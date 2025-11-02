@@ -1,9 +1,9 @@
 package de.bushnaq.abdalla.util;
 
 
-import de.bushnaq.abdalla.projecthub.dto.Sprint;
-import de.bushnaq.abdalla.projecthub.dto.Task;
-import de.bushnaq.abdalla.projecthub.dto.User;
+import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.dto.Task;
+import de.bushnaq.abdalla.kassandra.dto.User;
 
 import java.io.File;
 import java.io.IOException;

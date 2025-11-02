@@ -18,8 +18,8 @@
 package de.bushnaq.abdalla.util;
 
 
-import de.bushnaq.abdalla.projecthub.dto.Task;
-import de.bushnaq.abdalla.projecthub.report.dao.MetaData;
+import de.bushnaq.abdalla.kassandra.dto.Task;
+import de.bushnaq.abdalla.kassandra.report.dao.MetaData;
 
 public class GanttErrorHandler extends ExcelErrorHandler {
     public static final String ERROR_100_UNSUPPORTED_MULTIPLE_RESOURCES_ASSIGNED  = "Error #100: Unsupported multiple resources assigned to task [#%d] '%s' in Gantt %s.";

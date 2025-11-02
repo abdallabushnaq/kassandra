@@ -17,8 +17,8 @@
 
 package de.bushnaq.abdalla.util;
 
-import de.bushnaq.abdalla.projecthub.Application;
-import de.bushnaq.abdalla.projecthub.report.dao.Range;
+import de.bushnaq.abdalla.kassandra.Application;
+import de.bushnaq.abdalla.kassandra.report.dao.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
