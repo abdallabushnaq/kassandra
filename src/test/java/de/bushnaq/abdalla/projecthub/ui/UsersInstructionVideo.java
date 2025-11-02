@@ -114,30 +114,25 @@ public class UsersInstructionVideo extends AbstractUiTestUtil {
 
         seleniumHandler.setHighlightEnabled(true);//highlight elements starting now
         paul.narrateAsync(NORMAL, "Let's navigate to the Users page from the main menu.");
-        // Direct navigation to UserListView using the route
-//        seleniumHandler.getAndCheck("http://localhost:8080/ui/" + UserListView.ROUTE);
-//        seleniumHandler.click( );
-        
+        seleniumHandler.click(MainLayout.ID_TAB_USERS);
+
         //---------------------------------------------------------------------------------------
         // Explain User List Page Purpose
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.highlight(UserListView.USER_LIST_PAGE_TITLE);
-        paul.narrate(NORMAL, "This is the Users page. Here you can see all team members who have access to Kassandra. Each user has a unique email address that serves as their identifier in the system.");
+        paul.narrate(NORMAL, "This is the Users page. Here you can see all team members who have access to Kassandra.");
 
         //---------------------------------------------------------------------------------------
         // Explain Grid Columns
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.highlight(UserListView.USER_GRID);
-        paul.narrate(NORMAL, "The grid shows several important columns. The Key is a unique internal identifier. The Name is how the user appears throughout the system in task assignments and reports. The Email is the user's unique identifier for authentication.");
-        paul.narrate(NORMAL, "Notice the small colored square next to each name? That's the user's personal color, which helps visually identify who's working on what in Gantt charts and resource utilization reports.");
+        paul.narrate(NORMAL, "The grid shows use information.");
 
         //---------------------------------------------------------------------------------------
         // Explain Employment Dates
         //---------------------------------------------------------------------------------------
-
-        paul.narrate(NORMAL, "First Working Day and Last Working Day define the employment period. The first working day is when the employee starts working and can be assigned tasks. If you don't set it, it defaults to today's date. The last working day is optional and is used in rare cases when someone leaves the company.");
 
         //---------------------------------------------------------------------------------------
         // Create New User - Scenario Introduction

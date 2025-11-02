@@ -62,6 +62,12 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
     // Test IDs for Selenium testing
     public static final String           ID_LOGO                      = "main-layout-logo";
     public static final String           ID_NAVIGATION_TABS           = "main-layout-navigation-tabs";
+    public static final String           ID_TAB_FEATURES              = "main-layout-tab-features";
+    public static final String           ID_TAB_PRODUCTS              = "main-layout-tab-products";
+    public static final String           ID_TAB_SPRINTS               = "main-layout-tab-sprints";
+    public static final String           ID_TAB_TASKS                 = "main-layout-tab-tasks";
+    public static final String           ID_TAB_USERS                 = "main-layout-tab-users";
+    public static final String           ID_TAB_VERSIONS              = "main-layout-tab-versions";
     public static final String           ID_THEME_TOGGLE              = "main-layout-theme-toggle";
     public static final String           ID_USER_MENU                 = "main-layout-user-menu";
     public static final String           ID_USER_MENU_AVAILABILITY    = "main-layout-user-menu-availability";
@@ -208,11 +214,20 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
 
         Span text = new Span(menuEntry.title());
 
+        Tab tab;
         if (icon != null) {
-            return new Tab(new HorizontalLayout(icon, text));
+            tab = new Tab(new HorizontalLayout(icon, text));
         } else {
-            return new Tab(text);
+            tab = new Tab(text);
         }
+
+        // Set ID based on the menu entry title
+        String tabId = getTabIdForTitle(menuEntry.title());
+        if (tabId != null) {
+            tab.setId(tabId);
+        }
+
+        return tab;
     }
 
     /**
@@ -271,6 +286,25 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
         logoutItem.setId(ID_USER_MENU_LOGOUT);
 
         return userMenu;
+    }
+
+    /**
+     * Gets the tab ID constant for a given menu title.
+     * This allows proper identification of tabs in UI tests.
+     *
+     * @param title the menu title
+     * @return the tab ID constant, or null if not found
+     */
+    private String getTabIdForTitle(String title) {
+        return switch (title) {
+            case "Products" -> ID_TAB_PRODUCTS;
+            case "Users" -> ID_TAB_USERS;
+            case "Versions" -> ID_TAB_VERSIONS;
+            case "Features" -> ID_TAB_FEATURES;
+            case "Sprints" -> ID_TAB_SPRINTS;
+            case "Tasks" -> ID_TAB_TASKS;
+            default -> null;
+        };
     }
 
     private String getUserEmail() {
