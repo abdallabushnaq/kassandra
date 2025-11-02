@@ -15,17 +15,20 @@
  *
  */
 
-package de.bushnaq.abdalla.projecthub.ui;
+package de.bushnaq.abdalla.projecthub.ui.introduction;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.projecthub.ai.narrator.Narrator;
 import de.bushnaq.abdalla.projecthub.ai.narrator.NarratorAttribute;
-import de.bushnaq.abdalla.projecthub.ui.component.AvailabilityCalendarComponent;
-import de.bushnaq.abdalla.projecthub.ui.dialog.AvailabilityDialog;
+import de.bushnaq.abdalla.projecthub.dto.OffDayType;
+import de.bushnaq.abdalla.projecthub.ui.MainLayout;
+import de.bushnaq.abdalla.projecthub.ui.component.OffDaysCalendarComponent;
+import de.bushnaq.abdalla.projecthub.ui.dialog.OffDayDialog;
+import de.bushnaq.abdalla.projecthub.ui.introduction.util.InstructionVideosUtil;
 import de.bushnaq.abdalla.projecthub.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.projecthub.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.projecthub.ui.view.AvailabilityListView;
 import de.bushnaq.abdalla.projecthub.ui.view.LoginView;
+import de.bushnaq.abdalla.projecthub.ui.view.OffDayListView;
 import de.bushnaq.abdalla.projecthub.ui.view.util.*;
 import de.bushnaq.abdalla.projecthub.util.RandomCase;
 import de.bushnaq.abdalla.projecthub.util.TestInfoUtil;
@@ -66,12 +69,13 @@ import java.util.Map;
 @Transactional
 @Testcontainers
 @Disabled
-public class UserAvailabilityInstructionVideo extends AbstractUiTestUtil {
-    public static final  NarratorAttribute          INTENSE  = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  NarratorAttribute          NORMAL   = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+public class UserOffDaysIntroductionVideoTest extends AbstractUiTestUtil {
+    public static final  NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final  NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final  String                     VIDEO_TITLE = "User Off Days Introduction Video";
     // Start Keycloak container with realm configuration
     @Container
-    private static final KeycloakContainer          keycloak = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
+    private static final KeycloakContainer          keycloak    = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
             .withRealmImportFile("keycloak/project-hub-realm.json")
             .withAdminUsername("admin")
             .withAdminPassword("admin")
@@ -116,106 +120,52 @@ public class UserAvailabilityInstructionVideo extends AbstractUiTestUtil {
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
-        seleniumHandler.showOverlay("Kassandra User Availability", "Introduction Video");
-        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), "User Availability Introduction Video");
+        seleniumHandler.showOverlay("Kassandra User Off-Days", InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE);
         seleniumHandler.wait(3000);
-        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about User Availability management in Kassandra. User availability defines what percentage of your time you can dedicate to project work. This is essential for accurate sprint planning and capacity calculations.");
+        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today I am happy to release our first instruction video for our Kassandra project management server.");
         seleniumHandler.hideOverlay();
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 
-        //---------------------------------------------------------------------------------------
-        // Navigate to Availability Page
-        //---------------------------------------------------------------------------------------
+        //---------------------------------------------------------------------------------------..
+        // Products Page
+        //---------------------------------------------------------------------------------------..
 
         seleniumHandler.setHighlightEnabled(true);//highlight elements starting now
-        paul.narrateAsync(NORMAL, "Let's open the user menu and navigate to the User Availability page.");
+        paul.narrate(NORMAL, "We are going to learn about User Off-Days management in Kassandra. By User Off-Days we mean vacations, sick leaves, or business trips. Basically any day where you are not available to work on your project tasks.");
+        paul.narrateAsync(NORMAL, "Lets open the user menu and switch to the User Off-Days page.");
         seleniumHandler.click(MainLayout.ID_USER_MENU);
-        seleniumHandler.click(MainLayout.ID_USER_MENU_AVAILABILITY);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_OFF_DAYS);
 
-        //---------------------------------------------------------------------------------------
-        // Explain Availability Page Purpose
-        //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(AvailabilityListView.AVAILABILITY_LIST_PAGE_TITLE);
-        paul.narrate(NORMAL, "This page shows your availability history. Each availability record defines what percentage of your working time is dedicated to project tasks during a specific time period.");
-        seleniumHandler.highlight(AvailabilityListView.AVAILABILITY_GRID);
-        paul.narrate(NORMAL, "For example, one hundred percent means you're fully available, fifty percent means you're working half time, and values over one hundred percent represent overtime work.");
+        seleniumHandler.highlight(OffDayListView.OFFDAY_LIST_PAGE_TITLE);
+        paul.narrate(NORMAL, "The User Off-Days shows a calendar with every day of the current year.");
+        seleniumHandler.highlight(OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_BUSINESS_TRIP, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_SICK_LEAVE, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_VACATION, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_HOLIDAY);
+        paul.narrate(NORMAL, "The legend on the bottom explains the different types of User Off-Days and their colors.");
+        paul.narrateAsync(NORMAL, "Lets take a look at previous year. There is a lot more going on");
+        seleniumHandler.click(OffDaysCalendarComponent.CALENDAR_PREV_YEAR_BTN);
+        paul.narrate(NORMAL, "You can see that there are holidays marked in the calendar. These are public holidays that Kassandra automatically populated based on the logged in user location.");
+        paul.narrate(NORMAL, "The vacation, business trip and sick leave days are all created by me.");
+        seleniumHandler.click(OffDaysCalendarComponent.CALENDAR_NEXT_YEAR_BTN);
+        paul.narrate(NORMAL, "I am located in Germany North Rhine Westphalia and so you can see the holidays of that region in Germany.");
+        paul.narrate(NORMAL, "Ok, i just noticed, that I have not taken any vacation days this year. So let me plan my summer vacation.");
+        paul.narrateAsync(NORMAL, "Select the create button.");
+        seleniumHandler.click(OffDayListView.CREATE_OFFDAY_BUTTON);
 
-        //---------------------------------------------------------------------------------------
-        // Explain Existing Records
-        //---------------------------------------------------------------------------------------
+        paul.narrateAsync(NORMAL, "Choose vacation.");
+        seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, OffDayType.VACATION.name());
 
-        paul.narrate(NORMAL, "I have one availability record starting from my first working day, set to fifty percent. This means Kassandra assumes I'm working half time on project work.");
-        paul.narrate(NORMAL, "However, my capacity might change over time.");
-        //---------------------------------------------------------------------------------------
-        // Explain Calendar
-        //---------------------------------------------------------------------------------------
+        paul.narrateAsync(NORMAL, "Select the start date.");
+        final LocalDate firstDay = LocalDate.of(2025, 6, 2);
+        seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_START_DATE_FIELD, firstDay);
 
-        paul.narrate(NORMAL, "On the right side, you can see a calendar with every day of the current year.");
-        seleniumHandler.highlight(AvailabilityCalendarComponent.LEGEND_ITEM_ID_100_PERCENT, AvailabilityCalendarComponent.LEGEND_ITEM_ID_80_PERCENT, AvailabilityCalendarComponent.LEGEND_ITEM_ID_60_PERCENT, AvailabilityCalendarComponent.LEGEND_ITEM_ID_40_PERCENT, AvailabilityCalendarComponent.LEGEND_ITEM_ID_20_PERCENT, AvailabilityCalendarComponent.LEGEND_ITEM_ID_0_PERCENT);
-        paul.narrate(NORMAL, "The legend at the bottom shows the different availability levels and their colors. Each day is filled from the bottom up to represent your availability percentage.");
-
-        //---------------------------------------------------------------------------------------
-        // Why Multiple Availability Records
-        //---------------------------------------------------------------------------------------
-
-        paul.narrate(NORMAL, "Why do we need an availability history? Well, your capacity can change over time.");
-        paul.narrate(NORMAL, "You might switch to part-time work, take on management responsibilities that reduce your project time, or work overtime during critical project phases.");
-        paul.narrate(NORMAL, "Kassandra uses this information to accurately calculate team capacity, plan realistic sprints, and estimate project release dates.");
-
-        //---------------------------------------------------------------------------------------
-        // Create New Availability - Intro
-        //---------------------------------------------------------------------------------------
-
-        paul.narrate(NORMAL, "Let me show you how to add a new availability record. I've been working at fifty percent project availability because I was handling third level support tasks.");
-        paul.narrate(NORMAL, "Good news - those support responsibilities are being reassigned, so I can increase my availability to eighty percent starting next month.");
-
-        //---------------------------------------------------------------------------------------
-        // Create New Availability - Dialog
-        //---------------------------------------------------------------------------------------
-
-        paul.narrateAsync(NORMAL, "Click the create button.");
-        seleniumHandler.click(AvailabilityListView.CREATE_AVAILABILITY_BUTTON);
-
-        paul.narrate(NORMAL, "First, we select the start date - this is when the new availability becomes effective. Let's set it to June first, twenty twenty-five.");
-        final LocalDate newAvailabilityStartDate = LocalDate.of(2025, 6, 1);
-        seleniumHandler.setDatePickerValue(AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, newAvailabilityStartDate);
-
-        paul.narrate(NORMAL, "Next, we enter the availability percentage. I'll enter eighty to represent eighty percent availability.");
-        seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, "80");
-
-        paul.narrateAsync(NORMAL, "Now click Save to create the availability record.");
-        seleniumHandler.click(AvailabilityDialog.CONFIRM_BUTTON);
-
-        //---------------------------------------------------------------------------------------
-        // Verify Creation & Explain Impact
-        //---------------------------------------------------------------------------------------
-
-        seleniumHandler.wait(1000);
-        seleniumHandler.highlight(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX + "2025-06-01");
-        paul.narrate(NORMAL, "Perfect! The new availability record is now visible in the grid and the calendar view.");
-        paul.narrate(NORMAL, "Starting June first, Kassandra will use this new availability to calculate the number of days I need to finish my estimated tasks.");
-        paul.narrate(NORMAL, "For example, a task that would take me ten days at one hundred percent availability will now take twelve and a half days.");
-        paul.narrate(NORMAL, "My old availability record automatically ends the day before the new one begins, ensuring accurate capacity tracking throughout the year.");
-
-        //---------------------------------------------------------------------------------------
-        // Mention Edit/Delete Capabilities
-        //---------------------------------------------------------------------------------------
-
-        paul.narrate(NORMAL, "With the little notepad and trashcan icons, on the right side, you can edit or delete any existing availability record.");
-
-        //---------------------------------------------------------------------------------------
-        // Mention Minimum Availability Requirement
-        //---------------------------------------------------------------------------------------
-
-        seleniumHandler.highlight(AvailabilityListView.AVAILABILITY_GRID);
-        paul.narrate(NORMAL, "However, you cannot delete your only availability record - Kassandra requires at least one availability record to calculate capacity properly.");
-
-        //---------------------------------------------------------------------------------------
-        // Closing
-        //---------------------------------------------------------------------------------------
-
-        paul.narrate(NORMAL, "That's all there is to managing your availability in Kassandra. Remember, keeping your availability up to date ensures accurate capacity planning and realistic sprint commitments. Thanks for watching!");
+        paul.narrate(NORMAL, "and select the end date.");
+        paul.narrateAsync(NORMAL, "I am really looking forward to a long summer vacation with my family.");
+        final LocalDate lastDay = LocalDate.of(2025, 6, 27);
+        seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
+        paul.narrateAsync(NORMAL, "Select Save to close the dialog and persist our vacation.").pause();
+        seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
+        paul.narrate(NORMAL, "the vacation immediately becomes visible in the calendar. Kassandra skips any weekend day or holiday that falls in your vacation.").pause();
 
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
@@ -261,6 +211,7 @@ public class UserAvailabilityInstructionVideo extends AbstractUiTestUtil {
         props.put("spring.security.oauth2.client.provider.keycloak.token-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/token");
         props.put("spring.security.oauth2.client.provider.keycloak.user-info-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/userinfo");
         props.put("spring.security.oauth2.client.provider.keycloak.jwk-set-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/certs");
+
         props.put("spring.security.oauth2.client.registration.keycloak.client-id", "project-hub-client");
         props.put("spring.security.oauth2.client.registration.keycloak.client-secret", "test-client-secret");
         props.put("spring.security.oauth2.client.registration.keycloak.scope", "openid,profile,email");
@@ -274,4 +225,3 @@ public class UserAvailabilityInstructionVideo extends AbstractUiTestUtil {
     }
 
 }
-

@@ -15,19 +15,18 @@
  *
  */
 
-package de.bushnaq.abdalla.projecthub.ui;
+package de.bushnaq.abdalla.projecthub.ui.introduction;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.projecthub.ai.narrator.Narrator;
 import de.bushnaq.abdalla.projecthub.ai.narrator.NarratorAttribute;
-import de.bushnaq.abdalla.projecthub.dto.OffDayType;
-import de.bushnaq.abdalla.projecthub.ui.component.OffDaysCalendarComponent;
-import de.bushnaq.abdalla.projecthub.ui.dialog.OffDayDialog;
+import de.bushnaq.abdalla.projecthub.ui.MainLayout;
+import de.bushnaq.abdalla.projecthub.ui.introduction.util.InstructionVideosUtil;
 import de.bushnaq.abdalla.projecthub.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.projecthub.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.projecthub.ui.view.LoginView;
-import de.bushnaq.abdalla.projecthub.ui.view.OffDayListView;
-import de.bushnaq.abdalla.projecthub.ui.view.util.*;
+import de.bushnaq.abdalla.projecthub.ui.view.UserProfileView;
+import de.bushnaq.abdalla.projecthub.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.projecthub.util.RandomCase;
 import de.bushnaq.abdalla.projecthub.util.TestInfoUtil;
 import org.junit.jupiter.api.Disabled;
@@ -67,12 +66,12 @@ import java.util.Map;
 @Transactional
 @Testcontainers
 @Disabled
-public class UserOffDaysInstructionVideo extends AbstractUiTestUtil {
-    public static final  NarratorAttribute          INTENSE  = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  NarratorAttribute          NORMAL   = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+public class UserProfileIntroductionVideoTest extends AbstractUiTestUtil {
+    public static final  NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final  String                   VIDEO_TITLE = "User Profile Introduction Video";
     // Start Keycloak container with realm configuration
     @Container
-    private static final KeycloakContainer          keycloak = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
+    private static final KeycloakContainer        keycloak    = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
             .withRealmImportFile("keycloak/project-hub-realm.json")
             .withAdminUsername("admin")
             .withAdminPassword("admin")
@@ -84,26 +83,9 @@ public class UserOffDaysInstructionVideo extends AbstractUiTestUtil {
             .withEnv("KC_HOSTNAME_STRICT", "false")
             .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false");
     @Autowired
-    private              AvailabilityListViewTester availabilityListViewTester;
+    private              ProductListViewTester    productListViewTester;
     @Autowired
-    private              FeatureListViewTester      featureListViewTester;
-    private              String                     featureName;
-    @Autowired
-    private              LocationListViewTester     locationListViewTester;
-    @Autowired
-    private              OffDayListViewTester       offDayListViewTester;
-    @Autowired
-    private              ProductListViewTester      productListViewTester;
-    @Autowired
-    private              HumanizedSeleniumHandler   seleniumHandler;
-    @Autowired
-    private              SprintListViewTester       sprintListViewTester;
-    @Autowired
-    private              TaskListViewTester         taskListViewTester;
-    @Autowired
-    private              UserListViewTester         userListViewTester;
-    @Autowired
-    private              VersionListViewTester      versionListViewTester;
+    private              HumanizedSeleniumHandler seleniumHandler;
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
@@ -117,52 +99,71 @@ public class UserOffDaysInstructionVideo extends AbstractUiTestUtil {
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
-        seleniumHandler.showOverlay("Kassandra User Off-Days", "Introduction Video");
-        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), "User Off Days Introduction Video");
+        seleniumHandler.showOverlay("Kassandra User Profile", InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE);
         seleniumHandler.wait(3000);
-        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today I am happy to release our first instruction video for our Kassandra project management server.");
+        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about managing your user profile in Kassandra. Your profile contains important information about how you're identified in the system and displayed in reports.");
         seleniumHandler.hideOverlay();
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 
-        //---------------------------------------------------------------------------------------..
-        // Products Page
-        //---------------------------------------------------------------------------------------..
+        //---------------------------------------------------------------------------------------
+        // Navigate to Profile Page
+        //---------------------------------------------------------------------------------------
 
         seleniumHandler.setHighlightEnabled(true);//highlight elements starting now
-        paul.narrate(NORMAL, "We are going to learn about User Off-Days management in Kassandra. By User Off-Days we mean vacations, sick leaves, or business trips. Basically any day where you are not available to work on your project tasks.");
-        paul.narrateAsync(NORMAL, "Lets open the user menu and switch to the User Off-Days page.");
+        paul.narrateAsync(NORMAL, "Let's open the user menu and navigate to the User Profile page.");
         seleniumHandler.click(MainLayout.ID_USER_MENU);
-        seleniumHandler.click(MainLayout.ID_USER_MENU_OFF_DAYS);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_VIEW_PROFILE);
 
+        //---------------------------------------------------------------------------------------
+        // Explain Profile Page Purpose
+        //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(OffDayListView.OFFDAY_LIST_PAGE_TITLE);
-        paul.narrate(NORMAL, "The User Off-Days shows a calendar with every day of the current year.");
-        seleniumHandler.highlight(OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_BUSINESS_TRIP, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_SICK_LEAVE, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_VACATION, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_HOLIDAY);
-        paul.narrate(NORMAL, "The legend on the bottom explains the different types of User Off-Days and their colors.");
-        paul.narrateAsync(NORMAL, "Lets take a look at previous year. There is a lot more going on");
-        seleniumHandler.click(OffDaysCalendarComponent.CALENDAR_PREV_YEAR_BTN);
-        paul.narrate(NORMAL, "You can see that there are holidays marked in the calendar. These are public holidays that Kassandra automatically populated based on the logged in user location.");
-        paul.narrate(NORMAL, "The vacation, business trip and sick leave days are all created by me.");
-        seleniumHandler.click(OffDaysCalendarComponent.CALENDAR_NEXT_YEAR_BTN);
-        paul.narrate(NORMAL, "I am located in Germany North Rhine Westphalia and so you can see the holidays of that region in Germany.");
-        paul.narrate(NORMAL, "Ok, i just noticed, that I have not taken any vacation days this year. So let me plan my summer vacation.");
-        paul.narrateAsync(NORMAL, "Select the create button.");
-        seleniumHandler.click(OffDayListView.CREATE_OFFDAY_BUTTON);
+        seleniumHandler.highlight(UserProfileView.PROFILE_PAGE_TITLE);
+        paul.narrate(NORMAL, "This is your personal profile page where you can edit your display name and personal color.");
 
-        paul.narrateAsync(NORMAL, "Choose vacation.");
-        seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, OffDayType.VACATION.name());
+        //---------------------------------------------------------------------------------------
+        // Use Case - Name Change
+        //---------------------------------------------------------------------------------------
 
-        paul.narrateAsync(NORMAL, "Select the start date.");
-        final LocalDate firstDay = LocalDate.of(2025, 6, 2);
-        seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_START_DATE_FIELD, firstDay);
+        seleniumHandler.highlight(UserProfileView.USER_NAME_FIELD);
+        paul.narrate(NORMAL, "Let's say I recently married and decided to change my last name to my wife's. I'll update my display name to reflect this change. This is the name that will appear in task assignments, reports, and calendars.");
+        seleniumHandler.setTextField(UserProfileView.USER_NAME_FIELD, "Christopher Wilson");
 
-        paul.narrate(NORMAL, "and select the end date.");
-        paul.narrateAsync(NORMAL, "I am really looking forward to a long summer vacation with my family.");
-        final LocalDate lastDay = LocalDate.of(2025, 6, 27);
-        seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
-        paul.narrateAsync(NORMAL, "Select Save to close the dialog and persist our vacation.").pause();
-        seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
-        paul.narrate(NORMAL, "the vacation immediately becomes visible in the calendar. Kassandra skips any weekend day or holiday that falls in your vacation.").pause();
+        //---------------------------------------------------------------------------------------
+        // Use Case - Color Change
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(UserProfileView.USER_COLOR_PICKER);
+        paul.narrate(NORMAL, "I also want to change my color. I'm working with another developer who is already using red, so let me pick a different color to better distinguish my tasks from hers.");
+        seleniumHandler.setColorPickerValue(UserProfileView.USER_COLOR_PICKER, "#00FF00");
+        seleniumHandler.wait(1000);
+
+        //---------------------------------------------------------------------------------------
+        // Explain Color Usage
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "This color is used throughout Kassandra in Gantt charts and resource utilization graphs, making it easy to identify who's working on what.");
+
+        //---------------------------------------------------------------------------------------
+        // Save Changes
+        //---------------------------------------------------------------------------------------
+
+        paul.narrateAsync(NORMAL, "Now let's save these changes.");
+        seleniumHandler.click(UserProfileView.SAVE_PROFILE_BUTTON);
+
+        //---------------------------------------------------------------------------------------
+        // Verify Changes
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.wait(1000);
+        paul.narrate(NORMAL, "Perfect! The profile has been updated successfully. These changes are immediately reflected throughout the system.");
+
+        //---------------------------------------------------------------------------------------
+        // Closing
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "That's all there is to managing your profile in Kassandra. Keep your name up to date and choose a distinct color so your team members can easily identify your work. Thanks for watching!");
 
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
@@ -208,7 +209,6 @@ public class UserOffDaysInstructionVideo extends AbstractUiTestUtil {
         props.put("spring.security.oauth2.client.provider.keycloak.token-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/token");
         props.put("spring.security.oauth2.client.provider.keycloak.user-info-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/userinfo");
         props.put("spring.security.oauth2.client.provider.keycloak.jwk-set-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/certs");
-
         props.put("spring.security.oauth2.client.registration.keycloak.client-id", "project-hub-client");
         props.put("spring.security.oauth2.client.registration.keycloak.client-secret", "test-client-secret");
         props.put("spring.security.oauth2.client.registration.keycloak.scope", "openid,profile,email");
@@ -222,3 +222,4 @@ public class UserOffDaysInstructionVideo extends AbstractUiTestUtil {
     }
 
 }
+

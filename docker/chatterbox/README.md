@@ -6,7 +6,7 @@ synthesis with GPU acceleration.
 ## Overview
 
 This Docker container runs a FastAPI-based REST server that wraps the Chatterbox TTS engine, making it accessible via
-HTTP API. It's designed to work with the Java client `ChatterboxTTS.java` in the project-hub application.
+HTTP API. It's designed to work with the Java client `ChatterboxTTS.java` in the kassandra application.
 
 ## Features
 
@@ -46,7 +46,7 @@ docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
 ### 1. Build the Container
 
 ```bash
-cd E:\github\project-hub\docker\chatterbox
+cd E:\github\kassandra\docker\chatterbox
 chatterbox-helper.bat build
 ```
 
@@ -189,8 +189,9 @@ API information and documentation.
 
 The `chatterbox-helper.bat` script provides convenient container management:
 
+
 | Command   | Description                                  |
-|-----------|----------------------------------------------|
+| --------- | -------------------------------------------- |
 | `start`   | Start the container                          |
 | `stop`    | Stop the container                           |
 | `restart` | Restart the container                        |
@@ -219,12 +220,13 @@ environment:
 To change the port (e.g., to 5000):
 
 1. Edit `docker-compose-chatterbox.yml`:
+
    ```yaml
    ports:
      - "5000:4123"  # External:Internal
    ```
-
 2. Rebuild and restart:
+
    ```bash
    chatterbox-helper.bat build
    chatterbox-helper.bat start
@@ -235,6 +237,7 @@ To change the port (e.g., to 5000):
 If you don't have a GPU or want to use CPU:
 
 1. Edit `docker-compose-chatterbox.yml`:
+
    ```yaml
    environment:
      - DEVICE=cpu
@@ -245,7 +248,6 @@ If you don't have a GPU or want to use CPU:
    #       devices:
    #         - driver: nvidia
    ```
-
 2. Rebuild and restart
 
 **Note**: CPU mode will be significantly slower (10-20x) than GPU mode.
@@ -330,7 +332,7 @@ The server code is mounted as a volume for fast development:
 
 ```bash
 # 1. Edit server.py in your IDE
-#    File: E:\github\project-hub\docker\chatterbox\server.py
+#    File: E:\github\kassandra\docker\chatterbox\server.py
 
 # 2. Restart container (NOT rebuild!)
 chatterbox-helper.bat restart    # Takes ~30 seconds
@@ -424,7 +426,7 @@ CPU mode is approximately 10-20x slower.
 
 ## License
 
-This container setup is part of the project-hub application.
+This container setup is part of the kassandra application.
 Chatterbox TTS is subject to its own license terms.
 
 ## Support
@@ -438,10 +440,9 @@ For issues specific to:
 ## Version History
 
 - **1.0.0** (2025-10-27)
-    - Initial release
-    - FastAPI-based REST server
-    - GPU support (RTX 2080 Ti)
-    - OpenAI-compatible endpoints
-    - Docker Compose setup
-    - Windows helper script
-
+  - Initial release
+  - FastAPI-based REST server
+  - GPU support (RTX 2080 Ti)
+  - OpenAI-compatible endpoints
+  - Docker Compose setup
+  - Windows helper script

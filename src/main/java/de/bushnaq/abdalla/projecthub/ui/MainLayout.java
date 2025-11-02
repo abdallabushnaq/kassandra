@@ -59,9 +59,9 @@ import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 public final class MainLayout extends AppLayout implements AfterNavigationObserver {
 
     public static final String           ID_BREADCRUMBS               = "main-layout-breadcrumbs";
-    // Test IDs for Selenium testing
     public static final String           ID_LOGO                      = "main-layout-logo";
     public static final String           ID_NAVIGATION_TABS           = "main-layout-navigation-tabs";
+    public static final String           ID_TAB_BASE                  = "main-layout-tab-";
     public static final String           ID_TAB_FEATURES              = "main-layout-tab-features";
     public static final String           ID_TAB_PRODUCTS              = "main-layout-tab-products";
     public static final String           ID_TAB_SPRINTS               = "main-layout-tab-sprints";
@@ -71,7 +71,6 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
     public static final String           ID_THEME_TOGGLE              = "main-layout-theme-toggle";
     public static final String           ID_USER_MENU                 = "main-layout-user-menu";
     public static final String           ID_USER_MENU_AVAILABILITY    = "main-layout-user-menu-availability";
-    //    public static final String           ID_USER_MENU_ITEM            = "main-layout-user-menu-item";
     public static final String           ID_USER_MENU_LOCATION        = "main-layout-user-menu-location";
     public static final String           ID_USER_MENU_LOGOUT          = "main-layout-user-menu-logout";
     public static final String           ID_USER_MENU_MANAGE_SETTINGS = "main-layout-user-menu-manage-settings";
@@ -296,15 +295,16 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
      * @return the tab ID constant, or null if not found
      */
     private String getTabIdForTitle(String title) {
-        return switch (title) {
-            case "Products" -> ID_TAB_PRODUCTS;
-            case "Users" -> ID_TAB_USERS;
-            case "Versions" -> ID_TAB_VERSIONS;
-            case "Features" -> ID_TAB_FEATURES;
-            case "Sprints" -> ID_TAB_SPRINTS;
-            case "Tasks" -> ID_TAB_TASKS;
-            default -> null;
-        };
+        return ID_TAB_BASE + title;
+//        return switch (title) {
+//            case "Products" -> ID_TAB_PRODUCTS;
+//            case "Users" -> ID_TAB_USERS;
+//            case "Versions" -> ID_TAB_VERSIONS;
+//            case "Features" -> ID_TAB_FEATURES;
+//            case "Sprints" -> ID_TAB_SPRINTS;
+//            case "Tasks" -> ID_TAB_TASKS;
+//            default -> null;
+//        };
     }
 
     private String getUserEmail() {

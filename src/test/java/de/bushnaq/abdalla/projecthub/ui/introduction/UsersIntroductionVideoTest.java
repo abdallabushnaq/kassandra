@@ -15,18 +15,20 @@
  *
  */
 
-package de.bushnaq.abdalla.projecthub.ui;
+package de.bushnaq.abdalla.projecthub.ui.introduction;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.projecthub.ai.narrator.Narrator;
 import de.bushnaq.abdalla.projecthub.ai.narrator.NarratorAttribute;
-import de.bushnaq.abdalla.projecthub.ui.component.OffDaysCalendarComponent;
-import de.bushnaq.abdalla.projecthub.ui.dialog.LocationDialog;
+import de.bushnaq.abdalla.projecthub.ui.MainLayout;
+import de.bushnaq.abdalla.projecthub.ui.dialog.UserDialog;
+import de.bushnaq.abdalla.projecthub.ui.introduction.util.InstructionVideosUtil;
 import de.bushnaq.abdalla.projecthub.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.projecthub.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.projecthub.ui.view.LocationListView;
 import de.bushnaq.abdalla.projecthub.ui.view.LoginView;
-import de.bushnaq.abdalla.projecthub.ui.view.util.*;
+import de.bushnaq.abdalla.projecthub.ui.view.UserListView;
+import de.bushnaq.abdalla.projecthub.ui.view.util.ProductListViewTester;
+import de.bushnaq.abdalla.projecthub.ui.view.util.UserListViewTester;
 import de.bushnaq.abdalla.projecthub.util.RandomCase;
 import de.bushnaq.abdalla.projecthub.util.TestInfoUtil;
 import org.junit.jupiter.api.Disabled;
@@ -66,12 +68,13 @@ import java.util.Map;
 @Transactional
 @Testcontainers
 @Disabled
-public class UserLocationsInstructionVideo extends AbstractUiTestUtil {
-    public static final  NarratorAttribute          INTENSE  = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  NarratorAttribute          NORMAL   = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+public class UsersIntroductionVideoTest extends AbstractUiTestUtil {
+    public static final  NarratorAttribute        INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final  NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final  String                   VIDEO_TITLE = "Users Introduction Video";
     // Start Keycloak container with realm configuration
     @Container
-    private static final KeycloakContainer          keycloak = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
+    private static final KeycloakContainer        keycloak    = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
             .withRealmImportFile("keycloak/project-hub-realm.json")
             .withAdminUsername("admin")
             .withAdminPassword("admin")
@@ -83,26 +86,11 @@ public class UserLocationsInstructionVideo extends AbstractUiTestUtil {
             .withEnv("KC_HOSTNAME_STRICT", "false")
             .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false");
     @Autowired
-    private              AvailabilityListViewTester availabilityListViewTester;
+    private              ProductListViewTester    productListViewTester;
     @Autowired
-    private              FeatureListViewTester      featureListViewTester;
-    private              String                     featureName;
+    private              HumanizedSeleniumHandler seleniumHandler;
     @Autowired
-    private              LocationListViewTester     locationListViewTester;
-    @Autowired
-    private              OffDayListViewTester       offDayListViewTester;
-    @Autowired
-    private              ProductListViewTester      productListViewTester;
-    @Autowired
-    private              HumanizedSeleniumHandler   seleniumHandler;
-    @Autowired
-    private              SprintListViewTester       sprintListViewTester;
-    @Autowired
-    private              TaskListViewTester         taskListViewTester;
-    @Autowired
-    private              UserListViewTester         userListViewTester;
-    @Autowired
-    private              VersionListViewTester      versionListViewTester;
+    private              UserListViewTester       userListViewTester;
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
@@ -116,113 +104,127 @@ public class UserLocationsInstructionVideo extends AbstractUiTestUtil {
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
-        seleniumHandler.showOverlay("Kassandra User Locations", "Introduction Video");
-        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), "User Locations Introduction Video");
+        seleniumHandler.showOverlay("Kassandra Users", InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE);
         seleniumHandler.wait(3000);
-        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about User Location management in Kassandra. User locations are essential for accurate project planning because they determine which public holidays apply to each team member.");
+        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about User Management in Kassandra. As an administrator, the Users page is where you add team members to the system so they can access Kassandra and be assigned to projects.");
         seleniumHandler.hideOverlay();
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 
         //---------------------------------------------------------------------------------------
-        // Navigate to Location Page
+        // Navigate to Users Page
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.setHighlightEnabled(true);//highlight elements starting now
-        paul.narrateAsync(NORMAL, "Let's open the user menu and navigate to the User Location page.");
-        seleniumHandler.click(MainLayout.ID_USER_MENU);
-        seleniumHandler.click(MainLayout.ID_USER_MENU_LOCATION);
+        paul.narrateAsync(NORMAL, "Let's navigate to the Users page from the main menu.");
+        seleniumHandler.click(MainLayout.ID_TAB_USERS);
 
         //---------------------------------------------------------------------------------------
-        // Explain Location Page Purpose
+        // Explain User List Page Purpose
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(LocationListView.LOCATION_LIST_PAGE_TITLE);
-        paul.narrate(NORMAL, "This page shows your location history. Each location record defines where you were working during a specific time period.");
-        paul.narrate(NORMAL, "This is important because Kassandra uses this information to automatically populate the correct public holidays for your region when planning sprints and calculating availability.");
+        seleniumHandler.highlight(UserListView.USER_LIST_PAGE_TITLE);
+        paul.narrate(NORMAL, "This is the Users page. Here you can see all team members who have access to Kassandra.");
 
         //---------------------------------------------------------------------------------------
-        // Explain Calendar
+        // Explain Grid Columns
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "On the right side, you can see a calendar with every day of the current year.");
-        seleniumHandler.highlight(OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_BUSINESS_TRIP, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_SICK_LEAVE, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_VACATION, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_HOLIDAY);
-        paul.narrate(NORMAL, "The legend on the bottom explains the different types of days and their colors.");
-        paul.narrateAsync(NORMAL, "Let's take a look at last year. There is a lot more going on.");
-        seleniumHandler.click(OffDaysCalendarComponent.CALENDAR_PREV_YEAR_BTN);
-        paul.narrate(NORMAL, "You can see the holidays marked in the calendar, based on my Germany North Rhine Westphalia location.");
-        paul.narrate(NORMAL, "When you change your location, the holidays will automatically update to match your new region.");
-        seleniumHandler.click(OffDaysCalendarComponent.CALENDAR_NEXT_YEAR_BTN);
+        seleniumHandler.highlight(UserListView.USER_GRID);
+        paul.narrate(NORMAL, "The grid shows use information.");
 
         //---------------------------------------------------------------------------------------
-        // Explain Existing Records
+        // Explain Employment Dates
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(LocationListView.LOCATION_GRID);
-        paul.narrate(NORMAL, "On the left, the location grid shows my location history.");
-        paul.narrate(NORMAL, "I have one location record starting from my first working day, which is currently active.");
-
         //---------------------------------------------------------------------------------------
-        // Why Multiple Locations
+        // Create New User - Scenario Introduction
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "Why do we need a location history? Well, if you relocate to a different country or region, the holidays will change.");
-        paul.narrate(NORMAL, "For example, if I move from Germany to the United States, Thanksgiving would now count as a day off, but German Unity Day would not.");
+        paul.narrate(NORMAL, "Let me show you how to add a new team member. We just hired a new developer named Sarah Johnson who needs access to Kassandra.");
 
         //---------------------------------------------------------------------------------------
-        // Create New Location - Intro
+        // Open Create User Dialog
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "Let me show you how to add a new location. Imagine I'm planning to relocate to California in September. Let's create that location record now.");
+        paul.narrateAsync(NORMAL, "Let's click the Create button to open the user dialog.");
+        seleniumHandler.click(UserListView.CREATE_USER_BUTTON);
 
         //---------------------------------------------------------------------------------------
-        // Create New Location - Dialog
+        // Fill User Name
         //---------------------------------------------------------------------------------------
 
-        paul.narrateAsync(NORMAL, "Click the create button.");
-        seleniumHandler.click(LocationListView.CREATE_LOCATION_BUTTON);
-
-        paul.narrate(NORMAL, "First, we select the start date - this is when the new location becomes effective.");
-        paul.narrateAsync(NORMAL, "Let's set it to September first, twenty twenty-five.");
-        final LocalDate californiaStartDate = LocalDate.of(2025, 9, 1);
-        seleniumHandler.setDatePickerValue(LocationDialog.LOCATION_START_DATE_FIELD, californiaStartDate);
-
-        paul.narrateAsync(NORMAL, "Next, we choose the country - United States.");
-        seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_COUNTRY_FIELD, "United States (US)");
-
-        paul.narrateAsync(NORMAL, "And finally, the state or region - California.");
-        seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_STATE_FIELD, "California (ca)");
-
-        paul.narrateAsync(NORMAL, "Now click Save to create the location record.");
-        seleniumHandler.click(LocationDialog.CONFIRM_BUTTON);
+        paul.narrate(NORMAL, "First, we enter the user's full name. This is how they'll appear in task assignments and reports throughout Kassandra.");
+        final String userName = "Sarah Johnson";
+        seleniumHandler.setTextField(UserDialog.USER_NAME_FIELD, userName);
 
         //---------------------------------------------------------------------------------------
-        // Verify Creation & Explain Impact
+        // Fill User Email
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "Next, their email address. This is the most important field - it's the unique identifier Sarah will use to log into Kassandra. Make sure it matches their authentication email exactly.");
+        final String userEmail = "sarah.johnson@kassandra.org";
+        seleniumHandler.setTextField(UserDialog.USER_EMAIL_FIELD, userEmail);
+
+        //---------------------------------------------------------------------------------------
+        // Set First Working Day
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "The First Working Day is the date when Sarah will start working and can be assigned tasks. Let's set it to July first, twenty twenty-five.");
+        final LocalDate firstWorkingDay = LocalDate.of(2025, 7, 1);
+        seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, firstWorkingDay);
+
+        //---------------------------------------------------------------------------------------
+        // Explain Last Working Day
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(UserDialog.USER_LAST_WORKING_DAY_PICKER);
+        paul.narrate(NORMAL, "The Last Working Day is optional and only used when someone leaves the company. We'll leave it empty for Sarah.");
+
+        //---------------------------------------------------------------------------------------
+        // Save User
+        //---------------------------------------------------------------------------------------
+
+        paul.narrateAsync(NORMAL, "Now let's save to create Sarah's user account.");
+        seleniumHandler.click(UserDialog.CONFIRM_BUTTON);
+
+        //---------------------------------------------------------------------------------------
+        // Verify Creation
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.wait(1000);
-        seleniumHandler.highlight(LocationListView.LOCATION_GRID_START_DATE_PREFIX + "2025-09-01");
-        paul.narrate(NORMAL, "Perfect! The new location record is now visible in the grid.");
-        paul.narrate(NORMAL, "Starting September first, Kassandra will use California holidays instead of North Rhine-Westphalia holidays when calculating my availability and planning sprints.");
-        paul.narrate(NORMAL, "My old location record automatically ends the day before the new one begins, ensuring there are no gaps or overlaps.");
+        seleniumHandler.highlight(UserListView.USER_GRID_NAME_PREFIX + userName);
+        paul.narrate(NORMAL, "Perfect! Sarah Johnson now appears in our user list. She can now log into Kassandra using her email address and be assigned to project tasks.");
 
         //---------------------------------------------------------------------------------------
-        // Mention Edit/Delete Capabilities
+        // Explain Edit/Delete Capabilities
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "With the little notepad and trashcan icons, on the right side, you can edit or delete any existing location.");
+        seleniumHandler.highlight(
+                UserListView.USER_GRID_EDIT_BUTTON_PREFIX + userName,
+                UserListView.USER_GRID_DELETE_BUTTON_PREFIX + userName
+        );
+        paul.narrate(NORMAL, "You can edit any user's information using the notepad icon on the right, or remove them from the system using the trashcan icon. However, be careful when deleting users who have been assigned tasks, as this may affect your project history and reporting.");
 
         //---------------------------------------------------------------------------------------
-        // Mention Minimum Location Requirement
+        // Explain Row Counter
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(LocationListView.LOCATION_GRID);
-        paul.narrate(NORMAL, "However, you cannot delete your only location record - Kassandra requires at least one location to calculate holidays properly.");
+        seleniumHandler.highlight(UserListView.USER_ROW_COUNTER);
+        paul.narrate(NORMAL, "The counter at the top shows you how many users currently have access to the system.");
+
+        //---------------------------------------------------------------------------------------
+        // Explain Global Filter
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(UserListView.USER_GLOBAL_FILTER);
+        paul.narrate(NORMAL, "As your team grows, you can use the search filter to quickly find specific users by typing their name or email address.");
 
         //---------------------------------------------------------------------------------------
         // Closing
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "That's all there is to managing your location in Kassandra. Remember, keeping your location up to date ensures accurate holiday calculations and better project planning. Thanks for watching!");
+        paul.narrate(NORMAL, "That's all there is to managing users in Kassandra. Remember, add new team members before they need to log in, and make sure to use their correct authentication email address. Thanks for watching!");
 
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
@@ -268,7 +270,6 @@ public class UserLocationsInstructionVideo extends AbstractUiTestUtil {
         props.put("spring.security.oauth2.client.provider.keycloak.token-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/token");
         props.put("spring.security.oauth2.client.provider.keycloak.user-info-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/userinfo");
         props.put("spring.security.oauth2.client.provider.keycloak.jwk-set-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/certs");
-
         props.put("spring.security.oauth2.client.registration.keycloak.client-id", "project-hub-client");
         props.put("spring.security.oauth2.client.registration.keycloak.client-secret", "test-client-secret");
         props.put("spring.security.oauth2.client.registration.keycloak.scope", "openid,profile,email");
@@ -282,4 +283,3 @@ public class UserLocationsInstructionVideo extends AbstractUiTestUtil {
     }
 
 }
-

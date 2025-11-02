@@ -438,7 +438,7 @@
         <license>
             <name>Apache License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>https://github.com/kunterbunt2/project-hub</distribution>
+            <distribution>https://github.com/abdallabushnaq/kassandra</distribution>
         </license>
     </licenses>
 
@@ -455,7 +455,7 @@
         </repository>
         <repository>
             <id>github</id>
-            <url>https://maven.pkg.github.com/kunterbunt2/project-hub</url>
+            <url>https://maven.pkg.github.com/abdallabushnaq/kassandra</url>
         </repository>
 
     </repositories>
