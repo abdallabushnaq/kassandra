@@ -198,6 +198,7 @@ public class UserAvailabilityIntroductionVideoTest extends AbstractKeycloakUiTes
 
         paul.narrate(NORMAL, "That's all there is to managing your availability in Kassandra. Remember, keeping your availability up to date ensures accurate capacity planning and realistic sprint commitments. Thanks for watching!");
 
+        seleniumHandler.showOverlay("Kassandra User Availability", InstructionVideosUtil.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 

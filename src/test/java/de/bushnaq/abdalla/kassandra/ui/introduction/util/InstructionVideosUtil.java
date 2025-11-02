@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.introduction.util;
 
 public class InstructionVideosUtil {
-    public static final String TARGET_FOLDER  = "introduction";
-    public static final String VIDEO_SUBTITLE = "Introduction Video";
+    public static final String COPYLEFT_SUBTITLE = "Apache License, version 2.0";
+    public static final String TARGET_FOLDER     = "introduction";
+    public static final String VIDEO_SUBTITLE    = "Introduction Video";
 }

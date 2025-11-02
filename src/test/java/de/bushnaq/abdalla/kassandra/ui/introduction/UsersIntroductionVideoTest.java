@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
-import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
@@ -41,7 +40,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
@@ -63,28 +61,15 @@ import java.util.List;
 @Transactional
 @Testcontainers
 public class UsersIntroductionVideoTest extends AbstractKeycloakUiTestUtil {
-    public static final  NarratorAttribute        INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  String                   VIDEO_TITLE = "Users Introduction Video";
-    // Start Keycloak container with realm configuration
-    @Container
-    private static final KeycloakContainer        keycloak    = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
-            .withRealmImportFile("keycloak/project-hub-realm.json")
-            .withAdminUsername("admin")
-            .withAdminPassword("admin")
-            // Expose on a fixed port for more reliable testing
-            .withExposedPorts(8080, 8443)
-            // Add debugging to see container output
-            .withLogConsumer(outputFrame -> System.out.println("Keycloak: " + outputFrame.getUtf8String()))
-            // Make Keycloak accessible from outside the container
-            .withEnv("KC_HOSTNAME_STRICT", "false")
-            .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false");
+    public static final NarratorAttribute        INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final String                   VIDEO_TITLE = "Users Introduction Video";
     @Autowired
-    private              ProductListViewTester    productListViewTester;
+    private             ProductListViewTester    productListViewTester;
     @Autowired
-    private              HumanizedSeleniumHandler seleniumHandler;
+    private             HumanizedSeleniumHandler seleniumHandler;
     @Autowired
-    private              UserListViewTester       userListViewTester;
+    private             UserListViewTester       userListViewTester;
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
