@@ -45,9 +45,11 @@ public class TtsCacheManager {
     private static final Logger logger = LoggerFactory.getLogger(TtsCacheManager.class);
 
     @Getter
-    private final Path   audioDir; // root for chronological files
-    private final Object idLock = new Object();
-    private       int    nextId;
+    private final  Path   audioDir; // root for chronological files
+    @Getter
+    private static int    cacheMiss = 0;
+    private final  Object idLock    = new Object();
+    private        int    nextId;
 
     /**
      * Creates a new manager bound to a directory for chronological files. Ensures the directory exists.
@@ -169,6 +171,7 @@ public class TtsCacheManager {
             // Matching, reuse existing file
             return new ChronoPlan(existing, true, idPrefix);
         }
+        cacheMiss++;
         // Not matching: ensure no conflicting file remains for that id
         deleteByIdPrefix(idPrefix);
         Path target = targetPathFor(idPrefix, canonicalName);

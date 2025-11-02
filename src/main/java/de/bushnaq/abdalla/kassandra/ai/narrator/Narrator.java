@@ -179,6 +179,7 @@ public class Narrator {
             pathToPlay = plan.path();
             logger.debug("Narration up-to-date at {}", pathToPlay.getFileName());
         } else {
+
             long t0 = System.nanoTime();
             logger.info("TTS generate start: attrs={}, file={}, text=\"{}\"", attrs, plan.path().getFileName(), text);
 

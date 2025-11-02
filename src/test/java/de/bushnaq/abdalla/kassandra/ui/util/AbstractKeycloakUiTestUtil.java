@@ -18,9 +18,13 @@
 package de.bushnaq.abdalla.kassandra.ui.util;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
+import de.bushnaq.abdalla.kassandra.ai.narrator.TtsCacheManager;
+import org.junit.jupiter.api.AfterAll;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,20 +36,31 @@ import java.util.Map;
  *
  * @author Abdalla Bushnaq
  */
+@Testcontainers
 public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
+    private static final Logger            logger   = LoggerFactory.getLogger(AbstractKeycloakUiTestUtil.class);
+    private static       KeycloakContainer keycloakInstance;
     // Start Keycloak container with realm configuration
-    @Container
-    private static final KeycloakContainer keycloak = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
-            .withRealmImportFile("keycloak/project-hub-realm.json")
-            .withAdminUsername("admin")
-            .withAdminPassword("admin")
-            // Expose on a fixed port for more reliable testing
-            .withExposedPorts(8080, 8443)
-            // Add debugging to see container output
-            .withLogConsumer(outputFrame -> System.out.println("Keycloak: " + outputFrame.getUtf8String()))
-            // Make Keycloak accessible from outside the container
-            .withEnv("KC_HOSTNAME_STRICT", "false")
-            .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false");
+    private static final KeycloakContainer keycloak = getKeycloakContainer();
+
+    private static synchronized KeycloakContainer getKeycloakContainer() {
+        if (keycloakInstance == null) {
+            keycloakInstance = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
+                    .withRealmImportFile("keycloak/project-hub-realm.json")
+                    .withAdminUsername("admin")
+                    .withAdminPassword("admin")
+                    .withExposedPorts(8080, 8443)
+                    .withLogConsumer(outputFrame -> System.out.println("Keycloak: " + outputFrame.getUtf8String()))
+                    .withEnv("KC_HOSTNAME_STRICT", "false")
+                    .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false")
+                    .withReuse(true); // Enable container reuse
+
+            System.out.println("=== CREATING NEW KEYCLOAK CONTAINER ===");
+        } else {
+            System.out.println("=== REUSING EXISTING KEYCLOAK CONTAINER === ON PORT " + keycloakInstance.getHttpPort());
+        }
+        return keycloakInstance;
+    }
 
     // Method to get the public-facing URL, fixing potential redirect issues
     private static String getPublicFacingUrl(KeycloakContainer container) {
@@ -54,12 +69,16 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
                 container.getMappedPort(8080));
     }
 
-
     // Configure Spring Security to use the Keycloak container
     @DynamicPropertySource
     static void registerKeycloakProperties(DynamicPropertyRegistry registry) {
-        // Start the container
-        keycloak.start();
+        // Ensure container is started
+        if (!keycloak.isRunning()) {
+            System.out.println("=== STARTING KEYCLOAK CONTAINER ===");
+            keycloak.start();
+        } else {
+            System.out.println("=== KEYCLOAK CONTAINER ALREADY RUNNING === ON PORT " + keycloakInstance.getHttpPort());
+        }
 
         // Get the actual URL that's accessible from outside the container
         String externalUrl = getPublicFacingUrl(keycloak);
@@ -92,5 +111,12 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
 
         // Register all properties
         props.forEach((key, value) -> registry.add(key, () -> value));
+    }
+
+    @AfterAll
+    public static void tearDown() {
+        if (TtsCacheManager.getCacheMiss() != 0) {
+            logger.warn("*** TTS CACHE MISSES: {} ***", TtsCacheManager.getCacheMiss());
+        }
     }
 }

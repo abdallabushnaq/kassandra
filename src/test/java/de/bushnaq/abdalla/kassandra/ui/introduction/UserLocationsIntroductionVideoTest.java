@@ -40,7 +40,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -59,7 +58,6 @@ import java.util.List;
 )
 @AutoConfigureMockMvc
 @Transactional
-@Testcontainers
 public class UserLocationsIntroductionVideoTest extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
@@ -206,6 +204,7 @@ public class UserLocationsIntroductionVideoTest extends AbstractKeycloakUiTestUt
 
         paul.narrate(NORMAL, "That's all there is to managing your location in Kassandra. Remember, keeping your location up to date ensures accurate holiday calculations and better project planning. Thanks for watching!");
 
+        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 

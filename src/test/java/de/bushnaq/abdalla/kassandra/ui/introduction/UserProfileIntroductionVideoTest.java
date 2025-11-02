@@ -38,7 +38,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -57,7 +56,6 @@ import java.util.List;
 )
 @AutoConfigureMockMvc
 @Transactional
-@Testcontainers
 public class UserProfileIntroductionVideoTest extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final String                   VIDEO_TITLE = "User Profile Introduction Video";
@@ -144,6 +142,7 @@ public class UserProfileIntroductionVideoTest extends AbstractKeycloakUiTestUtil
 
         paul.narrate(NORMAL, "That's all there is to managing your profile in Kassandra. Keep your name up to date and choose a distinct color so your team members can easily identify your work. Thanks for watching!");
 
+        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 

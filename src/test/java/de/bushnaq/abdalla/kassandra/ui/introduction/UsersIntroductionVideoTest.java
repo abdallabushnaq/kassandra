@@ -40,7 +40,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -59,7 +58,6 @@ import java.util.List;
 )
 @AutoConfigureMockMvc
 @Transactional
-@Testcontainers
 public class UsersIntroductionVideoTest extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute        INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
@@ -205,6 +203,7 @@ public class UsersIntroductionVideoTest extends AbstractKeycloakUiTestUtil {
 
         paul.narrate(NORMAL, "That's all there is to managing users in Kassandra. Remember, add new team members before they need to log in, and make sure to use their correct authentication email address. Thanks for watching!");
 
+        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 

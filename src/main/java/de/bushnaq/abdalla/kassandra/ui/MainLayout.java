@@ -295,16 +295,7 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
      * @return the tab ID constant, or null if not found
      */
     private String getTabIdForTitle(String title) {
-        return ID_TAB_BASE + title;
-//        return switch (title) {
-//            case "Products" -> ID_TAB_PRODUCTS;
-//            case "Users" -> ID_TAB_USERS;
-//            case "Versions" -> ID_TAB_VERSIONS;
-//            case "Features" -> ID_TAB_FEATURES;
-//            case "Sprints" -> ID_TAB_SPRINTS;
-//            case "Tasks" -> ID_TAB_TASKS;
-//            default -> null;
-//        };
+        return ID_TAB_BASE + title.toLowerCase();
     }
 
     private String getUserEmail() {
