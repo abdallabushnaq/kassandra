@@ -47,8 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-@Disabled
-class ProductAiFilterTest extends AbstractAiFilterTest<Product> {
+public class ProductAiFilterTest extends AbstractAiFilterTest<Product> {
 
     public ProductAiFilterTest(ObjectMapper mapper, AiFilterService aiFilterService) {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));

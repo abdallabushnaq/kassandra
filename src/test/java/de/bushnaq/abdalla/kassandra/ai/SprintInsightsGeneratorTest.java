@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ai;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,7 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest;
  * Demonstrates how to use the AI-powered sprint analysis functionality.
  */
 @SpringBootTest
-@Disabled
 public class SprintInsightsGeneratorTest {
 
     /**

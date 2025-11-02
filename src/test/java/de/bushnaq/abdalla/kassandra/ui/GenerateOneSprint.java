@@ -32,7 +32,6 @@ import de.bushnaq.abdalla.kassandra.ui.view.*;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -70,7 +69,6 @@ import java.util.Map;
 @AutoConfigureMockMvc
 @Transactional
 @Testcontainers
-@Disabled
 public class GenerateOneSprint extends AbstractUiTestUtil {
     //    public static final  float                      EXAGGERATE_LOW    = 0.25f;
 //    public static final  float                      EXAGGERATE_NORMAL = 0.3f;

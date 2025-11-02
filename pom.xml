@@ -330,14 +330,16 @@
                     <excludes>
                         <!-- we are missing the references for these tests online, we cannot run these tests in a github action -->
                         <exclude>**/LegacyGanttTest.java</exclude>
-                        <!-- we cannot use local GPU in a github action -->
-                        <!--
-                        <exclude>**/ai/*Test.java</exclude>
-                        -->
+                        <!-- Exclude AI-related tests that require LLM/GPU or are unfinished -->
+                        <exclude>**/ai/**/Test*.java</exclude>
+                        <exclude>**/ai/**/*Test.java</exclude>
+                        <exclude>**/ai/**/*Tests.java</exclude>
+                        <exclude>**/ai/**/*TestCase.java</exclude>
+                        <!-- Exclude all video/recording UI tests that require a real desktop/browser -->
+                        <exclude>**/*Video*Test.java</exclude>
+                        <!-- Exclude specific UI-heavy tests that are flaky in CI headless env -->
+                        <!--                        <exclude>**/ui/view/TaskListViewTest.java</exclude>-->
                     </excludes>
-                    <includes>
-                        <exclude>**/ai/*Test.java</exclude>
-                    </includes>
                 </configuration>
             </plugin>
             <plugin>

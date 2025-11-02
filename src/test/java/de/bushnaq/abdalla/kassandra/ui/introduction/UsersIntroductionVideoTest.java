@@ -31,7 +31,6 @@ import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.UserListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -63,7 +62,6 @@ import java.util.List;
 @AutoConfigureMockMvc
 @Transactional
 @Testcontainers
-@Disabled
 public class UsersIntroductionVideoTest extends AbstractKeycloakUiTestUtil {
     public static final  NarratorAttribute        INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final  NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
@@ -225,57 +223,11 @@ public class UsersIntroductionVideoTest extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 
-//    // Method to get the public-facing URL, fixing potential redirect issues
-//    private static String getPublicFacingUrl(KeycloakContainer container) {
-//        return String.format("http://%s:%s",
-//                container.getHost(),
-//                container.getMappedPort(8080));
-//    }
-
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
                 new RandomCase(1, LocalDate.parse("2025-05-01"), Duration.ofDays(10), 0, 0, 0, 0, 0, 6, 8, 12, 6, 13)//
         };
         return Arrays.stream(randomCases).toList();
     }
-
-//    // Configure Spring Security to use the Keycloak container
-//    @DynamicPropertySource
-//    static void registerKeycloakProperties(DynamicPropertyRegistry registry) {
-//        // Start the container
-//        keycloak.start();
-//
-//        // Get the actual URL that's accessible from outside the container
-//        String externalUrl = getPublicFacingUrl(keycloak);
-//        System.out.println("Keycloak External URL: " + externalUrl);
-//
-//        // Log all container environment information for debugging
-//        System.out.println("Keycloak Container:");
-//        System.out.println("  Auth Server URL: " + keycloak.getAuthServerUrl());
-//        System.out.println("  Container IP: " + keycloak.getHost());
-//        System.out.println("  HTTP Port Mapping: " + keycloak.getMappedPort(8080));
-//        System.out.println("  HTTPS Port Mapping: " + keycloak.getMappedPort(8443));
-//
-//        // Override the authServerUrl with our public-facing URL
-//        String publicAuthServerUrl = externalUrl + "/";
-//
-//        // Create properties with the public URL
-//        Map<String, String> props = new HashMap<>();
-//        props.put("spring.security.oauth2.client.provider.keycloak.issuer-uri", publicAuthServerUrl + "realms/project-hub-realm");
-//        props.put("spring.security.oauth2.client.provider.keycloak.authorization-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/auth");
-//        props.put("spring.security.oauth2.client.provider.keycloak.token-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/token");
-//        props.put("spring.security.oauth2.client.provider.keycloak.user-info-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/userinfo");
-//        props.put("spring.security.oauth2.client.provider.keycloak.jwk-set-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/certs");
-//        props.put("spring.security.oauth2.client.registration.keycloak.client-id", "project-hub-client");
-//        props.put("spring.security.oauth2.client.registration.keycloak.client-secret", "test-client-secret");
-//        props.put("spring.security.oauth2.client.registration.keycloak.scope", "openid,profile,email");
-//        props.put("spring.security.oauth2.client.registration.keycloak.authorization-grant-type", "authorization_code");
-//        props.put("spring.security.oauth2.client.registration.keycloak.redirect-uri", "{baseUrl}/login/oauth2/code/{registrationId}");
-//
-//        props.put("spring.security.oauth2.resourceserver.jwt.issuer-uri", publicAuthServerUrl + "realms/project-hub-realm");
-//
-//        // Register all properties
-//        props.forEach((key, value) -> registry.add(key, () -> value));
-//    }
 
 }

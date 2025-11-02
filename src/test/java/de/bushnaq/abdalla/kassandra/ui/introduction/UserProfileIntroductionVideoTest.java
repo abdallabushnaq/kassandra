@@ -29,7 +29,6 @@ import de.bushnaq.abdalla.kassandra.ui.view.UserProfileView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -61,7 +60,6 @@ import java.util.List;
 @AutoConfigureMockMvc
 @Transactional
 @Testcontainers
-@Disabled
 public class UserProfileIntroductionVideoTest extends AbstractKeycloakUiTestUtil {
     public static final  NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final  String                   VIDEO_TITLE = "User Profile Introduction Video";
@@ -218,4 +216,3 @@ public class UserProfileIntroductionVideoTest extends AbstractKeycloakUiTestUtil
 //    }
 
 }
-

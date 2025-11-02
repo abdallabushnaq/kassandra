@@ -45,7 +45,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-@Disabled
 class FeatureAiFilterTest extends AbstractAiFilterTest<Feature> {
 
     public FeatureAiFilterTest(ObjectMapper mapper, AiFilterService aiFilterService) {
