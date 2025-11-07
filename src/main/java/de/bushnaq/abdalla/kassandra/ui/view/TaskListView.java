@@ -257,14 +257,14 @@ public class TaskListView extends Main implements AfterNavigationObserver {
         createGridColumns();
 
         // Enable row reordering with drag and drop in edit mode
-        grid.setRowsDraggable(false); // Will be enabled in edit mode
+        grid.setRowsDraggable(true); // Will be enabled in edit mode
 
         // Enable keyboard navigation in edit mode
         setupKeyboardNavigation();
 
         // Add drop listener for reordering and dependency management
         grid.addDropListener(event -> {
-            if (!isEditMode || draggedTask == null) return;
+            if (isEditMode || draggedTask == null) return;
 
             Task dropTargetTask = event.getDropTargetItem().orElse(null);
 
@@ -300,7 +300,7 @@ public class TaskListView extends Main implements AfterNavigationObserver {
         });
 
         grid.addDragStartListener(event -> {
-            if (isEditMode && !event.getDraggedItems().isEmpty()) {
+            if (!isEditMode && !event.getDraggedItems().isEmpty()) {
                 draggedTask = event.getDraggedItems().get(0);
                 grid.setDropMode(com.vaadin.flow.component.grid.dnd.GridDropMode.ON_TOP_OR_BETWEEN); // Enable drop on top or between rows
             }
@@ -313,7 +313,8 @@ public class TaskListView extends Main implements AfterNavigationObserver {
 
         // Add drop filter to prevent invalid dependency creation
         grid.setDropFilter(dropTargetTask -> {
-            if (!isEditMode || draggedTask == null || dropTargetTask == null) {
+//            logger.info("{} {} {} {}", isEditMode, draggedTask == null, dropTargetTask == null, isEligiblePredecessor(dropTargetTask, draggedTask));
+            if (isEditMode || draggedTask == null || dropTargetTask == null) {
                 return true; // Allow drop if not in edit mode or no dragged task
             }
 
