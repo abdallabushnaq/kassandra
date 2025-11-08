@@ -1,5 +1,6 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -37,6 +38,7 @@ public class TaskGrid extends Grid<Task> {
     private final       Clock             clock;
     private             Task              draggedTask;          // Track the currently dragged task
     private final       DateTimeFormatter dtfymdhm              = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
+    private             boolean           isAltKeyPressed       = false; // Track if Alt key is pressed during drop
     @Getter
     @Setter
     private             boolean           isEditMode            = false;// Edit mode state management
@@ -619,6 +621,12 @@ public class TaskGrid extends Grid<Task> {
         getDataProvider().refreshAll();
     }
 
+    private boolean isEligibleParent(Task newParent, Task task) {
+        return newParent.isStory()
+                && !task.equals(newParent)
+                && !newParent.isDescendantOf(task);
+    }
+
     /**
      * Check if a task is eligible as a predecessor for another task.
      * Uses the same eligibility logic as DependencyDialog.
@@ -678,13 +686,29 @@ public class TaskGrid extends Grid<Task> {
         // Recalculate orderIds for all tasks based on their new positions
         for (int i = 0; i < taskOrder.size(); i++) {
             Task task = taskOrder.get(i);
-            task.setOrderId((long) i);
+            task.setOrderId(i);
             markTaskAsModified(task);
         }
 
         // Refresh the grid to show new order
         getDataProvider().refreshAll();
         log.info("Task order updated. {} tasks marked as modified.", modifiedTasks.size());
+    }
+
+    private void moveToNewParent(Task task, Task newStory) {
+        // Remove from current parent if any
+        if (task.getParentTask() != null) {
+            task.getParentTask().removeChildTask(task);
+        }
+
+        // Add to new parent
+        newStory.addChildTask(task);
+        markTaskAsModified(task);
+        markTaskAsModified(newStory);
+        moveTask(task.getOrderId(), newStory.getChildTasks().getLast().getOrderId() + 1);
+        onSaveAllChangesAndRefresh.run();
+        // Refresh grid to show updated hierarchy
+//        getDataProvider().refreshAll();
     }
 
     /**
@@ -723,9 +747,37 @@ public class TaskGrid extends Grid<Task> {
         getDataProvider().refreshAll();
     }
 
+    /**
+     * Called from client-side JavaScript to set the Alt key state during drop operations
+     */
+    @ClientCallable
+    public void setAltKeyPressed(boolean altKeyPressed) {
+        this.isAltKeyPressed = altKeyPressed;
+        log.debug("Alt key state set to: {}", altKeyPressed);
+    }
+
     private void setupDragAndDrop() {
         // Enable row reordering with drag and drop in edit mode
         setRowsDraggable(true); // Will be enabled in edit mode
+
+        // Setup JavaScript to capture Alt key state during drag operations
+        getElement().executeJs(
+                """
+                        const grid = this;
+                        
+                        // Capture Alt key state during dragover
+                        grid.addEventListener('dragover', (e) => {
+                            grid._altKeyPressed = e.altKey;
+                        });
+                        
+                        // Capture Alt key state during drop
+                        grid.addEventListener('drop', (e) => {
+                            grid._altKeyPressed = e.altKey;
+                            // Send Alt key state to server
+                            grid.$server.setAltKeyPressed(e.altKey);
+                        });
+                        """
+        );
 
         // Add drop listener for reordering and dependency management
         addDropListener(event -> {
@@ -738,9 +790,19 @@ public class TaskGrid extends Grid<Task> {
                 com.vaadin.flow.component.grid.dnd.GridDropLocation dropLocation = event.getDropLocation();
 
                 if (dropLocation == com.vaadin.flow.component.grid.dnd.GridDropLocation.ON_TOP) {
-                    //TODO check if Alt key is pressed
-                    // Handle dependency creation/removal when dropping ON_TOP
-                    handleDependencyDrop(draggedTask, dropTargetTask);
+                    // Check if Alt key is pressed to modify behavior
+                    if (isAltKeyPressed) {
+                        // Handle dependency creation/removal when dropping ON_TOP
+                        handleDependencyDrop(draggedTask, dropTargetTask);
+                    } else {
+                        // handle parent change
+                        if (isEligibleParent(dropTargetTask, draggedTask)) {
+                            moveToNewParent(draggedTask, dropTargetTask);
+
+                        } else {
+                            log.info("Cannot change parent: {} is not eligible as parent for {}", dropTargetTask.getKey(), draggedTask.getKey());
+                        }
+                    }
                 } else {
                     // Handle reordering when dropping BETWEEN
                     int draggedIndex = taskOrder.indexOf(draggedTask);
@@ -762,7 +824,8 @@ public class TaskGrid extends Grid<Task> {
                 }
             }
 
-            draggedTask = null; // Clear the dragged task reference
+            draggedTask     = null; // Clear the dragged task reference
+            isAltKeyPressed = false; // Reset Alt key state
         });
 
         addDragStartListener(event -> {
@@ -773,21 +836,28 @@ public class TaskGrid extends Grid<Task> {
         });
 
         addDragEndListener(event -> {
-            draggedTask = null; // Clear reference when drag ends without drop
+            draggedTask     = null; // Clear reference when drag ends without drop
+            isAltKeyPressed = false; // Reset Alt key state
             setDropMode(null);
         });
 
         // Add drop filter to prevent invalid dependency creation
-        setDropFilter(dropTargetTask -> {
-//            logger.info("{} {} {} {}", isEditMode, draggedTask == null, dropTargetTask == null, isEligiblePredecessor(dropTargetTask, draggedTask));
-            if (isEditMode || draggedTask == null || dropTargetTask == null) {
-                return true; // Allow drop if not in edit mode or no dragged task
-            }
+        setDropFilter(
 
-            // For ON_TOP drops, check if dependency creation is valid
-            // This uses the same eligibility logic as DependencyDialog
-            return isEligiblePredecessor(dropTargetTask, draggedTask);
-        });
+                dropTargetTask -> {
+                    log.info("{} {} {} {} {}", isEditMode, draggedTask == null, dropTargetTask == null, isEligibleParent(dropTargetTask, draggedTask), isEligiblePredecessor(dropTargetTask, draggedTask));
+                    if (isEditMode || draggedTask == null || dropTargetTask == null) {
+                        return true; // Allow drop if not in edit mode or no dragged task
+                    }
+
+                    // For ON_TOP drops, check if dependency creation is valid
+                    // This uses the same eligibility logic as DependencyDialog
+                    if (isAltKeyPressed) {
+                        return isEligibleParent(dropTargetTask, draggedTask);
+                    } else {
+                        return isEligiblePredecessor(dropTargetTask, draggedTask);
+                    }
+                });
     }
 
     /**

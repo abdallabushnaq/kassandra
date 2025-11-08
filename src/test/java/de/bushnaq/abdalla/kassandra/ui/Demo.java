@@ -155,7 +155,7 @@ public class Demo extends AbstractUiTestUtil {
         productListViewTester.selectProduct("Orion");
         versionListViewTester.selectVersion("1.0.0");
         featureListViewTester.selectFeature("dashboard");
-        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + "berlin");
+        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + "tokyo");
 
         seleniumHandler.waitUntilBrowserClosed(0);
     }

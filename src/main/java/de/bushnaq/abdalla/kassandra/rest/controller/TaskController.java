@@ -67,7 +67,7 @@ public class TaskController {
     public TaskDAO save(@RequestBody TaskDAO task) {
         // Assign the next available orderId if not set or set to 0
         if (task.getOrderId() == null || task.getOrderId() == 0L) {
-            Long maxOrderId = taskRepository.findMaxOrderId();
+            Integer maxOrderId = taskRepository.findMaxOrderId();
             task.setOrderId(maxOrderId + 1);
         }
         return taskRepository.save(task);

@@ -125,7 +125,7 @@ public class Task implements Comparable<Task> {
     /**
      * The order identifier for sorting tasks. Only unique within one sprint.
      */
-    private Long orderId = 0L;
+    private Integer orderId = 0;
 
     /**
      * The original estimated person days when the task was created.
