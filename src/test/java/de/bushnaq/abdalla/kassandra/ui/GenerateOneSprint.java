@@ -250,7 +250,7 @@ public class GenerateOneSprint extends AbstractUiTestUtil {
         seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
         narrator.narrate(NORMAL, "We can now edit all valid milestone, story or task cells.").pause();
         narrator.narrate(NORMAL, "Lets give the milestone a fixed start date and time. We want our developers to start working on this Monday first thing in the morning.");
-        seleniumHandler.click(TaskGrid.TASK_GRID_NAME_PREFIX + milestoneName);
+        seleniumHandler.click(TaskListView.TASK_GRID_NAME_PREFIX + milestoneName);
 
 
         narrator.narrate(NORMAL, "If you look carefully, you will notice that all three tasks have been assigned to the story.").pause();

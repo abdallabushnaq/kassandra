@@ -436,9 +436,9 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-3");
         // select the milestone
-        seleniumHandler.click(TaskGrid.TASK_GRID_NAME_PREFIX + "New Milestone-34");
+        seleniumHandler.click(TaskListView.TASK_GRID_NAME_PREFIX + "New Milestone-34");
         // select start cell
-        seleniumHandler.click(TaskGrid.TASK_GRID_NAME_PREFIX + "New Milestone-34" + "-start-cell");
+        seleniumHandler.click(TaskListView.TASK_GRID_NAME_PREFIX + "New Milestone-34" + "-start-cell");
     }
 
     /**
