@@ -17,10 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.report.gantt;
 
-import de.bushnaq.abdalla.profiler.Profiler;
-import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.profiler.Profiler;
+import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.MpxjUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -403,6 +403,7 @@ public class GanttUtil {
     }
 
     public void levelResources(GanttErrorHandler eh, Sprint sprint, String projectRequestKey, LocalDateTime currentStartTime) {
+        long time = System.currentTimeMillis();
         try {
             long checks     = 0;
             int  iterations = 0;
@@ -605,6 +606,7 @@ public class GanttUtil {
         logger.trace("Setting start date of sprint to earliest start date: {}", sprint.getStart());
         sprint.setEnd(sprint.getLatestFinishDate());
         logger.trace("Setting end date of sprint to latest finish date: {}", sprint.getEnd());
+        logger.trace("Critical path calculated in {} ms", System.currentTimeMillis() - time);
     }
 
     private void markCriticalPath(GanttErrorHandler eh, Sprint sprint, LocalDateTime currentStartTime) throws LevelingResourcesException {
