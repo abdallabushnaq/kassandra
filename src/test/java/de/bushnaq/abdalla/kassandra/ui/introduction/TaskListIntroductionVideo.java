@@ -163,7 +163,8 @@ public class TaskListIntroductionVideo extends AbstractKeycloakUiTestUtil {
         //---------------------------------------------------------------------------------------..
         // Tasks Page
         //---------------------------------------------------------------------------------------..
-        paul.setSilent(true);
+        paul.setSilent(false);
+        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about Stories and Tasks in Kassandra. A story is basically a container for a list of Tasks. Tasks represent the work we plan including the estimation for the effort. This is essential for accurate sprint planning and capacity calculations.");
         paul.narrate(NORMAL, "This is the page where you plan your sprint including the gantt chart.").pause();
         paul.narrate(NORMAL, "Lets start by adding a milestone that will fix the starting point of our sprint.").pause();
 
@@ -171,6 +172,7 @@ public class TaskListIntroductionVideo extends AbstractKeycloakUiTestUtil {
         seleniumHandler.click(TaskListView.CREATE_MILESTONE_BUTTON_ID);
         seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_PREFIX, milestone1Name);
 
+        String graceMartin = "Grace Martin";
         {
             //first story
             paul.narrate(NORMAL, "Lets also create a story. We use stories as containers for the actual work items called tasks.");
@@ -189,30 +191,49 @@ public class TaskListIntroductionVideo extends AbstractKeycloakUiTestUtil {
             seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_PREFIX, task13Name);
 
+            paul.narrate(NORMAL, "If you look carefully, you will notice that all three tasks have been assigned to the story.").pause();
+            paul.narrate(NORMAL, "The story is the parent of these tasks.").pause();
+            paul.narrate(NORMAL, "Kassandra does that automatically. All three tasks also are automatically assigned to myself.").pause();
+
             //edit
             paul.narrate(INTENSE, "Good!").longPause();
             paul.narrate(NORMAL, "Select the edit button to change to whole table into edit mode...").pause();
             seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
 
             paul.narrate(NORMAL, "We can now edit all valid milestone, story or task cells.").pause();
-            paul.narrate(NORMAL, "Lets give the milestone a fixed start date and time. We want our developers to start working first thing Monday morning.");
+            paul.narrate(NORMAL, "Lets give the milestone a name and fixed start date and time. We want our developers to start working first thing Monday morning.");
+            paul.narrate(NORMAL, "Start is a short and descriptive name.");
             paul.pauseIfSilent(500);// for debugging purposes only, has an effect if narrator is set to silent
             seleniumHandler.waitForPageLoaded();
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + milestone1Name + TaskGrid.NAME_FIELD, "Start");
+            paul.narrate(NORMAL, "Monday morning would be 8:00.");
             final LocalDateTime startDateTime = LocalDateTime.of(2025, 5, 5, 8, 0);
             seleniumHandler.setDateTimePickerValue(TaskGrid.TASK_GRID_PREFIX + milestone1Name + TaskGrid.START_FIELD, startDateTime);
 
+            paul.narrate(NORMAL, "Our first Story is all about the api.");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + story1Name + TaskGrid.NAME_FIELD, "Config api implementation");
 
+            paul.narrate(NORMAL, "We need a api controller.");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task11Name + TaskGrid.NAME_FIELD, "create controller");
+            paul.narrate(NORMAL, "But, as i am not a developer, we will assign these tasks to a developer.");
+            paul.narrate(NORMAL, "Lets assign it to Grace.");
+            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task11Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
+            paul.narrate(NORMAL, "For every task we need to estimate minimum and maximum effort in person hours.");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task11Name + TaskGrid.MIN_ESTIMATE_FIELD, "4h");
+            paul.narrate(NORMAL, "If we do not define the maximum, Kassandra will use the minimum instead.");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task11Name + TaskGrid.MAX_ESTIMATE_FIELD, "6h");
 
+            paul.narrate(NORMAL, "Next we need to document our api.");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task12Name + TaskGrid.NAME_FIELD, "api documentation");
+            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task12Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
+            paul.narrateAsync(NORMAL, "Lets set minimum to 2 hours and maximum to 3 hours.");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task12Name + TaskGrid.MIN_ESTIMATE_FIELD, "2h");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task12Name + TaskGrid.MAX_ESTIMATE_FIELD, "3h");
 
+            paul.narrate(NORMAL, "Never forget error handling.");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task13Name + TaskGrid.NAME_FIELD, "api error handling");
+            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task13Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
+            paul.narrateAsync(NORMAL, "Lets set minimum to 5 hours and maximum to 7 hours.");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task13Name + TaskGrid.MIN_ESTIMATE_FIELD, "5h");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task13Name + TaskGrid.MAX_ESTIMATE_FIELD, "7h");
 
@@ -245,39 +266,37 @@ public class TaskListIntroductionVideo extends AbstractKeycloakUiTestUtil {
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + story2Name + TaskGrid.NAME_FIELD, "Config persistence implementation");
 
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task21Name + TaskGrid.NAME_FIELD, "create repository");
-
+            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task21Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
             paul.narrate(NORMAL, "We can also navigate to the next field by pressing the tab key.").pause();
-            seleniumHandler.sendKeys(TaskGrid.TASK_GRID_PREFIX + task21Name + TaskGrid.NAME_FIELD, "\t");
-//            paul.pauseIfSilent(500);// for debugging purposes only, has an effect if narrator is set to silent
             seleniumHandler.setMoveMouse(false);
+            seleniumHandler.showTransientTitle("Tab");
+            seleniumHandler.sendKeys(TaskGrid.TASK_GRID_PREFIX + task21Name + TaskGrid.NAME_FIELD, "\t");
+            paul.pause();
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task21Name + TaskGrid.MIN_ESTIMATE_FIELD, "4h");
+            seleniumHandler.showTransientTitle("Tab");
             seleniumHandler.sendKeys(TaskGrid.TASK_GRID_PREFIX + task21Name + TaskGrid.MIN_ESTIMATE_FIELD, "\t");
-//            paul.pauseIfSilent(500);// for debugging purposes only, has an effect if narrator is set to silent
-
+            paul.pause();
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task21Name + TaskGrid.MAX_ESTIMATE_FIELD, "6h");
             seleniumHandler.setMoveMouse(true);
 
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task22Name + TaskGrid.NAME_FIELD, "schema documentation");
+            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task22Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task22Name + TaskGrid.MIN_ESTIMATE_FIELD, "2h");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task22Name + TaskGrid.MAX_ESTIMATE_FIELD, "3h");
 
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task23Name + TaskGrid.NAME_FIELD, "persistence error handling");
+            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task23Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task23Name + TaskGrid.MIN_ESTIMATE_FIELD, "5h");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task23Name + TaskGrid.MAX_ESTIMATE_FIELD, "7h");
 
             seleniumHandler.click(TaskListView.SAVE_BUTTON_ID);
         }
 
-
-        paul.narrate(NORMAL, "If you look carefully, you will notice that all three tasks have been assigned to the story.").pause();
-        paul.narrate(NORMAL, "The story is the parent of these tasks.").pause();
-        paul.narrate(NORMAL, "Kassandra does that automatically. All three tasks also are automatically assigned to myself.").pause();
-        paul.narrate(NORMAL, "But, as i am not a developer, we will assign these tasks to a developer.").pause();
         paul.narrate(NORMAL, "We want our story to depend on our milestone. The story can only start after the milestone.").pause();
         paul.narrate(NORMAL, "Defining such a dependency between a task or story to other tasks or stories can be done in 3 different ways...");
 
 
-        seleniumHandler.waitUntilBrowserClosed(0);
+//        seleniumHandler.waitUntilBrowserClosed(0);
     }
 
     private static List<RandomCase> listRandomCases() {

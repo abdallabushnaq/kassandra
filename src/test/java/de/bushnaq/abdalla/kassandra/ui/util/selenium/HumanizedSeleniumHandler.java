@@ -163,6 +163,23 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     }
 
     /**
+     * Explicitly hide the transient title badge if currently shown.
+     */
+    public void hideTransientTitle() {
+        if (!isHumanize()) {
+            return;
+        }
+        try {
+            String script =
+                    "var el=document.getElementById('video-key-title'); if(el){ el.remove(); }";
+            executeJavaScript(script);
+            logger.debug("Transient title removed");
+        } catch (Exception e) {
+            logger.trace("Failed to remove transient title: {}", e.getMessage());
+        }
+    }
+
+    /**
      * Highlights one or more elements by their IDs for a short period of time (default 2 seconds).
      * This is a convenience method that finds the elements by ID and then highlights them.
      * <p>
@@ -427,6 +444,13 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         robotInstance.delay(20 + random.nextInt(30));
     }
 
+//    /**
+//     * Adjust per-character typing delay in milliseconds for humanized mode.
+//     */
+//    public void setTypingDelayMillis(int typingDelayMillis) {
+//        this.typingDelayMillis = Math.max(0, typingDelayMillis);
+//    }
+
     /**
      * Moves the mouse cursor smoothly to the center of the specified element.
      * This method only performs the movement if humanize is enabled and not in headless mode.
@@ -478,14 +502,6 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // Continue with normal Selenium click even if mouse movement fails
         }
     }
-
-//    /**
-//     * Adjust per-character typing delay in milliseconds for humanized mode.
-//     */
-//    public void setTypingDelayMillis(int typingDelayMillis) {
-//        this.typingDelayMillis = Math.max(0, typingDelayMillis);
-//    }
-
 
     public void setComboBoxValue(String id, String text) {
         if (!isHumanize()) {
@@ -908,6 +924,58 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         }
 
         hideOverlay();
+    }
+
+    /**
+     * Show a quick, non-animated title badge and automatically hide it after a short time.
+     * No subtitle, no fade-in/out; intended for showing pressed keys or short hints in videos.
+     *
+     * @param title         text to show inside the badge
+     * @param displayMillis how long to keep it visible before removing (milliseconds)
+     */
+    public void showTransientTitle(String title, int displayMillis) {
+        if (!isHumanize()) {
+            return;
+        }
+        try {
+            // Ensure page is ready
+            waitForPageLoaded();
+
+            String escapedTitle = escapeJavaScript(title == null ? "" : title);
+            int    duration     = Math.max(0, displayMillis);
+
+            String script =
+                    "(function(){\n" +
+                            "  var id='video-key-title';\n" +
+                            "  // Remove any existing instance to avoid stacking and timer races\n" +
+                            "  var existing=document.getElementById(id);\n" +
+                            "  if(existing){ existing.remove(); }\n" +
+                            "  // Create a small center badge\n" +
+                            "  var el=document.createElement('div');\n" +
+                            "  el.id=id;\n" +
+                            "  el.textContent='" + escapedTitle + "';\n" +
+                            "  el.style.cssText = " +
+                            "    'position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);' +\n" +
+                            "    'background:rgba(0,0,0,0.65); color:#fff; padding:8px 14px; border-radius:10px;' +\n" +
+                            "    'font-size:20px; font-weight:600; z-index:999999; pointer-events:none;' +\n" +
+                            "    'box-shadow:0 2px 8px rgba(0,0,0,0.35); font-family:\"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif;';\n" +
+                            "  document.body.appendChild(el);\n" +
+                            "  // Auto-remove after the requested duration (no fade effects)\n" +
+                            "  setTimeout(function(){ var e=document.getElementById(id); if(e){ e.remove(); } }, " + duration + ");\n" +
+                            "})();";
+
+            executeJavaScript(script);
+            logger.info("Displayed transient title: '{}' for {} ms", title, duration);
+        } catch (Exception e) {
+            logger.error("Failed to show transient title: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Convenience overload that shows the transient title for a default of 1000 ms.
+     */
+    public void showTransientTitle(String title) {
+        showTransientTitle(title, 1000);
     }
 
     /**
