@@ -49,6 +49,8 @@ public class Narrator {
     private              NarratorAttribute defaultAttributes; // default TTS attributes for this narrator
     @Getter
     private volatile     Playback          playback; // most recently scheduled playback for external access
+    @Setter
+    private              boolean           silent = false;
     @Getter
     @Setter
     private static       long              startTime;//used by VideoRecorder to sync time with audio playing (only used to log the time)
@@ -121,7 +123,7 @@ public class Narrator {
      * Sleeps the current thread for roughly half a second.
      */
     public void longPause() throws InterruptedException {
-        Thread.sleep(1000);
+        pause(1000);
     }
 
 
@@ -129,8 +131,10 @@ public class Narrator {
      * Synchronously synthesize and play using per-call attributes. Blocks until playback finishes.
      */
     public Narrator narrate(NarratorAttribute attrs, String text) throws Exception {
-        narrateAsync(attrs, text);
-        getPlayback().await();
+        if (!silent) {
+            narrateAsync(attrs, text);
+            getPlayback().await();
+        }
         return this;
     }
 
@@ -139,8 +143,10 @@ public class Narrator {
      * Blocks until playback finishes.
      */
     public Narrator narrate(String text) throws Exception {
-        narrateAsync(text);
-        getPlayback().await();
+        if (!silent) {
+            narrateAsync(text);
+            getPlayback().await();
+        }
         return this;
     }
 
@@ -149,7 +155,11 @@ public class Narrator {
      * The provided attributes are used directly without merging with defaults.
      */
     public Narrator narrateAsync(NarratorAttribute attrs, String text) throws Exception {
-        return narrateResolved(attrs, text);
+        if (!silent) {
+
+            return narrateResolved(attrs, text);
+        }
+        return this;
     }
 
     /**
@@ -157,7 +167,10 @@ public class Narrator {
      * Returns immediately with a {@link Playback} handle available via {@link #getPlayback()}.
      */
     public Narrator narrateAsync(String text) throws Exception {
-        return narrateResolved(defaultAttributes, text);
+        if (!silent) {
+            return narrateResolved(defaultAttributes, text);
+        }
+        return this;
     }
 
     /**
@@ -199,8 +212,39 @@ public class Narrator {
     /**
      * Sleeps the current thread for roughly one second.
      */
-    public void pause() throws InterruptedException {
-        Thread.sleep(500);
+    public void pause() {
+        pause(500);
+    }
+
+    /**
+     * Sleeps the current thread for the specified duration.
+     * A silenced narrator will skip the pause.
+     *
+     * @param millis duration in milliseconds
+     */
+    public void pause(long millis) {
+        if (!silent) {
+            try {
+                Thread.sleep(millis);
+            } catch (InterruptedException e) {
+                logger.trace(e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * for debugging purposes only, has an effect if narrator is set to silent
+     *
+     * @param millis duration in milliseconds
+     */
+    public void pauseIfSilent(long millis) {
+        if (silent) {
+            try {
+                Thread.sleep(millis);
+            } catch (InterruptedException e) {
+                logger.trace(e.getMessage(), e);
+            }
+        }
     }
 
     public static Narrator withChatterboxTTS(String relativeFolder) {

@@ -30,6 +30,6 @@ public interface TaskRepository extends ListCrudRepository<TaskDAO, Long> {
 
     List<TaskDAO> findBySprintIdOrderByOrderIdAsc(Long sprintId);
 
-    @Query("SELECT COALESCE(MAX(t.orderId), 0) FROM TaskDAO t")
-    Integer findMaxOrderId();
+    @Query("SELECT COALESCE(MAX(t.orderId), -1) FROM TaskDAO t where sprintId=:sprintId")
+    Integer findMaxOrderId(Long sprintId);
 }

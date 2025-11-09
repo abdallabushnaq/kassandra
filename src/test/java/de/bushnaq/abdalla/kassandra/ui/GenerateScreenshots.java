@@ -364,7 +364,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
 
 //        seleniumHandler.setWindowSize(1800, 1300);
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(TaskListView.TASK_LIST_PAGE_TITLE)));
+        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(TaskListView.TASK_LIST_PAGE_TITLE_ID)));
 
 //        sprintListViewTester.selectSprint(sprintName);
 //        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
@@ -436,9 +436,9 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-3");
         // select the milestone
-        seleniumHandler.click(TaskGrid.TASK_GRID_NAME_PREFIX + "New Milestone-34");
+        seleniumHandler.click(TaskGrid.TASK_GRID_PREFIX + "New Milestone-34");
         // select start cell
-        seleniumHandler.click(TaskGrid.TASK_GRID_NAME_PREFIX + "New Milestone-34" + "-start-cell");
+        seleniumHandler.click(TaskGrid.TASK_GRID_PREFIX + "New Milestone-34" + "-start-cell");
     }
 
     /**

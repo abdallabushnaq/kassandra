@@ -73,7 +73,7 @@ public class TaskDAO {
     @Column(nullable = false)
     private String            name;
     @Column(nullable = false)
-    private Integer           orderId           = 0;
+    private Integer           orderId           = -1;
     @Column(nullable = true)
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)

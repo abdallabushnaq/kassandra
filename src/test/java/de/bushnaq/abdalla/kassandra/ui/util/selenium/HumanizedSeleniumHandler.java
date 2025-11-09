@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Random;
@@ -49,6 +50,9 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     @Getter
     @Setter
     private static boolean humanize               = false;
+    @Setter
+    @Getter
+    private        boolean moveMouse              = true;// Enable or disable mouse movement entirely
     private final  Random  random                 = new Random(); // For human-like randomness
     private        Robot   robot                  = null; // Lazily initialized
     private final  int     typingDelayMillis      = 50;
@@ -119,6 +123,43 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         }
 
         return robot;
+    }
+
+    /**
+     * Hide the currently displayed overlay with a fade-out animation.
+     * The overlay will fade out over 1 second and then be removed from the DOM.
+     */
+    public void hideOverlay() {
+        if (!isHumanize()) {
+            return;
+        }
+        // Skip if we're in headless mode
+        if (isSeleniumHeadless()) {
+            return;
+        }
+        try {
+            String script =
+                    "var overlay = document.getElementById('video-intro-overlay');\n" +
+                            "if (overlay) {\n" +
+                            "    overlay.style.opacity = '0';\n" +
+                            "    setTimeout(function() {\n" +
+                            "        overlay.remove();\n" +
+                            "    }, 1000);\n" +
+                            "}\n";
+
+            executeJavaScript(script);
+            logger.info("Hiding overlay with fade-out animation");
+
+            // Wait for fade-out animation to complete
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.warn("Interrupted while waiting for overlay fade-out");
+            }
+        } catch (Exception e) {
+            logger.error("Failed to hide overlay: {}", e.getMessage(), e);
+        }
     }
 
     /**
@@ -395,7 +436,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      */
     protected void moveMouseToElement(WebElement element) {
         // Skip if humanize is disabled, or we're in headless mode
-        if (!isHumanize() || isSeleniumHeadless()) {
+        if (!isHumanize() || isSeleniumHeadless() || !isMoveMouse()) {
             return;
         }
 
@@ -438,13 +479,14 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         }
     }
 
-    /**
-     * Sets a combobox value in a humanized way by clicking on the dropdown toggle,
-     * waiting for the overlay to appear, and clicking on the matching item.
-     * This simulates how a real human would interact with a combobox using mouse clicks.
-     *
-     * @param text the text of the item to select
-     */
+//    /**
+//     * Adjust per-character typing delay in milliseconds for humanized mode.
+//     */
+//    public void setTypingDelayMillis(int typingDelayMillis) {
+//        this.typingDelayMillis = Math.max(0, typingDelayMillis);
+//    }
+
+
     public void setComboBoxValue(String id, String text) {
         if (!isHumanize()) {
             super.setComboBoxValue(id, text);
@@ -452,7 +494,24 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         }
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
         WebElement comboBoxElement = findElement(By.id(id));
-        WebElement inputElement    = comboBoxElement.findElement(By.tagName("input"));
+        setComboBoxValue(comboBoxElement, text);
+    }
+
+    /**
+     * Sets a combobox value in a humanized way by clicking on the dropdown toggle,
+     * waiting for the overlay to appear, and clicking on the matching item.
+     * This simulates how a real human would interact with a combobox using mouse clicks.
+     *
+     * @param text the text of the item to select
+     */
+    public void setComboBoxValue(WebElement comboBoxElement, String text) {
+//        if (!isHumanize()) {
+//            super.setComboBoxValue(id, text);
+//            return;
+//        }
+//        waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
+//        WebElement comboBoxElement = findElement(By.id(id));
+        WebElement inputElement = comboBoxElement.findElement(By.tagName("input"));
         waitForElementToBeInteractable(inputElement.getAttribute("id"));
         try {
             // Find and click the toggle button to open the dropdown
@@ -469,7 +528,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
 
                 if (toggleButton != null) {
                     moveMouseToElement(toggleButton);
-                    toggleButton.click();
+                    clickElement(toggleButton);
+//                    toggleButton.click();
                     logger.debug("Clicked combobox toggle button via shadow DOM");
                 } else {
                     // Fallback: click on the input field if toggle button not found
@@ -485,10 +545,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // Wait for the dropdown overlay to become visible
             // The overlay element exists in the DOM even when closed
             // When opened, the 'opened' attribute is set to "true" (not an empty string)
-            waitUntil(ExpectedConditions.or(
-                    ExpectedConditions.attributeToBe(By.cssSelector("vaadin-combo-box-overlay"), "opened", "true"),
-                    ExpectedConditions.attributeToBe(By.cssSelector("vaadin-combo-box-dropdown-wrapper"), "opened", "true")
-            ));
+            waitUntil(ExpectedConditions.attributeToBe(By.cssSelector("vaadin-combo-box-overlay"), "opened", "true"));
 
             // Find dropdown items
             // Items are in the light DOM as children of vaadin-combo-box-scroller
@@ -528,13 +585,6 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             setComboBoxValueByTyping(inputElement, text);
         }
     }
-
-//    /**
-//     * Adjust per-character typing delay in milliseconds for humanized mode.
-//     */
-//    public void setTypingDelayMillis(int typingDelayMillis) {
-//        this.typingDelayMillis = Math.max(0, typingDelayMillis);
-//    }
 
     /**
      * Fallback method to set combobox value by typing.
@@ -614,6 +664,150 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         logger.debug("Successfully set date: {}", date);
     }
 
+    public void setDateTimePickerValue(String datePickerId, LocalDateTime date) {
+        if (!isHumanize()) {
+            super.setDateTimePickerValue(datePickerId, date);
+            return;
+        }
+        // Find the date-time picker element
+        WebElement dateTimePickerElement = findElement(By.id(datePickerId));
+
+        {
+            // find the date picker element
+            WebElement datePickerElement = dateTimePickerElement.findElement(By.tagName("vaadin-date-picker"));
+
+            // Find the toggle button in the shadow DOM to give visual feedback
+            WebElement toggleButton = expandRootElementAndFindElement(datePickerElement, "[part='toggle-button']");
+
+            if (toggleButton != null) {
+                // Click the toggle button to show the calendar (gives visual feedback)
+                moveMouseToElement(toggleButton);
+                wait(100);
+                toggleButton.click();
+                logger.debug("Clicked date picker toggle button");
+                wait(300); // Wait for calendar to appear
+            }
+
+            // Find the input field - it's NOT in shadow DOM, it's a direct child with slot='input'
+            // The actual input has an id like "search-input-vaadin-date-picker-20"
+            WebElement inputField = dateTimePickerElement.findElement(By.cssSelector("input[slot='input']"));
+
+            logger.debug("Found input field, typing date-time");
+
+            moveMouseToElement(inputField);
+            wait(100);
+            inputField.click();// Click the input field to focus it
+            wait(100);
+            inputField.clear();// Clear any existing value
+            wait(100);
+
+            // Format the date in US format (M/d/yyyy)
+            // Note: This matches the browser's default US locale
+            String dateStr = date.toLocalDate().format(DateTimeFormatter.ofPattern("M/d/yyyy"));
+            logger.info("Typing date into date time picker: {} (formatted as US: {})", date, dateStr);
+
+            typeText(inputField, dateStr);
+
+            wait(500);
+            inputField.sendKeys(Keys.ENTER);// Press Enter to confirm the date and close the calendar
+            logger.debug("Pressed Enter to confirm date-time");
+
+            // Wait for the calendar overlay to close
+            wait(200);
+            WebElement overlay = expandRootElementAndFindElement(datePickerElement, "vaadin-date-picker-overlay");
+            waitUntil(ExpectedConditions.invisibilityOfAllElements(overlay));
+            logger.debug("Date picker overlay closed successfully");
+        }
+        {
+            // find the date picker element
+            WebElement timePickerElement = dateTimePickerElement.findElement(By.tagName("vaadin-time-picker"));
+            setTimePickerValue(timePickerElement, date.toLocalTime().format(DateTimeFormatter.ofPattern("h:mm a")));
+        }
+        logger.debug("Successfully set date-time: {}", date);
+    }
+
+    public void setTimePickerValue(WebElement comboBoxElement, String text) {
+//        if (!isHumanize()) {
+//            super.setComboBoxValue(id, text);
+//            return;
+//        }
+//        waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
+//        WebElement comboBoxElement = findElement(By.id(id));
+        WebElement inputElement = comboBoxElement.findElement(By.tagName("input"));
+        waitForElementToBeInteractable(inputElement.getAttribute("id"));
+        try {
+            // Find and click the toggle button to open the dropdown
+            // A human would just click the toggle button directly (no need to click input first)
+            // Vaadin combobox uses shadow DOM, so we use expandRootElementAndFindElement to access it
+            try {
+                // Try to find toggle button by ID first
+                WebElement toggleButton = expandRootElementAndFindElement(comboBoxElement, "#toggleButton");
+
+                if (toggleButton == null) {
+                    // Fallback: try to find by part attribute
+                    toggleButton = expandRootElementAndFindElement(comboBoxElement, "[part='toggle-button']");
+                }
+
+                if (toggleButton != null) {
+                    moveMouseToElement(toggleButton);
+                    clickElement(toggleButton);
+//                    toggleButton.click();
+                    logger.debug("Clicked time-picker toggle button via shadow DOM");
+                } else {
+                    // Fallback: click on the input field if toggle button not found
+                    logger.debug("Toggle button not found in shadow DOM, clicking input field to open dropdown");
+                    inputElement.click();
+                }
+            } catch (Exception ex) {
+                // Fallback: click on the input field if shadow DOM access fails
+                logger.debug("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
+                inputElement.click();
+            }
+
+            // Wait for the dropdown overlay to become visible
+            // The overlay element exists in the DOM even when closed
+            // When opened, the 'opened' attribute is set to "true" (not an empty string)
+            waitUntil(ExpectedConditions.attributeToBe(By.cssSelector("vaadin-time-picker-overlay"), "opened", "true"));
+
+            // Find dropdown items
+            // Items are in the light DOM as children of vaadin-combo-box-scroller
+            // We can query them directly without accessing shadow DOM
+            List<WebElement> dropdownItems = getDriver().findElements(By.cssSelector("vaadin-time-picker-item"));
+
+            logger.debug("Found {} dropdown items", dropdownItems.size());
+
+            // Find the item that matches the text
+            WebElement matchingItem = null;
+            for (WebElement item : dropdownItems) {
+                String itemText = item.getText();
+                if (itemText != null && itemText.trim().equals(text.trim())) {
+                    matchingItem = item;
+                    break;
+                }
+            }
+
+            if (matchingItem != null) {
+                // Move mouse to the item and click it
+                moveMouseToElement(matchingItem);
+                wait(100);
+                matchingItem.click();
+                logger.debug("Clicked on dropdown item: {}", text);
+            } else {
+                logger.warn("Could not find dropdown item with text: {}. Falling back to keyboard method.", text);
+                // Fallback to typing method if item not found
+                setComboBoxValueByTyping(inputElement, text);
+            }
+
+            // Wait for dropdown to close
+            wait(200);
+
+        } catch (Exception ex) {
+            logger.warn("Error during humanized time-picker selection: {}. Falling back to keyboard method.", ex.getMessage());
+            // Fallback to typing method on any error
+            setComboBoxValueByTyping(inputElement, text);
+        }
+    }
+
     /**
      * Show a full-screen overlay with title and subtitle.
      * The overlay fades in over 1 second and remains visible until hideOverlay() is called.
@@ -627,6 +821,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             return;
         }
         try {
+            logger.trace("Preparing to show overlay with title: '{}' and subtitle: '{}'", title, subtitle);
             // Wait for page to be fully loaded
             waitForPageLoaded();
 

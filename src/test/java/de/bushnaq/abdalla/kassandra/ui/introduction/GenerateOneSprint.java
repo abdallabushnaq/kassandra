@@ -15,7 +15,7 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ui;
+package de.bushnaq.abdalla.kassandra.ui.introduction;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
@@ -28,7 +28,10 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.VersionDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.*;
+import de.bushnaq.abdalla.kassandra.ui.view.FeatureListView;
+import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
+import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
+import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -192,14 +195,14 @@ public class GenerateOneSprint extends AbstractUiTestUtil {
         //---------------------------------------------------------------------------------------..
         narrator.narrate(NORMAL, "This takes us to the Features Page. Features are what we actually want to plan and track, although they are split into one or more sprints.").pause();
         narrator.narrate(NORMAL, "Every product version can have any number of features.").pause();
-        narrator.narrate(NORMAL, "Lets assume Jupiter is a server that keeps track of micro services configurations.").pause();
-        narrator.narrate(NORMAL, "So the first feature would be a rest API that supports retrieving configurations.").pause();
+        narrator.narrate(NORMAL, "Lets assume Jupiter is a cloud service.").pause();
+        narrator.narrate(NORMAL, "So the first feature would be a micro service that supports retrieving configurations.").pause();
         narrator.narrate(NORMAL, "Select the Create button...");
         //---------------------------------------------------------------------------------------..
         // Create Feature
         //---------------------------------------------------------------------------------------..
         seleniumHandler.click(FeatureListView.CREATE_FEATURE_BUTTON_ID);
-        narrator.narrate(NORMAL, "Lets call the feature 'Property request API'.");
+        narrator.narrate(NORMAL, "Lets call the feature 'Config server'.");
         seleniumHandler.setTextField(FeatureDialog.FEATURE_NAME_FIELD, featureName);
         narrator.narrateAsync(NORMAL, "Select Save to close the dialog and persist our feature.");
         seleniumHandler.click(FeatureDialog.CONFIRM_BUTTON);
@@ -229,46 +232,46 @@ public class GenerateOneSprint extends AbstractUiTestUtil {
         // Tasks Page
         //---------------------------------------------------------------------------------------..
         narrator.narrate(NORMAL, "This is the page where you plan your sprint including the gantt chart.").pause();
-        narrator.narrate(NORMAL, "Lets start by adding a milestone that will fix the starting point of our sprint.").pause();
-        narrator.narrate(NORMAL, "Select the Create Milestone button...");
-        seleniumHandler.click(TaskListView.CREATE_MILESTONE_BUTTON_ID);
-        String milestoneName = "New Milestone-1";
-        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, milestoneName);
-        narrator.narrate(NORMAL, "Lets also create a story. We use stories as containers for the actual work items called tasks.");
-        seleniumHandler.click(TaskListView.CREATE_STORY_BUTTON_ID);
-        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Story-2");
-        narrator.narrate(NORMAL, "You can see that all the new created items are always added to the end of our table.").pause();
-        narrator.narrate(NORMAL, "Lets create 3 additional tasks as work units for our first sprint.");
-        seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
-        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-3");
-        seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
-        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-4");
-        seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
-        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-5");
-        narrator.narrate(INTENSE, "Good!").longPause();
-        narrator.narrate(NORMAL, "Select the edit button to change to whole table into edit mode...").pause();
-        seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
-        narrator.narrate(NORMAL, "We can now edit all valid milestone, story or task cells.").pause();
-        narrator.narrate(NORMAL, "Lets give the milestone a fixed start date and time. We want our developers to start working on this Monday first thing in the morning.");
-        seleniumHandler.click(TaskGrid.TASK_GRID_NAME_PREFIX + milestoneName);
+//        narrator.narrate(NORMAL, "Lets start by adding a milestone that will fix the starting point of our sprint.").pause();
+//        narrator.narrate(NORMAL, "Select the Create Milestone button...");
+//        seleniumHandler.click(TaskListView.CREATE_MILESTONE_BUTTON_ID);
+//        String milestoneName = "New Milestone-1";
+//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, milestoneName);
+//        narrator.narrate(NORMAL, "Lets also create a story. We use stories as containers for the actual work items called tasks.");
+//        seleniumHandler.click(TaskListView.CREATE_STORY_BUTTON_ID);
+//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Story-2");
+//        narrator.narrate(NORMAL, "You can see that all the new created items are always added to the end of our table.").pause();
+//        narrator.narrate(NORMAL, "Lets create 3 additional tasks as work units for our first sprint.");
+//        seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
+//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-3");
+//        seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
+//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-4");
+//        seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
+//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-5");
+//        narrator.narrate(INTENSE, "Good!").longPause();
+//        narrator.narrate(NORMAL, "Select the edit button to change to whole table into edit mode...").pause();
+//        seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
+//        narrator.narrate(NORMAL, "We can now edit all valid milestone, story or task cells.").pause();
+//        narrator.narrate(NORMAL, "Lets give the milestone a fixed start date and time. We want our developers to start working on this Monday first thing in the morning.");
+//        seleniumHandler.click(TaskGrid.TASK_GRID_NAME_PREFIX + milestoneName);
+//
+//
+//        narrator.narrate(NORMAL, "If you look carefully, you will notice that all three tasks have been assigned to the story.").pause();
+//        narrator.narrate(NORMAL, "The story is the parent of these tasks.").pause();
+//        narrator.narrate(NORMAL, "Kassandra does that automatically. All three tasks also are automatically assigned to myself.").pause();
+//        narrator.narrate(NORMAL, "But, as i am not a developer, we will assign these tasks to a developer.").pause();
+//        narrator.narrate(NORMAL, "We want our story to depend on our milestone. The story can only start after the milestone.").pause();
+//        narrator.narrate(NORMAL, "Defining such a dependency between a task or story to other tasks or stories can be done in 3 different ways...");
 
 
-        narrator.narrate(NORMAL, "If you look carefully, you will notice that all three tasks have been assigned to the story.").pause();
-        narrator.narrate(NORMAL, "The story is the parent of these tasks.").pause();
-        narrator.narrate(NORMAL, "Kassandra does that automatically. All three tasks also are automatically assigned to myself.").pause();
-        narrator.narrate(NORMAL, "But, as i am not a developer, we will assign these tasks to a developer.").pause();
-        narrator.narrate(NORMAL, "We want our story to depend on our milestone. The story can only start after the milestone.").pause();
-        narrator.narrate(NORMAL, "Defining such a dependency between a task or story to other tasks or stories can be done in 3 different ways...");
-
-
-        sprintListViewTester.selectSprint(sprintName);
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.BURNDOWN_CHART);
-
-        // After visiting the SprintQualityBoard, go back to SprintListView and use the column config button
-        seleniumHandler.click("Sprints (" + sprintName + ")"); // Go back to SprintListView using breadcrumb
-        // Find and click the column configuration button
-        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
+//        sprintListViewTester.selectSprint(sprintName);
+//        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
+//        seleniumHandler.waitForElementToBeClickable(RenderUtil.BURNDOWN_CHART);
+//
+//        // After visiting the SprintQualityBoard, go back to SprintListView and use the column config button
+//        seleniumHandler.click("Sprints (" + sprintName + ")"); // Go back to SprintListView using breadcrumb
+//        // Find and click the column configuration button
+//        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
         seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
         if (false) {
 

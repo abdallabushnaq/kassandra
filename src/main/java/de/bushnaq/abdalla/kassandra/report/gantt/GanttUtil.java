@@ -590,7 +590,7 @@ public class GanttUtil {
                         throw new LevelingResourcesException(String.format("Could not level resources after %d iterations, assuming dependency loop.", iterations));
                     }
                     if (checks % sprint.getTasks().size() == 0) {
-                        System.out.print(".");
+                        System.out.println(".");
                     }
                 } while (anythingChanged);
                 anythingChanged = createResourceDependencies(sprint, anythingChanged);
@@ -632,7 +632,7 @@ public class GanttUtil {
                 throw new LevelingResourcesException(String.format("Could not mark critical path  after %d iterations, assuming dependency loop.", checks));
             }
             if (checks % sprint.getTasks().size() == 0) {
-                System.out.print(".");
+                System.out.println(".");
             }
         } while (anythingChanged);
 //        } while (anythingChanged);

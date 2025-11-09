@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -506,35 +507,6 @@ class SeleniumHandler {
         return waitDuration;
     }
 
-    /**
-     * Hide the currently displayed overlay with a fade-out animation.
-     * The overlay will fade out over 1 second and then be removed from the DOM.
-     */
-    public void hideOverlay() {
-        try {
-            String script =
-                    "var overlay = document.getElementById('video-intro-overlay');\n" +
-                            "if (overlay) {\n" +
-                            "    overlay.style.opacity = '0';\n" +
-                            "    setTimeout(function() {\n" +
-                            "        overlay.remove();\n" +
-                            "    }, 1000);\n" +
-                            "}\n";
-
-            executeJavaScript(script);
-            logger.info("Hiding overlay with fade-out animation");
-
-            // Wait for fade-out animation to complete
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                logger.warn("Interrupted while waiting for overlay fade-out");
-            }
-        } catch (Exception e) {
-            logger.error("Failed to hide overlay: {}", e.getMessage(), e);
-        }
-    }
 
     /**
      * Helper method to initialize WebDriverWait if it hasn't been initialized yet.
@@ -919,6 +891,34 @@ class SeleniumHandler {
         }
     }
 
+    public void setDateTimePickerValue(String datePickerId, LocalDateTime date) {
+        // Wait for the date picker element to be present
+        waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(datePickerId)));
+        if (date == null) {
+            String clearScript =
+                    "var datePicker = document.getElementById('" + datePickerId + "');" +
+                            "if (datePicker) {" +
+                            "  datePicker.value = '';" +
+                            "  datePicker.dispatchEvent(new CustomEvent('change', { bubbles: true }));" +
+                            "  return true;" +
+                            "}" +
+                            "return false;";
+            executeJavaScript(clearScript);
+        } else {
+            String dateStr = date.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            String dateScript =
+                    "var datePicker = document.getElementById('" + datePickerId + "');" +
+                            "if (datePicker) {" +
+                            "  datePicker.value = '" + dateStr + "';" +
+                            "  datePicker.dispatchEvent(new CustomEvent('change', { bubbles: true }));" +
+                            "  return true;" +
+                            "}" +
+                            "return false;";
+            logger.info("set DatePicker value=" + dateStr);
+            executeJavaScript(dateScript);
+        }
+    }
+
 
 //    /**
 //     * Enable or disable humanized typing mode.
@@ -1027,7 +1027,7 @@ class SeleniumHandler {
      * @param testName   Name of the test for the video file name
      */
     public void startRecording(String folderName, String testName) {
-        if (!videoRecorder.isRecording()) {
+        if (!videoRecorder.isRecording() && folderName != null && testName != null) {
             try {
                 getDriver(); // Ensure the driver is initialized and browser is open
 

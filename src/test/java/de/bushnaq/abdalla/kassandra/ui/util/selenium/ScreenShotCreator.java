@@ -48,57 +48,59 @@ public class ScreenShotCreator {
      * @param fileName       The filename where the screenshot should be saved
      */
     public static void takeElementScreenshot(WebDriver driver, WebElement overlayElement, String dialogId, String fileName) {
-        try {
-            if (overlayElement != null) {
-
-                // Take screenshot of the entire page
-                wait(1000);
-                File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-                wait(1000);
-                // Read the screenshot file into a BufferedImage
-                BufferedImage fullImg = ImageIO.read(screenshot);
-
-                // Get the location and size of the element
-                org.openqa.selenium.Point     location = overlayElement.getLocation();
-                org.openqa.selenium.Dimension size     = overlayElement.getSize();
-
-                logger.info("Taking screenshot of dialog overlay: {} at x: {}, y: {}, width: {}, height: {}", dialogId, location.x, location.y, size.getWidth(), size.getHeight());
-                // Make sure width and height are positive
-                if (size.getWidth() <= 0 || size.getHeight() <= 0) {
-                    logger.warn("Dialog overlay has invalid dimensions: {}x{}", size.getWidth(), size.getHeight());
-                    // Fallback to taking a full screenshot
-                    takeScreenShot(driver, fileName);
-                    return;
-                }
-                // Crop the image to only include the dialog
-                BufferedImage elementImg = fullImg.getSubimage(
-                        location.getX(),
-                        location.getY(),
-                        size.getWidth(),
-                        size.getHeight()
-                );
-
-                // Ensure the directory exists
-                File file = new File(fileName);
-                File dir  = file.getParentFile();
-                if (dir != null && !dir.exists()) {
-                    dir.mkdirs();
-                }
-
-                // Save the cropped image
-                ImageIO.write(elementImg, "png", file);
-                logger.info("Dialog screenshot saved to: {}", fileName);
-            } else {
-                logger.warn("Could not find overlay element for dialog: {}", dialogId);
-                takeScreenShot(driver, fileName);
-            }
-        } catch (Exception e) {
-            logger.error("Failed to capture dialog screenshot", e);
-            // Fallback to taking a full screenshot
+        if (fileName != null) {
             try {
-                takeScreenShot(driver, fileName);
-            } catch (Exception ex) {
-                logger.error("Failed to take fallback screenshot", ex);
+                if (overlayElement != null) {
+
+                    // Take screenshot of the entire page
+                    wait(1000);
+                    File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+                    wait(1000);
+                    // Read the screenshot file into a BufferedImage
+                    BufferedImage fullImg = ImageIO.read(screenshot);
+
+                    // Get the location and size of the element
+                    org.openqa.selenium.Point     location = overlayElement.getLocation();
+                    org.openqa.selenium.Dimension size     = overlayElement.getSize();
+
+                    logger.info("Taking screenshot of dialog overlay: {} at x: {}, y: {}, width: {}, height: {}", dialogId, location.x, location.y, size.getWidth(), size.getHeight());
+                    // Make sure width and height are positive
+                    if (size.getWidth() <= 0 || size.getHeight() <= 0) {
+                        logger.warn("Dialog overlay has invalid dimensions: {}x{}", size.getWidth(), size.getHeight());
+                        // Fallback to taking a full screenshot
+                        takeScreenShot(driver, fileName);
+                        return;
+                    }
+                    // Crop the image to only include the dialog
+                    BufferedImage elementImg = fullImg.getSubimage(
+                            location.getX(),
+                            location.getY(),
+                            size.getWidth(),
+                            size.getHeight()
+                    );
+
+                    // Ensure the directory exists
+                    File file = new File(fileName);
+                    File dir  = file.getParentFile();
+                    if (dir != null && !dir.exists()) {
+                        dir.mkdirs();
+                    }
+
+                    // Save the cropped image
+                    ImageIO.write(elementImg, "png", file);
+                    logger.info("Dialog screenshot saved to: {}", fileName);
+                } else {
+                    logger.warn("Could not find overlay element for dialog: {}", dialogId);
+                    takeScreenShot(driver, fileName);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to capture dialog screenshot", e);
+                // Fallback to taking a full screenshot
+                try {
+                    takeScreenShot(driver, fileName);
+                } catch (Exception ex) {
+                    logger.error("Failed to take fallback screenshot", ex);
+                }
             }
         }
     }

@@ -123,9 +123,9 @@ public class Task implements Comparable<Task> {
     private String notes;
 
     /**
-     * The order identifier for sorting tasks. Only unique within one sprint.
+     * Zeero based order identifier for sorting tasks. Only unique within one sprint.
      */
-    private Integer orderId = 0;
+    private Integer orderId = -1;
 
     /**
      * The original estimated person days when the task was created.

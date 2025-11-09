@@ -69,7 +69,7 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     public static final String            CREATE_TASK_BUTTON_ID      = "create-task-button";
     public static final String            EDIT_BUTTON_ID             = "edit-tasks-button";
     public static final String            SAVE_BUTTON_ID             = "save-tasks-button";
-    public static final String            TASK_LIST_PAGE_TITLE       = "task-list-page-title";
+    public static final String            TASK_LIST_PAGE_TITLE_ID    = "task-list-page-title";
     private             Button            cancelButton;
     private final       Clock             clock;
     @Autowired
@@ -234,7 +234,7 @@ public class TaskListView extends Main implements AfterNavigationObserver {
         icon.getStyle().set("margin-right", "var(--lumo-space-s)");
 
         com.vaadin.flow.component.html.H2 title = new com.vaadin.flow.component.html.H2("Tasks");
-        title.setId(TASK_LIST_PAGE_TITLE);
+        title.setId(TASK_LIST_PAGE_TITLE_ID);
         title.getStyle()
                 .set("margin", "0")
                 .set("font-size", "var(--lumo-font-size-xl)")
@@ -327,7 +327,7 @@ public class TaskListView extends Main implements AfterNavigationObserver {
      * Enter edit mode - enable editing for all rows
      */
     private void enterEditMode() {
-        grid.setEditMode(false);
+        grid.setEditMode(true);
         grid.getModifiedTasks().clear();
 
         // Update button visibility

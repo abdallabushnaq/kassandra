@@ -33,24 +33,30 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class TaskGrid extends Grid<Task> {
-    public static final String            TASK_GRID_NAME_PREFIX = "task-grid-name-";
-    private final       List<User>        allUsers              = new ArrayList<>();
+    public static final String            ASSIGNED_FIELD     = "-assigned-field";
+    public static final String            MAX_ESTIMATE_FIELD = "-max-estimate-field";
+    public static final String            MIN_ESTIMATE_FIELD = "-min-estimate-field";
+    public static final String            NAME_FIELD         = "-name-field";
+    public static final String            START_FIELD        = "-start-field";
+    public static final String            TASK_GRID_PREFIX   = "task-grid-";
+    private final       List<User>        allUsers           = new ArrayList<>();
     private final       Clock             clock;
+    private             String            dragMode;
     private             Task              draggedTask;          // Track the currently dragged task
-    private final       DateTimeFormatter dtfymdhm              = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
-    private             boolean           isAltKeyPressed       = false; // Track if Alt key is pressed during drop
+    private final       DateTimeFormatter dtfymdhm           = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
+    private             boolean           isAltKeyPressed    = false; // Track if Alt key is pressed during drop
     @Getter
     @Setter
-    private             boolean           isEditMode            = false;// Edit mode state management
+    private             boolean           isEditMode         = false;// Edit mode state management
     private final       Locale            locale;
     @Getter
-    private final       Set<Task>         modifiedTasks         = new HashSet<>();
+    private final       Set<Task>         modifiedTasks      = new HashSet<>();
     @Setter
     private             Consumer<Task>    onPersistTask;
     @Setter
     private             Runnable          onSaveAllChangesAndRefresh;
     private             Sprint            sprint;
-    private             List<Task>        taskOrder             = new ArrayList<>(); // Track current order in memory
+    private             List<Task>        taskOrder          = new ArrayList<>(); // Track current order in memory
 
 
     public TaskGrid(Clock clock, Locale locale) {
@@ -298,6 +304,7 @@ public class TaskGrid extends Grid<Task> {
                 // Add name field or text
                 if (isEditMode) {
                     TextField nameField = new TextField();
+                    nameField.setId(TASK_GRID_PREFIX + task.getName() + NAME_FIELD);
                     nameField.setValue(task.getName() != null ? task.getName() : "");
                     nameField.setWidthFull();
 
@@ -312,7 +319,7 @@ public class TaskGrid extends Grid<Task> {
                 } else {
                     Div div = new Div();
                     div.setText(task.getName() != null ? task.getName() : "");
-                    div.setId(TASK_GRID_NAME_PREFIX + task.getName());
+                    div.setId(TASK_GRID_PREFIX + task.getName());
                     container.add(div);
                     container.setFlexGrow(1, div);
                 }
@@ -329,7 +336,7 @@ public class TaskGrid extends Grid<Task> {
                     DateTimePicker startField = new DateTimePicker();
                     startField.setValue(task.getStart() != null ? task.getStart() : LocalDateTime.now());
                     startField.setWidthFull();
-                    startField.setId(TASK_GRID_NAME_PREFIX + task.getName() + "-start-field");
+                    startField.setId(TASK_GRID_PREFIX + task.getName() + START_FIELD);
 
                     startField.addValueChangeListener(e -> {
                         if (e.isFromClient()) {
@@ -369,6 +376,7 @@ public class TaskGrid extends Grid<Task> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     ComboBox<User> userComboBox = new ComboBox<>();
+                    userComboBox.setId(TASK_GRID_PREFIX + task.getName() + ASSIGNED_FIELD);
                     userComboBox.setAllowCustomValue(false);
                     userComboBox.setClearButtonVisible(true);
                     userComboBox.setWidthFull();
@@ -417,6 +425,7 @@ public class TaskGrid extends Grid<Task> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     TextField estimateField = new TextField();
+                    estimateField.setId(TASK_GRID_PREFIX + task.getName() + MIN_ESTIMATE_FIELD);
                     estimateField.setValue(!task.getMinEstimate().equals(Duration.ZERO) ?
                             DateUtil.createWorkDayDurationString(task.getMinEstimate()) : "");
                     estimateField.setWidthFull();
@@ -454,6 +463,7 @@ public class TaskGrid extends Grid<Task> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     TextField estimateField = new TextField();
+                    estimateField.setId(TASK_GRID_PREFIX + task.getName() + MAX_ESTIMATE_FIELD);
                     estimateField.setValue(!task.getMaxEstimate().equals(Duration.ZERO) ?
                             DateUtil.createWorkDayDurationString(task.getMaxEstimate()) : "");
                     estimateField.setWidthFull();
@@ -618,12 +628,24 @@ public class TaskGrid extends Grid<Task> {
         markTaskAsModified(previousStory);
 
         // Refresh grid to show updated hierarchy
-        getDataProvider().refreshAll();
+//        getDataProvider().refreshAll();
+    }
+
+    private boolean isEligibleMoveTarget(Task dropTargetTask, Task draggedTask) {
+        if (draggedTask.isTask()) {
+            return dropTargetTask.isTask();
+        } else if (draggedTask.isMilestone()) {
+            return dropTargetTask.isStory();
+        } else if (draggedTask.isStory()) {
+            return dropTargetTask.isStory();
+        }
+        return false;
     }
 
     private boolean isEligibleParent(Task newParent, Task task) {
         return newParent.isStory()
                 && !task.equals(newParent)
+                && !task.getParentTask().equals(newParent)
                 && !newParent.isDescendantOf(task);
     }
 
@@ -658,6 +680,32 @@ public class TaskGrid extends Grid<Task> {
         return isEligible;
     }
 
+//    /**
+//     * Move a task to a new position and recalculate all orderIds
+//     */
+//    private void moveTask(int fromIndex, int toIndex) {
+//        if (fromIndex == toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= taskOrder.size() || toIndex >= taskOrder.size()) {
+//            log.info("Cannot move task from index {} to {}", fromIndex, toIndex);
+//            return;
+//        }
+//
+//        log.info("Moving task from index {} to {}", fromIndex, toIndex);
+//
+//        // Remove task from old position
+//        Task movedTask = taskOrder.remove(fromIndex);
+//
+//        // Insert at new position
+//        taskOrder.add(toIndex, movedTask);
+//
+//        // Recalculate orderIds for all tasks based on their new positions
+//        for (int i = 0; i < taskOrder.size(); i++) {
+//            Task task = taskOrder.get(i);
+//            task.setOrderId(i);
+//            markTaskAsModified(task);
+//        }
+//
+//        // Refresh the grid to show new order
+
     /**
      * Mark a task as modified
      */
@@ -666,32 +714,49 @@ public class TaskGrid extends Grid<Task> {
         log.debug("Task {} marked as modified. Total modified: {}", task.getKey(), modifiedTasks.size());
     }
 
-    /**
-     * Move a task to a new position and recalculate all orderIds
-     */
-    private void moveTask(int fromIndex, int toIndex) {
-        if (fromIndex == toIndex || fromIndex < 0 || toIndex < 0 ||
-                fromIndex >= taskOrder.size() || toIndex >= taskOrder.size()) {
-            return;
-        }
-
-        log.info("Moving task from index {} to {}", fromIndex, toIndex);
+    /// /        getDataProvider().refreshAll();
+    /// /        onSaveAllChangesAndRefresh.run();
+//        log.info("Task order updated. {} tasks marked as modified.", modifiedTasks.size());
+//    }
+    private void moveTaskAfter(Task task, Task after) {
+        log.info("Moving task from index {} to after {}", task.getOrderId(), after.getOrderId());
 
         // Remove task from old position
-        Task movedTask = taskOrder.remove(fromIndex);
+        taskOrder.remove(task);
 
         // Insert at new position
-        taskOrder.add(toIndex, movedTask);
+        int targetIndex = taskOrder.indexOf(after);
+        taskOrder.add(targetIndex + 1, task);
 
         // Recalculate orderIds for all tasks based on their new positions
+        //TODO optimize - only update affected tasks
         for (int i = 0; i < taskOrder.size(); i++) {
-            Task task = taskOrder.get(i);
-            task.setOrderId(i);
-            markTaskAsModified(task);
+            Task t = taskOrder.get(i);
+            t.setOrderId(i);
+            markTaskAsModified(t);
         }
 
-        // Refresh the grid to show new order
-        getDataProvider().refreshAll();
+        log.info("Task order updated. {} tasks marked as modified.", modifiedTasks.size());
+    }
+
+    private void moveTaskBefore(Task task, Task before) {
+        log.info("Moving task from index {} to before {}", task.getOrderId(), before.getOrderId());
+
+        // Remove task from old position
+        taskOrder.remove(task);
+
+        // Insert at new position
+        int targetIndex = taskOrder.indexOf(before);
+        taskOrder.add(targetIndex, task);
+
+        // Recalculate orderIds for all tasks based on their new positions
+        //TODO optimize - only update affected tasks
+        for (int i = 0; i < taskOrder.size(); i++) {
+            Task t = taskOrder.get(i);
+            t.setOrderId(i);
+            markTaskAsModified(t);
+        }
+
         log.info("Task order updated. {} tasks marked as modified.", modifiedTasks.size());
     }
 
@@ -701,12 +766,16 @@ public class TaskGrid extends Grid<Task> {
             task.getParentTask().removeChildTask(task);
         }
 
+        //what is the orderId of the last child of the new parent?
+        Task lastChild = newStory.getChildTasks().getLast();
+        if (lastChild == null)
+            lastChild = newStory;
         // Add to new parent
         newStory.addChildTask(task);
         markTaskAsModified(task);
         markTaskAsModified(newStory);
-        moveTask(task.getOrderId(), newStory.getChildTasks().getLast().getOrderId() + 1);
-        onSaveAllChangesAndRefresh.run();
+        moveTaskAfter(task, lastChild);//zero based index
+//        onSaveAllChangesAndRefresh.run();
         // Refresh grid to show updated hierarchy
 //        getDataProvider().refreshAll();
     }
@@ -744,7 +813,7 @@ public class TaskGrid extends Grid<Task> {
         markTaskAsModified(oldParent);
 
         // Refresh grid to show updated hierarchy
-        getDataProvider().refreshAll();
+//        getDataProvider().refreshAll();
     }
 
     /**
@@ -779,85 +848,168 @@ public class TaskGrid extends Grid<Task> {
                         """
         );
 
+        setDragFilter(dragSourceTask ->
+                {
+                    log.trace("DragFilter {}", isEditMode);
+                    if (isEditMode) return false;
+
+                    if (isAltKeyPressed) {
+                        // dependency drag mode
+                        //allow dragging stories and tasks
+                        return dragSourceTask != null && (dragSourceTask.isTask() || dragSourceTask.isStory()) && !isEditMode;
+                    } else {
+                        // reorder drag mode
+                        //allow dragging only tasks
+//                            log.info("DragFilter {} {} {}", dragSourceTask != null, dragSourceTask != null && dragSourceTask.isTask(), !isEditMode);
+                        return true;
+                    }
+                }
+        );
+
+        addDragStartListener(event -> {
+            log.trace("DragStartListener {} {}", event.getDraggedItems().isEmpty(), isAltKeyPressed);
+            if (isEditMode || event.getDraggedItems().isEmpty()) return;
+
+            draggedTask = event.getDraggedItems().getFirst();
+            if (isAltKeyPressed) {
+                log.info("starting dependency drag mode");
+                dragMode = "dependency";
+                setDropMode(com.vaadin.flow.component.grid.dnd.GridDropMode.ON_TOP); // Enable dependency drop on top mode
+            } else {
+                log.info("starting reorder drag mode");
+                dragMode = "reorder";
+                setDropMode(com.vaadin.flow.component.grid.dnd.GridDropMode.BETWEEN); // Enable reorder drop between mode
+            }
+        });
+
+        // Add drop filter to prevent invalid dependency creation
+        setDropFilter(dropTargetTask -> {
+            log.trace("DropFilter {} {}", draggedTask == null, dragMode);
+            if (isEditMode || draggedTask == null || dragMode == null) return false;
+            switch (dragMode) {
+                case "dependency":
+                    return isEligiblePredecessor(dropTargetTask, draggedTask);
+                case "reorder": {
+                    return isEligibleMoveTarget(dropTargetTask, draggedTask);
+                }
+            }
+//            log.info("DropFilter {} {} {} {} {}", isEditMode, draggedTask == null, dropTargetTask == null, isEligibleParent(dropTargetTask, draggedTask), isEligiblePredecessor(dropTargetTask, draggedTask));
+//            if (isEditMode || draggedTask == null || dropTargetTask == null) {
+//                return true; // Allow drop if not in edit mode or no dragged task
+//            }
+            return false;
+
+        });
+
         // Add drop listener for reordering and dependency management
         addDropListener(event -> {
-            if (isEditMode || draggedTask == null) return;
+            if (isEditMode || draggedTask == null || dragMode == null) return;
 
             Task dropTargetTask = event.getDropTargetItem().orElse(null);
 
             if (dropTargetTask != null && !draggedTask.equals(dropTargetTask)) {
-                // Check drop location to determine action
-                com.vaadin.flow.component.grid.dnd.GridDropLocation dropLocation = event.getDropLocation();
 
-                if (dropLocation == com.vaadin.flow.component.grid.dnd.GridDropLocation.ON_TOP) {
-                    // Check if Alt key is pressed to modify behavior
-                    if (isAltKeyPressed) {
-                        // Handle dependency creation/removal when dropping ON_TOP
-                        handleDependencyDrop(draggedTask, dropTargetTask);
-                    } else {
-                        // handle parent change
-                        if (isEligibleParent(dropTargetTask, draggedTask)) {
-                            moveToNewParent(draggedTask, dropTargetTask);
-
+                switch (dragMode) {
+                    case "dependency": {
+                        log.info("dropped {} on {}", draggedTask.getKey(), dropTargetTask.getKey());
+                        // Check if Alt key is pressed to modify behavior
+                        if (isAltKeyPressed) {
+                            // Handle dependency creation/removal when dropping ON_TOP
+                            handleDependencyDrop(draggedTask, dropTargetTask);
                         } else {
-                            log.info("Cannot change parent: {} is not eligible as parent for {}", dropTargetTask.getKey(), draggedTask.getKey());
+                            // handle parent change
+                            if (isEligibleParent(dropTargetTask, draggedTask)) {
+                                moveToNewParent(draggedTask, dropTargetTask);
+                            } else {
+                                log.info("Cannot change parent: {} is not eligible as parent for {}", dropTargetTask.getKey(), draggedTask.getKey());
+                            }
                         }
                     }
-                } else {
-                    // Handle reordering when dropping BETWEEN
-                    int draggedIndex = taskOrder.indexOf(draggedTask);
-                    int targetIndex  = taskOrder.indexOf(dropTargetTask);
+                    case "reorder": {
+                        if (draggedTask.isTask()) {
+                            log.info("dropped {} before {}", draggedTask.getKey(), dropTargetTask.getKey());
+                            // Handle reordering when dropping BETWEEN
+                            int draggedIndex = taskOrder.indexOf(draggedTask);
+                            int targetIndex  = taskOrder.indexOf(dropTargetTask);
 
-                    if (draggedIndex >= 0 && targetIndex >= 0) {
-                        // Remove from old parent before moving
-                        if (draggedTask.getParentTask() != null) {
-                            Task oldParent = draggedTask.getParentTask();
-                            oldParent.removeChildTask(draggedTask);
-                            markTaskAsModified(oldParent);
+                            if (draggedIndex >= 0 && targetIndex >= 0) {
+                                // Remove from old parent before moving
+                                if (draggedTask.getParentTask() != null) {
+                                    Task oldParent = draggedTask.getParentTask();
+                                    oldParent.removeChildTask(draggedTask);
+                                    markTaskAsModified(oldParent);//TODO not needed?
+                                }
+                                moveTaskBefore(draggedTask, dropTargetTask);
+                                // Try to re-parent the task based on its new position
+                                indentTask(draggedTask);
+                                onSaveAllChangesAndRefresh.run();
+                            }
+                        } else if (draggedTask.isMilestone()) {
+                            log.info("dropped {} before {}", draggedTask.getKey(), dropTargetTask.getKey());
+                            // Handle reordering when dropping BETWEEN
+                            int draggedIndex = taskOrder.indexOf(draggedTask);
+                            int targetIndex  = taskOrder.indexOf(dropTargetTask);
+
+                            if (draggedIndex >= 0 && targetIndex >= 0) {
+                                // Remove from old parent before moving
+                                if (draggedTask.getParentTask() != null) {
+                                    Task oldParent = draggedTask.getParentTask();
+                                    oldParent.removeChildTask(draggedTask);
+                                    markTaskAsModified(oldParent);//TODO not needed?
+                                }
+                                moveTaskBefore(draggedTask, dropTargetTask);
+                                // Try to re-parent the task based on its new position
+//                                indentTask(draggedTask);
+                                onSaveAllChangesAndRefresh.run();
+                            }
+                        } else if (draggedTask.isStory()) {
+                            log.info("dropped {} before {}", draggedTask.getKey(), dropTargetTask.getKey());
+                            // Handle reordering when dropping BETWEEN
+                            int draggedIndex = taskOrder.indexOf(draggedTask);
+                            int targetIndex  = taskOrder.indexOf(dropTargetTask);
+
+                            if (draggedIndex >= 0 && targetIndex >= 0) {
+                                // Remove from old parent before moving
+
+                                moveTaskBefore(draggedTask, dropTargetTask);
+                                //move all children along with the story
+                                Task lastChild = null;
+                                for (Task child : new LinkedList<>(draggedTask.getChildTasks())) {
+                                    if (lastChild == null)
+                                        moveTaskAfter(child, draggedTask);
+                                    else
+                                        moveTaskAfter(child, lastChild);
+                                    lastChild = child;
+                                }
+                                // Try to re-parent the task based on its new position
+//                                indentTask(draggedTask);
+                                onSaveAllChangesAndRefresh.run();
+                            }
                         }
-
-                        moveTask(draggedIndex, targetIndex);
-
-                        // Try to re-parent the task based on its new position
-                        indentTask(draggedTask);
                     }
                 }
+
+//                // Check drop location to determine action
+//                GridDropLocation dropLocation = event.getDropLocation();
+//
+//                if (dropLocation == GridDropLocation.ON_TOP) {
+//                } else {
+//                    //BETWEEN
+//                }
             }
 
             draggedTask     = null; // Clear the dragged task reference
             isAltKeyPressed = false; // Reset Alt key state
-        });
-
-        addDragStartListener(event -> {
-            if (!isEditMode && !event.getDraggedItems().isEmpty()) {
-                draggedTask = event.getDraggedItems().get(0);
-                setDropMode(com.vaadin.flow.component.grid.dnd.GridDropMode.ON_TOP_OR_BETWEEN); // Enable drop on top or between rows
-            }
+            dragMode        = null;
         });
 
         addDragEndListener(event -> {
             draggedTask     = null; // Clear reference when drag ends without drop
             isAltKeyPressed = false; // Reset Alt key state
             setDropMode(null);
+            dragMode = null;
         });
 
-        // Add drop filter to prevent invalid dependency creation
-        setDropFilter(
-
-                dropTargetTask -> {
-                    log.info("{} {} {} {} {}", isEditMode, draggedTask == null, dropTargetTask == null, isEligibleParent(dropTargetTask, draggedTask), isEligiblePredecessor(dropTargetTask, draggedTask));
-                    if (isEditMode || draggedTask == null || dropTargetTask == null) {
-                        return true; // Allow drop if not in edit mode or no dragged task
-                    }
-
-                    // For ON_TOP drops, check if dependency creation is valid
-                    // This uses the same eligibility logic as DependencyDialog
-                    if (isAltKeyPressed) {
-                        return isEligibleParent(dropTargetTask, draggedTask);
-                    } else {
-                        return isEligiblePredecessor(dropTargetTask, draggedTask);
-                    }
-                });
     }
 
     /**
