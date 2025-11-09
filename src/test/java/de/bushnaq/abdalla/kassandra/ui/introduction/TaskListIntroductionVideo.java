@@ -131,7 +131,8 @@ public class TaskListIntroductionVideo extends AbstractKeycloakUiTestUtil {
         Feature feature = addFeature(version, featureName);
         Sprint  sprint  = addSprint(feature, sprintName);
 
-        Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
+        Narrator paul  = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
+        Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
 
@@ -206,7 +207,7 @@ public class TaskListIntroductionVideo extends AbstractKeycloakUiTestUtil {
             paul.pauseIfSilent(500);// for debugging purposes only, has an effect if narrator is set to silent
             seleniumHandler.waitForPageLoaded();
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + milestone1Name + TaskGrid.NAME_FIELD, "Start");
-            paul.narrate(NORMAL, "Monday morning would be 8:00.");
+            paul.narrate(NORMAL, "Monday morning would be 8 AM.");
             final LocalDateTime startDateTime = LocalDateTime.of(2025, 5, 5, 8, 0);
             seleniumHandler.setDateTimePickerValue(TaskGrid.TASK_GRID_PREFIX + milestone1Name + TaskGrid.START_FIELD, startDateTime);
 
@@ -223,7 +224,7 @@ public class TaskListIntroductionVideo extends AbstractKeycloakUiTestUtil {
             paul.narrate(NORMAL, "If we do not define the maximum, Kassandra will use the minimum instead.");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task11Name + TaskGrid.MAX_ESTIMATE_FIELD, "6h");
 
-            paul.narrate(NORMAL, "Next we need to document our api.");
+            paul.narrate(NORMAL, "Next we need to document our API.");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task12Name + TaskGrid.NAME_FIELD, "api documentation");
             seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task12Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
             paul.narrateAsync(NORMAL, "Lets set minimum to 2 hours and maximum to 3 hours.");
@@ -242,13 +243,10 @@ public class TaskListIntroductionVideo extends AbstractKeycloakUiTestUtil {
 
         {
             // second story
-            paul.narrate(NORMAL, "Lets also create a story. We use stories as containers for the actual work items called tasks.");
+            paul.narrate(NORMAL, "Lets create another story.");
             seleniumHandler.click(TaskListView.CREATE_STORY_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_PREFIX, story2Name);
 
-            paul.narrate(NORMAL, "You can see that all the new created items are always added to the end of our table.").pause();
-
-            paul.narrate(NORMAL, "Lets create 3 additional tasks as work units for our first sprint.");
             seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_PREFIX, task21Name);
 
@@ -257,6 +255,8 @@ public class TaskListIntroductionVideo extends AbstractKeycloakUiTestUtil {
 
             seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_PREFIX, task23Name);
+            paul.narrate(NORMAL, "Have you noticed that the new tasks have been assigned to Grace automatically?").pause();
+            paul.narrate(NORMAL, "Kassandra uses the assigned user of a previous task. In case there is no previous task, it will use the logged in user.").pause();
 
             //edit
             seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
@@ -266,7 +266,7 @@ public class TaskListIntroductionVideo extends AbstractKeycloakUiTestUtil {
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + story2Name + TaskGrid.NAME_FIELD, "Config persistence implementation");
 
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task21Name + TaskGrid.NAME_FIELD, "create repository");
-            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task21Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
+//            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task21Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
             paul.narrate(NORMAL, "We can also navigate to the next field by pressing the tab key.").pause();
             seleniumHandler.setMoveMouse(false);
             seleniumHandler.showTransientTitle("Tab");
@@ -280,12 +280,12 @@ public class TaskListIntroductionVideo extends AbstractKeycloakUiTestUtil {
             seleniumHandler.setMoveMouse(true);
 
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task22Name + TaskGrid.NAME_FIELD, "schema documentation");
-            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task22Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
+//            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task22Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task22Name + TaskGrid.MIN_ESTIMATE_FIELD, "2h");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task22Name + TaskGrid.MAX_ESTIMATE_FIELD, "3h");
 
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task23Name + TaskGrid.NAME_FIELD, "persistence error handling");
-            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task23Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
+//            seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_PREFIX + task23Name + TaskGrid.ASSIGNED_FIELD, graceMartin);
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task23Name + TaskGrid.MIN_ESTIMATE_FIELD, "5h");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + task23Name + TaskGrid.MAX_ESTIMATE_FIELD, "7h");
 
