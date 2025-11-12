@@ -96,6 +96,9 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         }
     }
 
+    public void dragAndDrop(String sourceId, String targetId) {
+    }
+
     /**
      * Gets or initializes the Robot instance for mouse movement.
      * Returns null if Robot cannot be initialized (e.g., in headless mode or due to security restrictions).
