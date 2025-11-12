@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ai.narrator;
 
+import de.bushnaq.abdalla.kassandra.ai.SyncResult;
+import de.bushnaq.abdalla.kassandra.ai.TtsEngine;
 import de.bushnaq.abdalla.kassandra.ai.chatterbox.ChatterboxTTS;
 import de.bushnaq.abdalla.kassandra.ai.indextts.IndexTTS;
 import lombok.Getter;
@@ -43,7 +45,7 @@ public class Narrator {
 
     private static final Logger            logger = LoggerFactory.getLogger(Narrator.class);
     private final        AudioPlayer       audioPlayer;  // playback queue/handles
-    private final        TtsCacheManager   cacheManager; // chronological file coordinator
+    private static       TtsCacheManager   cacheManager; // chronological file coordinator
     @Getter
     @Setter
     private              NarratorAttribute defaultAttributes; // default TTS attributes for this narrator
@@ -55,14 +57,22 @@ public class Narrator {
     @Setter
     private static       long              startTime;//used by VideoRecorder to sync time with audio playing (only used to log the time)
     private final        TtsEngine         ttsEngine;    // synthesis strategy
+    @Getter
+    private final        String            voiceReference; // narrator-level voice; may be null
 
     /**
      * Creates a Narrator storing audio under {@code relativeFolder} and using the default TTS engine.
      */
-    public Narrator(String relativeFolder) {
-        this(relativeFolder, chatterboxTtsEngine());
+    public Narrator(String relativeFolder) throws Exception {
+        this(relativeFolder, chatterboxTtsEngine(), null);
     }
 
+    /**
+     * Creates a Narrator storing audio under {@code relativeFolder} and using the default TTS engine and a provided voice.
+     */
+    public Narrator(String relativeFolder, String voiceReference) throws Exception {
+        this(relativeFolder, chatterboxTtsEngine(), voiceReference);
+    }
 
     /**
      * Creates a Narrator storing audio under {@code relativeFolder} and using a provided {@link TtsEngine}.
@@ -71,61 +81,101 @@ public class Narrator {
      * @param engine         TTS engine implementation used to synthesize audio
      */
     public Narrator(String relativeFolder, TtsEngine engine) {
+        this(relativeFolder, engine, null);
+    }
+
+    /**
+     * Creates a Narrator storing audio under {@code relativeFolder}, using a provided {@link TtsEngine} and an optional voice.
+     *
+     * @param relativeFolder output directory for chronological WAV files
+     * @param engine         TTS engine implementation used to synthesize audio
+     * @param voiceReference optional voice reference to be applied for synthesis (may be null)
+     */
+    public Narrator(String relativeFolder, TtsEngine engine, String voiceReference) {
         Path audioDir = Path.of(relativeFolder);
-        this.cacheManager      = new TtsCacheManager(audioDir);
+        if (cacheManager == null)
+            cacheManager = new TtsCacheManager(audioDir);
         this.audioPlayer       = new AudioPlayer();
         this.ttsEngine         = engine;
         this.defaultAttributes = new NarratorAttribute().withTemperature(0.5f).withCfgWeight(1.0f).withExaggeration(0.5f);
+        this.voiceReference    = voiceReference; // may be null
     }
 
-    private static TtsEngine chatterboxTtsEngine() {
-        return (text, attrs) -> ChatterboxTTS.generateSpeech(
-                text,
-                attrs.getTemperature() != null ? attrs.getTemperature() : 0.5f,
-                attrs.getExaggeration() != null ? attrs.getExaggeration() : 0.5f,
-                attrs.getCfg_weight() != null ? attrs.getCfg_weight() : 1.0f
-        );
+    private static TtsEngine chatterboxTtsEngine() throws Exception {
+//        return (text, attrs) -> ChatterboxTTS.generateSpeech(
+//                text,
+//                attrs.getTemperature() != null ? attrs.getTemperature() : 0.5f,
+//                attrs.getExaggeration() != null ? attrs.getExaggeration() : 0.5f,
+//                attrs.getCfg_weight() != null ? attrs.getCfg_weight() : 1.0f
+//        );
+        ChatterboxTTS chatterboxTTS = new ChatterboxTTS();
+        SyncResult    syncResult    = chatterboxTTS.syncVoiceReferences("docker\\chatterbox\\voices");
+        chatterboxTTS.logSyncResult(syncResult);
+        return chatterboxTTS;
     }
 
+    // Helper to create a shallow copy of attributes and inject the narrator-level voice if present.
+    private NarratorAttribute effectiveAttributes(NarratorAttribute attrs) {
+        NarratorAttribute e = new NarratorAttribute();
+        e.setTemperature(attrs.getTemperature());
+        e.setExaggeration(attrs.getExaggeration());
+        e.setCfg_weight(attrs.getCfg_weight());
+        e.setSpeed(attrs.getSpeed());
+        e.setEmotion_angry(attrs.getEmotion_angry());
+        e.setEmotion_happy(attrs.getEmotion_happy());
+        e.setEmotion_sad(attrs.getEmotion_sad());
+        e.setEmotion_surprise(attrs.getEmotion_surprise());
+        e.setEmotion_neutral(attrs.getEmotion_neutral());
+        // Voice precedence: narrator-level voice (if set) overrides any attr-level voice.
+        if (this.voiceReference != null && !this.voiceReference.isEmpty()) {
+            e.setVoiceReference(ttsEngine.voiceToPath(this.voiceReference));
+        } else {
+            e.setVoiceReference(attrs.getVoiceReference());
+        }
+        return e;
+    }
 
     public static String getElapsedNarrationTime() {
-        long   now          = System.currentTimeMillis();
-        long   elapsedMs    = now - Narrator.getStartTime();
-        long   secondsTotal = elapsedMs / 1000;
-        long   hours        = secondsTotal / 3600;
-        long   minutes      = (secondsTotal % 3600) / 60;
-        long   seconds      = secondsTotal % 60;
-        String timeString   = String.format("%02d:%02d:%02d", hours, minutes, seconds);
-        return timeString;
+        long now          = System.currentTimeMillis();
+        long elapsedMs    = now - Narrator.getStartTime();
+        long secondsTotal = elapsedMs / 1000;
+        long hours        = secondsTotal / 3600;
+        long minutes      = (secondsTotal % 3600) / 60;
+        long seconds      = secondsTotal % 60;
+        // Return directly without redundant local variable
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
     /**
      * Creates TTS engine for Index TTS with specific voice
      */
-    private static TtsEngine indexTtsEngine() {
-        return (text, attrs) -> {
-            String voiceReference  = attrs.getVoiceReference();
-            Float  speed           = attrs.getSpeed();
-            Float  emotionAngry    = attrs.getEmotion_angry();
-            Float  emotionHappy    = attrs.getEmotion_happy();
-            Float  emotionSad      = attrs.getEmotion_sad();
-            Float  emotionSurprise = attrs.getEmotion_surprise();
-            Float  emotionNeutral  = attrs.getEmotion_neutral();
-            Float  temperature     = attrs.getTemperature();
+    private static TtsEngine indexTtsEngine() throws Exception {
+//        return (text, attrs) -> {
+//            String voiceReference  = attrs.getVoiceReference();
+//            Float  speed           = attrs.getSpeed();
+//            Float  emotionAngry    = attrs.getEmotion_angry();
+//            Float  emotionHappy    = attrs.getEmotion_happy();
+//            Float  emotionSad      = attrs.getEmotion_sad();
+//            Float  emotionSurprise = attrs.getEmotion_surprise();
+//            Float  emotionNeutral  = attrs.getEmotion_neutral();
+//            Float  temperature     = attrs.getTemperature();
+//
+//            return IndexTTS.generateSpeech(text, voiceReference, speed,
+//                    emotionAngry, emotionHappy, emotionSad,
+//                    emotionSurprise, emotionNeutral, temperature);
+//        };
+        IndexTTS indexTts = new IndexTTS();
+        indexTts.syncVoiceReferences("docker\\chatterbox\\voices");
+        return indexTts;
 
-            return IndexTTS.generateSpeech(text, voiceReference, speed,
-                    emotionAngry, emotionHappy, emotionSad,
-                    emotionSurprise, emotionNeutral, temperature);
-        };
     }
 
     /**
      * Sleeps the current thread for roughly half a second.
      */
-    public void longPause() throws InterruptedException {
+    public void longPause() {
         pause(1000);
     }
-
 
     /**
      * Synchronously synthesize and play using per-call attributes. Blocks until playback finishes.
@@ -183,7 +233,10 @@ public class Narrator {
      * </ol>
      */
     private Narrator narrateResolved(NarratorAttribute attrs, String text) throws Exception {
-        String                     canonicalName = cacheManager.buildFileName(text, attrs);
+        // Ensure the effective attributes include the narrator-level voice for hashing and synthesis
+        NarratorAttribute eff = effectiveAttributes(attrs);
+
+        String                     canonicalName = cacheManager.buildFileName(text, eff);
         TtsCacheManager.ChronoPlan plan          = cacheManager.prepareChronological(canonicalName);
 
         Path pathToPlay;
@@ -194,13 +247,13 @@ public class Narrator {
         } else {
 
             long t0 = System.nanoTime();
-            logger.info("TTS generate start: attrs={}, file={}, text=\"{}\"", attrs, plan.path().getFileName(), text);
+            logger.info("TTS generate start: attrs={}, file={}, text=\"{}\"", eff, plan.path().getFileName(), text);
 
-            byte[] audio = ttsEngine.synthesize(text, attrs);
+            byte[] audio = ttsEngine.synthesize(text, eff);
 
             cacheManager.writeChronological(audio, plan.path());
             long tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t0);
-            logger.info("TTS generate done:   attrs={}, file={}, bytes={}, took={} ms", attrs, plan.path().getFileName(), audio.length, tookMs);
+            logger.info("TTS generate done:   attrs={}, file={}, bytes={}, took={} ms", eff, plan.path().getFileName(), audio.length, tookMs);
             pathToPlay = plan.path();
         }
 
@@ -247,15 +300,26 @@ public class Narrator {
         }
     }
 
-    public static Narrator withChatterboxTTS(String relativeFolder) {
-        return new Narrator(relativeFolder, chatterboxTtsEngine());
+    public static Narrator withChatterboxTTS(String relativeFolder) throws Exception {
+        return new Narrator(relativeFolder, chatterboxTtsEngine(), "christopher");
+    }
+
+    public static Narrator withChatterboxTTS(String relativeFolder, String voiceReference) throws Exception {
+        return new Narrator(relativeFolder, chatterboxTtsEngine(), voiceReference);
     }
 
     /**
      * Creates a Narrator using Index TTS engine with default voice
      */
-    public static Narrator withIndexTTS(String relativeFolder) {
-        return new Narrator(relativeFolder, indexTtsEngine());
+    public static Narrator withIndexTTS(String relativeFolder) throws Exception {
+        return new Narrator(relativeFolder, indexTtsEngine(), "christopher");
+    }
+
+    /**
+     * Creates a Narrator using Index TTS engine with a provided voice
+     */
+    public static Narrator withIndexTTS(String relativeFolder, String voiceReference) throws Exception {
+        return new Narrator(relativeFolder, indexTtsEngine(), voiceReference);
     }
 
 }

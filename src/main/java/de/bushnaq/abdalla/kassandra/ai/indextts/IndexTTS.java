@@ -18,6 +18,8 @@
 package de.bushnaq.abdalla.kassandra.ai.indextts;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.bushnaq.abdalla.kassandra.ai.AbstractTtsEngine;
+import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -49,7 +51,7 @@ import java.util.Map;
  *   <li>Pass null to use the server's default voice reference</li>
  * </ul>
  */
-public class IndexTTS {
+public class IndexTTS extends AbstractTtsEngine {
     private static final ObjectMapper objectMapper    = new ObjectMapper();
     private static       String       TTS_SERVICE_URL = "http://localhost:5124";
 
@@ -244,6 +246,22 @@ public class IndexTTS {
 
     public static void setServiceUrl(String url) {
         TTS_SERVICE_URL = url;
+    }
+
+    @Override
+    public byte[] synthesize(String text, NarratorAttribute attrs) throws Exception {
+        String voiceReference  = attrs.getVoiceReference();
+        Float  speed           = attrs.getSpeed();
+        Float  emotionAngry    = attrs.getEmotion_angry();
+        Float  emotionHappy    = attrs.getEmotion_happy();
+        Float  emotionSad      = attrs.getEmotion_sad();
+        Float  emotionSurprise = attrs.getEmotion_surprise();
+        Float  emotionNeutral  = attrs.getEmotion_neutral();
+        Float  temperature     = attrs.getTemperature();
+
+        return IndexTTS.generateSpeech(text, voiceReference, speed,
+                emotionAngry, emotionHappy, emotionSad,
+                emotionSurprise, emotionNeutral, temperature);
     }
 
     /**

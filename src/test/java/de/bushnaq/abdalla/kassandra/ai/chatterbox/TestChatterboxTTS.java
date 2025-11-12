@@ -24,6 +24,9 @@ import org.junit.jupiter.api.Test;
 public class TestChatterboxTTS {
     Narrator narrator = Narrator.withChatterboxTTS("tts/TestChatterboxTTS");
 
+    public TestChatterboxTTS() throws Exception {
+    }
+
     @Test
     public void listLanguages() throws Exception {
 

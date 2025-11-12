@@ -18,6 +18,8 @@
 package de.bushnaq.abdalla.kassandra.ai.chatterbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.bushnaq.abdalla.kassandra.ai.AbstractTtsEngine;
+import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -28,7 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-public class ChatterboxTTS {
+public class ChatterboxTTS extends AbstractTtsEngine {
     private static final ObjectMapper objectMapper    = new ObjectMapper();
     private static       String       TTS_SERVICE_URL = "http://localhost:4123";
 
@@ -169,6 +171,17 @@ public class ChatterboxTTS {
 
     public static void setServiceUrl(String url) {
         TTS_SERVICE_URL = url;
+    }
+
+    public byte[] synthesize(String text, NarratorAttribute attrs) throws Exception {
+        return ChatterboxTTS.generateSpeech(
+                text,
+                attrs.getVoiceReference(),
+                "en",
+                attrs.getTemperature() != null ? attrs.getTemperature() : 0.5f,
+                attrs.getExaggeration() != null ? attrs.getExaggeration() : 0.5f,
+                attrs.getCfg_weight() != null ? attrs.getCfg_weight() : 1.0f
+        );
     }
 
     /**

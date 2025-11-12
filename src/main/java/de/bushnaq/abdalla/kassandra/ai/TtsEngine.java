@@ -15,13 +15,19 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.narrator;
+package de.bushnaq.abdalla.kassandra.ai;
+
+import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
 
 /**
  * TtsEngine defines an abstraction for text-to-speech synthesis.
  * Implementations must return a WAV byte array for the provided input.
  */
 public interface TtsEngine {
+    void logSyncResult(SyncResult result) throws Exception;
+
+    SyncResult syncVoiceReferences(String localVoicesDir) throws Exception;
+
     /**
      * Synthesizes speech for the provided text and attributes.
      *
@@ -31,5 +37,8 @@ public interface TtsEngine {
      * @throws Exception on synthesis failure
      */
     byte[] synthesize(String text, NarratorAttribute attributes) throws Exception;
+
+    String voiceToPath(String voice);
+
 }
 

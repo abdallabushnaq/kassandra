@@ -17,14 +17,122 @@
 
 package de.bushnaq.abdalla.kassandra.ai.chatterbox;
 
+import de.bushnaq.abdalla.kassandra.ai.SyncResult;
 import org.junit.jupiter.api.Test;
 
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import java.io.File;
 import java.util.List;
 
 /**
  * Example tests demonstrating Index TTS voice cloning and voice reference management
  */
 public class ChatterboxVoiceManagementTest {
+
+    private static void deleteVoiceReferences(ChatterboxTTS.VoiceReference[] refs) throws Exception {
+        for (int i = 0; i < refs.length; i++) {
+//            System.out.println("  [" + i + "] " + refs[i].filename());
+//            System.out.println("\nTo delete a voice reference:");
+//            System.out.println("  IndexTTS.deleteVoiceReference(\"filename.wav\");");
+
+            // Example (commented out for safety):
+            String filenameToDelete = refs[0].filename();
+            System.out.println("\nDeleting: " + filenameToDelete);
+            ChatterboxTTS.deleteVoiceReference(filenameToDelete);
+            System.out.println("✅ Deleted successfully");
+        }
+    }
+
+//    /**
+//     * Example 5: Complete upload and use workflow
+//     */
+//    @Test
+//    public void testCompleteWorkflow() throws Exception {
+//        System.out.println("=== Example 5: Complete Workflow ===\n");
+//
+//        // Step 1: List existing references
+//        System.out.println("Step 1: Checking existing voice references...");
+//        ChatterboxTTS.VoiceReference[] refs = ChatterboxTTS.listVoiceReferences();
+//        System.out.println("Found " + refs.length + " voice reference(s)\n");
+//
+//        // Step 2: Upload if needed (commented for safety)
+//        /*
+//        if (refs.length == 0) {
+//            System.out.println("Step 2: Uploading new voice reference...");
+//            String localFile = "E:\\path\\to\\your\\voice.wav";
+//            IndexTTS.VoiceReference uploaded = IndexTTS.uploadVoiceReference(localFile);
+//            System.out.println("✅ Uploaded: " + uploaded.getFilename() + "\n");
+//            refs = new IndexTTS.VoiceReference[]{uploaded};
+//        } else {
+//            System.out.println("Step 2: Using existing voice reference\n");
+//        }
+//        */
+//
+//        // Step 3: Generate speech
+//        if (refs.length > 0) {
+//            System.out.println("Step 3: Generating speech with voice reference...");
+//            byte[] audio = ChatterboxTTS.generateSpeech(
+//                    "This is a complete workflow demonstration.",
+//                    refs[0].path(),
+//                    null, null, null, null, null, null, null
+//            );
+//            ChatterboxTTS.writeWav(audio, "test_workflow.wav");
+//            System.out.println("✅ Generated -> test_workflow.wav\n");
+//        } else {
+//            System.out.println("Step 3: No voice references available, using default voice...");
+//            byte[] audio = ChatterboxTTS.generateSpeech("This is a complete workflow demonstration.");
+//            ChatterboxTTS.writeWav(audio, "test_workflow.wav");
+//            System.out.println("✅ Generated -> test_workflow.wav\n");
+//        }
+//    }
+
+    protected static void playBlocking(String fileName) {
+        try {
+            Clip clip = AudioSystem.getClip();
+            clip.open(AudioSystem.getAudioInputStream(new File(fileName)));
+            clip.start();
+            while (!clip.isRunning())
+                Thread.sleep(10);
+            while (clip.isRunning())
+                Thread.sleep(10);
+            clip.close();
+        } catch (Exception exc) {
+            exc.printStackTrace(System.out);
+        }
+    }
+
+    private static void printSyncResult(SyncResult result) throws Exception {
+        // Display detailed results
+        System.out.println("\n📊 Sync Summary:");
+        System.out.println("  Local files: " + result.localFileCount());
+        System.out.println("  Server files (before): " + result.serverFileCountBefore());
+        System.out.println("  Server files (after): " + result.getServerFileCountAfter());
+        System.out.println("  Uploaded: " + result.uploadedCount());
+        System.out.println("  Deleted: " + result.deletedCount());
+
+        if (result.hasErrors()) {
+            System.out.println("\n⚠️  Errors encountered:");
+            for (String error : result.errors()) {
+                System.out.println("  - " + error);
+            }
+        }
+
+        if (result.uploadedCount() == 0 && result.deletedCount() == 0) {
+            System.out.println("\n✅ Already in sync - no changes needed!");
+        } else {
+            System.out.println("\n✅ Sync complete!");
+        }
+
+        // Show final voice references on server
+        ChatterboxTTS.VoiceReference[] finalRefs = ChatterboxTTS.listVoiceReferences();
+        if (finalRefs.length > 0) {
+            System.out.println("\n📋 Voice references on server:");
+            for (ChatterboxTTS.VoiceReference ref : finalRefs) {
+                System.out.println("  - " + ref.filename() + " (" + ref.sizeBytes() + " bytes)");
+            }
+        }
+    }
 
     /**
      * Synchronize voice references between local directory and server
@@ -105,54 +213,11 @@ public class ChatterboxVoiceManagementTest {
         return new SyncResult(localFiles.length, serverRefs.length, uploadedCount, deletedCount, errors);
     }
 
-//    /**
-//     * Example 5: Complete upload and use workflow
-//     */
-//    @Test
-//    public void testCompleteWorkflow() throws Exception {
-//        System.out.println("=== Example 5: Complete Workflow ===\n");
-//
-//        // Step 1: List existing references
-//        System.out.println("Step 1: Checking existing voice references...");
-//        ChatterboxTTS.VoiceReference[] refs = ChatterboxTTS.listVoiceReferences();
-//        System.out.println("Found " + refs.length + " voice reference(s)\n");
-//
-//        // Step 2: Upload if needed (commented for safety)
-//        /*
-//        if (refs.length == 0) {
-//            System.out.println("Step 2: Uploading new voice reference...");
-//            String localFile = "E:\\path\\to\\your\\voice.wav";
-//            IndexTTS.VoiceReference uploaded = IndexTTS.uploadVoiceReference(localFile);
-//            System.out.println("✅ Uploaded: " + uploaded.getFilename() + "\n");
-//            refs = new IndexTTS.VoiceReference[]{uploaded};
-//        } else {
-//            System.out.println("Step 2: Using existing voice reference\n");
-//        }
-//        */
-//
-//        // Step 3: Generate speech
-//        if (refs.length > 0) {
-//            System.out.println("Step 3: Generating speech with voice reference...");
-//            byte[] audio = ChatterboxTTS.generateSpeech(
-//                    "This is a complete workflow demonstration.",
-//                    refs[0].path(),
-//                    null, null, null, null, null, null, null
-//            );
-//            ChatterboxTTS.writeWav(audio, "test_workflow.wav");
-//            System.out.println("✅ Generated -> test_workflow.wav\n");
-//        } else {
-//            System.out.println("Step 3: No voice references available, using default voice...");
-//            byte[] audio = ChatterboxTTS.generateSpeech("This is a complete workflow demonstration.");
-//            ChatterboxTTS.writeWav(audio, "test_workflow.wav");
-//            System.out.println("✅ Generated -> test_workflow.wav\n");
-//        }
-//    }
-
     /**
      * Example 4: Delete a voice reference
      */
     @Test
-    public void testDeleteVoiceReference() throws Exception {
+    public void testDeleteVoiceReferences() throws Exception {
         System.out.println("=== Example 4: Delete Voice Reference ===\n");
 
         ChatterboxTTS.VoiceReference[] refs = ChatterboxTTS.listVoiceReferences();
@@ -161,20 +226,8 @@ public class ChatterboxVoiceManagementTest {
             System.out.println("No voice references to delete.");
         } else {
             System.out.println("Available voice references:");
-            for (int i = 0; i < refs.length; i++) {
-                System.out.println("  [" + i + "] " + refs[i].filename());
-            }
+            deleteVoiceReferences(refs);
 
-            System.out.println("\nTo delete a voice reference:");
-            System.out.println("  IndexTTS.deleteVoiceReference(\"filename.wav\");");
-
-            // Example (commented out for safety):
-            /*
-            String filenameToDelete = refs[0].getFilename();
-            System.out.println("\nDeleting: " + filenameToDelete);
-            IndexTTS.deleteVoiceReference(filenameToDelete);
-            System.out.println("✅ Deleted successfully");
-            */
         }
     }
 
@@ -220,34 +273,68 @@ public class ChatterboxVoiceManagementTest {
         // Perform sync using the reusable method
         SyncResult result = syncVoiceReferences(localVoicesDir);
 
-        // Display detailed results
-        System.out.println("\n📊 Sync Summary:");
-        System.out.println("  Local files: " + result.localFileCount);
-        System.out.println("  Server files (before): " + result.serverFileCountBefore);
-        System.out.println("  Server files (after): " + result.getServerFileCountAfter());
-        System.out.println("  Uploaded: " + result.uploadedCount);
-        System.out.println("  Deleted: " + result.deletedCount);
+        printSyncResult(result);
+    }
 
-        if (result.hasErrors()) {
-            System.out.println("\n⚠️  Errors encountered:");
-            for (String error : result.errors) {
-                System.out.println("  - " + error);
-            }
+    @Test
+    public void testUseDefaultAndVoiceReference() throws Exception {
+        System.out.println("=== Example 3: Use Voice Reference ===\n");
+        String       localVoicesDir = "docker\\chatterbox\\voices";
+        java.io.File voicesDir      = new java.io.File(localVoicesDir);
+        if (!voicesDir.exists() || !voicesDir.isDirectory()) {
+            System.out.println("❌ Local voices directory not found: " + localVoicesDir);
+            System.out.println("Create the directory and add WAV files to sync.");
+            return;
         }
+        System.out.println("📁 Local voices directory: " + localVoicesDir);
+        SyncResult                     result = syncVoiceReferences(localVoicesDir);
+        ChatterboxTTS.VoiceReference[] refs   = ChatterboxTTS.listVoiceReferences();
+        // Perform sync using the reusable method
+        {
+//            System.out.println("No voice references available.");
+//            System.out.println("Upload one first using testUploadVoiceReference()");
+            System.out.println("\nUsing default voice instead:");
 
-        if (result.uploadedCount == 0 && result.deletedCount == 0) {
-            System.out.println("\n✅ Already in sync - no changes needed!");
-        } else {
-            System.out.println("\n✅ Sync complete!");
+            byte[] audio = ChatterboxTTS.generateSpeech("This uses the default voice.",
+                    refs[1].path(),
+                    null,
+                    0.5f,
+                    0.5f,
+                    .5f
+            );
+            ChatterboxTTS.writeWav(audio, "test_default_voice.wav");
+            System.out.println("✅ Generated -> test_default_voice.wav");
+            playBlocking("test_default_voice.wav");
         }
+        {
+            System.out.println("Using first available voice: " + refs[1].filename());
 
-        // Show final voice references on server
-        ChatterboxTTS.VoiceReference[] finalRefs = ChatterboxTTS.listVoiceReferences();
-        if (finalRefs.length > 0) {
-            System.out.println("\n📋 Voice references on server:");
-            for (ChatterboxTTS.VoiceReference ref : finalRefs) {
-                System.out.println("  - " + ref.filename() + " (" + ref.sizeBytes() + " bytes)");
-            }
+            byte[] audio = ChatterboxTTS.generateSpeech(
+                    "This is using a custom voice reference from the server.",
+                    refs[0].path(),
+                    null,
+                    0.5f,
+                    0.5f,
+                    .5f
+            );
+            ChatterboxTTS.writeWav(audio, "test_custom_voice.wav");
+            System.out.println("✅ Generated -> test_custom_voice.wav");
+            playBlocking("test_custom_voice.wav");
+        }
+        {
+            System.out.println("No voice references available.");
+            System.out.println("Upload one first using testUploadVoiceReference()");
+            System.out.println("\nUsing default voice instead:");
+
+            byte[] audio = ChatterboxTTS.generateSpeech("This uses the default voice.",
+                    refs[1].path(), null,
+                    0.5f,
+                    0.5f,
+                    .5f
+            );
+            ChatterboxTTS.writeWav(audio, "test_default_voice.wav");
+            System.out.println("✅ Generated -> test_default_voice.wav");
+            playBlocking("test_default_voice.wav");
         }
     }
 
@@ -349,25 +436,5 @@ public class ChatterboxVoiceManagementTest {
 //        System.out.println("✅ test_angry_emotion.wav");
 //    }
 
-    /**
-     * Result of a voice reference sync operation
-     */
-    public record SyncResult(int localFileCount, int serverFileCountBefore, int uploadedCount, int deletedCount,
-                             List<String> errors) {
-
-        public int getServerFileCountAfter() {
-            return serverFileCountBefore - deletedCount + uploadedCount;
-        }
-
-        public boolean hasErrors() {
-            return !errors.isEmpty();
-        }
-
-        @Override
-        public String toString() {
-            return String.format("SyncResult{local=%d, server=%d->%d, uploaded=%d, deleted=%d, errors=%d}",
-                    localFileCount, serverFileCountBefore, getServerFileCountAfter(), uploadedCount, deletedCount, errors.size());
-        }
-    }
 }
 

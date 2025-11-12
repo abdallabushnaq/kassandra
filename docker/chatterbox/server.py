@@ -6,14 +6,13 @@ Provides OpenAI-compatible TTS API endpoints for the Chatterbox TTS engine.
 import io
 import logging
 import os
-from typing import Optional
-
 import torch
 import torchaudio as ta
 import uvicorn
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel, Field
+from typing import Optional
 
 # Configure logging
 logging.basicConfig(
@@ -186,8 +185,8 @@ async def generate_speech(request: SpeechRequest):
     """
     try:
         # Ensure TTS is initialized
-        if tts_model is None:
-            initialize_tts()
+        # if tts_model is None:
+        initialize_tts()
 
         logger.info(f"Generating speech for text: '{request.input[:50]}...'")
         if request.language:
@@ -215,10 +214,13 @@ async def generate_speech(request: SpeechRequest):
             # Generate speech with optional audio prompt
             if request.audio_prompt_path and os.path.exists(request.audio_prompt_path):
                 logger.info(f"Using voice cloning with prompt: {request.audio_prompt_path}")
-                wav = model.generate(request.input, audio_prompt_path=request.audio_prompt_path)
+                wav = model.generate(request.input, audio_prompt_path=request.audio_prompt_path,
+                                     exaggeration=request.exaggeration, cfg_weight=request.cfg_weight,
+                                     temperature=request.temperature)
             else:
-                wav = model.generate(request.input)
-
+                logger.info(f"Using default voice")
+                wav = model.generate(request.input, exaggeration=request.exaggeration, cfg_weight=request.cfg_weight,
+                                     temperature=request.temperature)
             sample_rate = model.sr
 
         # Convert to WAV format in memory using torchaudio

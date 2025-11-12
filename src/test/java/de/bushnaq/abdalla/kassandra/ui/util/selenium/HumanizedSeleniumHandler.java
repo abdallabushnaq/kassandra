@@ -44,7 +44,7 @@ import java.util.Random;
 public class HumanizedSeleniumHandler extends SeleniumHandler {
     @Getter
     @Setter
-    private        boolean highlightEnabled       = false;
+    private        boolean highlightEnabled       = true;
     private final  Object  highlightLock          = new Object();// Synchronization for highlight removal
     private        Thread  highlightRemovalThread = null;
     @Getter
