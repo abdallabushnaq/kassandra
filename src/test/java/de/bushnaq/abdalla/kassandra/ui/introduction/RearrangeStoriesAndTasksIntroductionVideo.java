@@ -161,7 +161,11 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
 
         HumanizedSeleniumHandler.setHumanize(true);
         // Move Story-5 before Story-1
-        seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + story1Name + TaskGrid.NAME_FIELD, TaskGrid.TASK_GRID_PREFIX + story2Name + TaskGrid.NAME_FIELD);
+        seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + story2Name, TaskGrid.TASK_GRID_PREFIX + story1Name);
+
+        seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + task12Name, TaskGrid.TASK_GRID_PREFIX + task11Name);
+
+        seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + task22Name, TaskGrid.TASK_GRID_PREFIX + task11Name);
 
         seleniumHandler.waitUntilBrowserClosed(0);
     }

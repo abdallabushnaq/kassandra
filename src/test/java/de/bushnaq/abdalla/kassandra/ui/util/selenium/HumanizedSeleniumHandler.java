@@ -26,6 +26,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -97,6 +98,111 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     }
 
     public void dragAndDrop(String sourceId, String targetId) {
+        // Ensure both elements are ready
+        waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(sourceId)));
+        waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(targetId)));
+        waitUntil(ExpectedConditions.elementToBeClickable(By.id(sourceId)));
+        waitUntil(ExpectedConditions.visibilityOfElementLocated(By.id(targetId)));
+
+        WebElement sourceElement = findElement(By.id(sourceId));
+        WebElement targetElement = findElement(By.id(targetId));
+
+        // Visual hint (non-blocking async removal handled by highlight())
+//        highlight(800, sourceElement, targetElement);
+
+        // Move mouse to source first for realism
+        moveMouseToElement(sourceElement);
+        wait(120 + random.nextInt(120));
+
+        boolean canHumanize = isHumanize() && !isSeleniumHeadless() && isMoveMouse();
+        Robot   r           = canHumanize ? getRobot() : null;
+
+        try {
+            if (canHumanize && r != null) {
+                // Compute screen coordinates
+                java.awt.Point start = getElementCenterOnScreen(sourceElement);
+                java.awt.Point end   = getElementCenterOnScreen(targetElement);
+
+                // Small jitter to avoid pixel-perfect center every time
+                start.translate(random.nextInt(7) - 3, random.nextInt(7) - 3);
+                end.translate(random.nextInt(7) - 3, random.nextInt(7) - 3);
+
+                // Ensure we are exactly at start
+                java.awt.Point current = MouseInfo.getPointerInfo().getLocation();
+                if (current.distance(start) > 2) {
+                    humanLikeMouseMove(current.x, current.y, start.x, start.y);
+                }
+
+                // Press and hold left button
+                r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+                wait(80 + random.nextInt(120));
+
+                // Human-like move to target
+                humanLikeMouseMove(start.x, start.y, end.x, end.y);
+                wait(60 + random.nextInt(120));
+
+                // Release
+                r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+                wait(120 + random.nextInt(200));
+                logger.info("Drag-and-drop performed (humanized) from '{}' to '{}'", sourceId, targetId);
+            } else {
+                // Fallback to reliable Selenium Actions
+                new org.openqa.selenium.interactions.Actions(getDriver())
+                        .moveToElement(sourceElement)
+                        .pause(java.time.Duration.ofMillis(150))
+                        .clickAndHold(sourceElement)
+                        .pause(java.time.Duration.ofMillis(150))
+                        .moveToElement(targetElement)
+                        .pause(java.time.Duration.ofMillis(150))
+                        .release(targetElement)
+                        .build()
+                        .perform();
+                logger.info("Drag-and-drop performed via Selenium Actions from '{}' to '{}'", sourceId, targetId);
+            }
+        } catch (StaleElementReferenceException e) {
+            // Retry once if elements went stale mid-action
+            logger.debug("Elements went stale during drag-and-drop, retrying once: {}", e.getMessage());
+            WebElement src2 = findElement(By.id(sourceId));
+            WebElement dst2 = findElement(By.id(targetId));
+            new org.openqa.selenium.interactions.Actions(getDriver())
+                    .moveToElement(src2)
+                    .pause(java.time.Duration.ofMillis(150))
+                    .clickAndHold(src2)
+                    .pause(java.time.Duration.ofMillis(150))
+                    .moveToElement(dst2)
+                    .pause(java.time.Duration.ofMillis(150))
+                    .release(dst2)
+                    .build()
+                    .perform();
+        } catch (Exception e) {
+            logger.warn("Drag-and-drop failed using humanized mode, falling back to Actions if possible: {}", e.getMessage());
+            try {
+                new org.openqa.selenium.interactions.Actions(getDriver())
+                        .clickAndHold(sourceElement)
+                        .moveToElement(targetElement)
+                        .release()
+                        .build()
+                        .perform();
+            } catch (Exception e2) {
+                logger.error("Drag-and-drop failed via Actions as well: {}", e2.getMessage(), e2);
+                throw e2;
+            }
+        }
+    }
+
+    /**
+     * Compute the screen center coordinates of a DOM element, accounting for
+     * browser window position and chrome height.
+     */
+    private java.awt.Point getElementCenterOnScreen(WebElement element) {
+        org.openqa.selenium.Point     elementLocation = element.getLocation();
+        org.openqa.selenium.Dimension elementSize     = element.getSize();
+        Point                         windowPosition  = getDriver().manage().window().getPosition();
+        int                           chromeHeight    = getBrowserChromeHeight();
+
+        int targetX = windowPosition.getX() + elementLocation.getX() + (elementSize.getWidth() / 2);
+        int targetY = windowPosition.getY() + elementLocation.getY() + (elementSize.getHeight() / 2) + chromeHeight;
+        return new java.awt.Point(targetX, targetY);
     }
 
     /**
@@ -477,27 +583,29 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         }
 
         try {
-            // Get element location and size relative to the page
-            org.openqa.selenium.Point     elementLocation = element.getLocation();
-            org.openqa.selenium.Dimension elementSize     = element.getSize();
+            java.awt.Point target = getElementCenterOnScreen(element);
 
-            // Get browser window position on screen
-            Point windowPosition = getDriver().manage().window().getPosition();
-
-            // Calculate browser chrome height (cached after first calculation)
-            int chromeHeight = getBrowserChromeHeight();
-
-            // Calculate target screen coordinates (center of element)
-            int targetX = windowPosition.getX() + elementLocation.getX() + (elementSize.getWidth() / 2);
-            int targetY = windowPosition.getY() + elementLocation.getY() + (elementSize.getHeight() / 2) + chromeHeight;
+//            // Get element location and size relative to the page
+//            org.openqa.selenium.Point     elementLocation = element.getLocation();
+//            org.openqa.selenium.Dimension elementSize     = element.getSize();
+//
+//            // Get browser window position on screen
+//            Point windowPosition = getDriver().manage().window().getPosition();
+//
+//            // Calculate browser chrome height (cached after first calculation)
+//            int chromeHeight = getBrowserChromeHeight();
+//
+//            // Calculate target screen coordinates (center of element)
+//            int targetX = windowPosition.getX() + elementLocation.getX() + (elementSize.getWidth() / 2);
+//            int targetY = windowPosition.getY() + elementLocation.getY() + (elementSize.getHeight() / 2) + chromeHeight;
 
             // Get current mouse position
             java.awt.Point currentMouse = MouseInfo.getPointerInfo().getLocation();
 
             // Perform smooth mouse movement with human-like characteristics
-            humanLikeMouseMove(currentMouse.x, currentMouse.y, targetX, targetY);
+            humanLikeMouseMove(currentMouse.x, currentMouse.y, target.x, target.y);
 
-            logger.debug("Moved mouse to element '{}' at ({}, {})", element.getText(), targetX, targetY);
+            logger.debug("Moved mouse to element '{}' at ({}, {})", element.getText(), target.x, target.y);
             wait(300);
 
         } catch (Exception e) {
