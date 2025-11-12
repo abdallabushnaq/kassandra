@@ -44,7 +44,7 @@ public class TaskGrid extends Grid<Task> {
     private             String            dragMode;
     private             Task              draggedTask;          // Track the currently dragged task
     private final       DateTimeFormatter dtfymdhm           = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
-    private             boolean           isAltKeyPressed    = false; // Track if Alt key is pressed during drop
+    private             boolean           isCtrlKeyPressed   = false; // Track if Ctrl key is pressed during drop
     @Getter
     @Setter
     private             boolean           isEditMode         = false;// Edit mode state management
@@ -820,31 +820,50 @@ public class TaskGrid extends Grid<Task> {
      * Called from client-side JavaScript to set the Alt key state during drop operations
      */
     @ClientCallable
-    public void setAltKeyPressed(boolean altKeyPressed) {
-        this.isAltKeyPressed = altKeyPressed;
-        log.debug("Alt key state set to: {}", altKeyPressed);
+    public void setCtrlKeyPressed(boolean ctrlKeyPressed) {
+        this.isCtrlKeyPressed = ctrlKeyPressed;
+        log.debug("Ctrl/Meta key state set to: {}", ctrlKeyPressed);
     }
 
     private void setupDragAndDrop() {
         // Enable row reordering with drag and drop in edit mode
         setRowsDraggable(true); // Will be enabled in edit mode
 
-        // Setup JavaScript to capture Alt key state during drag operations
+        // Setup JavaScript to capture Ctrl/Meta key state during drag operations
         getElement().executeJs(
                 """
                         const grid = this;
                         
-                        // Capture Alt key state during dragover
-                        grid.addEventListener('dragover', (e) => {
-                            grid._altKeyPressed = e.altKey;
-                        });
-                        
-                        // Capture Alt key state during drop
-                        grid.addEventListener('drop', (e) => {
-                            grid._altKeyPressed = e.altKey;
-                            // Send Alt key state to server
-                            grid.$server.setAltKeyPressed(e.altKey);
-                        });
+                        // Use Ctrl (Windows/Linux) and Meta (macOS) to toggle dependency drag mode.
+                        if (!grid.__modifierKeyHandlersInstalled) {
+                            grid.__modifierKeyHandlersInstalled = true;
+                            grid.__ctrlKeyPressed = false; // local state to avoid repeat spam
+                            const send = (pressed) => {
+                                if (grid.$server && grid.$server.setCtrlKeyPressed) {
+                                    grid.$server.setCtrlKeyPressed(pressed);
+                                }
+                            };
+                            window.addEventListener('keydown', (e) => {
+                                if ((e.key === 'Control' || e.key === 'Meta')) {
+                                    // Ignore auto-repeat: e.repeat true means key is held
+                                    if (e.repeat) return;
+                                    if (!grid.__ctrlKeyPressed) {
+                                        grid.__ctrlKeyPressed = true;
+                                        send(true);
+                                    }
+                                }
+                            }, true);
+                            window.addEventListener('keyup', (e) => {
+                                if ((e.key === 'Control' || e.key === 'Meta')) {
+                                    if (grid.__ctrlKeyPressed) {
+                                        grid.__ctrlKeyPressed = false;
+                                        send(false);
+                                    }
+                                }
+                            }, true);
+                        }
+                        // Allow drop events to fire (HTML5 DnD spec requires canceling dragover)
+                        grid.addEventListener('dragover', (e) => { e.preventDefault(); });
                         """
         );
 
@@ -853,32 +872,31 @@ public class TaskGrid extends Grid<Task> {
                     log.trace("DragFilter {}", isEditMode);
                     if (isEditMode) return false;
 
-                    if (isAltKeyPressed) {
+                    if (isCtrlKeyPressed) {
                         // dependency drag mode
                         //allow dragging stories and tasks
+                        log.trace("isCtrlKeyPressed {}", isCtrlKeyPressed);
                         return dragSourceTask != null && (dragSourceTask.isTask() || dragSourceTask.isStory()) && !isEditMode;
                     } else {
                         // reorder drag mode
-                        //allow dragging only tasks
-//                            log.info("DragFilter {} {} {}", dragSourceTask != null, dragSourceTask != null && dragSourceTask.isTask(), !isEditMode);
                         return true;
                     }
                 }
         );
 
         addDragStartListener(event -> {
-            log.trace("DragStartListener {} {}", event.getDraggedItems().isEmpty(), isAltKeyPressed);
+            log.trace("DragStartListener {} {}", event.getDraggedItems().isEmpty(), isCtrlKeyPressed);
             if (isEditMode || event.getDraggedItems().isEmpty()) return;
 
             draggedTask = event.getDraggedItems().getFirst();
-            if (isAltKeyPressed) {
+            if (isCtrlKeyPressed) {
                 log.info("starting dependency drag mode");
                 dragMode = "dependency";
-                setDropMode(com.vaadin.flow.component.grid.dnd.GridDropMode.ON_TOP); // Enable dependency drop on top mode
+                setDropMode(com.vaadin.flow.component.grid.dnd.GridDropMode.ON_TOP); // dependency mode
             } else {
                 log.info("starting reorder drag mode");
                 dragMode = "reorder";
-                setDropMode(com.vaadin.flow.component.grid.dnd.GridDropMode.BETWEEN); // Enable reorder drop between mode
+                setDropMode(com.vaadin.flow.component.grid.dnd.GridDropMode.BETWEEN); // reorder mode
             }
         });
 
@@ -912,8 +930,8 @@ public class TaskGrid extends Grid<Task> {
                 switch (dragMode) {
                     case "dependency": {
                         log.info("dropped {} on {}", draggedTask.getKey(), dropTargetTask.getKey());
-                        // Check if Alt key is pressed to modify behavior
-                        if (isAltKeyPressed) {
+                        // Check if Ctrl/Meta key is pressed to modify behavior
+                        if (isCtrlKeyPressed) {
                             // Handle dependency creation/removal when dropping ON_TOP
                             handleDependencyDrop(draggedTask, dropTargetTask);
                         } else {
@@ -998,14 +1016,14 @@ public class TaskGrid extends Grid<Task> {
 //                }
             }
 
-            draggedTask     = null; // Clear the dragged task reference
-            isAltKeyPressed = false; // Reset Alt key state
-            dragMode        = null;
+            draggedTask      = null; // Clear the dragged task reference
+            isCtrlKeyPressed = false; // Reset modifier key state
+            dragMode         = null;
         });
 
         addDragEndListener(event -> {
-            draggedTask     = null; // Clear reference when drag ends without drop
-            isAltKeyPressed = false; // Reset Alt key state
+            draggedTask      = null; // Clear reference when drag ends without drop
+            isCtrlKeyPressed = false; // Reset modifier key state
             setDropMode(null);
             dragMode = null;
         });
@@ -1282,3 +1300,4 @@ public class TaskGrid extends Grid<Task> {
 
 
 }
+

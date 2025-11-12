@@ -122,9 +122,9 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         Sprint sprint = generateData();
 
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setSilent(true);
+//        paul.setSilent(true);
         Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
-        grace.setSilent(true);
+//        grace.setSilent(true);
         seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
 
@@ -161,11 +161,17 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
 
         HumanizedSeleniumHandler.setHumanize(true);
         // Move Story-5 before Story-1
+        paul.narrate(NORMAL, "Now, let's see how we can rearrange stories and tasks using drag and drop. First, we'll move the second story before first story to prioritize it higher in our sprint backlog. So, first the persistence, then the API");
         seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + story2Name, TaskGrid.TASK_GRID_PREFIX + story1Name);
 
+        paul.narrate(NORMAL, "Great! Now, let's rearrange some tasks within the API story. I like open API first approach. We'll move API documentation before creating the controller.");
         seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + task12Name, TaskGrid.TASK_GRID_PREFIX + task11Name);
 
-        seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + task22Name, TaskGrid.TASK_GRID_PREFIX + task11Name);
+        paul.narrate(NORMAL, "Finally, let's say we need to address error handling first to ensure robustness. We'll move API error handling to the top of our task list into the persistence story.");
+        seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + task13Name, TaskGrid.TASK_GRID_PREFIX + task21Name);
+
+        paul.narrate(NORMAL, "Lets redo that. We do nto want API related tasks in the story that is all about persistence.");
+        seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + task13Name, TaskGrid.TASK_GRID_PREFIX + task12Name);
 
         seleniumHandler.waitUntilBrowserClosed(0);
     }
@@ -184,19 +190,19 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         User graceMartin     = userApi.getByEmail("grace.martin@kassandra.org");
         {
             LocalDateTime startDateTime  = LocalDateTime.parse("2025-05-05T08:00");
-            Task          startMilestone = addTask(sprint, null, "New Milestone-0", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+            Task          startMilestone = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         }
         {
-            Task story1 = addParentTask("New Story-1", sprint, null, null);
-            Task task11 = addTask("New Task-2", "1d", null, christopherPaul, sprint, story1, null);
-            Task task12 = addTask("New Task-3", "1d", null, christopherPaul, sprint, story1, null);
-            Task task13 = addTask("New Task-4", "1d", null, christopherPaul, sprint, story1, null);
+            Task story1 = addParentTask("Config api implementation", sprint, null, null);
+            Task task11 = addTask("create controller", "4h", "6h", christopherPaul, sprint, story1, null);
+            Task task12 = addTask("api documentation", "2h", "3h", christopherPaul, sprint, story1, null);
+            Task task13 = addTask("api error handling", "5h", "7h", christopherPaul, sprint, story1, null);
         }
         {
-            Task story2 = addParentTask("New Story-5", sprint, null, null);
-            Task task21 = addTask("New Task-6", "1d", null, graceMartin, sprint, story2, null);
-            Task task22 = addTask("New Task-7", "1d", null, graceMartin, sprint, story2, null);
-            Task task32 = addTask("New Task-8", "1d", null, graceMartin, sprint, story2, null);
+            Task story2 = addParentTask("Config persistence implementation", sprint, null, null);
+            Task task21 = addTask("create repository", "4h", "6h", graceMartin, sprint, story2, null);
+            Task task22 = addTask("schema documentation", "2h", "3h", graceMartin, sprint, story2, null);
+            Task task32 = addTask("persistence error handling", "5h", "7h", graceMartin, sprint, story2, null);
         }
 
 
