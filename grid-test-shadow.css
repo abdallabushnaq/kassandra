@@ -1,0 +1,54 @@
+/* Shadow DOM specific CSS - simulating Vaadin's shadow root styling */
+:host {
+    display: block;
+    background: #f4f5f7;
+}
+
+:host(.jira-backlog) #scroller {
+    background: #f4f5f7;
+}
+
+:host(.jira-backlog) table {
+    border-spacing: 0 0px;
+    border-collapse: separate;
+    background: #f4f5f7;
+    width: 100%;
+}
+
+:host(.jira-backlog) tbody tr {
+    box-shadow: 0 2px 4px rgba(9, 30, 66, 0.2), 2px 2px 4px rgba(9, 30, 66, 0.15);
+}
+
+:host(.jira-backlog) td {
+    background: #ffffff;
+    padding: 12px 16px;
+    border: 1px;
+    border-color: red;
+    border-style: solid;
+}
+
+:host(.jira-backlog) td:first-child {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+:host(.jira-backlog) td:last-child {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+:host(.jira-backlog) th {
+    background: transparent;
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 600;
+    color: #5e6c84;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+:host(.jira-backlog) thead tr {
+    background: transparent;
+}
+

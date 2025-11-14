@@ -682,32 +682,6 @@ public class TaskGrid extends Grid<Task> {
         return isEligible;
     }
 
-//    /**
-//     * Move a task to a new position and recalculate all orderIds
-//     */
-//    private void moveTask(int fromIndex, int toIndex) {
-//        if (fromIndex == toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= taskOrder.size() || toIndex >= taskOrder.size()) {
-//            log.info("Cannot move task from index {} to {}", fromIndex, toIndex);
-//            return;
-//        }
-//
-//        log.info("Moving task from index {} to {}", fromIndex, toIndex);
-//
-//        // Remove task from old position
-//        Task movedTask = taskOrder.remove(fromIndex);
-//
-//        // Insert at new position
-//        taskOrder.add(toIndex, movedTask);
-//
-//        // Recalculate orderIds for all tasks based on their new positions
-//        for (int i = 0; i < taskOrder.size(); i++) {
-//            Task task = taskOrder.get(i);
-//            task.setOrderId(i);
-//            markTaskAsModified(task);
-//        }
-//
-//        // Refresh the grid to show new order
-
     /**
      * Mark a task as modified
      */

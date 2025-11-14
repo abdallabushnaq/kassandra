@@ -1,23 +1,9 @@
-/*
- *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
-
+// File: 'src/main/java/de/bushnaq/abdalla/kassandra/ui/view/GridRowReordering.java'
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
 import com.vaadin.flow.component.grid.dnd.GridDropLocation;
 import com.vaadin.flow.component.grid.dnd.GridDropMode;
@@ -35,14 +21,18 @@ import java.util.List;
 @AnonymousAllowed
 @Log4j2
 @Deprecated
+@CssImport(value = "./styles/jira-backlog-grid.css", themeFor = "vaadin-grid")
+@CssImport("./styles/jira-backlog-view.css")
 public class GridRowReordering extends Div {
 
     private User draggedItem;
 
     public GridRowReordering(UserApi userApi) {
+        addClassName("jira-backlog-view");
+        setSizeFull();
+
         Grid<User> grid = setupGrid();
 
-        // Modifying the data view requires a mutable collection
         List<User>             people   = new ArrayList<>(userApi.getAll());
         GridListDataView<User> dataView = grid.setItems(people);
 
@@ -53,22 +43,18 @@ public class GridRowReordering extends Div {
             grid.setDropMode(GridDropMode.BETWEEN);
         });
 
-        grid.setDropFilter(e -> {
-            return false;
-        });
+        // Keep your existing drop filter/logic if needed
+        grid.setDropFilter(e -> false);
+
         grid.addDropListener(e -> {
             User             targetPerson = e.getDropTargetItem().orElse(null);
             GridDropLocation dropLocation = e.getDropLocation();
 
             log.warn("DropListener: draggedItem={}, targetPerson={}, dropLocation={}", draggedItem, targetPerson, dropLocation);
-            boolean personWasDroppedOntoItself = draggedItem
-                    .equals(targetPerson);
-
-            if (targetPerson == null || personWasDroppedOntoItself)
-                return;
+            boolean personWasDroppedOntoItself = draggedItem != null && draggedItem.equals(targetPerson);
+            if (targetPerson == null || personWasDroppedOntoItself) return;
 
             dataView.removeItem(draggedItem);
-
             if (dropLocation == GridDropLocation.BELOW) {
                 dataView.addItemAfter(draggedItem, targetPerson);
             } else {
@@ -86,11 +72,15 @@ public class GridRowReordering extends Div {
 
     private static Grid<User> setupGrid() {
         Grid<User> grid = new Grid<>(User.class, false);
-        grid.addColumn(User::getName).setHeader("First name");
-        grid.addColumn(User::getEmail).setHeader("Last name");
-        grid.addColumn(User::getEmail).setHeader("Email");
+        grid.addClassName("jira-backlog");
+        grid.setHeightFull();
+        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
+
+        // Keep multiple columns
+        grid.addColumn(User::getName).setHeader("First name").setAutoWidth(true);
+        grid.addColumn(User::getEmail).setHeader("Last name").setAutoWidth(true);
+        grid.addColumn(User::getEmail).setHeader("Email").setAutoWidth(true);
 
         return grid;
     }
-
 }

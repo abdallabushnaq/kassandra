@@ -1,0 +1,9 @@
+/* File: 'frontend/styles/jira-backlog-view.css'
+   Light gray background for the whole view */
+.jira-backlog-view {
+  background-color: #f4f5f7;
+  padding: var(--lumo-space-m);
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+}

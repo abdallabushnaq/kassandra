@@ -242,6 +242,7 @@ public class ProductListViewTester {
      */
     public void switchToProductListView(String screenshotFileName, String recordingFolderName, String testName) {
         seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
+//        seleniumHandler.wait(120000);
         seleniumHandler.startRecording(recordingFolderName, testName);
         seleniumHandler.setLoginUser("admin-user");
         seleniumHandler.setLoginPassword("test-password");

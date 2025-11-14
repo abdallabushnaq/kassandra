@@ -1,0 +1,171 @@
+<!--
+  ~
+  ~ Copyright (C) 2025-2025 Abdalla Bushnaq
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  ~
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Jira-like Grid Test</title>
+    <link href="grid-test.css" rel="stylesheet">
+</head>
+<body>
+<h2>Jira-like Grid Test (Simulating Vaadin Shadow DOM)</h2>
+<p>This simulates the Vaadin grid structure to test CSS. Gray gaps should be visible between white row "cards".</p>
+
+<h3>Test 1: Regular DOM (should work)</h3>
+<div class="grid-host">
+    <div id="scroller">
+        <table>
+            <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>John</td>
+                <td>Doe</td>
+                <td>john.doe@example.com</td>
+            </tr>
+            <tr>
+                <td>Jane</td>
+                <td>Smith</td>
+                <td>jane.smith@example.com</td>
+            </tr>
+            <tr>
+                <td>Bob</td>
+                <td>Johnson</td>
+                <td>bob.johnson@example.com</td>
+            </tr>
+            <tr>
+                <td>Alice</td>
+                <td>Williams</td>
+                <td>alice.williams@example.com</td>
+            </tr>
+            <tr>
+                <td>Charlie</td>
+                <td>Brown</td>
+                <td>charlie.brown@example.com</td>
+            </tr>
+            <tr>
+                <td>Diana</td>
+                <td>Davis</td>
+                <td>diana.davis@example.com</td>
+            </tr>
+            <tr>
+                <td>Eve</td>
+                <td>Miller</td>
+                <td>eve.miller@example.com</td>
+            </tr>
+            <tr>
+                <td>Frank</td>
+                <td>Wilson</td>
+                <td>frank.wilson@example.com</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<h3 style="margin-top: 40px;">Test 2: Shadow DOM (simulating Vaadin)</h3>
+<test-grid class="jira-backlog"></test-grid>
+
+<script>
+    // Create a custom element with shadow DOM to test if shadow root affects border-spacing
+    class TestGrid extends HTMLElement {
+        constructor() {
+            super();
+            // Attach shadow DOM
+            const shadow = this.attachShadow({ mode: 'open' });
+
+            // Load external CSS file into shadow DOM
+            const linkElem = document.createElement('link');
+            linkElem.setAttribute('rel', 'stylesheet');
+            linkElem.setAttribute('href', 'grid-test-shadow.css');
+
+            // Create the table structure
+            const scroller = document.createElement('div');
+            scroller.id = 'scroller';
+            scroller.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>John</td>
+                            <td>Doe</td>
+                            <td>john.doe@example.com</td>
+                        </tr>
+                        <tr>
+                            <td>Jane</td>
+                            <td>Smith</td>
+                            <td>jane.smith@example.com</td>
+                        </tr>
+                        <tr>
+                            <td>Bob</td>
+                            <td>Johnson</td>
+                            <td>bob.johnson@example.com</td>
+                        </tr>
+                        <tr>
+                            <td>Alice</td>
+                            <td>Williams</td>
+                            <td>alice.williams@example.com</td>
+                        </tr>
+                        <tr>
+                            <td>Charlie</td>
+                            <td>Brown</td>
+                            <td>charlie.brown@example.com</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+
+            shadow.appendChild(linkElem);
+            shadow.appendChild(scroller);
+        }
+    }
+
+    // Register the custom element
+    customElements.define('test-grid', TestGrid);
+</script>
+
+<div style="margin-top: 40px; padding: 20px; background: white; border-radius: 4px;">
+    <h3>Debug Info:</h3>
+    <p><strong>Test 1 (Regular DOM):</strong> Should show gray gaps - standard HTML table with external CSS.</p>
+    <p><strong>Test 2 (Shadow DOM):</strong> Should show if shadow root affects border-spacing behavior. Uses :host()
+        selectors like Vaadin.</p>
+    <ul>
+        <li>Background: #f4f5f7 (light gray)</li>
+        <li>Table border-spacing: 0 4px (vertical gaps)</li>
+        <li>tbody tr gets box-shadow</li>
+        <li>td background: #ffffff (white)</li>
+        <li>Expected result: Gray gaps visible between white row cards in BOTH tests</li>
+    </ul>
+    <p><strong>If Test 1 works but Test 2 doesn't, we've found the issue!</strong></p>
+    <p>If both work, then Vaadin must have additional interference.</p>
+</div>
+</body>
+</html>
+
