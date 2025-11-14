@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -44,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @Component
 @Lazy
+@Log4j2
 public class ProductListViewTester {
     @Getter
     private final int                      port;
@@ -276,7 +278,7 @@ public class ProductListViewTester {
 
                 // Click with SeleniumHandler for mouse movement and humanization
                 seleniumHandler.click(LoginView.OIDC_LOGIN_BUTTON);
-                System.out.println("OIDC Login: Clicked login button with mouse movement");
+//                System.out.println("OIDC Login: Clicked login button with mouse movement");
 
                 // Wait a moment and check the current URL
 //                try {
@@ -289,7 +291,7 @@ public class ProductListViewTester {
                 // Wait longer for Keycloak redirect (up to 10 seconds)
 //                System.out.println("OIDC Login: Waiting for Keycloak login page");
                 seleniumHandler.waitForPageLoaded(10);
-                System.out.println("OIDC Login: Current URL after waiting: " + seleniumHandler.getCurrentUrl());
+//                System.out.println("OIDC Login: Current URL after waiting: " + seleniumHandler.getCurrentUrl());
                 // Check for username field
 //                System.out.println("OIDC Login: Looking for username field");
                 try {
@@ -313,9 +315,9 @@ public class ProductListViewTester {
                     // Wait for redirect back
 //                    System.out.println("OIDC Login: Waiting for redirect back to application");
                     seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(ProductListView.PRODUCT_LIST_PAGE_TITLE)));
-                    System.out.println("OIDC Login: Successfully logged in with OIDC");
+//                    System.out.println("OIDC Login: Successfully logged in with OIDC");
                 } catch (Exception e) {
-                    System.out.println("OIDC Login: Error during Keycloak login: " + e.getMessage());
+                    log.error("OIDC Login: Error during Keycloak login: " + e.getMessage());
                     throw e;
                 }
             } else {
@@ -330,8 +332,8 @@ public class ProductListViewTester {
                 throw new Exception("OIDC Login: Fatal error in login process: ");
             }
         } catch (Exception e) {
-            System.out.println("OIDC Login: Fatal error in login process: " + e.getMessage());
-            e.printStackTrace();
+            log.error("OIDC Login: Fatal error in login process: " + e.getMessage(), e);
+//            e.printStackTrace();
 //            seleniumHandler.takeScreenshot("fatal-login-error.png");
             throw e;
         }

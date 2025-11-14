@@ -58,7 +58,7 @@ import java.util.List;
 @Transactional
 public class UserProfileIntroductionVideoTest extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                   VIDEO_TITLE = "User Profile Introduction Video";
+    public static final String                   VIDEO_TITLE = "Kassandra User Profile";
     @Autowired
     private             ProductListViewTester    productListViewTester;
     @Autowired
@@ -76,8 +76,8 @@ public class UserProfileIntroductionVideoTest extends AbstractKeycloakUiTestUtil
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
-        seleniumHandler.showOverlay("Kassandra User Profile", InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE);
+        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         seleniumHandler.wait(3000);
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about managing your user profile in Kassandra. Your profile contains important information about how you're identified in the system and displayed in reports.");
         seleniumHandler.hideOverlay();

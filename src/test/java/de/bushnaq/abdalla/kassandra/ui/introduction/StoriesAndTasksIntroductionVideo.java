@@ -73,7 +73,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
     public static final  String                     NEW_STORY     = "New Story-";
     public static final  String                     NEW_TASK      = "New Task-";
     public static final  NarratorAttribute          NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  String                     VIDEO_TITLE   = "Stories and Tasks Introduction Video";
+    public static final  String                     VIDEO_TITLE   = "Kassandra Stories and Tasks";
     // Start Keycloak container with realm configuration
     @Container
     private static final KeycloakContainer          keycloak      = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
@@ -146,8 +146,8 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
         seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(TaskListView.TASK_LIST_PAGE_TITLE_ID)));
 
         HumanizedSeleniumHandler.setHumanize(false);
-        seleniumHandler.showOverlay("Kassandra Stories and Tasks", InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE);
+        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         paul.pause(3000);
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about Stories and Tasks in Kassandra. A story is basically a container for a list of Tasks. Tasks represent the work we plan including the estimation for the effort. This is essential for accurate sprint planning and capacity calculations.");
         seleniumHandler.hideOverlay();

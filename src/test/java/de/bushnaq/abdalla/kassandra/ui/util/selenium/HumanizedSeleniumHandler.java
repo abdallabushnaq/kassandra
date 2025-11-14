@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.util.selenium;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 import org.openqa.selenium.*;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
@@ -42,21 +43,37 @@ import java.util.Random;
  * @author Abdalla Bushnaq
  */
 @Component
+@Log4j2
 public class HumanizedSeleniumHandler extends SeleniumHandler {
     @Getter
     @Setter
-    private        boolean highlightEnabled       = true;
-    private final  Object  highlightLock          = new Object();// Synchronization for highlight removal
-    private        Thread  highlightRemovalThread = null;
+    private        boolean highlightEnabled         = true;
+    private final  Object  highlightLock            = new Object();// Synchronization for highlight removal
+    private        Thread  highlightRemovalThread   = null;
     @Getter
     @Setter
-    private static boolean humanize               = false;
+    private static boolean humanize                 = false;
+    /**
+     * -- GETTER --
+     * Get the current mouse move delay multiplier.
+     */
+    // --- New configurable mouse movement speed controls ---
+    // Multiplies per-step delays during human-like mouse movement. >1 slows down, <1 speeds up. Default 1.0 retains current behavior.
+    @Getter
+    private        double  mouseMoveDelayMultiplier = 1.0;
+    /**
+     * -- GETTER --
+     * Get the current mouse move steps multiplier.
+     */
+    // Multiplies the number of movement steps. >1 adds more steps (smoother and slower overall), <1 reduces steps. Default 1.0.
+    @Getter
+    private        double  mouseMoveStepsMultiplier = 1.0;
     @Setter
     @Getter
-    private        boolean moveMouse              = true;// Enable or disable mouse movement entirely
-    private final  Random  random                 = new Random(); // For human-like randomness
-    private        Robot   robot                  = null; // Lazily initialized
-    private final  int     typingDelayMillis      = 50;
+    private        boolean moveMouse                = true;// Enable or disable mouse movement entirely
+    private final  Random  random                   = new Random(); // For human-like randomness
+    private        Robot   robot                    = null; // Lazily initialized
+    private final  int     typingDelayMillis        = 50;
 
     /**
      * Centers the mouse cursor on the browser window.
@@ -75,7 +92,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
 
         Robot robotInstance = getRobot();
         if (robotInstance == null) {
-            logger.debug("Robot not available, cannot center mouse");
+            log.debug("Robot not available, cannot center mouse");
             return;
         }
 
@@ -90,14 +107,58 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
 
             // Move mouse to center (instantly, no smooth movement)
             robotInstance.mouseMove(centerX, centerY);
-            logger.debug("Centered mouse on browser at ({}, {})", centerX, centerY);
+            log.debug("Centered mouse on browser at ({}, {})", centerX, centerY);
 
         } catch (Exception e) {
-            logger.warn("Failed to center mouse on browser: {}", e.getMessage());
+            log.warn("Failed to center mouse on browser: {}", e.getMessage());
         }
     }
 
+    /**
+     * Performs a drag-and-drop operation from the source element to the target element.
+     *
+     * @param sourceId
+     * @param targetId
+     */
     public void dragAndDrop(String sourceId, String targetId) {
+        dragAndDropShift(sourceId, targetId, 0, 0);
+    }
+
+    /**
+     * Performs a drag-and-drop operation from the source element to just above the target element.
+     *
+     * @param sourceId
+     * @param targetId
+     */
+    public void dragAndDropAbove(String sourceId, String targetId) {
+        dragAndDropShift(sourceId, targetId, 0, -6);
+    }
+
+    /**
+     * Performs a drag-and-drop operation from the source element to just below the target element.
+     *
+     * @param sourceId
+     * @param targetId
+     */
+    public void dragAndDropBelow(String sourceId, String targetId) {
+        dragAndDropShift(sourceId, targetId, 0, 6);
+    }
+
+    /**
+     * Performs a drag-and-drop operation from the source element to the target element,
+     * with optional pixel shifts to adjust the drop position.
+     * <p>
+     * If humanized mode is enabled and not in headless mode, uses Robot for smooth
+     * mouse movement and realistic drag-and-drop simulation. Otherwise, falls back
+     * to Selenium Actions for reliability.
+     * </p>
+     *
+     * @param sourceId
+     * @param targetId
+     * @param shiftX
+     * @param shiftY
+     */
+    public void dragAndDropShift(String sourceId, String targetId, int shiftX, int shiftY) {
         // Ensure both elements are ready
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(sourceId)));
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(targetId)));
@@ -124,8 +185,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 java.awt.Point end   = getElementCenterOnScreen(targetElement);
 
                 // Small jitter to avoid pixel-perfect center every time
-                start.translate(random.nextInt(7) - 3, random.nextInt(7) - 3);
-                end.translate(random.nextInt(7) - 3, random.nextInt(7) - 3);
+//                start.translate(0, 0);
+                end.translate(shiftX, shiftY);
 
                 // Ensure we are exactly at start
                 java.awt.Point current = MouseInfo.getPointerInfo().getLocation();
@@ -138,13 +199,14 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 wait(80 + random.nextInt(120));
 
                 // Human-like move to target
+                log.trace("---Dragging from ({}, {}) to ({}, {})", start.x, start.y, end.x, end.y);
                 humanLikeMouseMove(start.x, start.y, end.x, end.y);
                 wait(60 + random.nextInt(120));
 
                 // Release
                 r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
                 wait(120 + random.nextInt(200));
-                logger.info("Drag-and-drop performed (humanized) from '{}' to '{}'", sourceId, targetId);
+                log.info("Drag-and-drop performed (humanized) from '{}' to '{}'", sourceId, targetId);
             } else {
                 // Fallback to reliable Selenium Actions
                 new org.openqa.selenium.interactions.Actions(getDriver())
@@ -157,11 +219,11 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                         .release(targetElement)
                         .build()
                         .perform();
-                logger.info("Drag-and-drop performed via Selenium Actions from '{}' to '{}'", sourceId, targetId);
+                log.info("Drag-and-drop performed via Selenium Actions from '{}' to '{}'", sourceId, targetId);
             }
         } catch (StaleElementReferenceException e) {
             // Retry once if elements went stale mid-action
-            logger.debug("Elements went stale during drag-and-drop, retrying once: {}", e.getMessage());
+            log.debug("Elements went stale during drag-and-drop, retrying once: {}", e.getMessage());
             WebElement src2 = findElement(By.id(sourceId));
             WebElement dst2 = findElement(By.id(targetId));
             new org.openqa.selenium.interactions.Actions(getDriver())
@@ -175,7 +237,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                     .build()
                     .perform();
         } catch (Exception e) {
-            logger.warn("Drag-and-drop failed using humanized mode, falling back to Actions if possible: {}", e.getMessage());
+            log.warn("Drag-and-drop failed using humanized mode, falling back to Actions if possible: {}", e.getMessage());
             try {
                 new org.openqa.selenium.interactions.Actions(getDriver())
                         .clickAndHold(sourceElement)
@@ -184,7 +246,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                         .build()
                         .perform();
             } catch (Exception e2) {
-                logger.error("Drag-and-drop failed via Actions as well: {}", e2.getMessage(), e2);
+                log.error("Drag-and-drop failed via Actions as well: {}", e2.getMessage(), e2);
                 throw e2;
             }
         }
@@ -200,8 +262,10 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         Point                         windowPosition  = getDriver().manage().window().getPosition();
         int                           chromeHeight    = getBrowserChromeHeight();
 
+        windowPosition = new Point(Math.max(windowPosition.x, 0), Math.max(windowPosition.y, 0));//prevent negative coordinates
         int targetX = windowPosition.getX() + elementLocation.getX() + (elementSize.getWidth() / 2);
         int targetY = windowPosition.getY() + elementLocation.getY() + (elementSize.getHeight() / 2) + chromeHeight;
+        log.trace("Element {} center on screen calculated at ({}, {}, {}, {}, {}, {})", element.getTagName(), windowPosition, elementLocation, elementSize, chromeHeight, targetX, targetY);
         return new java.awt.Point(targetX, targetY);
     }
 
@@ -218,16 +282,16 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
 
         // Don't even try to create Robot in headless mode
         if (isSeleniumHeadless()) {
-            logger.debug("Headless mode detected, Robot not available");
+            log.debug("Headless mode detected, Robot not available");
             return null;
         }
 
         try {
             robot = new Robot();
             robot.setAutoDelay(0); // We'll control delays manually
-            logger.info("Robot initialized successfully for mouse movement");
+            log.info("Robot initialized successfully for mouse movement");
         } catch (AWTException e) {
-            logger.warn("Failed to initialize Robot for mouse movement: {}", e.getMessage());
+            log.warn("Failed to initialize Robot for mouse movement: {}", e.getMessage());
             robot = null;
         }
 
@@ -257,17 +321,17 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                             "}\n";
 
             executeJavaScript(script);
-            logger.info("Hiding overlay with fade-out animation");
+            log.info("Hiding overlay with fade-out animation");
 
             // Wait for fade-out animation to complete
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.warn("Interrupted while waiting for overlay fade-out");
+                log.warn("Interrupted while waiting for overlay fade-out");
             }
         } catch (Exception e) {
-            logger.error("Failed to hide overlay: {}", e.getMessage(), e);
+            log.error("Failed to hide overlay: {}", e.getMessage(), e);
         }
     }
 
@@ -282,9 +346,9 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             String script =
                     "var el=document.getElementById('video-key-title'); if(el){ el.remove(); }";
             executeJavaScript(script);
-            logger.debug("Transient title removed");
+            log.debug("Transient title removed");
         } catch (Exception e) {
-            logger.trace("Failed to remove transient title: {}", e.getMessage());
+            log.trace("Failed to remove transient title: {}", e.getMessage());
         }
     }
 
@@ -316,7 +380,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             return;
         }
         if (ids == null || ids.length == 0) {
-            logger.warn("No element IDs provided to highlight");
+            log.warn("No element IDs provided to highlight");
             return;
         }
 
@@ -363,7 +427,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             return;
         }
         if (!highlightEnabled || elements == null || elements.length == 0) {
-            logger.warn("No elements provided to highlight");
+            log.warn("No elements provided to highlight");
             return;
         }
 
@@ -397,18 +461,18 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             synchronized (highlightLock) {
                 if (highlightRemovalThread != null && highlightRemovalThread.isAlive()) {
                     try {
-                        logger.debug("Waiting for previous highlight removal to complete...");
+                        log.debug("Waiting for previous highlight removal to complete...");
                         highlightRemovalThread.join();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        logger.warn("Interrupted while waiting for previous highlight removal");
+                        log.warn("Interrupted while waiting for previous highlight removal");
                     }
                 }
 
                 // Execute the highlight script
                 Object result = executeJavaScript(script, elements);
 
-                logger.info("Highlighted {} element(s) for {}ms", elements.length, durationMillis);
+                log.info("Highlighted {} element(s) for {}ms", elements.length, durationMillis);
 
                 // Create cleanup script
                 String cleanupScript =
@@ -432,15 +496,15 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                         Thread.sleep(durationMillis);
                         // Remove highlights
                         executeJavaScript(cleanupScript, result);
-                        logger.debug("Removed highlights from {} element(s)", elements.length);
+                        log.debug("Removed highlights from {} element(s)", elements.length);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        logger.warn("Highlight removal thread interrupted");
+                        log.warn("Highlight removal thread interrupted");
                     } catch (StaleElementReferenceException e) {
                         //ignore, as this happens all the time when the element is no longer in the DOM
-                        logger.trace("Element went stale before highlight removal: {}", e.getMessage());
+//                        logger.trace("Element went stale before highlight removal: {}", e.getMessage());
                     } catch (Exception e) {
-                        logger.trace("Failed to remove highlights: {}", e.getMessage(), e);
+                        log.trace("Failed to remove highlights: {}", e.getMessage(), e);
                     }
                 }, "HighlightRemovalThread");
 
@@ -448,7 +512,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             }
 
         } catch (Exception e) {
-            logger.error("Failed to highlight elements: {}", e.getMessage(), e);
+            log.error("Failed to highlight elements: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to highlight elements: " + e.getMessage(), e);
         }
     }
@@ -508,6 +572,9 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         int steps = (int) (distance / 3); // Approximately 3 pixels per step
         steps = Math.max(steps, 20); // Minimum steps for smoothness
         steps = Math.min(steps, 200); // Maximum to prevent overly slow movements
+        // Apply user-configurable steps multiplier and clamp to a reasonable upper bound
+        steps = (int) Math.round(steps * mouseMoveStepsMultiplier);
+        steps = Math.max(20, Math.min(steps, 400));
 
         // Move the mouse along a quadratic B-spline curve with variable speed
         for (int i = 1; i <= steps; i++) {
@@ -529,36 +596,37 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
 
             // Variable delay: faster at start, slower at end
             // Start with 1-3ms, end with 3-8ms
-            int delay;
+            int baseDelay;
             if (t < 0.3) {
                 // Fast start
-                delay = 1 + random.nextInt(3);
+                baseDelay = 1 + random.nextInt(3);
             } else if (t < 0.7) {
                 // Medium speed
-                delay = 2 + random.nextInt(4);
+                baseDelay = 2 + random.nextInt(4);
             } else {
                 // Slow end for precision
-                delay = 3 + random.nextInt(6);
+                baseDelay = 3 + random.nextInt(6);
             }
 
-            if (delay > 0) {
-                robotInstance.delay(delay);
+            // Apply configurable delay multiplier
+            double m             = mouseMoveDelayMultiplier;
+            int    adjustedDelay = (int) Math.round(baseDelay * (m <= 0 ? 0 : m));
+
+            if (adjustedDelay > 0) {
+                robotInstance.delay(adjustedDelay);
             }
         }
 
         // Ensure we end exactly at the target position
         robotInstance.mouseMove(toX, toY);
 
-        // Small pause at the end (human-like settling)
-        robotInstance.delay(20 + random.nextInt(30));
+        // Small pause at the end (human-like settling), scaled by the delay multiplier
+        int endPause = 20 + random.nextInt(30);
+        endPause = (int) Math.round(endPause * (mouseMoveDelayMultiplier <= 0 ? 0 : mouseMoveDelayMultiplier));
+        if (endPause > 0) {
+            robotInstance.delay(endPause);
+        }
     }
-
-//    /**
-//     * Adjust per-character typing delay in milliseconds for humanized mode.
-//     */
-//    public void setTypingDelayMillis(int typingDelayMillis) {
-//        this.typingDelayMillis = Math.max(0, typingDelayMillis);
-//    }
 
     /**
      * Moves the mouse cursor smoothly to the center of the specified element.
@@ -578,7 +646,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         // Initialize Robot if needed
         Robot robotInstance = getRobot();
         if (robotInstance == null) {
-            logger.debug("Robot not available, skipping mouse movement");
+            log.debug("Robot not available, skipping mouse movement");
             return;
         }
 
@@ -605,11 +673,11 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // Perform smooth mouse movement with human-like characteristics
             humanLikeMouseMove(currentMouse.x, currentMouse.y, target.x, target.y);
 
-            logger.debug("Moved mouse to element '{}' at ({}, {})", element.getText(), target.x, target.y);
+            log.debug("Moved mouse to element '{}' at ({}, {})", element.getText(), target.x, target.y);
             wait(300);
 
         } catch (Exception e) {
-            logger.warn("Failed to move mouse to element: {}", e.getMessage());
+            log.warn("Failed to move mouse to element: {}", e.getMessage());
             // Continue with normal Selenium click even if mouse movement fails
         }
     }
@@ -623,6 +691,13 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         WebElement comboBoxElement = findElement(By.id(id));
         setComboBoxValue(comboBoxElement, text);
     }
+
+//    /**
+//     * Adjust per-character typing delay in milliseconds for humanized mode.
+//     */
+//    public void setTypingDelayMillis(int typingDelayMillis) {
+//        this.typingDelayMillis = Math.max(0, typingDelayMillis);
+//    }
 
     /**
      * Sets a combobox value in a humanized way by clicking on the dropdown toggle,
@@ -657,15 +732,15 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                     moveMouseToElement(toggleButton);
                     clickElement(toggleButton);
 //                    toggleButton.click();
-                    logger.debug("Clicked combobox toggle button via shadow DOM");
+                    log.debug("Clicked combobox toggle button via shadow DOM");
                 } else {
                     // Fallback: click on the input field if toggle button not found
-                    logger.debug("Toggle button not found in shadow DOM, clicking input field to open dropdown");
+                    log.debug("Toggle button not found in shadow DOM, clicking input field to open dropdown");
                     inputElement.click();
                 }
             } catch (Exception ex) {
                 // Fallback: click on the input field if shadow DOM access fails
-                logger.debug("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
+                log.debug("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
                 inputElement.click();
             }
 
@@ -679,7 +754,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // We can query them directly without accessing shadow DOM
             List<WebElement> dropdownItems = getDriver().findElements(By.cssSelector("vaadin-combo-box-item"));
 
-            logger.debug("Found {} dropdown items", dropdownItems.size());
+            log.debug("Found {} dropdown items", dropdownItems.size());
 
             // Find the item that matches the text
             WebElement matchingItem = null;
@@ -696,9 +771,9 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 moveMouseToElement(matchingItem);
                 wait(100);
                 matchingItem.click();
-                logger.debug("Clicked on dropdown item: {}", text);
+                log.debug("Clicked on dropdown item: {}", text);
             } else {
-                logger.warn("Could not find dropdown item with text: {}. Falling back to keyboard method.", text);
+                log.warn("Could not find dropdown item with text: {}. Falling back to keyboard method.", text);
                 // Fallback to typing method if item not found
                 setComboBoxValueByTyping(inputElement, text);
             }
@@ -707,7 +782,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             wait(200);
 
         } catch (Exception ex) {
-            logger.warn("Error during humanized combobox selection: {}. Falling back to keyboard method.", ex.getMessage());
+            log.warn("Error during humanized combobox selection: {}. Falling back to keyboard method.", ex.getMessage());
             // Fallback to typing method on any error
             setComboBoxValueByTyping(inputElement, text);
         }
@@ -755,7 +830,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             moveMouseToElement(toggleButton);
             wait(100);
             toggleButton.click();
-            logger.debug("Clicked date picker toggle button");
+            log.debug("Clicked date picker toggle button");
             wait(300); // Wait for calendar to appear
         }
 
@@ -763,7 +838,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         // The actual input has an id like "search-input-vaadin-date-picker-20"
         WebElement inputField = datePickerElement.findElement(By.cssSelector("input[slot='input']"));
 
-        logger.debug("Found input field, typing date");
+        log.debug("Found input field, typing date");
 
         moveMouseToElement(inputField);
         wait(100);
@@ -775,20 +850,20 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         // Format the date in US format (M/d/yyyy)
         // Note: This matches the browser's default US locale
         String dateStr = date.format(DateTimeFormatter.ofPattern("M/d/yyyy"));
-        logger.info("Typing date into date picker: {} (formatted as US: {})", date, dateStr);
+        log.info("Typing date into date picker: {} (formatted as US: {})", date, dateStr);
 
         typeText(inputField, dateStr);
 
         wait(500);
         inputField.sendKeys(Keys.ENTER);// Press Enter to confirm the date and close the calendar
-        logger.debug("Pressed Enter to confirm date");
+        log.debug("Pressed Enter to confirm date");
 
         // Wait for the calendar overlay to close
         wait(200);
         WebElement overlay = expandRootElementAndFindElement(datePickerElement, "vaadin-date-picker-overlay");
         waitUntil(ExpectedConditions.invisibilityOfAllElements(overlay));
-        logger.debug("Date picker overlay closed successfully");
-        logger.debug("Successfully set date: {}", date);
+        log.debug("Date picker overlay closed successfully");
+        log.debug("Successfully set date: {}", date);
     }
 
     public void setDateTimePickerValue(String datePickerId, LocalDateTime date) {
@@ -811,7 +886,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 moveMouseToElement(toggleButton);
                 wait(100);
                 toggleButton.click();
-                logger.debug("Clicked date picker toggle button");
+                log.debug("Clicked date picker toggle button");
                 wait(300); // Wait for calendar to appear
             }
 
@@ -819,7 +894,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // The actual input has an id like "search-input-vaadin-date-picker-20"
             WebElement inputField = dateTimePickerElement.findElement(By.cssSelector("input[slot='input']"));
 
-            logger.debug("Found input field, typing date-time");
+            log.debug("Found input field, typing date-time");
 
             moveMouseToElement(inputField);
             wait(100);
@@ -831,26 +906,42 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // Format the date in US format (M/d/yyyy)
             // Note: This matches the browser's default US locale
             String dateStr = date.toLocalDate().format(DateTimeFormatter.ofPattern("M/d/yyyy"));
-            logger.info("Typing date into date time picker: {} (formatted as US: {})", date, dateStr);
+            log.info("Typing date into date time picker: {} (formatted as US: {})", date, dateStr);
 
             typeText(inputField, dateStr);
 
             wait(500);
             inputField.sendKeys(Keys.ENTER);// Press Enter to confirm the date and close the calendar
-            logger.debug("Pressed Enter to confirm date-time");
+            log.debug("Pressed Enter to confirm date-time");
 
             // Wait for the calendar overlay to close
             wait(200);
             WebElement overlay = expandRootElementAndFindElement(datePickerElement, "vaadin-date-picker-overlay");
             waitUntil(ExpectedConditions.invisibilityOfAllElements(overlay));
-            logger.debug("Date picker overlay closed successfully");
+            log.debug("Date picker overlay closed successfully");
         }
         {
             // find the date picker element
             WebElement timePickerElement = dateTimePickerElement.findElement(By.tagName("vaadin-time-picker"));
             setTimePickerValue(timePickerElement, date.toLocalTime().format(DateTimeFormatter.ofPattern("h:mm a")));
         }
-        logger.debug("Successfully set date-time: {}", date);
+        log.debug("Successfully set date-time: {}", date);
+    }
+
+    /**
+     * Set a multiplier for the per-step delay during human-like mouse movements.
+     * Values > 1.0 slow the movement; values between 0.0 and 1.0 speed it up. Negative values are clamped to 0.0.
+     */
+    public void setMouseMoveDelayMultiplier(double mouseMoveDelayMultiplier) {
+        this.mouseMoveDelayMultiplier = Math.max(0.0, mouseMoveDelayMultiplier);
+    }
+
+    /**
+     * Set a multiplier for the number of steps used during human-like mouse movement.
+     * Values > 1.0 increase steps (smoother and slower), values between 0.1 and 1.0 reduce steps. Values < 0.1 are clamped to 0.1.
+     */
+    public void setMouseMoveStepsMultiplier(double mouseMoveStepsMultiplier) {
+        this.mouseMoveStepsMultiplier = Math.max(0.1, mouseMoveStepsMultiplier);
     }
 
     public void setTimePickerValue(WebElement comboBoxElement, String text) {
@@ -858,7 +949,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
 //            super.setComboBoxValue(id, text);
 //            return;
 //        }
-//        waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
+//        waitUntil(ExpectedConditions.elementToBeInteractable(By.id(id)));
 //        WebElement comboBoxElement = findElement(By.id(id));
         WebElement inputElement = comboBoxElement.findElement(By.tagName("input"));
         waitForElementToBeInteractable(inputElement.getAttribute("id"));
@@ -879,15 +970,15 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                     moveMouseToElement(toggleButton);
                     clickElement(toggleButton);
 //                    toggleButton.click();
-                    logger.debug("Clicked time-picker toggle button via shadow DOM");
+                    log.debug("Clicked time-picker toggle button via shadow DOM");
                 } else {
                     // Fallback: click on the input field if toggle button not found
-                    logger.debug("Toggle button not found in shadow DOM, clicking input field to open dropdown");
+                    log.debug("Toggle button not found in shadow DOM, clicking input field to open dropdown");
                     inputElement.click();
                 }
             } catch (Exception ex) {
                 // Fallback: click on the input field if shadow DOM access fails
-                logger.debug("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
+                log.debug("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
                 inputElement.click();
             }
 
@@ -901,7 +992,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // We can query them directly without accessing shadow DOM
             List<WebElement> dropdownItems = getDriver().findElements(By.cssSelector("vaadin-time-picker-item"));
 
-            logger.debug("Found {} dropdown items", dropdownItems.size());
+            log.debug("Found {} dropdown items", dropdownItems.size());
 
             // Find the item that matches the text
             WebElement matchingItem = null;
@@ -918,9 +1009,9 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 moveMouseToElement(matchingItem);
                 wait(100);
                 matchingItem.click();
-                logger.debug("Clicked on dropdown item: {}", text);
+                log.debug("Clicked on dropdown item: {}", text);
             } else {
-                logger.warn("Could not find dropdown item with text: {}. Falling back to keyboard method.", text);
+                log.warn("Could not find dropdown item with text: {}. Falling back to keyboard method.", text);
                 // Fallback to typing method if item not found
                 setComboBoxValueByTyping(inputElement, text);
             }
@@ -929,7 +1020,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             wait(200);
 
         } catch (Exception ex) {
-            logger.warn("Error during humanized time-picker selection: {}. Falling back to keyboard method.", ex.getMessage());
+            log.warn("Error during humanized time-picker selection: {}. Falling back to keyboard method.", ex.getMessage());
             // Fallback to typing method on any error
             setComboBoxValueByTyping(inputElement, text);
         }
@@ -948,7 +1039,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             return;
         }
         try {
-            logger.trace("Preparing to show overlay with title: '{}' and subtitle: '{}'", title, subtitle);
+            log.trace("Preparing to show overlay with title: '{}' and subtitle: '{}'", title, subtitle);
             // Wait for page to be fully loaded
             waitForPageLoaded();
 
@@ -995,17 +1086,17 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                             "}, 10);\n";
 
             executeJavaScript(script);
-            logger.info("Displayed overlay with title: '{}'", title);
+            log.info("Displayed overlay with title: '{}'", title);
 
             // Wait for fade-in animation to complete
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.warn("Interrupted while waiting for overlay fade-in");
+                log.warn("Interrupted while waiting for overlay fade-in");
             }
         } catch (Exception e) {
-            logger.error("Failed to show overlay: {}", e.getMessage(), e);
+            log.error("Failed to show overlay: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to show overlay: " + e.getMessage(), e);
         }
     }
@@ -1030,7 +1121,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 Thread.sleep(displaySeconds * 1000L);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.warn("Interrupted while waiting for overlay display duration");
+                log.warn("Interrupted while waiting for overlay display duration");
             }
         }
 
@@ -1076,9 +1167,9 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                             "})();";
 
             executeJavaScript(script);
-            logger.info("Displayed transient title: '{}' for {} ms", title, duration);
+            log.info("Displayed transient title: '{}' for {} ms", title, duration);
         } catch (Exception e) {
-            logger.error("Failed to show transient title: {}", e.getMessage(), e);
+            log.error("Failed to show transient title: {}", e.getMessage(), e);
         }
     }
 

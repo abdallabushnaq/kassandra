@@ -28,7 +28,10 @@ import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
 import de.bushnaq.abdalla.kassandra.ui.view.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.view.TaskListView;
-import de.bushnaq.abdalla.kassandra.ui.view.util.*;
+import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
+import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
+import de.bushnaq.abdalla.kassandra.ui.view.util.SprintListViewTester;
+import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.TestInfo;
@@ -63,17 +66,15 @@ import java.util.List;
 @AutoConfigureMockMvc
 @Transactional
 public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil {
-    //    public static final  float                      EXAGGERATE_LOW    = 0.25f;
-//    public static final  float                      EXAGGERATE_NORMAL = 0.3f;
-    public static final  NarratorAttribute          EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  String                     NEW_MILESTONE = "New Milestone-";
-    public static final  String                     NEW_STORY     = "New Story-";
-    public static final  String                     NEW_TASK      = "New Task-";
-    public static final  NarratorAttribute          NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  String                     VIDEO_TITLE   = "Rearranging Stories and Tasks Introduction Video";
-    // Start Keycloak container with realm configuration
+    public static final  NarratorAttribute        EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final  String                   NEW_MILESTONE = "New Milestone-";
+    public static final  String                   NEW_STORY     = "New Story-";
+    public static final  String                   NEW_TASK      = "New Task-";
+    public static final  NarratorAttribute        NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final  String                   VIDEO_TITLE   = "Rearranging Stories and Tasks";
     @Container
-    private static final KeycloakContainer          keycloak      = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
+    private static final KeycloakContainer        keycloak      = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
+            // Start Keycloak container with realm configuration
             .withRealmImportFile("keycloak/project-hub-realm.json")
             .withAdminUsername("admin")
             .withAdminPassword("admin")
@@ -85,29 +86,27 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
             .withEnv("KC_HOSTNAME_STRICT", "false")
             .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false");
     @Autowired
-    private              AvailabilityListViewTester availabilityListViewTester;
+    private              FeatureListViewTester    featureListViewTester;
+    private              String                   featureName;
     @Autowired
-    private              FeatureListViewTester      featureListViewTester;
-    private              String                     featureName;
+    private              ProductListViewTester    productListViewTester;
+    private              String                   productName;
     @Autowired
-    private              LocationListViewTester     locationListViewTester;
+    private              HumanizedSeleniumHandler seleniumHandler;
     @Autowired
-    private              OffDayListViewTester       offDayListViewTester;
+    private              SprintListViewTester     sprintListViewTester;
+    private              String                   sprintName;
+    private              Task                     story1;
+    private              Task                     story2;
+    private              Task                     task11;
+    private              Task                     task12;
+    private              Task                     task13;
+    private              Task                     task21;
+    private              Task                     task22;
+    private              Task                     task23;
     @Autowired
-    private              ProductListViewTester      productListViewTester;
-    private              String                     productName;
-    @Autowired
-    private              HumanizedSeleniumHandler   seleniumHandler;
-    @Autowired
-    private              SprintListViewTester       sprintListViewTester;
-    private              String                     sprintName;
-    @Autowired
-    private              TaskListViewTester         taskListViewTester;
-    @Autowired
-    private              UserListViewTester         userListViewTester;
-    @Autowired
-    private              VersionListViewTester      versionListViewTester;
-    private              String                     versionName;
+    private              VersionListViewTester    versionListViewTester;
+    private              String                   versionName;
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
@@ -128,19 +127,18 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
 
-
-        // Demo the natural language search capabilities
+        // navigate to the sprint's task list view
         productListViewTester.selectProduct(productName);
         versionListViewTester.selectVersion(versionName);
         featureListViewTester.selectFeature(featureName);
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
         seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(TaskListView.TASK_LIST_PAGE_TITLE_ID)));
 
-        HumanizedSeleniumHandler.setHumanize(false);
-        seleniumHandler.showOverlay("Kassandra Stories and Tasks", InstructionVideosUtil.VIDEO_SUBTITLE);
-//        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE);
+        HumanizedSeleniumHandler.setHumanize(true);
+        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         paul.pause(3000);
-        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about Stories and Tasks in Kassandra. A story is basically a container for a list of Tasks. Tasks represent the work we plan including the estimation for the effort. This is essential for accurate sprint planning and capacity calculations.");
+        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn how to rearrange stories and tasks. By rearranging we mean changing the order in the list to change the priority of a story or task, or moving a task from a story to another story.");
         seleniumHandler.hideOverlay();
 
         int    orderId        = 0;
@@ -158,22 +156,33 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         // Tasks Page
         //---------------------------------------------------------------------------------------..
 
-
-        HumanizedSeleniumHandler.setHumanize(true);
+        seleniumHandler.setMouseMoveStepsMultiplier(2.0);
+        seleniumHandler.setMouseMoveDelayMultiplier(2);
         // Move Story-5 before Story-1
         paul.narrate(NORMAL, "Now, let's see how we can rearrange stories and tasks using drag and drop. First, we'll move the second story before first story to prioritize it higher in our sprint backlog. So, first the persistence, then the API");
-        seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + story2Name, TaskGrid.TASK_GRID_PREFIX + story1Name);
+        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + story2.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
+
+        paul.narrate(NORMAL, "Next, lets move the story back.");
+        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_PREFIX + story2.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
+        paul.narrate(NORMAL, "Have you noticed that Kassandra only allowed me to drop the story above or below another story and that the child tasks always follow the story? This makes rearranging blocks of work really easy.");
 
         paul.narrate(NORMAL, "Great! Now, let's rearrange some tasks within the API story. I like open API first approach. We'll move API documentation before creating the controller.");
-        seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + task12Name, TaskGrid.TASK_GRID_PREFIX + task11Name);
+        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + task12.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
 
         paul.narrate(NORMAL, "Finally, let's say we need to address error handling first to ensure robustness. We'll move API error handling to the top of our task list into the persistence story.");
-        seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + task13Name, TaskGrid.TASK_GRID_PREFIX + task21Name);
+        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + task13.getName(), TaskGrid.TASK_GRID_PREFIX + task21.getName());
 
-        paul.narrate(NORMAL, "Lets redo that. We do nto want API related tasks in the story that is all about persistence.");
-        seleniumHandler.dragAndDrop(TaskGrid.TASK_GRID_PREFIX + task13Name, TaskGrid.TASK_GRID_PREFIX + task12Name);
+        paul.narrate(NORMAL, "Lets redo that. We do not want API related tasks in the story that is all about persistence.");
+        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_PREFIX + task13.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
 
-        seleniumHandler.waitUntilBrowserClosed(0);
+        //---------------------------------------------------------------------------------------
+        // Closing
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "That's all there is to rearranging stories and tasks in Kassandra. Thanks for watching!");
+
+        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
+        seleniumHandler.waitUntilBrowserClosed(5000);
     }
 
     private Sprint generateData() {
@@ -193,16 +202,16 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
             Task          startMilestone = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         }
         {
-            Task story1 = addParentTask("Config api implementation", sprint, null, null);
-            Task task11 = addTask("create controller", "4h", "6h", christopherPaul, sprint, story1, null);
-            Task task12 = addTask("api documentation", "2h", "3h", christopherPaul, sprint, story1, null);
-            Task task13 = addTask("api error handling", "5h", "7h", christopherPaul, sprint, story1, null);
+            story1 = addParentTask("Config api implementation", sprint, null, null);
+            task11 = addTask("create controller", "4h", "6h", graceMartin, sprint, story1, null);
+            task12 = addTask("api documentation", "2h", "3h", graceMartin, sprint, story1, null);
+            task13 = addTask("api error handling", "5h", "7h", graceMartin, sprint, story1, null);
         }
         {
-            Task story2 = addParentTask("Config persistence implementation", sprint, null, null);
-            Task task21 = addTask("create repository", "4h", "6h", graceMartin, sprint, story2, null);
-            Task task22 = addTask("schema documentation", "2h", "3h", graceMartin, sprint, story2, null);
-            Task task32 = addTask("persistence error handling", "5h", "7h", graceMartin, sprint, story2, null);
+            story2 = addParentTask("Config persistence implementation", sprint, null, null);
+            task21 = addTask("create repository", "4h", "6h", graceMartin, sprint, story2, null);
+            task22 = addTask("schema documentation", "2h", "3h", graceMartin, sprint, story2, null);
+            task23 = addTask("persistence error handling", "5h", "7h", graceMartin, sprint, story2, null);
         }
 
 

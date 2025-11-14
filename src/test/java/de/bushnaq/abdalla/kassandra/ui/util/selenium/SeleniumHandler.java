@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.openqa.selenium.*;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
@@ -31,8 +32,6 @@ import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Wait;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -53,13 +52,13 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @Component
 @Getter
+@Log4j2
 class SeleniumHandler {
     private static final int             DEFAULT_BROWSER_CHROME_HEIGHT = 130; // Typical Chrome window chrome height in pixels
     private              Integer         browserChromeHeight           = null; // Cached browser chrome height
     private              WebDriver       driver;
     private final        Duration        implicitWaitDuration;
     private final        Stack<Duration> implicitWaitStack             = new Stack<>();
-    protected final      Logger          logger                        = LoggerFactory.getLogger(this.getClass());
     private final        VideoRecorder   videoRecorder;
     private              WebDriverWait   wait;
     private              Duration        waitDuration;
@@ -85,7 +84,7 @@ class SeleniumHandler {
         WebElement element = findElement(By.id(id));
         moveMouseToElement(element);
         element.click();
-        logger.info("Clicked element with ID: " + id);
+        log.info("Clicked element with ID: " + id);
     }
 
     /**
@@ -98,7 +97,7 @@ class SeleniumHandler {
     public void clickElement(WebElement element) {
         moveMouseToElement(element);
         element.click();
-        logger.info("Clicked element with mouse movement");
+        log.info("Clicked element with mouse movement");
     }
 
     @PreDestroy
@@ -113,7 +112,7 @@ class SeleniumHandler {
             driver.quit();//quit the driver and close all windows
             driver = null;
         }
-        logger.info("quit selenium driver");
+        log.info("quit selenium driver");
     }
 
     /**
@@ -141,7 +140,7 @@ class SeleniumHandler {
 
     public void ensureIsInList(String id, String userName) {
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id + userName)));
-        logger.info("Element with ID: " + id + userName + " is in grid");
+        log.info("Element with ID: " + id + userName + " is in grid");
     }
 
     public void ensureIsNotInList(String id, String name) {
@@ -149,7 +148,7 @@ class SeleniumHandler {
         setImplicitWaitDuration(Duration.ofSeconds(1));
         waitUntil(ExpectedConditions.not(ExpectedConditions.elementToBeClickable(By.id(id + name))));
         setImplicitWaitDuration(implicitTime);
-        logger.info("Element with ID: " + id + name + " is not in grid");
+        log.info("Element with ID: " + id + name + " is not in grid");
     }
 
     public void ensureIsSelected(String id, String userName) {
@@ -222,7 +221,7 @@ class SeleniumHandler {
 
     public void get(String url) {
         getDriver().get(url);
-        logger.info("Navigated to URL: " + url);
+        log.info("Navigated to URL: " + url);
     }
 
     public void getAndCheck(String url) {
@@ -249,14 +248,14 @@ class SeleniumHandler {
 
             if (outerHeight != null && innerHeight != null) {
                 browserChromeHeight = (int) (outerHeight - innerHeight);
-                logger.debug("Calculated browser chrome height: {} pixels", browserChromeHeight);
+                log.debug("Calculated browser chrome height: {} pixels", browserChromeHeight);
             } else {
                 browserChromeHeight = DEFAULT_BROWSER_CHROME_HEIGHT;
-                logger.debug("Using default browser chrome height: {} pixels", browserChromeHeight);
+                log.debug("Using default browser chrome height: {} pixels", browserChromeHeight);
             }
         } catch (Exception e) {
             browserChromeHeight = DEFAULT_BROWSER_CHROME_HEIGHT;
-            logger.debug("Failed to calculate chrome height, using default: {} pixels", browserChromeHeight);
+            log.debug("Failed to calculate chrome height, using default: {} pixels", browserChromeHeight);
         }
 
         return browserChromeHeight;
@@ -370,7 +369,7 @@ class SeleniumHandler {
         // Check if we're running in headless mode (for CI environment)
         boolean headlessMode = isSeleniumHeadless();
         if (headlessMode) {
-            logger.info("creating selenium driver, Running Chrome in headless mode");
+            log.info("creating selenium driver, Running Chrome in headless mode");
             options.addArguments("--headless=new");
             options.addArguments("--disable-gpu");
             options.addArguments("--no-sandbox");
@@ -388,7 +387,7 @@ class SeleniumHandler {
                     "profile.password_manager_enabled", false
             ));
         } else {
-            logger.info("creating selenium driver");
+            log.info("creating selenium driver");
         }
 
         options.addArguments("--remote-allow-origins=*");
@@ -456,7 +455,7 @@ class SeleniumHandler {
                 return false;
             });
         } catch (org.openqa.selenium.TimeoutException e) {
-            logger.warn("Timed out waiting for error message on field: {}", fieldId);
+            log.warn("Timed out waiting for error message on field: {}", fieldId);
             // We'll continue and try to get whatever message might be there
         }
         popWaitDuration();
@@ -566,7 +565,7 @@ class SeleniumHandler {
 //        moveMouseToElement(button);
 //        button.click();
         click(LoginView.LOGIN_VIEW_SUBMIT_BUTTON);
-        logger.info("Clicked login submit button");
+        log.info("Clicked login submit button");
         waitForPageLoaded();
     }
 
@@ -640,7 +639,7 @@ class SeleniumHandler {
                     moveMouseToElement(row);
                     row.click();
                     weClicked = true;
-                    logger.info("Clicked row: " + gridRowBaseId + rowName);
+                    log.info("Clicked row: " + gridRowBaseId + rowName);
                 } catch (StaleElementReferenceException e) {
                     //ignore and retry
                 }
@@ -819,7 +818,7 @@ class SeleniumHandler {
         sendKeys(id, Keys.RETURN);
         wait(500);
         sendKeys(id, Keys.ARROW_DOWN, Keys.TAB);
-        logger.info("set ComboBox value=" + text);
+        log.info("set ComboBox value=" + text);
     }
 
 
@@ -886,7 +885,7 @@ class SeleniumHandler {
                             "  return true;" +
                             "}" +
                             "return false;";
-            logger.info("set DatePicker value=" + dateStr);
+            log.info("set DatePicker value=" + dateStr);
             executeJavaScript(dateScript);
         }
     }
@@ -914,7 +913,7 @@ class SeleniumHandler {
                             "  return true;" +
                             "}" +
                             "return false;";
-            logger.info("set DatePicker value=" + dateStr);
+            log.info("set DatePicker value=" + dateStr);
             executeJavaScript(dateScript);
         }
     }
@@ -953,7 +952,7 @@ class SeleniumHandler {
     public void setLoginPassword(String loginPassword) {
         WebElement passwordElement = findElement(By.id(LoginView.LOGIN_VIEW_PASSWORD));
         moveMouseToElement(passwordElement);  // Move mouse to password field before typing
-        logger.info("sent loginPassword='{}' to element with name '{}}'%n", loginPassword, LoginView.LOGIN_VIEW_PASSWORD);
+        log.info("sent loginPassword='{}' to element with name '{}}'%n", loginPassword, LoginView.LOGIN_VIEW_PASSWORD);
         // Humanized typing
         typeText(passwordElement, loginPassword);
     }
@@ -962,7 +961,7 @@ class SeleniumHandler {
         waitForElementToBeLocated(LoginView.LOGIN_VIEW_USERNAME);
         WebElement usernameElement = findElement(By.id(LoginView.LOGIN_VIEW_USERNAME));
         moveMouseToElement(usernameElement);  // Move mouse to username field before typing
-        logger.info("sent loginUser='{}' to element with id '{}'%n", loginUser, LoginView.LOGIN_VIEW_USERNAME);
+        log.info("sent loginUser='{}' to element with id '{}'%n", loginUser, LoginView.LOGIN_VIEW_USERNAME);
         // Humanized typing
         typeText(usernameElement, loginUser);
     }
@@ -992,7 +991,7 @@ class SeleniumHandler {
             i.sendKeys(Keys.CONTROL + "a");
             i.sendKeys(Keys.DELETE);
         }
-        logger.info("set TextField " + id + " to '" + text + "'\n");
+        log.info("set TextField " + id + " to '" + text + "'\n");
         // Humanized typing
         typeText(i, text);
     }
@@ -1046,10 +1045,10 @@ class SeleniumHandler {
                 // Start the recording with content-only mode, which will use JavaScript to determine
                 // the exact content area within the browser window
                 if (videoRecorder.startRecording(folderName, testName, true)) {
-                    logger.info("Started video recording for test: {}", testName);
+                    log.info("Started video recording for test: {}", testName);
                 }
             } catch (IOException | AWTException e) {
-                logger.error("Failed to start video recording: {}", e.getMessage(), e);
+                log.error("Failed to start video recording: {}", e.getMessage(), e);
             }
         }
     }
@@ -1064,11 +1063,11 @@ class SeleniumHandler {
             try {
                 File videoFile = videoRecorder.stopRecording();
                 if (videoFile != null) {
-                    logger.info("Video recording saved to: {}", videoFile.getAbsolutePath());
+                    log.info("Video recording saved to: {}", videoFile.getAbsolutePath());
                 }
                 return videoFile;
             } catch (IOException e) {
-                logger.error("Failed to stop video recording: {}", e.getMessage(), e);
+                log.error("Failed to stop video recording: {}", e.getMessage(), e);
             }
         }
         return null;
@@ -1094,7 +1093,7 @@ class SeleniumHandler {
     public void testUrl(String expectedUrl) {
         String currentUrl = getCurrentUrl();
         waitUntil(ExpectedConditions.urlContains(expectedUrl));
-        logger.trace(String.format("expectedUrl=%s, actualUrl=%s", expectedUrl, currentUrl));
+        log.trace(String.format("expectedUrl=%s, actualUrl=%s", expectedUrl, currentUrl));
         assertTrue(currentUrl.contains(expectedUrl));
     }
 
@@ -1123,7 +1122,7 @@ class SeleniumHandler {
         }
         // Type with humanization
         typeText(element, text);
-        logger.info("Typed text into element with humanization");
+        log.info("Typed text into element with humanization");
     }
 
     /**
@@ -1166,7 +1165,7 @@ class SeleniumHandler {
             Thread.sleep(milliseconds);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.error("Thread interrupted while waiting", e);
+            log.error("Thread interrupted while waiting", e);
         }
     }
 
@@ -1203,7 +1202,7 @@ class SeleniumHandler {
                 Thread.currentThread().interrupt();
             }
         } catch (Exception e) {
-            logger.error("Error waiting for element to be interactable: " + id, e);
+            log.error("Error waiting for element to be interactable: " + id, e);
             throw e;
         }
     }
@@ -1278,7 +1277,7 @@ class SeleniumHandler {
      * @return true if browser was closed, false if timeout occurred
      */
     public boolean waitUntilBrowserClosed(long timeoutMillis) {
-        logger.error("Waiting {}s for browser to be closed.", timeoutMillis / 1000);
+        log.error("Waiting {}s for browser to be closed.", timeoutMillis / 1000);
         long startTime = System.currentTimeMillis();
 
         while (true) {

@@ -61,7 +61,7 @@ import java.util.List;
 public class UsersIntroductionVideoTest extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute        INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                   VIDEO_TITLE = "Users Introduction Video";
+    public static final String                   VIDEO_TITLE = "Kassandra Users";
     @Autowired
     private             ProductListViewTester    productListViewTester;
     @Autowired
@@ -81,8 +81,8 @@ public class UsersIntroductionVideoTest extends AbstractKeycloakUiTestUtil {
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
-        seleniumHandler.showOverlay("Kassandra Users", InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE);
+        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         seleniumHandler.wait(3000);
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about User Management in Kassandra. As an administrator, the Users page is where you add team members to the system so they can access Kassandra and be assigned to projects.");
         seleniumHandler.hideOverlay();
