@@ -19,6 +19,13 @@ tbd
 
 [ER Diagram](https://github.com/kunterbunt2/project-hub/wiki/ER-Diagram)
 
+Roadma
+
+1. task and story dependencies
+2. sprint view
+   1. change status
+   2. burn down work
+
 # Screenshots
 
 ![gantt-03](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/gantt/gantt_03-3-gant-chart.svg)

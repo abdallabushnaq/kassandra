@@ -29,55 +29,59 @@
 
 <h3>Test 1: Regular DOM (should work)</h3>
 <div class="grid-host">
+    class="jira-backlog">
     <div id="scroller">
         <table>
             <thead>
-            <tr>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Email</th>
+            <tr part="header-row">
+                <th part="header-cell first-column-cell">Key</th>
+                <th part="header-cell">Summary</th>
+                <th part="header-cell">Status</th>
+                <th part="header-cell last-column-cell">Assignee</th>
             </tr>
             </thead>
             <tbody>
-            <tr>
-                <td>John</td>
-                <td>Doe</td>
-                <td>john.doe@example.com</td>
+            <tr part="row">
+                <td part="body-cell first-column-cell">
+                    <slot name="cell-0-0"></slot>
+                </td>
+                <td part="body-cell">
+                    <slot name="cell-0-1"></slot>
+                </td>
+                <td part="body-cell">
+                    <slot name="cell-0-2"></slot>
+                </td>
+                <td part="body-cell last-column-cell">
+                    <slot name="cell-0-3"></slot>
+                </td>
             </tr>
-            <tr>
-                <td>Jane</td>
-                <td>Smith</td>
-                <td>jane.smith@example.com</td>
+            <tr part="row">
+                <td part="body-cell first-column-cell">
+                    <slot name="cell-1-0"></slot>
+                </td>
+                <td part="body-cell">
+                    <slot name="cell-1-1"></slot>
+                </td>
+                <td part="body-cell">
+                    <slot name="cell-1-2"></slot>
+                </td>
+                <td part="body-cell last-column-cell">
+                    <slot name="cell-1-3"></slot>
+                </td>
             </tr>
-            <tr>
-                <td>Bob</td>
-                <td>Johnson</td>
-                <td>bob.johnson@example.com</td>
-            </tr>
-            <tr>
-                <td>Alice</td>
-                <td>Williams</td>
-                <td>alice.williams@example.com</td>
-            </tr>
-            <tr>
-                <td>Charlie</td>
-                <td>Brown</td>
-                <td>charlie.brown@example.com</td>
-            </tr>
-            <tr>
-                <td>Diana</td>
-                <td>Davis</td>
-                <td>diana.davis@example.com</td>
-            </tr>
-            <tr>
-                <td>Eve</td>
-                <td>Miller</td>
-                <td>eve.miller@example.com</td>
-            </tr>
-            <tr>
-                <td>Frank</td>
-                <td>Wilson</td>
-                <td>frank.wilson@example.com</td>
+            <tr part="row">
+                <td part="body-cell first-column-cell">
+                    <slot name="cell-2-0"></slot>
+                </td>
+                <td part="body-cell">
+                    <slot name="cell-2-1"></slot>
+                </td>
+                <td part="body-cell">
+                    <slot name="cell-2-2"></slot>
+                </td>
+                <td part="body-cell last-column-cell">
+                    <slot name="cell-2-3"></slot>
+                </td>
             </tr>
             </tbody>
         </table>
@@ -85,7 +89,23 @@
 </div>
 
 <h3 style="margin-top: 40px;">Test 2: Shadow DOM (simulating Vaadin)</h3>
-<test-grid class="jira-backlog"></test-grid>
+<test-grid class="jira-backlog">
+    <!-- Light DOM content that gets slotted into shadow DOM, like Vaadin does -->
+    <span slot="cell-0-0">PROJ-123</span>
+    <span slot="cell-0-1">Fix login bug</span>
+    <span slot="cell-0-2">In Progress</span>
+    <span slot="cell-0-3">John Doe</span>
+
+    <span slot="cell-1-0">PROJ-124</span>
+    <span slot="cell-1-1">Update documentation</span>
+    <span slot="cell-1-2">To Do</span>
+    <span slot="cell-1-3">Jane Smith</span>
+
+    <span slot="cell-2-0">PROJ-125</span>
+    <span slot="cell-2-1">Add new feature</span>
+    <span slot="cell-2-2">Done</span>
+    <span slot="cell-2-3">Bob Johnson</span>
+</test-grid>
 
 <script>
     // Create a custom element with shadow DOM to test if shadow root affects border-spacing
@@ -106,37 +126,55 @@
             scroller.innerHTML = `
                 <table>
                     <thead>
-                        <tr>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Email</th>
+                        <tr part="header-row">
+                            <th part="header-cell first-column-cell">Key</th>
+                            <th part="header-cell">Summary</th>
+                            <th part="header-cell">Status</th>
+                            <th part="header-cell last-column-cell">Assignee</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>John</td>
-                            <td>Doe</td>
-                            <td>john.doe@example.com</td>
+                        <tr part="row">
+                            <td part="body-cell first-column-cell">
+                                <slot name="cell-0-0"></slot>
+                            </td>
+                            <td part="body-cell">
+                                <slot name="cell-0-1"></slot>
+                            </td>
+                            <td part="body-cell">
+                                <slot name="cell-0-2"></slot>
+                            </td>
+                            <td part="body-cell last-column-cell">
+                                <slot name="cell-0-3"></slot>
+                            </td>
                         </tr>
-                        <tr>
-                            <td>Jane</td>
-                            <td>Smith</td>
-                            <td>jane.smith@example.com</td>
+                        <tr part="row">
+                            <td part="body-cell first-column-cell">
+                                <slot name="cell-1-0"></slot>
+                            </td>
+                            <td part="body-cell">
+                                <slot name="cell-1-1"></slot>
+                            </td>
+                            <td part="body-cell">
+                                <slot name="cell-1-2"></slot>
+                            </td>
+                            <td part="body-cell last-column-cell">
+                                <slot name="cell-1-3"></slot>
+                            </td>
                         </tr>
-                        <tr>
-                            <td>Bob</td>
-                            <td>Johnson</td>
-                            <td>bob.johnson@example.com</td>
-                        </tr>
-                        <tr>
-                            <td>Alice</td>
-                            <td>Williams</td>
-                            <td>alice.williams@example.com</td>
-                        </tr>
-                        <tr>
-                            <td>Charlie</td>
-                            <td>Brown</td>
-                            <td>charlie.brown@example.com</td>
+                        <tr part="row">
+                            <td part="body-cell first-column-cell">
+                                <slot name="cell-2-0"></slot>
+                            </td>
+                            <td part="body-cell">
+                                <slot name="cell-2-1"></slot>
+                            </td>
+                            <td part="body-cell">
+                                <slot name="cell-2-2"></slot>
+                            </td>
+                            <td part="body-cell last-column-cell">
+                                <slot name="cell-2-3"></slot>
+                            </td>
                         </tr>
                     </tbody>
                 </table>

@@ -9,7 +9,7 @@
 }
 
 :host(.jira-backlog) table {
-    border-spacing: 0 0px;
+    border-spacing: 0 6px;
     border-collapse: separate;
     background: #f4f5f7;
     width: 100%;

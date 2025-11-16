@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
+import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.dialog.*;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;

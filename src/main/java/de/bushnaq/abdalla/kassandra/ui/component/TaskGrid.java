@@ -1,4 +1,21 @@
-package de.bushnaq.abdalla.kassandra.ui.view;
+/*
+ *
+ * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
+package de.bushnaq.abdalla.kassandra.ui.component;
 
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.button.Button;
@@ -111,15 +128,6 @@ public class TaskGrid extends Grid<Task> {
             if (loggedInUser != null) {
                 assignedUserId = loggedInUser.getId();
             }
-//            String currentUserName = loginUser;
-//            try {
-//                User currentUser = userApi.getByName(currentUserName);
-//                if (currentUser != null) {
-//                    assignedUserId = currentUser.getId();
-//                }
-//            } catch (Exception e) {
-//                log.warn("Could not find user with name: " + currentUserName, e);
-//            }
         }
 
         // Assign the user to the new task
@@ -503,7 +511,7 @@ public class TaskGrid extends Grid<Task> {
     /**
      * Create a new Task with default estimates
      */
-    void createTask(User loggedInUser) {
+    public void createTask(User loggedInUser) {
         long nextOrderId = sprint.getNextOrderId();
 
         Task task = new Task();
@@ -1032,223 +1040,6 @@ public class TaskGrid extends Grid<Task> {
             }
         }).addEventData("event.detail.taskId");
 
-        // Add keyboard navigation support for Tab key navigation between editable cells
-        // and Tab/Shift+Tab for indent/outdent when focused on a row
-//        getElement().executeJs(
-//                """
-//                        const grid = this;
-//                        let isEditMode = false;
-//
-//                        console.log('Setting up keyboard navigation for grid');
-//
-//                        // Function to update edit mode state from server
-//                        grid.updateEditMode = function(editMode) {
-//                            isEditMode = editMode;
-//                            console.log('Edit mode updated to:', isEditMode);
-//                        };
-//
-//                        // Function to get task ID from a row element
-//                        function getTaskIdFromRow(row) {
-//                            if (!row) return null;
-//                            const cells = row.querySelectorAll('vaadin-grid-cell-content');
-//                            // The first column (index 0) is the hidden Identifier column with actual task ID
-//                            if (cells.length > 0) {
-//                                const identifierText = cells[0].textContent?.trim();
-//                                console.log('Task ID from identifier column (index 0):', identifierText);
-//                                return identifierText || null;
-//                            }
-//                            return null;
-//                        }
-//
-//                        // Function to check if we're in a text input
-//                        function isInTextInput(element) {
-//                            if (!element) return false;
-//
-//                            // Check for input elements
-//                            if (element.tagName === 'INPUT') return true;
-//
-//                            // Check for Vaadin components
-//                            const vaadinComponents = ['VAADIN-TEXT-FIELD', 'VAADIN-COMBO-BOX', 'VAADIN-DATE-TIME-PICKER'];
-//                            if (vaadinComponents.includes(element.tagName)) return true;
-//
-//                            // Check if inside a shadow DOM of a Vaadin component
-//                            if (element.getRootNode && element.getRootNode() !== document) {
-//                                const host = element.getRootNode().host;
-//                                if (host && vaadinComponents.includes(host.tagName)) return true;
-//                            }
-//
-//                            return false;
-//                        }
-//
-//                        // Add event listener with higher priority (capture phase)
-//                        grid.addEventListener('keydown', function(e) {
-//                            console.log('Keydown event:', e.key, 'Edit mode:', isEditMode);
-//
-//                            // Only handle Tab key
-//                            if (e.key !== 'Tab') return;
-//
-//                            console.log('Tab key pressed, shift:', e.shiftKey);
-//
-//                            const activeElement = grid.getRootNode().activeElement || document.activeElement;
-//                            console.log('Active element:', activeElement?.tagName, activeElement);
-//
-//                            const isInInput = isInTextInput(activeElement);
-//                            console.log('Is in input field:', isInInput);
-//
-//                            // If in edit mode and NOT in an input field, handle indent/outdent
-//                            if (isEditMode && !isInInput) {
-//                                console.log('>>> Handling indent/outdent');
-//                                e.preventDefault();
-//                                e.stopPropagation();
-//
-//                                // Find the current row - check multiple ways
-//                                let currentRow = null;
-//
-//                                // Try to find row from active element
-//                                if (activeElement) {
-//                                    currentRow = activeElement.closest('tr');
-//                                    console.log('Found row from activeElement:', currentRow ? 'yes' : 'no');
-//                                }
-//
-//                                // If not found, try to get the focused row from grid
-//                                if (!currentRow) {
-//                                    const focusedCell = grid.shadowRoot?.querySelector('[part~="focused-cell"]');
-//                                    console.log('Focused cell from shadowRoot:', focusedCell);
-//                                    if (focusedCell) {
-//                                        currentRow = focusedCell.closest('tr');
-//                                        console.log('Found row from focused cell:', currentRow ? 'yes' : 'no');
-//                                    }
-//                                }
-//
-//                                // Try another approach - get active item from grid
-//                                if (!currentRow && grid.activeItem) {
-//                                    console.log('Grid has active item:', grid.activeItem);
-//                                    // Try to find the row by data
-//                                    const allRows = grid.shadowRoot.querySelectorAll('tr');
-//                                    console.log('Total rows found:', allRows.length);
-//                                }
-//
-//                                if (!currentRow) {
-//                                    console.log('!!! No current row found for indent/outdent');
-//                                    return;
-//                                }
-//
-//                                const taskId = getTaskIdFromRow(currentRow);
-//                                console.log('Task ID from row:', taskId);
-//
-//                                if (!taskId) {
-//                                    console.log('!!! No task ID found for row');
-//                                    return;
-//                                }
-//
-//                                console.log('>>> Dispatching event - task ID:', taskId, 'shift:', e.shiftKey);
-//
-//                                // Dispatch custom event to server
-//                                if (e.shiftKey) {
-//                                    // Shift+Tab = Outdent
-//                                    grid.dispatchEvent(new CustomEvent('outdent-task', {
-//                                        detail: { taskId: taskId }
-//                                    }));
-//                                    console.log('>>> Outdent event dispatched');
-//                                } else {
-//                                    // Tab = Indent
-//                                    grid.dispatchEvent(new CustomEvent('indent-task', {
-//                                        detail: { taskId: taskId }
-//                                    }));
-//                                    console.log('>>> Indent event dispatched');
-//                                }
-//                                return;
-//                            }
-//
-//                            // If in an input field, handle cell navigation
-//                            if (!isInInput) {
-//                                console.log('Not in input field and not in edit mode or other condition not met');
-//                                return;
-//                            }
-//
-//                            console.log('>>> Handling cell navigation');
-//
-//                            // Find current cell position
-//                            let currentCell = activeElement.closest('vaadin-grid-cell-content');
-//                            if (!currentCell) {
-//                                currentCell = activeElement.getRootNode().host?.closest('vaadin-grid-cell-content');
-//                            }
-//                            if (!currentCell) {
-//                                console.log('No current cell found for navigation');
-//                                return;
-//                            }
-//
-//                            // Handle Tab key (move to next field)
-//                            if (e.key === 'Tab' && !e.shiftKey) {
-//                                e.preventDefault();
-//                                const next = currentCell.parentElement?.nextElementSibling?.querySelector('input, vaadin-combo-box, vaadin-date-time-picker');
-//                                if (next) {
-//                                    setTimeout(() => {
-//                                        if (next.tagName === 'VAADIN-COMBO-BOX' || next.tagName === 'VAADIN-DATE-TIME-PICKER') {
-//                                            next.focus();
-//                                        } else {
-//                                            next.focus();
-//                                            next.select();
-//                                        }
-//                                    }, 10);
-//                                } else {
-//                                    // Move to next row, first editable column
-//                                    const row = currentCell.closest('tr');
-//                                    const nextRow = row?.nextElementSibling;
-//                                    if (nextRow) {
-//                                        const firstInput = nextRow.querySelector('input, vaadin-combo-box, vaadin-date-time-picker');
-//                                        if (firstInput) {
-//                                            setTimeout(() => {
-//                                                if (firstInput.tagName === 'VAADIN-COMBO-BOX' || firstInput.tagName === 'VAADIN-DATE-TIME-PICKER') {
-//                                                    firstInput.focus();
-//                                                } else {
-//                                                    firstInput.focus();
-//                                                    firstInput.select();
-//                                                }
-//                                            }, 10);
-//                                        }
-//                                    }
-//                                }
-//                            }
-//
-//                            // Handle Shift+Tab (move to previous field)
-//                            if (e.key === 'Tab' && e.shiftKey) {
-//                                e.preventDefault();
-//                                const prev = currentCell.parentElement?.previousElementSibling?.querySelector('input, vaadin-combo-box, vaadin-date-time-picker');
-//                                if (prev) {
-//                                    setTimeout(() => {
-//                                        if (prev.tagName === 'VAADIN-COMBO-BOX' || prev.tagName === 'VAADIN-DATE-TIME-PICKER') {
-//                                            prev.focus();
-//                                        } else {
-//                                            prev.focus();
-//                                            prev.select();
-//                                        }
-//                                    }, 10);
-//                                } else {
-//                                    // Move to previous row, last editable column
-//                                    const row = currentCell.closest('tr');
-//                                    const prevRow = row?.previousElementSibling;
-//                                    if (prevRow) {
-//                                        const inputs = prevRow.querySelectorAll('input, vaadin-combo-box, vaadin-date-time-picker');
-//                                        const lastInput = inputs[inputs.length - 1];
-//                                        if (lastInput) {
-//                                            setTimeout(() => {
-//                                                if (lastInput.tagName === 'VAADIN-COMBO-BOX' || lastInput.tagName === 'VAADIN-DATE-TIME-PICKER') {
-//                                                    lastInput.focus();
-//                                                } else {
-//                                                    lastInput.focus();
-//                                                    lastInput.select();
-//                                                }
-//                                            }, 10);
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }, true);  // Use capture phase to intercept before other handlers
-//
-//                        console.log('Keyboard navigation setup complete');
-//                        """
-//        );
     }
 
     public void updateData(Sprint sprint, List<Task> taskOrder, List<User> allUsers) {

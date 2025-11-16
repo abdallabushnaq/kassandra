@@ -1,90 +1,137 @@
-/* File: 'frontend/styles/jira-backlog-grid.css' (themeFor='vaadin-grid')
-   Jira-like backlog styling: light gray background, white row "cards" with gaps and subtle shadow.
-
-   Key approach (matching grid-test.css):
-   - Table uses border-spacing for vertical gaps between rows
-   - TR elements get the shadow for unified row appearance
-   - TD elements have white background and padding
-   - First/last cells get rounded corners */
-
-/* Light gray background for the grid host and internal scroller */
+/*
 :host(.jira-backlog),
 :host(.jira-backlog) #scroller {
   background: #f4f5f7 !important;
-  /* Override Vaadin's CSS variables */
   --vaadin-grid-cell-background: transparent;
 }
 
-/* Table with border-spacing for gaps between rows */
 :host(.jira-backlog) table {
+
   border-spacing: 0 4px !important;
   border-collapse: separate !important;
   background: #f4f5f7 !important;
   width: 100% !important;
 }
 
-/* Force tbody to inherit and not reset border-spacing */
+
 :host(.jira-backlog) tbody {
-  border-spacing: inherit !important;
-  border-collapse: inherit !important;
 }
 
-/* Force tr to inherit border-spacing (Vaadin might be resetting this) */
 :host(.jira-backlog) tbody tr {
-  /*background: #ffffff !important;*/
-  border-spacing: 0 4px !important;
   box-shadow: 0 2px 4px rgba(9, 30, 66, 0.2), 2px 2px 4px rgba(9, 30, 66, 0.15) !important;
 }
 
-/* White background on cells to create the "card" effect */
-/* Override Vaadin's default background-color CSS variables */
-:host(.jira-backlog) td[part~="body-cell"] {
+:host(.jira-backlog) td {
   background: #ffffff !important;
-  /*background-color: #ffffff !important;*/
-  /*background-clip: padding-box !important;*/
-  padding: 12px 16px !important;
-  border-spacing: 0 4px !important;
-    border: 1px;
-    border-color: red;
-    border-style: solid;
+  padding: 10px 14px !important;
+  border: 1px;
+  border-color: red;
+  border-style: solid;
 }
 
-/* Rounded corners on first cell */
 :host(.jira-backlog) td[part~="body-cell"][part~="first-column-cell"] {
   border-top-left-radius: 4px !important;
   border-bottom-left-radius: 4px !important;
 }
 
-/* Rounded corners on last cell */
 :host(.jira-backlog) td[part~="body-cell"][part~="last-column-cell"] {
   border-top-right-radius: 4px !important;
   border-bottom-right-radius: 4px !important;
 }
 
-/* Header styling */
 :host(.jira-backlog) th[part~="header-cell"] {
   background: transparent !important;
-  text-align: left !important;
-  padding: 12px 16px !important;
-  font-weight: 600 !important;
-  color: #5e6c84 !important;
-  font-size: 12px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.5px !important;
+  font-weight: 600; font-size: 12px; letter-spacing: .5px; text-transform: uppercase;
+  color: #5e6c84; padding: 8px 14px !important; border: 0 !important;
 }
+:host(.jira-backlog) tr[part~="header-row"] {box-shadow: none !important;}
 
-:host(.jira-backlog) thead tr {
-  background: transparent !important;
-}
+:host(.jira-backlog) [part~="cell"]::after, :host(.jira-backlog) [part~="row"]::after {display:none !important;}
 
-/* Remove default grid cell dividers and borders */
-/*
-:host(.jira-backlog) [part~="cell"]::after {
-  display: none !important;
-}
+:host(.jira-backlog) tbody tr[part~="row"]:hover td[part~="body-cell"] { background: #fbfcfd !important; }
 
-:host(.jira-backlog) [part~="row"]::after {
-  display: none !important;
-}
+:host(.jira-backlog) tbody tr[part~="row"][dragover] td[part~="body-cell"] { outline:2px dashed var(--lumo-primary-color); outline-offset:-2px; }
 */
 
+:host(.jira-backlog),
+:host(.jira-backlog) #scroller {
+  background: #f4f5f7 !important;
+  --vaadin-grid-cell-background: transparent;
+}
+
+
+:host(.jira-backlog) table {
+
+  border-spacing: 0 6px !important;
+  border-collapse: separate !important;
+  background: #f4f5f7 !important;
+  width: 100% !important;
+}
+
+:host(.jira-backlog) {
+  --vaadin-grid-cell-background: transparent !important; /* base */
+}
+
+:host(.jira-backlog) tbody {
+/*
+  border-spacing: inherit !important;
+  border-collapse: inherit !important;
+  */
+}
+
+tbody tr {
+  box-shadow: 0 2px 4px rgba(9, 30, 66, 0.2), 2px 2px 4px rgba(9, 30, 66, 0.15) !important;
+}
+:host(.jira-backlog) tbody tr {
+  /*background: #ffffff !important;
+  border-spacing: 0 4px !important;
+  */
+  box-shadow: 0 2px 4px rgba(9, 30, 66, 0.2), 2px 2px 4px rgba(9, 30, 66, 0.15) !important;
+}
+
+:host(.jira-backlog) tbody tr[part~="row"],
+{
+  box-shadow: 0 2px 4px rgba(9,30,66,0.18), 0 0 0 1px rgba(9,30,66,0.08);
+  background: transparent !important; /* keep gaps visible */
+}
+
+:host(.jira-backlog) td {
+  background: #ffffff !important;
+  padding: 10px 14px !important;
+  border: 1px;
+  border-color: red;
+  border-style: solid;
+  --_cell-padding: 0px;
+}
+
+
+:host(.jira-backlog) td[part~="body-cell"] {
+  background: #ffffff !important;
+  padding: 10px 14px !important;
+  border: 1px;
+  border-color: red;
+  border-style: solid;
+}
+
+:host(.jira-backlog) td[part~="body-cell"][part~="first-column-cell"] {
+  border-top-left-radius: 4px !important;
+  border-bottom-left-radius: 4px !important;
+}
+
+:host(.jira-backlog) td[part~="body-cell"][part~="last-column-cell"] {
+  border-top-right-radius: 4px !important;
+  border-bottom-right-radius: 4px !important;
+}
+
+:host(.jira-backlog) th[part~="header-cell"] {
+  background: transparent !important;
+  font-weight: 600; font-size: 12px; letter-spacing: .5px; text-transform: uppercase;
+  color: #5e6c84; padding: 8px 14px !important; border: 0 !important;
+}
+:host(.jira-backlog) tr[part~="header-row"] {box-shadow: none !important;}
+
+:host(.jira-backlog) [part~="cell"]::after, :host(.jira-backlog) [part~="row"]::after {display:none !important;}
+
+:host(.jira-backlog) tbody tr[part~="row"]:hover td[part~="body-cell"] { background: #fbfcfd !important; }
+
+:host(.jira-backlog) tbody tr[part~="row"][dragover] td[part~="body-cell"] { outline:2px dashed var(--lumo-primary-color); outline-offset:-2px; }

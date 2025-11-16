@@ -35,6 +35,7 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import jakarta.annotation.security.PermitAll;
@@ -344,138 +345,6 @@ public class TaskListView extends Main implements AfterNavigationObserver {
         // Refresh grid to show editable components
         grid.getDataProvider().refreshAll();
 
-        // Setup keyboard navigation after grid is rendered
-//        getUI().ifPresent(ui -> ui.getPage().executeJs(
-//                """
-//                        console.log('=== EXECUTING JAVASCRIPT FROM SERVER ===');
-//
-//                        const grid = document.querySelector('vaadin-grid');
-//                        console.log('Found grid:', grid);
-//
-//                        if (!grid) {
-//                            console.error('Grid not found!');
-//                            return;
-//                        }
-//
-//                        if (grid.keyboardSetupDone) {
-//                            console.log('Keyboard already setup, skipping');
-//                            return;
-//                        }
-//
-//                        console.log('Setting up keyboard navigation for the first time');
-//                        grid.keyboardSetupDone = true;
-//
-//                        grid.addEventListener('keydown', (e) => {
-//                            console.log('=== GRID KEYDOWN EVENT ===', e.key);
-//
-//                            if (e.key !== 'Tab') return;
-//
-//                            console.log('Tab pressed! Shift:', e.shiftKey);
-//
-//                            // Check if we're in an input field
-//                            const target = e.target;
-//                            console.log('Event target:', target.tagName);
-//
-//                            // Check if the target is within a text input in the shadow DOM
-//                            const activeElement = grid.shadowRoot?.activeElement || document.activeElement;
-//                            console.log('Active element:', activeElement?.tagName);
-//
-//                            const isInInput = activeElement && (
-//                                activeElement.tagName === 'INPUT' ||
-//                                activeElement.tagName === 'VAADIN-TEXT-FIELD' ||
-//                                activeElement.tagName === 'VAADIN-COMBO-BOX' ||
-//                                activeElement.tagName === 'VAADIN-DATE-TIME-PICKER'
-//                            );
-//
-//                            console.log('Is in input:', isInInput);
-//
-//                            if (!isInInput) {
-//                                console.log('>>> Not in input - handling indent/outdent');
-//                                e.preventDefault();
-//                                e.stopPropagation();
-//
-//                                // Get the active (selected) item from the grid
-//                                const activeItem = grid.activeItem;
-//                                console.log('Grid active item:', activeItem);
-//
-//                                if (!activeItem) {
-//                                    console.log('!!! No active item in grid');
-//                                    return;
-//                                }
-//
-//                                // The activeItem properties are mapped by Vaadin
-//                                // Try various property names that might contain the ID
-//                                let taskId = activeItem.id || activeItem.orderId || activeItem.col0;
-//                                console.log('Task ID from active item (trying id/orderId/col1):', taskId);
-//
-//                                // If still not found, iterate through all properties to find the ID
-//                                if (!taskId) {
-//                                    console.log('Trying to find ID in all properties:', Object.keys(activeItem));
-//                                    // Look for properties that might be the ID
-//                                    for (let key in activeItem) {
-//                                        if (key.toLowerCase().includes('id') || key.toLowerCase().includes('order')) {
-//                                            console.log('Found potential ID property:', key, '=', activeItem[key]);
-//                                            if (activeItem[key] && !key.includes('node') && !key.includes('key')) {
-//                                                taskId = activeItem[key];
-//                                                break;
-//                                            }
-//                                        }
-//                                    }
-//                                }
-//
-//                                // Alternative: find the focused cell and get ID from the DOM
-//                                if (!taskId) {
-//                                    console.log('!!! No task ID found in active item, trying alternative approach');
-//
-//                                    const focusedCell = grid.shadowRoot?.querySelector('td[part~="focused-cell"]') ||
-//                                                      grid.shadowRoot?.querySelector('td[part~="selected-row-cell"]');
-//                                    console.log('Focused cell:', focusedCell);
-//
-//                                    if (focusedCell) {
-//                                        const row = focusedCell.closest('tr');
-//                                        console.log('Found row from focused cell:', row);
-//
-//                                        if (row) {
-//                                            const cells = row.querySelectorAll('td');
-//                                            console.log('Found cells in row:', cells.length);
-//
-//                                            // ID should be in the second column (index 1) - the first visible column after drag handle
-//                                            if (cells.length > 1) {
-//                                                // Try to get text from the ID column
-//                                                const idCell = cells[1];
-//                                                taskId = idCell.textContent?.trim();
-//                                                console.log('Task ID from cell[1]:', taskId);
-//                                            }
-//                                        }
-//                                    }
-//                                }
-//
-//                                if (!taskId) {
-//                                    console.log('!!! Could not determine task ID');
-//                                    return;
-//                                }
-//
-//                                const eventName = e.shiftKey ? 'outdent-task' : 'indent-task';
-//                                console.log('>>> Dispatching:', eventName, 'for task:', taskId);
-//
-//                                grid.dispatchEvent(new CustomEvent(eventName, {
-//                                    bubbles: true,
-//                                    composed: true,
-//                                    detail: { taskId: String(taskId) }
-//                                }));
-//
-//                                console.log('>>> Event dispatched successfully');
-//                            } else {
-//                                console.log('In input field - handling cell navigation');
-//                                // TODO: Implement cell navigation if needed
-//                            }
-//                        }, true);
-//
-//                        console.log('=== KEYBOARD NAVIGATION SETUP COMPLETE ===');
-//                        """
-//        ));
-
-//        log.info("Edit mode entered, keyboard navigation should be set up");
     }
 
     /**
