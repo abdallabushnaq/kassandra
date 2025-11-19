@@ -630,7 +630,7 @@ public class TaskGrid extends Grid<Task> {
         markTaskAsModified(sourceTask);
 
         // Refresh grid to show updated dependencies
-        getDataProvider().refreshAll();
+//        getDataProvider().refreshAll();
     }
 
     /**
@@ -832,42 +832,42 @@ public class TaskGrid extends Grid<Task> {
         setRowsDraggable(true); // Will be enabled in edit mode
 
         // Setup JavaScript to capture Ctrl/Meta key state during drag operations
-//        getElement().executeJs(
-//                """
-//                        const grid = this;
-//
-//                        // Use Ctrl (Windows/Linux) and Meta (macOS) to toggle dependency drag mode.
-//                        if (!grid.__modifierKeyHandlersInstalled) {
-//                            grid.__modifierKeyHandlersInstalled = true;
-//                            grid.__ctrlKeyPressed = false; // local state to avoid repeat spam
-//                            const send = (pressed) => {
-//                                if (grid.$server && grid.$server.setCtrlKeyPressed) {
-//                                    grid.$server.setCtrlKeyPressed(pressed);
-//                                }
-//                            };
-//                            window.addEventListener('keydown', (e) => {
-//                                if ((e.key === 'Control' || e.key === 'Meta')) {
-//                                    // Ignore auto-repeat: e.repeat true means key is held
-//                                    if (e.repeat) return;
-//                                    if (!grid.__ctrlKeyPressed) {
-//                                        grid.__ctrlKeyPressed = true;
-//                                        send(true);
-//                                    }
-//                                }
-//                            }, true);
-//                            window.addEventListener('keyup', (e) => {
-//                                if ((e.key === 'Control' || e.key === 'Meta')) {
-//                                    if (grid.__ctrlKeyPressed) {
-//                                        grid.__ctrlKeyPressed = false;
-//                                        send(false);
-//                                    }
-//                                }
-//                            }, true);
-//                        }
-//                        // Allow drop events to fire (HTML5 DnD spec requires canceling dragover)
-//                        grid.addEventListener('dragover', (e) => { e.preventDefault(); });
-//                        """
-//        );
+        getElement().executeJs(
+                """
+                        const grid = this;
+                        
+                        // Use Ctrl (Windows/Linux) and Meta (macOS) to toggle dependency drag mode.
+                        if (!grid.__modifierKeyHandlersInstalled) {
+                            grid.__modifierKeyHandlersInstalled = true;
+                            grid.__ctrlKeyPressed = false; // local state to avoid repeat spam
+                            const send = (pressed) => {
+                                if (grid.$server && grid.$server.setCtrlKeyPressed) {
+                                    grid.$server.setCtrlKeyPressed(pressed);
+                                }
+                            };
+                            window.addEventListener('keydown', (e) => {
+                                if ((e.key === 'Control' || e.key === 'Meta')) {
+                                    // Ignore auto-repeat: e.repeat true means key is held
+                                    if (e.repeat) return;
+                                    if (!grid.__ctrlKeyPressed) {
+                                        grid.__ctrlKeyPressed = true;
+                                        send(true);
+                                    }
+                                }
+                            }, true);
+                            window.addEventListener('keyup', (e) => {
+                                if ((e.key === 'Control' || e.key === 'Meta')) {
+                                    if (grid.__ctrlKeyPressed) {
+                                        grid.__ctrlKeyPressed = false;
+                                        send(false);
+                                    }
+                                }
+                            }, true);
+                        }
+                        // Allow drop events to fire (HTML5 DnD spec requires canceling dragover)
+                        grid.addEventListener('dragover', (e) => { e.preventDefault(); });
+                        """
+        );
 
         /*
          * A drag filter function can be used to specify the rows that are available for dragging. The function receives an item and returns true if the row can be dragged, false otherwise.
@@ -905,7 +905,6 @@ public class TaskGrid extends Grid<Task> {
             }
         });
 
-        // Add drop filter to prevent invalid dependency creation
         setDropFilter(dropTargetTask -> {
             log.trace("DropFilter {} {} {}", draggedTask.getKey(), dropTargetTask.getKey(), dragMode);
             if (isEditMode || draggedTask == null || dragMode == null) return false;
@@ -943,18 +942,10 @@ public class TaskGrid extends Grid<Task> {
                     case "dependency": {
                         log.info("dropped {} on {}", draggedTask.getKey(), dropTargetTask.getKey());
                         // Check if Ctrl/Meta key is pressed to modify behavior
-                        if (isCtrlKeyPressed) {
-                            // Handle dependency creation/removal when dropping ON_TOP
-                            handleDependencyDrop(draggedTask, dropTargetTask);
-                        } else {
-                            // handle parent change
-                            if (isEligibleParent(dropTargetTask, draggedTask)) {
-                                moveToNewParent(draggedTask, dropTargetTask);
-                            } else {
-                                log.info("Cannot change parent: {} is not eligible as parent for {}", dropTargetTask.getKey(), draggedTask.getKey());
-                            }
-                        }
+                        handleDependencyDrop(draggedTask, dropTargetTask);
+                        onSaveAllChangesAndRefresh.run();
                     }
+                    break;
                     case "reorder": {
                         if (draggedTask.isTask() || draggedTask.isMilestone()) {
                             log.info("dropped {} before {}", draggedTask.getKey(), dropTargetTask.getKey());
@@ -999,6 +990,7 @@ public class TaskGrid extends Grid<Task> {
                             onSaveAllChangesAndRefresh.run();
                         }
                     }
+                    break;
                 }
             }
 
