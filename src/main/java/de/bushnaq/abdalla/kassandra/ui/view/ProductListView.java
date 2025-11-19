@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -49,6 +50,7 @@ import java.util.Map;
 @Menu(order = 1, icon = "vaadin:factory", title = "Products")
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
+@JsModule("./styles/vaadin-grid-styles.js")
 public class ProductListView extends AbstractMainGrid<Product> implements AfterNavigationObserver {
     public static final String     CREATE_PRODUCT_BUTTON             = "create-product-button";
     public static final String     PRODUCT_GLOBAL_FILTER             = "product-global-filter";

@@ -1,7 +1,7 @@
 // File: 'src/main/java/de/bushnaq/abdalla/kassandra/ui/view/GridRowReordering.java'
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
@@ -21,8 +21,7 @@ import java.util.List;
 @AnonymousAllowed
 @Log4j2
 @Deprecated
-@CssImport(value = "./styles/jira-backlog-grid.css", themeFor = "vaadin-grid")
-@CssImport("./styles/jira-backlog-view.css")
+@JsModule("./styles/vaadin-grid-styles.js")
 public class GridRowReordering extends Div {
 
     private User draggedItem;

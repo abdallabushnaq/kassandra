@@ -22,6 +22,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
@@ -55,6 +56,7 @@ import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 
 @Layout
 @PermitAll // When security is enabled, allow all authenticated users
+@CssImport("./styles/main-layout.css")
 //@JsModule("/tooltips.js")
 public final class MainLayout extends AppLayout implements AfterNavigationObserver {
 
@@ -86,6 +88,7 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
     MainLayout() {
         UI.getCurrent().getPage().addJavaScript("/js/tooltips.js");
         setPrimarySection(Section.NAVBAR);
+        addClassName("main-layout"); // scope CSS to this layout
 
         // Create main navigation bar components
         HorizontalLayout navbarLayout        = createNavBar();

@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -57,6 +58,7 @@ import java.util.stream.Collectors;
 @Route(value = "availability/:user-email?", layout = MainLayout.class)
 @PageTitle("User Availability")
 @PermitAll
+@JsModule("./styles/vaadin-grid-styles.js")
 public class AvailabilityListView extends AbstractMainGrid<Availability> implements BeforeEnterObserver, AfterNavigationObserver {
     public static final String                        AVAILABILITY_GLOBAL_FILTER             = "availability-global-filter";
     public static final String                        AVAILABILITY_GRID                      = "availability-grid";

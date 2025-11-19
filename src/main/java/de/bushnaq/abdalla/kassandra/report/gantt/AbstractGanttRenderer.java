@@ -131,7 +131,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     }
 
     private void drawCriticalMarker(Task task, int x1, int x2, int y) {
-        if (task.isCritical()) {
+        if (task.getCritical()) {
             graphics2D.setColor(graphicsTheme.ganttCriticalTaskBorderColor);
         } else {
             graphics2D.setColor(graphicsTheme.ganttTaskBorderColor);
@@ -341,7 +341,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
         int x1 = calculateX(targetTask.getFinish(), targetTask.getFinish().truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
         int x2 = RELATION_CORNER_LENGTH + calculateX(sourceTask.getStart(), sourceTask.getStart().truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2 - RESOURCE_NAME_TO_TASK_GAP;
         graphics2D.setStroke(new BasicStroke(RELATION_LINE_STROKE_WIDTH));
-        if (sourceTask.isCritical() && targetTask.isCritical()) {
+        if (sourceTask.getCritical() && targetTask.getCritical()) {
             graphics2D.setColor(graphicsTheme.ganttCriticalRelationColor);
 
         } else {

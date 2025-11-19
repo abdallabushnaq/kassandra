@@ -19,8 +19,6 @@ package de.bushnaq.abdalla.kassandra.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import de.bushnaq.abdalla.profiler.Profiler;
-import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -29,6 +27,8 @@ import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
+import de.bushnaq.abdalla.profiler.Profiler;
+import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -482,7 +482,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
 
     private void logTask(Task task, Task referenceTask, int maxNameLength) {
         String   buffer         = "";
-        String   criticalString = task.isCritical() ? "Y" : "N";
+        String   criticalString = task.getCritical() ? "Y" : "N";
         String   startString    = DateUtil.createDateString(task.getStart(), dtfymdhmss);
         String   finishString   = DateUtil.createDateString(task.getFinish(), dtfymdhmss);
         String   durationString = null;
@@ -505,7 +505,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         String          durationFlag = ANSI_GREEN;
         ProjectCalendar calendar     = GanttUtil.getCalendar(task);
         if (referenceTask != null) {
-            if (task.getChildTasks().isEmpty() && task.isCritical() != referenceTask.isCritical()) {
+            if (task.getChildTasks().isEmpty() && task.getCritical() != referenceTask.getCritical()) {
                 criticalFlag = ANSI_RED;
             }
             if (task.getStart() == null) {

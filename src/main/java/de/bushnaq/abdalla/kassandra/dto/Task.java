@@ -68,7 +68,7 @@ public class Task implements Comparable<Task> {
     /**
      * Indicates whether this task is on the critical path of the project.
      */
-    private boolean critical = false;
+    private Boolean critical = false;
 
     /**
      * The total duration of the task. Depends on the min estimate and the availability of the assigned resource.

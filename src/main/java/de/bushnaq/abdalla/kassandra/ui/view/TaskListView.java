@@ -17,10 +17,12 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.Svg;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.Paragraph;
@@ -63,6 +65,7 @@ import java.util.concurrent.ExecutionException;
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
 @Log4j2
+@JsModule("./styles/vaadin-grid-styles.js")
 public class TaskListView extends Main implements AfterNavigationObserver {
     public static final String            CANCEL_BUTTON_ID           = "cancel-tasks-button";
     public static final String            CREATE_MILESTONE_BUTTON_ID = "create-milestone-button";
@@ -84,6 +87,7 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     private final       TaskGrid          grid;
     private final       HorizontalLayout  headerLayout;
     private             User              loggedInUser               = null;
+    private final       ObjectMapper      objectMapper;
     private final       ProductApi        productApi;
     private             Long              productId;
     private             Button            saveButton;
@@ -97,18 +101,22 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     private             Long              versionId;
     private final       WorklogApi        worklogApi;
 
-    public TaskListView(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock) {
-        this.worklogApi = worklogApi;
-        this.taskApi    = taskApi;
-        this.sprintApi  = sprintApi;
-        this.productApi = productApi;
-        this.versionApi = versionApi;
-        this.featureApi = featureApi;
-        this.userApi    = userApi;
-        this.clock      = clock;
+    public TaskListView(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock, ObjectMapper objectMapper) {
+        this.worklogApi   = worklogApi;
+        this.taskApi      = taskApi;
+        this.sprintApi    = sprintApi;
+        this.productApi   = productApi;
+        this.versionApi   = versionApi;
+        this.featureApi   = featureApi;
+        this.userApi      = userApi;
+        this.clock        = clock;
+        this.objectMapper = objectMapper;
 
         try {
             setSizeFull();
+            // Make view background transparent, so AppLayout's gray background is visible
+            getStyle().set("background-color", "transparent");
+
             addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
             headerLayout = createHeaderWithButtons();
             grid         = createGrid(clock);
@@ -205,7 +213,7 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     }
 
     private TaskGrid createGrid(Clock clock) {
-        TaskGrid grid = new TaskGrid(clock, getLocale());
+        TaskGrid grid = new TaskGrid(clock, getLocale(), objectMapper);
         // Set up callbacks for grid actions
         grid.setOnPersistTask(this::onPersistTask);
         grid.setOnSaveAllChangesAndRefresh(this::saveAllChangesAndRefresh);
@@ -364,8 +372,6 @@ public class TaskListView extends Main implements AfterNavigationObserver {
         // Remove visual feedback
         grid.removeClassName("edit-mode");
 
-        // Update JavaScript edit mode state
-        grid.getElement().executeJs("this.updateEditMode(false);");
 
         // Refresh grid to show read-only components
         grid.getDataProvider().refreshAll();

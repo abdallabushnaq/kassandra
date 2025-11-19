@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui;
 
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
@@ -151,14 +152,14 @@ public class Demo extends AbstractUiTestUtil {
 
 
         productListViewTester.switchToProductListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        seleniumHandler.getAndCheck("http://localhost:" + productListViewTester.getPort() + "/ui/" + "grid-row-reordering");
+//        seleniumHandler.getAndCheck("http://localhost:" + productListViewTester.getPort() + "/ui/" + "grid-row-reordering");
 
 //        // Demo the natural language search capabilities
-//        demonstrateNaturalLanguageSearch();
-//        productListViewTester.selectProduct("Orion");
-//        versionListViewTester.selectVersion("1.0.0");
-//        featureListViewTester.selectFeature("dashboard");
-//        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + "tokyo");
+        demonstrateNaturalLanguageSearch();
+        productListViewTester.selectProduct("Orion");
+        versionListViewTester.selectVersion("1.0.0");
+        featureListViewTester.selectFeature("dashboard");
+        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + "tokyo");
 
         seleniumHandler.waitUntilBrowserClosed(0);
     }

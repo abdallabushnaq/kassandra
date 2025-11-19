@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -42,6 +43,7 @@ import java.time.format.FormatStyle;
 @PageTitle("User List Page")
 @Menu(order = 2, icon = "vaadin:users", title = "Users")
 @PermitAll // When security is enabled, allow all authenticated users
+@JsModule("./styles/vaadin-grid-styles.js")
 public class UserListView extends AbstractMainGrid<User> implements AfterNavigationObserver {
     public static final String  CREATE_USER_BUTTON             = "create-user-button";
     public static final String  ROUTE                          = "user-list";

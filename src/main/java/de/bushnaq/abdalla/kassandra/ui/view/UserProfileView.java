@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.icon.Icon;
@@ -50,6 +51,7 @@ import java.util.List;
 @Route(value = "profile/:user-email?", layout = MainLayout.class)
 @PageTitle("User Profile")
 @PermitAll
+@JsModule("./styles/vaadin-grid-styles.js")
 public class UserProfileView extends Main implements BeforeEnterObserver {
     public static final String                                        PROFILE_PAGE_TITLE  = "profile-page-title";
     public static final String                                        ROUTE               = "profile";

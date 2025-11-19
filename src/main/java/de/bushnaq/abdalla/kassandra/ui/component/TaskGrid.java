@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -52,36 +53,44 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class TaskGrid extends Grid<Task> {
-    public static final String            ASSIGNED_FIELD     = "-assigned-field";
-    public static final String            MAX_ESTIMATE_FIELD = "-max-estimate-field";
-    public static final String            MIN_ESTIMATE_FIELD = "-min-estimate-field";
-    public static final String            NAME_FIELD         = "-name-field";
-    public static final String            START_FIELD        = "-start-field";
-    public static final String            TASK_GRID_PREFIX   = "task-grid-";
-    private final       List<User>        allUsers           = new ArrayList<>();
-    private final       Clock             clock;
-    private             String            dragMode;
-    private             Task              draggedTask;          // Track the currently dragged task
-    private final       DateTimeFormatter dtfymdhm           = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
-    private             boolean           isCtrlKeyPressed   = false; // Track if Ctrl key is pressed during drop
+    public static final String               ASSIGNED_FIELD     = "-assigned-field";
+    public static final String               MAX_ESTIMATE_FIELD = "-max-estimate-field";
+    public static final String               MIN_ESTIMATE_FIELD = "-min-estimate-field";
+    public static final String               NAME_FIELD         = "-name-field";
+    public static final String               START_FIELD        = "-start-field";
+    public static final String               TASK_GRID_PREFIX   = "task-grid-";
+    private final       List<User>           allUsers           = new ArrayList<>();
+    private final       TaskClipboardHandler clipboardHandler;
+    private final       Clock                clock;
+    private             String               dragMode;
+    private             Task                 draggedTask;          // Track the currently dragged task
+    private final       DateTimeFormatter    dtfymdhm           = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
+    private             boolean              isCtrlKeyPressed   = false; // Track if Ctrl key is pressed during drop
     @Getter
     @Setter
-    private             boolean           isEditMode         = false;// Edit mode state management
-    private final       Locale            locale;
+    private             boolean              isEditMode         = false;// Edit mode state management
+    private final       Locale               locale;
     @Getter
-    private final       Set<Task>         modifiedTasks      = new HashSet<>();
+    private final       Set<Task>            modifiedTasks      = new HashSet<>();
+    private final       ObjectMapper         objectMapper;
     @Setter
-    private             Consumer<Task>    onPersistTask;
+    private             Consumer<Task>       onPersistTask;
     @Setter
-    private             Runnable          onSaveAllChangesAndRefresh;
-    private             Sprint            sprint;
-    private             List<Task>        taskOrder          = new ArrayList<>(); // Track current order in memory
+    private             Runnable             onSaveAllChangesAndRefresh;
+    private             Sprint               sprint;
+    private             List<Task>           taskOrder          = new ArrayList<>(); // Track current order in memory
 
 
-    public TaskGrid(Clock clock, Locale locale) {
-        this.clock  = clock;
-        this.locale = locale;
+    public TaskGrid(Clock clock, Locale locale, ObjectMapper objectMapper) {
+        this.clock            = clock;
+        this.locale           = locale;
+        this.objectMapper     = objectMapper;
+        this.clipboardHandler = new TaskClipboardHandler(
+                this,
+                objectMapper
+        );
 
+        setSelectionMode(SelectionMode.SINGLE);
         addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
         createGridColumns();
         setupDragAndDrop();
@@ -99,6 +108,15 @@ public class TaskGrid extends Grid<Task> {
         addThemeVariants(com.vaadin.flow.component.grid.GridVariant.LUMO_NO_BORDER, com.vaadin.flow.component.grid.GridVariant.LUMO_NO_ROW_BORDERS);
         addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
 
+    }
+
+    public void addTask(Task task) {
+        task.setSprint(sprint);
+        task.setSprintId(sprint.getId());
+        sprint.addTask(task);
+        taskOrder.add(task);
+        indentTask(task);
+        onSaveAllChangesAndRefresh.run();
     }
 
     /**
@@ -516,22 +534,18 @@ public class TaskGrid extends Grid<Task> {
 
         Task task = new Task();
         task.setName("New Task-" + nextOrderId);
-        task.setSprint(sprint);
-        task.setSprintId(sprint.getId());
-        sprint.addTask(task);
+//        task.setSprint(sprint);
+//        task.setSprintId(sprint.getId());
+//        sprint.addTask(task);
         Duration work = Duration.ofHours(7).plus(Duration.ofMinutes(30));
         task.setMinEstimate(work);
         task.setOriginalEstimate(work);
         task.setRemainingEstimate(work);
-        taskOrder.add(task);
-        indentTask(task);
-
-        // Assign user to the new task
+//        taskOrder.add(task);
+//        indentTask(task);
         assignUserToNewTask(task, loggedInUser);
-//        onPersistTask.accept(task);
-        onSaveAllChangesAndRefresh.run();
-//        loadData();
-//        refreshGrid();
+//        onSaveAllChangesAndRefresh.run();
+        addTask(task);
     }
 
     /**
@@ -1003,6 +1017,76 @@ public class TaskGrid extends Grid<Task> {
      * Used by JS code
      */
     private void setupKeyboardNavigation() {
+        // Setup JavaScript for keyboard shortcuts including copy/paste
+        getElement().executeJs(
+                """
+                        const grid = this;
+                        if (!grid.__keyboardHandlersInstalled) {
+                            grid.__keyboardHandlersInstalled = true;
+                        
+                            // Add keyboard event listener for copy/paste
+                            grid.addEventListener('keydown', (e) => {
+                                // Handle Ctrl+C or Cmd+C (copy)
+                                if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                                    console.warn('--- copy shortcut detected');
+                                    const selectedItems = grid.selectedItems;
+                                    console.log('selectedItems:', selectedItems);
+                        
+                                    if (selectedItems && selectedItems.length > 0) {
+                                        console.warn('--- items selected, count:', selectedItems.length);
+                        
+                                        // Get the first selected item
+                                        const selectedItem = selectedItems[0];
+                                        console.log('selectedItem:', selectedItem);
+                        
+                                        // Extract task key from col2 (format: "T-{ID}")
+                                        const taskKey = selectedItem.col2;
+                                        console.log('taskKey from col2:', taskKey);
+                        
+                                        if (taskKey && taskKey.startsWith('T-')) {
+                                            // Extract ID from "T-{ID}" format
+                                            const taskId = taskKey.substring(2);
+                                            console.log('Extracted task ID:', taskId);
+                        
+                                            if (taskId) {
+                                                console.warn('--- dispatching copy event with taskId:', taskId);
+                                                // Dispatch copy event to server
+                                                grid.dispatchEvent(new CustomEvent('copy-task', {
+                                                    detail: { taskId: taskId }
+                                                }));
+                                                e.preventDefault();
+                                            } else {
+                                                console.warn('Could not parse task ID from key:', taskKey);
+                                            }
+                                        } else {
+                                            console.warn('Task key not in expected format (T-{ID}):', taskKey);
+                                        }
+                                    } else {
+                                        console.log('No items selected');
+                                    }
+                                }
+                        
+                                // Handle Ctrl+V or Cmd+V (paste)
+                                if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                                    console.warn('--- past shortcut detected');
+                                    // Read from clipboard
+                                    navigator.clipboard.readText().then(text => {
+                                        if (text) {
+                                            // Dispatch paste event to server
+                                            grid.dispatchEvent(new CustomEvent('paste-task', {
+                                                detail: { clipboardData: text }
+                                            }));
+                                        }
+                                    }).catch(err => {
+                                        console.error('Failed to read clipboard:', err);
+                                    });
+                                    e.preventDefault();
+                                }
+                            });
+                        }
+                        """
+        );
+
         // Register server-side event listeners for indent/outdent
         getElement().addEventListener("indent-task", event -> {
             String taskIdStr = event.getEventData().getString("event.detail.taskId");
@@ -1039,6 +1123,33 @@ public class TaskGrid extends Grid<Task> {
                 }
             }
         }).addEventData("event.detail.taskId");
+
+        // Register server-side event listener for copy (Ctrl+C)
+        getElement().addEventListener("copy-task", event -> {
+            String taskIdStr = event.getEventData().getString("event.detail.taskId");
+            if (taskIdStr != null && !taskIdStr.isEmpty()) {
+                try {
+                    Long taskId = Long.parseLong(taskIdStr);
+                    Task task = taskOrder.stream()
+                            .filter(t -> t.getId().equals(taskId))
+                            .findFirst()
+                            .orElse(null);
+                    if (task != null && !isEditMode) {
+                        clipboardHandler.handleCopy(task);
+                    }
+                } catch (NumberFormatException ex) {
+                    log.warn("Invalid task ID for copy operation: {}", taskIdStr);
+                }
+            }
+        }).addEventData("event.detail.taskId");
+
+        // Register server-side event listener for paste (Ctrl+V)
+        getElement().addEventListener("paste-task", event -> {
+            String clipboardData = event.getEventData().getString("event.detail.clipboardData");
+            if (clipboardData != null && !clipboardData.isEmpty() && !isEditMode) {
+                clipboardHandler.handlePaste(clipboardData);
+            }
+        }).addEventData("event.detail.clipboardData");
 
     }
 
