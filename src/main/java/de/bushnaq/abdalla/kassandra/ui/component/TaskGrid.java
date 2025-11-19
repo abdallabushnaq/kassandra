@@ -115,7 +115,11 @@ public class TaskGrid extends Grid<Task> {
         task.setSprintId(sprint.getId());
         sprint.addTask(task);
         taskOrder.add(task);
-        indentTask(task);
+        if (!task.isStory()) {
+            indentTask(task);
+        } else {
+            markTaskAsModified(task);
+        }
         onSaveAllChangesAndRefresh.run();
     }
 
