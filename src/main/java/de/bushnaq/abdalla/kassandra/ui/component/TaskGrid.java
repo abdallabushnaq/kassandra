@@ -845,27 +845,35 @@ public class TaskGrid extends Grid<Task> {
                                     grid.$server.setCtrlKeyPressed(pressed);
                                 }
                             };
+                            const syncState = (pressed) => {
+                                if (grid.__ctrlKeyPressed === pressed) {
+                                    return;
+                                }
+                                grid.__ctrlKeyPressed = pressed;
+                                send(pressed);
+                            };
                             window.addEventListener('keydown', (e) => {
                                 if ((e.key === 'Control' || e.key === 'Meta')) {
-                                    // Ignore auto-repeat: e.repeat true means key is held
                                     if (e.repeat) return;
-                                    if (!grid.__ctrlKeyPressed) {
-                                        grid.__ctrlKeyPressed = true;
-                                        send(true);
-                                    }
+                                    syncState(true);
                                 }
                             }, true);
                             window.addEventListener('keyup', (e) => {
                                 if ((e.key === 'Control' || e.key === 'Meta')) {
-                                    if (grid.__ctrlKeyPressed) {
-                                        grid.__ctrlKeyPressed = false;
-                                        send(false);
-                                    }
+                                    syncState(false);
                                 }
                             }, true);
+                            grid.addEventListener('dragstart', (e) => {
+                                syncState(e.ctrlKey || e.metaKey);
+                            }, true);
+                            grid.addEventListener('dragend', () => {
+                                syncState(false);
+                            }, true);
+                            grid.addEventListener('dragover', (e) => {
+                                e.preventDefault();
+                                syncState(e.ctrlKey || e.metaKey);
+                            });
                         }
-                        // Allow drop events to fire (HTML5 DnD spec requires canceling dragover)
-                        grid.addEventListener('dragover', (e) => { e.preventDefault(); });
                         """
         );
 
@@ -910,9 +918,10 @@ public class TaskGrid extends Grid<Task> {
             if (isEditMode || draggedTask == null || dragMode == null) return false;
             switch (dragMode) {
                 case "dependency":
+                    log.trace("dependency DropFilter {}", isEligiblePredecessor(dropTargetTask, draggedTask));
                     return isEligiblePredecessor(dropTargetTask, draggedTask);
                 case "reorder": {
-                    log.trace("DropFilter {}", isEligibleMoveTarget(dropTargetTask, draggedTask));
+                    log.trace("reorder DropFilter {}", isEligibleMoveTarget(dropTargetTask, draggedTask));
                     return isEligibleMoveTarget(dropTargetTask, draggedTask);
 //                    return false;
                 }
