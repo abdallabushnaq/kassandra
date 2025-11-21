@@ -358,7 +358,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * Highlights one or more elements by their IDs for a short period of time (default 2 seconds).
      * This is a convenience method that finds the elements by ID and then highlights them.
      * <p>
-     * All elements are highlighted with a simple red border (3px solid) regardless of element type.
+     * All elements are highlighted with a red outline and subtle shadow that don't affect layout.
      * The highlights are applied simultaneously to all elements and removed after the duration.
      *
      * @param ids One or more element IDs to highlight
@@ -371,7 +371,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * Highlights one or more elements by their IDs for a specified duration.
      * This is a convenience method that finds the elements by ID and then highlights them.
      * <p>
-     * All elements are highlighted with a simple red border (3px solid) regardless of element type.
+     * All elements are highlighted with a red outline and subtle shadow that don't affect layout.
      * The highlights are applied simultaneously to all elements and removed after the duration.
      *
      * @param durationMillis Duration in milliseconds to show the highlight (e.g., 2000 for 2 seconds)
@@ -402,7 +402,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * This is useful for creating instruction videos where you want to draw the viewer's attention
      * to specific elements without needing to describe their exact location.
      * <p>
-     * All elements are highlighted with a simple red border (3px solid) regardless of element type.
+     * All elements are highlighted with a red outline and subtle shadow that don't affect layout.
      * The highlights are applied simultaneously to all elements and removed after the duration.
      * The original element styles are preserved and restored after highlighting.
      *
@@ -417,7 +417,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * This is useful for creating instruction videos where you want to draw the viewer's attention
      * to specific elements without needing to describe their exact location.
      * <p>
-     * All elements are highlighted with a simple red border (3px solid) regardless of element type.
+     * All elements are highlighted with a red outline and subtle shadow that don't affect layout.
      * The highlights are applied simultaneously to all elements and removed after the duration.
      * The original element styles are preserved and restored after highlighting.
      *
@@ -434,7 +434,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         }
 
         try {
-            // Build JavaScript to highlight all elements with a simple red border
+            // Build JavaScript to highlight all elements using outline and box-shadow
+            // Using outline instead of border prevents layout shifts because outline doesn't affect the box model
 
             String script = "var elements = arguments;\n" +
                     "var originals = [];\n" +
@@ -445,15 +446,20 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                     "  var element = elements[i];\n" +
                     "  if (!element) continue;\n" +
                     "\n" +
-                    "  // Add a simple red border to all elements\n" +
+                    "  // Use outline and box-shadow instead of border to prevent layout shifts\n" +
                     "  originals.push({\n" +
                     "    element: element,\n" +
-                    "    border: element.style.border,\n" +
+                    "    outline: element.style.outline,\n" +
+                    "    outlineOffset: element.style.outlineOffset,\n" +
+                    "    boxShadow: element.style.boxShadow,\n" +
                     "    transition: element.style.transition\n" +
                     "  });\n" +
                     "  \n" +
-                    "  element.style.transition = 'all 0.3s ease-in-out';\n" +
-                    "  element.style.border = '3px solid #ff0000';\n" +
+                    "  element.style.transition = 'outline 0.3s ease-in-out, box-shadow 0.3s ease-in-out';\n" +
+                    "  element.style.outline = '3px solid #ff0000';\n" +
+                    "  element.style.outlineOffset = '0px';\n" +
+                    "  // Add a subtle shadow for better visibility\n" +
+                    "  element.style.boxShadow = '0 0 8px 2px rgba(255, 0, 0, 0.5)';\n" +
                     "}\n" +
                     "\n" +
                     "// Store the cleanup data for later removal\n" +
@@ -481,12 +487,14 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                         "var cleanup = arguments[0];\n" +
                                 "if (!cleanup) return;\n" +
                                 "\n" +
-                                "// Restore original styles for border highlights\n" +
+                                "// Restore original styles for outline highlights\n" +
                                 "if (cleanup.originals) {\n" +
                                 "  cleanup.originals.forEach(function(original) {\n" +
                                 "    if (original.element) {\n" +
                                 "      original.element.style.transition = original.transition || '';\n" +
-                                "      original.element.style.border = original.border || '';\n" +
+                                "      original.element.style.outline = original.outline || '';\n" +
+                                "      original.element.style.outlineOffset = original.outlineOffset || '';\n" +
+                                "      original.element.style.boxShadow = original.boxShadow || '';\n" +
                                 "    }\n" +
                                 "  });\n" +
                                 "}\n";
