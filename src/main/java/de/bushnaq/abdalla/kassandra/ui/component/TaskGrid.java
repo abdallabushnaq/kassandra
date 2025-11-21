@@ -834,51 +834,45 @@ public class TaskGrid extends Grid<Task> {
         // Setup JavaScript to capture Ctrl/Meta key state during drag operations
         getElement().executeJs(
                 """
-                                                const grid = this;
+                        const grid = this;
                         
-                                                // Use Ctrl (Windows/Linux) and Meta (macOS) to toggle dependency drag mode.
-                                                if (!grid.__modifierKeyHandlersInstalled) {
-                                                    grid.__modifierKeyHandlersInstalled = true;
-                                                    grid.__ctrlKeyPressed = false; // local state to avoid repeat spam
-                                                    const send = (pressed) => {
-                                                        if (grid.$server && grid.$server.setCtrlKeyPressed) {
-                                                            grid.$server.setCtrlKeyPressed(pressed);
-                                                        }
-                                                    };
-                                                    const syncState = (pressed) => {
-                                                        if (grid.__ctrlKeyPressed === pressed) {
-                                                            return;
-                                                        }
-                                                        console.log('Syncing Ctrl key state to:', pressed);
-                                                        grid.__ctrlKeyPressed = pressed;
-                                                        send(pressed);
-                                                    };
-                                                    window.addEventListener('keydown', (e) => {
-                                                        if ((e.key === 'Control' || e.key === 'Meta')) {
-                                                            if (e.repeat) return;
-                                                            console.log('Keydown: Control pressed');
-                                                            syncState(true);
-                                                        }
-                                                    }, true);
-                                                    window.addEventListener('keyup', (e) => {
-                                                        if ((e.key === 'Control' || e.key === 'Meta')) {
-                                                            console.log('Keyup: Control released');
-                                                            syncState(false);
-                                                        }
-                                                    }, true);
-                                                    // Sync state at dragstart to capture the initial Ctrl key state
-                                                    // (not using capture phase to let Vaadin handle the event first)
-                                                    grid.addEventListener('dragstart', (e) => {
-                                                        console.log('Dragstart: ctrlKey=', e.ctrlKey, 'metaKey=', e.metaKey);
-                                                        syncState(e.ctrlKey || e.metaKey);
-                                                    });
-                                                    // Sync state at dragend to sync back to reality
-                                                    // Use capture phase to catch the event before Vaadin consumes it
-                                                    grid.addEventListener('dragend', (e) => {
-                                                        console.log('Dragend: ctrlKey=', e.ctrlKey, 'metaKey=', e.metaKey);
-                                                        syncState(e.ctrlKey || e.metaKey);
-                                                    }, true);
-                                                }
+                        // Use Ctrl (Windows/Linux) and Meta (macOS) to toggle dependency drag mode.
+                        if (!grid.__modifierKeyHandlersInstalled) {
+                            grid.__modifierKeyHandlersInstalled = true;
+                            grid.__ctrlKeyPressed = false; // local state to avoid repeat spam
+                            const send = (pressed) => {
+                                if (grid.$server && grid.$server.setCtrlKeyPressed) {
+                                    grid.$server.setCtrlKeyPressed(pressed);
+                                }
+                            };
+                            const syncState = (pressed) => {
+                                if (grid.__ctrlKeyPressed === pressed) {
+                                    return;
+                                }
+                                console.log('Syncing Ctrl key state to:', pressed);
+                                grid.__ctrlKeyPressed = pressed;
+                                send(pressed);
+                            };
+                            window.addEventListener('keydown', (e) => {
+                                if ((e.key === 'Control' || e.key === 'Meta')) {
+                                    if (e.repeat) return;
+                                    console.log('Keydown: Control pressed');
+                                    syncState(true);
+                                }
+                            }, true);
+                            window.addEventListener('keyup', (e) => {
+                                if ((e.key === 'Control' || e.key === 'Meta')) {
+                                    console.log('Keyup: Control released');
+                                    syncState(false);
+                                }
+                            }, true);
+                            // Sync state at dragend to sync back to reality
+                            // Use capture phase to catch the event before Vaadin consumes it
+                            grid.addEventListener('dragend', (e) => {
+                                console.log('Dragend: ctrlKey=', e.ctrlKey, 'metaKey=', e.metaKey);
+                                syncState(e.ctrlKey || e.metaKey);
+                            }, true);
+                        }
                         """
         );
 
@@ -1011,10 +1005,6 @@ public class TaskGrid extends Grid<Task> {
             draggedTask      = null; // Clear the dragged task reference
             isCtrlKeyPressed = false; // Reset modifier key state
             dragMode         = null;
-
-            // Sync the client-side state back to reality by checking actual key state
-            // This handles the case where user released Ctrl during drag
-            syncCtrlKeyStateFromClient();
         });
 
         addDragEndListener(event -> {
@@ -1022,9 +1012,6 @@ public class TaskGrid extends Grid<Task> {
             isCtrlKeyPressed = false; // Reset modifier key state
             setDropMode(null);
             dragMode = null;
-
-            // Sync the client-side state back to reality
-            syncCtrlKeyStateFromClient();
         });
 
     }
@@ -1168,28 +1155,6 @@ public class TaskGrid extends Grid<Task> {
             }
         }).addEventData("event.detail.clipboardData");
 
-    }
-
-    /**
-     * Syncs the Ctrl key state from the client by checking the actual browser state
-     * This is needed because dragend events might not fire or be consumed by Vaadin
-     */
-    private void syncCtrlKeyStateFromClient() {
-        // Use a small timeout to ensure drag operation has fully completed
-        // Then check the client state and update it with a forced sync
-        getElement().executeJs(
-                """
-                        setTimeout(() => {
-                            const grid = this;
-                            // Force an update by checking stored state
-                            const currentState = grid.__ctrlKeyPressed || false;
-                            console.log('Java-triggered sync: current client state =', currentState);
-                            if (grid.$server && grid.$server.setCtrlKeyPressed) {
-                                grid.$server.setCtrlKeyPressed(currentState);
-                            }
-                        }, 10);
-                        """
-        );
     }
 
     public void updateData(Sprint sprint, List<Task> taskOrder, List<User> allUsers) {
