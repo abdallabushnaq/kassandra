@@ -78,6 +78,7 @@ public class TaskGrid extends Grid<Task> {
     @Setter
     private             Runnable             onSaveAllChangesAndRefresh;
     private             Sprint               sprint;
+    @Getter
     private             List<Task>           taskOrder          = new ArrayList<>(); // Track current order in memory
 
 
@@ -538,17 +539,11 @@ public class TaskGrid extends Grid<Task> {
 
         Task task = new Task();
         task.setName("New Task-" + nextOrderId);
-//        task.setSprint(sprint);
-//        task.setSprintId(sprint.getId());
-//        sprint.addTask(task);
         Duration work = Duration.ofHours(7).plus(Duration.ofMinutes(30));
         task.setMinEstimate(work);
         task.setOriginalEstimate(work);
         task.setRemainingEstimate(work);
-//        taskOrder.add(task);
-//        indentTask(task);
         assignUserToNewTask(task, loggedInUser);
-//        onSaveAllChangesAndRefresh.run();
         addTask(task);
     }
 
