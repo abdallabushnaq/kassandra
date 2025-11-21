@@ -71,7 +71,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
     public static final  String                   NEW_STORY     = "New Story-";
     public static final  String                   NEW_TASK      = "New Task-";
     public static final  NarratorAttribute        NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  String                   VIDEO_TITLE   = "Rearranging Stories and Tasks";
+    public static final  String                   VIDEO_TITLE   = "Stories and Tasks - Rearranging and Copying";
     @Container
     private static final KeycloakContainer        keycloak      = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
             // Start Keycloak container with realm configuration
@@ -121,9 +121,9 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         Sprint sprint = generateData();
 
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-//        paul.setSilent(true);
+        paul.setSilent(true);
         Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
-//        grace.setSilent(true);
+        grace.setSilent(true);
         seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
 
@@ -138,7 +138,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
         seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         paul.pause(3000);
-        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn how to rearrange stories and tasks. By rearranging we mean changing the order in the list to change the priority of a story or task, or moving a task from a story to another story.");
+        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn how to rearrange and copy stories and tasks. By rearranging we mean changing the order in the list to change the priority of a story or task, or moving a task from a story to another story. We'll also see how to quickly duplicate stories with all their child tasks using copy and paste.");
         seleniumHandler.hideOverlay();
 
         int    orderId        = 0;
@@ -159,28 +159,56 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         seleniumHandler.setMouseMoveStepsMultiplier(2.0);
         seleniumHandler.setMouseMoveDelayMultiplier(2);
         // Move Story-5 before Story-1
-        paul.narrate(NORMAL, "Now, let's see how we can rearrange stories and tasks using drag and drop. First, we'll move the second story before first story to prioritize it higher in our sprint backlog. So, first the persistence, then the API");
-        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + story2.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
+//        paul.narrate(NORMAL, "Now, let's see how we can rearrange stories and tasks using drag and drop. First, we'll move the second story before first story to prioritize it higher in our sprint backlog. So, first the persistence, then the API");
+//        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + story2.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
+//
+//        paul.narrate(NORMAL, "Next, lets move the story back.");
+//        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_PREFIX + story2.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
+//        paul.narrate(NORMAL, "Have you noticed that Kassandra only allowed me to drop the story above or below another story and that the child tasks always follow the story? This makes rearranging blocks of work really easy.");
+//
+//        paul.narrate(NORMAL, "Great! Now, let's rearrange some tasks within the API story. I like open API first approach. We'll move API documentation before creating the controller.");
+//        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + task12.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
+//
+//        paul.narrate(NORMAL, "Finally, let's say we need to address error handling first to ensure robustness. We'll move API error handling to the top of our task list into the persistence story.");
+//        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + task13.getName(), TaskGrid.TASK_GRID_PREFIX + task21.getName());
+//
+//        paul.narrate(NORMAL, "Lets redo that. We do not want API related tasks in the story that is all about persistence.");
+//        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_PREFIX + task13.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
 
-        paul.narrate(NORMAL, "Next, lets move the story back.");
-        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_PREFIX + story2.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
-        paul.narrate(NORMAL, "Have you noticed that Kassandra only allowed me to drop the story above or below another story and that the child tasks always follow the story? This makes rearranging blocks of work really easy.");
+        //---------------------------------------------------------------------------------------
+        // Copy/Paste Introduction
+        //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "Great! Now, let's rearrange some tasks within the API story. I like open API first approach. We'll move API documentation before creating the controller.");
-        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + task12.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
+        paul.narrate(NORMAL, "Now, let's learn about another powerful feature: copying tasks and stories. Sometimes you need to duplicate a story with all its child tasks. Kassandra makes this incredibly easy with copy and paste.");
 
-        paul.narrate(NORMAL, "Finally, let's say we need to address error handling first to ensure robustness. We'll move API error handling to the top of our task list into the persistence story.");
-        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + task13.getName(), TaskGrid.TASK_GRID_PREFIX + task21.getName());
+        paul.narrate(NORMAL, "First, I'll select the first story, Config api implementation, by clicking on it.");
+        seleniumHandler.selectGridRow(TaskGrid.TASK_GRID_PREFIX, TaskListView.class, story1.getName());
 
-        paul.narrate(NORMAL, "Lets redo that. We do not want API related tasks in the story that is all about persistence.");
-        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_PREFIX + task13.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
+        paul.pause(500);
+
+        paul.narrate(NORMAL, "Now, I'll press control plus C to copy the story.");
+        seleniumHandler.copy();
+        paul.pauseIfSilent(1000);
+        paul.pause(1000);
+
+        paul.narrate(NORMAL, "And now, control plus V to paste it.");
+        seleniumHandler.past();
+        paul.pauseIfSilent(1000);
+        paul.pause(1500);
+
+        paul.narrate(NORMAL, "Notice how Kassandra automatically copied the entire story along with all three of its child tasks to the end of the grid. The copied story and tasks are exact duplicates, ready for you to modify as needed.");
+        paul.pause(1000);
+
+        paul.narrate(NORMAL, "This copy and paste feature is perfect for managing project templates. You can quickly build your project duplicate your work and then adjust the details.");
+
 
         //---------------------------------------------------------------------------------------
         // Closing
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "That's all there is to rearranging stories and tasks in Kassandra. Thanks for watching!");
+        paul.narrate(NORMAL, "That's all there is to rearranging and copying stories and tasks in Kassandra. Thanks for watching!");
 
+        paul.pauseIfSilent(5000);
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }

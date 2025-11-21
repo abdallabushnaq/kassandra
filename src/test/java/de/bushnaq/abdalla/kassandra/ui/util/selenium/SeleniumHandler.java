@@ -21,12 +21,13 @@ import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -52,7 +53,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @Component
 @Getter
-@Log4j2
+@Slf4j
 class SeleniumHandler {
     private static final int             DEFAULT_BROWSER_CHROME_HEIGHT = 130; // Typical Chrome window chrome height in pixels
     private              Integer         browserChromeHeight           = null; // Cached browser chrome height
@@ -98,6 +99,15 @@ class SeleniumHandler {
         moveMouseToElement(element);
         element.click();
         log.info("Clicked element with mouse movement");
+    }
+
+    public void copy() {
+        showTransientTitle("Ctrl+C");
+        Actions a = new Actions(getDriver());
+        a.keyDown(Keys.CONTROL);
+        a.sendKeys("c");
+        a.keyUp(Keys.CONTROL);
+        a.build().perform();
     }
 
     @PreDestroy
@@ -381,16 +391,29 @@ class SeleniumHandler {
             options.addArguments("--dns-prefetch-disable");
             // Add a longer timeout for the page load
             options.setPageLoadTimeout(Duration.ofSeconds(60));
-            // Disable the "Save password?" prompt
+            // Disable the "Save password?" prompt and grant clipboard permissions
             options.setExperimentalOption("prefs", Map.of(
                     "credentials_enable_service", false,
-                    "profile.password_manager_enabled", false
+                    "profile.password_manager_enabled", false,
+                    "profile.content_settings.exceptions.clipboard", Map.of(
+                            "*", Map.of("setting", 1)
+                    )
             ));
         } else {
             log.info("creating selenium driver");
+            // Disable the "Save password?" prompt and grant clipboard permissions
+            options.setExperimentalOption("prefs", Map.of(
+                    "credentials_enable_service", false,
+                    "profile.password_manager_enabled", false,
+                    "profile.content_settings.exceptions.clipboard", Map.of(
+                            "*", Map.of("setting", 1)
+                    )
+            ));
         }
 
         options.addArguments("--remote-allow-origins=*");
+        // Grant clipboard permissions without prompting
+        options.addArguments("--disable-features=ClipboardContentSetting");
         options.setCapability(CapabilityType.ACCEPT_INSECURE_CERTS, true);
 
         // Enable browser console logging to capture JavaScript console.log messages
@@ -506,7 +529,6 @@ class SeleniumHandler {
         return waitDuration;
     }
 
-
     /**
      * Helper method to initialize WebDriverWait if it hasn't been initialized yet.
      * This is used by methods that need to wait for elements or conditions.
@@ -532,16 +554,6 @@ class SeleniumHandler {
         }
     }
 
-    /**
-     * Checks if an element with the specified ID is present on the page
-     *
-     * @param id the ID of the element to check
-     * @return true if the element is present, false otherwise
-     */
-    public boolean isElementPresent(String id) {
-        return isElementPresent(By.id(id));
-    }
-
 //    /**
 //     * Gets whether mouse movement is currently enabled.
 //     * Mouse movement is controlled by the humanize flag.
@@ -551,6 +563,16 @@ class SeleniumHandler {
 //    public boolean isMouseMovementEnabled() {
 //        return humanize;
 //    }
+
+    /**
+     * Checks if an element with the specified ID is present on the page
+     *
+     * @param id the ID of the element to check
+     * @return true if the element is present, false otherwise
+     */
+    public boolean isElementPresent(String id) {
+        return isElementPresent(By.id(id));
+    }
 
     public boolean isRecording() {
         return videoRecorder.isRecording();
@@ -571,6 +593,17 @@ class SeleniumHandler {
 
     protected void moveMouseToElement(WebElement element) {
         //dummy implementation
+    }
+
+    public void past() throws Exception {
+        showTransientTitle("Ctrl+V");
+        {
+            Actions a = new Actions(getDriver());
+            a.keyDown(Keys.CONTROL);
+            a.sendKeys("v");
+            a.keyUp(Keys.CONTROL);
+            a.build().perform();
+        }
     }
 
     /**
@@ -1018,6 +1051,24 @@ class SeleniumHandler {
         }
     }
 
+    /**
+     * Show a quick, non-animated title badge and automatically hide it after a short time.
+     * No subtitle, no fade-in/out; intended for showing pressed keys or short hints in videos.
+     *
+     * @param title         text to show inside the badge
+     * @param displayMillis how long to keep it visible before removing (milliseconds)
+     */
+    public void showTransientTitle(String title, int displayMillis) {
+        if (!HumanizedSeleniumHandler.isHumanize()) {
+        }
+    }
+
+    /**
+     * Convenience overload that shows the transient title for a default of 1000 ms.
+     */
+    public void showTransientTitle(String title) {
+        showTransientTitle(title, 1000);
+    }
 
     /**
      * Start recording screen activities for the current test

@@ -250,6 +250,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 throw e2;
             }
         }
+        wait(100);
+        waitForPageLoaded();
     }
 
     /**
@@ -692,13 +694,6 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         setComboBoxValue(comboBoxElement, text);
     }
 
-//    /**
-//     * Adjust per-character typing delay in milliseconds for humanized mode.
-//     */
-//    public void setTypingDelayMillis(int typingDelayMillis) {
-//        this.typingDelayMillis = Math.max(0, typingDelayMillis);
-//    }
-
     /**
      * Sets a combobox value in a humanized way by clicking on the dropdown toggle,
      * waiting for the overlay to appear, and clicking on the matching item.
@@ -806,6 +801,13 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         wait(500);
         inputElement.sendKeys(Keys.ARROW_DOWN, Keys.TAB);
     }
+
+//    /**
+//     * Adjust per-character typing delay in milliseconds for humanized mode.
+//     */
+//    public void setTypingDelayMillis(int typingDelayMillis) {
+//        this.typingDelayMillis = Math.max(0, typingDelayMillis);
+//    }
 
     /**
      * Sets a date picker value in a humanized way by clicking the toggle button,
