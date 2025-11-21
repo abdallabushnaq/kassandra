@@ -834,46 +834,51 @@ public class TaskGrid extends Grid<Task> {
         // Setup JavaScript to capture Ctrl/Meta key state during drag operations
         getElement().executeJs(
                 """
-                        const grid = this;
+                                                const grid = this;
                         
-                        // Use Ctrl (Windows/Linux) and Meta (macOS) to toggle dependency drag mode.
-                        if (!grid.__modifierKeyHandlersInstalled) {
-                            grid.__modifierKeyHandlersInstalled = true;
-                            grid.__ctrlKeyPressed = false; // local state to avoid repeat spam
-                            const send = (pressed) => {
-                                if (grid.$server && grid.$server.setCtrlKeyPressed) {
-                                    grid.$server.setCtrlKeyPressed(pressed);
-                                }
-                            };
-                            const syncState = (pressed) => {
-                                if (grid.__ctrlKeyPressed === pressed) {
-                                    return;
-                                }
-                                grid.__ctrlKeyPressed = pressed;
-                                send(pressed);
-                            };
-                            window.addEventListener('keydown', (e) => {
-                                if ((e.key === 'Control' || e.key === 'Meta')) {
-                                    if (e.repeat) return;
-                                    syncState(true);
-                                }
-                            }, true);
-                            window.addEventListener('keyup', (e) => {
-                                if ((e.key === 'Control' || e.key === 'Meta')) {
-                                    syncState(false);
-                                }
-                            }, true);
-                            grid.addEventListener('dragstart', (e) => {
-                                syncState(e.ctrlKey || e.metaKey);
-                            }, true);
-                            grid.addEventListener('dragend', () => {
-                                syncState(false);
-                            }, true);
-                            grid.addEventListener('dragover', (e) => {
-                                e.preventDefault();
-                                syncState(e.ctrlKey || e.metaKey);
-                            });
-                        }
+                                                // Use Ctrl (Windows/Linux) and Meta (macOS) to toggle dependency drag mode.
+                                                if (!grid.__modifierKeyHandlersInstalled) {
+                                                    grid.__modifierKeyHandlersInstalled = true;
+                                                    grid.__ctrlKeyPressed = false; // local state to avoid repeat spam
+                                                    const send = (pressed) => {
+                                                        if (grid.$server && grid.$server.setCtrlKeyPressed) {
+                                                            grid.$server.setCtrlKeyPressed(pressed);
+                                                        }
+                                                    };
+                                                    const syncState = (pressed) => {
+                                                        if (grid.__ctrlKeyPressed === pressed) {
+                                                            return;
+                                                        }
+                                                        console.log('Syncing Ctrl key state to:', pressed);
+                                                        grid.__ctrlKeyPressed = pressed;
+                                                        send(pressed);
+                                                    };
+                                                    window.addEventListener('keydown', (e) => {
+                                                        if ((e.key === 'Control' || e.key === 'Meta')) {
+                                                            if (e.repeat) return;
+                                                            console.log('Keydown: Control pressed');
+                                                            syncState(true);
+                                                        }
+                                                    }, true);
+                                                    window.addEventListener('keyup', (e) => {
+                                                        if ((e.key === 'Control' || e.key === 'Meta')) {
+                                                            console.log('Keyup: Control released');
+                                                            syncState(false);
+                                                        }
+                                                    }, true);
+                                                    // Sync state at dragstart to capture the initial Ctrl key state
+                                                    // (not using capture phase to let Vaadin handle the event first)
+                                                    grid.addEventListener('dragstart', (e) => {
+                                                        console.log('Dragstart: ctrlKey=', e.ctrlKey, 'metaKey=', e.metaKey);
+                                                        syncState(e.ctrlKey || e.metaKey);
+                                                    });
+                                                    // Sync state at dragend to sync back to reality
+                                                    // Use capture phase to catch the event before Vaadin consumes it
+                                                    grid.addEventListener('dragend', (e) => {
+                                                        console.log('Dragend: ctrlKey=', e.ctrlKey, 'metaKey=', e.metaKey);
+                                                        syncState(e.ctrlKey || e.metaKey);
+                                                    }, true);
+                                                }
                         """
         );
 
@@ -903,19 +908,19 @@ public class TaskGrid extends Grid<Task> {
 
             draggedTask = event.getDraggedItems().getFirst();
             if (isCtrlKeyPressed) {
-//                log.info("starting dependency drag mode");
+                log.info("starting dependency drag mode");
                 dragMode = "dependency";
                 setDropMode(GridDropMode.ON_TOP); // dependency mode
             } else {
-//                log.info("starting reorder drag mode");
+                log.info("starting reorder drag mode");
                 dragMode = "reorder";
                 setDropMode(GridDropMode.BETWEEN); // reorder mode
             }
         });
 
         setDropFilter(dropTargetTask -> {
-            log.trace("DropFilter {} {} {}", draggedTask.getKey(), dropTargetTask.getKey(), dragMode);
             if (isEditMode || draggedTask == null || dragMode == null) return false;
+//            log.trace("DropFilter {} {} {}", draggedTask.getKey(), dropTargetTask.getKey(), dragMode);
             switch (dragMode) {
                 case "dependency":
                     log.trace("dependency DropFilter {}", isEligiblePredecessor(dropTargetTask, draggedTask));
@@ -936,8 +941,8 @@ public class TaskGrid extends Grid<Task> {
 
         // Add drop listener for reordering and dependency management
         addDropListener(event -> {
-            log.trace("DropListener {} {}", draggedTask.getKey(), dragMode);
             if (isEditMode || draggedTask == null || dragMode == null) return;
+            log.trace("DropListener {} {}", draggedTask.getKey(), dragMode);
 
             Task             dropTargetTask = event.getDropTargetItem().orElse(null);
             GridDropLocation dropLocation   = event.getDropLocation();
@@ -1006,6 +1011,10 @@ public class TaskGrid extends Grid<Task> {
             draggedTask      = null; // Clear the dragged task reference
             isCtrlKeyPressed = false; // Reset modifier key state
             dragMode         = null;
+
+            // Sync the client-side state back to reality by checking actual key state
+            // This handles the case where user released Ctrl during drag
+            syncCtrlKeyStateFromClient();
         });
 
         addDragEndListener(event -> {
@@ -1013,6 +1022,9 @@ public class TaskGrid extends Grid<Task> {
             isCtrlKeyPressed = false; // Reset modifier key state
             setDropMode(null);
             dragMode = null;
+
+            // Sync the client-side state back to reality
+            syncCtrlKeyStateFromClient();
         });
 
     }
@@ -1156,6 +1168,28 @@ public class TaskGrid extends Grid<Task> {
             }
         }).addEventData("event.detail.clipboardData");
 
+    }
+
+    /**
+     * Syncs the Ctrl key state from the client by checking the actual browser state
+     * This is needed because dragend events might not fire or be consumed by Vaadin
+     */
+    private void syncCtrlKeyStateFromClient() {
+        // Use a small timeout to ensure drag operation has fully completed
+        // Then check the client state and update it with a forced sync
+        getElement().executeJs(
+                """
+                        setTimeout(() => {
+                            const grid = this;
+                            // Force an update by checking stored state
+                            const currentState = grid.__ctrlKeyPressed || false;
+                            console.log('Java-triggered sync: current client state =', currentState);
+                            if (grid.$server && grid.$server.setCtrlKeyPressed) {
+                                grid.$server.setCtrlKeyPressed(currentState);
+                            }
+                        }, 10);
+                        """
+        );
     }
 
     public void updateData(Sprint sprint, List<Task> taskOrder, List<User> allUsers) {

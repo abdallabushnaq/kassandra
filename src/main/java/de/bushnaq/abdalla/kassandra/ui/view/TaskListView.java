@@ -22,7 +22,6 @@ import com.vaadin.flow.component.Svg;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
-import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.Paragraph;
@@ -65,7 +64,7 @@ import java.util.concurrent.ExecutionException;
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
 @Log4j2
-@JsModule("./styles/vaadin-grid-styles.js")
+//@JsModule("./styles/vaadin-grid-styles.js")
 public class TaskListView extends Main implements AfterNavigationObserver {
     public static final String            CANCEL_BUTTON_ID           = "cancel-tasks-button";
     public static final String            CREATE_MILESTONE_BUTTON_ID = "create-milestone-button";
