@@ -32,6 +32,8 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -86,9 +88,9 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
     private              FeatureListViewTester      featureListViewTester;
     private              String                     featureName;
     private final        LocalDate                  firstDay        = LocalDate.of(2025, 6, 1);
-    private final        LocalDate                  firstDayRecord1 = LocalDate.of(2025, 8, 1);
+    private final        LocalDate                  firstDayRecord1 = LocalDate.of(2025, 8, 4);
     private final        LocalDate                  lastDay         = LocalDate.of(2025, 6, 1);
-    private final        LocalDate                  lastDayRecord1  = LocalDate.of(2025, 8, 5);
+    private final        LocalDate                  lastDayRecord1  = LocalDate.of(2025, 8, 8);
     @Autowired
     private              LocationListViewTester     locationListViewTester;
     @Autowired
@@ -215,6 +217,29 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
     }
 
     /**
+     * Takes screenshots of Project create, edit and delete dialogs
+     */
+    private void takeFeatureDialogScreenshots() {
+        // Create project dialog
+        seleniumHandler.click(FeatureListView.CREATE_FEATURE_BUTTON_ID);
+        seleniumHandler.waitForElementToBeClickable(FeatureDialog.CANCEL_BUTTON); // Wait for dialog
+        seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(FeatureDialog.FEATURE_DIALOG), FeatureDialog.FEATURE_DIALOG, "../kassandra.wiki/screenshots/feature-create-dialog.png");
+        seleniumHandler.click(FeatureDialog.CANCEL_BUTTON);
+
+        // Edit project dialog - open action menu first, then edit
+        seleniumHandler.click(FeatureListView.FEATURE_GRID_EDIT_BUTTON_PREFIX + featureName);
+        seleniumHandler.waitForElementToBeClickable(FeatureDialog.CANCEL_BUTTON); // Wait for dialog
+        seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(FeatureDialog.FEATURE_DIALOG), FeatureDialog.FEATURE_DIALOG, "../kassandra.wiki/screenshots/feature-edit-dialog.png");
+        seleniumHandler.click(FeatureDialog.CANCEL_BUTTON);
+
+        // Delete project dialog - open action menu first, then delete
+        seleniumHandler.click(FeatureListView.FEATURE_GRID_DELETE_BUTTON_PREFIX + featureName);
+        seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
+        seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/feature-delete-dialog.png");
+        seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+    }
+
+    /**
      * Takes screenshots of Location create, edit and delete dialogs
      */
     private void takeLocationDialogScreenshots() {
@@ -305,37 +330,12 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
     }
 
-    /**
-     * Takes screenshots of Project create, edit and delete dialogs
-     */
-    private void takeProjectDialogScreenshots() {
-        // Create project dialog
-        seleniumHandler.click(FeatureListView.CREATE_FEATURE_BUTTON_ID);
-        seleniumHandler.waitForElementToBeClickable(FeatureDialog.CANCEL_BUTTON); // Wait for dialog
-        seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(FeatureDialog.FEATURE_DIALOG), FeatureDialog.FEATURE_DIALOG, "../kassandra.wiki/screenshots/feature-create-dialog.png");
-        seleniumHandler.click(FeatureDialog.CANCEL_BUTTON);
-
-        // Edit project dialog - open action menu first, then edit
-        seleniumHandler.click(FeatureListView.FEATURE_GRID_EDIT_BUTTON_PREFIX + featureName);
-        seleniumHandler.waitForElementToBeClickable(FeatureDialog.CANCEL_BUTTON); // Wait for dialog
-        seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(FeatureDialog.FEATURE_DIALOG), FeatureDialog.FEATURE_DIALOG, "../kassandra.wiki/screenshots/feature-edit-dialog.png");
-        seleniumHandler.click(FeatureDialog.CANCEL_BUTTON);
-
-        // Delete project dialog - open action menu first, then delete
-        seleniumHandler.click(FeatureListView.FEATURE_GRID_DELETE_BUTTON_PREFIX + featureName);
-        seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
-        seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/feature-delete-dialog.png");
-        seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
-    }
-
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void takeScreenshots(RandomCase randomCase, TestInfo testInfo) throws Exception {
         // Set browser window to a fixed size for consistent screenshots
-//        seleniumHandler.setWindowSize(1024, 800);
 //        seleniumHandler.setWindowSize(1800, 1300);
-//        seleniumHandler.setWindowSize(1024, 800);
         seleniumHandler.setWindowSize(1700, 1200);
 
 //        printAuthentication();
@@ -363,37 +363,29 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         versionListViewTester.selectVersion(versionName);
         //FeatureListView
         seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/feature-list-view.png");
-        takeProjectDialogScreenshots();
+        takeFeatureDialogScreenshots();
         featureListViewTester.selectFeature(featureName);
         //SprintListView
         seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/sprint-list-view.png");
         takeSprintDialogScreenshots();
-//        seleniumHandler.setWindowSize(1800, 1300);
-//        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
-//        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(TaskListView.TASK_LIST_PAGE_TITLE_ID)));
-//        //TaskListView
-//        takeTaskDialogScreenshots();
-//        //go back to SprintListView
-
-
         sprintListViewTester.selectSprint(sprintName);
         seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
         seleniumHandler.waitForElementToBeClickable(RenderUtil.BURNDOWN_CHART);
         seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/sprint-quality-board.png");
 
-//        // After visiting the SprintQualityBoard, go back to SprintListView and use the column config button
-//        seleniumHandler.click("Sprints (" + sprintName + ")"); // Go back to SprintListView using breadcrumb
-//        // Find and click the column configuration button
-//        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
-//        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
-//        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/task-list-view.png");
+
+        // After visiting the SprintQualityBoard, go back to SprintListView and use the column config button
+        seleniumHandler.click("Sprints (" + sprintName + ")"); // Go back to SprintListView using breadcrumb
+        // Find and click the column configuration button
+        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
+        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(TaskListView.TASK_LIST_PAGE_TITLE_ID)));
+        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/task-list-view.png");
 
 
         userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/user-list-view.png");
         takeUserDialogScreenshots();
 
-//        seleniumHandler.setWindowSize(1024, 800);
         // Navigate to AvailabilityListView for the current user and take screenshots
         availabilityListViewTester.switchToAvailabilityListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
         seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/availability-list-view.png");
@@ -405,7 +397,6 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         takeLocationDialogScreenshots();
 
         // Navigate to OffDayListView for the current user and take screenshots
-//        seleniumHandler.setWindowSize(1800, 1300);
         offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
         seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/offday-list-view.png");
         takeOffDayDialogScreenshots();
@@ -449,42 +440,6 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         seleniumHandler.click(TaskGrid.TASK_GRID_PREFIX + "New Milestone-34" + "-start-cell");
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/task-view-list.png");
     }
-
-    /**
-     * Takes screenshots of Task view and dialogs
-     */
-//    private void takeTaskListViewScreenshots() {
-//        // Navigate to the TaskListView page
-//        seleniumHandler.click("task-list"); // Click on the Tasks link in the breadcrumb
-//        seleniumHandler.waitForElementToBeClickable("task-grid-name-"); // Wait for the task grid to be loaded
-//
-//        // Take a screenshot of the task list view
-//        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/task-list-view.png");
-//
-//        // Create task dialog (if there's a create button similar to other views)
-//        if (seleniumHandler.isElementPresent("create-task-button")) {
-//            seleniumHandler.click("create-task-button");
-//            seleniumHandler.waitForDialogToOpen();
-//            seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement("task-dialog"), "task-dialog", "../kassandra.wiki/screenshots/task-create-dialog.png");
-//            seleniumHandler.click("cancel-button"); // Assume there's a cancel button in the dialog
-//        }
-//
-//        // If tasks exist, try to edit one
-//        if (seleniumHandler.isElementPresent("task-grid-edit-button-")) {
-//            seleniumHandler.click("task-grid-edit-button-");
-//            seleniumHandler.waitForDialogToOpen();
-//            seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement("task-dialog"), "task-dialog", "../kassandra.wiki/screenshots/task-edit-dialog.png");
-//            seleniumHandler.click("cancel-button");
-//        }
-//
-//        // If tasks exist, try to delete one
-//        if (seleniumHandler.isElementPresent("task-grid-delete-button-")) {
-//            seleniumHandler.click("task-grid-delete-button-");
-//            seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON);
-//            seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/task-delete-dialog.png");
-//            seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
-//        }
-//    }
 
     /**
      * Takes screenshots of User create, edit and delete dialogs

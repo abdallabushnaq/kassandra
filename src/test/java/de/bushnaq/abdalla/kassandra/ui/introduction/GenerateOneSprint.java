@@ -128,7 +128,8 @@ public class GenerateOneSprint extends AbstractUiTestUtil {
     public void createASprint(RandomCase randomCase, TestInfo testInfo) throws Exception {
         // Set browser window to a fixed size for consistent screenshots
 //        seleniumHandler.setWindowSize(1024, 800);
-        seleniumHandler.setWindowSize(1800, 1300);
+//        seleniumHandler.setWindowSize(1800, 1300);
+        seleniumHandler.setWindowSize(1700, 1200);
 //        seleniumHandler.setTypingDelayMillis(50);
 
 //        printAuthentication();

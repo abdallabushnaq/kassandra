@@ -558,16 +558,6 @@ class SeleniumHandler {
         }
     }
 
-//    /**
-//     * Gets whether mouse movement is currently enabled.
-//     * Mouse movement is controlled by the humanize flag.
-//     *
-//     * @return true if humanize (and thus mouse movement) is enabled, false otherwise
-//     */
-//    public boolean isMouseMovementEnabled() {
-//        return humanize;
-//    }
-
     /**
      * Checks if an element with the specified ID is present on the page
      *
@@ -587,9 +577,6 @@ class SeleniumHandler {
     }
 
     public void loginSubmit() {
-//        WebElement button = findElement(By.id(LoginView.LOGIN_VIEW_SUBMIT_BUTTON));
-//        moveMouseToElement(button);
-//        button.click();
         click(LoginView.LOGIN_VIEW_SUBMIT_BUTTON);
         log.info("Clicked login submit button");
         waitForPageLoaded();
@@ -859,39 +846,6 @@ class SeleniumHandler {
     }
 
 
-//    /**
-//     * Sets a value to a date picker component.
-//     * <p>
-//     * This method provides a reliable way to set date values on Vaadin DatePicker
-//     * components. In humanized mode, it opens the calendar and clicks on the date.
-//     * In fast mode, it uses JavaScript to set the value directly.
-//     *
-//     * @param datePickerId the ID of the date picker component
-//     * @param date         the LocalDate value to set, can be null to clear the date
-//     */
-//    public void setDatePickerValue(String datePickerId, LocalDate date) {
-//        // Wait for the date picker element to be present
-//        waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(datePickerId)));
-//
-//        if (date == null) {
-//            // Clear the date picker (always use JavaScript for clearing)
-//            setDatePickerValueByScript(datePickerId, null);
-//        }
-//
-//        // If humanize is enabled, interact like a human by clicking through the calendar
-//        if (humanize) {
-//            try {
-//                setDatePickerValueHumanized(datePickerId, date);
-//            } catch (Exception ex) {
-//                logger.warn("Error during humanized date picker selection: {}. Falling back to script method.", ex.getMessage());
-//                setDatePickerValueByScript(datePickerId, date);
-//            }
-//        } else {
-//            // Fast mode: use JavaScript to set the value directly
-//            setDatePickerValueByScript(datePickerId, date);
-//        }
-//    }
-
     /**
      * Sets a date picker value by directly setting it via JavaScript.
      * This is the fast method used when humanize mode is disabled.
@@ -900,31 +854,27 @@ class SeleniumHandler {
      * @param date         the LocalDate value to set, can be null to clear
      */
     public void setDatePickerValue(String datePickerId, LocalDate date) {
-        // Wait for the date picker element to be present
-        waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(datePickerId)));
-        if (date == null) {
-            String clearScript =
-                    "var datePicker = document.getElementById('" + datePickerId + "');" +
-                            "if (datePicker) {" +
-                            "  datePicker.value = '';" +
-                            "  datePicker.dispatchEvent(new CustomEvent('change', { bubbles: true }));" +
-                            "  return true;" +
-                            "}" +
-                            "return false;";
-            executeJavaScript(clearScript);
-        } else {
-            String dateStr = date.format(DateTimeFormatter.ISO_LOCAL_DATE);
-            String dateScript =
-                    "var datePicker = document.getElementById('" + datePickerId + "');" +
-                            "if (datePicker) {" +
-                            "  datePicker.value = '" + dateStr + "';" +
-                            "  datePicker.dispatchEvent(new CustomEvent('change', { bubbles: true }));" +
-                            "  return true;" +
-                            "}" +
-                            "return false;";
-            log.info("set DatePicker value=" + dateStr);
-            executeJavaScript(dateScript);
-        }
+        // Find the date picker element
+        WebElement datePickerElement = findElement(By.id(datePickerId));
+        // Find the input field - it's NOT in shadow DOM, it's a direct child with slot='input'
+        // The actual input has an id like "search-input-vaadin-date-picker-20"
+        WebElement inputField = datePickerElement.findElement(By.cssSelector("input[slot='input']"));
+
+        log.debug("Found input field, typing date");
+
+        inputField.clear();// Clear any existing value
+
+        // Format the date in US format (M/d/yyyy)
+        // Note: This matches the browser's default US locale
+        String dateStr = date.format(DateTimeFormatter.ofPattern("M/d/yyyy"));
+        log.info("Typing date into date picker: {} (formatted as US: {})", date, dateStr);
+
+        typeText(inputField, dateStr);
+
+        inputField.sendKeys(Keys.ENTER);// Press Enter to confirm the date and close the calendar
+        log.debug("Pressed Enter to confirm date");
+
+        log.debug("Successfully set date: {}", date);
     }
 
     public void setDateTimePickerValue(String datePickerId, LocalDateTime date) {
@@ -955,18 +905,6 @@ class SeleniumHandler {
         }
     }
 
-
-//    /**
-//     * Enable or disable humanized typing mode.
-//     * When enabled, text is typed character-by-character with variable human-like delays,
-//     * and mouse movements become more natural with curved paths and variable speed.
-//     */
-//    public void setHumanize(boolean humanize) {
-//        this.humanize = humanize;
-//        if (humanize && !isSeleniumHeadless()) {
-//            logger.info("Humanize mode enabled (typing and mouse movement with natural variation)");
-//        }
-//    }
 
     public void setImplicitWaitDuration(Duration duration) {
         getDriver().manage().timeouts().implicitlyWait(duration);
@@ -1188,31 +1126,6 @@ class SeleniumHandler {
     protected void typeText(WebElement inputElement, String text) {
         if (text == null || text.isEmpty()) return;
         inputElement.sendKeys(text);
-
-//        for (int idx = 0; idx < text.length(); idx++) {
-//            String ch = String.valueOf(text.charAt(idx));
-//            inputElement.sendKeys(ch);
-//
-//            if (typingDelayMillis > 0) {
-//                try {
-//                    // Variable delay: base delay +/- 50% randomness
-//                    // This creates a more natural typing rhythm
-//                    int minDelay      = typingDelayMillis / 2;
-//                    int maxDelay      = typingDelayMillis + (typingDelayMillis / 2);
-//                    int variableDelay = minDelay + random.nextInt(maxDelay - minDelay + 1);
-//
-//                    // Occasionally add a longer pause (simulating thinking/hesitation)
-//                    // About 10% chance of a longer pause
-//                    if (random.nextInt(10) == 0) {
-//                        variableDelay += typingDelayMillis * (2 + random.nextInt(3)); // 2-4x longer
-//                    }
-//
-//                    Thread.sleep(variableDelay);
-//                } catch (InterruptedException e) {
-//                    Thread.currentThread().interrupt();
-//                }
-//            }
-//        }
     }
 
     public void wait(int milliseconds) {

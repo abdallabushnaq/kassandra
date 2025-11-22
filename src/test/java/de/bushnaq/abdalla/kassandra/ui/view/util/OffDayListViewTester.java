@@ -144,7 +144,6 @@ public class OffDayListViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
         seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
-
         // Verify the record appears in the list
         verifyOffDayRecordExists(firstDay, lastDay, type);
     }
@@ -374,12 +373,10 @@ public class OffDayListViewTester {
         String id = findOffDayRecordId(firstDay);
 
         // Verify the last day and type match
-        WebElement lastDayElement = seleniumHandler.findElement(
-                By.id(OffDayListView.OFFDAY_GRID_END_DATE_PREFIX + id));
+        WebElement lastDayElement = seleniumHandler.findElement(By.id(OffDayListView.OFFDAY_GRID_END_DATE_PREFIX + id));
         assertEquals(lastDayStr, lastDayElement.getText(), "Last day doesn't match expected value");
 
-        WebElement typeElement = seleniumHandler.findElement(
-                By.id(OffDayListView.OFFDAY_GRID_TYPE_PREFIX + id));
+        WebElement typeElement = seleniumHandler.findElement(By.id(OffDayListView.OFFDAY_GRID_TYPE_PREFIX + id));
         assertEquals(type.name(), typeElement.getText(), "Type doesn't match expected value");
     }
 

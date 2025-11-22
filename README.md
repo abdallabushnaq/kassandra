@@ -19,7 +19,7 @@ tbd
 
 [ER Diagram](https://github.com/kunterbunt2/project-hub/wiki/ER-Diagram)
 
-Roadma
+Roadmap
 
 1. task and story dependencies
 2. sprint view
