@@ -146,7 +146,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
         seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(TaskListView.TASK_LIST_PAGE_TITLE_ID)));
 
-        HumanizedSeleniumHandler.setHumanize(false);
+        HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
         seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         paul.pause(3000);
@@ -331,10 +331,9 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
 
         paul.narrate(NORMAL, "We want our story to depend on our milestone. The story can only start after the milestone.").pause();
         paul.narrate(NORMAL, "Defining such a dependency between a task or story to other tasks or stories can be done in 3 different ways...");
-        HumanizedSeleniumHandler.setHumanize(true);
 
 
-        seleniumHandler.waitUntilBrowserClosed(0);
+        seleniumHandler.waitUntilBrowserClosed(5000);
     }
 
     private static List<RandomCase> listRandomCases() {

@@ -253,7 +253,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             editButton.setId(SPRINT_GRID_EDIT_BUTTON_PREFIX + sprint.getName());
             editButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
             editButton.addClickListener(e -> openSprintDialog(sprint));
-            editButton.getElement().setAttribute("title", "Edit");
+//            editButton.getElement().setAttribute("title", "Edit");
 
             Button configButton = new Button(new Icon(VaadinIcon.COG));
             configButton.setId(SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprint.getName());
@@ -269,13 +269,13 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                         QueryParameters.simple(params)
                 );
             });
-            configButton.getElement().setAttribute("title", "Tasks Configuration");
+//            configButton.getElement().setAttribute("title", "Tasks Configuration");
 
             Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
             deleteButton.setId(SPRINT_GRID_DELETE_BUTTON_PREFIX + sprint.getName());
             deleteButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
             deleteButton.addClickListener(e -> confirmDelete(sprint));
-            deleteButton.getElement().setAttribute("title", "Delete");
+//            deleteButton.getElement().setAttribute("title", "Delete");
 
             layout.add(editButton, configButton, deleteButton);
             return layout;

@@ -122,9 +122,9 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         Sprint sprint = generateData();
 
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-//        paul.setSilent(true);
+        paul.setSilent(false);
         Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
-//        grace.setSilent(true);
+        grace.setSilent(false);
         seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
 

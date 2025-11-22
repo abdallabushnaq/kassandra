@@ -97,13 +97,13 @@ public final class VaadinUtil {
             editButton.setId(editButtonIdPrefix + itemIdentifierFunction.apply(item));
             editButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
             editButton.addClickListener(e -> editClickHandler.accept(item));
-            editButton.getElement().setAttribute("title", "Edit");
+//            editButton.getElement().setAttribute("title", "Edit");
 
             Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
             deleteButton.setId(deleteButtonIdPrefix + itemIdentifierFunction.apply(item));
             deleteButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
             deleteButton.addClickListener(e -> deleteClickHandler.accept(item));
-            deleteButton.getElement().setAttribute("title", "Delete");
+//            deleteButton.getElement().setAttribute("title", "Delete");
 
             // Apply validation if validator is provided
             if (deleteValidator != null) {

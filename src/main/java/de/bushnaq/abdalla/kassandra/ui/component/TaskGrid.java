@@ -308,7 +308,7 @@ public class TaskGrid extends Grid<Task> {
                             .set("transform", "rotate(45deg)")
                             .set("margin-right", "8px")
                             .set("flex-shrink", "0");
-                    diamond.getElement().setAttribute("title", "Milestone");
+//                    diamond.getElement().setAttribute("title", "Milestone");
                     container.add(diamond);
                 } else if (task.isStory()) {
                     // Downward triangle for story
@@ -321,7 +321,7 @@ public class TaskGrid extends Grid<Task> {
                             .set("border-top", "10px solid #43a047")
                             .set("margin-right", "8px")
                             .set("flex-shrink", "0");
-                    triangle.getElement().setAttribute("title", "Story");
+//                    triangle.getElement().setAttribute("title", "Story");
                     container.add(triangle);
                 } else if (task.isTask()) {
                     // Task gets no visible icon, but add spacing to match icon width
