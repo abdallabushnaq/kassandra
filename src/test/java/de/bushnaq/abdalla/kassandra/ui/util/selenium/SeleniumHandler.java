@@ -376,6 +376,10 @@ class SeleniumHandler {
 
         ChromeOptions options = new ChromeOptions();
 
+        // Remove the "Chrome is being controlled by automated test software" banner
+        options.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
+        options.setExperimentalOption("useAutomationExtension", false);
+
         // Check if we're running in headless mode (for CI environment)
         boolean headlessMode = isSeleniumHeadless();
         if (headlessMode) {

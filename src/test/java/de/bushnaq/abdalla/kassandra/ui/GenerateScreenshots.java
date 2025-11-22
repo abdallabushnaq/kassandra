@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.dialog.*;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.*;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
@@ -31,8 +32,6 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -335,7 +334,9 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
     public void takeScreenshots(RandomCase randomCase, TestInfo testInfo) throws Exception {
         // Set browser window to a fixed size for consistent screenshots
 //        seleniumHandler.setWindowSize(1024, 800);
-        seleniumHandler.setWindowSize(1800, 1300);
+//        seleniumHandler.setWindowSize(1800, 1300);
+//        seleniumHandler.setWindowSize(1024, 800);
+        seleniumHandler.setWindowSize(1700, 1200);
 
 //        printAuthentication();
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
@@ -350,28 +351,35 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         sprintName  = nameGenerator.generateSprintName(0);
         taskName    = nameGenerator.generateSprintName(0);
 
+
+        //ProductListView
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-//        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/product-list-view.png");
-//        takeProductDialogScreenshots();
+        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/product-list-view.png");
+        takeProductDialogScreenshots();
         productListViewTester.selectProduct(productName);
-//        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/version-list-view.png");
-//        takeVersionDialogScreenshots();
+        //VersionListView
+        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/version-list-view.png");
+        takeVersionDialogScreenshots();
         versionListViewTester.selectVersion(versionName);
-//        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/feature-list-view.png");
-//        takeProjectDialogScreenshots();
+        //FeatureListView
+        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/feature-list-view.png");
+        takeProjectDialogScreenshots();
         featureListViewTester.selectFeature(featureName);
-//        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/sprint-list-view.png");
-//        takeSprintDialogScreenshots();
-
+        //SprintListView
+        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/sprint-list-view.png");
+        takeSprintDialogScreenshots();
 //        seleniumHandler.setWindowSize(1800, 1300);
-        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(TaskListView.TASK_LIST_PAGE_TITLE_ID)));
+//        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
+//        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(TaskListView.TASK_LIST_PAGE_TITLE_ID)));
+//        //TaskListView
+//        takeTaskDialogScreenshots();
+//        //go back to SprintListView
 
-//        sprintListViewTester.selectSprint(sprintName);
-//        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
-//        seleniumHandler.waitForElementToBeClickable(RenderUtil.BURNDOWN_CHART);
-//        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/sprint-quality-board.png");
-        takeTaskDialogScreenshots();
+
+        sprintListViewTester.selectSprint(sprintName);
+        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
+        seleniumHandler.waitForElementToBeClickable(RenderUtil.BURNDOWN_CHART);
+        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/sprint-quality-board.png");
 
 //        // After visiting the SprintQualityBoard, go back to SprintListView and use the column config button
 //        seleniumHandler.click("Sprints (" + sprintName + ")"); // Go back to SprintListView using breadcrumb
@@ -379,28 +387,28 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
 //        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
 //        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
 //        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/task-list-view.png");
-//
-//
-//        userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-//        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/user-list-view.png");
-//        takeUserDialogScreenshots();
-//
-////        seleniumHandler.setWindowSize(1024, 800);
-//        // Navigate to AvailabilityListView for the current user and take screenshots
-//        availabilityListViewTester.switchToAvailabilityListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-//        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/availability-list-view.png");
-//        takeAvailabilityDialogScreenshots();
-//
-//        // Navigate to LocationListView for the current user and take screenshots
-//        locationListViewTester.switchToLocationListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-//        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/location-list-view.png");
-//        takeLocationDialogScreenshots();
-//
-//        // Navigate to OffDayListView for the current user and take screenshots
-////        seleniumHandler.setWindowSize(1800, 1300);
-//        offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-//        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/offday-list-view.png");
-//        takeOffDayDialogScreenshots();
+
+
+        userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/user-list-view.png");
+        takeUserDialogScreenshots();
+
+//        seleniumHandler.setWindowSize(1024, 800);
+        // Navigate to AvailabilityListView for the current user and take screenshots
+        availabilityListViewTester.switchToAvailabilityListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/availability-list-view.png");
+        takeAvailabilityDialogScreenshots();
+
+        // Navigate to LocationListView for the current user and take screenshots
+        locationListViewTester.switchToLocationListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/location-list-view.png");
+        takeLocationDialogScreenshots();
+
+        // Navigate to OffDayListView for the current user and take screenshots
+//        seleniumHandler.setWindowSize(1800, 1300);
+        offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+        seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/offday-list-view.png");
+        takeOffDayDialogScreenshots();
 
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
@@ -429,7 +437,6 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
     }
 
     private void takeTaskDialogScreenshots() {
-        // Create product dialog
         seleniumHandler.click(TaskListView.CREATE_MILESTONE_BUTTON_ID);
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Milestone-34");
         seleniumHandler.click(TaskListView.CREATE_STORY_BUTTON_ID);
@@ -440,6 +447,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         seleniumHandler.click(TaskGrid.TASK_GRID_PREFIX + "New Milestone-34");
         // select start cell
         seleniumHandler.click(TaskGrid.TASK_GRID_PREFIX + "New Milestone-34" + "-start-cell");
+        seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/task-view-list.png");
     }
 
     /**

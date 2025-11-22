@@ -79,7 +79,7 @@ public class AvailabilityCalendarComponent extends VerticalLayout {
         this.dayClickHandler = dayClickHandler;
 
         // Set fixed width that won't resize
-        setWidth("1200px");
+        setWidth("1130px");
         setHeight("auto");
         setPadding(false);
         setSpacing(false);

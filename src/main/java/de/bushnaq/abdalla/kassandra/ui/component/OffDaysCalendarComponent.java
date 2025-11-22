@@ -34,6 +34,7 @@ import de.bushnaq.abdalla.kassandra.dto.OffDay;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import lombok.Getter;
+import lombok.Setter;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
 
@@ -72,6 +73,13 @@ public class OffDaysCalendarComponent extends VerticalLayout {
     private final        Consumer<LocalDate>        dayClickHandler;
     private final        Map<LocalDate, OffDayType> offDayMap                           = new HashMap<>();
     private              User                       user;
+    /**
+     * -- SETTER --
+     * Sets the handler that will be called when the year changes.
+     *
+     * @param yearChangeHandler Consumer that handles year changes
+     */
+    @Setter
     private              Consumer<Integer>          yearChangeHandler;
 
     /**
@@ -87,7 +95,7 @@ public class OffDaysCalendarComponent extends VerticalLayout {
         this.dayClickHandler = dayClickHandler;
 
         // Set fixed width that won't resize
-        setWidth("1200px");
+        setWidth("1130px");
         setHeight("auto");
         setPadding(false);
         setSpacing(false);
@@ -381,15 +389,6 @@ public class OffDaysCalendarComponent extends VerticalLayout {
         if (yearChangeHandler != null) {
             yearChangeHandler.accept(year);
         }
-    }
-
-    /**
-     * Sets the handler that will be called when the year changes.
-     *
-     * @param yearChangeHandler Consumer that handles year changes
-     */
-    public void setYearChangeHandler(Consumer<Integer> yearChangeHandler) {
-        this.yearChangeHandler = yearChangeHandler;
     }
 
     /**
