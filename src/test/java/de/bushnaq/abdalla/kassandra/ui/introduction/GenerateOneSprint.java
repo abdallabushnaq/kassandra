@@ -55,6 +55,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -131,7 +132,7 @@ public class GenerateOneSprint extends AbstractUiTestUtil {
         // Set browser window to a fixed size for consistent screenshots
 //        seleniumHandler.setWindowSize(1024, 800);
 //        seleniumHandler.setWindowSize(1800, 1300);
-        seleniumHandler.setWindowSize(1700, 1200);
+        seleniumHandler.setWindowSize(InstructionVideosUtil.VIDEO_WIDTH, InstructionVideosUtil.VIDEO_HEIGHT);
 //        seleniumHandler.setTypingDelayMillis(50);
 
 //        printAuthentication();
@@ -311,7 +312,7 @@ public class GenerateOneSprint extends AbstractUiTestUtil {
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(1, LocalDate.parse("2025-10-23"), Duration.ofDays(10), 0, 0, 0, 0, 0, 6, 8, 12, 6, 13)//
+                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 0, 0, 0, 0, 0, 6, 8, 12, 6, 13)//
         };
         return Arrays.stream(randomCases).toList();
     }

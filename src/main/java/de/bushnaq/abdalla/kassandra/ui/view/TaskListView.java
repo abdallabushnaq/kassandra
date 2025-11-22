@@ -19,14 +19,17 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.Svg;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -66,39 +69,41 @@ import java.util.concurrent.ExecutionException;
 @Log4j2
 //@JsModule("./styles/vaadin-grid-styles.js")
 public class TaskListView extends Main implements AfterNavigationObserver {
-    public static final String            CANCEL_BUTTON_ID           = "cancel-tasks-button";
-    public static final String            CREATE_MILESTONE_BUTTON_ID = "create-milestone-button";
-    public static final String            CREATE_STORY_BUTTON_ID     = "create-story-button";
-    public static final String            CREATE_TASK_BUTTON_ID      = "create-task-button";
-    public static final String            EDIT_BUTTON_ID             = "edit-tasks-button";
-    public static final String            SAVE_BUTTON_ID             = "save-tasks-button";
-    public static final String            TASK_LIST_PAGE_TITLE_ID    = "task-list-page-title";
-    private             Button            cancelButton;
-    private final       Clock             clock;
+    public static final String                  CANCEL_BUTTON_ID           = "cancel-tasks-button";
+    public static final String                  CREATE_MILESTONE_BUTTON_ID = "create-milestone-button";
+    public static final String                  CREATE_STORY_BUTTON_ID     = "create-story-button";
+    public static final String                  CREATE_TASK_BUTTON_ID      = "create-task-button";
+    public static final String                  EDIT_BUTTON_ID             = "edit-tasks-button";
+    public static final String                  SAVE_BUTTON_ID             = "save-tasks-button";
+    public static final String                  TASK_LIST_PAGE_TITLE_ID    = "task-list-page-title";
+    private             Button                  cancelButton;
+    private final       Clock                   clock;
     @Autowired
-    protected           Context           context;
-    private             Button            editButton;
-    private final       GanttErrorHandler eh                         = new GanttErrorHandler();
-    private final       FeatureApi        featureApi;
-    private             Long              featureId;
-    private final       Svg               ganttChart                 = new Svg();
-    private             GanttUtil         ganttUtil;
-    private final       TaskGrid          grid;
-    private final       HorizontalLayout  headerLayout;
-    private             User              loggedInUser               = null;
-    private final       ObjectMapper      objectMapper;
-    private final       ProductApi        productApi;
-    private             Long              productId;
-    private             Button            saveButton;
-    private             Sprint            sprint;
-    private final       SprintApi         sprintApi;
-    private             Long              sprintId;
-    private final       TaskApi           taskApi;
-    private final       UserApi           userApi;
-    private             List<User>        users                      = new ArrayList<>();
-    private final       VersionApi        versionApi;
-    private             Long              versionId;
-    private final       WorklogApi        worklogApi;
+    protected           Context                 context;
+    private             Button                  editButton;
+    private final       GanttErrorHandler       eh                         = new GanttErrorHandler();
+    private final       FeatureApi              featureApi;
+    private             Long                    featureId;
+    private final       Svg                     ganttChart                 = new Svg();
+    private             Div                     ganttChartContainer;
+    private             CompletableFuture<Void> ganttGenerationFuture;
+    private             GanttUtil               ganttUtil;
+    private final       TaskGrid                grid;
+    private final       HorizontalLayout        headerLayout;
+    private             User                    loggedInUser               = null;
+    private final       ObjectMapper            objectMapper;
+    private final       ProductApi              productApi;
+    private             Long                    productId;
+    private             Button                  saveButton;
+    private             Sprint                  sprint;
+    private final       SprintApi               sprintApi;
+    private             Long                    sprintId;
+    private final       TaskApi                 taskApi;
+    private final       UserApi                 userApi;
+    private             List<User>              users                      = new ArrayList<>();
+    private final       VersionApi              versionApi;
+    private             Long                    versionId;
+    private final       WorklogApi              worklogApi;
 
     public TaskListView(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock, ObjectMapper objectMapper) {
         this.worklogApi   = worklogApi;
@@ -216,10 +221,6 @@ public class TaskListView extends Main implements AfterNavigationObserver {
         // Set up callbacks for grid actions
         grid.setOnPersistTask(this::onPersistTask);
         grid.setOnSaveAllChangesAndRefresh(this::saveAllChangesAndRefresh);
-//        grid.setOnTaskModified((task, editMode) -> markTaskAsModified(task));
-//        grid.setOnIndentTask(this::indentTask);
-//        grid.setOnOutdentTask(this::outdentTask);
-//        grid.setOnDependencyDrop(this::handleDependencyDrop);
 
         grid.setWidthFull();
         addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
@@ -332,6 +333,42 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     }
 
     /**
+     * Display error message for Gantt chart generation failure
+     */
+    private void displayGanttError(Throwable throwable) {
+        ganttChartContainer.removeAll();
+
+        // Convert stack trace to string
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter  printWriter  = new PrintWriter(stringWriter);
+        throwable.printStackTrace(printWriter);
+        String stackTrace = stringWriter.toString();
+
+        // Display error message with stack trace
+        Paragraph errorParagraph = new Paragraph("Error generating Gantt chart: " + throwable.getMessage());
+        errorParagraph.getStyle()
+                .set("color", "var(--lumo-error-color)")
+                .set("font-weight", "bold");
+
+        Paragraph stackTraceParagraph = new Paragraph(stackTrace);
+        stackTraceParagraph.getStyle()
+                .set("white-space", "pre-wrap")
+                .set("font-family", "monospace")
+                .set("font-size", "12px")
+                .set("background-color", "var(--lumo-contrast-5pct)")
+                .set("padding", "var(--lumo-space-s)")
+                .set("border-radius", "var(--lumo-border-radius-m)")
+                .set("max-height", "300px")
+                .set("overflow-y", "auto");
+
+        Div errorContainer = new Div(errorParagraph, stackTraceParagraph);
+        errorContainer.getStyle()
+                .set("padding", "var(--lumo-space-m)");
+
+        ganttChartContainer.add(errorContainer);
+    }
+
+    /**
      * Enter edit mode - enable editing for all rows
      */
     private void enterEditMode() {
@@ -377,41 +414,101 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     }
 
     private void generateGanttChart() {
-        try {
-            long time = System.currentTimeMillis();
-            RenderUtil.generateGanttChartSvg(context, sprint, ganttChart);
-
-            // Configure Gantt chart for proper scrolling display
-            ganttChart.getStyle()
-                    .set("margin-top", "var(--lumo-space-m)")
-                    .set("max-width", "100%")
-                    .set("height", "auto")
-                    .set("display", "block");
-
-            // Add the chart in a container div for better scrolling behavior
-            Div chartContainer = new Div(ganttChart);
-            chartContainer.getStyle()
-                    .set("overflow-x", "auto")
-                    .set("width", "100%");
-
-            add(chartContainer);
-            log.trace("Gantt chart generated in {} ms", System.currentTimeMillis() - time);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            // Convert stack trace to string
-            StringWriter stringWriter = new StringWriter();
-            PrintWriter  printWriter  = new PrintWriter(stringWriter);
-            e.printStackTrace(printWriter);
-            String stackTrace = stringWriter.toString();
-
-            // Display error message with stack trace
-            Paragraph errorParagraph      = new Paragraph("Error generating gantt chart: " + e.getMessage());
-            Paragraph stackTraceParagraph = new Paragraph(stackTrace);
-            stackTraceParagraph.getStyle().set("white-space", "pre-wrap").set("font-family", "monospace").set("font-size", "12px");
-
-            Div errorContainer = new Div(errorParagraph, stackTraceParagraph);
-            add(errorContainer);
+        // Cancel any previous generation in progress
+        if (ganttGenerationFuture != null && !ganttGenerationFuture.isDone()) {
+            ganttGenerationFuture.cancel(true);
+            log.debug("Cancelled previous Gantt chart generation");
         }
+
+        // Initialize container if needed
+        if (ganttChartContainer == null) {
+            ganttChartContainer = new Div();
+            ganttChartContainer.getStyle()
+                    .set("overflow-x", "auto")
+                    .set("width", "100%")
+                    .set("margin-top", "var(--lumo-space-m)");
+            add(ganttChartContainer);
+        }
+
+        // Clear container and show loading indicator
+        ganttChartContainer.removeAll();
+        ProgressBar progressBar = new ProgressBar();
+        progressBar.setIndeterminate(true);
+        progressBar.setWidth("300px");
+
+        Span loadingText = new Span("Generating Gantt chart...");
+        loadingText.getStyle()
+                .set("margin-right", "var(--lumo-space-m)")
+                .set("font-style", "italic")
+                .set("color", "var(--lumo-secondary-text-color)");
+
+        Div loadingContainer = new Div(loadingText, progressBar);
+        loadingContainer.getStyle()
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("padding", "var(--lumo-space-m)");
+
+        ganttChartContainer.add(loadingContainer);
+
+        // Capture UI and security context
+        UI             ui             = UI.getCurrent();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Sprint         sprintSnapshot = this.sprint; // Capture current sprint reference
+
+        // Generate chart asynchronously
+        long startTime = System.currentTimeMillis();
+        ganttGenerationFuture = CompletableFuture.supplyAsync(() -> {
+            // Set security context in background thread
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                log.debug("Starting async Gantt chart generation");
+                Svg svg = new Svg();
+                RenderUtil.generateGanttChartSvg(TaskListView.this.context, sprintSnapshot, svg);
+                return svg;
+            } catch (Exception e) {
+                // Wrap checked exception in runtime exception for CompletableFuture
+                throw new RuntimeException("Error generating Gantt chart", e);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        }).thenAccept(svg -> {
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.info("Gantt chart generated in {} ms", elapsed);
+
+            // Update UI on UI thread
+            ui.access(() -> {
+                try {
+                    ganttChartContainer.removeAll();
+
+                    // Configure Gantt chart for proper scrolling display
+                    svg.getStyle()
+                            .set("margin-top", "var(--lumo-space-m)")
+                            .set("max-width", "100%")
+                            .set("height", "auto")
+                            .set("display", "block");
+
+                    ganttChartContainer.add(svg);
+                    ui.push(); // Push changes to client
+                    log.trace("Gantt chart added to UI and pushed to client");
+                } catch (Exception e) {
+                    log.error("Error adding Gantt chart to UI", e);
+                    displayGanttError(e);
+                    ui.push(); // Push error to client
+                }
+            });
+        }).exceptionally(ex -> {
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.error("Error generating Gantt chart after {} ms: {}", elapsed, ex.getMessage(), ex);
+
+            // Show error in UI
+            ui.access(() -> {
+                displayGanttError(ex);
+                ui.push(); // Push error to client
+            });
+            return null;
+        });
     }
 
     /**
@@ -528,7 +625,7 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     private void refreshGrid() {
         // Update taskOrder list with current sprint tasks
         grid.updateData(sprint, new ArrayList<>(sprint.getTasks()), users);
-//        generateGanttChart();
+        generateGanttChart();
     }
 
     /**

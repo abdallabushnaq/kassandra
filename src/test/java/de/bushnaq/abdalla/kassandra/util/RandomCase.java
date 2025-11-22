@@ -22,23 +22,25 @@ import lombok.ToString;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 @Getter
 @ToString(callSuper = false)
 public class RandomCase {
-    private final int       maxDurationDays;
-    private final int       maxNumberOfFeatures;
-    private final int       maxNumberOfProducts;
-    private final int       maxNumberOfSprints;
-    private final int       maxNumberOfStories;
-    private final int       maxNumberOfTasks;
-    private final int       maxNumberOfUsers;
-    private final int       maxNumberOfVersions;
-    private final Duration  maxStartDateShift;
-    private final int       minNumberOfProducts;
-    private final LocalDate minStartDate;
-    private final long      seed;
-    private final int       testCaseIndex;
+    private final int            maxDurationDays;
+    private final int            maxNumberOfFeatures;
+    private final int            maxNumberOfProducts;
+    private final int            maxNumberOfSprints;
+    private final int            maxNumberOfStories;
+    private final int            maxNumberOfTasks;
+    private final int            maxNumberOfUsers;
+    private final int            maxNumberOfVersions;
+    private final Duration       maxStartDateShift;
+    private final int            minNumberOfProducts;
+    private final LocalDate      minStartDate;
+    private final OffsetDateTime now;
+    private final long           seed;
+    private final int            testCaseIndex;
 
     public RandomCase(int testCaseIndex, int maxDurationDays, int maxNumberOfStories, int maxNumberOfUsers, int maxNumberOfTasks, int seed) {
         this.testCaseIndex       = testCaseIndex;
@@ -54,9 +56,10 @@ public class RandomCase {
         this.maxNumberOfUsers    = maxNumberOfUsers;
         this.maxNumberOfTasks    = maxNumberOfTasks;
         this.seed                = seed;
+        this.now                 = OffsetDateTime.parse("2025-05-05T08:00:00+01:00");
     }
 
-    public RandomCase(int testCaseIndex, LocalDate minStartDate, Duration maxStartDateShift, int minNumberOfProducts, int maxNumberOfProducts, int maxNumberOfVersions, int maxNumberOfFeatures, int maxNumberOfSprints, int maxDurationDays, int maxNumberOfStories, int maxNumberOfUsers, int maxNumberOfTasks, int seed) {
+    public RandomCase(int testCaseIndex, OffsetDateTime now, LocalDate minStartDate, Duration maxStartDateShift, int minNumberOfProducts, int maxNumberOfProducts, int maxNumberOfVersions, int maxNumberOfFeatures, int maxNumberOfSprints, int maxDurationDays, int maxNumberOfStories, int maxNumberOfUsers, int maxNumberOfTasks, int seed) {
         this.testCaseIndex       = testCaseIndex;
         this.minStartDate        = minStartDate;
         this.maxStartDateShift   = maxStartDateShift;
@@ -70,6 +73,7 @@ public class RandomCase {
         this.maxNumberOfUsers    = maxNumberOfUsers;
         this.maxNumberOfTasks    = maxNumberOfTasks;
         this.seed                = seed;
+        this.now                 = now;
     }
 
 }

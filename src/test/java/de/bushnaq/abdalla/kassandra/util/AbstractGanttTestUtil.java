@@ -225,6 +225,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
     }
 
     protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase) throws Exception {
+        ParameterOptions.setNow(randomCase.getNow());
         String testCaseName = this.getClass().getName() + "-" + testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex();
         // Create a snapshot name based on the test case
         String snapshotName = testInfo.getTestClass().get().getSimpleName() + "-" + randomCase.getTestCaseIndex();
