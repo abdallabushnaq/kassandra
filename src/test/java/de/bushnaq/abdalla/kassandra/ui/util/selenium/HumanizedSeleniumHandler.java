@@ -23,6 +23,7 @@ import lombok.extern.log4j.Log4j2;
 import org.openqa.selenium.*;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.stereotype.Component;
 
@@ -252,6 +253,56 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         }
         wait(100);
         waitForPageLoaded();
+    }
+
+    /**
+     * Performs a control+drag-and-drop operation to create or remove a dependency.
+     * When holding control during drag, the source task becomes dependent on the target task.
+     * If the dependency already exists, it will be removed (toggle behavior).
+     *
+     * @param sourceId The task that will depend on the target
+     * @param targetId The task that will be the predecessor
+     */
+    public void dragAndDropWithControl(String sourceId, String targetId) {
+        Actions a = new Actions(getDriver());
+        a.keyDown(Keys.CONTROL);
+        showTransientTitle("Ctrl");
+        a.build().perform();
+        dragAndDrop(sourceId, targetId);
+        a.keyUp(Keys.CONTROL);
+        a.build().perform();
+    }
+
+    /**
+     * Performs a control+drag-and-drop operation above the target element.
+     *
+     * @param sourceId The task that will depend on the target
+     * @param targetId The task that will be the predecessor
+     */
+    public void dragAndDropWithControlAbove(String sourceId, String targetId) {
+        Actions a = new Actions(getDriver());
+        a.keyDown(Keys.CONTROL);
+        showTransientTitle("Ctrl");
+        a.build().perform();
+        dragAndDropAbove(sourceId, targetId);
+        a.keyUp(Keys.CONTROL);
+        a.build().perform();
+    }
+
+    /**
+     * Performs a control+drag-and-drop operation below the target element.
+     *
+     * @param sourceId The task that will depend on the target
+     * @param targetId The task that will be the predecessor
+     */
+    public void dragAndDropWithControlBelow(String sourceId, String targetId) {
+        Actions a = new Actions(getDriver());
+        a.keyDown(Keys.CONTROL);
+        showTransientTitle("Ctrl");
+        a.build().perform();
+        dragAndDropBelow(sourceId, targetId);
+        a.keyUp(Keys.CONTROL);
+        a.build().perform();
     }
 
     /**

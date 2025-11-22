@@ -65,13 +65,13 @@ import java.util.List;
 )
 @AutoConfigureMockMvc
 @Transactional
-public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil {
+public class StoryAndTaskRelationsIntroductionVideo extends AbstractKeycloakUiTestUtil {
     public static final  NarratorAttribute        EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final  String                   NEW_MILESTONE = "New Milestone-";
     public static final  String                   NEW_STORY     = "New Story-";
     public static final  String                   NEW_TASK      = "New Task-";
     public static final  NarratorAttribute        NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  String                   VIDEO_TITLE   = "Stories and Tasks - Rearranging and Copying";
+    public static final  String                   VIDEO_TITLE   = "Story and Task Relations";
     @Container
     private static final KeycloakContainer        keycloak      = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
             // Start Keycloak container with realm configuration
@@ -98,12 +98,16 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
     private              String                   sprintName;
     private              Task                     story1;
     private              Task                     story2;
+    private              Task                     story3;
     private              Task                     task11;
     private              Task                     task12;
     private              Task                     task13;
     private              Task                     task21;
     private              Task                     task22;
     private              Task                     task23;
+    private              Task                     task31;
+    private              Task                     task32;
+    private              Task                     task33;
     @Autowired
     private              VersionListViewTester    versionListViewTester;
     private              String                   versionName;
@@ -139,133 +143,98 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
         seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         paul.pause(3000);
-        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn how to rearrange and copy stories and tasks. By rearranging we mean changing the order in the list to change the priority of a story or task, or moving a task from a story to another story. We'll also see how to quickly duplicate stories with all their child tasks using copy and paste.");
+        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about task and story dependencies. Dependencies let you define relationships between tasks and stories, ensuring that one task can only start after another task is finished. This is crucial for managing complex workflows and project schedules.");
         seleniumHandler.hideOverlay();
 
-        int    orderId        = 0;
-        String milestone1Name = NEW_MILESTONE + orderId++;
-        String story1Name     = NEW_STORY + orderId++;
-        String task11Name     = NEW_TASK + orderId++;
-        String task12Name     = NEW_TASK + orderId++;
-        String task13Name     = NEW_TASK + orderId++;
-        String story2Name     = NEW_STORY + orderId++;
-        String task21Name     = NEW_TASK + orderId++;
-        String task22Name     = NEW_TASK + orderId++;
-        String task23Name     = NEW_TASK + orderId++;
+        //---------------------------------------------------------------------------------------
+        // Introduction to Dependencies
+        //---------------------------------------------------------------------------------------
 
-        //---------------------------------------------------------------------------------------..
-        // Tasks Page
-        //---------------------------------------------------------------------------------------..
+        paul.narrate(NORMAL, "Let's look at our current sprint. We have three stories: Config API implementation, Config persistence implementation, and Config security implementation. Each story has its own tasks.");
+        paul.pause(1000);
+
+        paul.narrate(NORMAL, "Now, imagine we can't start working on the API until the persistence layer is complete. In Kassandra, we can create a dependency to represent this relationship.");
+
+        //---------------------------------------------------------------------------------------
+        // Creating Story Dependencies
+        //---------------------------------------------------------------------------------------
 
         seleniumHandler.setMouseMoveStepsMultiplier(2.0);
         seleniumHandler.setMouseMoveDelayMultiplier(2);
-        // Move Story-5 before Story-1
-        paul.narrate(NORMAL, "Now, let's see how we can rearrange stories and tasks using drag and drop. First, we'll move the second story before first story to prioritize it higher in our sprint backlog. So, first the persistence, then the API");
-        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + story2.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
 
-        paul.narrate(NORMAL, "Next, lets move the story back.");
-        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_PREFIX + story2.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
-        paul.narrate(NORMAL, "Have you noticed that Kassandra only allowed me to drop the story above or below another story and that the child tasks always follow the story? This makes rearranging blocks of work really easy.");
+        paul.narrate(NORMAL, "To create a dependency, we hold down the Control key and drag one task or story onto another. Let's make the API story depend on the persistence story.");
 
-        paul.narrate(NORMAL, "Great! Now, let's rearrange some tasks within the API story. I like open API first approach. We'll move API documentation before creating the controller.");
-        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + task12.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
-
-        paul.narrate(NORMAL, "Finally, let's say we need to address error handling first to ensure robustness. We'll move API error handling to the top of our task list into the persistence story.");
-        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + task13.getName(), TaskGrid.TASK_GRID_PREFIX + task21.getName());
-
-        paul.narrate(NORMAL, "Lets redo that. We do not want API related tasks in the story that is all about persistence.");
-        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_PREFIX + task13.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
-
-        //---------------------------------------------------------------------------------------
-        // Copy/Paste Introduction
-        //---------------------------------------------------------------------------------------
-
-        paul.narrate(NORMAL, "Now, let's learn about another powerful feature: copying tasks and stories. Sometimes you need to duplicate a story with all its child tasks. Kassandra makes this incredibly easy with copy and paste.");
-
-        paul.narrate(NORMAL, "First, I'll select the first story, Config API implementation, by clicking on it.");
-        seleniumHandler.selectGridRow(TaskGrid.TASK_GRID_PREFIX, TaskListView.class, story1.getName());
-
-        paul.pause(500);
-
-        paul.narrate(NORMAL, "Now, I'll press control plus C to copy the story.");
-        seleniumHandler.copy();
-        paul.pauseIfSilent(1000);
-        paul.pause(1000);
-
-        paul.narrate(NORMAL, "And now, control plus V to paste it.");
-        seleniumHandler.past();
+        paul.narrate(NORMAL, "First, I'll hold down Control and drag the API story onto the persistence story.");
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + story1.getName(), TaskGrid.TASK_GRID_PREFIX + story2.getName());
         paul.pauseIfSilent(1000);
         paul.pause(1500);
 
-        paul.narrate(NORMAL, "Notice how Kassandra automatically copied the entire story along with all three of its child tasks to the end of the grid. The copied story and tasks are exact duplicates, ready for you to modify as needed.");
+        paul.narrate(NORMAL, "Notice in the Dependency column, the API story now shows the ID of the persistence story. This means the API story can only start after the persistence story is finished.");
+        paul.pause(1500);
+
+        //---------------------------------------------------------------------------------------
+        // Creating Task Dependencies
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "We can also create dependencies between individual tasks. Let's say we need to create the controller before we can write the API documentation.");
+
+        paul.narrate(NORMAL, "I'll hold Control and drag the API documentation task onto the create controller task.");
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + task12.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
+        paul.pauseIfSilent(1000);
+        paul.pause(1500);
+
+        paul.narrate(NORMAL, "Perfect! Now the API documentation task depends on the create controller task.");
         paul.pause(1000);
 
-        paul.narrate(NORMAL, "This copy and paste feature is perfect for managing project templates. You can quickly build your project duplicate your work and then adjust the details.");
-
         //---------------------------------------------------------------------------------------
-        // Edit Copied Story and Tasks
+        // Cross-Story Dependencies
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "Let's now customize the copied story and tasks to make them unique.");
+        paul.narrate(NORMAL, "Dependencies can even cross story boundaries. Let's say the security audit task depends on the API error handling task being complete.");
 
-        // Define new names for the copied story and tasks
-        String copiedStory1Name = "Config api implementation (copy)";
-        String copiedTask11Name = "create controller (copy)";
-        String copiedTask12Name = "api documentation (copy)";
-        String copiedTask13Name = "api error handling (copy)";
+        paul.narrate(NORMAL, "I'll hold Control and drag the security audit task from the security story onto the API error handling task in the API story.");
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + task33.getName(), TaskGrid.TASK_GRID_PREFIX + task13.getName());
+        paul.pauseIfSilent(1000);
+        paul.pause(1500);
 
-        paul.narrate(NORMAL, "First, we'll enter edit mode to modify the copied items.");
-        seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
-        paul.pauseIfSilent(500);
-        seleniumHandler.waitForPageLoaded();
-
-        paul.narrate(NORMAL, "Let's rename the copied story to Config security implementation.");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedStory1Name + TaskGrid.NAME_FIELD, "Config security implementation");
-
-        paul.narrate(NORMAL, "Now we'll update the tasks to match the security theme.");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask11Name + TaskGrid.NAME_FIELD, "implement authentication");
-
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask12Name + TaskGrid.NAME_FIELD, "security documentation");
-
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask13Name + TaskGrid.NAME_FIELD, "security audit");
-
-        seleniumHandler.click(TaskListView.SAVE_BUTTON_ID);
-
-        // Update the names to the new values
-        copiedStory1Name = "Config security implementation";
-        copiedTask11Name = "implement authentication";
-        copiedTask12Name = "security documentation";
-        copiedTask13Name = "security audit";
-
-        paul.narrate(NORMAL, "Now let's ask Grace to update the effort estimates for these new security tasks.");
-        paul.narrate(NORMAL, "Grace, can you help us estimate the effort for the security tasks?");
-
-        grace.narrate(NORMAL, "Sure, Christopher! Let me update the estimates.").pause();
-        grace.narrate(NORMAL, "Let's go to edit mode.");
-
-        seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
-        grace.pauseIfSilent(500);
-        seleniumHandler.waitForPageLoaded();
-
-        grace.narrateAsync(NORMAL, "Authentication will need more time. Let's set minimum to 6 hours and maximum to 8 hours.");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask11Name + TaskGrid.MIN_ESTIMATE_FIELD, "6h");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask11Name + TaskGrid.MAX_ESTIMATE_FIELD, "8h");
-
-        grace.narrateAsync(NORMAL, "Security documentation is quick. Minimum 1 hour and maximum 2 hours.");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask12Name + TaskGrid.MIN_ESTIMATE_FIELD, "1h");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask12Name + TaskGrid.MAX_ESTIMATE_FIELD, "2h");
-
-        grace.narrateAsync(NORMAL, "Security audit requires thorough testing. Minimum 8 hours and maximum 10 hours.");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask13Name + TaskGrid.MIN_ESTIMATE_FIELD, "8h");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask13Name + TaskGrid.MAX_ESTIMATE_FIELD, "10h");
-
-        seleniumHandler.click(TaskListView.SAVE_BUTTON_ID);
+        paul.narrate(NORMAL, "Excellent! Now the security audit won't start until the API error handling is complete. This gives us a clear path through our work.");
+        paul.pause(1000);
 
         //---------------------------------------------------------------------------------------
-        // Closing
+        // Removing Dependencies
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "That's all there is to rearranging and copying stories and tasks in Kassandra. Thanks for watching!");
+        paul.narrate(NORMAL, "What if we need to remove a dependency? It's just as easy. We simply hold Control and drag the task onto the same predecessor again. It acts like a toggle.");
+
+        paul.narrate(NORMAL, "Let's remove the dependency between the security audit and API error handling.");
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + task33.getName(), TaskGrid.TASK_GRID_PREFIX + task13.getName());
+        paul.pauseIfSilent(1000);
+        paul.pause(1500);
+
+        paul.narrate(NORMAL, "See? The dependency is gone. The Dependency column for the security audit task is now empty again.");
+        paul.pause(1000);
+
+        //---------------------------------------------------------------------------------------
+        // Multiple Dependencies
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "Tasks can have multiple dependencies. Let's make the security implementation story depend on both the API and persistence stories.");
+
+        paul.narrate(NORMAL, "I'll add a dependency from the security story to the API story.");
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + story3.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
+        paul.pauseIfSilent(1000);
+        paul.pause(1500);
+
+        paul.narrate(NORMAL, "And now I'll add another dependency from the security story to the persistence story.");
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + story3.getName(), TaskGrid.TASK_GRID_PREFIX + story2.getName());
+        paul.pauseIfSilent(1000);
+        paul.pause(1500);
+
+        paul.narrate(NORMAL, "Perfect! Now the security story has two dependencies. It can only start once both the API and persistence stories are complete. This is really powerful for managing complex project dependencies.");
+        paul.pause(1500);
+
+        paul.narrate(NORMAL, "And that's all there is to managing task and story dependencies in Kassandra! Remember, hold Control and drag to create or remove dependencies. This feature helps you build realistic project schedules and ensures work happens in the right order. Thanks for watching!");
+        paul.pause(1000);
 
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
@@ -298,6 +267,12 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
             task21 = addTask("create repository", "4h", "6h", graceMartin, sprint, story2, null);
             task22 = addTask("schema documentation", "2h", "3h", graceMartin, sprint, story2, null);
             task23 = addTask("persistence error handling", "5h", "7h", graceMartin, sprint, story2, null);
+        }
+        {
+            story3 = addParentTask("Config security implementation", sprint, null, null);
+            task31 = addTask("implement authentication", "6h", "8h", graceMartin, sprint, story3, null);
+            task32 = addTask("security documentation", "1h", "2h", graceMartin, sprint, story3, null);
+            task33 = addTask("security audit", "8h", "10h", graceMartin, sprint, story3, null);
         }
 
 

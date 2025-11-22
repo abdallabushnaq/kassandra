@@ -323,34 +323,34 @@ public class Task implements Comparable<Task> {
     }
 
     /**
-     * Checks if the specified story is an ancestor of this task in the task hierarchy.
-     * A task considered its own descendant.
+     * Checks if we are an ancestor of the given task in the task hierarchy.
+     * A task considered its own ancestor.
      *
-     * @param story the story to check
-     * @return true if the specified story is an ancestor of this task, false otherwise
+     * @param task the task to check
+     * @return true if we are an ancestor of the given task, false otherwise
      */
-    public boolean isAncestorOf(Task story) {
-        if (Objects.equals(story.getId(), getId()))
+    public boolean isAncestorOf(Task task) {
+        if (Objects.equals(task.getId(), getId()))
             return true;
         for (Task childTask : childTasks) {
-            if (childTask.isAncestorOf(story))
+            if (childTask.isAncestorOf(task))
                 return true;
         }
         return false;
     }
 
     /**
-     * Checks if the specified task is a descendant of this story in the task hierarchy.
+     * Checks if we are a descendant of the given story in the task hierarchy.
      * A task is considered its own descendant.
      *
-     * @param task the task to check
-     * @return true if the specified task is a descendant of this story, false otherwise
+     * @param story the story to check
+     * @return true if we are a descendant of the given story, false otherwise
      */
-    public boolean isDescendantOf(Task task) {
-        if (Objects.equals(task.getId(), getId()))
+    public boolean isDescendantOf(Task story) {
+        if (Objects.equals(story.getId(), getId()))
             return true;
-        for (Task childTask : task.childTasks) {
-            if (childTask.isDescendantOf(childTask))
+        for (Task childTask : story.childTasks) {
+            if (childTask.isDescendantOf(this))
                 return true;
         }
         return false;

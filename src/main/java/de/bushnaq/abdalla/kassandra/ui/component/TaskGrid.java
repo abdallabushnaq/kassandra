@@ -688,14 +688,14 @@ public class TaskGrid extends Grid<Task> {
 
         boolean isEligible = !predecessor.getId().equals(dependent.getId()) // Not the same task
                 && !predecessor.isDescendantOf(dependent) // Not a descendant (would create cycle)
-                && !dependent.isDescendantOf(predecessor); // Not an ancestor (would create cycle)
+                && !predecessor.isAncestorOf(dependent); // Not an ancestor (would create cycle)
 
         if (!isEligible) {
             if (predecessor.getId().equals(dependent.getId())) {
                 log.debug("Cannot create dependency: task {} cannot depend on itself", dependent.getKey());
             } else if (predecessor.isDescendantOf(dependent)) {
                 log.debug("Cannot create dependency: {} is a descendant of {}", predecessor.getKey(), dependent.getKey());
-            } else if (dependent.isDescendantOf(predecessor)) {
+            } else if (predecessor.isAncestorOf(dependent)) {
                 log.debug("Cannot create dependency: {} is an ancestor of {}", predecessor.getKey(), dependent.getKey());
             }
         }
