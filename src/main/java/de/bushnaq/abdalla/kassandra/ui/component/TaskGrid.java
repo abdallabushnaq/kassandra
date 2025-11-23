@@ -1038,14 +1038,14 @@ public class TaskGrid extends TreeGrid<Task> {
                                 moveTaskBefore(draggedTask, dropTargetTask);
                             }
                             //move all children along with the story
-                            Task lastChild = null;
-                            for (Task child : new LinkedList<>(draggedTask.getChildTasks())) {
-                                if (lastChild == null)
-                                    moveTaskAfter(child, draggedTask);
-                                else
-                                    moveTaskAfter(child, lastChild);
-                                lastChild = child;
-                            }
+//                            Task lastChild = null;
+//                            for (Task child : new LinkedList<>(draggedTask.getChildTasks())) {
+//                                if (lastChild == null)
+//                                    moveTaskAfter(child, draggedTask);
+//                                else
+//                                    moveTaskAfter(child, lastChild);
+//                                lastChild = child;
+//                            }
                             onSaveAllChangesAndRefresh.run();
                         }
                     }

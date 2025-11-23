@@ -314,6 +314,68 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     }
 
     /**
+     * Creates a deep copy (snapshot) of the sprint and all its tasks.
+     * This is necessary for async Gantt chart generation to avoid race conditions
+     * when tasks are being saved/updated while the chart is being rendered.
+     *
+     * @param original the sprint to copy
+     * @return a deep copy of the sprint with all relationships preserved
+     */
+    private Sprint createSprintSnapshot(Sprint original) {
+        try {
+            // Use Jackson to create a deep copy through serialization/deserialization
+            String sprintJson = objectMapper.writeValueAsString(original);
+            Sprint snapshot   = objectMapper.readValue(sprintJson, Sprint.class);
+
+            // Need to reconstruct the relationships and initialize the sprint
+            // Get a copy of the tasks list
+            List<Task> tasksCopy = new ArrayList<>();
+            for (Task originalTask : original.getTasks()) {
+                String taskJson = objectMapper.writeValueAsString(originalTask);
+                Task   taskCopy = objectMapper.readValue(taskJson, Task.class);
+                tasksCopy.add(taskCopy);
+            }
+
+            // Get a copy of worklogs
+            List<Worklog> worklogsCopy = new ArrayList<>();
+            for (Worklog originalWorklog : original.getWorklogs()) {
+                String  worklogJson = objectMapper.writeValueAsString(originalWorklog);
+                Worklog worklogCopy = objectMapper.readValue(worklogJson, Worklog.class);
+                worklogsCopy.add(worklogCopy);
+            }
+
+            // Get a copy of users (serialize/deserialize to ensure deep copy)
+            List<User> usersCopy = new ArrayList<>();
+            for (User originalUser : original.getUserMap().values()) {
+                String userJson = objectMapper.writeValueAsString(originalUser);
+                User   userCopy = objectMapper.readValue(userJson, User.class);
+                usersCopy.add(userCopy);
+            }
+
+            // Initialize the snapshot - this is critical!
+            // First initialize the sprint itself (sets up ProjectFile and properties)
+            snapshot.initialize();
+
+            // Then initialize user map (sets up calendars)
+            snapshot.initUserMap(usersCopy);
+
+            // Then initialize task map (sets up task relationships and sprint references)
+            snapshot.initTaskMap(tasksCopy, worklogsCopy);
+
+            // Finally recalculate (updates calculated fields like release date)
+            snapshot.recalculate(ParameterOptions.getLocalNow());
+
+            log.debug("Created sprint snapshot with {} tasks, {} users, {} worklogs",
+                    tasksCopy.size(), usersCopy.size(), worklogsCopy.size());
+            return snapshot;
+        } catch (Exception e) {
+            log.error("Error creating sprint snapshot, falling back to original reference", e);
+            // If snapshot creation fails, return the original (better than crashing)
+            return original;
+        }
+    }
+
+    /**
      * Create a new Story task
      */
     private void createStory() {
@@ -450,7 +512,7 @@ public class TaskListView extends Main implements AfterNavigationObserver {
         // Capture UI and security context
         UI             ui             = UI.getCurrent();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Sprint         sprintSnapshot = this.sprint; // Capture current sprint reference
+        Sprint         sprintSnapshot = createSprintSnapshot(this.sprint); // Create deep copy of sprint
 
         // Generate chart asynchronously
         long startTime = System.currentTimeMillis();
