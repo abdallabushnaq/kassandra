@@ -356,7 +356,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         versionName = nameGenerator.generateVersionName(0);
         featureName = nameGenerator.generateFeatureName(0);
         sprintName  = nameGenerator.generateSprintName(0);
-        taskName    = nameGenerator.generateSprintName(0);
+//        taskName    = nameGenerator.generateSprintName(0);
 
 
         //ProductListView
