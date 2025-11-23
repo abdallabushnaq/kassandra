@@ -114,7 +114,8 @@ public class TaskListView extends Main implements AfterNavigationObserver {
         this.objectMapper = objectMapper;
 
         try {
-            setSizeFull();
+            // Set width full but not height - let content determine height for scrolling
+            setWidthFull();
             // Make view background transparent, so AppLayout's gray background is visible
             getStyle().set("background-color", "transparent");
 
