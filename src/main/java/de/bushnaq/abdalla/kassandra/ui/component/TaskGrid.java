@@ -67,6 +67,7 @@ public class TaskGrid extends TreeGrid<Task> {
     private             String               dragMode;
     private             Task                 draggedTask;          // Track the currently dragged task
     private final       DateTimeFormatter    dtfymdhm           = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
+    private             boolean              expandInitially    = true; // Control whether to expand all items on first load
     private final       Set<Task>            expandedTasks      = new HashSet<>(); // Track expanded tasks for state preservation
     private             boolean              isCtrlKeyPressed   = false; // Track if Ctrl key is pressed during drop
     @Getter
@@ -857,8 +858,10 @@ public class TaskGrid extends TreeGrid<Task> {
 
         // Restore expansion state - expand all by default or restore previous state
         if (expandedTasks.isEmpty()) {
-            // First time or all collapsed - expand all
-            expandRecursively(rootTasks, Integer.MAX_VALUE);
+            // First time or all collapsed - expand all only if expandInitially is true
+            if (expandInitially) {
+                expandRecursively(rootTasks, Integer.MAX_VALUE);
+            }
         } else {
             // Restore previous expansion state
             expandedTasks.forEach(task -> {
@@ -876,6 +879,16 @@ public class TaskGrid extends TreeGrid<Task> {
     public void setCtrlKeyPressed(boolean ctrlKeyPressed) {
         this.isCtrlKeyPressed = ctrlKeyPressed;
         log.debug("Ctrl/Meta key state set to: {}", ctrlKeyPressed);
+    }
+
+    /**
+     * Set whether items should be expanded initially when data is loaded.
+     * Must be called before updateData() to take effect.
+     *
+     * @param expandInitially true to expand all items initially, false to keep them collapsed
+     */
+    public void setExpandInitially(boolean expandInitially) {
+        this.expandInitially = expandInitially;
     }
 
     private void setupDragAndDrop() {

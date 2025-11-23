@@ -21,8 +21,10 @@ tbd
 
 Roadmap
 
-1. task and story dependencies
-2. sprint view
+1. add logout button
+2. add authorization
+3. fix resource leveling not handling dependency to later story.
+4. sprint view
    1. change status
    2. burn down work
 
