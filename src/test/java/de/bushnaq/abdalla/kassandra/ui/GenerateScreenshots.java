@@ -124,10 +124,16 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-//                new RandomCase(1, 5, 8, 8, 8, 1),//
-                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 1, 1, 1, 1, 1, 6, 8, 8, 6, 13)//
-//                new RandomCase(2, 10, 3, 2, 3, 1)//
-//                new RandomCase(2, 4, 4, 4, 4, 10, 7, 8, 5, 1)//
+                new RandomCase(
+                        1,
+                        OffsetDateTime.parse("2025-08-11T08:00:00+01:00"),
+                        LocalDate.parse("2025-08-04"),
+                        Duration.ofDays(10),
+                        4, 4,
+                        1, 3,
+                        1, 3,
+                        1, 4,
+                        6, 8, 8, 6, 13)//
         };
         return Arrays.stream(randomCases).toList();
     }

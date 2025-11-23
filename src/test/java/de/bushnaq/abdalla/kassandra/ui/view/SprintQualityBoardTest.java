@@ -26,6 +26,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.SprintListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
+import de.bushnaq.abdalla.kassandra.util.NameGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.TestInfo;
@@ -87,16 +88,12 @@ public class SprintQualityBoardTest extends AbstractUiTestUtil {
             for (int t = 0; t < numberOfTasks; t++) {
                 User   user     = expectedUsers.stream().toList().get(random.nextInt(numberOfUsers));
                 String duration = String.format("%dd", random.nextInt(randomCase.getMaxDurationDays()) + 1);
-                String workName = generateWorkName(featureName, t);
+                String workName = NameGenerator.generateWorkName(featureName, t);
                 addTask(workName, duration, null, user, sprint, feature, null);
             }
         }
     }
 
-    private static String generateWorkName(String featureName, int t) {
-        String[] workNames = new String[]{"pre-planning", "planning", "analysis", "design", "implementation", "module test", "Functional Test", "System Test", "debugging", "deployment"};
-        return String.format("%s-%s", featureName, workNames[t]);
-    }
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//

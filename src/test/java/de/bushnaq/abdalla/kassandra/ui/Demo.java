@@ -17,6 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.ui;
 
+import de.bushnaq.abdalla.kassandra.dto.Feature;
+import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
@@ -130,7 +134,7 @@ public class Demo extends AbstractUiTestUtil {
         RandomCase[] randomCases = new RandomCase[]{//
 //                new RandomCase(1, LocalDate.parse("2024-12-01"), Duration.ofDays(10), 10, 2, 1, 2, 1),//
 //                new RandomCase(2, LocalDate.parse("2024-12-01"), Duration.ofDays(10), 1, 1, 1, 6, 6, 8, 8, 6, 7)//
-                new RandomCase(3, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 2, 2, 2, 2, 5, 5, 8, 8, 6, 7)//
+                new RandomCase(3, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 2, 2, 2, 2, 2, 2, 1, 5, 5, 8, 8, 6, 7)//
 //                new RandomCase(3, LocalDate.parse("2024-12-01"), Duration.ofDays(10), 4, 3, 3, 3, 10, 5, 8, 5, 1)//
         };
         return Arrays.stream(randomCases).toList();
@@ -151,16 +155,25 @@ public class Demo extends AbstractUiTestUtil {
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
 
+        List<Product> products     = productApi.getAll();
+        Product       firstProduct = products.getFirst();
+        List<Version> versions     = versionApi.getAll(firstProduct.getId());
+        Version       firstVersion = versions.getFirst();
+        List<Feature> features     = featureApi.getAll(firstVersion.getId());
+        Feature       firstFeature = features.getFirst();
+        List<Sprint>  sprints      = sprintApi.getAll(firstFeature.getId());
+        Sprint        firstSprint  = sprints.getFirst();
 
         productListViewTester.switchToProductListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 //        seleniumHandler.getAndCheck("http://localhost:" + productListViewTester.getPort() + "/ui/" + "grid-row-reordering");
 
 //        // Demo the natural language search capabilities
         demonstrateNaturalLanguageSearch();
-        productListViewTester.selectProduct("Orion");
-        versionListViewTester.selectVersion("1.0.0");
-        featureListViewTester.selectFeature("dashboard");
-        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + "tokyo");
+        productListViewTester.selectProduct(firstProduct.getName());
+        versionListViewTester.selectVersion(firstVersion.getName());
+        featureListViewTester.selectFeature(firstFeature.getName());
+
+        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + firstSprint.getName());
 
         seleniumHandler.waitUntilBrowserClosed(0);
     }

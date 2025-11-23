@@ -23,8 +23,7 @@ import org.ajbrown.namemachine.NameGeneratorOptions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class NameGenerator {
@@ -33,6 +32,8 @@ public class NameGenerator {
     private final        List<String> productNames;
     private final        List<String> projectNames;
     private final        List<String> sprintNames;
+    private final        List<String> storyNames;
+    private final        Set<String>  usedStoryNames;
     private final        List<Name>   userNames;
     private final        List<String> versionNames;
 
@@ -40,30 +41,52 @@ public class NameGenerator {
         NameGeneratorOptions options = new NameGeneratorOptions();
         options.setRandomSeed(123L);//Get deterministic results by setting a random seed.
         org.ajbrown.namemachine.NameGenerator generator = new org.ajbrown.namemachine.NameGenerator(options);
-        userNames    = generator.generateNames(1000);
-        productNames = new ArrayList<>();
-        versionNames = new ArrayList<>();
-        projectNames = new ArrayList<>();
-        sprintNames  = new ArrayList<>();
+        userNames      = generator.generateNames(1000);
+        productNames   = new ArrayList<>();
+        versionNames   = new ArrayList<>();
+        projectNames   = new ArrayList<>();
+        sprintNames    = new ArrayList<>();
+        storyNames     = new ArrayList<>();
+        usedStoryNames = new HashSet<>();
         try {
-            productNames.addAll(Files.readAllLines(Paths.get("src/test/resources/product-names.txt")));
+            productNames.addAll(Files.readAllLines(Paths.get("src/test/resources/product-names.txt"))
+                    .stream()
+                    .filter(line -> line != null && !line.trim().isEmpty())
+                    .toList());
         } catch (IOException e) {
             logger.severe("Error reading product-names.txt: " + e.getMessage());
         }
         try {
-            versionNames.addAll(Files.readAllLines(Paths.get("src/test/resources/version-names.txt")));
+            versionNames.addAll(Files.readAllLines(Paths.get("src/test/resources/version-names.txt"))
+                    .stream()
+                    .filter(line -> line != null && !line.trim().isEmpty())
+                    .toList());
         } catch (IOException e) {
             logger.severe("Error reading version-names.txt: " + e.getMessage());
         }
         try {
-            projectNames.addAll(Files.readAllLines(Paths.get("src/test/resources/feature-names.txt")));
+            projectNames.addAll(Files.readAllLines(Paths.get("src/test/resources/feature-names.txt"))
+                    .stream()
+                    .filter(line -> line != null && !line.trim().isEmpty())
+                    .toList());
         } catch (IOException e) {
             logger.severe("Error reading feature-names.txt: " + e.getMessage());
         }
         try {
-            sprintNames.addAll(Files.readAllLines(Paths.get("src/test/resources/sprint-names.txt")));
+            sprintNames.addAll(Files.readAllLines(Paths.get("src/test/resources/sprint-names.txt"))
+                    .stream()
+                    .filter(line -> line != null && !line.trim().isEmpty())
+                    .toList());
         } catch (IOException e) {
             logger.severe("Error reading sprint-names.txt: " + e.getMessage());
+        }
+        try {
+            storyNames.addAll(Files.readAllLines(Paths.get("src/test/resources/story-names.txt"))
+                    .stream()
+                    .filter(line -> line != null && !line.trim().isEmpty())
+                    .toList());
+        } catch (IOException e) {
+            logger.severe("Error reading story-names.txt: " + e.getMessage());
         }
     }
 
@@ -83,12 +106,18 @@ public class NameGenerator {
 
     public String generateSprintName(int index) {
         if (index >= 0 && index < sprintNames.size()) {
-            return sprintNames.get(index);
+            // Capitalize first letter of city name
+            String cityName = sprintNames.get(index);
+            cityName = cityName.substring(0, 1).toUpperCase() + cityName.substring(1);
+            return String.format("Sprint %s", cityName);
         }
         return String.format("Sprint-%d", index);
     }
 
     public String generateStoryName(int t) {
+        if (t >= 0 && t < storyNames.size()) {
+            return storyNames.get(t);
+        }
         return String.format("Story-%d", t);
     }
 
@@ -107,8 +136,103 @@ public class NameGenerator {
         return String.format("1.%d.0", index);
     }
 
-    public static String generateWorkName(String featureName, int t) {
-        String[] workNames = new String[]{"pre-planning", "planning", "analysis", "design", "implementation", "module test", "Functional Test", "System Test", "debugging", "deployment"};
-        return String.format("%s-%s", featureName, workNames[t]);
+    public static String generateWorkName(String storyName, int t) {
+        // Define realistic task types that would be part of developing a story
+        String[] workTypes = new String[]{
+                "Requirements Analysis",
+                "Technical Design",
+                "Database Schema",
+                "Backend Implementation",
+                "Frontend Development",
+                "API Integration",
+                "Unit Testing",
+                "Integration Testing",
+                "Code Review",
+                "Bug Fixing",
+                "Documentation",
+                "Deployment Setup",
+                "Performance Testing",
+                "Security Review",
+                "User Acceptance Testing"
+        };
+
+        if (t >= 0 && t < workTypes.length) {
+            return String.format("%s - %s", storyName, workTypes[t]);
+        }
+        return String.format("%s - Task %d", storyName, t);
+    }
+
+    /**
+     * Get total number of available story names
+     */
+    public int getAvailableStoryCount() {
+        return storyNames.size() - usedStoryNames.size();
+    }
+
+    /**
+     * Get a randomized list of story names for a sprint.
+     * Uses a deterministic shuffle based on sprint index to ensure reproducibility.
+     * Tracks used stories to avoid duplicates across sprints.
+     *
+     * @param sprintIndex The sprint index (used as seed for shuffling)
+     * @param count       Number of stories needed
+     * @return List of unique story names (always returns exactly 'count' stories)
+     */
+    public List<String> getShuffledStoryNames(int sprintIndex, int count) {
+        List<String> result = new ArrayList<>();
+
+        // Check if story names were loaded
+        if (storyNames.isEmpty()) {
+            logger.warning("Story names list is empty! Generating fallback story names.");
+            for (int i = 0; i < count; i++) {
+                result.add(String.format("Story-%d", sprintIndex * 100 + i));
+            }
+            return result;
+        }
+
+        List<String> availableStories = new ArrayList<>();
+
+        // Get stories that haven't been used yet
+        for (String story : storyNames) {
+            if (!usedStoryNames.contains(story)) {
+                availableStories.add(story);
+            }
+        }
+
+        // If we don't have enough unused stories, reset the pool
+        if (availableStories.size() < count) {
+            logger.warning(String.format("Not enough unused stories (%d available, %d needed). Resetting story pool.",
+                    availableStories.size(), count));
+            usedStoryNames.clear();
+            availableStories = new ArrayList<>(storyNames);
+        }
+
+        // Shuffle with a deterministic seed based on sprint index
+        Collections.shuffle(availableStories, new Random(123L + sprintIndex));
+
+        // Take the first 'count' stories, or all available if we still don't have enough
+        int storiesToTake = Math.min(count, availableStories.size());
+        for (int i = 0; i < storiesToTake; i++) {
+            result.add(availableStories.get(i));
+        }
+
+        // If we still need more stories (shouldn't happen after reset, but safety check)
+        while (result.size() < count) {
+            String fallbackName = String.format("Story-%d", sprintIndex * 100 + result.size());
+            logger.warning(String.format("Generating fallback story name: %s", fallbackName));
+            result.add(fallbackName);
+        }
+
+        // Mark them as used
+        usedStoryNames.addAll(result);
+
+        return result;
+    }
+
+    /**
+     * Reset the story pool (useful when starting a new test or project)
+     */
+    public void resetStoryPool() {
+        usedStoryNames.clear();
     }
 }

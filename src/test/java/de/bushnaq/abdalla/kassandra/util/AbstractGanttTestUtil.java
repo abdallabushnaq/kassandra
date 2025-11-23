@@ -259,13 +259,13 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             try (Profiler pc = new Profiler(SampleType.JPA)) {
                 for (int p = 0; p < numberOfProducts; p++) {
                     Product product          = addProduct(nameGenerator.generateProductName(productIndex));
-                    int     numberOfVersions = generateRandomValue(1, randomCase.getMaxNumberOfVersions());
+                    int     numberOfVersions = generateRandomValue(randomCase.getMinNumberOfVersions(), randomCase.getMaxNumberOfVersions());
                     for (int v = 0; v < numberOfVersions; v++) {
                         Version version          = addVersion(product, nameGenerator.generateVersionName(v));
-                        int     numberOfFeatures = generateRandomValue(1, randomCase.getMaxNumberOfFeatures());
+                        int     numberOfFeatures = generateRandomValue(randomCase.getMinNumberOfFeatures(), randomCase.getMaxNumberOfFeatures());
                         for (int f = 0; f < numberOfFeatures; f++) {
                             Feature feature         = addFeature(version, nameGenerator.generateFeatureName(featureIndex));
-                            int     numberOfSprints = generateRandomValue(1, randomCase.getMaxNumberOfSprints());
+                            int     numberOfSprints = generateRandomValue(randomCase.getMinNumberOfSprints(), randomCase.getMaxNumberOfSprints());
                             for (int s = 0; s < numberOfSprints; s++) {
                                 generateSprint(testInfo, randomCase, feature);
                             }
@@ -288,14 +288,20 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         int numberOfUsers = randomCase.getMaxNumberOfUsers();
 //        System.out.println("Number of users=" + numberOfUsers);
         try (Profiler pc1 = new Profiler(SampleType.JPA)) {
-            Sprint generatedSprint = addRandomSprint(project);
-            Sprint sprint          = sprintApi.getById(generatedSprint.getId());
+            // Capture current sprint index before creating the sprint
+            int    currentSprintIndex = getCurrentSprintIndex();
+            Sprint generatedSprint    = addRandomSprint(project);
+            Sprint sprint             = sprintApi.getById(generatedSprint.getId());
             if (randomCase.getMaxNumberOfStories() > 0) {
                 int           numberOfStories = random.nextInt(randomCase.getMaxNumberOfStories()) + 1;
                 LocalDateTime startDateTime   = randomCase.getMinStartDate().plusDays(random.nextInt((int) randomCase.getMaxStartDateShift().toDays())).atStartOfDay().plusHours(8);
                 Task          startMilestone  = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+
+                // Get shuffled story names for this sprint to ensure variety
+                List<String> sprintStoryNames = nameGenerator.getShuffledStoryNames(currentSprintIndex, numberOfStories);
+
                 for (int f = 0; f < numberOfStories; f++) {
-                    String storyName     = nameGenerator.generateStoryName(f);
+                    String storyName     = sprintStoryNames.get(f);
                     Task   story         = addParentTask(storyName, sprint, null, startMilestone);
                     int    numberOfTasks = random.nextInt(randomCase.getMaxNumberOfTasks()) + 1;
                     for (int t = 0; t < numberOfTasks; t++) {

@@ -97,6 +97,7 @@ public class TaskApi extends AbstractApi {
     }
 
     public Task persist(Task task) {
+        String a = task.getName();
         ResponseEntity<Task> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/task",
                 HttpMethod.POST,
@@ -107,6 +108,7 @@ public class TaskApi extends AbstractApi {
     }
 
     public void update(Task task) {
+        String a = task.getName();
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/task",
                 HttpMethod.PUT,

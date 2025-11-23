@@ -66,6 +66,7 @@ public class TaskController {
     @PreAuthorize("hasRole('ADMIN')")
     public TaskDAO save(@RequestBody TaskDAO task) {
         // Assign the next available orderId if not set or set to 0
+
         if (task.getOrderId() == null || task.getOrderId() == -1) {
             Integer maxOrderId = taskRepository.findMaxOrderId(task.getSprintId());
             task.setOrderId(maxOrderId + 1);

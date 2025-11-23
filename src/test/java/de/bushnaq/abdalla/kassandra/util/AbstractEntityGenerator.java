@@ -18,13 +18,13 @@
 package de.bushnaq.abdalla.kassandra.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.bushnaq.abdalla.profiler.Profiler;
-import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.dao.GraphicsLightTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
+import de.bushnaq.abdalla.profiler.Profiler;
+import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import jakarta.annotation.PostConstruct;
 import net.sf.mpxj.ProjectCalendar;
@@ -428,6 +428,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             task.setParentTaskId(parent.getId());
         }
         // Save the task
+        System.out.printf("trying to add %s%n", task);
+
         Task saved = taskApi.persist(task);
         expectedTasks.add(saved);
         if (parent != null) {
@@ -514,6 +516,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         sprintIndex  = 0;
         userIndex    = 0;
         versionIndex = 0;
+        nameGenerator.resetStoryPool(); // Reset story pool for each test
     }
 
     private void generateRandomOffDays(User saved, LocalDate employmentDate) {
@@ -538,6 +541,10 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
     private static int generateUserYearSeed(User saved, int year) {
         return (saved.getName() + year).hashCode();
+    }
+
+    protected int getCurrentSprintIndex() {
+        return sprintIndex;
     }
 
     private LocalDate getNextWorkingDay(ProjectCalendar calendar, LocalDate start, int workingDays) {
