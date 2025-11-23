@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
@@ -60,7 +59,6 @@ import java.util.Map;
 @PageTitle("Sprint List Page")
 //@Menu(order = 1, icon = "vaadin:factory", title = "project List")
 @PermitAll // When security is enabled, allow all authenticated users
-@JsModule("./styles/vaadin-grid-styles.js")
 public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
     public static final String     CREATE_SPRINT_BUTTON             = "create-sprint-button";
     public static final String     SPRINT_GLOBAL_FILTER             = "sprint-global-filter";

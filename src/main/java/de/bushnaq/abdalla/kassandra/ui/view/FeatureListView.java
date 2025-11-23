@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -53,7 +52,6 @@ import java.util.Map;
 @PageTitle("Feature List Page")
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Restrict access to users with specific roles
-@JsModule("./styles/vaadin-grid-styles.js")
 public class FeatureListView extends AbstractMainGrid<Feature> implements AfterNavigationObserver {
     public static final String     CREATE_FEATURE_BUTTON_ID          = "create-feature-button";
     public static final String     FEATURE_GLOBAL_FILTER             = "feature-global-filter";

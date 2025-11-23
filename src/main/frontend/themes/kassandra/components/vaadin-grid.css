@@ -1,15 +1,25 @@
 /* Styles for vaadin-grid component */
 /* These styles are automatically injected into vaadin-grid shadow DOM */
 
-/*
-:host([theme~="row-hover"]) [part~="row"]:hover [part~="body-cell"] {
-  background-color: lightgray;
-}
-*/
-
 /* Apply hover to all grids by default */
 [part~="row"]:hover [part~="body-cell"] {
   background-color: var(--lumo-contrast-10pct) !important;
 }
 
+/* Grid sorter component customization */
+:host [part='indicators'] {
+  vertical-align: top;
+  align-self: flex-start !important;
+  margin-top: 3px; /* Fine-tune alignment with the column header text */
+}
 
+/* Custom styling for dialog overlay */
+[part='backdrop']
+{
+  /* Adjust the alpha channel (0.3) to control darkness (lower = less dark) */
+  background: rgba(25, 25, 25, 0.3);
+
+  /* Apply a blur effect to the background */
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px); /* For Safari compatibility */
+}

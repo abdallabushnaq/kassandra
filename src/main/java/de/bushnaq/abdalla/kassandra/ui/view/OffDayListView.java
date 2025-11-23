@@ -18,7 +18,6 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -54,7 +53,6 @@ import java.util.stream.Collectors;
 @Route(value = "offday/:user-email?", layout = MainLayout.class)
 @PageTitle("User Off Days")
 @PermitAll
-@JsModule("./styles/vaadin-grid-styles.js")
 public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEnterObserver, AfterNavigationObserver {
     public static final String                   CREATE_OFFDAY_BUTTON             = "create-offday-button";
     public static final String                   OFFDAY_GLOBAL_FILTER             = "offday-global-filter";

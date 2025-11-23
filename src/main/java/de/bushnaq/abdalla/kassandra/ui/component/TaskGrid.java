@@ -31,6 +31,8 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.treegrid.TreeGrid;
+import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import de.bushnaq.abdalla.kassandra.dto.Relation;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
@@ -52,7 +54,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Log4j2
-public class TaskGrid extends Grid<Task> {
+public class TaskGrid extends TreeGrid<Task> {
     public static final String               ASSIGNED_FIELD     = "-assigned-field";
     public static final String               MAX_ESTIMATE_FIELD = "-max-estimate-field";
     public static final String               MIN_ESTIMATE_FIELD = "-min-estimate-field";
@@ -65,6 +67,7 @@ public class TaskGrid extends Grid<Task> {
     private             String               dragMode;
     private             Task                 draggedTask;          // Track the currently dragged task
     private final       DateTimeFormatter    dtfymdhm           = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
+    private final       Set<Task>            expandedTasks      = new HashSet<>(); // Track expanded tasks for state preservation
     private             boolean              isCtrlKeyPressed   = false; // Track if Ctrl key is pressed during drop
     @Getter
     @Setter
@@ -96,6 +99,7 @@ public class TaskGrid extends Grid<Task> {
         createGridColumns();
         setupDragAndDrop();
         setupKeyboardNavigation();
+        setupExpansionListeners();
 
         // Add borders between columns
         addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
@@ -122,6 +126,16 @@ public class TaskGrid extends Grid<Task> {
             markTaskAsModified(task);
         }
         onSaveAllChangesAndRefresh.run();
+    }
+
+    /**
+     * Recursively add a task and its children to a flat list.
+     */
+    private void addTaskAndChildren(List<Task> list, Task task) {
+        list.add(task);
+        for (Task child : task.getChildTasks()) {
+            addTaskAndChildren(list, child);
+        }
     }
 
     /**
@@ -159,6 +173,23 @@ public class TaskGrid extends Grid<Task> {
         }
     }
 
+    /**
+     * Rebuild the flat taskOrder list from the hierarchical tree structure in depth-first order.
+     * This ensures taskOrder matches the visual tree order.
+     */
+    private List<Task> buildFlatOrderFromTree() {
+        List<Task> flatList = new ArrayList<>();
+        List<Task> rootTasks = taskOrder.stream()
+                .filter(t -> t.getParentTask() == null)
+                .sorted(Comparator.comparingInt(Task::getOrderId))
+                .collect(Collectors.toList());
+
+        for (Task root : rootTasks) {
+            addTaskAndChildren(flatList, root);
+        }
+        return flatList;
+    }
+
     private void createGridColumns() {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
 
@@ -174,7 +205,7 @@ public class TaskGrid extends Grid<Task> {
 
         // Order Column with Up/Down arrows - visible only in edit mode
         {
-            addComponentColumn(task -> {
+            addComponentColumn((Task task) -> {
                 if (isEditMode) {
                     // Create drag handle icon (burger menu)
                     com.vaadin.flow.component.icon.Icon dragIcon = VaadinIcon.MENU.create();
@@ -209,7 +240,7 @@ public class TaskGrid extends Grid<Task> {
         }
         //Dependency
         {
-            addColumn(new ComponentRenderer<>(task -> {
+            addColumn(new ComponentRenderer<>((Task task) -> {
                 if (isEditMode) {
                     // Editable - show current dependencies as text with an edit button
                     HorizontalLayout container = new HorizontalLayout();
@@ -285,17 +316,12 @@ public class TaskGrid extends Grid<Task> {
         }
         //name - Editable for all task types, with icon on the left
         {
-            Grid.Column<Task> nameColumn = addColumn(new ComponentRenderer<>(task -> {
-                // Calculate indentation depth
-                int depth        = task.getHierarchyDepth();
-                int indentPixels = depth * 20;
-
-                // Create container for icon + name
+            Grid.Column<Task> nameColumn = addComponentHierarchyColumn((Task task) -> {
+                // Create container for icon + name (TreeGrid handles indentation automatically)
                 HorizontalLayout container = new HorizontalLayout();
                 container.setSpacing(false);
                 container.setPadding(false);
                 container.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-                container.getStyle().set("padding-left", indentPixels + "px");
 
                 // Add icon based on task type
                 if (task.isMilestone()) {
@@ -358,12 +384,12 @@ public class TaskGrid extends Grid<Task> {
                 }
 
                 return container;
-            })).setHeader("Name").setAutoWidth(true).setFlexGrow(1);
+            }).setHeader("Name").setAutoWidth(true).setFlexGrow(1);
             nameColumn.setId("task-grid-name-column");
         }
         //Start - Editable only for Milestone tasks
         {
-            Grid.Column<Task> startColumn = addColumn(new ComponentRenderer<>(task -> {
+            Grid.Column<Task> startColumn = addColumn(new ComponentRenderer<>((Task task) -> {
                 if (isEditMode && task.isMilestone()) {
                     // Editable for Milestone tasks
                     DateTimePicker startField = new DateTimePicker();
@@ -405,7 +431,7 @@ public class TaskGrid extends Grid<Task> {
         }
         //Assigned - Editable only for Task tasks
         {
-            addColumn(new ComponentRenderer<>(task -> {
+            addColumn(new ComponentRenderer<>((Task task) -> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     ComboBox<User> userComboBox = new ComboBox<>();
@@ -454,7 +480,7 @@ public class TaskGrid extends Grid<Task> {
 
         //Min Estimate - Editable only for Task tasks
         {
-            addColumn(new ComponentRenderer<>(task -> {
+            addColumn(new ComponentRenderer<>((Task task) -> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     TextField estimateField = new TextField();
@@ -492,7 +518,7 @@ public class TaskGrid extends Grid<Task> {
         }
         //Max Estimate - Editable only for Task tasks
         {
-            addColumn(new ComponentRenderer<>(task -> {
+            addColumn(new ComponentRenderer<>((Task task) -> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     TextField estimateField = new TextField();
@@ -650,8 +676,8 @@ public class TaskGrid extends Grid<Task> {
         markTaskAsModified(task);
         markTaskAsModified(previousStory);
 
-        // Refresh grid to show updated hierarchy
-//        getDataProvider().refreshAll();
+        // Refresh tree to show updated hierarchy
+        refreshTreeData();
     }
 
     private boolean isEligibleMoveTarget(Task dropTargetTask, Task draggedTask) {
@@ -772,9 +798,9 @@ public class TaskGrid extends Grid<Task> {
         markTaskAsModified(task);
         markTaskAsModified(newStory);
         moveTaskAfter(task, lastChild);//zero based index
-//        onSaveAllChangesAndRefresh.run();
-        // Refresh grid to show updated hierarchy
-//        getDataProvider().refreshAll();
+
+        // Refresh tree to show updated hierarchy
+        refreshTreeData();
     }
 
     /**
@@ -785,8 +811,8 @@ public class TaskGrid extends Grid<Task> {
             // Mark task as modified
             markTaskAsModified(t);
 
-            // Refresh grid
-            getDataProvider().refreshAll();
+            // Refresh tree grid
+            refreshTreeData();
         });
         dialog.open();
     }
@@ -809,8 +835,38 @@ public class TaskGrid extends Grid<Task> {
         markTaskAsModified(task);
         markTaskAsModified(oldParent);
 
-        // Refresh grid to show updated hierarchy
-//        getDataProvider().refreshAll();
+        // Refresh tree to show updated hierarchy
+        refreshTreeData();
+    }
+
+    /**
+     * Refresh the tree data structure after hierarchy changes.
+     * Preserves expansion state for all expanded tasks.
+     */
+    private void refreshTreeData() {
+        // Build hierarchical tree structure
+        TreeData<Task> treeData = new TreeData<>();
+        List<Task> rootTasks = taskOrder.stream()
+                .filter(t -> t.getParentTask() == null)
+                .sorted(Comparator.comparingInt(Task::getOrderId))
+                .collect(Collectors.toList());
+        treeData.addItems(rootTasks, Task::getChildTasks);
+
+        // Set the tree data
+        setTreeData(treeData);
+
+        // Restore expansion state - expand all by default or restore previous state
+        if (expandedTasks.isEmpty()) {
+            // First time or all collapsed - expand all
+            expandRecursively(rootTasks, Integer.MAX_VALUE);
+        } else {
+            // Restore previous expansion state
+            expandedTasks.forEach(task -> {
+                if (taskOrder.contains(task)) {
+                    expand(task);
+                }
+            });
+        }
     }
 
     /**
@@ -1012,6 +1068,25 @@ public class TaskGrid extends Grid<Task> {
     }
 
     /**
+     * Setup listeners to track expansion state changes
+     */
+    private void setupExpansionListeners() {
+        addExpandListener(event -> {
+            expandedTasks.addAll(event.getItems());
+            log.debug("Task expanded: {}, total expanded: {}",
+                    event.getItems().stream().map(Task::getKey).collect(Collectors.joining(", ")),
+                    expandedTasks.size());
+        });
+
+        addCollapseListener(event -> {
+            expandedTasks.removeAll(event.getItems());
+            log.debug("Task collapsed: {}, total expanded: {}",
+                    event.getItems().stream().map(Task::getKey).collect(Collectors.joining(", ")),
+                    expandedTasks.size());
+        });
+    }
+
+    /**
      * Setup keyboard navigation for Excel-like behavior
      * Used by JS code
      */
@@ -1157,7 +1232,12 @@ public class TaskGrid extends Grid<Task> {
         this.taskOrder = taskOrder;
         this.allUsers.clear();
         this.allUsers.addAll(allUsers);
-        setItems(taskOrder);
+
+        // Clear previous expansion state when loading new data
+        expandedTasks.clear();
+
+        // Build and display hierarchical tree structure (with all nodes expanded by default)
+        refreshTreeData();
     }
 
 

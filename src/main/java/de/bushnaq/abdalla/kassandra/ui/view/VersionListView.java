@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -50,7 +49,6 @@ import java.util.Map;
 @Route("version-list")
 @PageTitle("Version List Page")
 @PermitAll // When security is enabled, allow all authenticated users
-@JsModule("./styles/vaadin-grid-styles.js")
 public class VersionListView extends AbstractMainGrid<Version> implements AfterNavigationObserver {
     public static final String     CREATE_VERSION_BUTTON             = "create-version-button";
     public static final String     ROUTE                             = "version-list";
