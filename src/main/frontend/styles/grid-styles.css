@@ -1,3 +1,5 @@
+
+/*
 .jira-style-grid {
   border: 1px solid var(--lumo-contrast-10pct);
 }
@@ -8,10 +10,9 @@
 }
 
 .jira-style-grid [part~="header-cell"] {
-  padding: 4px 8px !important; /* Reduce header cell padding (top/bottom, left/right) */
+  padding: 4px 8px !important;
 }
 
-/* Edit mode styling */
 .edit-mode {
   background-color: var(--lumo-contrast-5pct);
   border: 2px solid var(--lumo-primary-color);
@@ -26,7 +27,6 @@
   background-color: var(--lumo-primary-color-10pct);
 }
 
-/* Style for text fields in edit mode */
 .edit-mode vaadin-text-field {
   --lumo-border-radius: 0;
 }
@@ -34,3 +34,4 @@
 .edit-mode vaadin-combo-box {
   --lumo-border-radius: 0;
 }
+*/

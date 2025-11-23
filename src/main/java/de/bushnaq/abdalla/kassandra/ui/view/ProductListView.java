@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -50,7 +49,6 @@ import java.util.Map;
 @Menu(order = 1, icon = "vaadin:factory", title = "Products")
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
-@JsModule("./styles/vaadin-grid-styles.js")
 public class ProductListView extends AbstractMainGrid<Product> implements AfterNavigationObserver {
     public static final String     CREATE_PRODUCT_BUTTON             = "create-product-button";
     public static final String     PRODUCT_GLOBAL_FILTER             = "product-global-filter";
@@ -78,7 +76,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                         PRODUCT_GLOBAL_FILTER,
                         aiFilterService, mapper, "Product"
                 ),
-                grid
+                getGridPanelWrapper()
         );
     }
 
@@ -146,10 +144,10 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     protected void initGrid(Clock clock) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
 
-        grid.setId(PRODUCT_GRID);
+        getGrid().setId(PRODUCT_GRID);
 
         // Add click listener to navigate to VersionView with the selected product ID
-        grid.addItemClickListener(event -> {
+        getGrid().addItemClickListener(event -> {
             Product selectedProduct = event.getItem();
             // Create parameters map
             Map<String, String> params = new HashMap<>();
@@ -159,11 +157,11 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         });
 
         {
-            Grid.Column<Product> keyColumn = grid.addColumn(Product::getKey);
+            Grid.Column<Product> keyColumn = getGrid().addColumn(Product::getKey);
             VaadinUtil.addSimpleHeader(keyColumn, "Key", VaadinIcon.KEY);
         }
         {
-            Grid.Column<Product> nameColumn = grid.addColumn(new ComponentRenderer<>(product -> {
+            Grid.Column<Product> nameColumn = getGrid().addColumn(new ComponentRenderer<>(product -> {
                 Div div = new Div();
                 div.add(product.getName());
                 div.setId(PRODUCT_GRID_NAME_PREFIX + product.getName());
@@ -177,16 +175,16 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
             VaadinUtil.addSimpleHeader(nameColumn, "Name", VaadinIcon.CUBE);
         }
         {
-            Grid.Column<Product> createdColumn = grid.addColumn(product -> dateTimeFormatter.format(product.getCreated()));
+            Grid.Column<Product> createdColumn = getGrid().addColumn(product -> dateTimeFormatter.format(product.getCreated()));
             VaadinUtil.addSimpleHeader(createdColumn, "Created", VaadinIcon.CALENDAR);
         }
         {
-            Grid.Column<Product> updatedColumn = grid.addColumn(product -> dateTimeFormatter.format(product.getUpdated()));
+            Grid.Column<Product> updatedColumn = getGrid().addColumn(product -> dateTimeFormatter.format(product.getUpdated()));
             VaadinUtil.addSimpleHeader(updatedColumn, "Updated", VaadinIcon.CALENDAR);
         }
         // Add actions column using VaadinUtil
         VaadinUtil.addActionColumn(
-                grid,
+                getGrid(),
                 PRODUCT_GRID_EDIT_BUTTON_PREFIX,
                 PRODUCT_GRID_DELETE_BUTTON_PREFIX,
                 Product::getName,
@@ -229,8 +227,8 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     }
 
     private void refreshGrid() {
-        dataProvider.getItems().clear();
-        dataProvider.getItems().addAll(productApi.getAll());
-        dataProvider.refreshAll();
+        getDataProvider().getItems().clear();
+        getDataProvider().getItems().addAll(productApi.getAll());
+        getDataProvider().refreshAll();
     }
 }

@@ -89,7 +89,7 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
                         OFFDAY_GLOBAL_FILTER,
                         aiFilterService, mapper, "OffDay"
                 ),
-                new HorizontalLayout(grid, createCalendar())
+                new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
     }
 
@@ -207,14 +207,14 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
     }
 
     protected void initGrid(Clock clock) {
-        grid.setId(OFFDAY_GRID);
+        getGrid().setId(OFFDAY_GRID);
 
         // Format dates consistently
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         // First Day Column
         {
-            Grid.Column<OffDay> firstDayColumn = grid.addColumn(new ComponentRenderer<>(offDay -> {
+            Grid.Column<OffDay> firstDayColumn = getGrid().addColumn(new ComponentRenderer<>(offDay -> {
                 String startDateStr = offDay.getFirstDay().format(dateFormatter);
                 Span   span         = new Span(startDateStr);
                 span.setId(OFFDAY_GRID_START_DATE_PREFIX + offDay.getId());
@@ -233,7 +233,7 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
 
         // Last Day Column
         {
-            Grid.Column<OffDay> lastDayColumn = grid.addColumn(new ComponentRenderer<>(offDay -> {
+            Grid.Column<OffDay> lastDayColumn = getGrid().addColumn(new ComponentRenderer<>(offDay -> {
                 String endDateStr = offDay.getLastDay().format(dateFormatter);
                 Span   span       = new Span(endDateStr);
                 span.setId(OFFDAY_GRID_END_DATE_PREFIX + offDay.getId());
@@ -252,7 +252,7 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
 
         // Type Column
         {
-            Grid.Column<OffDay> typeColumn = grid.addColumn(new ComponentRenderer<>(offDay -> {
+            Grid.Column<OffDay> typeColumn = getGrid().addColumn(new ComponentRenderer<>(offDay -> {
                 OffDayType type = offDay.getType();
                 Span       span = new Span(type.name());
                 span.setId(OFFDAY_GRID_TYPE_PREFIX + offDay.getId());
@@ -271,7 +271,7 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
 
         // Add action column using VaadinUtil
         VaadinUtil.addActionColumn(
-                grid,
+                getGrid(),
                 OFFDAY_GRID_EDIT_BUTTON_PREFIX,
                 OFFDAY_GRID_DELETE_BUTTON_PREFIX,
                 offDay -> String.valueOf(offDay.getId()),
@@ -320,9 +320,9 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
                     .sorted(Comparator.comparing(OffDay::getFirstDay).reversed())
                     .collect(Collectors.toList());
 
-            dataProvider.getItems().clear();
-            dataProvider.getItems().addAll(sortedOffDays);
-            dataProvider.refreshAll();
+            getDataProvider().getItems().clear();
+            getDataProvider().getItems().addAll(sortedOffDays);
+            getDataProvider().refreshAll();
 
             yearCalendar.updateCalendar(currentUser);
         }

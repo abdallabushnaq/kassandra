@@ -5,60 +5,6 @@
   --vaadin-grid-cell-background: transparent;
 }
 
-:host(.jira-backlog) table {
-
-  border-spacing: 0 4px !important;
-  border-collapse: separate !important;
-  background: #f4f5f7 !important;
-  width: 100% !important;
-}
-
-
-:host(.jira-backlog) tbody {
-}
-
-:host(.jira-backlog) tbody tr {
-  box-shadow: 0 2px 4px rgba(9, 30, 66, 0.2), 2px 2px 4px rgba(9, 30, 66, 0.15) !important;
-}
-
-:host(.jira-backlog) td {
-  background: #ffffff !important;
-  padding: 10px 14px !important;
-  border: 1px;
-  border-color: red;
-  border-style: solid;
-}
-
-:host(.jira-backlog) td[part~="body-cell"][part~="first-column-cell"] {
-  border-top-left-radius: 4px !important;
-  border-bottom-left-radius: 4px !important;
-}
-
-:host(.jira-backlog) td[part~="body-cell"][part~="last-column-cell"] {
-  border-top-right-radius: 4px !important;
-  border-bottom-right-radius: 4px !important;
-}
-
-:host(.jira-backlog) th[part~="header-cell"] {
-  background: transparent !important;
-  font-weight: 600; font-size: 12px; letter-spacing: .5px; text-transform: uppercase;
-  color: #5e6c84; padding: 8px 14px !important; border: 0 !important;
-}
-:host(.jira-backlog) tr[part~="header-row"] {box-shadow: none !important;}
-
-:host(.jira-backlog) [part~="cell"]::after, :host(.jira-backlog) [part~="row"]::after {display:none !important;}
-
-:host(.jira-backlog) tbody tr[part~="row"]:hover td[part~="body-cell"] { background: #fbfcfd !important; }
-
-:host(.jira-backlog) tbody tr[part~="row"][dragover] td[part~="body-cell"] { outline:2px dashed var(--lumo-primary-color); outline-offset:-2px; }
-*/
-
-:host(.jira-backlog),
-:host(.jira-backlog) #scroller {
-  background: #f4f5f7 !important;
-  --vaadin-grid-cell-background: transparent;
-}
-
 
 :host(.jira-backlog) table {
 
@@ -69,23 +15,16 @@
 }
 
 :host(.jira-backlog) {
-  --vaadin-grid-cell-background: transparent !important; /* base */
+  --vaadin-grid-cell-background: transparent !important;
 }
 
 :host(.jira-backlog) tbody {
-/*
-  border-spacing: inherit !important;
-  border-collapse: inherit !important;
-  */
 }
 
 tbody tr {
   box-shadow: 0 2px 4px rgba(9, 30, 66, 0.2), 2px 2px 4px rgba(9, 30, 66, 0.15) !important;
 }
 :host(.jira-backlog) tbody tr {
-  /*background: #ffffff !important;
-  border-spacing: 0 4px !important;
-  */
   box-shadow: 0 2px 4px rgba(9, 30, 66, 0.2), 2px 2px 4px rgba(9, 30, 66, 0.15) !important;
 }
 
@@ -144,3 +83,4 @@ tbody tr {
 :host(.jira-backlog) tbody tr[part~="row"]:hover td[part~="body-cell"] { background: #fbfcfd !important; }
 
 :host(.jira-backlog) tbody tr[part~="row"][dragover] td[part~="body-cell"] { outline:2px dashed var(--lumo-primary-color); outline-offset:-2px; }
+*/

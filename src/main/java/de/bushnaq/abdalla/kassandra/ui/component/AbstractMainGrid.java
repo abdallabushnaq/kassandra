@@ -29,6 +29,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
@@ -36,21 +37,25 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
+import lombok.Getter;
 
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.function.Function;
 
+@Getter
 public abstract class AbstractMainGrid<T> extends Main {
-    protected       ListDataProvider<T> dataProvider;
-    protected final Grid<T>             grid;
-    private final   ObjectMapper        mapper;
+    private final ListDataProvider<T> dataProvider;
+    private final Grid<T>             grid;
+    private final VerticalLayout      gridPanelWrapper;
+    private final ObjectMapper        mapper;
 
     public AbstractMainGrid(Clock clock) {
         this(clock, null);
     }
 
     public AbstractMainGrid(Clock clock, ObjectMapper mapper) {
+        setClassName("list-view");
         this.mapper = mapper;
         setSizeFull();
         addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
@@ -59,8 +64,29 @@ public abstract class AbstractMainGrid<T> extends Main {
         grid         = new Grid<>();
         dataProvider = new ListDataProvider<T>(new ArrayList<>());
         grid.setDataProvider(dataProvider);
-        grid.setSizeFull();
-        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
+        grid.addThemeVariants(GridVariant.LUMO_COMPACT);
+        grid.setWidthFull();
+        grid.setAllRowsVisible(true);
+//        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
+        gridPanelWrapper = new VerticalLayout();
+        gridPanelWrapper.setPadding(false);
+        gridPanelWrapper.setSpacing(false);
+        gridPanelWrapper.setWidthFull();
+        gridPanelWrapper.addClassName("grid-panel-wrapper");
+
+        var innerWrapper = new VerticalLayout();
+        innerWrapper.setPadding(false);
+        innerWrapper.setSpacing(false);
+        gridPanelWrapper.add(innerWrapper);
+
+        var gridPanel = new VerticalLayout(grid);
+        gridPanel.setPadding(false);
+        gridPanel.setSpacing(false);
+        gridPanel.setWidthFull();
+        gridPanel.addClassName("grid-panel");
+
+        innerWrapper.add(gridPanel);
+
         initGrid(clock);
     }
 

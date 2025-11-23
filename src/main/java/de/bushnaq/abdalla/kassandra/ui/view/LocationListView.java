@@ -90,7 +90,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
                         LOCATION_GLOBAL_FILTER,
                         aiFilterService, mapper, "Location"
                 ),
-                new HorizontalLayout(grid, createCalendar())
+                new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
     }
 
@@ -135,7 +135,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
     }
 
     private void confirmDelete(Location location) {
-        if (dataProvider.getItems().size() <= 1) {
+        if (getDataProvider().getItems().size() <= 1) {
             Notification notification = Notification.show("Cannot delete - Users must have at least one location", 3000, Notification.Position.MIDDLE);
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
@@ -230,14 +230,14 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
     }
 
     protected void initGrid(Clock clock) {
-        grid.setId(LOCATION_GRID);
+        getGrid().setId(LOCATION_GRID);
 
         // Format dates consistently
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         // Start Date Column
         {
-            Grid.Column<Location> startColumn = grid.addColumn(new ComponentRenderer<>(location -> {
+            Grid.Column<Location> startColumn = getGrid().addColumn(new ComponentRenderer<>(location -> {
                 String startDateStr = location.getStart().format(dateFormatter);
                 Span   span         = new Span(startDateStr);
                 span.setId(LOCATION_GRID_START_DATE_PREFIX + startDateStr);
@@ -257,7 +257,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
 
         // Country column with descriptive name
         {
-            Grid.Column<Location> countryColumn = grid.addColumn(new ComponentRenderer<>(location -> {
+            Grid.Column<Location> countryColumn = getGrid().addColumn(new ComponentRenderer<>(location -> {
                 String countryCode = location.getCountry();
                 Locale locale      = new Locale("", countryCode);
                 String displayText = locale.getDisplayCountry() + " (" + countryCode + ")";
@@ -283,7 +283,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
 
         // State column with descriptive name
         {
-            Grid.Column<Location> stateColumn = grid.addColumn(new ComponentRenderer<>(location -> {
+            Grid.Column<Location> stateColumn = getGrid().addColumn(new ComponentRenderer<>(location -> {
                 String countryCode = location.getCountry();
                 String stateCode   = location.getState();
                 String displayText = getStateDescription(countryCode, stateCode);
@@ -305,7 +305,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
 
         // Add actions column with delete validation
         VaadinUtil.addActionColumn(
-                grid,
+                getGrid(),
                 LOCATION_GRID_EDIT_BUTTON_PREFIX,
                 LOCATION_GRID_DELETE_BUTTON_PREFIX,
                 location -> location.getStart().format(dateFormatter),
@@ -313,7 +313,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
                 this::confirmDelete,
                 location -> {
                     // Validate: Users must have at least one location
-                    if (dataProvider.getItems().size() <= 1) {
+                    if (getDataProvider().getItems().size() <= 1) {
                         return VaadinUtil.DeleteValidationResult.invalid("Cannot delete - Users must have at least one location");
                     }
                     return VaadinUtil.DeleteValidationResult.valid();
@@ -342,9 +342,9 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
             // Sort locations by start date in descending order (latest first)
             List<Location> sortedLocations = currentUser.getLocations().stream().sorted(Comparator.comparing(Location::getStart).reversed()).collect(Collectors.toList());
 
-            dataProvider.getItems().clear();
-            dataProvider.getItems().addAll(sortedLocations);
-            dataProvider.refreshAll();
+            getDataProvider().getItems().clear();
+            getDataProvider().getItems().addAll(sortedLocations);
+            getDataProvider().refreshAll();
 
             // Update the calendar with the fresh user data
             if (yearCalendar != null) {

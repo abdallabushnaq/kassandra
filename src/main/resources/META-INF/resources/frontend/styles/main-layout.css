@@ -1,19 +1,19 @@
 /* Scope to MainLayout via class name */
 
 /* Ensure routed view roots don't override the gray background */
-vaadin-app-layout.main-layout {
+/*vaadin-app-layout.main-layout {
   background-color: var(--lumo-contrast-5pct);
-}
+}*/
 
 /* Optional: make grids blend with the page background instead of forcing white */
-vaadin-grid {
+/*vaadin-grid {
   background-color: transparent;
-}
+}*/
 
 /* In case cell parts apply their own white background, keep them transparent */
-vaadin-grid::part(body-cell),
+/*vaadin-grid::part(body-cell),
 vaadin-grid::part(header-cell),
 vaadin-grid::part(footer-cell) {
   background-color: transparent;
-}
+}*/
 

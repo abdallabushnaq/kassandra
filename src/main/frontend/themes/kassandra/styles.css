@@ -1,3 +1,33 @@
+/* Add your styles here for elements not in the shadow dom*/
+
+/*******************/
+/* TreeGrid styles */
+/*******************/
+
+.list-view {
+    padding-left: 24px;
+    padding-right: 24px;
+    box-sizing: border-box;
+    overflow-x: auto;
+}
+
+.grid-panel-wrapper {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.grid-panel {
+    background-color: var(--lumo-contrast-5pct);
+    border-radius: var(--lumo-border-radius-l) var(--lumo-border-radius-l) var(--lumo-border-radius-l) var(--lumo-border-radius-l);
+    padding: 8px;
+}
+
+/*******************/
+/* Calendar styles */
+/*******************/
+
 /* Default theme (light) */
 @import url('./components/vaadin-dialog-overlay.css');
 @import url('./components/vaadin-grid-sorter.css');

@@ -32,7 +32,7 @@ import java.time.Clock;
 @SpringBootApplication
 @ComponentScan
 @JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
-@Theme(value = "theme")
+@Theme(value = "kassandra")
 @Push(value = PushMode.MANUAL) // Enable manual push for async UI updates (e.g., Gantt chart generation)
 public class Application implements AppShellConfigurator {
     @Bean

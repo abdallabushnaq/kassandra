@@ -91,7 +91,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
                         AVAILABILITY_GLOBAL_FILTER,
                         aiFilterService, mapper, "Availability"
                 ),
-                new HorizontalLayout(grid, createCalendar())
+                new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
     }
 
@@ -134,7 +134,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
     }
 
     private void confirmDelete(Availability availability) {
-        if (dataProvider.getItems().size() <= 1) {
+        if (getDataProvider().getItems().size() <= 1) {
             Notification notification = Notification.show("Cannot delete - Users must have at least one availability", 3000, Notification.Position.MIDDLE);
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
@@ -206,14 +206,14 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
     }
 
     protected void initGrid(Clock clock) {
-        grid.setId(AVAILABILITY_GRID);
+        getGrid().setId(AVAILABILITY_GRID);
 
         // Format dates consistently
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         // Start Date Column
         {
-            Grid.Column<Availability> startColumn = grid.addColumn(new ComponentRenderer<>(availability -> {
+            Grid.Column<Availability> startColumn = getGrid().addColumn(new ComponentRenderer<>(availability -> {
                 String startDateStr = availability.getStart().format(dateFormatter);
                 Span   span         = new Span(startDateStr);
                 span.setId(AVAILABILITY_GRID_START_DATE_PREFIX + startDateStr);
@@ -233,7 +233,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
         // Availability Column with percentage formatting
         {
             NumberFormat percentageFormat = NumberFormat.getPercentInstance(Locale.US);
-            Grid.Column<Availability> availabilityColumn = grid.addColumn(new NumberRenderer<>(
+            Grid.Column<Availability> availabilityColumn = getGrid().addColumn(new NumberRenderer<>(
                     availability -> availability.getAvailability(),
                     percentageFormat
             ));
@@ -250,7 +250,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
 
         // Add actions column with delete validation
         VaadinUtil.addActionColumn(
-                grid,
+                getGrid(),
                 AVAILABILITY_GRID_EDIT_BUTTON_PREFIX,
                 AVAILABILITY_GRID_DELETE_BUTTON_PREFIX,
                 availability -> availability.getStart().format(dateFormatter),
@@ -258,7 +258,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
                 this::confirmDelete,
                 availability -> {
                     // Validate: Users must have at least one availability
-                    if (dataProvider.getItems().size() <= 1) {
+                    if (getDataProvider().getItems().size() <= 1) {
                         return VaadinUtil.DeleteValidationResult.invalid("Cannot delete - Users must have at least one availability");
                     }
                     return VaadinUtil.DeleteValidationResult.valid();
@@ -284,9 +284,9 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
             currentUser.initialize();
             // Sort availabilities by start date in descending order (latest first)
             List<Availability> sortedAvailabilities = currentUser.getAvailabilities().stream().sorted(Comparator.comparing(Availability::getStart).reversed()).collect(Collectors.toList());
-            dataProvider.getItems().clear();
-            dataProvider.getItems().addAll(sortedAvailabilities);
-            dataProvider.refreshAll();
+            getDataProvider().getItems().clear();
+            getDataProvider().getItems().addAll(sortedAvailabilities);
+            getDataProvider().refreshAll();
 
             // Update the calendar with the latest data
             if (yearCalendar != null) {

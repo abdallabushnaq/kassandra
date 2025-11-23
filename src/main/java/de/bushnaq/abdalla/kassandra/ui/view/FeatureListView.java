@@ -86,7 +86,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                         FEATURE_GLOBAL_FILTER,
                         aiFilterService, mapper, "Feature"
                 ),
-                grid
+                getGridPanelWrapper()
         );
     }
 
@@ -144,10 +144,10 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     protected void initGrid(Clock clock) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
 
-        grid.setId(FEATURE_GRID);
+        getGrid().setId(FEATURE_GRID);
 
         // Add click listener to navigate to SprintListView with the selected feature ID
-        grid.addItemClickListener(event -> {
+        getGrid().addItemClickListener(event -> {
             Feature selectedFeature = event.getItem();
             // Create parameters map
             Map<String, String> params = new HashMap<>();
@@ -162,12 +162,12 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         });
 
         {
-            Grid.Column<Feature> keyColumn = grid.addColumn(Feature::getKey);
+            Grid.Column<Feature> keyColumn = getGrid().addColumn(Feature::getKey);
             VaadinUtil.addSimpleHeader(keyColumn, "Key", VaadinIcon.KEY);
         }
         {
             // Add name column with filtering and sorting
-            Grid.Column<Feature> nameColumn = grid.addColumn(new ComponentRenderer<>(feature -> {
+            Grid.Column<Feature> nameColumn = getGrid().addColumn(new ComponentRenderer<>(feature -> {
                 Div div = new Div();
                 div.add(feature.getName());
                 div.setId(FEATURE_GRID_NAME_PREFIX + feature.getName());
@@ -181,17 +181,17 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
             VaadinUtil.addSimpleHeader(nameColumn, "Name", VaadinIcon.LIGHTBULB);
         }
         {
-            Grid.Column<Feature> createdColumn = grid.addColumn(feature -> dateTimeFormatter.format(feature.getCreated()));
+            Grid.Column<Feature> createdColumn = getGrid().addColumn(feature -> dateTimeFormatter.format(feature.getCreated()));
             VaadinUtil.addSimpleHeader(createdColumn, "Created", VaadinIcon.CALENDAR);
         }
         {
-            Grid.Column<Feature> updatedColumn = grid.addColumn(feature -> dateTimeFormatter.format(feature.getUpdated()));
+            Grid.Column<Feature> updatedColumn = getGrid().addColumn(feature -> dateTimeFormatter.format(feature.getUpdated()));
             VaadinUtil.addSimpleHeader(updatedColumn, "Updated", VaadinIcon.CALENDAR);
         }
 
         // Add actions column using VaadinUtil
         VaadinUtil.addActionColumn(
-                grid,
+                getGrid(),
                 FEATURE_GRID_EDIT_BUTTON_PREFIX,
                 FEATURE_GRID_DELETE_BUTTON_PREFIX,
                 Feature::getName,
@@ -233,8 +233,8 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     }
 
     private void refreshGrid() {
-        dataProvider.getItems().clear();
-        dataProvider.getItems().addAll((versionId != null) ? featureApi.getAll(versionId) : featureApi.getAll());
-        dataProvider.refreshAll();
+        getDataProvider().getItems().clear();
+        getDataProvider().getItems().addAll((versionId != null) ? featureApi.getAll(versionId) : featureApi.getAll());
+        getDataProvider().refreshAll();
     }
 }

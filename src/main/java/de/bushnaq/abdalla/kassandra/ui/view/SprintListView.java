@@ -99,7 +99,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                         SPRINT_GLOBAL_FILTER,
                         aiFilterService, mapper, "Sprint"
                 ),
-                grid
+                getGridPanelWrapper()
         );
     }
 
@@ -168,10 +168,10 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     protected void initGrid(Clock clock) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
 
-        grid.setId(SPRINT_GRID);
+        getGrid().setId(SPRINT_GRID);
 
         // Add click listener to navigate to SprintQualityBoard with the selected sprint ID
-        grid.addItemClickListener(event -> {
+        getGrid().addItemClickListener(event -> {
             Sprint selectedSprint = event.getItem();
             // Create parameters map
             Map<String, String> params = new HashMap<>();
@@ -187,13 +187,13 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         });
 
         {
-            Grid.Column<Sprint> keyColumn = grid.addColumn(Sprint::getKey);
+            Grid.Column<Sprint> keyColumn = getGrid().addColumn(Sprint::getKey);
             VaadinUtil.addSimpleHeader(keyColumn, "Key", VaadinIcon.KEY);
         }
 
         {
             // Add name column with filtering and sorting
-            Grid.Column<Sprint> nameColumn = grid.addColumn(new ComponentRenderer<>(sprint -> {
+            Grid.Column<Sprint> nameColumn = getGrid().addColumn(new ComponentRenderer<>(sprint -> {
                 Div div = new Div();
                 div.add(sprint.getName());
                 div.setId(SPRINT_GRID_NAME_PREFIX + sprint.getName());
@@ -208,43 +208,43 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         }
 
         {
-            Grid.Column<Sprint> startColumn = grid.addColumn(sprint -> sprint.getStart() != null ? dateTimeFormatter.format(sprint.getStart()) : "");
+            Grid.Column<Sprint> startColumn = getGrid().addColumn(sprint -> sprint.getStart() != null ? dateTimeFormatter.format(sprint.getStart()) : "");
             VaadinUtil.addSimpleHeader(startColumn, "Start", VaadinIcon.CALENDAR);
         }
 
         {
-            Grid.Column<Sprint> endColumn = grid.addColumn(sprint -> sprint.getEnd() != null ? dateTimeFormatter.format(sprint.getEnd()) : "");
+            Grid.Column<Sprint> endColumn = getGrid().addColumn(sprint -> sprint.getEnd() != null ? dateTimeFormatter.format(sprint.getEnd()) : "");
             VaadinUtil.addSimpleHeader(endColumn, "End", VaadinIcon.CALENDAR);
         }
 
         {
-            Grid.Column<Sprint> statusColumn = grid.addColumn(sprint -> sprint.getStatus().name());
+            Grid.Column<Sprint> statusColumn = getGrid().addColumn(sprint -> sprint.getStatus().name());
             VaadinUtil.addSimpleHeader(statusColumn, "Status", VaadinIcon.FLAG);
         }
 
         {
-            Grid.Column<Sprint> originalEstimationColumn = grid.addColumn(sprint ->
+            Grid.Column<Sprint> originalEstimationColumn = getGrid().addColumn(sprint ->
                     sprint.getOriginalEstimation() != null ?
                             DateUtil.createDurationString(sprint.getOriginalEstimation(), false, true, true) : "");
             VaadinUtil.addSimpleHeader(originalEstimationColumn, "Original Estimation", VaadinIcon.CLOCK);
         }
 
         {
-            Grid.Column<Sprint> workedColumn = grid.addColumn(sprint ->
+            Grid.Column<Sprint> workedColumn = getGrid().addColumn(sprint ->
                     sprint.getWorked() != null ?
                             DateUtil.createDurationString(sprint.getWorked(), false, true, true) : "");
             VaadinUtil.addSimpleHeader(workedColumn, "Worked", VaadinIcon.TIMER);
         }
 
         {
-            Grid.Column<Sprint> remainingColumn = grid.addColumn(sprint ->
+            Grid.Column<Sprint> remainingColumn = getGrid().addColumn(sprint ->
                     sprint.getRemaining() != null ?
                             DateUtil.createDurationString(sprint.getRemaining(), false, true, true) : "");
             VaadinUtil.addSimpleHeader(remainingColumn, "Remaining", VaadinIcon.HOURGLASS);
         }
 
         // Add actions column using VaadinUtil with an additional config button
-        grid.addColumn(new ComponentRenderer<>(sprint -> {
+        getGrid().addColumn(new ComponentRenderer<>(sprint -> {
             HorizontalLayout layout = new HorizontalLayout();
             layout.setAlignItems(FlexComponent.Alignment.CENTER);
             layout.setSpacing(true);
@@ -317,8 +317,8 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     }
 
     private void refreshGrid() {
-        dataProvider.getItems().clear();
-        dataProvider.getItems().addAll((featureId != null) ? sprintApi.getAll(featureId) : sprintApi.getAll());
-        dataProvider.refreshAll();
+        getDataProvider().getItems().clear();
+        getDataProvider().getItems().addAll((featureId != null) ? sprintApi.getAll(featureId) : sprintApi.getAll());
+        getDataProvider().refreshAll();
     }
 }

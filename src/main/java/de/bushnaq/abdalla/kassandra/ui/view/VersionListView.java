@@ -81,7 +81,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         VERSION_GLOBAL_FILTER,
                         aiFilterService, mapper, "Version"
                 ),
-                grid
+                getGridPanelWrapper()
         );
     }
 
@@ -161,10 +161,10 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     protected void initGrid(Clock clock) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
 
-        grid.setId(VERSION_GRID);
+        getGrid().setId(VERSION_GRID);
 
         // Add click listener to navigate to FeatureListView with the selected version ID
-        grid.addItemClickListener(event -> {
+        getGrid().addItemClickListener(event -> {
             Version selectedVersion = event.getItem();
             // Create parameters map
             Map<String, String> params = new HashMap<>();
@@ -178,12 +178,12 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         });
 
         {
-            Grid.Column<Version> keyColumn = grid.addColumn(Version::getKey);
+            Grid.Column<Version> keyColumn = getGrid().addColumn(Version::getKey);
             VaadinUtil.addSimpleHeader(keyColumn, "Key", VaadinIcon.KEY);
         }
         {
             // Add name column with filtering and sorting
-            Grid.Column<Version> nameColumn = grid.addColumn(new ComponentRenderer<>(version -> {
+            Grid.Column<Version> nameColumn = getGrid().addColumn(new ComponentRenderer<>(version -> {
                 Div div = new Div();
                 div.add(version.getName());
                 div.setId(VERSION_GRID_NAME_PREFIX + version.getName());
@@ -196,17 +196,17 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
             VaadinUtil.addSimpleHeader(nameColumn, "Name", VaadinIcon.TAG);
         }
         {
-            Grid.Column<Version> createdColumn = grid.addColumn(version -> dateTimeFormatter.format(version.getCreated()));
+            Grid.Column<Version> createdColumn = getGrid().addColumn(version -> dateTimeFormatter.format(version.getCreated()));
             VaadinUtil.addSimpleHeader(createdColumn, "Created", VaadinIcon.CALENDAR);
         }
         {
-            Grid.Column<Version> updatedColumn = grid.addColumn(version -> dateTimeFormatter.format(version.getUpdated()));
+            Grid.Column<Version> updatedColumn = getGrid().addColumn(version -> dateTimeFormatter.format(version.getUpdated()));
             VaadinUtil.addSimpleHeader(updatedColumn, "Updated", VaadinIcon.CALENDAR);
         }
 
         // Add actions column using VaadinUtil
         VaadinUtil.addActionColumn(
-                grid,
+                getGrid(),
                 VERSION_GRID_EDIT_BUTTON_PREFIX,
                 VERSION_GRID_DELETE_BUTTON_PREFIX,
                 Version::getName,
@@ -250,8 +250,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     }
 
     private void refreshGrid() {
-        dataProvider.getItems().clear();
-        dataProvider.getItems().addAll((productId != null) ? versionApi.getAll(productId) : versionApi.getAll());
-        dataProvider.refreshAll();
+        getDataProvider().getItems().clear();
+        getDataProvider().getItems().addAll((productId != null) ? versionApi.getAll(productId) : versionApi.getAll());
+        getDataProvider().refreshAll();
     }
 }

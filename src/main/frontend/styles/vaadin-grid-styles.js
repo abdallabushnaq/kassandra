@@ -3,10 +3,10 @@ import { css, registerStyles } from '@vaadin/vaadin-themable-mixin';
 registerStyles('vaadin-grid', css`
   /* Jira-style backlog grid styles for vaadin-grid */
 
-    vaadin-grid {
+/*    vaadin-grid {
         background: transparent;
         border: 0;
-    }
+    }*/
 
 //    [part~="row"] {
 //        padding-inline: 1px;
