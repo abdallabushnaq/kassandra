@@ -191,6 +191,12 @@ public class Task implements Comparable<Task> {
     private TaskMode taskMode = TaskMode.AUTO_SCHEDULED;
 
     /**
+     * The status of the task in the Scrum board workflow (TODO, IN_PROGRESS, DONE).
+     * For stories, this is calculated from child task statuses.
+     */
+    private TaskStatus taskStatus = TaskStatus.TODO;
+
+    /**
      * The total person days already spent on this task.
      */
     @JsonSerialize(using = DurationSerializer.class)
@@ -254,6 +260,63 @@ public class Task implements Comparable<Task> {
     }
 
     /**
+     * Calculates the status of a story based on its child tasks.
+     * <p>
+     * Status is determined as follows:
+     * <ul>
+     *     <li>DONE - if all child tasks are DONE</li>
+     *     <li>IN_PROGRESS - if any child task is IN_PROGRESS or if some are DONE and some are TODO</li>
+     *     <li>TODO - if all child tasks are TODO</li>
+     * </ul>
+     * If the story has no child tasks, returns the story's own status.
+     *
+     * @return the calculated status for the story
+     */
+    @JsonIgnore
+    public TaskStatus calculateStoryStatus() {
+        if (!isStory() || childTasks.isEmpty()) {
+            return taskStatus;
+        }
+
+        boolean hasInProgress = false;
+        boolean hasTodo       = false;
+        boolean hasDone       = false;
+
+        for (Task child : childTasks) {
+            TaskStatus childStatus = child.getEffectiveStatus();
+            switch (childStatus) {
+                case IN_PROGRESS:
+                    hasInProgress = true;
+                    break;
+                case TODO:
+                    hasTodo = true;
+                    break;
+                case DONE:
+                    hasDone = true;
+                    break;
+            }
+        }
+
+        // If any task is in progress, story is in progress
+        if (hasInProgress) {
+            return TaskStatus.IN_PROGRESS;
+        }
+
+        // If all tasks are done, story is done
+        if (hasDone && !hasTodo && !hasInProgress) {
+            return TaskStatus.DONE;
+        }
+
+        // If all tasks are todo, story is todo
+        if (hasTodo && !hasDone && !hasInProgress) {
+            return TaskStatus.TODO;
+        }
+
+        // Mixed state (some done, some todo, or any in progress) means in progress
+        return TaskStatus.IN_PROGRESS;
+    }
+
+    /**
      * Compares this task to another task based on their IDs.
      *
      * @param other the task to compare to
@@ -289,6 +352,22 @@ public class Task implements Comparable<Task> {
         } else {
             return sprint.getCalendar();
         }
+    }
+
+    /**
+     * Gets the effective status of this task.
+     * <p>
+     * For regular tasks: returns the actual taskStatus.
+     * For stories: returns the calculated status based on child tasks.
+     *
+     * @return the effective status of this task
+     */
+    @JsonIgnore
+    public TaskStatus getEffectiveStatus() {
+        if (isStory()) {
+            return calculateStoryStatus();
+        }
+        return taskStatus;
     }
 
     /**

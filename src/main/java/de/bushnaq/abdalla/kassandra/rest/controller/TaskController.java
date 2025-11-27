@@ -79,4 +79,15 @@ public class TaskController {
     public void update(@RequestBody TaskDAO task) {
         taskRepository.save(task);
     }
+
+    @PutMapping("/{id}/status/{status}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public void updateStatus(@PathVariable Long id, @PathVariable de.bushnaq.abdalla.kassandra.dto.TaskStatus status) {
+        Optional<TaskDAO> taskOptional = taskRepository.findById(id);
+        if (taskOptional.isPresent()) {
+            TaskDAO task = taskOptional.get();
+            task.setTaskStatus(status);
+            taskRepository.save(task);
+        }
+    }
 }

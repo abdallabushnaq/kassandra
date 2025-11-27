@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
-import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
@@ -46,7 +45,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Container;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -69,49 +67,36 @@ import java.util.List;
 public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil {
     //    public static final  float                      EXAGGERATE_LOW    = 0.25f;
 //    public static final  float                      EXAGGERATE_NORMAL = 0.3f;
-    public static final  NarratorAttribute          EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  String                     NEW_MILESTONE = "New Milestone-";
-    public static final  String                     NEW_STORY     = "New Story-";
-    public static final  String                     NEW_TASK      = "New Task-";
-    public static final  NarratorAttribute          NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  String                     VIDEO_TITLE   = "Kassandra Stories and Tasks";
-    // Start Keycloak container with realm configuration
-    @Container
-    private static final KeycloakContainer          keycloak      = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
-            .withRealmImportFile("keycloak/project-hub-realm.json")
-            .withAdminUsername("admin")
-            .withAdminPassword("admin")
-            // Expose on a fixed port for more reliable testing
-            .withExposedPorts(8080, 8443)
-            // Add debugging to see container output
-            .withLogConsumer(outputFrame -> System.out.println("Keycloak: " + outputFrame.getUtf8String()))
-            // Make Keycloak accessible from outside the container
-            .withEnv("KC_HOSTNAME_STRICT", "false")
-            .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false");
+    public static final NarratorAttribute          EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final String                     NEW_MILESTONE = "New Milestone-";
+    public static final String                     NEW_STORY     = "New Story-";
+    public static final String                     NEW_TASK      = "New Task-";
+    public static final NarratorAttribute          NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final String                     VIDEO_TITLE   = "Kassandra Stories and Tasks";
     @Autowired
-    private              AvailabilityListViewTester availabilityListViewTester;
+    private             AvailabilityListViewTester availabilityListViewTester;
     @Autowired
-    private              FeatureListViewTester      featureListViewTester;
-    private              String                     featureName;
+    private             FeatureListViewTester      featureListViewTester;
+    private             String                     featureName;
     @Autowired
-    private              LocationListViewTester     locationListViewTester;
+    private             LocationListViewTester     locationListViewTester;
     @Autowired
-    private              OffDayListViewTester       offDayListViewTester;
+    private             OffDayListViewTester       offDayListViewTester;
     @Autowired
-    private              ProductListViewTester      productListViewTester;
-    private              String                     productName;
+    private             ProductListViewTester      productListViewTester;
+    private             String                     productName;
     @Autowired
-    private              HumanizedSeleniumHandler   seleniumHandler;
+    private             HumanizedSeleniumHandler   seleniumHandler;
     @Autowired
-    private              SprintListViewTester       sprintListViewTester;
-    private              String                     sprintName;
+    private             SprintListViewTester       sprintListViewTester;
+    private             String                     sprintName;
     @Autowired
-    private              TaskListViewTester         taskListViewTester;
+    private             TaskListViewTester         taskListViewTester;
     @Autowired
-    private              UserListViewTester         userListViewTester;
+    private             UserListViewTester         userListViewTester;
     @Autowired
-    private              VersionListViewTester      versionListViewTester;
-    private              String                     versionName;
+    private             VersionListViewTester      versionListViewTester;
+    private             String                     versionName;
 
     @ParameterizedTest
     @MethodSource("listRandomCases")

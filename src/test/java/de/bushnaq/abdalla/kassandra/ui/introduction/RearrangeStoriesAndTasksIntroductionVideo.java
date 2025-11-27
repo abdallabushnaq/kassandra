@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
-import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -46,7 +45,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Container;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -67,47 +65,34 @@ import java.util.List;
 @AutoConfigureMockMvc
 @Transactional
 public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil {
-    public static final  NarratorAttribute        EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  String                   NEW_MILESTONE = "New Milestone-";
-    public static final  String                   NEW_STORY     = "New Story-";
-    public static final  String                   NEW_TASK      = "New Task-";
-    public static final  NarratorAttribute        NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  String                   VIDEO_TITLE   = "Stories and Tasks - Rearranging and Copying";
-    @Container
-    private static final KeycloakContainer        keycloak      = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
-            // Start Keycloak container with realm configuration
-            .withRealmImportFile("keycloak/project-hub-realm.json")
-            .withAdminUsername("admin")
-            .withAdminPassword("admin")
-            // Expose on a fixed port for more reliable testing
-            .withExposedPorts(8080, 8443)
-            // Add debugging to see container output
-            .withLogConsumer(outputFrame -> System.out.println("Keycloak: " + outputFrame.getUtf8String()))
-            // Make Keycloak accessible from outside the container
-            .withEnv("KC_HOSTNAME_STRICT", "false")
-            .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false");
+    public static final NarratorAttribute        EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final String                   NEW_MILESTONE = "New Milestone-";
+    public static final String                   NEW_STORY     = "New Story-";
+    public static final String                   NEW_TASK      = "New Task-";
+    public static final NarratorAttribute        NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final String                   VIDEO_TITLE   = "Stories and Tasks - Rearranging and Copying";
     @Autowired
-    private              FeatureListViewTester    featureListViewTester;
-    private              String                   featureName;
+    private             FeatureListViewTester    featureListViewTester;
+    private             String                   featureName;
     @Autowired
-    private              ProductListViewTester    productListViewTester;
-    private              String                   productName;
+    private             ProductListViewTester    productListViewTester;
+    private             String                   productName;
     @Autowired
-    private              HumanizedSeleniumHandler seleniumHandler;
+    private             HumanizedSeleniumHandler seleniumHandler;
     @Autowired
-    private              SprintListViewTester     sprintListViewTester;
-    private              String                   sprintName;
-    private              Task                     story1;
-    private              Task                     story2;
-    private              Task                     task11;
-    private              Task                     task12;
-    private              Task                     task13;
-    private              Task                     task21;
-    private              Task                     task22;
-    private              Task                     task23;
+    private             SprintListViewTester     sprintListViewTester;
+    private             String                   sprintName;
+    private             Task                     story1;
+    private             Task                     story2;
+    private             Task                     task11;
+    private             Task                     task12;
+    private             Task                     task13;
+    private             Task                     task21;
+    private             Task                     task22;
+    private             Task                     task23;
     @Autowired
-    private              VersionListViewTester    versionListViewTester;
-    private              String                   versionName;
+    private             VersionListViewTester    versionListViewTester;
+    private             String                   versionName;
 
     @ParameterizedTest
     @MethodSource("listRandomCases")

@@ -116,4 +116,15 @@ public class TaskApi extends AbstractApi {
                 Void.class
         ));
     }
+
+    public void updateTaskStatus(Long taskId, de.bushnaq.abdalla.kassandra.dto.TaskStatus newStatus) {
+        executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/task/{id}/status/{status}",
+                HttpMethod.PUT,
+                createHttpEntity(),
+                Void.class,
+                taskId,
+                newStatus
+        ));
+    }
 }
