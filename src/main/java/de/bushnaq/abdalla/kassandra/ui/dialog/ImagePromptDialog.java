@@ -108,11 +108,17 @@ public class ImagePromptDialog extends Dialog {
                 .set("border", "1px dashed var(--lumo-contrast-30pct)")
                 .set("border-radius", "var(--lumo-border-radius)")
                 .set("padding", "var(--lumo-space-m)")
-                .set("min-height", "200px")
+                .set("width", "256px")
+                .set("height", "256px")
+                .set("min-width", "256px")
+                .set("min-height", "256px")
+                .set("max-width", "256px")
+                .set("max-height", "256px")
                 .set("display", "flex")
                 .set("align-items", "center")
                 .set("justify-content", "center")
-                .set("background-color", "var(--lumo-contrast-5pct)");
+                .set("background-color", "var(--lumo-contrast-5pct)")
+                .set("overflow", "hidden");
 
         Div placeholderText = new Div();
         placeholderText.setText("Generated image will appear here");

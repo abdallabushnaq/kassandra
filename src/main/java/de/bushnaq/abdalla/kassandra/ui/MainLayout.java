@@ -40,6 +40,8 @@ import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import com.vaadin.flow.theme.lumo.Lumo;
+import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
@@ -84,8 +86,10 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
     private             Image            logoImage;   // Store reference to logo image
     private final       Map<Tab, String> tabToPathMap                 = new HashMap<>();
     private final       Tabs             tabs                         = new Tabs();
+    private final       UserApi          userApi;
 
-    MainLayout() {
+    MainLayout(UserApi userApi) {
+        this.userApi = userApi;
         UI.getCurrent().getPage().addJavaScript("/js/tooltips.js");
         setPrimarySection(Section.NAVBAR);
         addClassName("main-layout"); // scope CSS to this layout
@@ -254,17 +258,50 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
     private Component createUserMenu() {
         final String userEmail = getUserEmail();
 
-        var avatar = new Avatar(userEmail);
-        avatar.addThemeVariants(AvatarVariant.LUMO_XSMALL);
-        avatar.addClassNames(Margin.Right.SMALL);
-        avatar.setColorIndex(5);
+        // Try to get user from database to check for avatar
+        User userFromDb;
+        try {
+            userFromDb = userApi.getByEmail(userEmail);
+        } catch (Exception e) {
+            // User not found or error, will use default avatar
+            userFromDb = null;
+        }
+        final User user = userFromDb;
+
+        // Create avatar component
+        Component avatarComponent;
+        if (user != null && user.getAvatarImage() != null && user.getAvatarImage().length > 0) {
+            // User has a custom avatar image
+            com.vaadin.flow.component.html.Image avatarImage = new com.vaadin.flow.component.html.Image();
+            avatarImage.setWidth("24px");
+            avatarImage.setHeight("24px");
+            avatarImage.getStyle()
+                    .set("border-radius", "50%")
+                    .set("object-fit", "cover");
+
+            final byte[] avatarImageBytes = user.getAvatarImage();
+            com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
+                    "user-menu-" + System.currentTimeMillis() + ".png",
+                    () -> new java.io.ByteArrayInputStream(avatarImageBytes)
+            );
+            resource.setContentType("image/png");
+            resource.setCacheTime(0);
+            avatarImage.setSrc(resource);
+            avatarComponent = avatarImage;
+        } else {
+            // Use default avatar
+            var avatar = new Avatar(userEmail);
+            avatar.addThemeVariants(AvatarVariant.LUMO_XSMALL);
+            avatar.setColorIndex(5);
+            avatarComponent = avatar;
+        }
 
         var userMenu = new MenuBar();
         userMenu.addThemeVariants(MenuBarVariant.LUMO_TERTIARY_INLINE);
         userMenu.addClassNames(Margin.Right.MEDIUM);
         userMenu.setId(ID_USER_MENU);
 
-        var userMenuItem = userMenu.addItem(avatar);
+        var userMenuItem = userMenu.addItem(avatarComponent);
         userMenuItem.add(userEmail);
 //        userMenuItem.setId(ID_USER_MENU_ITEM);
 

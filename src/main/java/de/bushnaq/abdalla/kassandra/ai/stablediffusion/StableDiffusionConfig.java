@@ -32,30 +32,30 @@ public class StableDiffusionConfig {
     /**
      * Base URL of the Stable Diffusion WebUI API
      */
-    private String apiUrl = "http://localhost:7860";
+    private String apiUrl         = "http://localhost:7860";
     /**
      * CFG Scale (Classifier Free Guidance)
      */
-    private double cfgScale = 7.0;
+    private double cfgScale       = 7.0;
     /**
-     * Default sampler algorithm
+     * Default sampler algorithm (optimized for SD3 Medium)
      */
     private String defaultSampler = "DPM++ 2M Karras";
     /**
      * Default number of sampling steps
      */
-    private int defaultSteps = 20;
+    private int    defaultSteps   = 20;
     /**
      * Size to generate images at (before resizing)
      */
-    private int generationSize = 512;
+    private int    generationSize = 512;
     /**
      * Final output size for avatars/icons
      */
-    private int outputSize = 64;
+    private int    outputSize     = 64;
     /**
      * Timeout in seconds for API requests
      */
-    private int timeoutSeconds = 60;
+    private int    timeoutSeconds = 60;
 }
 

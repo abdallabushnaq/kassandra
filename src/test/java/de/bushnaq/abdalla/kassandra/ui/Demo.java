@@ -21,7 +21,7 @@ import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Version;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
@@ -52,11 +52,22 @@ import java.util.Arrays;
 import java.util.List;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = "server.port=8080")
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=8080",
+                "spring.profiles.active=test",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
 @AutoConfigureMockMvc
 @Transactional
+//@ExtendWith(SpringExtension.class)
+//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = "server.port=8080")
+//@AutoConfigureMockMvc
+//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class Demo extends AbstractUiTestUtil {
+public class Demo extends AbstractKeycloakUiTestUtil {
     private static final Logger                   logger = LoggerFactory.getLogger(Demo.class);
     @Autowired
     private              FeatureListViewTester    featureListViewTester;
@@ -164,7 +175,8 @@ public class Demo extends AbstractUiTestUtil {
         List<Sprint>  sprints      = sprintApi.getAll(firstFeature.getId());
         Sprint        firstSprint  = sprints.getFirst();
 
-        productListViewTester.switchToProductListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+//        productListViewTester.switchToProductListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 //        seleniumHandler.getAndCheck("http://localhost:" + productListViewTester.getPort() + "/ui/" + "grid-row-reordering");
 
 //        // Demo the natural language search capabilities

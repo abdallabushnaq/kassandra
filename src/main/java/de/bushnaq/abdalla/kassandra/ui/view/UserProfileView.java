@@ -32,11 +32,13 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -51,19 +53,26 @@ import java.util.List;
 @PageTitle("User Profile")
 @PermitAll
 public class UserProfileView extends Main implements BeforeEnterObserver {
-    public static final String                                        PROFILE_PAGE_TITLE  = "profile-page-title";
-    public static final String                                        ROUTE               = "profile";
-    public static final String                                        SAVE_PROFILE_BUTTON = "save-profile-button";
-    public static final String                                        USER_COLOR_PICKER   = "user-color-picker";
-    public static final String                                        USER_EMAIL_FIELD    = "user-email-field";
-    public static final String                                        USER_NAME_FIELD     = "user-name-field";
+    public static final String                                        GENERATE_AVATAR_BUTTON = "generate-avatar-button";
+    public static final String                                        PROFILE_PAGE_TITLE     = "profile-page-title";
+    public static final String                                        ROUTE                  = "profile";
+    public static final String                                        SAVE_PROFILE_BUTTON    = "save-profile-button";
+    public static final String                                        USER_COLOR_PICKER      = "user-color-picker";
+    public static final String                                        USER_EMAIL_FIELD       = "user-email-field";
+    public static final String                                        USER_NAME_FIELD        = "user-name-field";
+    private             com.vaadin.flow.component.html.Image          avatarPreview;
     private             ColorPicker                                   colorPicker;
     private             User                                          currentUser;
+    private             byte[]                                        generatedAvatarBytes;
+    private             com.vaadin.flow.component.html.Image          headerAvatarImage;
     private             com.vaadin.flow.component.textfield.TextField nameField;
+    private             com.vaadin.flow.component.html.Image          nameFieldAvatarImage;
+    private final       StableDiffusionService                        stableDiffusionService;
     private final       UserApi                                       userApi;
 
-    public UserProfileView(UserApi userApi) {
-        this.userApi = userApi;
+    public UserProfileView(UserApi userApi, StableDiffusionService stableDiffusionService) {
+        this.userApi                = userApi;
+        this.stableDiffusionService = stableDiffusionService;
 
         setSizeFull();
         addClassNames(
@@ -128,6 +137,60 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         return user;
     }
 
+    private void handleGeneratedAvatar(byte[] imageBytes) {
+        this.generatedAvatarBytes = imageBytes;
+
+        // Update UI from callback (might be from async thread)
+        getUI().ifPresent(ui -> ui.access(() -> {
+            // Create or update preview
+            if (avatarPreview == null) {
+                // Avatar preview was an Icon, we need to recreate the view with an Image
+                // Easiest way is to just reinitialize the entire view
+                initializeView();
+                // After reinitializing, the generated avatar bytes are still stored
+                // and will be used when user saves
+            } else {
+                // Update existing preview
+                com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
+                        "user-avatar-preview-" + System.currentTimeMillis() + ".png",
+                        () -> new java.io.ByteArrayInputStream(imageBytes)
+                );
+                avatarPreview.setSrc(resource);
+            }
+
+            // Update header icon if it exists
+            if (headerAvatarImage != null) {
+                com.vaadin.flow.server.StreamResource headerResource = new com.vaadin.flow.server.StreamResource(
+                        "user-profile-header-" + System.currentTimeMillis() + ".png",
+                        () -> new java.io.ByteArrayInputStream(imageBytes)
+                );
+                headerAvatarImage.setSrc(headerResource);
+            }
+
+            // Update name field icon
+            if (nameFieldAvatarImage == null) {
+                // Create new image component if it doesn't exist
+                nameFieldAvatarImage = new com.vaadin.flow.component.html.Image();
+                nameFieldAvatarImage.setWidth("20px");
+                nameFieldAvatarImage.setHeight("20px");
+                nameFieldAvatarImage.getStyle()
+                        .set("border-radius", "50%")
+                        .set("object-fit", "cover");
+                nameField.setPrefixComponent(nameFieldAvatarImage);
+            }
+            com.vaadin.flow.server.StreamResource nameFieldResource = new com.vaadin.flow.server.StreamResource(
+                    "user-name-field-" + System.currentTimeMillis() + ".png",
+                    () -> new java.io.ByteArrayInputStream(imageBytes)
+            );
+            nameFieldAvatarImage.setSrc(nameFieldResource);
+
+            Notification.show("Avatar generated successfully", 3000, Notification.Position.BOTTOM_END);
+
+            // Push the UI update
+            ui.push();
+        }));
+    }
+
     private void initializeView() {
         removeAll();
 
@@ -137,8 +200,29 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         headerLayout.setPadding(false);
         headerLayout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
 
-        Icon titleIcon = new Icon(VaadinIcon.USER);
-        H2   pageTitle = new H2("User Profile");
+        // Create title icon (avatar or default icon)
+        com.vaadin.flow.component.Component titleIcon;
+        if (currentUser.getAvatarImage() != null && currentUser.getAvatarImage().length > 0) {
+            headerAvatarImage = new com.vaadin.flow.component.html.Image();
+            headerAvatarImage.setWidth("32px");
+            headerAvatarImage.setHeight("32px");
+            headerAvatarImage.getStyle()
+                    .set("border-radius", "50%")
+                    .set("object-fit", "cover");
+            com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
+                    "user-profile-" + System.currentTimeMillis() + ".png",
+                    () -> new java.io.ByteArrayInputStream(currentUser.getAvatarImage())
+            );
+            resource.setContentType("image/png");
+            resource.setCacheTime(0);
+            headerAvatarImage.setSrc(resource);
+            titleIcon = headerAvatarImage;
+        } else {
+            headerAvatarImage = null;
+            titleIcon         = new Icon(VaadinIcon.USER);
+        }
+
+        H2 pageTitle = new H2("User Profile");
         pageTitle.setId(PROFILE_PAGE_TITLE);
         pageTitle.addClassNames(
                 LumoUtility.Margin.Top.MEDIUM,
@@ -166,7 +250,27 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         nameField.setValue(currentUser.getName() != null ? currentUser.getName() : "");
         nameField.setWidthFull();
         nameField.setRequired(true);
-        nameField.setPrefixComponent(new Icon(VaadinIcon.USER));
+
+        // Set prefix icon (avatar or default icon)
+        if (currentUser.getAvatarImage() != null && currentUser.getAvatarImage().length > 0) {
+            nameFieldAvatarImage = new com.vaadin.flow.component.html.Image();
+            nameFieldAvatarImage.setWidth("20px");
+            nameFieldAvatarImage.setHeight("20px");
+            nameFieldAvatarImage.getStyle()
+                    .set("border-radius", "50%")
+                    .set("object-fit", "cover");
+            com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
+                    "user-name-field-" + System.currentTimeMillis() + ".png",
+                    () -> new java.io.ByteArrayInputStream(currentUser.getAvatarImage())
+            );
+            resource.setContentType("image/png");
+            resource.setCacheTime(0);
+            nameFieldAvatarImage.setSrc(resource);
+            nameField.setPrefixComponent(nameFieldAvatarImage);
+        } else {
+            nameFieldAvatarImage = null;
+            nameField.setPrefixComponent(new Icon(VaadinIcon.USER));
+        }
 
         com.vaadin.flow.component.textfield.TextField emailField = new com.vaadin.flow.component.textfield.TextField("Email");
         emailField.setId(USER_EMAIL_FIELD);
@@ -204,15 +308,86 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             colorPicker.setValue(colorHex);
         }
 
+        // Avatar section
+        VerticalLayout avatarSection = new VerticalLayout();
+        avatarSection.setPadding(false);
+        avatarSection.setSpacing(true);
+
+        // Avatar preview - use Component to support both Image and Icon
+        com.vaadin.flow.component.Component avatarPreviewComponent;
+        if (currentUser.getAvatarImage() != null && currentUser.getAvatarImage().length > 0) {
+            avatarPreview = new com.vaadin.flow.component.html.Image();
+            avatarPreview.setWidth("128px");
+            avatarPreview.setHeight("128px");
+            avatarPreview.getStyle()
+                    .set("border-radius", "50%")
+                    .set("object-fit", "cover")
+                    .set("border", "2px solid var(--lumo-contrast-20pct)")
+                    .set("background-color", "var(--lumo-contrast-5pct)");
+
+            com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
+                    "user-avatar-preview-" + System.currentTimeMillis() + ".png",
+                    () -> new java.io.ByteArrayInputStream(currentUser.getAvatarImage())
+            );
+            resource.setContentType("image/png");
+            resource.setCacheTime(0);
+            avatarPreview.setSrc(resource);
+            avatarPreviewComponent = avatarPreview;
+        } else {
+            // Show default VaadinIcon.USER
+            Icon defaultAvatarIcon = new Icon(VaadinIcon.USER);
+            defaultAvatarIcon.setSize("128px");
+            defaultAvatarIcon.getStyle()
+                    .set("color", "var(--lumo-contrast-50pct)")
+                    .set("border-radius", "50%")
+                    .set("border", "2px solid var(--lumo-contrast-20pct)")
+                    .set("background-color", "var(--lumo-contrast-5pct)")
+                    .set("padding", "var(--lumo-space-l)");
+            avatarPreview          = null;
+            avatarPreviewComponent = defaultAvatarIcon;
+        }
+
+        // Generate avatar button (only if service is available)
+        HorizontalLayout avatarButtonLayout = new HorizontalLayout();
+        avatarButtonLayout.setSpacing(true);
+
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            Button generateAvatarButton = new Button("Generate Avatar", new Icon(VaadinIcon.MAGIC));
+            generateAvatarButton.setId(GENERATE_AVATAR_BUTTON);
+            generateAvatarButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+            generateAvatarButton.addClickListener(e -> openAvatarPromptDialog());
+            avatarButtonLayout.add(generateAvatarButton);
+        }
+
+        avatarSection.add(
+                new com.vaadin.flow.component.html.Span("Profile Picture"),
+                avatarPreviewComponent,
+                avatarButtonLayout
+        );
+        avatarSection.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+
         // Save button
         Button saveButton = new Button("Save Changes", new Icon(VaadinIcon.CHECK));
         saveButton.setId(SAVE_PROFILE_BUTTON);
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.addClickListener(e -> saveProfile());
 
-        formLayout.add(nameField, emailField, colorPicker, saveButton);
+        formLayout.add(nameField, emailField, colorPicker, avatarSection, saveButton);
 
         add(headerLayout, formLayout);
+    }
+
+    private void openAvatarPromptDialog() {
+        String defaultPrompt = nameField.getValue().isEmpty()
+                ? "Professional portrait avatar, minimalist, flat design, simple background"
+                : "Professional portrait avatar of " + nameField.getValue() + ", minimalist, flat design, simple background, icon style";
+
+        ImagePromptDialog imageDialog = new ImagePromptDialog(
+                stableDiffusionService,
+                defaultPrompt,
+                this::handleGeneratedAvatar
+        );
+        imageDialog.open();
     }
 
     private void saveProfile() {
@@ -233,11 +408,19 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                 currentUser.setColor(Color.decode(colorValue));
             }
 
+            // Set generated avatar if available
+            if (generatedAvatarBytes != null) {
+                currentUser.setAvatarImage(generatedAvatarBytes);
+            }
+
             // Save user
-            userApi.persist(currentUser);
+            userApi.update(currentUser);
 
             Notification notification = Notification.show("Profile updated successfully", 3000, Notification.Position.MIDDLE);
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+            // Refresh the view to show updated data
+            initializeView();
         } catch (Exception ex) {
             Notification notification = Notification.show("Failed to update profile: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);

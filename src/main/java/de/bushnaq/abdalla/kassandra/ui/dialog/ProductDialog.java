@@ -47,8 +47,10 @@ public class ProductDialog extends Dialog {
     public static final String                 PRODUCT_NAME_FIELD    = "product-name-field";
     private final       Image                  avatarPreview;
     private             byte[]                 generatedImageBytes;
+    private final       Image                  headerIcon;
     private final       boolean                isEditMode;
     private final       TextField              nameField;
+    private final       Icon                   nameFieldIcon;
     private final       Product                product;
     private final       SaveCallback           saveCallback;
     private final       StableDiffusionService stableDiffusionService;
@@ -69,7 +71,25 @@ public class ProductDialog extends Dialog {
         setId(PRODUCT_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);
         String title = isEditMode ? "Edit Product" : "Create Product";
-        getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.CUBE));
+
+        // Create header icon (either product image or default icon)
+        if (isEditMode && product.getAvatarImage() != null && product.getAvatarImage().length > 0) {
+            headerIcon = new Image();
+            headerIcon.setWidth("24px");
+            headerIcon.setHeight("24px");
+            headerIcon.getStyle()
+                    .set("border-radius", "var(--lumo-border-radius)")
+                    .set("object-fit", "cover");
+            StreamResource resource = new StreamResource(
+                    "product-header-" + System.currentTimeMillis() + ".png",
+                    () -> new ByteArrayInputStream(product.getAvatarImage())
+            );
+            headerIcon.setSrc(resource);
+            getHeader().add(VaadinUtil.createDialogHeader(title, headerIcon));
+        } else {
+            headerIcon = null;
+            getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.CUBE));
+        }
 
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);
@@ -81,7 +101,26 @@ public class ProductDialog extends Dialog {
         nameField.setWidthFull();
         nameField.setRequired(true);
         nameField.setHelperText("Product name must be unique");
-        nameField.setPrefixComponent(new Icon(VaadinIcon.CUBE));
+
+        // Create name field prefix icon (either product image or default icon)
+        if (isEditMode && product.getAvatarImage() != null && product.getAvatarImage().length > 0) {
+            Image nameFieldImage = new Image();
+            nameFieldImage.setWidth("20px");
+            nameFieldImage.setHeight("20px");
+            nameFieldImage.getStyle()
+                    .set("border-radius", "var(--lumo-border-radius-s)")
+                    .set("object-fit", "cover");
+            StreamResource resource = new StreamResource(
+                    "product-name-" + System.currentTimeMillis() + ".png",
+                    () -> new ByteArrayInputStream(product.getAvatarImage())
+            );
+            nameFieldImage.setSrc(resource);
+            nameField.setPrefixComponent(nameFieldImage);
+            nameFieldIcon = null;
+        } else {
+            nameFieldIcon = new Icon(VaadinIcon.CUBE);
+            nameField.setPrefixComponent(nameFieldIcon);
+        }
 
         // Set to eager mode so value changes fire on every keystroke
         nameField.setValueChangeMode(com.vaadin.flow.data.value.ValueChangeMode.EAGER);
@@ -152,10 +191,29 @@ public class ProductDialog extends Dialog {
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
             // Show preview
-            StreamResource resource = new StreamResource("product-avatar.png",
+            StreamResource resource = new StreamResource("product-avatar-" + System.currentTimeMillis() + ".png",
                     () -> new ByteArrayInputStream(imageBytes));
             avatarPreview.setSrc(resource);
             avatarPreview.setVisible(true);
+
+            // Update header icon if it exists
+            if (headerIcon != null) {
+                StreamResource headerResource = new StreamResource("product-header-" + System.currentTimeMillis() + ".png",
+                        () -> new ByteArrayInputStream(imageBytes));
+                headerIcon.setSrc(headerResource);
+            }
+
+            // Update name field icon to show the new image
+            Image nameFieldImage = new Image();
+            nameFieldImage.setWidth("20px");
+            nameFieldImage.setHeight("20px");
+            nameFieldImage.getStyle()
+                    .set("border-radius", "var(--lumo-border-radius-s)")
+                    .set("object-fit", "cover");
+            StreamResource nameFieldResource = new StreamResource("product-name-" + System.currentTimeMillis() + ".png",
+                    () -> new ByteArrayInputStream(imageBytes));
+            nameFieldImage.setSrc(nameFieldResource);
+            nameField.setPrefixComponent(nameFieldImage);
 
             Notification.show("Image set successfully", 3000, Notification.Position.BOTTOM_END);
 

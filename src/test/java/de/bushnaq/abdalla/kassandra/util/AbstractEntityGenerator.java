@@ -19,6 +19,8 @@ package de.bushnaq.abdalla.kassandra.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.dao.GraphicsLightTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
@@ -49,42 +51,44 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AbstractEntityGenerator extends AbstractTestUtil {
-    public static final String                FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
-    public static final String                FIRST_OFF_DAY_START_DATE  = "2024-04-01";
-    protected           AvailabilityApi       availabilityApi;
-    protected final     TreeSet<Availability> expectedAvailabilities    = new TreeSet<>();
-    protected           List<Feature>         expectedFeatures          = new ArrayList<>();
-    protected final     TreeSet<Location>     expectedLocations         = new TreeSet<>();
-    protected           TreeSet<OffDay>       expectedOffDays           = new TreeSet<>();
-    protected           List<Product>         expectedProducts          = new ArrayList<>();
-    protected           List<Sprint>          expectedSprints           = new ArrayList<>();
-    protected           List<Task>            expectedTasks             = new ArrayList<>();
-    protected           TreeSet<User>         expectedUsers             = new TreeSet<>();
-    protected           List<Version>         expectedVersions          = new ArrayList<>();
-    protected           List<Worklog>         expectedWorklogs          = new ArrayList<>();
-    protected           FeatureApi            featureApi;
-    protected static    int                   featureIndex              = 0;
-    protected           LocationApi           locationApi;
-    protected           NameGenerator         nameGenerator             = new NameGenerator();
+    public static final String                 FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
+    public static final String                 FIRST_OFF_DAY_START_DATE  = "2024-04-01";
+    protected           AvailabilityApi        availabilityApi;
+    protected final     TreeSet<Availability>  expectedAvailabilities    = new TreeSet<>();
+    protected           List<Feature>          expectedFeatures          = new ArrayList<>();
+    protected final     TreeSet<Location>      expectedLocations         = new TreeSet<>();
+    protected           TreeSet<OffDay>        expectedOffDays           = new TreeSet<>();
+    protected           List<Product>          expectedProducts          = new ArrayList<>();
+    protected           List<Sprint>           expectedSprints           = new ArrayList<>();
+    protected           List<Task>             expectedTasks             = new ArrayList<>();
+    protected           TreeSet<User>          expectedUsers             = new TreeSet<>();
+    protected           List<Version>          expectedVersions          = new ArrayList<>();
+    protected           List<Worklog>          expectedWorklogs          = new ArrayList<>();
+    protected           FeatureApi             featureApi;
+    protected static    int                    featureIndex              = 0;
+    protected           LocationApi            locationApi;
+    protected           NameGenerator          nameGenerator             = new NameGenerator();
     @Autowired
-    protected           ObjectMapper          objectMapper;
-    protected           OffDayApi             offDayApi;
-    private             int                   offDaysIterations;
+    protected           ObjectMapper           objectMapper;
+    protected           OffDayApi              offDayApi;
+    private             int                    offDaysIterations;
     @LocalServerPort
-    private             int                   port;
-    protected           ProductApi            productApi;
-    protected static    int                   productIndex              = 0;
-    protected final     Random                random                    = new Random();
-    protected           SprintApi             sprintApi;
-    private static      int                   sprintIndex               = 0;
-    protected           TaskApi               taskApi;
+    private             int                    port;
+    protected           ProductApi             productApi;
+    protected static    int                    productIndex              = 0;
+    protected final     Random                 random                    = new Random();
+    protected           SprintApi              sprintApi;
+    private static      int                    sprintIndex               = 0;
     @Autowired
-    private             TestRestTemplate      testRestTemplate; // Use TestRestTemplate instead of RestTemplate
-    protected           UserApi               userApi;
-    protected static    int                   userIndex                 = 0;
-    protected           VersionApi            versionApi;
-    protected static    int                   versionIndex              = 0;
-    protected           WorklogApi            worklogApi;
+    protected           StableDiffusionService stableDiffusionService;
+    protected           TaskApi                taskApi;
+    @Autowired
+    private             TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
+    protected           UserApi                userApi;
+    protected static    int                    userIndex                 = 0;
+    protected           VersionApi             versionApi;
+    protected static    int                    versionIndex              = 0;
+    protected           WorklogApi             worklogApi;
 
     protected void addAvailability(User user, float availability, LocalDate start) {
         Availability a = new Availability(availability, start);
@@ -242,6 +246,21 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         product.setName(name);
         product.setCreated(ParameterOptions.getNow());
         product.setUpdated(ParameterOptions.getNow());
+
+        // Generate AI image for the product if service is available
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            try {
+                String prompt = "Icon representing " + name + ", minimalist, flat design, professional, tech product";
+                System.out.println("Generating image for product: " + name + " with prompt: " + prompt);
+                long   startTime = System.currentTimeMillis();
+                byte[] image     = stableDiffusionService.generateImage(prompt, 64);
+                product.setAvatarImage(image);
+                System.out.println("Generated image for product: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            } catch (StableDiffusionException e) {
+                System.err.println("Failed to generate image for product " + name + ": " + e.getMessage());
+                // Continue without image
+            }
+        }
 
         Product saved = productApi.persist(product);
         expectedProducts.add(saved);
@@ -451,6 +470,22 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         user.setColor(color);
         user.setCreated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
         user.setUpdated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
+
+        // Generate AI image for the user if service is available
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            try {
+                String prompt = "Professional avatar portrait of " + name + ", minimalist, flat design, simple background, icon style";
+                System.out.println("Generating avatar for user: " + name + " with prompt: " + prompt);
+                long   startTime = System.currentTimeMillis();
+                byte[] image     = stableDiffusionService.generateImage(prompt, 64);
+                user.setAvatarImage(image);
+                System.out.println("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            } catch (StableDiffusionException e) {
+                System.err.println("Failed to generate avatar for user " + name + ": " + e.getMessage());
+                // Continue without image
+            }
+        }
+
         User saved = userApi.persist(user);
         addLocation(saved, country, state, start);
         addAvailability(saved, availability, start);
@@ -469,6 +504,22 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         user.setColor(color);
         user.setCreated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
         user.setUpdated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
+
+        // Generate AI image for the user if service is available
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            try {
+                String prompt = "Professional avatar portrait of " + name + ", minimalist, flat design, simple background, icon style";
+                System.out.println("Generating avatar for user: " + name + " with prompt: " + prompt);
+                long   startTime = System.currentTimeMillis();
+                byte[] image     = stableDiffusionService.generateImage(prompt, 64);
+                user.setAvatarImage(image);
+                System.out.println("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            } catch (StableDiffusionException e) {
+                System.err.println("Failed to generate avatar for user " + name + ": " + e.getMessage());
+                // Continue without image
+            }
+        }
+
         User saved = userApi.persist(user);
         addLocation(saved, country, state, start);
         addAvailability(saved, availability, start);

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.util;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -444,6 +445,24 @@ public final class VaadinUtil {
         titleLabel.getStyle().set("margin", "0");
 
         headerLayout.add(icon, titleLabel);
+
+        // Add bottom margin to create space between the header and content
+        headerLayout.getStyle().set("margin-bottom", "var(--lumo-space-m)");
+
+        return headerLayout;
+    }
+
+    public static HorizontalLayout createDialogHeader(String title, Component iconComponent) {
+        HorizontalLayout headerLayout = new HorizontalLayout();
+        headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        headerLayout.setSpacing(true);
+
+        iconComponent.getElement().getStyle().set("margin-right", "0.5em");
+
+        H3 titleLabel = new H3(title);
+        titleLabel.getStyle().set("margin", "0");
+
+        headerLayout.add(iconComponent, titleLabel);
 
         // Add bottom margin to create space between the header and content
         headerLayout.getStyle().set("margin-bottom", "var(--lumo-space-m)");
