@@ -42,31 +42,26 @@ public class UserDAO extends AbstractTimeAwareDAO {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<AvailabilityDAO> availabilities = new ArrayList<>();
-
+    @Lob
+    @Column(name = "avatar_image")
+    private byte[] avatarImage;
     @Column(nullable = false)
     private Color color;
-
     @Column(nullable = false)
     private String email;
-
     @Column(nullable = false)
     private LocalDate firstWorkingDay;//first working day
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
-
     @Column(nullable = true)
     private LocalDate lastWorkingDay;//last working day
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<LocationDAO> locations = new ArrayList<>();
-
     @Column(nullable = false)
     private String name;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<OffDayDAO> offDays = new ArrayList<>();

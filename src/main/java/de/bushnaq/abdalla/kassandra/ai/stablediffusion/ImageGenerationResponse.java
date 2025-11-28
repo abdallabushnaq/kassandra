@@ -15,30 +15,29 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.dao;
+package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.Proxy;
+import lombok.Data;
 
-@Entity
-@Table(name = "products")
-@Getter
-@Setter
-@NoArgsConstructor
-@ToString(callSuper = true)
-@EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
-public class ProductDAO extends AbstractTimeAwareDAO {
+import java.util.List;
 
-    @Lob
-    @Column(name = "avatar_image")
-    private byte[] avatarImage;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
-    @Column(nullable = false, unique = true)
-    private String name;
+/**
+ * Response DTO from Stable Diffusion text-to-image API
+ */
+@Data
+public class ImageGenerationResponse {
 
+    /**
+     * List of generated images in base64 format
+     */
+    private List<String> images;
+    /**
+     * Information about the generation process
+     */
+    private String info;
+    /**
+     * Generation parameters used
+     */
+    private Object parameters;
 }
+

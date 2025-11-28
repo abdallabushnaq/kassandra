@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  stable-diffusion:
+    image: universonic/stable-diffusion-webui:full
+    container_name: kassandra-stable-diffusion
+    ports:
+      - "7860:8080"
+    volumes:
+      - sd-models:/app/stable-diffusion-webui/models
+      - sd-outputs:/app/stable-diffusion-webui/outputs
+    environment:
+      # CLI arguments for the WebUI
+      - COMMANDLINE_ARGS=--api --xformers --lowvram --no-half-vae --listen --port 8080 --skip-torch-cuda-test
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    restart: unless-stopped
+
+volumes:
+  sd-models:
+    name: kassandra-sd-models
+  sd-outputs:
+    name: kassandra-sd-outputs
+

@@ -15,30 +15,19 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.dao;
+package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.Proxy;
+/**
+ * Exception thrown when Stable Diffusion image generation fails.
+ */
+public class StableDiffusionException extends Exception {
 
-@Entity
-@Table(name = "products")
-@Getter
-@Setter
-@NoArgsConstructor
-@ToString(callSuper = true)
-@EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
-public class ProductDAO extends AbstractTimeAwareDAO {
+    public StableDiffusionException(String message) {
+        super(message);
+    }
 
-    @Lob
-    @Column(name = "avatar_image")
-    private byte[] avatarImage;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
-    @Column(nullable = false, unique = true)
-    private String name;
-
+    public StableDiffusionException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
+

@@ -21,11 +21,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
@@ -50,20 +52,22 @@ import java.util.Map;
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
 public class ProductListView extends AbstractMainGrid<Product> implements AfterNavigationObserver {
-    public static final String     CREATE_PRODUCT_BUTTON             = "create-product-button";
-    public static final String     PRODUCT_GLOBAL_FILTER             = "product-global-filter";
-    public static final String     PRODUCT_GRID                      = "product-grid";
-    public static final String     PRODUCT_GRID_DELETE_BUTTON_PREFIX = "product-grid-delete-button-prefix-";
-    public static final String     PRODUCT_GRID_EDIT_BUTTON_PREFIX   = "product-grid-edit-button-prefix-";
-    public static final String     PRODUCT_GRID_NAME_PREFIX          = "product-grid-name-";
-    public static final String     PRODUCT_LIST_PAGE_TITLE           = "product-list-page-title";
-    public static final String     PRODUCT_ROW_COUNTER               = "product-row-counter";
-    public static final String     ROUTE                             = "product-list";
-    private final       ProductApi productApi;
+    public static final String                 CREATE_PRODUCT_BUTTON             = "create-product-button";
+    public static final String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
+    public static final String                 PRODUCT_GRID                      = "product-grid";
+    public static final String                 PRODUCT_GRID_DELETE_BUTTON_PREFIX = "product-grid-delete-button-prefix-";
+    public static final String                 PRODUCT_GRID_EDIT_BUTTON_PREFIX   = "product-grid-edit-button-prefix-";
+    public static final String                 PRODUCT_GRID_NAME_PREFIX          = "product-grid-name-";
+    public static final String                 PRODUCT_LIST_PAGE_TITLE           = "product-list-page-title";
+    public static final String                 PRODUCT_ROW_COUNTER               = "product-row-counter";
+    public static final String                 ROUTE                             = "product-list";
+    private final       ProductApi             productApi;
+    private final       StableDiffusionService stableDiffusionService;
 
-    public ProductListView(ProductApi productApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper) {
+    public ProductListView(ProductApi productApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper, StableDiffusionService stableDiffusionService) {
         super(clock);
-        this.productApi = productApi;
+        this.productApi             = productApi;
+        this.stableDiffusionService = stableDiffusionService;
 
         add(
                 createSmartHeader(
@@ -161,6 +165,46 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
             VaadinUtil.addSimpleHeader(keyColumn, "Key", VaadinIcon.KEY);
         }
         {
+            // Add avatar image column
+            Grid.Column<Product> avatarColumn = getGrid().addColumn(new ComponentRenderer<>(product -> {
+                if (product.getAvatarImage() != null && product.getAvatarImage().length > 0) {
+                    // Product has a custom image
+                    com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
+                    avatar.setWidth("24px");
+                    avatar.setHeight("24px");
+                    avatar.getStyle()
+                            .set("border-radius", "var(--lumo-border-radius)")
+                            .set("object-fit", "cover")
+                            .set("display", "block")
+                            .set("margin", "0")
+                            .set("padding", "0");
+
+                    com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
+                            "product-" + product.getId() + "-" + System.currentTimeMillis() + ".png",
+                            () -> new java.io.ByteArrayInputStream(product.getAvatarImage())
+                    );
+                    resource.setContentType("image/png");
+                    resource.setCacheTime(0); // Disable caching
+                    avatar.setSrc(resource);
+                    avatar.setAlt(product.getName());
+                    return avatar;
+                } else {
+                    // No custom image - show default VaadinIcon
+                    Icon defaultIcon = new Icon(VaadinIcon.CUBE);
+                    defaultIcon.setSize("20px");
+                    defaultIcon.getStyle()
+                            .set("color", "var(--lumo-contrast-50pct)")
+                            .set("padding", "0")
+                            .set("margin", "0")
+                            .set("display", "block");
+                    return defaultIcon;
+                }
+            }));
+            avatarColumn.setWidth("48px");
+            avatarColumn.setFlexGrow(0);
+            avatarColumn.setHeader("");
+        }
+        {
             Grid.Column<Product> nameColumn = getGrid().addColumn(new ComponentRenderer<>(product -> {
                 Div div = new Div();
                 div.add(product.getName());
@@ -196,7 +240,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
 
     private void openProductDialog(Product product) {
         // Use the new SaveCallback interface that passes both the product and the dialog
-        ProductDialog dialog = new ProductDialog(product, (savedProduct, dialogReference) -> {
+        ProductDialog dialog = new ProductDialog(product, stableDiffusionService, (savedProduct, dialogReference) -> {
             try {
                 if (product != null) {
                     // Edit mode
@@ -227,8 +271,19 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     }
 
     private void refreshGrid() {
+        // Clear existing items
         getDataProvider().getItems().clear();
+
+        // Fetch fresh data from API
         getDataProvider().getItems().addAll(productApi.getAll());
+
+        // Force complete refresh of the grid
         getDataProvider().refreshAll();
+
+        // Force the grid to re-render
+        getGrid().getDataProvider().refreshAll();
+
+        // Push UI updates if in push mode
+        getUI().ifPresent(ui -> ui.push());
     }
 }

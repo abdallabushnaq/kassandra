@@ -38,10 +38,9 @@ import java.util.Objects;
         property = "id")
 public class Product extends AbstractTimeAware implements Comparable<Product> {
 
-    private Long id;
-
-    private String name;
-
+    private byte[]        avatarImage;
+    private Long          id;
+    private String        name;
     @JsonIgnore
     @ToString.Exclude//help intellij debugger not to go into a loop
     private List<Version> versions = new ArrayList<>();
