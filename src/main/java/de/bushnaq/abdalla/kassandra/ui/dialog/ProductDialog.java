@@ -24,6 +24,7 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.server.StreamResource;
@@ -132,9 +133,10 @@ public class ProductDialog extends Dialog {
         // AI Image generation button (only show if service is available)
         Button generateImageButton = null;
         if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            generateImageButton = new Button("Generate Image", new Icon(VaadinIcon.MAGIC));
+            generateImageButton = new Button(new Icon(VaadinIcon.MAGIC));
             generateImageButton.setId(GENERATE_IMAGE_BUTTON);
             generateImageButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+            generateImageButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
             generateImageButton.addClickListener(e -> openImagePromptDialog());
 
             // Disable button if name field is empty
@@ -144,8 +146,6 @@ public class ProductDialog extends Dialog {
                 generateImageButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
                 generateImageButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
             }
-
-            nameField.setSuffixComponent(generateImageButton);
         }
 
         // Enable/disable button when name field changes (must be after the if block)
@@ -166,7 +166,16 @@ public class ProductDialog extends Dialog {
             });
         }
 
-        dialogLayout.add(nameField);
+        // Layout for name field and button
+        HorizontalLayout nameRow = new HorizontalLayout();
+        nameRow.setWidthFull();
+        nameRow.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER); // Center vertically
+        nameRow.add(nameField);
+        if (generateImageButton != null) {
+            nameRow.add(generateImageButton);
+        }
+        nameRow.expand(nameField);
+        dialogLayout.add(nameRow);
 
         // Avatar preview (if image exists or will be generated)
         avatarPreview = new Image();
@@ -227,10 +236,12 @@ public class ProductDialog extends Dialog {
                 ? "Modern tech product icon, minimalist, flat design"
                 : "Icon representing " + nameField.getValue() + ", minimalist, flat design";
 
+        byte[] initialImage = isEditMode && product.getAvatarImage() != null && product.getAvatarImage().length > 0 ? product.getAvatarImage() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 stableDiffusionService,
                 defaultPrompt,
-                this::handleGeneratedImage
+                this::handleGeneratedImage,
+                initialImage
         );
         imageDialog.open();
     }
@@ -278,3 +289,4 @@ public class ProductDialog extends Dialog {
         void save(Product product, ProductDialog dialog);
     }
 }
+

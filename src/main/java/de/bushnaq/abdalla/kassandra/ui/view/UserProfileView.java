@@ -236,14 +236,6 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         headerLayout.add(titleLayout);
         headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
 
-        // Create form layout
-        VerticalLayout formLayout = new VerticalLayout();
-        formLayout.setPadding(true);
-        formLayout.setSpacing(true);
-        formLayout.setMaxWidth("600px");
-        formLayout.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
-        formLayout.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
-
         // User info
         nameField = new com.vaadin.flow.component.textfield.TextField("Name");
         nameField.setId(USER_NAME_FIELD);
@@ -272,6 +264,24 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             nameField.setPrefixComponent(new Icon(VaadinIcon.USER));
         }
 
+        // Add wand button to the right of the name field, aligned to the bottom
+        Button generateAvatarButton = null;
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            generateAvatarButton = new Button(new Icon(VaadinIcon.MAGIC));
+            generateAvatarButton.setId(GENERATE_AVATAR_BUTTON);
+            generateAvatarButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+            generateAvatarButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
+            generateAvatarButton.addClickListener(e -> openAvatarPromptDialogWithInitialImage());
+        }
+        HorizontalLayout nameRow = new HorizontalLayout();
+        nameRow.setWidthFull();
+        nameRow.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.END); // Align to bottom
+        nameRow.add(nameField);
+        if (generateAvatarButton != null) {
+            nameRow.add(generateAvatarButton);
+        }
+        nameRow.expand(nameField);
+
         com.vaadin.flow.component.textfield.TextField emailField = new com.vaadin.flow.component.textfield.TextField("Email");
         emailField.setId(USER_EMAIL_FIELD);
         emailField.setValue(currentUser.getEmail() != null ? currentUser.getEmail() : "");
@@ -284,8 +294,6 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         colorPicker.setId(USER_COLOR_PICKER);
         colorPicker.setWidth("100%");
         colorPicker.setLabel("User Color");
-
-        // Set predefined color presets
         colorPicker.setPresets(List.of(
                 new ColorPicker.ColorPreset("#FF0000", "Red"),
                 new ColorPicker.ColorPreset("#0000FF", "Blue"),
@@ -301,70 +309,10 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                 new ColorPicker.ColorPreset("#A9A9A9", "Dark Gray"),
                 new ColorPicker.ColorPreset("#000000", "Black")
         ));
-
-        // Set current color
         if (currentUser.getColor() != null) {
             String colorHex = String.format("#%06X", (0xFFFFFF & currentUser.getColor().getRGB()));
             colorPicker.setValue(colorHex);
         }
-
-        // Avatar section
-        VerticalLayout avatarSection = new VerticalLayout();
-        avatarSection.setPadding(false);
-        avatarSection.setSpacing(true);
-
-        // Avatar preview - use Component to support both Image and Icon
-        com.vaadin.flow.component.Component avatarPreviewComponent;
-        if (currentUser.getAvatarImage() != null && currentUser.getAvatarImage().length > 0) {
-            avatarPreview = new com.vaadin.flow.component.html.Image();
-            avatarPreview.setWidth("128px");
-            avatarPreview.setHeight("128px");
-            avatarPreview.getStyle()
-                    .set("border-radius", "50%")
-                    .set("object-fit", "cover")
-                    .set("border", "2px solid var(--lumo-contrast-20pct)")
-                    .set("background-color", "var(--lumo-contrast-5pct)");
-
-            com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
-                    "user-avatar-preview-" + System.currentTimeMillis() + ".png",
-                    () -> new java.io.ByteArrayInputStream(currentUser.getAvatarImage())
-            );
-            resource.setContentType("image/png");
-            resource.setCacheTime(0);
-            avatarPreview.setSrc(resource);
-            avatarPreviewComponent = avatarPreview;
-        } else {
-            // Show default VaadinIcon.USER
-            Icon defaultAvatarIcon = new Icon(VaadinIcon.USER);
-            defaultAvatarIcon.setSize("128px");
-            defaultAvatarIcon.getStyle()
-                    .set("color", "var(--lumo-contrast-50pct)")
-                    .set("border-radius", "50%")
-                    .set("border", "2px solid var(--lumo-contrast-20pct)")
-                    .set("background-color", "var(--lumo-contrast-5pct)")
-                    .set("padding", "var(--lumo-space-l)");
-            avatarPreview          = null;
-            avatarPreviewComponent = defaultAvatarIcon;
-        }
-
-        // Generate avatar button (only if service is available)
-        HorizontalLayout avatarButtonLayout = new HorizontalLayout();
-        avatarButtonLayout.setSpacing(true);
-
-        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            Button generateAvatarButton = new Button("Generate Avatar", new Icon(VaadinIcon.MAGIC));
-            generateAvatarButton.setId(GENERATE_AVATAR_BUTTON);
-            generateAvatarButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-            generateAvatarButton.addClickListener(e -> openAvatarPromptDialog());
-            avatarButtonLayout.add(generateAvatarButton);
-        }
-
-        avatarSection.add(
-                new com.vaadin.flow.component.html.Span("Profile Picture"),
-                avatarPreviewComponent,
-                avatarButtonLayout
-        );
-        avatarSection.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
 
         // Save button
         Button saveButton = new Button("Save Changes", new Icon(VaadinIcon.CHECK));
@@ -372,7 +320,13 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.addClickListener(e -> saveProfile());
 
-        formLayout.add(nameField, emailField, colorPicker, avatarSection, saveButton);
+        VerticalLayout formLayout = new VerticalLayout();
+        formLayout.setPadding(true);
+        formLayout.setSpacing(true);
+        formLayout.setMaxWidth("600px");
+        formLayout.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
+        formLayout.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
+        formLayout.add(nameRow, emailField, colorPicker, saveButton);
 
         add(headerLayout, formLayout);
     }
@@ -386,6 +340,21 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                 stableDiffusionService,
                 defaultPrompt,
                 this::handleGeneratedAvatar
+        ); // Do not pass initial image
+        imageDialog.open();
+    }
+
+    private void openAvatarPromptDialogWithInitialImage() {
+        String defaultPrompt = nameField.getValue().isEmpty()
+                ? "Professional portrait avatar, minimalist, flat design, simple background"
+                : "Professional portrait avatar of " + nameField.getValue() + ", minimalist, flat design, simple background, icon style";
+        byte[] initialImage = (currentUser.getAvatarImage() != null && currentUser.getAvatarImage().length > 0)
+                ? currentUser.getAvatarImage() : null;
+        ImagePromptDialog imageDialog = new ImagePromptDialog(
+                stableDiffusionService,
+                defaultPrompt,
+                this::handleGeneratedAvatar,
+                initialImage
         );
         imageDialog.open();
     }
@@ -427,4 +396,3 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         }
     }
 }
-

@@ -170,6 +170,69 @@ public class StableDiffusionService {
     }
 
     /**
+     * Generate an image from an initial image and a text prompt (img2img).
+     *
+     * @param initImage        The initial image bytes (PNG or JPG)
+     * @param prompt           The text description of the image to generate
+     * @param outputSize       The desired output size (square image)
+     * @param progressCallback Callback for progress updates (can be null)
+     * @return byte array containing the generated image (PNG format)
+     * @throws StableDiffusionException if generation fails
+     */
+    public byte[] img2img(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
+        log.info("Generating image-to-image with prompt: '{}' at size {}x{}", prompt, outputSize, outputSize);
+        try {
+            String base64Init = java.util.Base64.getEncoder().encodeToString(initImage);
+            ImageToImageRequest request = ImageToImageRequest.builder()
+                    .prompt(prompt)
+                    .negativePrompt("blurry, distorted, low quality, ugly, deformed, bad anatomy")
+                    .steps(config.getDefaultSteps())
+                    .samplerName(config.getDefaultSampler())
+                    .cfgScale(config.getCfgScale())
+                    .width(config.getGenerationSize())
+                    .height(config.getGenerationSize())
+                    .batchSize(1)
+                    .seed(-1L)
+                    .initImages(new String[]{base64Init})
+                    .build();
+
+            Thread progressThread = null;
+            if (progressCallback != null) {
+                progressThread = new Thread(() -> pollProgress(progressCallback));
+                progressThread.setDaemon(true);
+                progressThread.start();
+            }
+
+            try {
+                ImageGenerationResponse response = webClient.post()
+                        .uri("/sdapi/v1/img2img")
+                        .bodyValue(request)
+                        .retrieve()
+                        .bodyToMono(ImageGenerationResponse.class)
+                        .timeout(Duration.ofSeconds(config.getTimeoutSeconds()))
+                        .block();
+
+                if (response == null || response.getImages() == null || response.getImages().isEmpty()) {
+                    throw new StableDiffusionException("No image returned from Stable Diffusion API (img2img)");
+                }
+
+                String base64Image  = response.getImages().getFirst();
+                byte[] imageBytes   = java.util.Base64.getDecoder().decode(base64Image);
+                byte[] resizedImage = resizeImage(imageBytes, outputSize);
+                log.info("Successfully generated and resized image-to-image to {}x{}", outputSize, outputSize);
+                return resizedImage;
+            } finally {
+                if (progressThread != null) {
+                    progressThread.interrupt();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error generating image-to-image with Stable Diffusion", e);
+            throw new StableDiffusionException("Failed to generate image-to-image: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Check if the Stable Diffusion API is available.
      *
      * @return true if the API is reachable, false otherwise
@@ -267,4 +330,3 @@ public class StableDiffusionService {
         void onProgress(double progress, int step, int totalSteps);
     }
 }
-

@@ -105,9 +105,10 @@ public class UserDialog extends Dialog {
         // AI Image generation button (only show if service is available)
         Button generateImageButton = null;
         if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            generateImageButton = new Button("Generate Avatar", new Icon(VaadinIcon.MAGIC));
+            generateImageButton = new Button(new Icon(VaadinIcon.MAGIC));
             generateImageButton.setId(GENERATE_IMAGE_BUTTON);
             generateImageButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+            generateImageButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
             generateImageButton.addClickListener(e -> openImagePromptDialog());
 
             // Disable button if name field is empty
@@ -117,8 +118,6 @@ public class UserDialog extends Dialog {
                 generateImageButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
                 generateImageButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
             }
-
-            nameField.setSuffixComponent(generateImageButton);
         }
 
         // Enable/disable button when name field changes
@@ -139,9 +138,16 @@ public class UserDialog extends Dialog {
             });
         }
 
-        dialogLayout.add(nameField);
-
-        dialogLayout.add(nameField);
+        // Layout for name field and button
+        com.vaadin.flow.component.orderedlayout.HorizontalLayout nameRow = new com.vaadin.flow.component.orderedlayout.HorizontalLayout();
+        nameRow.setWidthFull();
+        nameRow.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.END);
+        nameRow.add(nameField);
+        if (generateImageButton != null) {
+            nameRow.add(generateImageButton);
+        }
+        nameRow.expand(nameField);
+        dialogLayout.add(nameRow);
 
         // Avatar preview (if image exists or will be generated)
         avatarPreview = new Image();
@@ -225,10 +231,12 @@ public class UserDialog extends Dialog {
                 ? "Professional avatar portrait, person, business style, neutral background"
                 : "Professional avatar portrait of " + nameField.getValue() + ", business style, neutral background";
 
+        byte[] initialImage = isEditMode && user.getAvatarImage() != null && user.getAvatarImage().length > 0 ? user.getAvatarImage() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 stableDiffusionService,
                 defaultPrompt,
-                this::handleGeneratedImage
+                this::handleGeneratedImage,
+                initialImage
         );
         imageDialog.open();
     }

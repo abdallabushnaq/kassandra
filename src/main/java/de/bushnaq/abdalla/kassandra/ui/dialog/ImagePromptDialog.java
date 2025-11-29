@@ -55,11 +55,13 @@ public class ImagePromptDialog extends Dialog {
     private final       AcceptCallback acceptCallback;
     private final       Button         generateButton;
     private             byte[]         generatedImage;
+    private final       byte[]         initialImage;
     private final       Div            previewContainer;
     private final       TextArea       promptField;
     @Autowired
     StableDiffusionConfig stableDiffusionConfig;
     private final StableDiffusionService stableDiffusionService;
+    private final Button                 updateButton;
 
     /**
      * Creates a dialog for generating AI images.
@@ -69,8 +71,13 @@ public class ImagePromptDialog extends Dialog {
      * @param acceptCallback         Callback that receives the generated image bytes
      */
     public ImagePromptDialog(StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback) {
+        this(stableDiffusionService, defaultPrompt, acceptCallback, null);
+    }
+
+    public ImagePromptDialog(StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback, byte[] initialImage) {
         this.stableDiffusionService = stableDiffusionService;
         this.acceptCallback         = acceptCallback;
+        this.initialImage           = initialImage;
 
         setId(IMAGE_PROMPT_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);
@@ -124,18 +131,28 @@ public class ImagePromptDialog extends Dialog {
                 .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("overflow", "hidden");
 
-        Div placeholderText = new Div();
-        placeholderText.setText("Generated image will appear here");
-        placeholderText.getStyle().set("color", "var(--lumo-contrast-50pct)");
-        previewContainer.add(placeholderText);
-
+        if (initialImage != null && initialImage.length > 0) {
+            displayGeneratedImage(initialImage);
+        } else {
+            Div placeholderText = new Div();
+            placeholderText.setText("Generated image will appear here");
+            placeholderText.getStyle().set("color", "var(--lumo-contrast-50pct)");
+            previewContainer.add(placeholderText);
+        }
         dialogLayout.add(previewContainer);
 
         // Buttons
         generateButton = new Button("Generate", new Icon(VaadinIcon.MAGIC));
         generateButton.setId(GENERATE_BUTTON);
         generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        generateButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
         generateButton.addClickListener(e -> generateImage());
+
+        updateButton = new Button("Update", new Icon(VaadinIcon.REFRESH));
+        updateButton.setId("update-image-button");
+//        updateButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
+        updateButton.setEnabled(initialImage != null && initialImage.length > 0);
+        updateButton.addClickListener(e -> updateImage());
 
         acceptButton = new Button("Accept", new Icon(VaadinIcon.CHECK));
         acceptButton.setId(ACCEPT_BUTTON);
@@ -147,7 +164,7 @@ public class ImagePromptDialog extends Dialog {
         cancelButton.setId(CANCEL_BUTTON);
         cancelButton.addClickListener(e -> close());
 
-        HorizontalLayout buttonLayout = new HorizontalLayout(generateButton, acceptButton, cancelButton);
+        HorizontalLayout buttonLayout = new HorizontalLayout(generateButton, updateButton, acceptButton, cancelButton);
         buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         buttonLayout.setWidthFull();
         buttonLayout.setPadding(true);
@@ -200,7 +217,7 @@ public class ImagePromptDialog extends Dialog {
 
         // Disable button and show loading state
         generateButton.setEnabled(false);
-        generateButton.setText("Generating...");
+        updateButton.setEnabled(false);
         acceptButton.setEnabled(false);
 
         // Clear preview and show progress bar
@@ -280,6 +297,79 @@ public class ImagePromptDialog extends Dialog {
                         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
 
                         // Push UI updates
+                        ui.push();
+                    });
+                }
+            }).start();
+        });
+    }
+
+    private void updateImage() {
+        if (initialImage == null || initialImage.length == 0) {
+            Notification.show("No image to update.", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+        String prompt = promptField.getValue().trim();
+        if (prompt.isEmpty()) {
+            Notification.show("Please enter a description", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+        generateButton.setEnabled(false);
+        updateButton.setEnabled(false);
+        acceptButton.setEnabled(false);
+        previewContainer.removeAll();
+        VerticalLayout loadingLayout = new VerticalLayout();
+        loadingLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        loadingLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        loadingLayout.setPadding(false);
+        loadingLayout.setSpacing(true);
+        Icon hourglassIcon = new Icon(VaadinIcon.HOURGLASS);
+        hourglassIcon.setSize("32px");
+        hourglassIcon.getStyle().set("color", "var(--lumo-primary-color)");
+        Div loadingText = new Div();
+        loadingText.setText("Updating image...");
+        loadingText.getStyle().set("color", "var(--lumo-contrast-60pct)").set("font-weight", "500");
+        Div progressText = new Div();
+        progressText.setText("Initializing...");
+        progressText.getStyle().set("color", "var(--lumo-contrast-50pct)").set("font-size", "var(--lumo-font-size-s)");
+        com.vaadin.flow.component.progressbar.ProgressBar progressBar = new com.vaadin.flow.component.progressbar.ProgressBar();
+        progressBar.setMin(0);
+        progressBar.setMax(1);
+        progressBar.setValue(0);
+        progressBar.setWidth("80%");
+        loadingLayout.add(hourglassIcon, loadingText, progressText, progressBar);
+        previewContainer.add(loadingLayout);
+        getUI().ifPresent(ui -> {
+            new Thread(() -> {
+                try {
+                    byte[] imageBytes = stableDiffusionService.img2img(initialImage, prompt, 256, (progress, step, totalSteps) -> {
+                        ui.access(() -> {
+                            progressBar.setValue(progress);
+                            progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
+                            ui.push();
+                        });
+                    });
+                    generatedImage = imageBytes;
+                    ui.access(() -> {
+                        displayGeneratedImage(imageBytes);
+                        generateButton.setEnabled(true);
+                        updateButton.setEnabled(true);
+                        acceptButton.setEnabled(true);
+                        Notification notification = Notification.show("Image updated successfully!", 3000, Notification.Position.BOTTOM_END);
+                        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                        ui.push();
+                    });
+                } catch (StableDiffusionException ex) {
+                    ui.access(() -> {
+                        generateButton.setEnabled(true);
+                        updateButton.setEnabled(true);
+                        previewContainer.removeAll();
+                        Div errorText = new Div();
+                        errorText.setText("Failed to update image: " + ex.getMessage());
+                        errorText.getStyle().set("color", "var(--lumo-error-text-color)");
+                        previewContainer.add(new Icon(VaadinIcon.WARNING), errorText);
+                        Notification notification = Notification.show("Update failed: " + ex.getMessage(), 5000, Notification.Position.MIDDLE);
+                        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
                         ui.push();
                     });
                 }
