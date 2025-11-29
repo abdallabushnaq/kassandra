@@ -52,21 +52,21 @@ import java.io.ByteArrayOutputStream;
 public class ImagePromptDialog extends Dialog {
 
     // Button ID constants for Selenium tests
-    public static final String ID_ACCEPT_BUTTON   = "accept-image-button";
-    public static final String ID_CANCEL_BUTTON   = "cancel-image-button";
-    public static final String ID_DOWNLOAD_BUTTON = "download-image-button";
-    public static final String ID_GENERATE_BUTTON = "generate-image-button";
-    public static final String ID_UPDATE_BUTTON   = "update-image-button";
-    public static final String ID_UPLOAD_BUTTON   = "upload-image-button";
-
-    private final Button         acceptButton;
-    private final AcceptCallback acceptCallback;
-    private final Button         cancelButton;
-    private final Button         generateButton;
-    private       byte[]         generatedImage;
-    private final byte[]         initialImage;
-    private final Div            previewContainer;
-    private final TextArea       promptField;
+    public static final String         ID_ACCEPT_BUTTON      = "accept-image-button";
+    public static final String         ID_CANCEL_BUTTON      = "cancel-image-button";
+    public static final String         ID_DOWNLOAD_BUTTON    = "download-image-button";
+    public static final String         ID_GENERATE_BUTTON    = "generate-image-button";
+    public static final String         ID_IMAGE_PROMPT_FIELD = "image-prompt-field";
+    public static final String         ID_UPDATE_BUTTON      = "update-image-button";
+    public static final String         ID_UPLOAD_BUTTON      = "upload-image-button";
+    private final       Button         acceptButton;
+    private final       AcceptCallback acceptCallback;
+    private final       Button         cancelButton;
+    private final       Button         generateButton;
+    private             byte[]         generatedImage;
+    private final       byte[]         initialImage;
+    private final       Div            previewContainer;
+    private final       TextArea       promptField;
     @Autowired
     StableDiffusionConfig stableDiffusionConfig;
     private final StableDiffusionService stableDiffusionService;
@@ -111,7 +111,7 @@ public class ImagePromptDialog extends Dialog {
 
         // Prompt text area
         promptField = new TextArea("Image Description");
-        promptField.setId("image-prompt-field");
+        promptField.setId(ID_IMAGE_PROMPT_FIELD);
         promptField.setWidthFull();
         promptField.setPlaceholder("Describe the image you want to generate...");
         promptField.setHelperText("Be specific about style, colors, and composition");
@@ -350,7 +350,8 @@ public class ImagePromptDialog extends Dialog {
                     ui.access(() -> {
                         displayGeneratedImage(imageBytes);
                         generateButton.setEnabled(true);
-                        generateButton.setText("Generate");
+                        updateButton.setEnabled(true);
+//                        generateButton.setText("Generate");
                         acceptButton.setEnabled(true);
 
                         Notification notification = Notification.show("Image generated successfully!", 3000, Notification.Position.BOTTOM_END);
@@ -362,7 +363,8 @@ public class ImagePromptDialog extends Dialog {
                 } catch (StableDiffusionException ex) {
                     ui.access(() -> {
                         generateButton.setEnabled(true);
-                        generateButton.setText("Generate");
+                        updateButton.setEnabled(true);
+//                        generateButton.setText("Generate");
 
                         previewContainer.removeAll();
                         Div errorText = new Div();

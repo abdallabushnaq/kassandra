@@ -12,7 +12,8 @@ services:
     environment:
       # CLI arguments for the WebUI
       # Using SD 3 Medium model for better prompt adherence
-      - COMMANDLINE_ARGS=--api --xformers --medvram --no-half-vae --listen --port 8080 --skip-torch-cuda-test
+      #- COMMANDLINE_ARGS=--api --xformers --medvram --no-half-vae --listen --port 8080 --skip-torch-cuda-test
+      - COMMANDLINE_ARGS=--api --xformers --no-half-vae --listen --port 8080 --skip-torch-cuda-test
       # Set default model to SD 3 Medium
       - SD_MODEL=sd3_medium_incl_clips_t5xxlfp8.safetensors
     deploy:

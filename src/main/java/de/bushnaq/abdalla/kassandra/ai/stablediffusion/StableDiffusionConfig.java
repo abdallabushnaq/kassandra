@@ -48,7 +48,7 @@ public class StableDiffusionConfig {
     /**
      * Size to generate images at (before resizing)
      */
-    private int    generationSize = 512;
+    private int    generationSize = 1024;
     /**
      * Final output size for avatars/icons
      */
@@ -56,6 +56,6 @@ public class StableDiffusionConfig {
     /**
      * Timeout in seconds for API requests
      */
-    private int    timeoutSeconds = 60;
+    private int    timeoutSeconds = 120;
 }
 

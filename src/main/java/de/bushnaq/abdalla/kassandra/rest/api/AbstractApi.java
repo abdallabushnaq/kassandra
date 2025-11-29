@@ -20,6 +20,8 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.rest.ErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,13 +34,18 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerErrorException;
 
@@ -52,18 +59,21 @@ import java.util.stream.Collectors;
  */
 //@Service
 public class AbstractApi {
-    private static final Logger logger = LoggerFactory.getLogger(AbstractApi.class);
-
+    private static final Logger                           logger = LoggerFactory.getLogger(AbstractApi.class);
     @Autowired(required = false)
-    protected OAuth2AuthorizedClientService authorizedClientService;
+    protected            OAuth2AuthorizedClientManager    authorizedClientManager;
+    @Autowired(required = false)
+    protected            OAuth2AuthorizedClientRepository authorizedClientRepository;
+    @Autowired(required = false)
+    protected            OAuth2AuthorizedClientService    authorizedClientService;
     @Value("${projecthub.api.base-url:}")
-    private   String                        configuredBaseUrl;
+    private              String                           configuredBaseUrl;
     @Autowired(required = false)
-    private   Environment                   environment;
-    protected ObjectMapper                  objectMapper;
+    private              Environment                      environment;
+    protected            ObjectMapper                     objectMapper;
     @Value("${server.port:8080}")
-    private   int                           port;
-    protected RestTemplate                  restTemplate;
+    private              int                              port;
+    protected            RestTemplate                     restTemplate;
 
     /**
      * used for uni tests to enforce in-memory db.
@@ -109,12 +119,100 @@ public class AbstractApi {
 //            logger.debug("User {} has roles: {}", authentication.getName(), roles);
 
             // Check if the authentication is OAuth2/OIDC
-            if (authentication instanceof OAuth2AuthenticationToken oauth2Token && authorizedClientService != null) {
-                OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
-                        oauth2Token.getAuthorizedClientRegistrationId(),
-                        oauth2Token.getName());
+            if (authentication instanceof OAuth2AuthenticationToken oauth2Token) {
+                OAuth2AuthorizedClient client = null;
+
+                // Try to use the OAuth2AuthorizedClientManager first (supports automatic token refresh)
+                if (authorizedClientManager != null) {
+                    try {
+                        // Check if we're in a request context
+                        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+                        if (attributes != null) {
+                            // We have a servlet request context - use the manager with the request
+                            HttpServletRequest  request  = attributes.getRequest();
+                            HttpServletResponse response = attributes.getResponse();
+
+                            // Build an authorize request with servlet request and response
+                            OAuth2AuthorizeRequest.Builder authorizeRequestBuilder = OAuth2AuthorizeRequest
+                                    .withClientRegistrationId(oauth2Token.getAuthorizedClientRegistrationId())
+                                    .principal(oauth2Token);
+
+                            // Add request and response as attributes
+                            authorizeRequestBuilder.attribute(HttpServletRequest.class.getName(), request);
+                            if (response != null) {
+                                authorizeRequestBuilder.attribute(HttpServletResponse.class.getName(), response);
+                            }
+
+                            OAuth2AuthorizeRequest authorizeRequest = authorizeRequestBuilder.build();
+
+                            // This call will automatically refresh the token if it's expired
+                            client = authorizedClientManager.authorize(authorizeRequest);
+
+                            if (client != null) {
+                                logger.debug("Token loaded via OAuth2AuthorizedClientManager (supports auto-refresh)");
+                            }
+                        } else {
+                            // No request context available - fall back to service
+                            logger.debug("No servlet request context available, falling back to OAuth2AuthorizedClientService");
+                            if (authorizedClientService != null) {
+                                client = authorizedClientService.loadAuthorizedClient(
+                                        oauth2Token.getAuthorizedClientRegistrationId(),
+                                        oauth2Token.getName());
+
+                                if (client != null) {
+                                    logger.debug("Token loaded via OAuth2AuthorizedClientService (no auto-refresh in this context)");
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Failed to use OAuth2AuthorizedClientManager: {}, falling back to service", e.getMessage());
+                        // Fallback to service
+                        if (authorizedClientService != null) {
+                            client = authorizedClientService.loadAuthorizedClient(
+                                    oauth2Token.getAuthorizedClientRegistrationId(),
+                                    oauth2Token.getName());
+                        }
+                    }
+                }
+                // Fallback to OAuth2AuthorizedClientService if manager not available (no auto-refresh)
+                else if (authorizedClientService != null) {
+                    client = authorizedClientService.loadAuthorizedClient(
+                            oauth2Token.getAuthorizedClientRegistrationId(),
+                            oauth2Token.getName());
+
+                    if (client != null) {
+                        logger.warn("Token loaded via OAuth2AuthorizedClientService (NO auto-refresh support)");
+                    }
+                }
 
                 if (client != null && client.getAccessToken() != null) {
+                    // Check if token is expired
+                    if (client.getAccessToken().getExpiresAt() != null) {
+                        java.time.Instant expiresAt          = client.getAccessToken().getExpiresAt();
+                        java.time.Instant now                = java.time.Instant.now();
+                        long              secondsUntilExpiry = java.time.Duration.between(now, expiresAt).getSeconds();
+
+                        if (secondsUntilExpiry < 0) {
+                            logger.error("Access token has EXPIRED for user {}. Expired {} seconds ago. Token will not work!",
+                                    oauth2Token.getName(), Math.abs(secondsUntilExpiry));
+                            logger.error("Token expiry time: {}, Current time: {}", expiresAt, now);
+
+                            // Check if we have a refresh token
+                            if (client.getRefreshToken() != null) {
+                                logger.error("Refresh token is available but was NOT used. Check OAuth2AuthorizedClientManager configuration!");
+                            } else {
+                                logger.error("No refresh token available. Cannot refresh the expired access token.");
+                            }
+                        } else if (secondsUntilExpiry < 60) {
+                            logger.warn("Access token for user {} will expire in {} seconds",
+                                    oauth2Token.getName(), secondsUntilExpiry);
+                        } else {
+                            logger.debug("Access token for user {} is valid for {} more seconds",
+                                    oauth2Token.getName(), secondsUntilExpiry);
+                        }
+                    }
+
                     // Use OAuth2 Bearer Token authentication
                     String tokenValue = client.getAccessToken().getTokenValue();
 
