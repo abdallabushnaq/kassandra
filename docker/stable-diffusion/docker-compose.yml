@@ -2,20 +2,21 @@ version: '3.8'
 
 services:
   stable-diffusion:
-    image: universonic/stable-diffusion-webui:full
+    image: universonic/stable-diffusion-webui:minimal
     container_name: kassandra-stable-diffusion
     ports:
-      - "7860:8080"
+      - "7861:8080"
     volumes:
-      - sd-models:/app/stable-diffusion-webui/models
-      - sd-outputs:/app/stable-diffusion-webui/outputs
+      - ./models/Stable-diffusion:/app/stable-diffusion-webui/models/Stable-diffusion
+      #- sd-outputs:/app/stable-diffusion-webui/outputs
     environment:
       # CLI arguments for the WebUI
       # Using SD 3 Medium model for better prompt adherence
       #- COMMANDLINE_ARGS=--api --xformers --medvram --no-half-vae --listen --port 8080 --skip-torch-cuda-test
-      - COMMANDLINE_ARGS=--api --xformers --no-half-vae --listen --port 8080 --skip-torch-cuda-test
+      #- COMMANDLINE_ARGS=--api --xformers --no-half --no-half-vae --listen --port 8080 --skip-torch-cuda-test
+      - COMMANDLINE_ARGS=--api --xformers
       # Set default model to SD 3 Medium
-      - SD_MODEL=sd3_medium_incl_clips_t5xxlfp8.safetensors
+      - SD_MODEL=realisticVisionV60B1_v51HyperVAE.safetensors
     deploy:
       resources:
         reservations:
@@ -24,10 +25,3 @@ services:
               count: 1
               capabilities: [ gpu ]
     restart: unless-stopped
-
-volumes:
-  sd-models:
-    name: kassandra-sd-models
-  sd-outputs:
-    name: kassandra-sd-outputs
-

@@ -48,7 +48,7 @@ public class StableDiffusionConfig {
     /**
      * Size to generate images at (before resizing)
      */
-    private int    generationSize = 1024;
+    private int    generationSize = 512;
     /**
      * Final output size for avatars/icons
      */

@@ -208,7 +208,7 @@ public class AbstractApi {
                             logger.warn("Access token for user {} will expire in {} seconds",
                                     oauth2Token.getName(), secondsUntilExpiry);
                         } else {
-                            logger.debug("Access token for user {} is valid for {} more seconds",
+                            logger.trace("Access token for user {} is valid for {} more seconds",
                                     oauth2Token.getName(), secondsUntilExpiry);
                         }
                     }
