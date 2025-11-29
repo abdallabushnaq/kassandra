@@ -18,10 +18,10 @@
 package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIf;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -37,36 +37,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * Test class for StableDiffusionService.
  * Tests will only run if the Stable Diffusion API is available.
  */
+@SpringBootTest
 @Slf4j
 public class StableDiffusionServiceTest {
 
-    private        StableDiffusionConfig  config;
-    private static boolean                isApiAvailable;
-    private        Path                   outputDir;
-    private        StableDiffusionService stableDiffusionService;
-
-    @BeforeAll
-    public static void checkApiAvailability() {
-        // Check once if API is available
-        StableDiffusionConfig tempConfig = new StableDiffusionConfig();
-        tempConfig.setApiUrl("http://localhost:7861");
-        StableDiffusionService tempService = new StableDiffusionService(tempConfig);
-        isApiAvailable = tempService.isAvailable();
-
-        if (!isApiAvailable) {
-            log.warn("Stable Diffusion API is not available. Tests will be skipped.");
-            log.warn("To run these tests, start Stable Diffusion WebUI with --api flag.");
-        } else {
-            log.info("Stable Diffusion API is available. Tests will run.");
-        }
-    }
-
-    /**
-     * Check if the Stable Diffusion API is available for testing.
-     */
-    static boolean isStableDiffusionAvailable() {
-        return isApiAvailable;
-    }
+    @Autowired
+    private StableDiffusionConfig  config;
+    private Path                   outputDir;
+    private StableDiffusionService stableDiffusionService;
 
     /**
      * Helper method to save test images for visual verification.
@@ -79,17 +57,6 @@ public class StableDiffusionServiceTest {
 
     @BeforeEach
     public void setUp() throws IOException {
-        // Create config
-        config = new StableDiffusionConfig();
-        config.setApiUrl("http://localhost:7861");
-        config.setDefaultSteps(20);
-        config.setDefaultSampler("DPM++ 2M Karras");
-        config.setCfgScale(7.0);
-        config.setGenerationSize(512);
-        config.setOutputSize(64);
-        config.setTimeoutSeconds(60);
-
-        // Create service
         stableDiffusionService = new StableDiffusionService(config);
 
         // Create output directory for test images
@@ -99,7 +66,6 @@ public class StableDiffusionServiceTest {
     }
 
     @Test
-    @EnabledIf("isStableDiffusionAvailable")
     public void testGenerateImage_Avatar() throws Exception {
         // Generate avatar-style image
         String prompt     = "portrait of a friendly robot character, cartoon style, simple background";
@@ -121,7 +87,6 @@ public class StableDiffusionServiceTest {
     }
 
     @Test
-    @EnabledIf("isStableDiffusionAvailable")
     public void testGenerateImage_CustomSize() throws Exception {
         // Generate image with custom output size
         String prompt     = "a majestic lion, wildlife photography";
@@ -144,7 +109,6 @@ public class StableDiffusionServiceTest {
     }
 
     @Test
-    @EnabledIf("isStableDiffusionAvailable")
     public void testGenerateImage_MultipleImages() throws Exception {
         // Generate multiple images to test consistency
         String[] prompts = {
@@ -171,7 +135,6 @@ public class StableDiffusionServiceTest {
     }
 
     @Test
-    @EnabledIf("isStableDiffusionAvailable")
     public void testGenerateImage_SimplePrompt() throws Exception {
         // Generate image
         String prompt     = "a beautiful sunset over mountains, professional photography";
@@ -194,7 +157,6 @@ public class StableDiffusionServiceTest {
     }
 
     @Test
-    @EnabledIf("isStableDiffusionAvailable")
     public void testIsAvailable() {
         assertTrue(stableDiffusionService.isAvailable(), "Stable Diffusion API should be available");
     }
