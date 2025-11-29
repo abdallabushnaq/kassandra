@@ -50,37 +50,26 @@ import java.util.Map;
 @PageTitle("Version List Page")
 @PermitAll // When security is enabled, allow all authenticated users
 public class VersionListView extends AbstractMainGrid<Version> implements AfterNavigationObserver {
-    public static final String     CREATE_VERSION_BUTTON             = "create-version-button";
-    public static final String     ROUTE                             = "version-list";
-    public static final String     VERSION_GLOBAL_FILTER             = "version-global-filter";
-    public static final String     VERSION_GRID                      = "version-grid";
-    public static final String     VERSION_GRID_DELETE_BUTTON_PREFIX = "version-grid-delete-button-prefix-";
-    public static final String     VERSION_GRID_EDIT_BUTTON_PREFIX   = "version-grid-edit-button-prefix-";
-    public static final String     VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
-    public static final String     VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
-    public static final String     VERSION_ROW_COUNTER               = "version-row-counter";
-    private final       ProductApi productApi;
-    private             Long       productId;
-    private final       VersionApi versionApi;
+    public static final String                              CREATE_VERSION_BUTTON             = "create-version-button";
+    public static final String                              ROUTE                             = "version-list";
+    public static final String                              VERSION_GLOBAL_FILTER             = "version-global-filter";
+    public static final String                              VERSION_GRID                      = "version-grid";
+    public static final String                              VERSION_GRID_DELETE_BUTTON_PREFIX = "version-grid-delete-button-prefix-";
+    public static final String                              VERSION_GRID_EDIT_BUTTON_PREFIX   = "version-grid-edit-button-prefix-";
+    public static final String                              VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
+    public static final String                              VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
+    public static final String                              VERSION_ROW_COUNTER               = "version-row-counter";
+    private             com.vaadin.flow.component.Component headerComponent; // Track the header
+    private final       ProductApi                          productApi;
+    private             Long                                productId;
+    private final       VersionApi                          versionApi;
 
     public VersionListView(VersionApi versionApi, ProductApi productApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper) {
         super(clock);
         this.versionApi = versionApi;
         this.productApi = productApi;
-
-        add(
-                createSmartHeader(
-                        "Versions",
-                        VERSION_LIST_PAGE_TITLE,
-                        VaadinIcon.TAG,
-                        CREATE_VERSION_BUTTON,
-                        () -> openVersionDialog(null),
-                        VERSION_ROW_COUNTER,
-                        VERSION_GLOBAL_FILTER,
-                        aiFilterService, mapper, "Version"
-                ),
-                getGridPanelWrapper()
-        );
+        // Header will be created in afterNavigation, not here
+        add(getGridPanelWrapper());
     }
 
     @Override
@@ -91,7 +80,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         if (queryParameters.getParameters().containsKey("product")) {
             this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
         }
-        //- update breadcrumbs
+        //- update breadcrumbs and header
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
@@ -101,6 +90,51 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         Map<String, String> params = new HashMap<>();
                         params.put("product", String.valueOf(productId));
                         mainLayout.getBreadcrumbs().addItem("Versions", VersionListView.class, params);
+                        // --- Create header with avatar and name ---
+                        com.vaadin.flow.component.Component newHeader;
+                        final String                        HEADER_ID = "version-list-header";
+                        if (product.getAvatarImage() != null && product.getAvatarImage().length > 0) {
+                            com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
+                            avatar.setWidth("32px");
+                            avatar.setHeight("32px");
+                            avatar.getStyle()
+                                    .set("border-radius", "var(--lumo-border-radius)")
+                                    .set("object-fit", "cover")
+                                    .set("display", "inline-block")
+                                    .set("margin-right", "12px");
+                            com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
+                                    "product-" + product.getId() + "-" + System.currentTimeMillis() + ".png",
+                                    () -> new java.io.ByteArrayInputStream(product.getAvatarImage())
+                            );
+                            resource.setContentType("image/png");
+                            resource.setCacheTime(0);
+                            avatar.setSrc(resource);
+                            avatar.setAlt(product.getName());
+                            com.vaadin.flow.component.html.Span nameSpan = new com.vaadin.flow.component.html.Span(product.getName());
+                            nameSpan.getStyle().set("font-size", "1.5em").set("vertical-align", "middle");
+                            com.vaadin.flow.component.html.Div headerDiv = new com.vaadin.flow.component.html.Div(avatar, nameSpan);
+                            headerDiv.setId(HEADER_ID);
+                            headerDiv.getStyle().set("display", "flex").set("align-items", "center").set("gap", "8px");
+                            newHeader = headerDiv;
+                        } else {
+                            com.vaadin.flow.component.icon.Icon defaultIcon = new com.vaadin.flow.component.icon.Icon(VaadinIcon.CUBE);
+                            defaultIcon.setSize("32px");
+                            defaultIcon.getStyle().set("margin-right", "12px");
+                            com.vaadin.flow.component.html.Span nameSpan = new com.vaadin.flow.component.html.Span(product.getName());
+                            nameSpan.getStyle().set("font-size", "1.5em").set("vertical-align", "middle");
+                            com.vaadin.flow.component.html.Div headerDiv = new com.vaadin.flow.component.html.Div(defaultIcon, nameSpan);
+                            headerDiv.setId(HEADER_ID);
+                            headerDiv.getStyle().set("display", "flex").set("align-items", "center").set("gap", "8px");
+                            newHeader = headerDiv;
+                        }
+                        // Remove previous header by id if present
+                        getChildren()
+                                .filter(c -> HEADER_ID.equals(c.getId().orElse(null)))
+                                .findFirst()
+                                .ifPresent(this::remove);
+                        // Insert header before the grid panel (which is always present)
+                        addComponentAtIndex(0, newHeader);
+                        headerComponent = newHeader;
                     }
                 });
 
