@@ -31,9 +31,11 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.server.StreamResource;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
 
@@ -44,18 +46,20 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
  */
 public class ImagePromptDialog extends Dialog {
 
-    public static final String                 ACCEPT_BUTTON       = "accept-image-button";
-    public static final String                 CANCEL_BUTTON       = "cancel-image-button";
-    public static final String                 GENERATE_BUTTON     = "generate-image-button";
-    public static final String                 IMAGE_PROMPT_DIALOG = "image-prompt-dialog";
-    public static final String                 PROMPT_FIELD        = "image-prompt-field";
-    private final       Button                 acceptButton;
-    private final       AcceptCallback         acceptCallback;
-    private final       Button                 generateButton;
-    private             byte[]                 generatedImage;
-    private final       Div                    previewContainer;
-    private final       TextArea               promptField;
-    private final       StableDiffusionService stableDiffusionService;
+    public static final String         ACCEPT_BUTTON       = "accept-image-button";
+    public static final String         CANCEL_BUTTON       = "cancel-image-button";
+    public static final String         GENERATE_BUTTON     = "generate-image-button";
+    public static final String         IMAGE_PROMPT_DIALOG = "image-prompt-dialog";
+    public static final String         PROMPT_FIELD        = "image-prompt-field";
+    private final       Button         acceptButton;
+    private final       AcceptCallback acceptCallback;
+    private final       Button         generateButton;
+    private             byte[]         generatedImage;
+    private final       Div            previewContainer;
+    private final       TextArea       promptField;
+    @Autowired
+    StableDiffusionConfig stableDiffusionConfig;
+    private final StableDiffusionService stableDiffusionService;
 
     /**
      * Creates a dialog for generating AI images.
@@ -86,7 +90,7 @@ public class ImagePromptDialog extends Dialog {
                     .set("border-radius", "var(--lumo-border-radius)")
                     .set("margin-bottom", "var(--lumo-space-m)");
             warningDiv.add(new Icon(VaadinIcon.WARNING));
-            warningDiv.add(" Stable Diffusion API is not available. Please ensure it's running at http://localhost:7860");
+            warningDiv.add(" Stable Diffusion API is not available. Please ensure it's running at " + stableDiffusionConfig.getApiUrl());
             dialogLayout.add(warningDiv);
         }
 

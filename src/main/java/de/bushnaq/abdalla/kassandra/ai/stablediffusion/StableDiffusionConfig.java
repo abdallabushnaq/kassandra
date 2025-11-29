@@ -32,7 +32,7 @@ public class StableDiffusionConfig {
     /**
      * Base URL of the Stable Diffusion WebUI API
      */
-    private String apiUrl         = "http://localhost:7860";
+    private String apiUrl         = "http://localhost:7861";
     /**
      * CFG Scale (Classifier Free Guidance)
      */

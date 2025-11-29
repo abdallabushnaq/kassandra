@@ -49,7 +49,7 @@ public class StableDiffusionServiceTest {
     public static void checkApiAvailability() {
         // Check once if API is available
         StableDiffusionConfig tempConfig = new StableDiffusionConfig();
-        tempConfig.setApiUrl("http://localhost:7860");
+        tempConfig.setApiUrl("http://localhost:7861");
         StableDiffusionService tempService = new StableDiffusionService(tempConfig);
         isApiAvailable = tempService.isAvailable();
 
@@ -81,7 +81,7 @@ public class StableDiffusionServiceTest {
     public void setUp() throws IOException {
         // Create config
         config = new StableDiffusionConfig();
-        config.setApiUrl("http://localhost:7860");
+        config.setApiUrl("http://localhost:7861");
         config.setDefaultSteps(20);
         config.setDefaultSampler("DPM++ 2M Karras");
         config.setCfgScale(7.0);
