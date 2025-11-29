@@ -14,7 +14,7 @@ services:
       # Using SD 3 Medium model for better prompt adherence
       #- COMMANDLINE_ARGS=--api --xformers --medvram --no-half-vae --listen --port 8080 --skip-torch-cuda-test
       #- COMMANDLINE_ARGS=--api --xformers --no-half --no-half-vae --listen --port 8080 --skip-torch-cuda-test
-      - COMMANDLINE_ARGS=--api --xformers --ckpt realisticVisionV60B1_v51HyperVAE.safetensors
+      - COMMANDLINE_ARGS=--api --xformers
       # Set default model to SD 3 Medium
       - SD_MODEL=realisticVisionV60B1_v51HyperVAE.safetensors
     deploy:

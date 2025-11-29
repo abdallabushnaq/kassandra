@@ -121,7 +121,7 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
                     avatar.setWidth("24px");
                     avatar.setHeight("24px");
                     avatar.getStyle()
-                            .set("border-radius", "50%") // Make it circular for avatars
+                            .set("border-radius", "4px") // Slightly rounded corners for avatars
                             .set("object-fit", "cover")
                             .set("display", "block")
                             .set("margin", "0")

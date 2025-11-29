@@ -56,7 +56,8 @@ public class StableDiffusionService {
                 .exchangeStrategies(strategies)
                 .build();
 
-        if (!getCurrentModel().equals(config.getModelName())) {
+        String currentModel = getCurrentModel();
+        if (currentModel != null && !currentModel.startsWith(config.getModelName())) {
             selectModel(config.getModelName());
         }
         getOptions();

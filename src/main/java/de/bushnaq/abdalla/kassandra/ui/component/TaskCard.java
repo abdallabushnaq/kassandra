@@ -106,13 +106,7 @@ public class TaskCard extends Div {
         title.getStyle().set("white-space", "nowrap");
         title.getStyle().set("flex", "1");
 
-        Span assignedUser = new Span(getAssignedUserName());
-        assignedUser.addClassName("task-card-user");
-        assignedUser.getStyle().set("font-size", "var(--lumo-font-size-xs)");
-        assignedUser.getStyle().set("color", "var(--lumo-secondary-text-color)");
-        assignedUser.getStyle().set("white-space", "nowrap");
-
-        topRow.add(title, assignedUser);
+        topRow.add(title, getAssignedUserComponent());
 
         // Bottom row: Task key (left) and remaining effort (right)
         HorizontalLayout bottomRow = new HorizontalLayout();
@@ -167,12 +161,43 @@ public class TaskCard extends Div {
         return "TASK-???";
     }
 
-    private String getAssignedUserName() {
+    private com.vaadin.flow.component.Component getAssignedUserComponent() {
         if (task.getResourceId() != null && userMap.containsKey(task.getResourceId())) {
             User user = userMap.get(task.getResourceId());
-            return "👤 " + user.getName();
+            if (user.getAvatarImage() != null && user.getAvatarImage().length > 0) {
+                com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
+                avatar.setWidth("24px");
+                avatar.setHeight("24px");
+                avatar.getStyle()
+                        .set("border-radius", "4px")
+                        .set("object-fit", "cover")
+                        .set("display", "inline-block")
+                        .set("vertical-align", "middle");
+                com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
+                        "task-user-avatar-" + user.getId() + ".png",
+                        () -> new java.io.ByteArrayInputStream(user.getAvatarImage())
+                );
+                resource.setContentType("image/png");
+                resource.setCacheTime(0);
+                avatar.setSrc(resource);
+                avatar.setAlt(user.getName());
+                avatar.getElement().setProperty("title", user.getName());
+                return avatar;
+            } else {
+                Span name = new Span("\uD83D\uDC64 " + user.getName());
+                name.addClassName("task-card-user");
+                name.getStyle().set("font-size", "var(--lumo-font-size-xs)");
+                name.getStyle().set("color", "var(--lumo-secondary-text-color)");
+                name.getStyle().set("white-space", "nowrap");
+                return name;
+            }
         }
-        return "👤 Unassigned";
+        Span unassigned = new Span("\uD83D\uDC64 Unassigned");
+        unassigned.addClassName("task-card-user");
+        unassigned.getStyle().set("font-size", "var(--lumo-font-size-xs)");
+        unassigned.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        unassigned.getStyle().set("white-space", "nowrap");
+        return unassigned;
     }
 
     public Task getTask() {

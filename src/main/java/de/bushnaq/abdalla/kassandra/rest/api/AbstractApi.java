@@ -150,11 +150,11 @@ public class AbstractApi {
                             client = authorizedClientManager.authorize(authorizeRequest);
 
                             if (client != null) {
-                                logger.debug("Token loaded via OAuth2AuthorizedClientManager (supports auto-refresh)");
+                                logger.trace("Token loaded via OAuth2AuthorizedClientManager (supports auto-refresh)");
                             }
                         } else {
                             // No request context available - fall back to service
-                            logger.debug("No servlet request context available, falling back to OAuth2AuthorizedClientService");
+                            logger.trace("No servlet request context available, falling back to OAuth2AuthorizedClientService");
                             if (authorizedClientService != null) {
                                 client = authorizedClientService.loadAuthorizedClient(
                                         oauth2Token.getAuthorizedClientRegistrationId(),

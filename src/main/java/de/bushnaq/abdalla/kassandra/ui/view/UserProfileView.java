@@ -174,7 +174,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                 nameFieldAvatarImage.setWidth("20px");
                 nameFieldAvatarImage.setHeight("20px");
                 nameFieldAvatarImage.getStyle()
-                        .set("border-radius", "50%")
+                        .set("border-radius", "4px")
                         .set("object-fit", "cover");
                 nameField.setPrefixComponent(nameFieldAvatarImage);
             }
@@ -207,7 +207,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             headerAvatarImage.setWidth("32px");
             headerAvatarImage.setHeight("32px");
             headerAvatarImage.getStyle()
-                    .set("border-radius", "50%")
+                    .set("border-radius", "4px")
                     .set("object-fit", "cover");
             com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
                     "user-profile-" + System.currentTimeMillis() + ".png",
@@ -249,7 +249,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             nameFieldAvatarImage.setWidth("20px");
             nameFieldAvatarImage.setHeight("20px");
             nameFieldAvatarImage.getStyle()
-                    .set("border-radius", "50%")
+                    .set("border-radius", "4px")
                     .set("object-fit", "cover");
             com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
                     "user-name-field-" + System.currentTimeMillis() + ".png",

@@ -77,9 +77,24 @@ public class UserDialog extends Dialog {
         this.saveCallback           = saveCallback;
         isEditMode                  = user != null;
 
-        // Set the dialog title with an icon
+        // Set the dialog title with an icon (avatar image if available)
         String title = isEditMode ? "Edit User" : "Create User";
-        getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.USER));
+        if (isEditMode && user.getAvatarImage() != null && user.getAvatarImage().length > 0) {
+            Image headerAvatar = new Image();
+            headerAvatar.setWidth("24px");
+            headerAvatar.setHeight("24px");
+            headerAvatar.getStyle()
+                    .set("border-radius", "4px")
+                    .set("object-fit", "cover");
+            StreamResource resource = new StreamResource(
+                    "user-header-" + System.currentTimeMillis() + ".png",
+                    () -> new ByteArrayInputStream(user.getAvatarImage())
+            );
+            headerAvatar.setSrc(resource);
+            getHeader().add(VaadinUtil.createDialogHeader(title, headerAvatar));
+        } else {
+            getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.USER));
+        }
 
         setId(USER_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);
@@ -93,7 +108,22 @@ public class UserDialog extends Dialog {
         nameField.setId(USER_NAME_FIELD);
         nameField.setWidthFull();
         nameField.setRequired(true);
-        nameField.setPrefixComponent(new Icon(VaadinIcon.USER));
+        if (isEditMode && user.getAvatarImage() != null && user.getAvatarImage().length > 0) {
+            Image nameFieldAvatar = new Image();
+            nameFieldAvatar.setWidth("20px");
+            nameFieldAvatar.setHeight("20px");
+            nameFieldAvatar.getStyle()
+                    .set("border-radius", "4px")
+                    .set("object-fit", "cover");
+            StreamResource resource = new StreamResource(
+                    "user-name-" + System.currentTimeMillis() + ".png",
+                    () -> new ByteArrayInputStream(user.getAvatarImage())
+            );
+            nameFieldAvatar.setSrc(resource);
+            nameField.setPrefixComponent(nameFieldAvatar);
+        } else {
+            nameField.setPrefixComponent(new Icon(VaadinIcon.USER));
+        }
 
         // Set to eager mode so value changes fire on every keystroke
         nameField.setValueChangeMode(ValueChangeMode.EAGER);

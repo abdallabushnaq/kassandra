@@ -276,7 +276,7 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
             avatarImage.setWidth("24px");
             avatarImage.setHeight("24px");
             avatarImage.getStyle()
-                    .set("border-radius", "50%")
+                    .set("border-radius", "4px")
                     .set("object-fit", "cover");
 
             final byte[] avatarImageBytes = user.getAvatarImage();
