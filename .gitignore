@@ -2,9 +2,17 @@
 .classpath
 .project
 .idea
-/target
-/tts
+/docker/stable-diffusion/models
+/docker/chatterbox/voices
+/docker/index-tts/voices
+/docker/index-tts/checkpoints
+/references
 /node_modules
+/src/main/bundles
+/target
+/test-reference-results
+/tts
+
 ai-test-results
 *log.*.gz
 package.json
@@ -27,3 +35,7 @@ webpack.generated.js
 test-results
 test-recordings
 src/main/frontend/generated
+tsconfig.json
+types.d.ts
+vite.config.ts
+vite.generated.ts
