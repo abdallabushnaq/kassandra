@@ -55,6 +55,11 @@ public class StableDiffusionService {
                 .baseUrl(config.getApiUrl())
                 .exchangeStrategies(strategies)
                 .build();
+
+        if (!getCurrentModel().equals(config.getModelName())) {
+            selectModel(config.getModelName());
+        }
+        getOptions();
     }
 
     /**
@@ -147,6 +152,39 @@ public class StableDiffusionService {
         } catch (Exception e) {
             log.error("Error generating image with Stable Diffusion", e);
             throw new StableDiffusionException("Failed to generate image: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Get the currently loaded Stable Diffusion model checkpoint name.
+     *
+     * @return The name of the currently loaded model, or null if unavailable
+     */
+    public String getCurrentModel() {
+        StableDiffusionOptions options = getOptions();
+        return options != null ? options.getSd_model_checkpoint() : null;
+    }
+
+    /**
+     * Get the full Stable Diffusion options/configuration from the API.
+     *
+     * @return StableDiffusionOptions object, or null if unavailable
+     */
+    public StableDiffusionOptions getOptions() {
+        try {
+            StableDiffusionOptions options = webClient.get()
+                    .uri("/sdapi/v1/options")
+                    .retrieve()
+                    .bodyToMono(StableDiffusionOptions.class)
+                    .timeout(Duration.ofSeconds(2))
+                    .block();
+            if (options != null) {
+                log.info("Stable Diffusion options: {}", options);
+            }
+            return options;
+        } catch (Exception e) {
+            log.debug("Failed to get Stable Diffusion options: {}", e.getMessage());
+            return null;
         }
     }
 
@@ -313,6 +351,30 @@ public class StableDiffusionService {
         ImageIO.write(resizedImage, "PNG", outputStream);
 
         return outputStream.toByteArray();
+    }
+
+    /**
+     * Selects and loads a new Stable Diffusion model by name.
+     *
+     * @param modelName The filename of the model to load (e.g., "realisticVisionV60B1_v51HyperVAE.safetensors")
+     * @return true if the model was set successfully, false otherwise
+     */
+    public boolean selectModel(String modelName) {
+        try {
+            var requestBody = java.util.Map.of("sd_model_checkpoint", modelName);
+            webClient.post()
+                    .uri("/sdapi/v1/options")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
+            log.info("Requested model switch to: {}", modelName);
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to select model '{}': {}", modelName, e.getMessage());
+            return false;
+        }
     }
 
     /**

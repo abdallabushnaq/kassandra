@@ -49,6 +49,7 @@ public class StableDiffusionConfig {
      * Size to generate images at (before resizing)
      */
     private int    generationSize = 512;
+    private String modelName = "realisticVisionV60B1_v51HyperVAE.safetensors";
     /**
      * Final output size for avatars/icons
      */
