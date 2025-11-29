@@ -51,6 +51,14 @@ import java.io.ByteArrayOutputStream;
  */
 public class ImagePromptDialog extends Dialog {
 
+    // Button ID constants for Selenium tests
+    public static final String ID_ACCEPT_BUTTON   = "accept-image-button";
+    public static final String ID_CANCEL_BUTTON   = "cancel-image-button";
+    public static final String ID_DOWNLOAD_BUTTON = "download-image-button";
+    public static final String ID_GENERATE_BUTTON = "generate-image-button";
+    public static final String ID_UPDATE_BUTTON   = "update-image-button";
+    public static final String ID_UPLOAD_BUTTON   = "upload-image-button";
+
     private final Button         acceptButton;
     private final AcceptCallback acceptCallback;
     private final Button         cancelButton;
@@ -145,6 +153,7 @@ public class ImagePromptDialog extends Dialog {
         // Upload button
         MemoryBuffer uploadBuffer = new MemoryBuffer();
         Upload       upload       = new Upload(uploadBuffer);
+        upload.setId(ID_UPLOAD_BUTTON);
         upload.setAcceptedFileTypes(".png");
         upload.setMaxFiles(1);
         upload.setDropAllowed(true);
@@ -153,24 +162,24 @@ public class ImagePromptDialog extends Dialog {
 
         // Buttons (declare as local variables, and use them in listeners)
         generateButton = new Button("Generate", new Icon(VaadinIcon.MAGIC));
-        generateButton.setId("generate-image-button");
+        generateButton.setId(ID_GENERATE_BUTTON);
         generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         generateButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
         generateButton.addClickListener(e -> generateImage());
 
         updateButton = new Button("Update", new Icon(VaadinIcon.REFRESH));
-        updateButton.setId("update-image-button");
+        updateButton.setId(ID_UPDATE_BUTTON);
         updateButton.setEnabled(initialImage != null && initialImage.length > 0);
         updateButton.addClickListener(e -> updateImage());
 
         acceptButton = new Button("Accept", new Icon(VaadinIcon.CHECK));
-        acceptButton.setId("accept-image-button");
+        acceptButton.setId(ID_ACCEPT_BUTTON);
         acceptButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         acceptButton.setEnabled(false);
         acceptButton.addClickListener(e -> acceptImage());
 
         cancelButton = new Button("Cancel", new Icon(VaadinIcon.CLOSE));
-        cancelButton.setId("cancel-image-button");
+        cancelButton.setId(ID_CANCEL_BUTTON);
         cancelButton.addClickListener(e -> close());
 
         // Use local variables in upload succeeded listener
@@ -203,7 +212,7 @@ public class ImagePromptDialog extends Dialog {
         // Download button
         Anchor downloadAnchor = new Anchor();
         Button downloadButton = new Button(new Icon(VaadinIcon.DOWNLOAD));
-        downloadButton.setId("download-image-button");
+        downloadButton.setId(ID_DOWNLOAD_BUTTON);
         downloadButton.getElement().setAttribute("title", "Download PNG");
         downloadAnchor.add(downloadButton);
         downloadAnchor.getElement().setAttribute("download", true);
