@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.dialog;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.Icon;
@@ -30,6 +31,8 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.server.StreamResource;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
@@ -37,27 +40,25 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-
-import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
+import java.io.ByteArrayOutputStream;
 
 /**
  * A reusable dialog for generating AI images using prompts.
  */
 public class ImagePromptDialog extends Dialog {
 
-    public static final String         ACCEPT_BUTTON       = "accept-image-button";
-    public static final String         CANCEL_BUTTON       = "cancel-image-button";
-    public static final String         GENERATE_BUTTON     = "generate-image-button";
-    public static final String         IMAGE_PROMPT_DIALOG = "image-prompt-dialog";
-    public static final String         PROMPT_FIELD        = "image-prompt-field";
-    private final       Button         acceptButton;
-    private final       AcceptCallback acceptCallback;
-    private final       Button         generateButton;
-    private             byte[]         generatedImage;
-    private final       byte[]         initialImage;
-    private final       Div            previewContainer;
-    private final       TextArea       promptField;
+    private final Button         acceptButton;
+    private final AcceptCallback acceptCallback;
+    private final Button         cancelButton;
+    private final Button         generateButton;
+    private       byte[]         generatedImage;
+    private final byte[]         initialImage;
+    private final Div            previewContainer;
+    private final TextArea       promptField;
     @Autowired
     StableDiffusionConfig stableDiffusionConfig;
     private final StableDiffusionService stableDiffusionService;
@@ -79,8 +80,7 @@ public class ImagePromptDialog extends Dialog {
         this.acceptCallback         = acceptCallback;
         this.initialImage           = initialImage;
 
-        setId(IMAGE_PROMPT_DIALOG);
-        setWidth(DIALOG_DEFAULT_WIDTH);
+        setId("image-prompt-dialog");
         getHeader().add(VaadinUtil.createDialogHeader("Generate AI Image", VaadinIcon.MAGIC));
 
         VerticalLayout dialogLayout = new VerticalLayout();
@@ -103,7 +103,7 @@ public class ImagePromptDialog extends Dialog {
 
         // Prompt text area
         promptField = new TextArea("Image Description");
-        promptField.setId(PROMPT_FIELD);
+        promptField.setId("image-prompt-field");
         promptField.setWidthFull();
         promptField.setPlaceholder("Describe the image you want to generate...");
         promptField.setHelperText("Be specific about style, colors, and composition");
@@ -141,39 +141,107 @@ public class ImagePromptDialog extends Dialog {
         }
         dialogLayout.add(previewContainer);
 
-        // Buttons
+        // --- Preview and upload/download controls ---
+        // Upload button
+        MemoryBuffer uploadBuffer = new MemoryBuffer();
+        Upload       upload       = new Upload(uploadBuffer);
+        upload.setAcceptedFileTypes(".png");
+        upload.setMaxFiles(1);
+        upload.setDropAllowed(true);
+        upload.setAutoUpload(true);
+        upload.getElement().setAttribute("title", "Upload PNG");
+
+        // Buttons (declare as local variables, and use them in listeners)
         generateButton = new Button("Generate", new Icon(VaadinIcon.MAGIC));
-        generateButton.setId(GENERATE_BUTTON);
+        generateButton.setId("generate-image-button");
         generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         generateButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
         generateButton.addClickListener(e -> generateImage());
 
         updateButton = new Button("Update", new Icon(VaadinIcon.REFRESH));
         updateButton.setId("update-image-button");
-//        updateButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
         updateButton.setEnabled(initialImage != null && initialImage.length > 0);
         updateButton.addClickListener(e -> updateImage());
 
         acceptButton = new Button("Accept", new Icon(VaadinIcon.CHECK));
-        acceptButton.setId(ACCEPT_BUTTON);
+        acceptButton.setId("accept-image-button");
         acceptButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         acceptButton.setEnabled(false);
         acceptButton.addClickListener(e -> acceptImage());
 
-        Button cancelButton = new Button("Cancel", new Icon(VaadinIcon.CLOSE));
-        cancelButton.setId(CANCEL_BUTTON);
+        cancelButton = new Button("Cancel", new Icon(VaadinIcon.CLOSE));
+        cancelButton.setId("cancel-image-button");
         cancelButton.addClickListener(e -> close());
 
+        // Use local variables in upload succeeded listener
+        upload.addSucceededListener(event -> {
+            try {
+                BufferedImage inputImage = ImageIO.read(uploadBuffer.getInputStream());
+                if (inputImage == null) {
+                    Notification.show("Invalid PNG file.", 3000, Notification.Position.MIDDLE);
+                    return;
+                }
+                BufferedImage resized = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D    g2d     = resized.createGraphics();
+                g2d.drawImage(inputImage, 0, 0, 256, 256, null);
+                g2d.dispose();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(resized, "png", baos);
+                baos.flush();
+                byte[] imageBytes = baos.toByteArray();
+                baos.close();
+                generatedImage = imageBytes;
+                displayGeneratedImage(imageBytes);
+                acceptButton.setEnabled(true);
+                updateButton.setEnabled(true);
+                Notification.show("Image uploaded and resized.", 2000, Notification.Position.BOTTOM_END);
+            } catch (Exception ex) {
+                Notification.show("Failed to process image: " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
+            }
+        });
+
+        // Download button
+        Anchor downloadAnchor = new Anchor();
+        Button downloadButton = new Button(new Icon(VaadinIcon.DOWNLOAD));
+        downloadButton.setId("download-image-button");
+        downloadButton.getElement().setAttribute("title", "Download PNG");
+        downloadAnchor.add(downloadButton);
+        downloadAnchor.getElement().setAttribute("download", true);
+        downloadButton.addClickListener(e -> {
+            byte[] imageToDownload = generatedImage != null ? generatedImage : initialImage;
+            if (imageToDownload != null && imageToDownload.length > 0) {
+                StreamResource resource = new StreamResource("ai-image.png", () -> new ByteArrayInputStream(imageToDownload));
+                resource.setContentType("image/png");
+                resource.setCacheTime(0);
+                downloadAnchor.setHref(resource);
+            } else {
+                Notification.show("No image to download.", 2000, Notification.Position.MIDDLE);
+            }
+        });
+
+        VerticalLayout uploadDownloadCol = new VerticalLayout(upload, downloadAnchor);
+        uploadDownloadCol.setPadding(false);
+        uploadDownloadCol.setSpacing(true);
+        uploadDownloadCol.setAlignItems(FlexComponent.Alignment.STRETCH);
+        uploadDownloadCol.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+
+        HorizontalLayout previewRow = new HorizontalLayout(previewContainer, uploadDownloadCol);
+        previewRow.setAlignItems(FlexComponent.Alignment.CENTER);
+        previewRow.setSpacing(true);
+        previewRow.setWidthFull();
+        dialogLayout.add(previewRow);
+
+        // Buttons (no upload/download here)
         HorizontalLayout buttonLayout = new HorizontalLayout(generateButton, updateButton, acceptButton, cancelButton);
         buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         buttonLayout.setWidthFull();
         buttonLayout.setPadding(true);
 
         dialogLayout.add(buttonLayout);
-
         add(dialogLayout);
     }
 
+    // Update methods to use these refs
     private void acceptImage() {
         if (generatedImage != null) {
             acceptCallback.accept(generatedImage);
