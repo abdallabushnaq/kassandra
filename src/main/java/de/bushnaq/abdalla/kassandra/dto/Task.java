@@ -395,6 +395,54 @@ public class Task implements Comparable<Task> {
     }
 
     /**
+     * Creates a searchable text string from this Task for filtering and search operations.
+     * Combines all relevant text fields including name, notes, task status, and task mode
+     * into a single string that can be used for text-based searching.
+     *
+     * @return a string containing all searchable text from this task, trimmed of excess whitespace
+     */
+    @JsonIgnore
+    public String getSearchableText() {
+        StringBuilder searchText = new StringBuilder();
+
+        // Add task ID
+        if (id != null) {
+            searchText.append(id).append(" ");
+        }
+
+        // Add task name
+        if (name != null) {
+            searchText.append(name).append(" ");
+        }
+
+        // Add notes
+        if (notes != null) {
+            searchText.append(notes).append(" ");
+        }
+
+        // Add task status
+        if (taskStatus != null) {
+            searchText.append(taskStatus.name()).append(" ");
+        }
+
+        // Add task mode
+        if (taskMode != null) {
+            searchText.append(taskMode.name()).append(" ");
+        }
+
+        // Add task type identifiers
+        if (isMilestone()) {
+            searchText.append("milestone ");
+        } else if (isStory()) {
+            searchText.append("story ");
+        } else if (isTask()) {
+            searchText.append("task ");
+        }
+
+        return searchText.toString().trim();
+    }
+
+    /**
      * Initializes the task. This method is currently empty but can be overridden or
      * extended for initialization logic.
      */

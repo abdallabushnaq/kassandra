@@ -52,15 +52,21 @@ public class ScrumBoard extends VerticalLayout {
 
     private final VerticalLayout     contentLayout;
     private final Map<Long, Boolean> expandedStories = new HashMap<>(); // Track expanded state per story ID
+    private       String             filterText      = "";
     private final Sprint             sprint;
     private final List<StoryCard>    storyCards      = new ArrayList<>();
     private final TaskApi            taskApi;
     private final Map<Long, User>    userMap;
 
     public ScrumBoard(Sprint sprint, TaskApi taskApi, Map<Long, User> userMap) {
-        this.sprint  = sprint;
-        this.taskApi = taskApi;
-        this.userMap = userMap;
+        this(sprint, taskApi, userMap, "");
+    }
+
+    public ScrumBoard(Sprint sprint, TaskApi taskApi, Map<Long, User> userMap, String filterText) {
+        this.sprint     = sprint;
+        this.taskApi    = taskApi;
+        this.userMap    = userMap;
+        this.filterText = filterText != null ? filterText.toLowerCase() : "";
 
         setPadding(false);
         setSpacing(true);
@@ -161,6 +167,17 @@ public class ScrumBoard extends VerticalLayout {
         );
     }
 
+    /**
+     * Check if a task matches the current filter text
+     */
+    private boolean matchesFilter(Task task) {
+        if (filterText == null || filterText.isEmpty()) {
+            return true;
+        }
+        String searchableText = task.getSearchableText();
+        return searchableText != null && searchableText.toLowerCase().contains(filterText);
+    }
+
     public void refresh() {
         // Save current expanded states before clearing
         storyCards.forEach(card ->
@@ -185,7 +202,18 @@ public class ScrumBoard extends VerticalLayout {
                 List<Task> childTasks = tasks.stream()
                         .filter(t -> t.getParentTaskId() != null && t.getParentTaskId().equals(task.getId()))
                         .collect(Collectors.toList());
-                storiesWithTasks.put(task, childTasks);
+
+                // If filter is active, filter child tasks
+                if (filterText != null && !filterText.isEmpty()) {
+                    childTasks = childTasks.stream()
+                            .filter(t -> matchesFilter(t))
+                            .collect(Collectors.toList());
+                }
+
+                // Only add story if it has child tasks after filtering OR if the story itself matches the filter
+                if (!childTasks.isEmpty() || (filterText != null && !filterText.isEmpty() && matchesFilter(task))) {
+                    storiesWithTasks.put(task, childTasks);
+                }
             }
         }
 
