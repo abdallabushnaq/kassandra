@@ -250,7 +250,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         // Generate AI image for the product if service is available
         if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
             try {
-                String prompt = "Icon representing " + name + ", minimalist, flat design, professional, tech product";
+                String prompt = "Icon representing " + name + ", minimalist, 3D object on a white background, optimized for 32px x 32px size";
                 System.out.println("Generating image for product: " + name + " with prompt: " + prompt);
                 long   startTime = System.currentTimeMillis();
                 byte[] image     = stableDiffusionService.generateImage(prompt, 64);
