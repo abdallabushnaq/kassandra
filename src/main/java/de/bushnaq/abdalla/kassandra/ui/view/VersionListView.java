@@ -93,7 +93,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         // --- Create header with avatar and name ---
                         com.vaadin.flow.component.Component newHeader;
                         final String                        HEADER_ID = "version-list-header";
-                        if (product.getAvatarImage() != null && product.getAvatarImage().length > 0) {
+                        if (product.getAvatarPrompt() != null && !product.getAvatarPrompt().isEmpty()) {
                             com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
                             avatar.setWidth("32px");
                             avatar.setHeight("32px");
@@ -102,13 +102,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                                     .set("object-fit", "cover")
                                     .set("display", "inline-block")
                                     .set("margin-right", "12px");
-                            com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
-                                    "product-" + product.getId() + "-" + System.currentTimeMillis() + ".png",
-                                    () -> new java.io.ByteArrayInputStream(product.getAvatarImage())
-                            );
-                            resource.setContentType("image/png");
-                            resource.setCacheTime(0);
-                            avatar.setSrc(resource);
+                            // Use REST API endpoint for avatar - enables browser caching
+                            avatar.setSrc("/frontend/avatar-proxy/product/" + product.getId());
                             avatar.setAlt(product.getName());
                             com.vaadin.flow.component.html.Span nameSpan = new com.vaadin.flow.component.html.Span(product.getName());
                             nameSpan.getStyle().set("font-size", "1.5em").set("vertical-align", "middle");

@@ -96,7 +96,33 @@ public class StableDiffusionService {
      * @throws StableDiffusionException if generation fails
      */
     public byte[] generateImage(String prompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
-        log.info("Generating image with prompt: '{}' at size {}x{}", prompt, outputSize, outputSize);
+        GeneratedImageResult result = generateImageWithOriginal(prompt, outputSize, progressCallback);
+        return result.getResizedImage();
+    }
+
+    /**
+     * Generate an image from a text prompt with both original and resized versions.
+     *
+     * @param prompt The text description of the image to generate
+     * @return GeneratedImageResult containing original, resized images, and the prompt
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult generateImageWithOriginal(String prompt) throws StableDiffusionException {
+        return generateImageWithOriginal(prompt, config.getOutputSize(), null);
+    }
+
+    /**
+     * Generate an image from a text prompt with both original and resized versions.
+     *
+     * @param prompt           The text description of the image to generate
+     * @param outputSize       The desired output size for the resized image (square image)
+     * @param progressCallback Callback for progress updates (can be null)
+     * @return GeneratedImageResult containing original, resized images, and the prompt
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult generateImageWithOriginal(String prompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
+        log.info("Generating image with original at size {}x{} and resized to {}x{}",
+                config.getGenerationSize(), config.getGenerationSize(), outputSize, outputSize);
 
         try {
             // Build request
@@ -134,15 +160,17 @@ public class StableDiffusionService {
                     throw new StableDiffusionException("No image returned from Stable Diffusion API");
                 }
 
-                // Decode base64 image
-                String base64Image = response.getImages().getFirst();
-                byte[] imageBytes  = Base64.getDecoder().decode(base64Image);
+                // Decode base64 image (original size)
+                String base64Image   = response.getImages().getFirst();
+                byte[] originalImage = Base64.getDecoder().decode(base64Image);
 
                 // Resize image to desired output size
-                byte[] resizedImage = resizeImage(imageBytes, outputSize);
+                byte[] resizedImage = resizeImage(originalImage, outputSize);
 
-                log.info("Successfully generated and resized image to {}x{}", outputSize, outputSize);
-                return resizedImage;
+                log.info("Successfully generated original ({}x{}) and resized ({}x{}) images",
+                        config.getGenerationSize(), config.getGenerationSize(), outputSize, outputSize);
+
+                return new GeneratedImageResult(originalImage, prompt, resizedImage);
             } finally {
                 // Stop progress polling
                 if (progressThread != null) {
@@ -219,6 +247,21 @@ public class StableDiffusionService {
      * @throws StableDiffusionException if generation fails
      */
     public byte[] img2img(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
+        GeneratedImageResult result = img2imgWithOriginal(initImage, prompt, outputSize, progressCallback);
+        return result.getResizedImage();
+    }
+
+    /**
+     * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
+     *
+     * @param initImage        The initial image bytes (PNG or JPG)
+     * @param prompt           The text description of the image to generate
+     * @param outputSize       The desired output size (square image)
+     * @param progressCallback Callback for progress updates (can be null)
+     * @return GeneratedImageResult containing original, resized images, and the prompt
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
         log.info("Generating image-to-image with prompt: '{}' at size {}x{}", prompt, outputSize, outputSize);
         try {
             String base64Init = java.util.Base64.getEncoder().encodeToString(initImage);
@@ -255,11 +298,11 @@ public class StableDiffusionService {
                     throw new StableDiffusionException("No image returned from Stable Diffusion API (img2img)");
                 }
 
-                String base64Image  = response.getImages().getFirst();
-                byte[] imageBytes   = java.util.Base64.getDecoder().decode(base64Image);
-                byte[] resizedImage = resizeImage(imageBytes, outputSize);
+                String base64Image   = response.getImages().getFirst();
+                byte[] originalImage = java.util.Base64.getDecoder().decode(base64Image);
+                byte[] resizedImage  = resizeImage(originalImage, outputSize);
                 log.info("Successfully generated and resized image-to-image to {}x{}", outputSize, outputSize);
-                return resizedImage;
+                return new GeneratedImageResult(originalImage, prompt, resizedImage);
             } finally {
                 if (progressThread != null) {
                     progressThread.interrupt();

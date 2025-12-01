@@ -51,7 +51,6 @@ import java.util.stream.Collectors;
 public class User extends AbstractTimeAware implements Comparable<User> {
     @JsonManagedReference
     private List<Availability> availabilities = new ArrayList<>();
-    private byte[]             avatarImage;
     @JsonIgnore
     private ProjectCalendar    calendar;
     private Color              color;

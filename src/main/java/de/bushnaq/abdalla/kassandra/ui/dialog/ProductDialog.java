@@ -29,8 +29,12 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.server.StreamResource;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayInputStream;
 
@@ -47,13 +51,16 @@ public class ProductDialog extends Dialog {
     public static final String                 PRODUCT_DIALOG        = "product-dialog";
     public static final String                 PRODUCT_NAME_FIELD    = "product-name-field";
     private final       Image                  avatarPreview;
+    private final       AvatarUpdateRequest    avatarUpdateRequest;
     private             byte[]                 generatedImageBytes;
+    private             byte[]                 generatedImageBytesOriginal;
+    private             String                 generatedImagePrompt;
     private final       Image                  headerIcon;
     private final       boolean                isEditMode;
     private final       TextField              nameField;
     private final       Icon                   nameFieldIcon;
     private final       Product                product;
-    private final       SaveCallback           saveCallback;
+    private final       ProductApi             productApi;
     private final       StableDiffusionService stableDiffusionService;
 
     /**
@@ -61,36 +68,31 @@ public class ProductDialog extends Dialog {
      *
      * @param product                The product to edit, or null for creating a new product
      * @param stableDiffusionService The AI image generation service (optional, can be null)
-     * @param saveCallback           Callback that receives the product with updated values and a reference to this dialog
+     * @param productApi             The product API for saving product data
      */
-    public ProductDialog(Product product, StableDiffusionService stableDiffusionService, SaveCallback saveCallback) {
+    public ProductDialog(Product product, StableDiffusionService stableDiffusionService, ProductApi productApi) {
         this.product                = product;
-        this.saveCallback           = saveCallback;
+        this.productApi             = productApi;
         this.stableDiffusionService = stableDiffusionService;
         isEditMode                  = product != null;
+
+        // Only fetch avatar if editing an existing product
+        this.avatarUpdateRequest = productApi.getAvatarFull(product.getId());
 
         setId(PRODUCT_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);
         String title = isEditMode ? "Edit Product" : "Create Product";
 
-        // Create header icon (either product image or default icon)
-        if (isEditMode && product.getAvatarImage() != null && product.getAvatarImage().length > 0) {
-            headerIcon = new Image();
-            headerIcon.setWidth("24px");
-            headerIcon.setHeight("24px");
-            headerIcon.getStyle()
-                    .set("border-radius", "var(--lumo-border-radius)")
-                    .set("object-fit", "cover");
-            StreamResource resource = new StreamResource(
-                    "product-header-" + System.currentTimeMillis() + ".png",
-                    () -> new ByteArrayInputStream(product.getAvatarImage())
-            );
-            headerIcon.setSrc(resource);
-            getHeader().add(VaadinUtil.createDialogHeader(title, headerIcon));
-        } else {
-            headerIcon = null;
-            getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.CUBE));
-        }
+        // Create header icon using avatar proxy endpoint
+        Image headerAvatar = new Image();
+        headerAvatar.setWidth("24px");
+        headerAvatar.setHeight("24px");
+        headerAvatar.getStyle()
+                .set("border-radius", "4px")
+                .set("object-fit", "cover");
+        headerAvatar.setSrc("/frontend/avatar-proxy/product/" + product.getId());
+        getHeader().add(VaadinUtil.createDialogHeader(title, headerAvatar));
+        headerIcon = headerAvatar;
 
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);
@@ -103,25 +105,16 @@ public class ProductDialog extends Dialog {
         nameField.setRequired(true);
         nameField.setHelperText("Product name must be unique");
 
-        // Create name field prefix icon (either product image or default icon)
-        if (isEditMode && product.getAvatarImage() != null && product.getAvatarImage().length > 0) {
-            Image nameFieldImage = new Image();
-            nameFieldImage.setWidth("20px");
-            nameFieldImage.setHeight("20px");
-            nameFieldImage.getStyle()
-                    .set("border-radius", "var(--lumo-border-radius-s)")
-                    .set("object-fit", "cover");
-            StreamResource resource = new StreamResource(
-                    "product-name-" + System.currentTimeMillis() + ".png",
-                    () -> new ByteArrayInputStream(product.getAvatarImage())
-            );
-            nameFieldImage.setSrc(resource);
-            nameField.setPrefixComponent(nameFieldImage);
-            nameFieldIcon = null;
-        } else {
-            nameFieldIcon = new Icon(VaadinIcon.CUBE);
-            nameField.setPrefixComponent(nameFieldIcon);
-        }
+        // Create name field prefix icon using avatar proxy endpoint
+        Image nameFieldImage = new Image();
+        nameFieldImage.setWidth("20px");
+        nameFieldImage.setHeight("20px");
+        nameFieldImage.getStyle()
+                .set("border-radius", "4px")
+                .set("object-fit", "cover");
+        nameFieldImage.setSrc("/frontend/avatar-proxy/product/" + product.getId());
+        nameField.setPrefixComponent(nameFieldImage);
+        nameFieldIcon = null;
 
         // Set to eager mode so value changes fire on every keystroke
         nameField.setValueChangeMode(com.vaadin.flow.data.value.ValueChangeMode.EAGER);
@@ -194,35 +187,17 @@ public class ProductDialog extends Dialog {
         add(dialogLayout);
     }
 
-    private void handleGeneratedImage(byte[] imageBytes) {
-        this.generatedImageBytes = imageBytes;
+    private void handleGeneratedImage(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result) {
+        this.generatedImageBytes         = result.getResizedImage();
+        this.generatedImageBytesOriginal = result.getOriginalImage();
+        this.generatedImagePrompt        = result.getPrompt();
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
-            // Show preview
-            StreamResource resource = new StreamResource("product-avatar-" + System.currentTimeMillis() + ".png",
-                    () -> new ByteArrayInputStream(imageBytes));
+            // Show preview using resized image
+            StreamResource resource = new StreamResource("product-avatar-" + System.currentTimeMillis() + ".png", () -> new ByteArrayInputStream(result.getResizedImage()));
             avatarPreview.setSrc(resource);
             avatarPreview.setVisible(true);
-
-            // Update header icon if it exists
-            if (headerIcon != null) {
-                StreamResource headerResource = new StreamResource("product-header-" + System.currentTimeMillis() + ".png",
-                        () -> new ByteArrayInputStream(imageBytes));
-                headerIcon.setSrc(headerResource);
-            }
-
-            // Update name field icon to show the new image
-            Image nameFieldImage = new Image();
-            nameFieldImage.setWidth("20px");
-            nameFieldImage.setHeight("20px");
-            nameFieldImage.getStyle()
-                    .set("border-radius", "var(--lumo-border-radius-s)")
-                    .set("object-fit", "cover");
-            StreamResource nameFieldResource = new StreamResource("product-name-" + System.currentTimeMillis() + ".png",
-                    () -> new ByteArrayInputStream(imageBytes));
-            nameFieldImage.setSrc(nameFieldResource);
-            nameField.setPrefixComponent(nameFieldImage);
 
             Notification.show("Image set successfully", 3000, Notification.Position.BOTTOM_END);
 
@@ -236,7 +211,7 @@ public class ProductDialog extends Dialog {
                 ? "Modern tech product icon, minimalist, flat design"
                 : "Icon representing " + nameField.getValue() + ", minimalist, flat design";
 
-        byte[] initialImage = isEditMode && product.getAvatarImage() != null && product.getAvatarImage().length > 0 ? product.getAvatarImage() : null;
+        byte[] initialImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 stableDiffusionService,
                 defaultPrompt,
@@ -261,14 +236,46 @@ public class ProductDialog extends Dialog {
             productToSave.setName(nameField.getValue().trim());
         }
 
-        // Set generated image if available
-        if (generatedImageBytes != null) {
-            productToSave.setAvatarImage(generatedImageBytes);
+        // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
+        byte[] avatarImage         = generatedImageBytes;
+        byte[] avatarImageOriginal = generatedImageBytesOriginal;
+        String avatarPrompt        = generatedImagePrompt;
+
+        try {
+            if (isEditMode) {
+                // Edit mode
+                productApi.update(productToSave);
+
+                // Update avatar separately if provided
+                if (avatarImage != null && avatarImageOriginal != null) {
+                    productApi.updateAvatarFull(productToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
+                }
+
+                Notification.show("Product updated", 3000, Notification.Position.BOTTOM_START);
+            } else {
+                // Create mode
+                Product createdProduct = productApi.persist(productToSave);
+
+                // Update avatar separately if provided
+                if (avatarImage != null && avatarImageOriginal != null && createdProduct != null) {
+                    productApi.updateAvatarFull(createdProduct.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
+                }
+
+                Notification.show("Product created", 3000, Notification.Position.BOTTOM_START);
+            }
+            close();
+        } catch (Exception e) {
+            if (e instanceof ResponseStatusException && ((ResponseStatusException) e).getStatusCode().equals(HttpStatus.CONFLICT)) {
+                setNameFieldError(((ResponseStatusException) e).getReason());
+                // Keep the dialog open so the user can correct the name
+            } else {
+                // For other errors, show generic message and keep dialog open
+                Notification notification = new Notification("An error occurred: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
+                notification.addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_ERROR);
+                notification.open();
+                // Keep the dialog open so the user can correct the issue
+            }
         }
-
-        // Call the save callback with the product and a reference to this dialog
-        saveCallback.save(productToSave, this);
-
     }
 
     /**
@@ -279,14 +286,6 @@ public class ProductDialog extends Dialog {
     public void setNameFieldError(String errorMessage) {
         nameField.setInvalid(errorMessage != null);
         nameField.setErrorMessage(errorMessage);
-    }
-
-    /**
-     * Functional interface for the save callback that receives both the product and a reference to this dialog
-     */
-    @FunctionalInterface
-    public interface SaveCallback {
-        void save(Product product, ProductDialog dialog);
     }
 }
 

@@ -38,7 +38,11 @@ import java.util.Objects;
         property = "id")
 public class Product extends AbstractTimeAware implements Comparable<Product> {
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private byte[]        avatarImage;
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private byte[]        avatarImageOriginal;
+    private String        avatarPrompt;
     private Long          id;
     private String        name;
     @JsonIgnore

@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -31,6 +32,7 @@ import de.bushnaq.abdalla.util.date.DateUtil;
 import jakarta.annotation.PostConstruct;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -247,14 +249,16 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         product.setCreated(ParameterOptions.getNow());
         product.setUpdated(ParameterOptions.getNow());
 
+        Product saved = productApi.persist(product);
+
         // Generate AI image for the product if service is available
         if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
             try {
                 String prompt = "Icon representing " + name + ", minimalist, 3D object on a white background, optimized for 32px x 32px size";
                 System.out.println("Generating image for product: " + name + " with prompt: " + prompt);
-                long   startTime = System.currentTimeMillis();
-                byte[] image     = stableDiffusionService.generateImage(prompt, 64);
-                product.setAvatarImage(image);
+                long                 startTime = System.currentTimeMillis();
+                GeneratedImageResult image     = stableDiffusionService.generateImageWithOriginal(prompt);
+                productApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
                 System.out.println("Generated image for product: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
             } catch (StableDiffusionException e) {
                 System.err.println("Failed to generate image for product " + name + ": " + e.getMessage());
@@ -262,7 +266,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             }
         }
 
-        Product saved = productApi.persist(product);
         expectedProducts.add(saved);
         productIndex++;
         return saved;
@@ -471,24 +474,25 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         user.setCreated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
         user.setUpdated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
 
+        User saved = userApi.persist(user);
+        addLocation(saved, country, state, start);
+        addAvailability(saved, availability, start);
+
         // Generate AI image for the user if service is available
         if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
             try {
-                String prompt = "Professional avatar portrait of " + name + ", minimalist, flat design, simple background, icon style";
-                System.out.println("Generating avatar for user: " + name + " with prompt: " + prompt);
-                long   startTime = System.currentTimeMillis();
-                byte[] image     = stableDiffusionService.generateImage(prompt, 64);
-                user.setAvatarImage(image);
+//                String prompt = "Professional avatar portrait of " + name + ", minimalist, flat design, simple background, icon style";
+//                System.out.println("Generating avatar for user: " + name + " with prompt: " + prompt);
+                long startTime = System.currentTimeMillis();
+//                GeneratedImageResult image     = stableDiffusionService.generateImageWithOriginal(prompt);
+                GeneratedImageResult image = generateUserAvatar(name);
+                userApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
                 System.out.println("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
             } catch (StableDiffusionException e) {
                 System.err.println("Failed to generate avatar for user " + name + ": " + e.getMessage());
                 // Continue without image
             }
         }
-
-        User saved = userApi.persist(user);
-        addLocation(saved, country, state, start);
-        addAvailability(saved, availability, start);
 
         userIndex++;
         expectedUsers.add(saved);
@@ -505,24 +509,22 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         user.setCreated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
         user.setUpdated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
 
+        User saved = userApi.persist(user);
+        addLocation(saved, country, state, start);
+        addAvailability(saved, availability, start);
+
         // Generate AI image for the user if service is available
         if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
             try {
-                String prompt = "Professional avatar portrait of " + name + ", minimalist, flat design, simple background, icon style";
-                System.out.println("Generating avatar for user: " + name + " with prompt: " + prompt);
-                long   startTime = System.currentTimeMillis();
-                byte[] image     = stableDiffusionService.generateImage(prompt, 64);
-                user.setAvatarImage(image);
+                long                 startTime = System.currentTimeMillis();
+                GeneratedImageResult image     = generateUserAvatar(name);
+                userApi.updateAvatarFull(user.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
                 System.out.println("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
             } catch (StableDiffusionException e) {
                 System.err.println("Failed to generate avatar for user " + name + ": " + e.getMessage());
                 // Continue without image
             }
         }
-
-        User saved = userApi.persist(user);
-        addLocation(saved, country, state, start);
-        addAvailability(saved, availability, start);
 
 
         userIndex++;
@@ -583,6 +585,12 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 addOffDays(saved, employmentDate, random.nextInt(5), year, OffDayType.TRIP, 1, 5);
             }
         }
+    }
+
+    private @NotNull GeneratedImageResult generateUserAvatar(String name) throws StableDiffusionException {
+        String prompt = "Professional avatar portrait of " + name + ", minimalist, flat design, simple background, icon style";
+        System.out.println("Generating avatar for user: " + name + " with prompt: " + prompt);
+        return stableDiffusionService.generateImageWithOriginal(prompt);
     }
 
     protected Color generateUserColor(int userIndex) {

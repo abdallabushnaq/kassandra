@@ -20,7 +20,6 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -115,8 +114,9 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
         {
             // Add avatar image column
             Grid.Column<User> avatarColumn = getGrid().addColumn(new ComponentRenderer<>(user -> {
-                if (user.getAvatarImage() != null && user.getAvatarImage().length > 0) {
-                    // User has a custom image
+//                if (user.getAvatarPrompt() != null && !user.getAvatarPrompt().isEmpty())
+                {
+                    // User has a custom image - use URL-based loading
                     com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
                     avatar.setWidth("24px");
                     avatar.setHeight("24px");
@@ -127,26 +127,22 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
                             .set("margin", "0")
                             .set("padding", "0");
 
-                    com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
-                            "user-" + user.getId() + "-" + System.currentTimeMillis() + ".png",
-                            () -> new java.io.ByteArrayInputStream(user.getAvatarImage())
-                    );
-                    resource.setContentType("image/png");
-                    resource.setCacheTime(0); // Disable caching
-                    avatar.setSrc(resource);
+                    // Use REST API endpoint for avatar - enables browser caching
+                    avatar.setSrc("/frontend/avatar-proxy/user/" + user.getId());
                     avatar.setAlt(user.getName());
                     return avatar;
-                } else {
-                    // No custom image - show default VaadinIcon
-                    Icon defaultIcon = new Icon(VaadinIcon.USER);
-                    defaultIcon.setSize("20px");
-                    defaultIcon.getStyle()
-                            .set("color", "var(--lumo-contrast-50pct)")
-                            .set("padding", "0")
-                            .set("margin", "0")
-                            .set("display", "block");
-                    return defaultIcon;
                 }
+//                else {
+//                    // No custom image - show default VaadinIcon
+//                    Icon defaultIcon = new Icon(VaadinIcon.USER);
+//                    defaultIcon.setSize("20px");
+//                    defaultIcon.getStyle()
+//                            .set("color", "var(--lumo-contrast-50pct)")
+//                            .set("padding", "0")
+//                            .set("margin", "0")
+//                            .set("display", "block");
+//                    return defaultIcon;
+//                }
             }));
             avatarColumn.setWidth("48px");
             avatarColumn.setFlexGrow(0);
@@ -227,17 +223,12 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
     }
 
     private void openUserDialog(User user) {
-        UserDialog dialog = new UserDialog(user, stableDiffusionService, savedUser -> {
-            if (user != null) {
-                // Edit mode
-                userApi.update(savedUser);
-                Notification.show("User updated", 3000, Notification.Position.BOTTOM_START);
-            } else {
-                // Create mode
-                userApi.persist(savedUser);
-                Notification.show("User created", 3000, Notification.Position.BOTTOM_START);
+        UserDialog dialog = new UserDialog(user, stableDiffusionService, userApi);
+        dialog.addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                // Dialog was closed, refresh the grid
+                refreshGrid();
             }
-            refreshGrid();
         });
         dialog.open();
     }

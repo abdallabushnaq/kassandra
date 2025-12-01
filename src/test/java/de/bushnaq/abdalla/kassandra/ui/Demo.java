@@ -62,10 +62,6 @@ import java.util.List;
 )
 @AutoConfigureMockMvc
 @Transactional
-//@ExtendWith(SpringExtension.class)
-//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = "server.port=8080")
-//@AutoConfigureMockMvc
-//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class Demo extends AbstractKeycloakUiTestUtil {
     private static final Logger                   logger = LoggerFactory.getLogger(Demo.class);

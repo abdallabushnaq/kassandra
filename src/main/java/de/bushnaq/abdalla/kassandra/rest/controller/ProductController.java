@@ -18,9 +18,12 @@
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.dao.ProductDAO;
+import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
+import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
 import de.bushnaq.abdalla.kassandra.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -54,6 +57,37 @@ public class ProductController {
         return productRepository.findAll();
     }
 
+    @GetMapping("/{id}/avatar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable Long id) {
+        Optional<ProductDAO> productOpt = productRepository.findById(id);
+        if (productOpt.isPresent()) {
+            ProductDAO product = productOpt.get();
+            if (product.getAvatarImage() == null || product.getAvatarImage().length == 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+            return ResponseEntity.ok(new AvatarWrapper(product.getAvatarImage()));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @GetMapping("/{id}/avatar/full")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable Long id) {
+        Optional<ProductDAO> productOpt = productRepository.findById(id);
+        if (productOpt.isPresent()) {
+            ProductDAO          product  = productOpt.get();
+            AvatarUpdateRequest response = new AvatarUpdateRequest();
+            response.setAvatarImage(product.getAvatarImage());
+            response.setAvatarImageOriginal(product.getAvatarImageOriginal());
+            response.setAvatarPrompt(product.getAvatarPrompt());
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
     @PostMapping(consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
     @PreAuthorize("hasRole('ADMIN')")
     public ProductDAO save(@RequestBody ProductDAO product) {
@@ -73,5 +107,48 @@ public class ProductController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Another product with name '" + product.getName() + "' already exists");
         }
         productRepository.save(product);
+    }
+
+    @PutMapping("/{id}/avatar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> updateAvatar(@PathVariable Long id, @RequestBody byte[] avatarData) {
+        Optional<ProductDAO> productOpt = productRepository.findById(id);
+        if (productOpt.isPresent()) {
+            ProductDAO product = productOpt.get();
+            product.setAvatarImage(avatarData);
+            productRepository.save(product);
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @PutMapping("/{id}/avatar/full")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
+        Optional<ProductDAO> productOpt = productRepository.findById(id);
+        if (productOpt.isPresent()) {
+            ProductDAO product = productOpt.get();
+
+            // Decode and set resized avatar if provided
+            if (request.getAvatarImage() != null && request.getAvatarImage().length != 0) {
+                product.setAvatarImage(request.getAvatarImage());
+            }
+
+            // Decode and set original avatar if provided
+            if (request.getAvatarImageOriginal() != null && request.getAvatarImageOriginal().length != 0) {
+                product.setAvatarImageOriginal(request.getAvatarImageOriginal());
+            }
+
+            // Set prompt if provided
+            if (request.getAvatarPrompt() != null) {
+                product.setAvatarPrompt(request.getAvatarPrompt());
+            }
+
+            productRepository.save(product);
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 }

@@ -37,6 +37,7 @@
 | kassandra.ai.narrator          | TtsCacheManager.java                           | src      |       24 |       83 |       20 |      131 |      258 |
 | kassandra.ai.narrator          | TtsCacheManagerTest.java                       | src      |       11 |        0 |       20 |       37 |       68 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+
+| kassandra.ai.stablediffusion   | GeneratedImageResult.java                      | src      |        4 |       12 |       16 |       12 |       44 |
 | kassandra.ai.stablediffusion   | ImageGenerationRequest.java                    | src      |        5 |       30 |       16 |       21 |       72 |
 | kassandra.ai.stablediffusion   | ImageGenerationResponse.java                   | src      |        6 |       12 |       16 |        9 |       43 |
 | kassandra.ai.stablediffusion   | ImageToImageRequest.java                       | src      |        4 |       30 |       19 |       23 |       76 |
@@ -44,7 +45,7 @@
 | kassandra.ai.stablediffusion   | StableDiffusionConfig.java                     | src      |        5 |       24 |       16 |       17 |       62 |
 | kassandra.ai.stablediffusion   | StableDiffusionException.java                  | src      |        5 |        3 |       16 |        9 |       33 |
 | kassandra.ai.stablediffusion   | StableDiffusionOptions.java                    | src      |        7 |        3 |       18 |       39 |       67 |
-| kassandra.ai.stablediffusion   | StableDiffusionService.java                    | src      |       40 |       84 |       29 |      242 |      395 |
+| kassandra.ai.stablediffusion   | StableDiffusionService.java                    | src      |       44 |      110 |       29 |      255 |      438 |
 | kassandra.ai.stablediffusion   | StableDiffusionServiceTest.java                | src      |       27 |        7 |       33 |       96 |      163 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai                   | AbstractAiFilterTest.java                      | src      |       15 |       14 |       34 |       82 |      145 |
@@ -78,11 +79,11 @@
 | kassandra.dao                  | FeatureDAO.java                                | src      |        6 |        0 |       16 |       25 |       47 |
 | kassandra.dao                  | LocationDAO.java                               | src      |        8 |        0 |       16 |       30 |       54 |
 | kassandra.dao                  | OffDayDAO.java                                 | src      |        6 |        0 |       16 |       26 |       48 |
-| kassandra.dao                  | ProductDAO.java                                | src      |        5 |        0 |       16 |       23 |       44 |
+| kassandra.dao                  | ProductDAO.java                                | src      |        5 |        0 |       16 |       30 |       51 |
 | kassandra.dao                  | RelationDAO.java                               | src      |        7 |        0 |       17 |       24 |       48 |
 | kassandra.dao                  | SprintDAO.java                                 | src      |        5 |        0 |       16 |       57 |       78 |
 | kassandra.dao                  | TaskDAO.java                                   | src      |        8 |        3 |       16 |       80 |      107 |
-| kassandra.dao                  | UserDAO.java                                   | src      |        7 |        0 |       16 |       53 |       76 |
+| kassandra.dao                  | UserDAO.java                                   | src      |        7 |        0 |       16 |       62 |       85 |
 | kassandra.dao                  | VersionDAO.java                                | src      |        7 |        0 |       16 |       25 |       48 |
 | kassandra.dao                  | WarnException.java                             | src      |        1 |        0 |        0 |        6 |        7 |
 | kassandra.dao                  | WorklogDAO.java                                | src      |       13 |        0 |       16 |       34 |       63 |
@@ -90,18 +91,20 @@
 | kassandra.dto                  | AbstractDateRange.java                         | src      |        7 |        0 |       16 |       17 |       40 |
 | kassandra.dto                  | AbstractTimeAware.java                         | src      |        7 |        0 |       16 |       12 |       35 |
 | kassandra.dto                  | Availability.java                              | src      |        9 |        0 |       16 |       29 |       54 |
+| kassandra.dto                  | AvatarUpdateRequest.java                       | src      |        6 |       13 |       16 |       12 |       47 |
+| kassandra.dto                  | AvatarWrapper.java                             | src      |        4 |        0 |       16 |       10 |       30 |
 | kassandra.dto                  | Feature.java                                   | src      |       12 |        0 |       16 |       47 |       75 |
 | kassandra.dto                  | Location.java                                  | src      |       11 |        6 |       16 |       30 |       63 |
 | kassandra.dto                  | OffDay.java                                    | src      |       11 |        0 |       16 |       35 |       62 |
 | kassandra.dto                  | OffDayType.java                                | src      |        2 |        0 |       16 |        6 |       24 |
-| kassandra.dto                  | Product.java                                   | src      |       10 |        0 |       16 |       50 |       76 |
+| kassandra.dto                  | Product.java                                   | src      |       10 |        0 |       16 |       54 |       80 |
 | kassandra.dto                  | Relation.java                                  | src      |        6 |        0 |       16 |       20 |       42 |
 | kassandra.dto                  | Sprint.java                                    | src      |       30 |        5 |       55 |      287 |      377 |
 | kassandra.dto                  | Status.java                                    | src      |        2 |        0 |       16 |        6 |       24 |
 | kassandra.dto                  | Task.java                                      | src      |       63 |      224 |       26 |      227 |      540 |
 | kassandra.dto                  | TaskMode.java                                  | src      |        5 |        0 |       16 |       12 |       33 |
 | kassandra.dto                  | TaskStatus.java                                | src      |        5 |       20 |       16 |        6 |       47 |
-| kassandra.dto                  | User.java                                      | src      |       20 |        0 |       17 |      145 |      182 |
+| kassandra.dto                  | User.java                                      | src      |       20 |        0 |       17 |      144 |      181 |
 | kassandra.dto                  | Version.java                                   | src      |       11 |        0 |       16 |       47 |       74 |
 | kassandra.dto                  | Worklog.java                                   | src      |        6 |        0 |       16 |       24 |       46 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -181,13 +184,13 @@
 | kassandra.rest.api             | LocationApiTest.java                           | src      |       43 |        0 |       47 |      274 |      364 |
 | kassandra.rest.api             | OffDayApi.java                                 | src      |       12 |        0 |       17 |       60 |       89 |
 | kassandra.rest.api             | OffDayApiTest.java                             | src      |       43 |        0 |       62 |      280 |      385 |
-| kassandra.rest.api             | ProductApi.java                                | src      |       13 |        0 |       16 |       67 |       96 |
+| kassandra.rest.api             | ProductApi.java                                | src      |       20 |       20 |       16 |      114 |      170 |
 | kassandra.rest.api             | ProductApiTest.java                            | src      |       26 |        0 |       26 |      185 |      237 |
 | kassandra.rest.api             | SprintApi.java                                 | src      |       14 |        0 |       16 |       77 |      107 |
 | kassandra.rest.api             | SprintApiTest.java                             | src      |       31 |        0 |       35 |      189 |      255 |
 | kassandra.rest.api             | TaskApi.java                                   | src      |       16 |        0 |       16 |       98 |      130 |
 | kassandra.rest.api             | TaskApiTest.java                               | src      |       28 |        0 |       22 |      128 |      178 |
-| kassandra.rest.api             | UserApi.java                                   | src      |       18 |       12 |       16 |      107 |      153 |
+| kassandra.rest.api             | UserApi.java                                   | src      |       25 |       32 |       17 |      151 |      225 |
 | kassandra.rest.api             | UserApiTest.java                               | src      |       35 |        0 |       31 |      167 |      233 |
 | kassandra.rest.api             | VersionApi.java                                | src      |       14 |        0 |       16 |       77 |      107 |
 | kassandra.rest.api             | VersionApiTest.java                            | src      |       33 |        0 |       31 |      203 |      267 |
@@ -195,13 +198,14 @@
 | kassandra.rest.api             | WorklogApiTest.java                            | src      |       16 |        0 |       18 |       71 |      105 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.rest.controller      | AvailabilityController.java                    | src      |       10 |        0 |       16 |       54 |       80 |
+| kassandra.rest.controller      | AvatarProxyController.java                     | src      |        7 |        0 |       29 |       45 |       81 |
 | kassandra.rest.controller      | FeatureController.java                         | src      |       11 |        0 |       18 |       59 |       88 |
 | kassandra.rest.controller      | LocationController.java                        | src      |       10 |        0 |       16 |       55 |       81 |
 | kassandra.rest.controller      | OffDayController.java                          | src      |       14 |        0 |       18 |       81 |      113 |
-| kassandra.rest.controller      | ProductController.java                         | src      |       10 |        0 |       18 |       49 |       77 |
+| kassandra.rest.controller      | ProductController.java                         | src      |       18 |        0 |       21 |      115 |      154 |
 | kassandra.rest.controller      | SprintController.java                          | src      |       11 |        0 |       18 |       57 |       86 |
 | kassandra.rest.controller      | TaskController.java                            | src      |       13 |        0 |       17 |       63 |       93 |
-| kassandra.rest.controller      | UserController.java                            | src      |       17 |        6 |       16 |       75 |      114 |
+| kassandra.rest.controller      | UserController.java                            | src      |       26 |        6 |       22 |      147 |      201 |
 | kassandra.rest.controller      | VersionController.java                         | src      |       11 |        0 |       18 |       60 |       89 |
 | kassandra.rest.controller      | WorklogController.java                         | src      |       11 |        0 |       16 |       41 |       68 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -216,7 +220,7 @@
 | kassandra.rest                 | JacksonConfig.java                             | src      |        7 |        0 |       19 |       67 |       93 |
 | kassandra.rest                 | OffsetDateTimeDeserializer.java                | src      |        5 |        0 |       17 |       19 |       41 |
 | kassandra.rest                 | OffsetDateTimeSerializer.java                  | src      |        5 |        0 |       17 |       18 |       40 |
-| kassandra.rest                 | RestClientConfig.java                          | src      |        4 |        0 |       16 |       22 |       42 |
+| kassandra.rest                 | RestClientConfig.java                          | src      |        4 |        0 |       17 |       24 |       45 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.security             | KeycloakTestContainer.java                     | src      |        6 |       11 |      130 |       15 |      162 |
 | kassandra.security             | OAuth2ClientConfig.java                        | src      |       13 |       18 |       18 |       39 |       88 |
@@ -238,7 +242,7 @@
 | kassandra.ui.component         | OffDaysCalendarComponent.java                  | src      |       47 |       51 |       55 |      268 |      421 |
 | kassandra.ui.component         | ScrumBoard.java                                | src      |       43 |       14 |       31 |      180 |      268 |
 | kassandra.ui.component         | StoryCard.java                                 | src      |       48 |       12 |       32 |      237 |      329 |
-| kassandra.ui.component         | TaskCard.java                                  | src      |       27 |       11 |       20 |      149 |      207 |
+| kassandra.ui.component         | TaskCard.java                                  | src      |       27 |       11 |       36 |      136 |      210 |
 | kassandra.ui.component         | TaskClipboardHandler.java                      | src      |       28 |       61 |       33 |      157 |      279 |
 | kassandra.ui.component         | TaskGrid.java                                  | src      |      141 |       68 |      160 |      889 |     1258 |
 | kassandra.ui.component         | ThemeToggle.java                               | src      |        9 |        0 |       20 |       50 |       79 |
@@ -248,12 +252,12 @@
 | kassandra.ui.dialog            | ConfirmDialog.java                             | src      |       10 |       11 |       17 |       35 |       73 |
 | kassandra.ui.dialog            | DependencyDialog.java                          | src      |       43 |       26 |       43 |      213 |      325 |
 | kassandra.ui.dialog            | FeatureDialog.java                             | src      |       19 |       17 |       19 |       67 |      122 |
-| kassandra.ui.dialog            | ImagePromptDialog.java                         | src      |       52 |       13 |       39 |      363 |      467 |
+| kassandra.ui.dialog            | ImagePromptDialog.java                         | src      |       52 |       13 |       39 |      376 |      480 |
 | kassandra.ui.dialog            | LocationDialog.java                            | src      |       42 |        0 |       42 |      223 |      307 |
 | kassandra.ui.dialog            | OffDayDialog.java                              | src      |       39 |       21 |       54 |      199 |      313 |
-| kassandra.ui.dialog            | ProductDialog.java                             | src      |       39 |       18 |       33 |      202 |      292 |
+| kassandra.ui.dialog            | ProductDialog.java                             | src      |       41 |       15 |       54 |      198 |      308 |
 | kassandra.ui.dialog            | SprintDialog.java                              | src      |       19 |       17 |       19 |       66 |      121 |
-| kassandra.ui.dialog            | UserDialog.java                                | src      |       42 |       10 |       34 |      221 |      307 |
+| kassandra.ui.dialog            | UserDialog.java                                | src      |       41 |       10 |       36 |      223 |      310 |
 | kassandra.ui.dialog            | VersionDialog.java                             | src      |       20 |       17 |       20 |       67 |      124 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.introduction.util | InstructionVideosUtil.java                     | src      |        2 |        0 |       16 |        8 |       26 |
@@ -305,7 +309,7 @@
 | kassandra.ui.view              | MainView.java                                  | src      |        7 |        7 |       18 |       25 |       57 |
 | kassandra.ui.view              | OffDayListView.java                            | src      |       35 |       11 |       60 |      223 |      329 |
 | kassandra.ui.view              | OffDayListViewTest.java                        | src      |       23 |       77 |       35 |      117 |      252 |
-| kassandra.ui.view              | ProductListView.java                           | src      |       30 |        3 |       39 |      217 |      289 |
+| kassandra.ui.view              | ProductListView.java                           | src      |       30 |        3 |       46 |      184 |      263 |
 | kassandra.ui.view              | ProductListViewTest.java                       | src      |       12 |       63 |       18 |       68 |      161 |
 | kassandra.ui.view              | SprintListView.java                            | src      |       30 |        0 |       32 |      260 |      322 |
 | kassandra.ui.view              | SprintListViewTest.java                        | src      |       15 |       82 |       24 |       86 |      207 |
@@ -314,21 +318,21 @@
 | kassandra.ui.view              | SprintStatistics.java                          | src      |       20 |        4 |       26 |       97 |      147 |
 | kassandra.ui.view              | TaskListView.java                              | src      |       91 |       39 |       79 |      508 |      717 |
 | kassandra.ui.view              | TaskListViewTest.java                          | src      |        8 |       16 |       17 |       68 |      109 |
-| kassandra.ui.view              | UserListView.java                              | src      |       30 |        0 |       30 |      201 |      261 |
+| kassandra.ui.view              | UserListView.java                              | src      |       30 |        0 |       41 |      181 |      252 |
 | kassandra.ui.view              | UserListViewTest.java                          | src      |       11 |       63 |       16 |       68 |      158 |
-| kassandra.ui.view              | UserProfileView.java                           | src      |       41 |        6 |       45 |      306 |      398 |
+| kassandra.ui.view              | UserProfileView.java                           | src      |       43 |        6 |       67 |      298 |      414 |
 | kassandra.ui.view              | UserProfileViewTest.java                       | src      |       11 |       30 |       20 |       49 |      110 |
-| kassandra.ui.view              | VersionListView.java                           | src      |       27 |        3 |       35 |      224 |      289 |
+| kassandra.ui.view              | VersionListView.java                           | src      |       27 |        3 |       36 |      218 |      284 |
 | kassandra.ui.view              | VersionListViewTest.java                       | src      |       13 |       80 |       20 |       74 |      187 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.ui                   | Demo.java                                      | src      |       16 |        3 |       77 |       97 |      193 |
+| kassandra.ui                   | Demo.java                                      | src      |       16 |        3 |       77 |      100 |      196 |
 | kassandra.ui                   | GenerateScreenshots.java                       | src      |       53 |       24 |       73 |      347 |      497 |
 | kassandra.ui                   | HtmlColor.java                                 | src      |        6 |        0 |       36 |       22 |       64 |
 | kassandra.ui                   | MainErrorHandler.java                          | src      |        5 |        0 |       16 |       28 |       49 |
-| kassandra.ui                   | MainLayout.java                                | src      |       59 |       17 |       41 |      274 |      391 |
+| kassandra.ui                   | MainLayout.java                                | src      |       59 |       17 |       42 |      267 |      385 |
 | kassandra.ui                   | SprintStatus.java                              | src      |        2 |        0 |       16 |        4 |       22 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.util                 | AbstractEntityGenerator.java                   | src      |      105 |       48 |       52 |      678 |      883 |
+| kassandra.util                 | AbstractEntityGenerator.java                   | src      |      107 |       48 |       55 |      681 |      891 |
 | kassandra.util                 | AbstractGanttTestUtil.java                     | src      |       52 |        6 |       53 |      504 |      615 |
 | kassandra.util                 | AbstractLegacyGanttTestUtil.java               | src      |       10 |        0 |       19 |       87 |      116 |
 | kassandra.util                 | AbstractTestUtil.java                          | src      |       20 |        0 |       27 |       92 |      139 |
@@ -336,6 +340,7 @@
 | kassandra.util                 | H2DatabaseStateManager.java                    | src      |       22 |       27 |       27 |      125 |      201 |
 | kassandra.util                 | NameGenerator.java                             | src      |       26 |       15 |       25 |      172 |      238 |
 | kassandra.util                 | RandomCase.java                                | src      |        7 |        0 |       16 |       65 |       88 |
+| kassandra.util                 | RestClientTestConfig.java                      | src      |        7 |        0 |       16 |       20 |       43 |
 | kassandra.util                 | TestInfoUtil.java                              | src      |       15 |       86 |       16 |       51 |      168 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra                      | Application.java                               | src      |        5 |        0 |       16 |       25 |       46 |
@@ -401,5 +406,5 @@
 | util                           | TaskUtil.java                                  | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                      | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 39 package(s)                  | 361 file(s)                                    | java     |     7721 |     5018 |    10255 |    39844 |    62838 |
+| 39 package(s)                  | 366 file(s)                                    | java     |     7789 |     5106 |    10443 |    40136 |    63474 |
 +--------------------------------+------------------------------------------------+----------+----------+----------+----------+----------+----------+

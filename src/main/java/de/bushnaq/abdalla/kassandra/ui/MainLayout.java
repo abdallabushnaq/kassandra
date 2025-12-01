@@ -270,8 +270,8 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
 
         // Create avatar component
         Component avatarComponent;
-        if (user != null && user.getAvatarImage() != null && user.getAvatarImage().length > 0) {
-            // User has a custom avatar image
+        if (user != null) {
+            // User has a custom avatar image - use URL-based loading
             com.vaadin.flow.component.html.Image avatarImage = new com.vaadin.flow.component.html.Image();
             avatarImage.setWidth("24px");
             avatarImage.setHeight("24px");
@@ -279,14 +279,8 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
                     .set("border-radius", "4px")
                     .set("object-fit", "cover");
 
-            final byte[] avatarImageBytes = user.getAvatarImage();
-            com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
-                    "user-menu-" + System.currentTimeMillis() + ".png",
-                    () -> new java.io.ByteArrayInputStream(avatarImageBytes)
-            );
-            resource.setContentType("image/png");
-            resource.setCacheTime(0);
-            avatarImage.setSrc(resource);
+            // Use REST API endpoint for avatar - enables browser caching
+            avatarImage.setSrc("/frontend/avatar-proxy/user/" + user.getId());
             avatarComponent = avatarImage;
         } else {
             // Use default avatar

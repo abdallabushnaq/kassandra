@@ -33,11 +33,18 @@ public class ProductDAO extends AbstractTimeAwareDAO {
 
     @Lob
     @Column(name = "avatar_image")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private byte[] avatarImage;
+    @Lob
+    @Column(name = "avatar_image_original")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private byte[] avatarImageOriginal;
+    @Column(name = "avatar_prompt", length = 1000)
+    private String avatarPrompt;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;
+    private Long   id;
     @Column(nullable = false, unique = true)
     private String name;
 

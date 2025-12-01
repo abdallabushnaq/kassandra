@@ -30,13 +30,15 @@ import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;
-import java.util.function.Consumer;
 
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
 
@@ -54,47 +56,45 @@ public class UserDialog extends Dialog {
     public static final String                 USER_LAST_WORKING_DAY_PICKER  = "user-last-working-day-picker";
     public static final String                 USER_NAME_FIELD               = "user-name-field";
     private final       Image                  avatarPreview;
+    private final       AvatarUpdateRequest    avatarUpdateRequest;
     private final       EmailField             emailField;
     private final       DatePicker             firstWorkingDayPicker;
     private             byte[]                 generatedImageBytes;
+    private             byte[]                 generatedImageBytesOriginal;
+    private             String                 generatedImagePrompt;
     private final       boolean                isEditMode;
     private final       DatePicker             lastWorkingDayPicker;
     private final       TextField              nameField;
-    private final       Consumer<User>         saveCallback;
     private final       StableDiffusionService stableDiffusionService;
     private final       User                   user;
+    private final       UserApi                userApi;
 
     /**
      * Creates a dialog for creating or editing a user.
      *
      * @param user                   The user to edit, or null for creating a new user
      * @param stableDiffusionService The AI image generation service (optional, can be null)
-     * @param saveCallback           Callback that receives the user with updated values
+     * @param userApi                The user API for saving user data
      */
-    public UserDialog(User user, StableDiffusionService stableDiffusionService, Consumer<User> saveCallback) {
+    public UserDialog(User user, StableDiffusionService stableDiffusionService, UserApi userApi) {
         this.user                   = user;
         this.stableDiffusionService = stableDiffusionService;
-        this.saveCallback           = saveCallback;
+        this.userApi                = userApi;
         isEditMode                  = user != null;
 
+        // Only fetch avatar if editing an existing user
+        this.avatarUpdateRequest = userApi.getAvatarFull(user.getId());
+
         // Set the dialog title with an icon (avatar image if available)
-        String title = isEditMode ? "Edit User" : "Create User";
-        if (isEditMode && user.getAvatarImage() != null && user.getAvatarImage().length > 0) {
-            Image headerAvatar = new Image();
-            headerAvatar.setWidth("24px");
-            headerAvatar.setHeight("24px");
-            headerAvatar.getStyle()
-                    .set("border-radius", "4px")
-                    .set("object-fit", "cover");
-            StreamResource resource = new StreamResource(
-                    "user-header-" + System.currentTimeMillis() + ".png",
-                    () -> new ByteArrayInputStream(user.getAvatarImage())
-            );
-            headerAvatar.setSrc(resource);
-            getHeader().add(VaadinUtil.createDialogHeader(title, headerAvatar));
-        } else {
-            getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.USER));
-        }
+        String title        = isEditMode ? "Edit User" : "Create User";
+        Image  headerAvatar = new Image();
+        headerAvatar.setWidth("24px");
+        headerAvatar.setHeight("24px");
+        headerAvatar.getStyle()
+                .set("border-radius", "4px")
+                .set("object-fit", "cover");
+        headerAvatar.setSrc("/frontend/avatar-proxy/user/" + user.getId());
+        getHeader().add(VaadinUtil.createDialogHeader(title, headerAvatar));
 
         setId(USER_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);
@@ -108,22 +108,14 @@ public class UserDialog extends Dialog {
         nameField.setId(USER_NAME_FIELD);
         nameField.setWidthFull();
         nameField.setRequired(true);
-        if (isEditMode && user.getAvatarImage() != null && user.getAvatarImage().length > 0) {
-            Image nameFieldAvatar = new Image();
-            nameFieldAvatar.setWidth("20px");
-            nameFieldAvatar.setHeight("20px");
-            nameFieldAvatar.getStyle()
-                    .set("border-radius", "4px")
-                    .set("object-fit", "cover");
-            StreamResource resource = new StreamResource(
-                    "user-name-" + System.currentTimeMillis() + ".png",
-                    () -> new ByteArrayInputStream(user.getAvatarImage())
-            );
-            nameFieldAvatar.setSrc(resource);
-            nameField.setPrefixComponent(nameFieldAvatar);
-        } else {
-            nameField.setPrefixComponent(new Icon(VaadinIcon.USER));
-        }
+        Image nameFieldAvatar = new Image();
+        nameFieldAvatar.setWidth("20px");
+        nameFieldAvatar.setHeight("20px");
+        nameFieldAvatar.getStyle()
+                .set("border-radius", "4px")
+                .set("object-fit", "cover");
+        nameFieldAvatar.setSrc("/frontend/avatar-proxy/user/" + user.getId());
+        nameField.setPrefixComponent(nameFieldAvatar);
 
         // Set to eager mode so value changes fire on every keystroke
         nameField.setValueChangeMode(ValueChangeMode.EAGER);
@@ -238,19 +230,17 @@ public class UserDialog extends Dialog {
         add(dialogLayout);
     }
 
-    private void handleGeneratedImage(byte[] imageBytes) {
-        this.generatedImageBytes = imageBytes;
-
+    private void handleGeneratedImage(GeneratedImageResult result) {
+        generatedImageBytes         = result.getResizedImage();
+        generatedImageBytesOriginal = result.getOriginalImage();
+        generatedImagePrompt        = result.getPrompt();
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
             // Show preview
-            StreamResource resource = new StreamResource("user-avatar.png",
-                    () -> new ByteArrayInputStream(imageBytes));
+            StreamResource resource = new StreamResource("user-avatar.png", () -> new ByteArrayInputStream(result.getResizedImage()));
             avatarPreview.setSrc(resource);
             avatarPreview.setVisible(true);
-
             Notification.show("Avatar set successfully", 3000, Notification.Position.BOTTOM_END);
-
             // Push the UI update
             ui.push();
         }));
@@ -261,7 +251,7 @@ public class UserDialog extends Dialog {
                 ? "Professional avatar portrait, person, business style, neutral background"
                 : "Professional avatar portrait of " + nameField.getValue() + ", business style, neutral background";
 
-        byte[] initialImage = isEditMode && user.getAvatarImage() != null && user.getAvatarImage().length > 0 ? user.getAvatarImage() : null;
+        byte[] initialImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 stableDiffusionService,
                 defaultPrompt,
@@ -295,12 +285,25 @@ public class UserDialog extends Dialog {
         userToSave.setFirstWorkingDay(firstWorkingDayPicker.getValue());
         userToSave.setLastWorkingDay(lastWorkingDayPicker.getValue());
 
-        // Set generated image if available
-        if (generatedImageBytes != null) {
-            userToSave.setAvatarImage(generatedImageBytes);
+        // Save user to backend
+        if (isEditMode) {
+            userApi.update(userToSave);
+        } else {
+            User saved = userApi.persist(userToSave);
+            userToSave.setId(saved.getId());
         }
 
-        saveCallback.accept(userToSave);
+        // Set generated avatar data if available (will be saved separately via API)
+        if (generatedImageBytes != null) {
+            userApi.updateAvatarFull(
+                    userToSave.getId(),
+                    generatedImageBytes,
+                    generatedImageBytesOriginal,
+                    generatedImagePrompt
+            );
+        }
+
+        Notification.show("User saved successfully", 3000, Notification.Position.MIDDLE);
         close();
 
     }

@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.rest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
@@ -30,6 +31,8 @@ public class RestClientConfig {
     @Bean
     public RestTemplate restTemplate() {
         RestTemplate template = new RestTemplate();
+        // Ensure support for byte[] responses (e.g., images)
+        template.getMessageConverters().add(new ByteArrayHttpMessageConverter());
         template.setErrorHandler(new DefaultResponseErrorHandler() {
             @Override
             public boolean hasError(ClientHttpResponse response) throws IOException {

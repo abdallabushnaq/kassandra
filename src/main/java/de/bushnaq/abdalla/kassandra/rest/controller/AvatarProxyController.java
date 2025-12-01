@@ -1,0 +1,81 @@
+/*
+ *
+ * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
+package de.bushnaq.abdalla.kassandra.rest.controller;
+
+import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
+import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/frontend/avatar-proxy")
+@Slf4j
+public class AvatarProxyController {
+    private final ProductApi productApi;
+    private final UserApi    userApi;
+
+    @Autowired
+    public AvatarProxyController(ProductApi productApi, UserApi userApi) {
+        this.productApi = productApi;
+        this.userApi    = userApi;
+    }
+
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<byte[]> proxyProductAvatar(@PathVariable("productId") Long productId) {
+        AvatarWrapper avatarImage = productApi.getAvatarImage(productId);
+        if (avatarImage == null) {
+//            log.error("--------------------------------------------------------------------------------------------");
+//            log.error("AvatarProxyController.proxyProductAvatar: No avatarImage found for productId {}", productId);
+//            log.error("--------------------------------------------------------------------------------------------");
+            return ResponseEntity.notFound().build();
+        }
+//        log.error("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+//        log.error("AvatarProxyController.proxyProductAvatar: Image found for productId {}", productId);
+//        log.error("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+        // You may want to detect the avatarImage type dynamically. Here, we default to PNG.
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+        return ResponseEntity.ok().headers(headers).body(avatarImage.getAvatar());
+    }
+
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<byte[]> proxyUserAvatar(@PathVariable("userId") Long userId) {
+        AvatarWrapper avatarImage = userApi.getAvatarImage(userId);
+        if (avatarImage == null) {
+//            log.error("--------------------------------------------------------------------------------------------");
+//            log.error("AvatarProxyController.proxyUserAvatar: No avatarImage found for userId {}", userId);
+//            log.error("--------------------------------------------------------------------------------------------");
+            return ResponseEntity.notFound().build();
+        }
+//        log.error("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+//        log.error("AvatarProxyController.proxyUserAvatar: Image found for userId {}", userId);
+//        log.error("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+        return ResponseEntity.ok().headers(headers).body(avatarImage.getAvatar());
+    }
+}

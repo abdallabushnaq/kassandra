@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -37,8 +36,6 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -167,8 +164,9 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         {
             // Add avatar image column
             Grid.Column<Product> avatarColumn = getGrid().addColumn(new ComponentRenderer<>(product -> {
-                if (product.getAvatarImage() != null && product.getAvatarImage().length > 0) {
-                    // Product has a custom image
+//                if (product.getAvatarPrompt() != null && !product.getAvatarPrompt().isEmpty())
+                {
+                    // Product has a custom image - use URL-based loading
                     com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
                     avatar.setWidth("24px");
                     avatar.setHeight("24px");
@@ -179,26 +177,23 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                             .set("margin", "0")
                             .set("padding", "0");
 
-                    com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
-                            "product-" + product.getId() + "-" + System.currentTimeMillis() + ".png",
-                            () -> new java.io.ByteArrayInputStream(product.getAvatarImage())
-                    );
-                    resource.setContentType("image/png");
-                    resource.setCacheTime(0); // Disable caching
-                    avatar.setSrc(resource);
+                    // Use REST API endpoint for avatar - enables browser caching
+//                    avatar.setSrc("/api/product/" + product.getId() + "/avatar");
+                    avatar.setSrc("/frontend/avatar-proxy/product/" + product.getId());
                     avatar.setAlt(product.getName());
                     return avatar;
-                } else {
-                    // No custom image - show default VaadinIcon
-                    Icon defaultIcon = new Icon(VaadinIcon.CUBE);
-                    defaultIcon.setSize("20px");
-                    defaultIcon.getStyle()
-                            .set("color", "var(--lumo-contrast-50pct)")
-                            .set("padding", "0")
-                            .set("margin", "0")
-                            .set("display", "block");
-                    return defaultIcon;
                 }
+//                else {
+//                    // No custom image - show default VaadinIcon
+//                    Icon defaultIcon = new Icon(VaadinIcon.CUBE);
+//                    defaultIcon.setSize("20px");
+//                    defaultIcon.getStyle()
+//                            .set("color", "var(--lumo-contrast-50pct)")
+//                            .set("padding", "0")
+//                            .set("margin", "0")
+//                            .set("display", "block");
+//                    return defaultIcon;
+//                }
             }));
             avatarColumn.setWidth("48px");
             avatarColumn.setFlexGrow(0);
@@ -239,32 +234,11 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     }
 
     private void openProductDialog(Product product) {
-        // Use the new SaveCallback interface that passes both the product and the dialog
-        ProductDialog dialog = new ProductDialog(product, stableDiffusionService, (savedProduct, dialogReference) -> {
-            try {
-                if (product != null) {
-                    // Edit mode
-                    productApi.update(savedProduct);
-                    Notification.show("Product updated", 3000, Notification.Position.BOTTOM_START);
-                } else {
-                    // Create mode
-                    productApi.persist(savedProduct);
-                    Notification.show("Product created", 3000, Notification.Position.BOTTOM_START);
-                }
+        ProductDialog dialog = new ProductDialog(product, stableDiffusionService, productApi);
+        dialog.addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                // Dialog was closed, refresh the grid
                 refreshGrid();
-                dialogReference.close();
-            } catch (Exception e) {
-                if (e instanceof ResponseStatusException && ((ResponseStatusException) e).getStatusCode().equals(HttpStatus.CONFLICT)) {
-                    dialogReference.setNameFieldError(((ResponseStatusException) e).getReason());
-                    // Keep the dialog open so the user can correct the name
-                } else {
-                    // For other errors, show generic message and close dialog
-                    Notification notification = new Notification("An error occurred: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
-                    notification.addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_ERROR);
-                    notification.open();
-                    // dialogReference.close();
-                    // Keep the dialog open so the user can correct the name
-                }
             }
         });
         dialog.open();

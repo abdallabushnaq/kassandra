@@ -34,6 +34,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.server.StreamResource;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
@@ -64,6 +65,7 @@ public class ImagePromptDialog extends Dialog {
     private final       Button         cancelButton;
     private final       Button         generateButton;
     private             byte[]         generatedImage;
+    private             byte[]         generatedImageOriginal;
     private final       byte[]         initialImage;
     private final       Div            previewContainer;
     private final       TextArea       promptField;
@@ -253,7 +255,14 @@ public class ImagePromptDialog extends Dialog {
     // Update methods to use these refs
     private void acceptImage() {
         if (generatedImage != null) {
-            acceptCallback.accept(generatedImage);
+            String prompt = promptField.getValue().trim();
+            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
+                    new de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult(
+                            generatedImageOriginal != null ? generatedImageOriginal : generatedImage,
+                            prompt,
+                            generatedImage
+                    );
+            acceptCallback.accept(result);
             close();
         }
     }
@@ -336,19 +345,21 @@ public class ImagePromptDialog extends Dialog {
             new Thread(() -> {
                 try {
                     // Generate with progress callback
-                    byte[] imageBytes = stableDiffusionService.generateImage(prompt, 256, (progress, step, totalSteps) -> {
-                        // Update UI with progress
-                        ui.access(() -> {
-                            progressBar.setValue(progress);
-                            progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
-                            ui.push();
-                        });
-                    });
+                    de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
+                            stableDiffusionService.generateImageWithOriginal(prompt, 256, (progress, step, totalSteps) -> {
+                                // Update UI with progress
+                                ui.access(() -> {
+                                    progressBar.setValue(progress);
+                                    progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
+                                    ui.push();
+                                });
+                            });
 
-                    generatedImage = imageBytes;
+                    generatedImage         = result.getResizedImage();
+                    generatedImageOriginal = result.getOriginalImage();
 
                     ui.access(() -> {
-                        displayGeneratedImage(imageBytes);
+                        displayGeneratedImage(result.getResizedImage());
                         generateButton.setEnabled(true);
                         updateButton.setEnabled(true);
 //                        generateButton.setText("Generate");
@@ -421,16 +432,18 @@ public class ImagePromptDialog extends Dialog {
         getUI().ifPresent(ui -> {
             new Thread(() -> {
                 try {
-                    byte[] imageBytes = stableDiffusionService.img2img(initialImage, prompt, 256, (progress, step, totalSteps) -> {
-                        ui.access(() -> {
-                            progressBar.setValue(progress);
-                            progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
-                            ui.push();
-                        });
-                    });
-                    generatedImage = imageBytes;
+                    de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
+                            stableDiffusionService.img2imgWithOriginal(initialImage, prompt, 256, (progress, step, totalSteps) -> {
+                                ui.access(() -> {
+                                    progressBar.setValue(progress);
+                                    progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
+                                    ui.push();
+                                });
+                            });
+                    generatedImage         = result.getResizedImage();
+                    generatedImageOriginal = result.getOriginalImage();
                     ui.access(() -> {
-                        displayGeneratedImage(imageBytes);
+                        displayGeneratedImage(result.getResizedImage());
                         generateButton.setEnabled(true);
                         updateButton.setEnabled(true);
                         acceptButton.setEnabled(true);
@@ -461,7 +474,7 @@ public class ImagePromptDialog extends Dialog {
      */
     @FunctionalInterface
     public interface AcceptCallback {
-        void accept(byte[] imageBytes);
+        void accept(GeneratedImageResult result);
     }
 }
 
