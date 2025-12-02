@@ -70,6 +70,28 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
         return url;
     }
 
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This provides a consistent prompt format for product avatars.
+     *
+     * @return A default prompt string for generating product avatar images
+     */
+    @JsonIgnore
+    public String getDefaultAvatarPrompt() {
+        return getDefaultAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This static method provides a consistent prompt format for product avatars.
+     *
+     * @param productName The name of the product
+     * @return A default prompt string for generating product avatar images
+     */
+    public static String getDefaultAvatarPrompt(String productName) {
+        return "Icon representing the product " + productName + ", minimalist, 3D design, white background";
+    }
+
     @JsonIgnore
     public String getKey() {
         return "P-" + id;

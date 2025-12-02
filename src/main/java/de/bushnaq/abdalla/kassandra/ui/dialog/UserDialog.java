@@ -247,13 +247,13 @@ public class UserDialog extends Dialog {
         generatedImagePrompt        = result.getPrompt();
 
         // Compute hash from the resized image
-        String newHash = AvatarUtil.computeHash(generatedImageBytes);
+//        String newHash = AvatarUtil.computeHash(generatedImageBytes);
 
         // For edit mode: Update hash in user DTO and save avatar to database immediately
-        if (isEditMode && user != null) {
-            user.setAvatarHash(newHash);
-            userApi.updateAvatarFull(user.getId(), generatedImageBytes, generatedImageBytesOriginal, generatedImagePrompt);
-        }
+//        if (isEditMode && user != null) {
+//            user.setAvatarHash(newHash);
+//            userApi.updateAvatarFull(user.getId(), generatedImageBytes, generatedImageBytesOriginal, generatedImagePrompt);
+//        }
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -282,7 +282,7 @@ public class UserDialog extends Dialog {
         if (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarPrompt() != null && !avatarUpdateRequest.getAvatarPrompt().isEmpty()) {
             defaultPrompt = avatarUpdateRequest.getAvatarPrompt();
         } else {
-            defaultPrompt = "Professional avatar portrait of " + nameField.getValue() + ", business style, 3D, neutral background";
+            defaultPrompt = User.getDefaultAvatarPrompt(nameField.getValue());
         }
 
         byte[] initialImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
@@ -319,22 +319,31 @@ public class UserDialog extends Dialog {
         userToSave.setFirstWorkingDay(firstWorkingDayPicker.getValue());
         userToSave.setLastWorkingDay(lastWorkingDayPicker.getValue());
 
+        String newHash = AvatarUtil.computeHash(generatedImageBytes);
+        userToSave.setAvatarHash(newHash);
         // Save user to backend
         if (isEditMode) {
             userApi.update(userToSave);
-            // Avatar was already saved immediately in handleGeneratedImage(), no need to save again
+            if (generatedImageBytes != null) {
+                // Compute and set hash before saving
+
+                userApi.updateAvatarFull(
+                        userToSave.getId(),
+                        generatedImageBytes,
+                        generatedImageBytesOriginal,
+                        generatedImagePrompt
+                );
+            }
         } else {
             User saved = userApi.persist(userToSave);
-            userToSave.setId(saved.getId());
+//            userToSave.setId(saved.getId());
 
             // For create mode, save avatar now since user didn't exist before
             if (generatedImageBytes != null) {
                 // Compute and set hash before saving
-                String newHash = AvatarUtil.computeHash(generatedImageBytes);
-                userToSave.setAvatarHash(newHash);
 
                 userApi.updateAvatarFull(
-                        userToSave.getId(),
+                        saved.getId(),
                         generatedImageBytes,
                         generatedImageBytesOriginal,
                         generatedImagePrompt

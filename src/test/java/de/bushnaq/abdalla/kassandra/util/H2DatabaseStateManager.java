@@ -77,11 +77,11 @@ public class H2DatabaseStateManager {
                 }
             }
 
-            // Drop each table
+            // Drop each table with CASCADE to handle foreign key dependencies
             for (String tableName : tableNames) {
                 try {
                     logger.debug("Dropping table: {}", tableName);
-                    conn.createStatement().execute("DROP TABLE IF EXISTS \"" + tableName + "\"");
+                    conn.createStatement().execute("DROP TABLE IF EXISTS \"" + tableName + "\" CASCADE");
                 } catch (SQLException e) {
                     logger.warn("Could not drop table {}: {}", tableName, e.getMessage());
                 }

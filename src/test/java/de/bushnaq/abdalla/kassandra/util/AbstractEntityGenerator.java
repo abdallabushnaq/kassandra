@@ -254,7 +254,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         // Generate AI image for the product if service is available
         if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
             try {
-                String prompt = "Icon representing " + name + ", minimalist, 3D object on a white background, optimized for 32px x 32px size";
+                String prompt = Product.getDefaultAvatarPrompt(name);
                 System.out.println("Generating image for product: " + name + " with prompt: " + prompt);
                 long                 startTime = System.currentTimeMillis();
                 GeneratedImageResult image     = stableDiffusionService.generateImageWithOriginal(prompt);
@@ -597,7 +597,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     }
 
     private @NotNull GeneratedImageResult generateUserAvatar(String name) throws StableDiffusionException {
-        String prompt = "Professional avatar portrait of " + name + ", minimalist, flat design, simple background, icon style";
+        String prompt = User.getDefaultAvatarPrompt(name);
         System.out.println("Generating avatar for user: " + name + " with prompt: " + prompt);
         return stableDiffusionService.generateImageWithOriginal(prompt);
     }

@@ -17,10 +17,16 @@
 
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
+import de.bushnaq.abdalla.kassandra.dao.ProductAvatarDAO;
+import de.bushnaq.abdalla.kassandra.dao.ProductAvatarGenerationDataDAO;
 import de.bushnaq.abdalla.kassandra.dao.ProductDAO;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
+import de.bushnaq.abdalla.kassandra.repository.ProductAvatarGenerationDataRepository;
+import de.bushnaq.abdalla.kassandra.repository.ProductAvatarRepository;
 import de.bushnaq.abdalla.kassandra.repository.ProductRepository;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,11 +39,15 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/product")
+@Slf4j
 public class ProductController {
 
     @Autowired
-    private ProductRepository productRepository;
-
+    private ProductAvatarGenerationDataRepository productAvatarGenerationDataRepository;
+    @Autowired
+    private ProductAvatarRepository               productAvatarRepository;
+    @Autowired
+    private ProductRepository                     productRepository;
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -61,32 +71,33 @@ public class ProductController {
     @GetMapping("/{id}/avatar")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable Long id) {
-        Optional<ProductDAO> productOpt = productRepository.findById(id);
-        if (productOpt.isPresent()) {
-            ProductDAO product = productOpt.get();
-            if (product.getAvatarImage() == null || product.getAvatarImage().length == 0) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-            return ResponseEntity.ok(new AvatarWrapper(product.getAvatarImage()));
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        return productAvatarRepository.findByProductId(id)
+                .map(avatar -> {
+                    if (avatar.getAvatarImage() == null || avatar.getAvatarImage().length == 0) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
+                    }
+                    return ResponseEntity.ok(new AvatarWrapper(avatar.getAvatarImage()));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @GetMapping("/{id}/avatar/full")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable Long id) {
-        Optional<ProductDAO> productOpt = productRepository.findById(id);
-        if (productOpt.isPresent()) {
-            ProductDAO          product  = productOpt.get();
-            AvatarUpdateRequest response = new AvatarUpdateRequest();
-            response.setAvatarImage(product.getAvatarImage());
-            response.setAvatarImageOriginal(product.getAvatarImageOriginal());
-            response.setAvatarPrompt(product.getAvatarPrompt());
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        AvatarUpdateRequest response = new AvatarUpdateRequest();
+
+        // Get avatar image
+        productAvatarRepository.findByProductId(id)
+                .ifPresent(avatar -> response.setAvatarImage(avatar.getAvatarImage()));
+
+        // Get generation data
+        productAvatarGenerationDataRepository.findByProductId(id)
+                .ifPresent(genData -> {
+                    response.setAvatarImageOriginal(genData.getAvatarImageOriginal());
+                    response.setAvatarPrompt(genData.getAvatarPrompt());
+                });
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping(consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
@@ -110,46 +121,45 @@ public class ProductController {
         productRepository.save(product);
     }
 
-    @PutMapping("/{id}/avatar")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> updateAvatar(@PathVariable Long id, @RequestBody byte[] avatarData) {
-        Optional<ProductDAO> productOpt = productRepository.findById(id);
-        if (productOpt.isPresent()) {
-            ProductDAO product = productOpt.get();
-            product.setAvatarImage(avatarData);
-            productRepository.save(product);
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-    }
 
     @PutMapping("/{id}/avatar/full")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
+        // Verify product exists
         Optional<ProductDAO> productOpt = productRepository.findById(id);
-        if (productOpt.isPresent()) {
-            ProductDAO product = productOpt.get();
-
-            // Decode and set resized avatar if provided
-            if (request.getAvatarImage() != null && request.getAvatarImage().length != 0) {
-                product.setAvatarImage(request.getAvatarImage());
-            }
-
-            // Decode and set original avatar if provided
-            if (request.getAvatarImageOriginal() != null && request.getAvatarImageOriginal().length != 0) {
-                product.setAvatarImageOriginal(request.getAvatarImageOriginal());
-            }
-
-            // Set prompt if provided
-            if (request.getAvatarPrompt() != null) {
-                product.setAvatarPrompt(request.getAvatarPrompt());
-            }
-
-            productRepository.save(product);
-            return ResponseEntity.ok().build();
-        } else {
+        if (productOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
+
+        // Update or create avatar image
+        if (request.getAvatarImage() != null && request.getAvatarImage().length != 0) {
+            ProductAvatarDAO avatar = productAvatarRepository.findByProductId(id)
+                    .orElse(new ProductAvatarDAO());
+            avatar.setProductId(id);
+            avatar.setAvatarImage(request.getAvatarImage());
+            productAvatarRepository.save(avatar);
+        }
+
+        // Update or create generation data
+        if (request.getAvatarImageOriginal() != null || request.getAvatarPrompt() != null) {
+            ProductAvatarGenerationDataDAO genData = productAvatarGenerationDataRepository.findByProductId(id)
+                    .orElse(new ProductAvatarGenerationDataDAO());
+            genData.setProductId(id);
+
+            if (request.getAvatarImageOriginal() != null && request.getAvatarImageOriginal().length != 0) {
+                genData.setAvatarImageOriginal(request.getAvatarImageOriginal());
+            }
+
+            if (request.getAvatarPrompt() != null) {
+                genData.setAvatarPrompt(request.getAvatarPrompt());
+            }
+
+            productAvatarGenerationDataRepository.save(genData);
+        }
+
+
+        log.info("ProductController.updateAvatarFull: Updated avatar for productId {}", id);
+        return ResponseEntity.ok().build();
     }
 }

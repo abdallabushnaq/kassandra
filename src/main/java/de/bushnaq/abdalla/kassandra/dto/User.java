@@ -103,6 +103,28 @@ public class User extends AbstractTimeAware implements Comparable<User> {
         return url;
     }
 
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This provides a consistent prompt format for user avatars.
+     *
+     * @return A default prompt string for generating user avatar images
+     */
+    @JsonIgnore
+    public String getDefaultAvatarPrompt() {
+        return getDefaultAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This static method provides a consistent prompt format for user avatars.
+     *
+     * @param userName The name of the user
+     * @return A default prompt string for generating user avatar images
+     */
+    public static String getDefaultAvatarPrompt(String userName) {
+        return "Professional avatar portrait of " + userName + ", business style, 3D, neutral background";
+    }
+
     @JsonIgnore
     public String getKey() {
         return "U-" + id;

@@ -19,31 +19,28 @@ package de.bushnaq.abdalla.kassandra.dao;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Proxy;
 
 @Entity
-@Table(name = "products")
+@Table(name = "product_avatars")
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
-public class ProductDAO extends AbstractTimeAwareDAO {
+public class ProductAvatarDAO extends AbstractTimeAwareDAO {
 
-    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private ProductAvatarDAO               avatar;
-    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private ProductAvatarGenerationDataDAO avatarGenerationData;
-    @Column(name = "avatar_hash", length = 16)
-    private String                         avatarHash;
+    @Lob
+    @Column(name = "avatar_image")
+    private byte[]     avatarImage;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long                           id;
-    @Column(nullable = false, unique = true)
-    private String                         name;
-
+    private Long       id;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", insertable = false, updatable = false)
+    private ProductDAO product;
+    @Column(name = "product_id", unique = true, nullable = false)
+    private Long       productId;
 }
+

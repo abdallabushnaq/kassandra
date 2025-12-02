@@ -18,13 +18,18 @@
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import de.bushnaq.abdalla.kassandra.dao.UserAvatarDAO;
+import de.bushnaq.abdalla.kassandra.dao.UserAvatarGenerationDataDAO;
 import de.bushnaq.abdalla.kassandra.dao.UserDAO;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
 import de.bushnaq.abdalla.kassandra.repository.LocationRepository;
+import de.bushnaq.abdalla.kassandra.repository.UserAvatarGenerationDataRepository;
+import de.bushnaq.abdalla.kassandra.repository.UserAvatarRepository;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import de.bushnaq.abdalla.kassandra.rest.debug.DebugUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,11 +52,13 @@ public class UserController {
     EntityManager entityManager;
 
     @Autowired
-    private LocationRepository locationRepository;
-
+    private LocationRepository                 locationRepository;
     @Autowired
-    private UserRepository userRepository;
-
+    private UserAvatarGenerationDataRepository userAvatarGenerationDataRepository;
+    @Autowired
+    private UserAvatarRepository               userAvatarRepository;
+    @Autowired
+    private UserRepository                     userRepository;
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -82,35 +89,33 @@ public class UserController {
     @GetMapping("/{id}/avatar")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable Long id) {
-        Optional<UserDAO> userOpt = userRepository.findById(id);
-        if (userOpt.isPresent()) {
-            UserDAO user = userOpt.get();
-            if (user.getAvatarImage() == null || user.getAvatarImage().length == 0) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-            return ResponseEntity.ok(new AvatarWrapper(user.getAvatarImage()));
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        return userAvatarRepository.findByUserId(id)
+                .map(avatar -> {
+                    if (avatar.getAvatarImage() == null || avatar.getAvatarImage().length == 0) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
+                    }
+                    return ResponseEntity.ok(new AvatarWrapper(avatar.getAvatarImage()));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @GetMapping("/{id}/avatar/full")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable Long id) {
-        Optional<UserDAO> userOpt = userRepository.findById(id);
-        if (userOpt.isPresent()) {
-            UserDAO             user     = userOpt.get();
-            AvatarUpdateRequest response = new AvatarUpdateRequest();
-            // Set resized avatar image (may be null)
-            response.setAvatarImage(user.getAvatarImage());
-            // Set original avatar image as byte[] if present
-            response.setAvatarImageOriginal(user.getAvatarImageOriginal());
-            // Set prompt
-            response.setAvatarPrompt(user.getAvatarPrompt());
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        AvatarUpdateRequest response = new AvatarUpdateRequest();
+
+        // Get avatar image
+        userAvatarRepository.findByUserId(id)
+                .ifPresent(avatar -> response.setAvatarImage(avatar.getAvatarImage()));
+
+        // Get generation data
+        userAvatarGenerationDataRepository.findByUserId(id)
+                .ifPresent(genData -> {
+                    response.setAvatarImageOriginal(genData.getAvatarImageOriginal());
+                    response.setAvatarPrompt(genData.getAvatarPrompt());
+                });
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/email/{email}")
@@ -153,50 +158,45 @@ public class UserController {
         userRepository.save(user);
     }
 
-    @PutMapping("/{id}/avatar")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> updateAvatar(@PathVariable Long id, @RequestBody byte[] avatarData) {
-        Optional<UserDAO> userOpt = userRepository.findById(id);
-        if (userOpt.isPresent()) {
-            UserDAO user = userOpt.get();
-            user.setAvatarImage(avatarData);
-            userRepository.save(user);
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-    }
 
     @PutMapping("/{id}/avatar/full")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
-
+        // Verify user exists
         Optional<UserDAO> userOpt = userRepository.findById(id);
-        if (userOpt.isPresent()) {
-            UserDAO user = userOpt.get();
-
-            // Decode and set resized avatar if provided
-            if (request.getAvatarImage() != null && request.getAvatarImage().length != 0) {
-                user.setAvatarImage(request.getAvatarImage());
-            }
-
-            // Decode and set original avatar if provided
-            if (request.getAvatarImageOriginal() != null && request.getAvatarImageOriginal().length != 0) {
-                user.setAvatarImageOriginal(request.getAvatarImageOriginal());
-            }
-
-            // Set prompt if provided
-            if (request.getAvatarPrompt() != null) {
-                user.setAvatarPrompt(request.getAvatarPrompt());
-            }
-
-            log.error("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-            log.error("UserController.updateAvatarFull: Updating avatar for userId {}", id);
-            log.error("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-            userRepository.save(user);
-            return ResponseEntity.ok().build();
-        } else {
+        if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
+
+        // Update or create avatar image
+        if (request.getAvatarImage() != null && request.getAvatarImage().length != 0) {
+            UserAvatarDAO avatar = userAvatarRepository.findByUserId(id)
+                    .orElse(new UserAvatarDAO());
+            avatar.setUserId(id);
+            avatar.setAvatarImage(request.getAvatarImage());
+            userAvatarRepository.save(avatar);
+        }
+
+        // Update or create generation data
+        if (request.getAvatarImageOriginal() != null || request.getAvatarPrompt() != null) {
+            UserAvatarGenerationDataDAO genData = userAvatarGenerationDataRepository.findByUserId(id)
+                    .orElse(new UserAvatarGenerationDataDAO());
+            genData.setUserId(id);
+
+            if (request.getAvatarImageOriginal() != null && request.getAvatarImageOriginal().length != 0) {
+                genData.setAvatarImageOriginal(request.getAvatarImageOriginal());
+            }
+
+            if (request.getAvatarPrompt() != null) {
+                genData.setAvatarPrompt(request.getAvatarPrompt());
+            }
+
+            userAvatarGenerationDataRepository.save(genData);
+        }
+
+
+        log.info("UserController.updateAvatarFull: Updated avatar for userId {}", id);
+        return ResponseEntity.ok().build();
     }
 }

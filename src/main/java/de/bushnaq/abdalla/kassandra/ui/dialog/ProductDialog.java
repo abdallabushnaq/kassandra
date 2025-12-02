@@ -201,13 +201,13 @@ public class ProductDialog extends Dialog {
         this.generatedImagePrompt        = result.getPrompt();
 
         // Compute hash from the resized image
-        String newHash = AvatarUtil.computeHash(generatedImageBytes);
+//        String newHash = AvatarUtil.computeHash(generatedImageBytes);
 
         // For edit mode: Update hash in product DTO and save avatar to database immediately
-        if (isEditMode && product != null) {
-            product.setAvatarHash(newHash);
-            productApi.updateAvatarFull(product.getId(), generatedImageBytes, generatedImageBytesOriginal, generatedImagePrompt);
-        }
+//        if (isEditMode && product != null) {
+//            product.setAvatarHash(newHash);
+//            productApi.updateAvatarFull(product.getId(), generatedImageBytes, generatedImageBytesOriginal, generatedImagePrompt);
+//        }
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -235,7 +235,7 @@ public class ProductDialog extends Dialog {
         if (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarPrompt() != null && !avatarUpdateRequest.getAvatarPrompt().isEmpty()) {
             defaultPrompt = avatarUpdateRequest.getAvatarPrompt();
         } else {
-            defaultPrompt = "Icon representing the product " + nameField.getValue() + ", minimalist, 3D design, white background";
+            defaultPrompt = Product.getDefaultAvatarPrompt(nameField.getValue());
         }
 
         byte[] initialImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
@@ -268,24 +268,23 @@ public class ProductDialog extends Dialog {
         byte[] avatarImageOriginal = generatedImageBytesOriginal;
         String avatarPrompt        = generatedImagePrompt;
 
+        String newHash = AvatarUtil.computeHash(avatarImage);
+        productToSave.setAvatarHash(newHash);
         try {
             if (isEditMode) {
                 // Edit mode
                 productApi.update(productToSave);
 
-                // Avatar was already saved immediately in handleGeneratedImage(), no need to save again
+                if (avatarImage != null && avatarImageOriginal != null) {
+                    productApi.updateAvatarFull(productToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
+                }
 
                 Notification.show("Product updated", 3000, Notification.Position.BOTTOM_START);
             } else {
                 // Create mode
                 Product createdProduct = productApi.persist(productToSave);
 
-                // Update avatar separately if provided (for create mode, we save it here since product didn't exist before)
                 if (avatarImage != null && avatarImageOriginal != null && createdProduct != null) {
-                    // Compute and set hash before saving
-                    String newHash = AvatarUtil.computeHash(avatarImage);
-                    productToSave.setAvatarHash(newHash);
-
                     productApi.updateAvatarFull(createdProduct.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
                 }
 
