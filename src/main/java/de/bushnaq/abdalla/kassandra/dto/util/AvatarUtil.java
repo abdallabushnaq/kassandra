@@ -30,12 +30,15 @@ public class AvatarUtil {
     }
 
     /**
-     * Compute SHA-256 hash of the given data.
+     * Compute hash of the given data for cache-busting.
+     * Uses first 16 characters of SHA-256 hash - provides excellent collision resistance
+     * while keeping URLs reasonably short.
+     * <p>
      * The hash is used for cache-busting in avatar URLs - when the image changes, the hash changes,
      * forcing the browser to fetch the new image instead of using a cached version.
      *
      * @param data The data to hash (typically the avatar image bytes)
-     * @return Hexadecimal string representation of the SHA-256 hash
+     * @return Hexadecimal string representation of the hash (16 characters)
      * @throws RuntimeException if SHA-256 algorithm is not available
      */
     public static String computeHash(byte[] data) {
@@ -43,8 +46,9 @@ public class AvatarUtil {
             MessageDigest digest    = MessageDigest.getInstance("SHA-256");
             byte[]        hashBytes = digest.digest(data);
             StringBuilder hexString = new StringBuilder();
-            for (byte b : hashBytes) {
-                String hex = Integer.toHexString(0xff & b);
+            // Only use first 8 bytes (16 hex characters) - more than enough for cache-busting
+            for (int i = 0; i < 8 && i < hashBytes.length; i++) {
+                String hex = Integer.toHexString(0xff & hashBytes[i]);
                 if (hex.length() == 1) {
                     hexString.append('0');
                 }

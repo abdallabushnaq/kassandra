@@ -31,7 +31,7 @@ import org.hibernate.annotations.Proxy;
 @Proxy(lazy = false)
 public class ProductDAO extends AbstractTimeAwareDAO {
 
-    @Column(name = "avatar_hash", length = 64)
+    @Column(name = "avatar_hash", length = 16)
     private String avatarHash;
     @Lob
     @Column(name = "avatar_image")
