@@ -31,6 +31,7 @@ import java.util.Objects;
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Feature extends AbstractTimeAware implements Comparable<Feature> {
+    private String avatarHash;
     private Long   id;
     private String name;
 
@@ -52,6 +53,43 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
     @Override
     public int compareTo(Feature other) {
         return this.id.compareTo(other.id);
+    }
+
+    /**
+     * Get the avatar URL with hash parameter for proper caching.
+     * The hash ensures that when the avatar changes, the URL changes, forcing the browser to fetch the new image.
+     *
+     * @return The avatar URL with hash parameter if hash is available, otherwise just the base URL
+     */
+    @JsonIgnore
+    public String getAvatarUrl() {
+        String url = "/frontend/avatar-proxy/feature/" + id;
+        if (avatarHash != null && !avatarHash.isEmpty()) {
+            url += "?h=" + avatarHash;
+        }
+        return url;
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This provides a consistent prompt format for feature avatars.
+     *
+     * @return A default prompt string for generating feature avatar images
+     */
+    @JsonIgnore
+    public String getDefaultAvatarPrompt() {
+        return getDefaultAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This static method provides a consistent prompt format for feature avatars.
+     *
+     * @param featureName The name of the feature
+     * @return A default prompt string for generating feature avatar images
+     */
+    public static String getDefaultAvatarPrompt(String featureName) {
+        return "Icon representing the feature " + featureName + ", minimalist, 3D design, white background";
     }
 
     @JsonIgnore

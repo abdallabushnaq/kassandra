@@ -17,9 +17,17 @@
 
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
+import de.bushnaq.abdalla.kassandra.dao.FeatureAvatarDAO;
+import de.bushnaq.abdalla.kassandra.dao.FeatureAvatarGenerationDataDAO;
 import de.bushnaq.abdalla.kassandra.dao.FeatureDAO;
+import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
+import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
+import de.bushnaq.abdalla.kassandra.repository.FeatureAvatarGenerationDataRepository;
+import de.bushnaq.abdalla.kassandra.repository.FeatureAvatarRepository;
 import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,15 +36,21 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/feature")
+@Slf4j
 public class FeatureController {
 
     @Autowired
-    private FeatureRepository featureRepository;
+    private FeatureAvatarGenerationDataRepository featureAvatarGenerationDataRepository;
     @Autowired
-    private VersionRepository versionRepository;
+    private FeatureAvatarRepository               featureAvatarRepository;
+    @Autowired
+    private FeatureRepository                     featureRepository;
+    @Autowired
+    private VersionRepository                     versionRepository;
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -62,6 +76,38 @@ public class FeatureController {
         return featureRepository.findAll();
     }
 
+    @GetMapping("/{id}/avatar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable Long id) {
+        return featureAvatarRepository.findByFeatureId(id)
+                .map(avatar -> {
+                    if (avatar.getAvatarImage() == null || avatar.getAvatarImage().length == 0) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
+                    }
+                    return ResponseEntity.ok(new AvatarWrapper(avatar.getAvatarImage()));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
+    @GetMapping("/{id}/avatar/full")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable Long id) {
+        AvatarUpdateRequest response = new AvatarUpdateRequest();
+
+        // Get avatar image
+        featureAvatarRepository.findByFeatureId(id)
+                .ifPresent(avatar -> response.setAvatarImage(avatar.getAvatarImage()));
+
+        // Get generation data
+        featureAvatarGenerationDataRepository.findByFeatureId(id)
+                .ifPresent(genData -> {
+                    response.setAvatarImageOriginal(genData.getAvatarImageOriginal());
+                    response.setAvatarPrompt(genData.getAvatarPrompt());
+                });
+
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping()
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FeatureDAO> save(@RequestBody FeatureDAO feature) {
@@ -84,5 +130,45 @@ public class FeatureController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Another feature with name '" + feature.getName() + "' already exists for this version");
         }
         return featureRepository.save(feature);
+    }
+
+    @PutMapping("/{id}/avatar/full")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
+        // Verify feature exists
+        Optional<FeatureDAO> featureOpt = featureRepository.findById(id);
+        if (featureOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        // Update or create avatar image
+        if (request.getAvatarImage() != null && request.getAvatarImage().length != 0) {
+            FeatureAvatarDAO avatar = featureAvatarRepository.findByFeatureId(id)
+                    .orElse(new FeatureAvatarDAO());
+            avatar.setFeatureId(id);
+            avatar.setAvatarImage(request.getAvatarImage());
+            featureAvatarRepository.save(avatar);
+        }
+
+        // Update or create generation data
+        if (request.getAvatarImageOriginal() != null || request.getAvatarPrompt() != null) {
+            FeatureAvatarGenerationDataDAO genData = featureAvatarGenerationDataRepository.findByFeatureId(id)
+                    .orElse(new FeatureAvatarGenerationDataDAO());
+            genData.setFeatureId(id);
+
+            if (request.getAvatarImageOriginal() != null && request.getAvatarImageOriginal().length != 0) {
+                genData.setAvatarImageOriginal(request.getAvatarImageOriginal());
+            }
+
+            if (request.getAvatarPrompt() != null) {
+                genData.setAvatarPrompt(request.getAvatarPrompt());
+            }
+
+            featureAvatarGenerationDataRepository.save(genData);
+        }
+
+        log.info("FeatureController.updateAvatarFull: Updated avatar for featureId {}", id);
+        return ResponseEntity.ok().build();
     }
 }

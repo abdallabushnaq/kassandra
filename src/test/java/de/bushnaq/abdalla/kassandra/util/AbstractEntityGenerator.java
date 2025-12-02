@@ -111,7 +111,27 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         feature.setVersionId(version.getId());
         feature.setCreated(ParameterOptions.getNow());
         feature.setUpdated(ParameterOptions.getNow());
-        Feature saved = featureApi.persist(feature);
+//        Feature saved = featureApi.persist(feature);
+
+        Feature saved = null;
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            try {
+                String prompt = Feature.getDefaultAvatarPrompt(name);
+                System.out.println("Generating image for feature: " + name + " with prompt: " + prompt);
+                long                 startTime = System.currentTimeMillis();
+                GeneratedImageResult image     = stableDiffusionService.generateImageWithOriginal(prompt);
+                feature.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+                saved = featureApi.persist(feature);
+                featureApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
+                System.out.println("Generated image for feature: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            } catch (StableDiffusionException e) {
+                System.err.println("Failed to generate image for feature " + name + ": " + e.getMessage());
+                // Continue without image
+            }
+        } else {
+            saved = featureApi.persist(feature);
+        }
+
         expectedFeatures.add(saved);
 
         version.addFeature(saved);

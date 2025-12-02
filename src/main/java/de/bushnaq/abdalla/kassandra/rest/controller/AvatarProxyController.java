@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
+import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import lombok.extern.slf4j.Slf4j;
@@ -34,13 +35,27 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/frontend/avatar-proxy")
 @Slf4j
 public class AvatarProxyController {
+    private final FeatureApi featureApi;
     private final ProductApi productApi;
     private final UserApi    userApi;
 
     @Autowired
-    public AvatarProxyController(ProductApi productApi, UserApi userApi) {
+    public AvatarProxyController(FeatureApi featureApi, ProductApi productApi, UserApi userApi) {
+        this.featureApi = featureApi;
         this.productApi = productApi;
         this.userApi    = userApi;
+    }
+
+    @GetMapping("/feature/{featureId}")
+    public ResponseEntity<byte[]> proxyFeatureAvatar(@PathVariable("featureId") Long featureId) {
+        AvatarWrapper avatarImage = featureApi.getAvatarImage(featureId);
+        if (avatarImage == null || avatarImage.getAvatar() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+        headers.setCacheControl("public, max-age=31536000, immutable"); // Cache for 1 year - hash in URL handles versioning
+        return ResponseEntity.ok().headers(headers).body(avatarImage.getAvatar());
     }
 
     @GetMapping("/product/{productId}")

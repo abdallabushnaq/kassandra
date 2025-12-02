@@ -18,6 +18,8 @@
 package de.bushnaq.abdalla.kassandra.rest.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
+import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -75,6 +77,48 @@ public class FeatureApi extends AbstractApi {
         return Arrays.asList(response.getBody());
     }
 
+    /**
+     * Get all avatar info (resized, original, and prompt) for a feature.
+     *
+     * @param featureId The feature ID
+     * @return AvatarUpdateRequest containing avatarImage, avatarImageOriginal, and avatarPrompt, or null if not found
+     */
+    public AvatarUpdateRequest getAvatarFull(Long featureId) {
+        try {
+            ResponseEntity<AvatarUpdateRequest> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/feature/{id}/avatar/full",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    AvatarUpdateRequest.class,
+                    featureId
+            ));
+            return response.getBody();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get avatar image bytes for a feature.
+     *
+     * @param featureId The feature ID
+     * @return The avatar image as byte array, or null if not found
+     */
+    public AvatarWrapper getAvatarImage(Long featureId) {
+        try {
+            ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/feature/{id}/avatar",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    AvatarWrapper.class,
+                    featureId
+            ));
+            return response.getBody();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public Feature getById(Long id) {
         ResponseEntity<Feature> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/feature/{id}",
@@ -102,6 +146,36 @@ public class FeatureApi extends AbstractApi {
                 HttpMethod.PUT,
                 createHttpEntity(feature),
                 Void.class
+        ));
+    }
+
+    /**
+     * Update feature avatar with all fields (resized, original, and prompt).
+     *
+     * @param featureId     The feature ID
+     * @param resizedImage  The resized avatar image bytes (e.g., 64x64)
+     * @param originalImage The original avatar image bytes (e.g., 512x512)
+     * @param prompt        The prompt used to generate the avatar
+     */
+    public void updateAvatarFull(Long featureId, byte[] resizedImage, byte[] originalImage, String prompt) {
+        AvatarUpdateRequest request = new AvatarUpdateRequest();
+
+        if (resizedImage != null) {
+            request.setAvatarImage(resizedImage);
+        }
+
+        if (originalImage != null) {
+            request.setAvatarImageOriginal(originalImage);
+        }
+
+        request.setAvatarPrompt(prompt);
+
+        executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/feature/{id}/avatar/full",
+                HttpMethod.PUT,
+                createHttpEntity(request),
+                Void.class,
+                featureId
         ));
     }
 }

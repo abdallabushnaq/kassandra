@@ -26,6 +26,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.Version;
@@ -39,8 +40,6 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.FeatureDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -53,25 +52,27 @@ import java.util.Map;
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Restrict access to users with specific roles
 public class FeatureListView extends AbstractMainGrid<Feature> implements AfterNavigationObserver {
-    public static final String     CREATE_FEATURE_BUTTON_ID          = "create-feature-button";
-    public static final String     FEATURE_GLOBAL_FILTER             = "feature-global-filter";
-    public static final String     FEATURE_GRID                      = "feature-grid";
-    public static final String     FEATURE_GRID_DELETE_BUTTON_PREFIX = "feature-grid-delete-button-prefix-";
-    public static final String     FEATURE_GRID_EDIT_BUTTON_PREFIX   = "feature-grid-edit-button-prefix-";
-    public static final String     FEATURE_GRID_NAME_PREFIX          = "feature-grid-name-";
-    public static final String     FEATURE_LIST_PAGE_TITLE           = "feature-list-page-title";
-    public static final String     FEATURE_ROW_COUNTER               = "feature-row-counter";
-    private final       FeatureApi featureApi;
-    private final       ProductApi productApi;
-    private             Long       productId;
-    private final       VersionApi versionApi;
-    private             Long       versionId;
+    public static final String                 CREATE_FEATURE_BUTTON_ID          = "create-feature-button";
+    public static final String                 FEATURE_GLOBAL_FILTER             = "feature-global-filter";
+    public static final String                 FEATURE_GRID                      = "feature-grid";
+    public static final String                 FEATURE_GRID_DELETE_BUTTON_PREFIX = "feature-grid-delete-button-prefix-";
+    public static final String                 FEATURE_GRID_EDIT_BUTTON_PREFIX   = "feature-grid-edit-button-prefix-";
+    public static final String                 FEATURE_GRID_NAME_PREFIX          = "feature-grid-name-";
+    public static final String                 FEATURE_LIST_PAGE_TITLE           = "feature-list-page-title";
+    public static final String                 FEATURE_ROW_COUNTER               = "feature-row-counter";
+    private final       FeatureApi             featureApi;
+    private final       ProductApi             productApi;
+    private             Long                   productId;
+    private final       StableDiffusionService stableDiffusionService;
+    private final       VersionApi             versionApi;
+    private             Long                   versionId;
 
-    public FeatureListView(FeatureApi featureApi, ProductApi productApi, VersionApi versionApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper) {
+    public FeatureListView(FeatureApi featureApi, ProductApi productApi, VersionApi versionApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper, StableDiffusionService stableDiffusionService) {
         super(clock);
-        this.featureApi = featureApi;
-        this.productApi = productApi;
-        this.versionApi = versionApi;
+        this.featureApi             = featureApi;
+        this.productApi             = productApi;
+        this.versionApi             = versionApi;
+        this.stableDiffusionService = stableDiffusionService;
 
         add(
                 createSmartHeader(
@@ -164,6 +165,29 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
             VaadinUtil.addSimpleHeader(keyColumn, "Key", VaadinIcon.KEY);
         }
         {
+            // Add avatar image column
+            Grid.Column<Feature> avatarColumn = getGrid().addColumn(new ComponentRenderer<>(feature -> {
+                // Feature has a custom image - use URL-based loading
+                com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
+                avatar.setWidth("24px");
+                avatar.setHeight("24px");
+                avatar.getStyle()
+                        .set("border-radius", "var(--lumo-border-radius)")
+                        .set("object-fit", "cover")
+                        .set("display", "block")
+                        .set("margin", "0")
+                        .set("padding", "0");
+
+                // Use hash-based URL for proper caching
+                avatar.setSrc(feature.getAvatarUrl());
+                avatar.setAlt(feature.getName());
+                return avatar;
+            }));
+            avatarColumn.setWidth("48px");
+            avatarColumn.setFlexGrow(0);
+            avatarColumn.setHeader("");
+        }
+        {
             // Add name column with filtering and sorting
             Grid.Column<Feature> nameColumn = getGrid().addColumn(new ComponentRenderer<>(feature -> {
                 Div div = new Div();
@@ -200,39 +224,30 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     }
 
     private void openFeatureDialog(Feature feature) {
-        FeatureDialog dialog = new FeatureDialog(feature, (savedFeature, featureDialog) -> {
-            try {
-                if (savedFeature.getId() == null) {
-                    savedFeature.setVersionId(versionId);
-                    featureApi.persist(savedFeature);
-                    Notification.show("Feature created", 3000, Notification.Position.BOTTOM_START);
-                    featureDialog.close();
-                } else {
-                    featureApi.update(savedFeature);
-                    Notification.show("Feature updated", 3000, Notification.Position.BOTTOM_START);
-                    featureDialog.close();
-                }
+        FeatureDialog dialog = new FeatureDialog(feature, stableDiffusionService, featureApi, versionId);
+        dialog.addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                // Dialog was closed, refresh the grid
                 refreshGrid();
-            } catch (ResponseStatusException ex) {
-                if (ex.getStatusCode() == HttpStatus.CONFLICT) {
-                    // This is a name uniqueness violation
-                    featureDialog.setErrorMessage("A feature with this name already exists");
-                } else {
-                    // Some other error
-                    Notification.show("Error: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
-                    featureDialog.close();
-                }
-            } catch (Exception ex) {
-                Notification.show("Unexpected error: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
-                featureDialog.close();
             }
         });
         dialog.open();
     }
 
     private void refreshGrid() {
+        // Clear existing items
         getDataProvider().getItems().clear();
+
+        // Fetch fresh data from API (with updated hashes)
         getDataProvider().getItems().addAll((versionId != null) ? featureApi.getAll(versionId) : featureApi.getAll());
+
+        // Force complete refresh of the grid
         getDataProvider().refreshAll();
+
+        // Force the grid to re-render
+        getGrid().getDataProvider().refreshAll();
+
+        // Push UI updates if in push mode
+        getUI().ifPresent(ui -> ui.push());
     }
 }
