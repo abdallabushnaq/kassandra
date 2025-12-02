@@ -31,6 +31,8 @@ import org.hibernate.annotations.Proxy;
 @Proxy(lazy = false)
 public class ProductDAO extends AbstractTimeAwareDAO {
 
+    @Column(name = "avatar_hash", length = 64)
+    private String avatarHash;
     @Lob
     @Column(name = "avatar_image")
     @com.fasterxml.jackson.annotation.JsonIgnore
@@ -40,6 +42,7 @@ public class ProductDAO extends AbstractTimeAwareDAO {
     @com.fasterxml.jackson.annotation.JsonIgnore
     private byte[] avatarImageOriginal;
     @Column(name = "avatar_prompt", length = 1000)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String avatarPrompt;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

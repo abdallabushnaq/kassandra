@@ -221,7 +221,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
 //            resource.setContentType("image/png");
 //            resource.setCacheTime(0);
 //            headerAvatarImage.setSrc(resource);
-            headerAvatarImage.setSrc("/frontend/avatar-proxy/user/" + currentUser.getId());
+            headerAvatarImage.setSrc(currentUser.getAvatarUrl());
             titleIcon = headerAvatarImage;
         }
 //        else {
@@ -259,8 +259,8 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             nameFieldAvatarImage.getStyle()
                     .set("border-radius", "4px")
                     .set("object-fit", "cover");
-            // Use REST API endpoint for avatar - enables browser caching
-            nameFieldAvatarImage.setSrc("/frontend/avatar-proxy/user/" + currentUser.getId());
+            // Use REST API endpoint for avatar with hash-based caching
+            nameFieldAvatarImage.setSrc(currentUser.getAvatarUrl());
             nameField.setPrefixComponent(nameFieldAvatarImage);
         }
 //        else {

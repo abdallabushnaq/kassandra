@@ -279,8 +279,8 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
                     .set("border-radius", "4px")
                     .set("object-fit", "cover");
 
-            // Use REST API endpoint for avatar - enables browser caching
-            avatarImage.setSrc("/frontend/avatar-proxy/user/" + user.getId());
+            // Use REST API endpoint for avatar with hash-based caching
+            avatarImage.setSrc(user.getAvatarUrl());
             avatarComponent = avatarImage;
         } else {
             // Use default avatar

@@ -38,11 +38,7 @@ import java.util.Objects;
         property = "id")
 public class Product extends AbstractTimeAware implements Comparable<Product> {
 
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private byte[]        avatarImage;
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private byte[]        avatarImageOriginal;
-    private String        avatarPrompt;
+    private String        avatarHash;
     private Long          id;
     private String        name;
     @JsonIgnore
@@ -57,6 +53,21 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
     @Override
     public int compareTo(Product other) {
         return this.id.compareTo(other.id);
+    }
+
+    /**
+     * Get the avatar URL with hash parameter for proper caching.
+     * The hash ensures that when the avatar changes, the URL changes, forcing the browser to fetch the new image.
+     *
+     * @return The avatar URL with hash parameter if hash is available, otherwise just the base URL
+     */
+    @JsonIgnore
+    public String getAvatarUrl() {
+        String url = "/frontend/avatar-proxy/product/" + id;
+        if (avatarHash != null && !avatarHash.isEmpty()) {
+            url += "?h=" + avatarHash;
+        }
+        return url;
     }
 
     @JsonIgnore

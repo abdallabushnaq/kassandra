@@ -27,10 +27,12 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import org.springframework.http.HttpStatus;
@@ -58,7 +60,7 @@ public class ProductDialog extends Dialog {
     private final       Image                  headerIcon;
     private final       boolean                isEditMode;
     private final       TextField              nameField;
-    private final       Icon                   nameFieldIcon;
+    private final       Image                  nameFieldImage;
     private final       Product                product;
     private final       ProductApi             productApi;
     private final       StableDiffusionService stableDiffusionService;
@@ -77,22 +79,26 @@ public class ProductDialog extends Dialog {
         isEditMode                  = product != null;
 
         // Only fetch avatar if editing an existing product
-        this.avatarUpdateRequest = productApi.getAvatarFull(product.getId());
-
+        if (product != null)
+            this.avatarUpdateRequest = productApi.getAvatarFull(product.getId());
+        else
+            this.avatarUpdateRequest = null;
         setId(PRODUCT_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);
         String title = isEditMode ? "Edit Product" : "Create Product";
 
         // Create header icon using avatar proxy endpoint
-        Image headerAvatar = new Image();
-        headerAvatar.setWidth("24px");
-        headerAvatar.setHeight("24px");
-        headerAvatar.getStyle()
+        headerIcon = new Image();
+        headerIcon.setWidth("24px");
+        headerIcon.setHeight("24px");
+        headerIcon.getStyle()
                 .set("border-radius", "4px")
                 .set("object-fit", "cover");
-        headerAvatar.setSrc("/frontend/avatar-proxy/product/" + product.getId());
-        getHeader().add(VaadinUtil.createDialogHeader(title, headerAvatar));
-        headerIcon = headerAvatar;
+        if (isEditMode) {
+            headerIcon.setSrc(product.getAvatarUrl());
+        }
+        // For create mode, leave image src empty
+        getHeader().add(VaadinUtil.createDialogHeader(title, headerIcon));
 
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);
@@ -106,18 +112,20 @@ public class ProductDialog extends Dialog {
         nameField.setHelperText("Product name must be unique");
 
         // Create name field prefix icon using avatar proxy endpoint
-        Image nameFieldImage = new Image();
+        nameFieldImage = new Image();
         nameFieldImage.setWidth("20px");
         nameFieldImage.setHeight("20px");
         nameFieldImage.getStyle()
                 .set("border-radius", "4px")
                 .set("object-fit", "cover");
-        nameFieldImage.setSrc("/frontend/avatar-proxy/product/" + product.getId());
+        if (isEditMode) {
+            nameFieldImage.setSrc(product.getAvatarUrl());
+        }
+        // For create mode, leave image src empty
         nameField.setPrefixComponent(nameFieldImage);
-        nameFieldIcon = null;
 
         // Set to eager mode so value changes fire on every keystroke
-        nameField.setValueChangeMode(com.vaadin.flow.data.value.ValueChangeMode.EAGER);
+        nameField.setValueChangeMode(ValueChangeMode.EAGER);
 
         if (isEditMode) {
             nameField.setValue(product.getName());
@@ -192,12 +200,27 @@ public class ProductDialog extends Dialog {
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();
 
+        // Compute hash from the resized image
+        String newHash = AvatarUtil.computeHash(generatedImageBytes);
+
+        // For edit mode: Update hash in product DTO and save avatar to database immediately
+        if (isEditMode && product != null) {
+            product.setAvatarHash(newHash);
+            productApi.updateAvatarFull(product.getId(), generatedImageBytes, generatedImageBytesOriginal, generatedImagePrompt);
+        }
+
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
-            // Show preview using resized image
-            StreamResource resource = new StreamResource("product-avatar-" + System.currentTimeMillis() + ".png", () -> new ByteArrayInputStream(result.getResizedImage()));
+            // Create StreamResource for the generated image
+            StreamResource resource = new StreamResource("product-avatar.png", () -> new ByteArrayInputStream(result.getResizedImage()));
+
+            // Show preview
             avatarPreview.setSrc(resource);
             avatarPreview.setVisible(true);
+
+            // Update header icon and name field icon with StreamResource (works for both create and edit mode)
+            headerIcon.setSrc(resource);
+            nameFieldImage.setSrc(resource);
 
             Notification.show("Image set successfully", 3000, Notification.Position.BOTTOM_END);
 
@@ -207,9 +230,13 @@ public class ProductDialog extends Dialog {
     }
 
     private void openImagePromptDialog() {
-        String defaultPrompt = nameField.getValue().isEmpty()
-                ? "Modern tech product icon, minimalist, flat design"
-                : "Icon representing " + nameField.getValue() + ", minimalist, flat design";
+        // Use stored prompt if available, otherwise generate default prompt
+        String defaultPrompt;
+        if (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarPrompt() != null && !avatarUpdateRequest.getAvatarPrompt().isEmpty()) {
+            defaultPrompt = avatarUpdateRequest.getAvatarPrompt();
+        } else {
+            defaultPrompt = "Icon representing the product " + nameField.getValue() + ", minimalist, 3D design, white background";
+        }
 
         byte[] initialImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
@@ -246,18 +273,19 @@ public class ProductDialog extends Dialog {
                 // Edit mode
                 productApi.update(productToSave);
 
-                // Update avatar separately if provided
-                if (avatarImage != null && avatarImageOriginal != null) {
-                    productApi.updateAvatarFull(productToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
-                }
+                // Avatar was already saved immediately in handleGeneratedImage(), no need to save again
 
                 Notification.show("Product updated", 3000, Notification.Position.BOTTOM_START);
             } else {
                 // Create mode
                 Product createdProduct = productApi.persist(productToSave);
 
-                // Update avatar separately if provided
+                // Update avatar separately if provided (for create mode, we save it here since product didn't exist before)
                 if (avatarImage != null && avatarImageOriginal != null && createdProduct != null) {
+                    // Compute and set hash before saving
+                    String newHash = AvatarUtil.computeHash(avatarImage);
+                    productToSave.setAvatarHash(newHash);
+
                     productApi.updateAvatarFull(createdProduct.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
                 }
 

@@ -127,8 +127,8 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
                             .set("margin", "0")
                             .set("padding", "0");
 
-                    // Use REST API endpoint for avatar - enables browser caching
-                    avatar.setSrc("/frontend/avatar-proxy/user/" + user.getId());
+                    // Use hash-based URL for proper caching
+                    avatar.setSrc(user.getAvatarUrl());
                     avatar.setAlt(user.getName());
                     return avatar;
                 }
@@ -237,7 +237,7 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
         // Clear existing items
         getDataProvider().getItems().clear();
 
-        // Fetch fresh data from API
+        // Fetch fresh data from API (with updated hashes)
         getDataProvider().getItems().addAll(userApi.getAll());
 
         // Force complete refresh of the grid

@@ -43,6 +43,8 @@ public class UserDAO extends AbstractTimeAwareDAO {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<AvailabilityDAO> availabilities = new ArrayList<>();
+    @Column(name = "avatar_hash", length = 64)
+    private String                avatarHash;
     @Lob
     @Column(name = "avatar_image")
     @JsonIgnore

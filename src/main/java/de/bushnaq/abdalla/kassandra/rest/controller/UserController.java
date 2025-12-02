@@ -52,6 +52,7 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {

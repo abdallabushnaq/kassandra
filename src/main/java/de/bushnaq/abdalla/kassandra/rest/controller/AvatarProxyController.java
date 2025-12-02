@@ -46,18 +46,12 @@ public class AvatarProxyController {
     @GetMapping("/product/{productId}")
     public ResponseEntity<byte[]> proxyProductAvatar(@PathVariable("productId") Long productId) {
         AvatarWrapper avatarImage = productApi.getAvatarImage(productId);
-        if (avatarImage == null) {
-//            log.error("--------------------------------------------------------------------------------------------");
-//            log.error("AvatarProxyController.proxyProductAvatar: No avatarImage found for productId {}", productId);
-//            log.error("--------------------------------------------------------------------------------------------");
+        if (avatarImage == null || avatarImage.getAvatar() == null) {
             return ResponseEntity.notFound().build();
         }
-//        log.error("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-//        log.error("AvatarProxyController.proxyProductAvatar: Image found for productId {}", productId);
-//        log.error("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        // You may want to detect the avatarImage type dynamically. Here, we default to PNG.
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.IMAGE_PNG);
+        headers.setCacheControl("public, max-age=31536000, immutable"); // Cache for 1 year - hash in URL handles versioning
         return ResponseEntity.ok().headers(headers).body(avatarImage.getAvatar());
     }
 
@@ -65,17 +59,12 @@ public class AvatarProxyController {
     @GetMapping("/user/{userId}")
     public ResponseEntity<byte[]> proxyUserAvatar(@PathVariable("userId") Long userId) {
         AvatarWrapper avatarImage = userApi.getAvatarImage(userId);
-        if (avatarImage == null) {
-//            log.error("--------------------------------------------------------------------------------------------");
-//            log.error("AvatarProxyController.proxyUserAvatar: No avatarImage found for userId {}", userId);
-//            log.error("--------------------------------------------------------------------------------------------");
+        if (avatarImage == null || avatarImage.getAvatar() == null) {
             return ResponseEntity.notFound().build();
         }
-//        log.error("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-//        log.error("AvatarProxyController.proxyUserAvatar: Image found for userId {}", userId);
-//        log.error("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.IMAGE_PNG);
+        headers.setCacheControl("public, max-age=31536000, immutable"); // Cache for 1 year - hash in URL handles versioning
         return ResponseEntity.ok().headers(headers).body(avatarImage.getAvatar());
     }
 }

@@ -93,7 +93,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         // --- Create header with avatar and name ---
                         com.vaadin.flow.component.Component newHeader;
                         final String                        HEADER_ID = "version-list-header";
-                        if (product.getAvatarPrompt() != null && !product.getAvatarPrompt().isEmpty()) {
+                        if (product.getAvatarHash() != null && !product.getAvatarHash().isEmpty()) {
                             com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
                             avatar.setWidth("32px");
                             avatar.setHeight("32px");
@@ -102,8 +102,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                                     .set("object-fit", "cover")
                                     .set("display", "inline-block")
                                     .set("margin-right", "12px");
-                            // Use REST API endpoint for avatar - enables browser caching
-                            avatar.setSrc("/frontend/avatar-proxy/product/" + product.getId());
+                            // Use REST API endpoint for avatar with hash-based caching
+                            avatar.setSrc(product.getAvatarUrl());
                             avatar.setAlt(product.getName());
                             com.vaadin.flow.component.html.Span nameSpan = new com.vaadin.flow.component.html.Span(product.getName());
                             nameSpan.getStyle().set("font-size", "1.5em").set("vertical-align", "middle");

@@ -180,6 +180,13 @@ public class ImagePromptDialog extends Dialog {
         acceptButton.setEnabled(false);
         acceptButton.addClickListener(e -> acceptImage());
 
+        // If initial image exists, enable Accept button and set generatedImage
+        if (initialImage != null && initialImage.length > 0) {
+            acceptButton.setEnabled(true);
+            generatedImage         = initialImage;
+            generatedImageOriginal = initialImage;
+        }
+
         cancelButton = new Button("Cancel", new Icon(VaadinIcon.CLOSE));
         cancelButton.setId(ID_CANCEL_BUTTON);
         cancelButton.addClickListener(e -> close());

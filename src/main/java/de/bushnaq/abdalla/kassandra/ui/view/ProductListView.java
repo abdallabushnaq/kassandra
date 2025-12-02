@@ -177,9 +177,8 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                             .set("margin", "0")
                             .set("padding", "0");
 
-                    // Use REST API endpoint for avatar - enables browser caching
-//                    avatar.setSrc("/api/product/" + product.getId() + "/avatar");
-                    avatar.setSrc("/frontend/avatar-proxy/product/" + product.getId());
+                    // Use hash-based URL for proper caching
+                    avatar.setSrc(product.getAvatarUrl());
                     avatar.setAlt(product.getName());
                     return avatar;
                 }
@@ -248,7 +247,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         // Clear existing items
         getDataProvider().getItems().clear();
 
-        // Fetch fresh data from API
+        // Fetch fresh data from API (with updated hashes)
         getDataProvider().getItems().addAll(productApi.getAll());
 
         // Force complete refresh of the grid

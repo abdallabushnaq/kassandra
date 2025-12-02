@@ -26,5 +26,4 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AvatarWrapper {
     private byte[] avatar;
-
 }

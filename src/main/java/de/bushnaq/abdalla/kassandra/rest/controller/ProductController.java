@@ -38,6 +38,7 @@ public class ProductController {
     @Autowired
     private ProductRepository productRepository;
 
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {

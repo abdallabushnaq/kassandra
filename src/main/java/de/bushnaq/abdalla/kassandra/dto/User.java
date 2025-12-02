@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
 public class User extends AbstractTimeAware implements Comparable<User> {
     @JsonManagedReference
     private List<Availability> availabilities = new ArrayList<>();
+    private String             avatarHash;
     @JsonIgnore
     private ProjectCalendar    calendar;
     private Color              color;
@@ -85,6 +86,21 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     @Override
     public int compareTo(User other) {
         return this.id.compareTo(other.id);
+    }
+
+    /**
+     * Get the avatar URL with hash parameter for proper caching.
+     * The hash ensures that when the avatar changes, the URL changes, forcing the browser to fetch the new image.
+     *
+     * @return The avatar URL with hash parameter if hash is available, otherwise just the base URL
+     */
+    @JsonIgnore
+    public String getAvatarUrl() {
+        String url = "/frontend/avatar-proxy/user/" + id;
+        if (avatarHash != null && !avatarHash.isEmpty()) {
+            url += "?h=" + avatarHash;
+        }
+        return url;
     }
 
     @JsonIgnore

@@ -181,7 +181,7 @@ public class TaskCard extends Div {
 //                resource.setContentType("image/png");
 //                resource.setCacheTime(0);
 //                avatar.setSrc(resource);
-                avatar.setSrc("/frontend/avatar-proxy/user/" + user.getId());
+                avatar.setSrc(user.getAvatarUrl());
                 avatar.setAlt(user.getName());
                 avatar.getElement().setProperty("title", user.getName());
                 return avatar;

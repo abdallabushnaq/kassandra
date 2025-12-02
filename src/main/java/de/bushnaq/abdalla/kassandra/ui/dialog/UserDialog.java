@@ -34,6 +34,7 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
@@ -62,9 +63,11 @@ public class UserDialog extends Dialog {
     private             byte[]                 generatedImageBytes;
     private             byte[]                 generatedImageBytesOriginal;
     private             String                 generatedImagePrompt;
+    private final       Image                  headerAvatar;
     private final       boolean                isEditMode;
     private final       DatePicker             lastWorkingDayPicker;
     private final       TextField              nameField;
+    private final       Image                  nameFieldAvatar;
     private final       StableDiffusionService stableDiffusionService;
     private final       User                   user;
     private final       UserApi                userApi;
@@ -82,18 +85,23 @@ public class UserDialog extends Dialog {
         this.userApi                = userApi;
         isEditMode                  = user != null;
 
-        // Only fetch avatar if editing an existing user
-        this.avatarUpdateRequest = userApi.getAvatarFull(user.getId());
+        if (isEditMode)
+            this.avatarUpdateRequest = userApi.getAvatarFull(user.getId());
+        else
+            this.avatarUpdateRequest = null;
 
         // Set the dialog title with an icon (avatar image if available)
-        String title        = isEditMode ? "Edit User" : "Create User";
-        Image  headerAvatar = new Image();
+        String title = isEditMode ? "Edit User" : "Create User";
+        headerAvatar = new Image();
         headerAvatar.setWidth("24px");
         headerAvatar.setHeight("24px");
         headerAvatar.getStyle()
                 .set("border-radius", "4px")
                 .set("object-fit", "cover");
-        headerAvatar.setSrc("/frontend/avatar-proxy/user/" + user.getId());
+        if (isEditMode) {
+            headerAvatar.setSrc(user.getAvatarUrl());
+        }
+        // For create mode, leave image src empty - will show broken image icon or can be replaced with VaadinIcon
         getHeader().add(VaadinUtil.createDialogHeader(title, headerAvatar));
 
         setId(USER_DIALOG);
@@ -108,13 +116,16 @@ public class UserDialog extends Dialog {
         nameField.setId(USER_NAME_FIELD);
         nameField.setWidthFull();
         nameField.setRequired(true);
-        Image nameFieldAvatar = new Image();
+        nameFieldAvatar = new Image();
         nameFieldAvatar.setWidth("20px");
         nameFieldAvatar.setHeight("20px");
         nameFieldAvatar.getStyle()
                 .set("border-radius", "4px")
                 .set("object-fit", "cover");
-        nameFieldAvatar.setSrc("/frontend/avatar-proxy/user/" + user.getId());
+        if (isEditMode) {
+            nameFieldAvatar.setSrc(user.getAvatarUrl());
+        }
+        // For create mode, leave image src empty
         nameField.setPrefixComponent(nameFieldAvatar);
 
         // Set to eager mode so value changes fire on every keystroke
@@ -234,22 +245,45 @@ public class UserDialog extends Dialog {
         generatedImageBytes         = result.getResizedImage();
         generatedImageBytesOriginal = result.getOriginalImage();
         generatedImagePrompt        = result.getPrompt();
+
+        // Compute hash from the resized image
+        String newHash = AvatarUtil.computeHash(generatedImageBytes);
+
+        // For edit mode: Update hash in user DTO and save avatar to database immediately
+        if (isEditMode && user != null) {
+            user.setAvatarHash(newHash);
+            userApi.updateAvatarFull(user.getId(), generatedImageBytes, generatedImageBytesOriginal, generatedImagePrompt);
+        }
+
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
+            // Create StreamResource for the generated image
+            StreamResource resource = new StreamResource("user-avatar.png",
+                    () -> new ByteArrayInputStream(result.getResizedImage()));
+
             // Show preview
-            StreamResource resource = new StreamResource("user-avatar.png", () -> new ByteArrayInputStream(result.getResizedImage()));
             avatarPreview.setSrc(resource);
             avatarPreview.setVisible(true);
+
+            // Update header icon and name field icon with StreamResource (works for both create and edit mode)
+            headerAvatar.setSrc(resource);
+            nameFieldAvatar.setSrc(resource);
+
             Notification.show("Avatar set successfully", 3000, Notification.Position.BOTTOM_END);
+
             // Push the UI update
             ui.push();
         }));
     }
 
     private void openImagePromptDialog() {
-        String defaultPrompt = nameField.getValue().isEmpty()
-                ? "Professional avatar portrait, person, business style, neutral background"
-                : "Professional avatar portrait of " + nameField.getValue() + ", business style, neutral background";
+        // Use stored prompt if available, otherwise generate default prompt
+        String defaultPrompt;
+        if (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarPrompt() != null && !avatarUpdateRequest.getAvatarPrompt().isEmpty()) {
+            defaultPrompt = avatarUpdateRequest.getAvatarPrompt();
+        } else {
+            defaultPrompt = "Professional avatar portrait of " + nameField.getValue() + ", business style, 3D, neutral background";
+        }
 
         byte[] initialImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
@@ -288,19 +322,24 @@ public class UserDialog extends Dialog {
         // Save user to backend
         if (isEditMode) {
             userApi.update(userToSave);
+            // Avatar was already saved immediately in handleGeneratedImage(), no need to save again
         } else {
             User saved = userApi.persist(userToSave);
             userToSave.setId(saved.getId());
-        }
 
-        // Set generated avatar data if available (will be saved separately via API)
-        if (generatedImageBytes != null) {
-            userApi.updateAvatarFull(
-                    userToSave.getId(),
-                    generatedImageBytes,
-                    generatedImageBytesOriginal,
-                    generatedImagePrompt
-            );
+            // For create mode, save avatar now since user didn't exist before
+            if (generatedImageBytes != null) {
+                // Compute and set hash before saving
+                String newHash = AvatarUtil.computeHash(generatedImageBytes);
+                userToSave.setAvatarHash(newHash);
+
+                userApi.updateAvatarFull(
+                        userToSave.getId(),
+                        generatedImageBytes,
+                        generatedImageBytesOriginal,
+                        generatedImagePrompt
+                );
+            }
         }
 
         Notification.show("User saved successfully", 3000, Notification.Position.MIDDLE);
