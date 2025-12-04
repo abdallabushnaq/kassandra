@@ -15,29 +15,16 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.dao;
+package de.bushnaq.abdalla.kassandra.repository;
 
-import jakarta.persistence.*;
-import lombok.*;
+import de.bushnaq.abdalla.kassandra.dao.SprintAvatarGenerationDataDAO;
+import org.springframework.data.repository.ListCrudRepository;
 
-@Entity
-@Table(name = "product_avatars")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@ToString(callSuper = true)
-@EqualsAndHashCode(of = {"id"}, callSuper = false)
-public class ProductAvatarDAO extends AbstractTimeAwareDAO {
+import java.util.Optional;
 
-    @Lob
-    @Column(name = "avatar_image")
-    private byte[] avatarImage;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long   id;
-    @Column(name = "product_id", unique = true, nullable = false)
-    private Long   productId;
+public interface SprintAvatarGenerationDataRepository extends ListCrudRepository<SprintAvatarGenerationDataDAO, Long> {
+    void deleteBySprintId(Long sprintId);
+
+    Optional<SprintAvatarGenerationDataDAO> findBySprintId(Long sprintId);
 }
 

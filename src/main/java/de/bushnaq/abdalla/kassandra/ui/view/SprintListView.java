@@ -31,6 +31,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
@@ -46,8 +47,6 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.SprintDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import jakarta.annotation.security.PermitAll;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -60,31 +59,33 @@ import java.util.Map;
 //@Menu(order = 1, icon = "vaadin:factory", title = "project List")
 @PermitAll // When security is enabled, allow all authenticated users
 public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
-    public static final String     CREATE_SPRINT_BUTTON             = "create-sprint-button";
-    public static final String     SPRINT_GLOBAL_FILTER             = "sprint-global-filter";
-    public static final String     SPRINT_GRID                      = "sprint-grid";
-    public static final String     SPRINT_GRID_CONFIG_BUTTON_PREFIX = "sprint-grid-config-button-prefix-";
-    public static final String     SPRINT_GRID_DELETE_BUTTON_PREFIX = "sprint-grid-delete-button-prefix-";
-    public static final String     SPRINT_GRID_EDIT_BUTTON_PREFIX   = "sprint-grid-edit-button-prefix-";
-    public static final String     SPRINT_GRID_NAME_PREFIX          = "sprint-grid-name-";
-    public static final String     SPRINT_LIST_PAGE_TITLE           = "sprint-list-page-title";
-    public static final String     SPRINT_ROW_COUNTER               = "sprint-row-counter";
-    private final       Clock      clock;
-    private final       FeatureApi featureApi;
-    private             Long       featureId;
-    private final       ProductApi productApi;
-    private             Long       productId;
-    private final       SprintApi  sprintApi;
-    private final       VersionApi versionApi;
-    private             Long       versionId;
+    public static final String                 CREATE_SPRINT_BUTTON             = "create-sprint-button";
+    public static final String                 SPRINT_GLOBAL_FILTER             = "sprint-global-filter";
+    public static final String                 SPRINT_GRID                      = "sprint-grid";
+    public static final String                 SPRINT_GRID_CONFIG_BUTTON_PREFIX = "sprint-grid-config-button-prefix-";
+    public static final String                 SPRINT_GRID_DELETE_BUTTON_PREFIX = "sprint-grid-delete-button-prefix-";
+    public static final String                 SPRINT_GRID_EDIT_BUTTON_PREFIX   = "sprint-grid-edit-button-prefix-";
+    public static final String                 SPRINT_GRID_NAME_PREFIX          = "sprint-grid-name-";
+    public static final String                 SPRINT_LIST_PAGE_TITLE           = "sprint-list-page-title";
+    public static final String                 SPRINT_ROW_COUNTER               = "sprint-row-counter";
+    private final       Clock                  clock;
+    private final       FeatureApi             featureApi;
+    private             Long                   featureId;
+    private final       ProductApi             productApi;
+    private             Long                   productId;
+    private final       SprintApi              sprintApi;
+    private final       StableDiffusionService stableDiffusionService;
+    private final       VersionApi             versionApi;
+    private             Long                   versionId;
 
-    public SprintListView(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper) {
+    public SprintListView(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper, StableDiffusionService stableDiffusionService) {
         super(clock);
-        this.sprintApi  = sprintApi;
-        this.productApi = productApi;
-        this.versionApi = versionApi;
-        this.featureApi = featureApi;
-        this.clock      = clock;
+        this.sprintApi              = sprintApi;
+        this.productApi             = productApi;
+        this.versionApi             = versionApi;
+        this.featureApi             = featureApi;
+        this.clock                  = clock;
+        this.stableDiffusionService = stableDiffusionService;
 
         add(
                 createSmartHeader(
@@ -188,6 +189,29 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             Grid.Column<Sprint> keyColumn = getGrid().addColumn(Sprint::getKey);
             VaadinUtil.addSimpleHeader(keyColumn, "Key", VaadinIcon.KEY);
         }
+        {
+            // Add avatar image column
+            Grid.Column<Sprint> avatarColumn = getGrid().addColumn(new ComponentRenderer<>(sprint -> {
+                // Sprint has a custom image - use URL-based loading
+                com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
+                avatar.setWidth("24px");
+                avatar.setHeight("24px");
+                avatar.getStyle()
+                        .set("border-radius", "var(--lumo-border-radius)")
+                        .set("object-fit", "cover")
+                        .set("display", "block")
+                        .set("margin", "0")
+                        .set("padding", "0");
+
+                // Use hash-based URL for proper caching
+                avatar.setSrc(sprint.getAvatarUrl());
+                avatar.setAlt(sprint.getName());
+                return avatar;
+            }));
+            avatarColumn.setWidth("48px");
+            avatarColumn.setFlexGrow(0);
+            avatarColumn.setHeader("");
+        }
 
         {
             // Add name column with filtering and sorting
@@ -282,41 +306,30 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     }
 
     private void openSprintDialog(Sprint sprint) {
-        SprintDialog dialog = new SprintDialog(sprint, (savedSprint, sprintDialog) -> {
-            try {
-                if (sprint != null) {
-                    // Edit mode
-                    sprintApi.update(savedSprint);
-                    Notification.show("Sprint updated", 3000, Notification.Position.BOTTOM_START);
-                    sprintDialog.close();
-                } else {
-                    // Create mode
-                    savedSprint.setFeatureId(featureId);
-                    sprintApi.persist(savedSprint);
-                    Notification.show("Sprint created", 3000, Notification.Position.BOTTOM_START);
-                    sprintDialog.close();
-                }
+        SprintDialog dialog = new SprintDialog(sprint, stableDiffusionService, sprintApi, featureId);
+        dialog.addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                // Dialog was closed, refresh the grid
                 refreshGrid();
-            } catch (ResponseStatusException ex) {
-                if (ex.getStatusCode() == HttpStatus.CONFLICT) {
-                    // This is a name uniqueness violation
-                    sprintDialog.setErrorMessage("A sprint with this name already exists");
-                } else {
-                    // Some other error
-                    Notification.show("Error: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
-                    sprintDialog.close();
-                }
-            } catch (Exception ex) {
-                Notification.show("Unexpected error: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
-                sprintDialog.close();
             }
         });
         dialog.open();
     }
 
     private void refreshGrid() {
+        // Clear existing items
         getDataProvider().getItems().clear();
+
+        // Fetch fresh data from API (with updated hashes)
         getDataProvider().getItems().addAll((featureId != null) ? sprintApi.getAll(featureId) : sprintApi.getAll());
+
+        // Force complete refresh of the grid
         getDataProvider().refreshAll();
+
+        // Force the grid to re-render
+        getGrid().getDataProvider().refreshAll();
+
+        // Push UI updates if in push mode
+        getUI().ifPresent(ui -> ui.push());
     }
 }

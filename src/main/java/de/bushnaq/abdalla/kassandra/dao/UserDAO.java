@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.dao;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -42,35 +41,29 @@ public class UserDAO extends AbstractTimeAwareDAO {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
-    private List<AvailabilityDAO>       availabilities = new ArrayList<>();
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private UserAvatarDAO               avatar;
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private UserAvatarGenerationDataDAO avatarGenerationData;
+    private List<AvailabilityDAO> availabilities = new ArrayList<>();
     @Column(name = "avatar_hash", length = 16)
-    private String                      avatarHash;
+    private String                avatarHash;
     @Column(nullable = false)
-    private Color                       color;
+    private Color                 color;
     @Column(nullable = false)
-    private String                      email;
+    private String                email;
     @Column(nullable = false)
-    private LocalDate                   firstWorkingDay;//first working day
+    private LocalDate             firstWorkingDay;//first working day
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long                        id;
+    private Long                  id;
     @Column(nullable = true)
-    private LocalDate                   lastWorkingDay;//last working day
+    private LocalDate             lastWorkingDay;//last working day
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
-    private List<LocationDAO>           locations      = new ArrayList<>();
+    private List<LocationDAO>     locations      = new ArrayList<>();
     @Column(nullable = false)
-    private String                      name;
+    private String                name;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
-    private List<OffDayDAO>             offDays        = new ArrayList<>();
+    private List<OffDayDAO>       offDays        = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

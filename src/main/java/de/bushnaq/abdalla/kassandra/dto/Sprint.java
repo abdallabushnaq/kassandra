@@ -47,6 +47,7 @@ import java.util.Map;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
 
+    private       String          avatarHash;
     @JsonIgnore
     private       ProjectCalendar calendar;
     private       LocalDateTime   end;
@@ -142,6 +143,43 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
 //            ProjectCalendarException calendarException = calendar.addCalendarException(ld, ld);
 //            calendarException.setName(context.bankHolidays.get(ld));
 //        }
+    }
+
+    /**
+     * Get the avatar URL with hash parameter for proper caching.
+     * The hash ensures that when the avatar changes, the URL changes, forcing the browser to fetch the new image.
+     *
+     * @return The avatar URL with hash parameter if hash is available, otherwise just the base URL
+     */
+    @JsonIgnore
+    public String getAvatarUrl() {
+        String url = "/frontend/avatar-proxy/sprint/" + id;
+        if (avatarHash != null && !avatarHash.isEmpty()) {
+            url += "?h=" + avatarHash;
+        }
+        return url;
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This provides a consistent prompt format for sprint avatars.
+     *
+     * @return A default prompt string for generating sprint avatar images
+     */
+    @JsonIgnore
+    public String getDefaultAvatarPrompt() {
+        return getDefaultAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This static method provides a consistent prompt format for sprint avatars.
+     *
+     * @param sprintName The name of the sprint
+     * @return A default prompt string for generating sprint avatar images
+     */
+    public static String getDefaultAvatarPrompt(String sprintName) {
+        return "Icon representing the sprint " + sprintName + ", minimalist, 3D design, white background";
     }
 
     @JsonIgnore

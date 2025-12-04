@@ -74,7 +74,7 @@ public class SecurityConfig extends VaadinWebSecurity {
      * This uses HTTP Basic Authentication for API security
      */
     @Bean
-    @Order(2) // Lower precedence than the OAuth2 API security filter chain
+    @Order(2) // Lower precedence than H2 console but higher than Vaadin
     public SecurityFilterChain basicAuthApiSecurityFilterChain(HttpSecurity http) throws Exception {
         logger.info(">>> Configuring security chain (3/4) basic authentication for REST API endpoints");
         return http
@@ -83,8 +83,8 @@ public class SecurityConfig extends VaadinWebSecurity {
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for API endpoints
-                .httpBasic() // Enable HTTP Basic Auth for APIs
-                .and()
+                .httpBasic(httpBasic -> {
+                }) // Enable HTTP Basic Auth for APIs
                 .exceptionHandling(handling -> handling
                         // Return 401 for unauthenticated requests instead of redirecting
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -105,18 +105,6 @@ public class SecurityConfig extends VaadinWebSecurity {
     protected void configure(HttpSecurity http) throws Exception {
         logger.info(">>> Configuring security chain (4/4) basic authentication for vaadin");
         // Configure for all non-API endpoints (Vaadin UI)
-
-        // Allow for H2 console
-        http//
-                .authorizeHttpRequests(authorize -> authorize//
-                        .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
-                )//
-                .csrf(csrf -> csrf//
-                        .ignoringRequestMatchers(new AntPathRequestMatcher("/h2-console/**"))
-                )//
-                .headers(headers -> headers//
-                        .frameOptions(frameOptions -> frameOptions.sameOrigin())
-                );
 
 
         // Set the login view
@@ -140,6 +128,29 @@ public class SecurityConfig extends VaadinWebSecurity {
 
         // Set the default success URL after login to ProductListView
         http.formLogin(formLogin -> formLogin.defaultSuccessUrl("/ui/product-list", true));
+    }
+
+    /**
+     * Separate security configuration for H2 Console
+     * This must have higher precedence to avoid conflicts with Vaadin security
+     */
+    @Bean
+    @Order(1) // Highest precedence for H2 console
+    public SecurityFilterChain h2ConsoleSecurityFilterChain(HttpSecurity http) throws Exception {
+        logger.info(">>> Configuring security chain (1/4) H2 console");
+        return http
+                .securityMatcher("/h2-console/**") // Apply only to H2 console
+                .authorizeHttpRequests(authorize -> authorize
+                        .anyRequest().permitAll()
+                )
+                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for H2 console
+                .formLogin(AbstractHttpConfigurer::disable) // Disable form login
+                .httpBasic(AbstractHttpConfigurer::disable) // Disable HTTP basic auth
+                .logout(AbstractHttpConfigurer::disable) // Disable logout
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.disable())
+                )
+                .build();
     }
 
     @Bean

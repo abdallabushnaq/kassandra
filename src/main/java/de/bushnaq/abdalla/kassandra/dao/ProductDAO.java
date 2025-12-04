@@ -31,19 +31,13 @@ import org.hibernate.annotations.Proxy;
 @Proxy(lazy = false)
 public class ProductDAO extends AbstractTimeAwareDAO {
 
-    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private ProductAvatarDAO               avatar;
-    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private ProductAvatarGenerationDataDAO avatarGenerationData;
     @Column(name = "avatar_hash", length = 16)
-    private String                         avatarHash;
+    private String avatarHash;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long                           id;
+    private Long   id;
     @Column(nullable = false, unique = true)
-    private String                         name;
+    private String name;
 
 }

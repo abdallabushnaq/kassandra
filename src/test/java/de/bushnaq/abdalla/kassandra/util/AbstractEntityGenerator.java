@@ -416,15 +416,37 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         return addVersion(product, nameGenerator.generateVersionName(versionIndex));
     }
 
-    protected Sprint addSprint(Feature feature, String sprintName) {
+    protected Sprint addSprint(Feature feature, String name) {
         Sprint sprint = new Sprint();
-        sprint.setName(sprintName);
+        sprint.setName(name);
         sprint.setStatus(Status.STARTED);
         sprint.setFeature(feature);
         sprint.setFeatureId(feature.getId());
         sprint.setCreated(ParameterOptions.getNow());
         sprint.setUpdated(ParameterOptions.getNow());
-        Sprint saved = sprintApi.persist(sprint);
+
+        Sprint saved = null;
+        // Generate AI image for the sprint if service is available
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            try {
+                String prompt = Sprint.getDefaultAvatarPrompt(name);
+                System.out.println("Generating image for sprint: " + name + " with prompt: " + prompt);
+                long                 startTime = System.currentTimeMillis();
+                GeneratedImageResult image     = stableDiffusionService.generateImageWithOriginal(prompt);
+                sprint.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+                saved = sprintApi.persist(sprint);
+                sprintApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
+                System.out.println("Generated image for sprint: " + saved.getId() + " in " + (System.currentTimeMillis() - startTime) + " ms");
+                System.out.println("Generated image for sprint: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            } catch (StableDiffusionException e) {
+                System.err.println("Failed to generate image for sprint " + name + ": " + e.getMessage());
+                // Continue without image
+            }
+        } else {
+            saved = sprintApi.persist(sprint);
+        }
+
+
         expectedSprints.add(saved);
         feature.addSprint(saved);
 

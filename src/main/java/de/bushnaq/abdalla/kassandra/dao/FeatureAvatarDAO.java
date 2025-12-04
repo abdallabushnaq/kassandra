@@ -32,15 +32,12 @@ public class FeatureAvatarDAO extends AbstractTimeAwareDAO {
 
     @Lob
     @Column(name = "avatar_image")
-    private byte[]     avatarImage;
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "feature_id", insertable = false, updatable = false)
-    private FeatureDAO feature;
+    private byte[] avatarImage;
     @Column(name = "feature_id", unique = true, nullable = false)
-    private Long       featureId;
+    private Long   featureId;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long       id;
+    private Long   id;
 }
 

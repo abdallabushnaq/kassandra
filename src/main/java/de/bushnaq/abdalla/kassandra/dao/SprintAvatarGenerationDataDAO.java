@@ -21,14 +21,14 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "user_avatar_generation_data")
+@Table(name = "sprint_avatar_generation_data")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-public class UserAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
+public class SprintAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
 
     @Lob
     @Column(name = "avatar_image_original")
@@ -39,7 +39,7 @@ public class UserAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long   id;
-    @Column(name = "user_id", unique = true, nullable = false)
-    private Long   userId;
+    @Column(name = "sprint_id", unique = true, nullable = false)
+    private Long   sprintId;
 }
 

@@ -38,11 +38,8 @@ public class ProductAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", insertable = false, updatable = false)
-    private ProductDAO product;
+    private Long   id;
     @Column(name = "product_id", unique = true, nullable = false)
-    private Long productId;
+    private Long   productId;
 }
 

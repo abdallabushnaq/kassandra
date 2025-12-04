@@ -51,7 +51,12 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public void delete(@PathVariable Long id) {
+        // Delete avatars first (cascade delete)
+        productAvatarRepository.deleteByProductId(id);
+        productAvatarGenerationDataRepository.deleteByProductId(id);
+        // Then delete product
         productRepository.deleteById(id);
     }
 

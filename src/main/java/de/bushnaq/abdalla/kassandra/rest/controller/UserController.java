@@ -62,7 +62,12 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public void delete(@PathVariable Long id) {
+        // Delete avatars first (cascade delete)
+        userAvatarRepository.deleteByUserId(id);
+        userAvatarGenerationDataRepository.deleteByUserId(id);
+        // Then delete user
         userRepository.deleteById(id);
     }
 

@@ -15,8 +15,10 @@
  *
  */
 package de.bushnaq.abdalla.kassandra.dao;
+
 import jakarta.persistence.*;
 import lombok.*;
+
 @Entity
 @Table(name = "user_avatars")
 @Getter
@@ -26,17 +28,14 @@ import lombok.*;
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class UserAvatarDAO extends AbstractTimeAwareDAO {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
-    @Column(name = "user_id", unique = true, nullable = false)
-    private Long userId;
     @Lob
     @Column(name = "avatar_image")
     private byte[] avatarImage;
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
-    private UserDAO user;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long   id;
+    @Column(name = "user_id", unique = true, nullable = false)
+    private Long   userId;
 }
 

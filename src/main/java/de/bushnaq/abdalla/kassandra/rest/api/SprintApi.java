@@ -18,7 +18,10 @@
 package de.bushnaq.abdalla.kassandra.rest.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
+import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
+@Slf4j
 public class SprintApi extends AbstractApi {
 
     @Autowired
@@ -75,6 +79,50 @@ public class SprintApi extends AbstractApi {
         return Arrays.asList(response.getBody());
     }
 
+    /**
+     * Get all avatar info (resized, original, and prompt) for a sprint.
+     *
+     * @param sprintId The sprint ID
+     * @return AvatarUpdateRequest containing avatarImage, avatarImageOriginal, and avatarPrompt, or null if not found
+     */
+    public AvatarUpdateRequest getAvatarFull(Long sprintId) {
+        try {
+            ResponseEntity<AvatarUpdateRequest> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/sprint/{id}/avatar/full",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    AvatarUpdateRequest.class,
+                    sprintId
+            ));
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Error fetching full avatar for sprint ID {}: {}", sprintId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get avatar image bytes for a sprint.
+     *
+     * @param sprintId The sprint ID
+     * @return The avatar image as byte array, or null if not found
+     */
+    public AvatarWrapper getAvatarImage(Long sprintId) {
+        try {
+            ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/sprint/{id}/avatar",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    AvatarWrapper.class,
+                    sprintId
+            ));
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Error fetching avatar image for sprint ID {}: {}", sprintId, e.getMessage());
+            return null;
+        }
+    }
+
     public Sprint getById(Long id) {
         ResponseEntity<Sprint> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/sprint/{id}",
@@ -102,6 +150,36 @@ public class SprintApi extends AbstractApi {
                 HttpMethod.PUT,
                 createHttpEntity(sprint),
                 Void.class
+        ));
+    }
+
+    /**
+     * Update sprint avatar with all fields (resized, original, and prompt).
+     *
+     * @param sprintId      The sprint ID
+     * @param resizedImage  The resized avatar image bytes (e.g., 64x64)
+     * @param originalImage The original avatar image bytes (e.g., 512x512)
+     * @param prompt        The prompt used to generate the avatar
+     */
+    public void updateAvatarFull(Long sprintId, byte[] resizedImage, byte[] originalImage, String prompt) {
+        AvatarUpdateRequest request = new AvatarUpdateRequest();
+
+        if (resizedImage != null) {
+            request.setAvatarImage(resizedImage);
+        }
+
+        if (originalImage != null) {
+            request.setAvatarImageOriginal(originalImage);
+        }
+
+        request.setAvatarPrompt(prompt);
+
+        executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/sprint/{id}/avatar/full",
+                HttpMethod.PUT,
+                createHttpEntity(request),
+                Void.class,
+                sprintId
         ));
     }
 }

@@ -54,7 +54,12 @@ public class FeatureController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public void delete(@PathVariable Long id) {
+        // Delete avatars first (cascade delete)
+        featureAvatarRepository.deleteByFeatureId(id);
+        featureAvatarGenerationDataRepository.deleteByFeatureId(id);
+        // Then delete feature
         featureRepository.deleteById(id);
     }
 
