@@ -290,7 +290,8 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 filterText,
                 mode,
                 featureMap,
-                selectedUsers
+                selectedUsers,
+                worklogApi
         );
 
         contentLayout.add(mergedBoard);

@@ -47,7 +47,6 @@ import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
 import jakarta.annotation.security.PermitAll;
 import lombok.Getter;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 
@@ -256,7 +255,7 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
     }
 
     private Component createUserMenu() {
-        final String userEmail = getUserEmail();
+        final String userEmail = SecurityUtils.getUserEmail();
 
         // Try to get user from database to check for avatar
         User userFromDb;
@@ -332,19 +331,19 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
         return ID_TAB_BASE + title.toLowerCase();
     }
 
-    private String getUserEmail() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String         userEmail      = authentication != null ? authentication.getName() : "Guest";
-
-        // If using OIDC, try to get the email address from authentication details
-        if (authentication != null && authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
-            String email = oidcUser.getEmail();
-            if (email != null && !email.isEmpty()) {
-                userEmail = email;
-            }
-        }
-        return userEmail;
-    }
+//    private String getUserEmail() {
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        String         userEmail      = authentication != null ? authentication.getName() : "Guest";
+//
+//        // If using OIDC, try to get the email address from authentication details
+//        if (authentication != null && authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
+//            String email = oidcUser.getEmail();
+//            if (email != null && !email.isEmpty()) {
+//                userEmail = email;
+//            }
+//        }
+//        return userEmail;
+//    }
 
     private void logout() {
         SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();

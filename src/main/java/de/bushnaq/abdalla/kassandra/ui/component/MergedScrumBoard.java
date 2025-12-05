@@ -24,6 +24,9 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
+import de.bushnaq.abdalla.kassandra.rest.api.WorklogApi;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.ui.dialog.WorklogDialog;
 import de.bushnaq.abdalla.kassandra.ui.view.GroupingMode;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,10 +59,11 @@ public class MergedScrumBoard extends VerticalLayout {
     private final List<StoryCard>    storyCards       = new ArrayList<>();
     private final TaskApi            taskApi;
     private final Map<Long, User>    userMap;
+    private final WorklogApi         worklogApi;
 
     public MergedScrumBoard(List<Sprint> sprints, List<Task> allTasks, TaskApi taskApi,
                             Map<Long, User> userMap, String filterText, GroupingMode groupingMode,
-                            Map<Long, Feature> featureMap, Set<User> selectedUsers) {
+                            Map<Long, Feature> featureMap, Set<User> selectedUsers, WorklogApi worklogApi) {
         this.sprints       = sprints;
         this.allTasks      = allTasks;
         this.taskApi       = taskApi;
@@ -68,6 +72,7 @@ public class MergedScrumBoard extends VerticalLayout {
         this.groupingMode  = groupingMode;
         this.featureMap    = featureMap;
         this.selectedUsers = selectedUsers;
+        this.worklogApi    = worklogApi;
 
         setPadding(false);
         setSpacing(true);
@@ -91,6 +96,43 @@ public class MergedScrumBoard extends VerticalLayout {
                 .orElse(null);
     }
 
+    /**
+     * Handle task click - open worklog dialog
+     */
+    private void handleTaskClick(Task task) {
+        log.info("Task clicked: {} (ID: {})", task.getName(), task.getId());
+
+        // Get current user email
+        String currentUserEmail = SecurityUtils.getUserEmail();
+
+        // Validate that the task can have work logged on it
+        String validationError = validateTaskForLogging(task, currentUserEmail);
+        if (validationError != null) {
+            // Show error notification and don't open the dialog
+            showError(validationError);
+            return;
+        }
+
+        // Find current user to get their ID
+        User currentUser = userMap.values().stream()
+                .filter(u -> currentUserEmail.equalsIgnoreCase(u.getEmail()))
+                .findFirst()
+                .orElse(null);
+
+        if (currentUser == null) {
+            showError("Cannot find your user profile. Please contact administrator.");
+            return;
+        }
+
+        // Validation passed - open the dialog
+        WorklogDialog dialog = new WorklogDialog(task, taskApi, worklogApi, worklog -> {
+            // After saving the worklog, refresh the board
+            log.info("Worklog saved for task {}", task.getId());
+            refresh();
+        }, currentUser.getId());
+
+        dialog.open();
+    }
 
     private void handleTaskStatusChange(Task task, TaskStatus newStatus) {
         try {
@@ -116,7 +158,6 @@ public class MergedScrumBoard extends VerticalLayout {
             showError("Failed to update task status: " + e.getMessage());
         }
     }
-
 
     /**
      * Check if a task matches the current filter text
@@ -249,7 +290,8 @@ public class MergedScrumBoard extends VerticalLayout {
                     userMap,
                     this::handleTaskStatusChange,
                     filterText,
-                    selectedUsers
+                    selectedUsers,
+                    this::handleTaskClick
             );
 
             // Only add feature if it has visible stories after filtering
@@ -315,7 +357,7 @@ public class MergedScrumBoard extends VerticalLayout {
 
         // Create StoryCard for each story
         storiesWithTasks.forEach((story, childTasks) -> {
-            StoryCard storyCard = new StoryCard(story, childTasks, userMap, this::handleTaskStatusChange);
+            StoryCard storyCard = new StoryCard(story, childTasks, userMap, this::handleTaskStatusChange, this::handleTaskClick);
 
             // Restore expanded state (default to true if not found)
             boolean shouldExpand = expandedStories.getOrDefault(story.getId(), true);
@@ -359,6 +401,50 @@ public class MergedScrumBoard extends VerticalLayout {
     private void showSuccess(String message) {
         Notification notification = Notification.show(message, 3000, Notification.Position.BOTTOM_END);
         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    }
+
+    /**
+     * Validates that the task can have work logged on it.
+     * Returns null if valid, or an error message if invalid.
+     */
+    private String validateTaskForLogging(Task task, String currentUserEmail) {
+        // Check if task is assigned
+        if (task.getResourceId() == null) {
+            return "Cannot log work on unassigned task. Please assign the task to yourself first.";
+        }
+
+        // Check if task is assigned to current user
+        User assignedUser = userMap.get(task.getResourceId());
+        if (assignedUser == null) {
+            return "Cannot find assigned user for this task.";
+        }
+
+        // Find current user by email in the userMap
+        if (currentUserEmail == null) {
+            return "Cannot determine current user.";
+        }
+
+        User currentUser = userMap.values().stream()
+                .filter(u -> currentUserEmail.equalsIgnoreCase(u.getEmail()))
+                .findFirst()
+                .orElse(null);
+
+        if (currentUser == null) {
+            log.warn("Current user with email {} not found in userMap", currentUserEmail);
+            return "Cannot find your user profile. Please contact administrator.";
+        }
+
+        // Compare user IDs instead of emails
+        if (!currentUser.getId().equals(assignedUser.getId())) {
+            return "You can only log work on tasks assigned to you. This task is assigned to: " + assignedUser.getName();
+        }
+
+        // Check if task is in IN_PROGRESS status
+        if (task.getTaskStatus() != TaskStatus.IN_PROGRESS) {
+            return "You can only log work on tasks that are in IN_PROGRESS status. This task is currently: " + task.getTaskStatus().name();
+        }
+
+        return null; // Validation passed
     }
 }
 

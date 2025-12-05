@@ -31,6 +31,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -52,6 +53,7 @@ public class StoryCard extends Div {
     private       boolean                      expanded = true; // Default to expanded
     private       VerticalLayout               inProgressLane;
     private       HorizontalLayout             lanesContainer;
+    private final Consumer<Task>               onTaskClick;
     private final BiConsumer<Task, TaskStatus> onTaskStatusChange;
     private final Task                         story;
     private       VerticalLayout               todoLane;
@@ -59,10 +61,16 @@ public class StoryCard extends Div {
 
     public StoryCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
                      BiConsumer<Task, TaskStatus> onTaskStatusChange) {
+        this(story, childTasks, userMap, onTaskStatusChange, null);
+    }
+
+    public StoryCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+                     BiConsumer<Task, TaskStatus> onTaskStatusChange, Consumer<Task> onTaskClick) {
         this.story              = story;
         this.childTasks         = childTasks;
         this.userMap            = userMap;
         this.onTaskStatusChange = onTaskStatusChange;
+        this.onTaskClick        = onTaskClick;
 
         addClassName("story-card");
         setWidthFull();
@@ -230,19 +238,19 @@ public class StoryCard extends Div {
 
         // Populate each lane
         tasksByStatus.getOrDefault(TaskStatus.TODO, List.of()).forEach(task -> {
-            TaskCard card = new TaskCard(task, userMap);
+            TaskCard card = new TaskCard(task, userMap, onTaskClick != null ? () -> onTaskClick.accept(task) : null);
             setupTaskCardDragHandlers(card, task);
             todoLane.add(card);
         });
 
         tasksByStatus.getOrDefault(TaskStatus.IN_PROGRESS, List.of()).forEach(task -> {
-            TaskCard card = new TaskCard(task, userMap);
+            TaskCard card = new TaskCard(task, userMap, onTaskClick != null ? () -> onTaskClick.accept(task) : null);
             setupTaskCardDragHandlers(card, task);
             inProgressLane.add(card);
         });
 
         tasksByStatus.getOrDefault(TaskStatus.DONE, List.of()).forEach(task -> {
-            TaskCard card = new TaskCard(task, userMap);
+            TaskCard card = new TaskCard(task, userMap, onTaskClick != null ? () -> onTaskClick.accept(task) : null);
             setupTaskCardDragHandlers(card, task);
             doneLane.add(card);
         });

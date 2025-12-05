@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +59,7 @@ public class FeatureCard extends Div {
     private final String                       filterText;
     private       VerticalLayout               inProgressLane;
     private       HorizontalLayout             lanesContainer;
+    private final Consumer<Task>               onTaskClick;
     private final BiConsumer<Task, TaskStatus> onTaskStatusChange;
     private final Set<User>                    selectedUsers;
     private final List<Task>                   stories;
@@ -66,6 +68,12 @@ public class FeatureCard extends Div {
 
     public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<Long, User> userMap,
                        BiConsumer<Task, TaskStatus> onTaskStatusChange, String filterText, Set<User> selectedUsers) {
+        this(feature, stories, allTasks, userMap, onTaskStatusChange, filterText, selectedUsers, null);
+    }
+
+    public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<Long, User> userMap,
+                       BiConsumer<Task, TaskStatus> onTaskStatusChange, String filterText, Set<User> selectedUsers,
+                       Consumer<Task> onTaskClick) {
         this.feature            = feature;
         this.stories            = stories;
         this.allTasks           = allTasks;
@@ -73,6 +81,7 @@ public class FeatureCard extends Div {
         this.onTaskStatusChange = onTaskStatusChange;
         this.filterText         = filterText != null ? filterText.toLowerCase() : "";
         this.selectedUsers      = selectedUsers;
+        this.onTaskClick        = onTaskClick;
 
         addClassName("feature-card");
         setWidthFull();
@@ -281,7 +290,7 @@ public class FeatureCard extends Div {
             if (!todoTasks.isEmpty()) {
                 // Use simplified header if story's effective status is not TODO (tasks are in different lane than story)
                 boolean       useSimplifiedHeader = (storyStatus != TaskStatus.TODO);
-                StoryTaskCard card                = new StoryTaskCard(story, todoTasks, userMap, onTaskStatusChange, useSimplifiedHeader);
+                StoryTaskCard card                = new StoryTaskCard(story, todoTasks, userMap, onTaskStatusChange, useSimplifiedHeader, onTaskClick);
                 todoLane.add(card);
             }
 
@@ -289,7 +298,7 @@ public class FeatureCard extends Div {
             if (!inProgressTasks.isEmpty()) {
                 // Use simplified header if story's effective status is not IN_PROGRESS
                 boolean       useSimplifiedHeader = (storyStatus != TaskStatus.IN_PROGRESS);
-                StoryTaskCard card                = new StoryTaskCard(story, inProgressTasks, userMap, onTaskStatusChange, useSimplifiedHeader);
+                StoryTaskCard card                = new StoryTaskCard(story, inProgressTasks, userMap, onTaskStatusChange, useSimplifiedHeader, onTaskClick);
                 inProgressLane.add(card);
             }
 
@@ -297,7 +306,7 @@ public class FeatureCard extends Div {
             if (!doneTasks.isEmpty()) {
                 // Use simplified header if story's effective status is not DONE
                 boolean       useSimplifiedHeader = (storyStatus != TaskStatus.DONE);
-                StoryTaskCard card                = new StoryTaskCard(story, doneTasks, userMap, onTaskStatusChange, useSimplifiedHeader);
+                StoryTaskCard card                = new StoryTaskCard(story, doneTasks, userMap, onTaskStatusChange, useSimplifiedHeader, onTaskClick);
                 doneLane.add(card);
             }
         }

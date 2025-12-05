@@ -67,6 +67,26 @@ public class SecurityUtils {
     }
 
     /**
+     * Gets the email of the currently authenticated user.
+     * Works with both regular authentication and OIDC.
+     *
+     * @return The email of the authenticated user or "Guest" if not authenticated
+     */
+    public static String getUserEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String         userEmail      = authentication != null ? authentication.getName() : "Guest";
+
+        // If using OIDC, try to get the email address from authentication details
+        if (authentication != null && authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
+            String email = oidcUser.getEmail();
+            if (email != null && !email.isEmpty()) {
+                userEmail = email;
+            }
+        }
+        return userEmail;
+    }
+
+    /**
      * Checks if the current user has the ADMIN role.
      *
      * @return true if the user is an admin, false otherwise

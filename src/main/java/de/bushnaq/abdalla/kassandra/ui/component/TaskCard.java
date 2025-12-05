@@ -43,12 +43,18 @@ import java.util.Map;
 @Slf4j
 public class TaskCard extends Div {
 
+    private final Runnable        onClickHandler;
     private final Task            task;
     private final Map<Long, User> userMap;
 
     public TaskCard(Task task, Map<Long, User> userMap) {
-        this.task    = task;
-        this.userMap = userMap;
+        this(task, userMap, null);
+    }
+
+    public TaskCard(Task task, Map<Long, User> userMap, Runnable onClickHandler) {
+        this.task           = task;
+        this.userMap        = userMap;
+        this.onClickHandler = onClickHandler;
 
         addClassName("task-card");
         setId("task-card-" + task.getId());
@@ -56,6 +62,11 @@ public class TaskCard extends Div {
 
         createCardContent();
         applyStyling();
+
+        // Add click listener if handler is provided
+        if (onClickHandler != null) {
+            getElement().addEventListener("click", e -> onClickHandler.run());
+        }
 
         log.info("Creating TaskCard for task: {} (ID: {})", task.getName(), task.getId());
 

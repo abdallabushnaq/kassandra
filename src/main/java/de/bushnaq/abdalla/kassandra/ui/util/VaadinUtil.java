@@ -439,12 +439,15 @@ public final class VaadinUtil {
         headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         headerLayout.setSpacing(true);
 
-        icon.getStyle().set("margin-right", "0.5em");
-
         H3 titleLabel = new H3(title);
         titleLabel.getStyle().set("margin", "0");
 
-        headerLayout.add(icon, titleLabel);
+        if (icon != null) {
+            icon.getStyle().set("margin-right", "0.5em");
+            headerLayout.add(icon, titleLabel);
+        } else {
+            headerLayout.add(titleLabel);
+        }
 
         // Add bottom margin to create space between the header and content
         headerLayout.getStyle().set("margin-bottom", "var(--lumo-space-m)");

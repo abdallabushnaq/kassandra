@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * A component representing a story with its child tasks in Features mode.
@@ -45,6 +46,7 @@ import java.util.function.BiConsumer;
 public class StoryTaskCard extends VerticalLayout {
 
     private final List<Task>                   childTasks;
+    private final Consumer<Task>               onTaskClick;
     private final BiConsumer<Task, TaskStatus> onTaskStatusChange;
     private final boolean                      showSimplifiedHeader;
     private final Task                         story;
@@ -52,11 +54,18 @@ public class StoryTaskCard extends VerticalLayout {
 
     public StoryTaskCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
                          BiConsumer<Task, TaskStatus> onTaskStatusChange, boolean showSimplifiedHeader) {
+        this(story, childTasks, userMap, onTaskStatusChange, showSimplifiedHeader, null);
+    }
+
+    public StoryTaskCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+                         BiConsumer<Task, TaskStatus> onTaskStatusChange, boolean showSimplifiedHeader,
+                         Consumer<Task> onTaskClick) {
         this.story                = story;
         this.childTasks           = childTasks;
         this.userMap              = userMap;
         this.onTaskStatusChange   = onTaskStatusChange;
         this.showSimplifiedHeader = showSimplifiedHeader;
+        this.onTaskClick          = onTaskClick;
 
         setPadding(false);
         setSpacing(false);
@@ -110,7 +119,7 @@ public class StoryTaskCard extends VerticalLayout {
 
             // Add each child task - TaskCard handles its own drag behavior
             for (Task task : childTasks) {
-                TaskCard taskCard = new TaskCard(task, userMap);
+                TaskCard taskCard = new TaskCard(task, userMap, onTaskClick != null ? () -> onTaskClick.accept(task) : null);
                 taskContainer.add(taskCard);
             }
 

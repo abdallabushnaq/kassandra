@@ -79,7 +79,7 @@ public class GenerateOneSprint extends AbstractUiTestUtil {
     public static final  NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     //    public static final  float                      EXAGGERATE_LOW    = 0.25f;
 //    public static final  float                      EXAGGERATE_NORMAL = 0.3f;
-    public static final  String                     VIDEO_TITLE = "Generate One Aprint";
+    public static final  String                     VIDEO_TITLE = "Kassandra Projects, Versions, Features and Sprints";
     // Start Keycloak container with realm configuration
     @Container
     private static final KeycloakContainer          keycloak    = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
@@ -142,7 +142,7 @@ public class GenerateOneSprint extends AbstractUiTestUtil {
         generateProductsIfNeeded(testInfo, randomCase);
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         productName = "Jupiter";
         versionName = "1.0.0";
