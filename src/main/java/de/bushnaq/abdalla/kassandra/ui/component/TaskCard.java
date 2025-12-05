@@ -17,12 +17,14 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
+import com.vaadin.flow.component.dnd.DragSource;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.util.Map;
@@ -38,6 +40,7 @@ import java.util.Map;
  * @version 1.0
  * @since 2025
  */
+@Slf4j
 public class TaskCard extends Div {
 
     private final Task            task;
@@ -51,18 +54,34 @@ public class TaskCard extends Div {
         setId("task-card-" + task.getId());
         setWidthFull(); // Make card use full width of the lane
 
-        // Make the card draggable
-        getElement().setAttribute("draggable", "true");
-        getElement().setProperty("taskId", task.getId().toString());
-
         createCardContent();
         applyStyling();
+
+        log.info("Creating TaskCard for task: {} (ID: {})", task.getName(), task.getId());
+
+        // Make the card draggable using Vaadin's DragSource API
+        DragSource<TaskCard> dragSource = DragSource.create(this);
+        dragSource.setDragData(task); // Store the task object for type-safe retrieval
+        dragSource.addDragStartListener(event -> {
+            log.info("Drag START for TaskCard: {} (ID: {})", task.getName(), task.getId());
+            addClassName("dragging");
+        });
+        dragSource.addDragEndListener(event -> {
+            log.info("Drag END for TaskCard: {} (ID: {})", task.getName(), task.getId());
+            removeClassName("dragging");
+        });
+
+        log.info("DragSource created and configured for TaskCard: {}", task.getId());
     }
 
     private void applyStyling() {
+        // Get user color for left border
+        String userColor = getUserColor();
+
         getStyle()
                 .set("background", "var(--lumo-base-color)")
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
+                .set("border-left", "4px solid " + userColor) // 4px colored left border
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("padding", "var(--lumo-space-s)")
                 .set("cursor", "grab")
@@ -161,6 +180,37 @@ public class TaskCard extends Div {
         return "TASK-???";
     }
 
+    /**
+     * Generate a consistent color based on user ID
+     */
+    private String generateColorFromUserId(Long userId) {
+        if (userId == null) {
+            return "#CCCCCC";
+        }
+
+        // Use predefined colors for better visibility and distinction
+        String[] colors = {
+                "#FF6B6B", // Red
+                "#4ECDC4", // Teal
+                "#45B7D1", // Blue
+                "#FFA07A", // Light Salmon
+                "#98D8C8", // Mint
+                "#FFD93D", // Yellow
+                "#6BCF7F", // Green
+                "#C77DFF", // Purple
+                "#FF8C42", // Orange
+                "#2EC4B6", // Turquoise
+                "#E63946", // Dark Red
+                "#A8DADC", // Light Blue
+                "#457B9D", // Steel Blue
+                "#F4A261", // Sandy Brown
+                "#E76F51", // Burnt Sienna
+        };
+
+        int index = (int) (userId % colors.length);
+        return colors[index];
+    }
+
     private com.vaadin.flow.component.Component getAssignedUserComponent() {
         if (task.getResourceId() != null && userMap.containsKey(task.getResourceId())) {
             User user = userMap.get(task.getResourceId());
@@ -205,6 +255,19 @@ public class TaskCard extends Div {
 
     public Task getTask() {
         return task;
+    }
+
+    /**
+     * Get the color for the assigned user
+     */
+    private String getUserColor() {
+        if (task.getResourceId() != null && userMap.containsKey(task.getResourceId())) {
+            User user = userMap.get(task.getResourceId());
+            // Generate a consistent color based on user ID
+            return generateColorFromUserId(user.getId());
+        }
+        // Default gray color for unassigned tasks
+        return "#CCCCCC";
     }
 }
 

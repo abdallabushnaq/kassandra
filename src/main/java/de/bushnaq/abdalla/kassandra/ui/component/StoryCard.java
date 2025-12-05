@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
+import com.vaadin.flow.component.dnd.DropTarget;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -264,28 +265,38 @@ public class StoryCard extends Div {
     }
 
     private void setupDropZone(VerticalLayout lane, TaskStatus targetStatus) {
-        lane.getElement().setAttribute("data-status", targetStatus.name());
+        // Create drop target using Vaadin's DropTarget API
+        DropTarget<VerticalLayout> dropTarget = DropTarget.create(lane);
+        dropTarget.setActive(true);
 
-        // Use JavaScript to handle drag and drop events properly
-        lane.getElement().executeJs(
-                "this.addEventListener('dragover', (e) => { e.preventDefault(); });" +
-                        "this.addEventListener('dragenter', (e) => { " +
-                        "  this.style.background = 'var(--lumo-primary-color-10pct)'; " +
-                        "});" +
-                        "this.addEventListener('dragleave', (e) => { " +
-                        "  this.style.background = 'var(--lumo-contrast-5pct)'; " +
-                        "});" +
-                        "this.addEventListener('drop', (e) => { " +
-                        "  this.style.background = 'var(--lumo-contrast-5pct)'; " +
-                        "});"
-        );
+        dropTarget.addDropListener(event -> {
+            // Get drag source component
+            event.getDragSourceComponent().ifPresent(source -> {
+                if (source instanceof TaskCard taskCard) {
+                    Task task = taskCard.getTask();
+                    // Only process if status actually changed
+                    if (task.getTaskStatus() != targetStatus) {
+                        // The callback will update the task status and refresh the board
+                        onTaskStatusChange.accept(task, targetStatus);
+                    }
+                }
+            });
+            // Reset background after drop
+            lane.getStyle().set("background", "#F5F5F5");
+        });
+
+        // Add visual feedback on drag over
+        lane.getElement().addEventListener("dragenter", e -> {
+            lane.getStyle().set("background", "var(--lumo-primary-color-10pct)");
+        });
+
+        lane.getElement().addEventListener("dragleave", e -> {
+            lane.getStyle().set("background", "#F5F5F5");
+        });
     }
 
     private void setupTaskCardDragHandlers(TaskCard card, Task task) {
-        card.getElement().executeJs(
-                "this.addEventListener('dragstart', (e) => { this.style.opacity = '0.5'; });" +
-                        "this.addEventListener('dragend', (e) => { this.style.opacity = '1'; });"
-        );
+        // No longer needed - TaskCard handles its own drag styling via DragSource
     }
 
     private void toggleExpand() {

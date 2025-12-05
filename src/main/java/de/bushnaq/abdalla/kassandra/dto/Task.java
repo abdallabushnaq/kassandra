@@ -265,8 +265,8 @@ public class Task implements Comparable<Task> {
      * Status is determined as follows:
      * <ul>
      *     <li>DONE - if all child tasks are DONE</li>
-     *     <li>IN_PROGRESS - if any child task is IN_PROGRESS or if some are DONE and some are TODO</li>
-     *     <li>TODO - if all child tasks are TODO</li>
+     *     <li>IN_PROGRESS - if all tasks are at least IN_PROGRESS (no TODO tasks remain)</li>
+     *     <li>TODO - if any child task is still TODO</li>
      * </ul>
      * If the story has no child tasks, returns the story's own status.
      *
@@ -297,23 +297,23 @@ public class Task implements Comparable<Task> {
             }
         }
 
-        // If any task is in progress, story is in progress
-        if (hasInProgress) {
-            return TaskStatus.IN_PROGRESS;
-        }
-
         // If all tasks are done, story is done
         if (hasDone && !hasTodo && !hasInProgress) {
             return TaskStatus.DONE;
         }
 
-        // If all tasks are todo, story is todo
-        if (hasTodo && !hasDone && !hasInProgress) {
+        // If any task is still TODO, story stays in TODO
+        if (hasTodo) {
             return TaskStatus.TODO;
         }
 
-        // Mixed state (some done, some todo, or any in progress) means in progress
-        return TaskStatus.IN_PROGRESS;
+        // If all tasks are at least IN_PROGRESS (no TODO tasks), story is IN_PROGRESS
+        if (hasInProgress || hasDone) {
+            return TaskStatus.IN_PROGRESS;
+        }
+
+        // Default to TODO if no specific condition met
+        return TaskStatus.TODO;
     }
 
     /**

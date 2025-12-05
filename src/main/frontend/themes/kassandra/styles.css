@@ -25,6 +25,16 @@
 }
 
 /*******************/
+/* Drag and Drop styles */
+/*******************/
+
+.task-card.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+    cursor: grabbing !important;
+}
+
+/*******************/
 /* Calendar styles */
 /*******************/
 

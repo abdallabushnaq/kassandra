@@ -19,11 +19,10 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Main;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -33,21 +32,15 @@ import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.rest.api.SprintApi;
-import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
-import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
-import de.bushnaq.abdalla.kassandra.rest.api.WorklogApi;
+import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
-import de.bushnaq.abdalla.kassandra.ui.component.ScrumBoard;
+import de.bushnaq.abdalla.kassandra.ui.component.MergedScrumBoard;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.log4j.Log4j2;
 
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Route("active-sprints")
@@ -62,16 +55,23 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private             List<Sprint>                allSprints                   = new ArrayList<>();
     private final       VerticalLayout              contentLayout;
     private final       DateTimeFormatter           dateFormatter                = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+    private final       FeatureApi                  featureApi;
+    private final       Map<Long, Feature>          featureMap                   = new HashMap<>();
+    private             ComboBox<GroupingMode>      groupingModeSelector;
     private             String                      searchText                   = "";
+    private             Set<Sprint>                 selectedSprints              = new HashSet<>();
+    private             Set<User>                   selectedUsers                = new HashSet<>();
     private final       SprintApi                   sprintApi;
-    private             MultiSelectComboBox<Sprint> sprintFilter;
+    private             MultiSelectComboBox<Sprint> sprintSelector;
     private final       TaskApi                     taskApi;
     private final       UserApi                     userApi;
     private final       Map<Long, User>             userMap                      = new HashMap<>();
+    private             MultiSelectComboBox<User>   userSelector;
     private             List<User>                  users                        = new ArrayList<>();
     private final       WorklogApi                  worklogApi;
 
-    public ActiveSprints(SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi) {
+    public ActiveSprints(FeatureApi featureApi, SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi) {
+        this.featureApi = featureApi;
         this.sprintApi  = sprintApi;
         this.taskApi    = taskApi;
         this.userApi    = userApi;
@@ -141,15 +141,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             }
 
             // Get selected sprints from filter (or all if none selected)
-            List<Sprint> sprintsToShow = allSprints;
-            if (sprintFilter != null && sprintFilter.getSelectedItems() != null && !sprintFilter.getSelectedItems().isEmpty()) {
-                sprintsToShow = new ArrayList<>(sprintFilter.getSelectedItems());
-            }
-
-            // Show all selected sprints - filtering happens at task level in ScrumBoard
-            for (Sprint sprint : sprintsToShow) {
-                createSprintSection(sprint, searchText);
-            }
+            List<Sprint> sprintsToShow = selectedSprints.isEmpty() ? allSprints : new ArrayList<>(selectedSprints);
 
             if (sprintsToShow.isEmpty()) {
                 Div emptyMessage = new Div();
@@ -159,7 +151,14 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                         .set("text-align", "center")
                         .set("color", "var(--lumo-secondary-text-color)");
                 contentLayout.add(emptyMessage);
+                return;
             }
+
+            // Get grouping mode
+            GroupingMode mode = groupingModeSelector != null ? groupingModeSelector.getValue() : GroupingMode.FEATURES;
+
+            // Merge all selected sprints into a combined view
+            createMergedBoard(sprintsToShow, mode, searchText);
 
         } catch (Exception e) {
             log.error("Error applying filters", e);
@@ -194,82 +193,107 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         });
         searchField.setWidth("300px");
 
-        // 2. Sprint multi-select dropdown
-        sprintFilter = new MultiSelectComboBox<>();
-        sprintFilter.setLabel("Sprint");
-        sprintFilter.setItemLabelGenerator(Sprint::getName);
-        sprintFilter.setPlaceholder("Select sprints");
-        sprintFilter.setWidth("300px");
-        sprintFilter.addValueChangeListener(e -> applyFilters());
+        // 2. User multi-select dropdown
+        userSelector = new MultiSelectComboBox<>();
+        userSelector.setLabel("User");
+        userSelector.setItemLabelGenerator(User::getName);
+        userSelector.setPlaceholder("Select users");
+        userSelector.setWidth("300px");
+        userSelector.addValueChangeListener(e -> {
+            selectedUsers = new HashSet<>(e.getValue());
+            applyFilters();
+        });
 
-        // 3. Clear filter button
+        // 3. Sprint multi-select dropdown
+        sprintSelector = new MultiSelectComboBox<>();
+        sprintSelector.setLabel("Sprint");
+        sprintSelector.setItemLabelGenerator(Sprint::getName);
+        sprintSelector.setPlaceholder("Select sprints");
+        sprintSelector.setWidth("300px");
+        sprintSelector.addValueChangeListener(e -> {
+            selectedSprints = new HashSet<>(e.getValue());
+            applyFilters();
+        });
+
+        // Add spacer to push remaining items to the right
+        Div spacer = new Div();
+        spacer.getStyle().set("flex-grow", "1");
+
+        // 4. Grouping mode selector
+        groupingModeSelector = new ComboBox<>();
+        groupingModeSelector.setLabel("Group by");
+        groupingModeSelector.setItems(GroupingMode.values());
+        groupingModeSelector.setItemLabelGenerator(GroupingMode::getDisplayName);
+        groupingModeSelector.setValue(GroupingMode.FEATURES); // Default to Features mode
+        groupingModeSelector.setWidth("200px");
+        groupingModeSelector.addValueChangeListener(e -> applyFilters());
+
+        // 5. Clear filter button
         Button clearButton = new Button("Clear filter", VaadinIcon.CLOSE_SMALL.create());
         clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         clearButton.addClickListener(e -> {
             searchField.clear();
-            sprintFilter.clear();
+            userSelector.clear();
+            sprintSelector.clear();
+            selectedSprints.clear();
+            selectedUsers.clear();
             searchText = "";
             // Don't call applyFilters here - let the value change listeners handle it
         });
 
-        header.add(searchField, sprintFilter, clearButton);
+        header.add(searchField, userSelector, sprintSelector, spacer, groupingModeSelector, clearButton);
 
         return header;
     }
 
     /**
-     * Create a section for a single sprint with its scrum board
+     * Create a merged board combining all selected sprints
      */
-    private void createSprintSection(Sprint sprint, String filterText) {
-        // Create container for this sprint
-        VerticalLayout sprintContainer = new VerticalLayout();
-        sprintContainer.setWidthFull();
-        sprintContainer.setPadding(false);
-        sprintContainer.setSpacing(true);
-        sprintContainer.getStyle()
-                .set("margin-bottom", "var(--lumo-space-l)");
-
-        // Create sprint header
-        HorizontalLayout sprintHeader = new HorizontalLayout();
-        sprintHeader.setWidthFull();
-        sprintHeader.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-
-        Icon sprintIcon = VaadinIcon.CALENDAR_CLOCK.create();
-        sprintIcon.getStyle().set("margin-right", "var(--lumo-space-s)");
-
-        H3 sprintTitle = new H3(sprint.getName());
-        sprintTitle.getStyle()
-                .set("margin", "0")
-                .set("font-size", "var(--lumo-font-size-l)")
-                .set("font-weight", "500");
-
-        // Add sprint dates
-        String dateRange = "";
-        if (sprint.getStart() != null && sprint.getEnd() != null) {
-            dateRange = " (" + dateFormatter.format(sprint.getStart()) +
-                    " - " + dateFormatter.format(sprint.getEnd()) + ")";
+    private void createMergedBoard(List<Sprint> sprints, GroupingMode mode, String filterText) {
+        // Merge all tasks from selected sprints
+        List<Task> allTasks = new ArrayList<>();
+        for (Sprint sprint : sprints) {
+            if (sprint.getTasks() != null) {
+                allTasks.addAll(sprint.getTasks());
+            }
         }
-        Div dateInfo = new Div();
-        dateInfo.setText(dateRange);
-        dateInfo.getStyle()
-                .set("margin-left", "var(--lumo-space-m)")
-                .set("color", "var(--lumo-secondary-text-color)")
-                .set("font-size", "var(--lumo-font-size-s)");
 
-        HorizontalLayout titleLayout = new HorizontalLayout(sprintIcon, sprintTitle, dateInfo);
-        titleLayout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-        titleLayout.setSpacing(false);
+        if (allTasks.isEmpty()) {
+            Div emptyMessage = new Div();
+            emptyMessage.setText("No tasks found in selected sprints.");
+            emptyMessage.getStyle()
+                    .set("padding", "var(--lumo-space-l)")
+                    .set("text-align", "center")
+                    .set("color", "var(--lumo-secondary-text-color)");
+            contentLayout.add(emptyMessage);
+            return;
+        }
 
-        sprintHeader.add(titleLayout);
+        // Create a virtual sprint that contains all merged tasks
+        Sprint mergedSprint = new Sprint();
+        mergedSprint.setId(-1L); // Virtual ID
+        mergedSprint.setName("Merged View");
+        mergedSprint.getTasks().addAll(allTasks);
 
-        // Create ScrumBoard for this sprint with filter text for task-level filtering
-        ScrumBoard scrumBoard = new ScrumBoard(sprint, taskApi, userMap, filterText);
+        // Set featureId based on mode - for features mode, we'll handle multiple features
+        // For now, use the first sprint's featureId (will be handled in ScrumBoard)
+        if (!sprints.isEmpty() && sprints.get(0).getFeatureId() != null) {
+            mergedSprint.setFeatureId(sprints.get(0).getFeatureId());
+        }
 
-        // Add header and scrum board to sprint container
-        sprintContainer.add(sprintHeader, scrumBoard);
+        // Create merged scrum board
+        MergedScrumBoard mergedBoard = new MergedScrumBoard(
+                sprints,
+                allTasks,
+                taskApi,
+                userMap,
+                filterText,
+                mode,
+                featureMap,
+                selectedUsers
+        );
 
-        // Add sprint container to main content
-        contentLayout.add(sprintContainer);
+        contentLayout.add(mergedBoard);
     }
 
     /**
@@ -282,6 +306,18 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             userMap.clear();
             for (User user : users) {
                 userMap.put(user.getId(), user);
+            }
+
+            // Populate user selector
+            if (userSelector != null) {
+                userSelector.setItems(users);
+            }
+
+            // Load all features and cache them
+            List<Feature> allFeatures = featureApi.getAll();
+            featureMap.clear();
+            for (Feature feature : allFeatures) {
+                featureMap.put(feature.getId(), feature);
             }
 
             // Load all sprints and filter only STARTED sprints
@@ -303,12 +339,13 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             }
 
             // Populate sprint filter dropdown with all active sprints
-            if (sprintFilter != null) {
-                sprintFilter.setItems(allSprints);
+            if (sprintSelector != null) {
+                sprintSelector.setItems(allSprints);
 
-                // Select first sprint by default
+                // Select first sprint by default if available
                 if (!allSprints.isEmpty()) {
-                    sprintFilter.setValue(java.util.Set.of(allSprints.get(0)));
+                    selectedSprints = Set.of(allSprints.get(0));
+                    sprintSelector.setValue(selectedSprints);
                 }
             }
 
