@@ -58,6 +58,11 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private final       FeatureApi                  featureApi;
     private final       Map<Long, Feature>          featureMap                   = new HashMap<>();
     private             ComboBox<GroupingMode>      groupingModeSelector;
+    private             boolean                     hasUrlParameters             = false;
+    private             boolean                     isRestoringFromUrl           = false;
+    private             String                      savedGroupByValue            = null;
+    private             String                      savedSprintIds               = null;
+    private             String                      savedUserIds                 = null;
     private             String                      searchText                   = "";
     private             Set<Sprint>                 selectedSprints              = new HashSet<>();
     private             Set<User>                   selectedUsers                = new HashSet<>();
@@ -117,8 +122,64 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                     }
                 });
 
+        // Read query parameters directly (like SprintListView does)
+        com.vaadin.flow.router.Location location        = event.getLocation();
+        QueryParameters                 queryParameters = location.getQueryParameters();
+
+        log.info("=== afterNavigation called (ActiveSprints) ===");
+        log.info("URL: {}", location.getPath());
+        log.info("Query params from event: {}", queryParameters.getParameters());
+
+        // Check if this is likely the "first" afterNavigation on F5 (no params but UI might have them)
+        // If the event has no params but we have component state, skip this call
+        if (queryParameters.getParameters().isEmpty() && !selectedSprints.isEmpty()) {
+            log.info("Event has no params but we have state - likely first afterNavigation on F5, skipping");
+            return;
+        }
+
+        // Set flag to prevent URL updates during restoration
+        isRestoringFromUrl = true;
+
+        // Check if any parameters exist (to distinguish first visit from cleared filters)
+        hasUrlParameters = !queryParameters.getParameters().isEmpty();
+        log.info("hasUrlParameters: {}", hasUrlParameters);
+
+        // Restore filter state from URL - save to fields
+        if (queryParameters.getParameters().containsKey("sprints")) {
+            savedSprintIds = queryParameters.getParameters().get("sprints").get(0);
+            log.info("Restored sprints from URL: {}", savedSprintIds);
+        } else {
+            savedSprintIds = null;
+            log.info("No sprints in URL, set to null");
+        }
+        if (queryParameters.getParameters().containsKey("users")) {
+            savedUserIds = queryParameters.getParameters().get("users").get(0);
+            log.info("Restored users from URL: {}", savedUserIds);
+        } else {
+            savedUserIds = null;
+            log.info("No users in URL, set to null");
+        }
+        if (queryParameters.getParameters().containsKey("groupBy")) {
+            savedGroupByValue = queryParameters.getParameters().get("groupBy").get(0);
+            log.info("Restored groupBy from URL: {}", savedGroupByValue);
+        } else {
+            savedGroupByValue = null;
+            log.info("No groupBy in URL, set to null");
+        }
+        if (queryParameters.getParameters().containsKey("search")) {
+            searchText = queryParameters.getParameters().get("search").get(0);
+            log.info("Restored search from URL: {}", searchText);
+        } else {
+            searchText = "";
+            log.info("No search in URL, set to empty");
+        }
+
         // Load data and populate scrum boards
         loadData();
+
+        // Clear restoration flag after load complete
+        isRestoringFromUrl = false;
+        log.info("=== afterNavigation complete (ActiveSprints) ===");
     }
 
     /**
@@ -188,8 +249,12 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         searchField.setPrefixComponent(VaadinIcon.SEARCH.create());
         searchField.setValueChangeMode(ValueChangeMode.EAGER);
         searchField.addValueChangeListener(e -> {
-            searchText = e.getValue() != null ? e.getValue().toLowerCase().trim() : "";
-            applyFilters();
+            // Only update if change is from user interaction
+            if (e.isFromClient()) {
+                searchText = e.getValue() != null ? e.getValue().toLowerCase().trim() : "";
+                updateUrlParameters();
+                applyFilters();
+            }
         });
         searchField.setWidth("300px");
 
@@ -200,8 +265,23 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         userSelector.setPlaceholder("Select users");
         userSelector.setWidth("300px");
         userSelector.addValueChangeListener(e -> {
-            selectedUsers = new HashSet<>(e.getValue());
-            applyFilters();
+            log.info("=== User selector value changed (ActiveSprints) ===");
+            log.info("isFromClient: {}", e.isFromClient());
+            log.info("Old value IDs: {}", e.getOldValue().stream().map(User::getId).toList());
+            log.info("New value IDs: {}", e.getValue().stream().map(User::getId).toList());
+            log.info("selectedUsers IDs before: {}", selectedUsers.stream().map(User::getId).toList());
+
+            // Only update if change is from user interaction
+            if (e.isFromClient()) {
+                selectedUsers = new HashSet<>(e.getValue());
+                log.info("selectedUsers IDs after update: {}", selectedUsers.stream().map(User::getId).toList());
+                log.info("Calling updateUrlParameters synchronously...");
+                updateUrlParameters();
+                log.info("Calling applyFilters...");
+                applyFilters();
+            } else {
+                log.info("Skipping update - not from client");
+            }
         });
 
         // 3. Sprint multi-select dropdown
@@ -211,13 +291,13 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         sprintSelector.setPlaceholder("Select sprints");
         sprintSelector.setWidth("300px");
         sprintSelector.addValueChangeListener(e -> {
-            selectedSprints = new HashSet<>(e.getValue());
-            applyFilters();
+            // Only update if change is from user interaction
+            if (e.isFromClient()) {
+                selectedSprints = new HashSet<>(e.getValue());
+                updateUrlParameters();
+                applyFilters();
+            }
         });
-
-        // Add spacer to push remaining items to the right
-        Div spacer = new Div();
-        spacer.getStyle().set("flex-grow", "1");
 
         // 4. Grouping mode selector
         groupingModeSelector = new ComboBox<>();
@@ -226,9 +306,15 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         groupingModeSelector.setItemLabelGenerator(GroupingMode::getDisplayName);
         groupingModeSelector.setValue(GroupingMode.FEATURES); // Default to Features mode
         groupingModeSelector.setWidth("200px");
-        groupingModeSelector.addValueChangeListener(e -> applyFilters());
+        groupingModeSelector.addValueChangeListener(e -> {
+            // Only update if change is from user interaction
+            if (e.isFromClient()) {
+                updateUrlParameters();
+                applyFilters();
+            }
+        });
 
-        // 5. Clear filter button
+        // 5. Clear filter button (right after filters, no spacer)
         Button clearButton = new Button("Clear filter", VaadinIcon.CLOSE_SMALL.create());
         clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         clearButton.addClickListener(e -> {
@@ -238,10 +324,12 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             selectedSprints.clear();
             selectedUsers.clear();
             searchText = "";
-            // Don't call applyFilters here - let the value change listeners handle it
+            groupingModeSelector.setValue(GroupingMode.FEATURES);
+            updateUrlParameters();
+            applyFilters();
         });
 
-        header.add(searchField, userSelector, sprintSelector, spacer, groupingModeSelector, clearButton);
+        header.add(searchField, userSelector, sprintSelector, groupingModeSelector, clearButton);
 
         return header;
     }
@@ -312,6 +400,26 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             // Populate user selector
             if (userSelector != null) {
                 userSelector.setItems(users);
+
+                // Restore selected users from URL
+                if (savedUserIds != null && !savedUserIds.isEmpty()) {
+                    Set<User> usersToSelect = new HashSet<>();
+                    for (String idStr : savedUserIds.split(",")) {
+                        try {
+                            Long id = Long.parseLong(idStr.trim());
+                            users.stream()
+                                    .filter(u -> u.getId().equals(id))
+                                    .findFirst()
+                                    .ifPresent(usersToSelect::add);
+                        } catch (NumberFormatException e) {
+                            log.warn("Invalid user ID in URL: {}", idStr);
+                        }
+                    }
+                    if (!usersToSelect.isEmpty()) {
+                        selectedUsers = usersToSelect;
+                        userSelector.setValue(usersToSelect);
+                    }
+                }
             }
 
             // Load all features and cache them
@@ -343,16 +451,62 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             if (sprintSelector != null) {
                 sprintSelector.setItems(allSprints);
 
-                // Select first sprint by default if available
-                if (!allSprints.isEmpty()) {
+                // Restore selected sprints from URL or select first sprint by default
+                if (savedSprintIds != null && !savedSprintIds.isEmpty()) {
+                    Set<Sprint> sprintsToSelect = new HashSet<>();
+                    for (String idStr : savedSprintIds.split(",")) {
+                        try {
+                            Long id = Long.parseLong(idStr.trim());
+                            allSprints.stream()
+                                    .filter(s -> s.getId().equals(id))
+                                    .findFirst()
+                                    .ifPresent(sprintsToSelect::add);
+                        } catch (NumberFormatException e) {
+                            log.warn("Invalid sprint ID in URL: {}", idStr);
+                        }
+                    }
+                    if (!sprintsToSelect.isEmpty()) {
+                        selectedSprints = sprintsToSelect;
+                        sprintSelector.setValue(sprintsToSelect);
+                    }
+                } else if (!hasUrlParameters && !allSprints.isEmpty()) {
+                    // Only select first sprint by default if NO URL parameters at all (first visit)
+                    // If hasUrlParameters is true but no sprints, user explicitly cleared all sprints
                     selectedSprints = Set.of(allSprints.get(0));
                     sprintSelector.setValue(selectedSprints);
                 }
             }
 
-            // Apply filters to show sprints (will be called by value change listener)
-            // Only call if no sprints to avoid double call
-            if (allSprints.isEmpty()) {
+            // Restore grouping mode from URL
+            if (savedGroupByValue != null && groupingModeSelector != null) {
+                try {
+                    GroupingMode mode = GroupingMode.valueOf(savedGroupByValue);
+                    groupingModeSelector.setValue(mode);
+                } catch (IllegalArgumentException e) {
+                    log.warn("Invalid groupBy value in URL: {}", savedGroupByValue);
+                }
+            }
+
+            // Restore search text in field
+            if (searchText != null && !searchText.isEmpty()) {
+                getUI().ifPresent(ui -> ui.access(() -> {
+                    if (getChildren().findFirst().isPresent()) {
+                        getChildren()
+                                .filter(c -> c instanceof HorizontalLayout)
+                                .findFirst()
+                                .ifPresent(header -> {
+                                    header.getChildren()
+                                            .filter(c -> c instanceof TextField)
+                                            .map(c -> (TextField) c)
+                                            .findFirst()
+                                            .ifPresent(field -> field.setValue(searchText));
+                                });
+                    }
+                }));
+            }
+
+            // Apply filters to show sprints
+            if (!allSprints.isEmpty()) {
                 applyFilters();
             }
 
@@ -366,6 +520,49 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                     .set("color", "var(--lumo-error-text-color)");
             contentLayout.add(errorMessage);
         }
+    }
+
+    /**
+     * Update URL parameters to persist filter state
+     */
+    private void updateUrlParameters() {
+        // Don't update URL if we're currently restoring from URL (prevents infinite loop)
+        if (isRestoringFromUrl) {
+            return;
+        }
+
+        Map<String, String> params = new HashMap<>();
+
+        if (!searchText.isEmpty()) {
+            params.put("search", searchText);
+        }
+
+        if (!selectedUsers.isEmpty()) {
+            String userIds = selectedUsers.stream()
+                    .map(u -> String.valueOf(u.getId()))
+                    .collect(Collectors.joining(","));
+            params.put("users", userIds);
+        }
+
+        if (!selectedSprints.isEmpty()) {
+            String sprintIds = selectedSprints.stream()
+                    .map(s -> String.valueOf(s.getId()))
+                    .collect(Collectors.joining(","));
+            params.put("sprints", sprintIds);
+        }
+
+        if (groupingModeSelector != null && groupingModeSelector.getValue() != null) {
+            params.put("groupBy", groupingModeSelector.getValue().name());
+        }
+
+        // Always add a marker parameter so we can distinguish first visit from cleared filters
+        if (params.isEmpty()) {
+            params.put("_", ""); // Empty marker parameter
+        }
+
+        // Update URL with query parameters
+        QueryParameters queryParameters = QueryParameters.simple(params);
+        getUI().ifPresent(ui -> ui.navigate(ActiveSprints.class, queryParameters));
     }
 }
 

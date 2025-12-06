@@ -102,7 +102,8 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
         // Get username from URL parameter or use the currently authenticated user
-        String userEmailParam = event.getRouteParameters().get("user-email").orElse(null);
+        String          userEmailParam  = event.getRouteParameters().get("user-email").orElse(null);
+        QueryParameters queryParameters = event.getLocation().getQueryParameters();
 
         Authentication authentication   = SecurityContextHolder.getContext().getAuthentication();
         String         currentUserEmail = authentication != null ? authentication.getName() : null;

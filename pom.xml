@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.5</version>
+        <version>3.5.8</version>
     </parent>
 
     <groupId>de.bushnaq.abdalla</groupId>
@@ -437,7 +437,7 @@
         <file.encoding>utf-8</file.encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.libraray.path>${env.JAVA_HOME}\bin</java.libraray.path>
-        <vaadin.version>24.7.5</vaadin.version>
+        <vaadin.version>24.9.6</vaadin.version>
         <flow.server.version>3.1.6</flow.server.version>
         <selenium.version>4.25.0</selenium.version>
     </properties>

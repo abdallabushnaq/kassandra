@@ -47,6 +47,7 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.SprintDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import jakarta.annotation.security.PermitAll;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -58,6 +59,7 @@ import java.util.Map;
 @PageTitle("Sprint List Page")
 //@Menu(order = 1, icon = "vaadin:factory", title = "project List")
 @PermitAll // When security is enabled, allow all authenticated users
+@Slf4j
 public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
     public static final String                 CREATE_SPRINT_BUTTON             = "create-sprint-button";
     public static final String                 SPRINT_GLOBAL_FILTER             = "sprint-global-filter";
@@ -104,6 +106,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
+        log.info("=== afterNavigation called ===");
         //- Get query parameters
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();

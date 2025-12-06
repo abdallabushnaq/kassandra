@@ -150,18 +150,18 @@ public class AbstractApi {
                             client = authorizedClientManager.authorize(authorizeRequest);
 
                             if (client != null) {
-                                logger.trace("Token loaded via OAuth2AuthorizedClientManager (supports auto-refresh)");
+//                                logger.trace("Token loaded via OAuth2AuthorizedClientManager (supports auto-refresh)");
                             }
                         } else {
                             // No request context available - fall back to service
-                            logger.trace("No servlet request context available, falling back to OAuth2AuthorizedClientService");
+//                            logger.trace("No servlet request context available, falling back to OAuth2AuthorizedClientService");
                             if (authorizedClientService != null) {
                                 client = authorizedClientService.loadAuthorizedClient(
                                         oauth2Token.getAuthorizedClientRegistrationId(),
                                         oauth2Token.getName());
 
                                 if (client != null) {
-                                    logger.debug("Token loaded via OAuth2AuthorizedClientService (no auto-refresh in this context)");
+//                                    logger.debug("Token loaded via OAuth2AuthorizedClientService (no auto-refresh in this context)");
                                 }
                             }
                         }
@@ -208,8 +208,7 @@ public class AbstractApi {
                             logger.warn("Access token for user {} will expire in {} seconds",
                                     oauth2Token.getName(), secondsUntilExpiry);
                         } else {
-                            logger.trace("Access token for user {} is valid for {} more seconds",
-                                    oauth2Token.getName(), secondsUntilExpiry);
+//                            logger.trace("Access token for user {} is valid for {} more seconds", oauth2Token.getName(), secondsUntilExpiry);
                         }
                     }
 
