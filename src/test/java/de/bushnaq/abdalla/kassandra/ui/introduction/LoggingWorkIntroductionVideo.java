@@ -63,7 +63,7 @@ import java.util.List;
 @Transactional
 public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute        EXCITED     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
-    public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.4f).withTemperature(1f);
+    public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.6f).withCfgWeight(.2f).withTemperature(1f);
     public static final String                   VIDEO_TITLE = "Logging Work in Kassandra";
     private             String                   featureName;
     @Autowired
@@ -148,14 +148,8 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         grace.pauseIfSilent(1000);
         grace.pause(2000);
 
-        grace.narrate(NORMAL, "Perfect! Now the board shows only tasks assigned to me. I'll click the clear button to remove this filter.");
-        grace.pause(2500);
-
-        // Click the clear button for the user selector
-        seleniumHandler.highlight(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
-        seleniumHandler.click(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
-        grace.pauseIfSilent(1000);
-        grace.pause(1500);
+        grace.narrate(NORMAL, "Perfect! Now the board shows only tasks assigned to me.");
+        grace.pause(2000);
 
         // Explain Sprint Filter
         grace.narrate(NORMAL, "Then we have the Sprint filter. If you have multiple active sprints, you can choose which ones to display. By default, the first active sprint is shown. You can select additional sprints from the dropdown.");
@@ -177,8 +171,13 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         grace.pause(2000);
 
         // Demonstrate Clear Filter Button
-        grace.narrate(NORMAL, "And finally, the Clear filter button resets all filters back to their defaults, including search, user selection, and sprint selection. Very handy when you want to see the full picture again.");
+        grace.narrate(NORMAL, "And finally, the Clear filter button resets all filters back to their defaults, including search, user selection, and sprint selection. Let me click it now to show you.");
         grace.pause(2500);
+
+        seleniumHandler.highlight(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
+        seleniumHandler.click(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
+        grace.pauseIfSilent(1000);
+        grace.pause(1500);
 
         grace.narrate(NORMAL, "Now let's get to work! I can see my tasks here in the Property request API feature, organized into the Config API Implementation story.");
         grace.pause(2000);
@@ -193,9 +192,6 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         // Moving Task 11 to IN PROGRESS
         //---------------------------------------------------------------------------------------
         {
-//            seleniumHandler.setMouseMoveStepsMultiplier(2.0);
-//            seleniumHandler.setMouseMoveDelayMultiplier(2);
-
             grace.narrate(NORMAL, "To start working on a task, I simply drag it from the to-do lane to the in-progress lane. Let me move the 'create controller' task. This tells the team that I've started working on it.");
 
             // Use real drag and drop - drag task card to IN_PROGRESS lane
@@ -321,8 +317,68 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(WorklogDialog.WORKLOG_DIALOG)));
             grace.pause(1500);
 
-            grace.narrate(NORMAL, "Perfect! The task card still shows 3 hours remaining, accurately reflecting the reality. This is exactly how you track your daily progress in Kassandra - honestly and transparently.");
+            grace.narrate(NORMAL, "Perfect! The task card still shows 2 hours remaining, accurately reflecting the reality. This is exactly how you track your daily progress in Kassandra - honestly and transparently.");
             grace.pause(2500);
+        }
+
+        //---------------------------------------------------------------------------------------
+        // Complete a Task and Move to DONE
+        //---------------------------------------------------------------------------------------
+        {
+            grace.narrate(NORMAL, "Now let me show you what happens when you complete a task. I'll work on the error handling task and finish it completely.");
+            grace.pause(2000);
+
+            // Drag the third task to IN_PROGRESS
+            String task13CardId = "task-card-" + task13.getId();
+            seleniumHandler.dragAndDrop(task13CardId, inProgressLaneId);
+            grace.pauseIfSilent(1000);
+            grace.pause(1500);
+
+            grace.narrate(NORMAL, "I've moved the error handling task to in-progress. Notice something important: the story itself has now moved to the in-progress lane! This happened because all tasks in the story are now either in-progress or done - none are left in the to-do lane.");
+            grace.pause(3500);
+
+            grace.narrate(NORMAL, "The story status automatically changes from to-do to in-progress when all of its tasks have been started. This gives you a quick overview of which stories are actively being worked on.");
+            grace.pause(3000);
+
+            grace.narrate(NORMAL, "Now I'll log the work I did to complete this task.");
+            grace.pause(2000);
+
+            // Open worklog dialog
+            seleniumHandler.click(task13CardId);
+            grace.pauseIfSilent(500);
+            seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(WorklogDialog.TITLE_ID)));
+            grace.pause(1500);
+
+            grace.narrate(NORMAL, "This task has 5 hours remaining. I'll log 5 hours of work to complete it entirely.");
+            grace.pause(2000);
+
+            seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "5h");
+            grace.pauseIfSilent(1000);
+            grace.pause(2000);
+
+            grace.narrate(NORMAL, "Notice how the remaining time automatically goes to zero. This means the task is now complete.");
+            grace.pause(2000);
+
+            seleniumHandler.setTextArea(WorklogDialog.COMMENT_FIELD, "Completed error handling implementation and testing");
+            grace.pauseIfSilent(1000);
+            grace.pause(1500);
+
+            seleniumHandler.click(WorklogDialog.SAVE_BUTTON);
+            grace.pauseIfSilent(500);
+            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(WorklogDialog.WORKLOG_DIALOG)));
+            grace.pause(1500);
+
+            grace.narrate(NORMAL, "Now I'll move this completed task to the done lane by dragging it.");
+            grace.pause(2000);
+
+            // Drag task to DONE lane
+            String doneLaneId = VaadinUtil.generateFeatureLaneId(story1.getSprint().getFeature(), TaskStatus.DONE);
+            seleniumHandler.dragAndDrop(task13CardId, doneLaneId);
+            grace.pauseIfSilent(1000);
+            grace.pause(2000);
+
+            grace.narrate(NORMAL, "Perfect! The task is now in the done lane, showing it's complete. The story remains in the in-progress lane because we still have other tasks in progress.");
+            grace.pause(3000);
         }
 
         //---------------------------------------------------------------------------------------
@@ -364,27 +420,6 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             Task          startMilestone = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         }
 
-        // Story 1: Config API implementation with tasks assigned to Grace Martin
-//        {
-//            story1 = addParentTask("Config API Implementation", sprint, null, null);
-//            story1.setTaskStatus(TaskStatus.TODO);
-//            taskApi.update(story1);
-//
-//            task11 = addTask("create controller", "4h", "6h", graceMartin, sprint, story1, null);
-//            task11.setTaskStatus(TaskStatus.TODO);
-//            task11.setRemainingEstimate(Duration.ofHours(6));
-//            taskApi.update(task11);
-//
-//            task12 = addTask("api documentation", "2h", "3h", graceMartin, sprint, story1, null);
-//            task12.setTaskStatus(TaskStatus.TODO);
-//            task12.setRemainingEstimate(Duration.ofHours(3));
-//            taskApi.update(task12);
-//
-//            task13 = addTask("api error handling", "5h", "7h", graceMartin, sprint, story1, null);
-//            task13.setTaskStatus(TaskStatus.TODO);
-//            task13.setRemainingEstimate(Duration.ofHours(7));
-//            taskApi.update(task13);
-//        }
         {
             story1 = addParentTask("Config api implementation", sprint, null, null);
             task11 = addTask("create controller", "4h", "6h", graceMartin, sprint, story1, null);
