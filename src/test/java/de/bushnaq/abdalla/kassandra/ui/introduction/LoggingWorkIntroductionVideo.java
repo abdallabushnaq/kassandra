@@ -63,7 +63,7 @@ import java.util.List;
 @Transactional
 public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute        EXCITED     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
-    public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f);
+    public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.4f).withTemperature(1f);
     public static final String                   VIDEO_TITLE = "Logging Work in Kassandra";
     private             String                   featureName;
     @Autowired
@@ -73,9 +73,17 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
     private             HumanizedSeleniumHandler seleniumHandler;
     private             String                   sprintName;
     private             Task                     story1;
+    private             Task                     story2;
+    private             Task                     story3;
     private             Task                     task11;
     private             Task                     task12;
     private             Task                     task13;
+    private             Task                     task21;
+    private             Task                     task22;
+    private             Task                     task23;
+    private             Task                     task31;
+    private             Task                     task32;
+    private             Task                     task33;
     private             String                   versionName;
 
     @ParameterizedTest
@@ -110,26 +118,67 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         seleniumHandler.hideOverlay();
 
         //---------------------------------------------------------------------------------------
-        // Explain Filter Controls
+        // Explain and Demonstrate Filter Controls
         //---------------------------------------------------------------------------------------
 
         grace.narrate(NORMAL, "First, let me show you the controls at the top of the Active Sprints view. These filters help you focus on the work that matters to you.");
         grace.pause(2000);
 
-        grace.narrate(NORMAL, "On the left, we have the Search field. You can type here to filter tasks by name, description, or any other text. This is great when you're looking for a specific task.");
+        // Demonstrate Search Field
+        grace.narrate(NORMAL, "On the left, we have the Search field. You can type here to filter tasks by name, description, or any other text. Let me search for 'controller' to see only tasks related to the controller.");
+        grace.pause(2000);
+
+        seleniumHandler.setTextField(ActiveSprints.ID_SEARCH_FIELD, "controller");
+        grace.pauseIfSilent(1000);
+        grace.pause(2000);
+
+        grace.narrate(NORMAL, "See how the board now shows only tasks matching 'controller'. Now I'll clear this search by clicking the X button.");
+        grace.pause(2000);
+
+        seleniumHandler.clickClearButton(ActiveSprints.ID_SEARCH_FIELD);
+        grace.pauseIfSilent(1000);
+        grace.pause(1500);
+
+        // Demonstrate User Filter
+        grace.narrate(NORMAL, "Next is the User filter. You can select one or more team members to see only their tasks. Let me filter to show only my tasks by selecting Grace Martin.");
         grace.pause(2500);
 
-        grace.narrate(NORMAL, "Next is the User filter. You can select one or more team members to see only their tasks. Since I'm Grace, I might want to see only my assigned work.");
+        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_USER_SELECTOR, "Grace Martin");
+        seleniumHandler.closeMultiSelectComboBoxValue(ActiveSprints.ID_USER_SELECTOR);
+        grace.pauseIfSilent(1000);
+        grace.pause(2000);
+
+        grace.narrate(NORMAL, "Perfect! Now the board shows only tasks assigned to me. I'll click the clear button to remove this filter.");
         grace.pause(2500);
 
-        grace.narrate(NORMAL, "Then we have the Sprint filter. If you have multiple active sprints, you can choose which ones to display. By default, the first active sprint is shown.");
-        grace.pause(2500);
+        // Click the clear button for the user selector
+        seleniumHandler.highlight(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
+        seleniumHandler.click(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
+        grace.pauseIfSilent(1000);
+        grace.pause(1500);
 
-        grace.narrate(NORMAL, "The Group by dropdown lets you organize the board in two ways: by Features, which groups all stories under their parent features, or by Stories, which shows each story individually. Right now, we're in Features mode.");
+        // Explain Sprint Filter
+        grace.narrate(NORMAL, "Then we have the Sprint filter. If you have multiple active sprints, you can choose which ones to display. By default, the first active sprint is shown. You can select additional sprints from the dropdown.");
         grace.pause(3000);
 
-        grace.narrate(NORMAL, "And finally, the Clear filter button resets all filters back to their defaults. Very handy when you want to see the full picture again.");
+        // Demonstrate Grouping Mode Selector
+        grace.narrate(NORMAL, "The Group by dropdown lets you organize the board in two ways. Right now, we're in Features mode, which groups all stories under their parent features. Let me switch to Stories mode.");
+        grace.pause(2500);
+
+        seleniumHandler.setComboBoxValue(ActiveSprints.ID_GROUPING_MODE_SELECTOR, "Stories");
+        grace.pauseIfSilent(1000);
+        grace.pause(2500);
+
+        grace.narrate(NORMAL, "In Stories mode, each story is shown individually with its own lanes. This gives you a more detailed view. Let me switch back to Features mode for our demo.");
+        grace.pause(2500);
+
+        seleniumHandler.setComboBoxValue(ActiveSprints.ID_GROUPING_MODE_SELECTOR, "Features");
+        grace.pauseIfSilent(1000);
         grace.pause(2000);
+
+        // Demonstrate Clear Filter Button
+        grace.narrate(NORMAL, "And finally, the Clear filter button resets all filters back to their defaults, including search, user selection, and sprint selection. Very handy when you want to see the full picture again.");
+        grace.pause(2500);
 
         grace.narrate(NORMAL, "Now let's get to work! I can see my tasks here in the Property request API feature, organized into the Config API Implementation story.");
         grace.pause(2000);
@@ -144,10 +193,10 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         // Moving Task 11 to IN PROGRESS
         //---------------------------------------------------------------------------------------
         {
-            seleniumHandler.setMouseMoveStepsMultiplier(2.0);
-            seleniumHandler.setMouseMoveDelayMultiplier(2);
+//            seleniumHandler.setMouseMoveStepsMultiplier(2.0);
+//            seleniumHandler.setMouseMoveDelayMultiplier(2);
 
-            grace.narrate(NORMAL, "To start working on a task, I simply drag it from the TO DO lane to the IN PROGRESS lane. Let me move the 'create controller' task. This tells the team that I've started working on it.");
+            grace.narrate(NORMAL, "To start working on a task, I simply drag it from the to-do lane to the in-progress lane. Let me move the 'create controller' task. This tells the team that I've started working on it.");
 
             // Use real drag and drop - drag task card to IN_PROGRESS lane
             // ActiveSprints defaults to Feature grouping mode, so use feature-based lane ID
@@ -158,7 +207,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             grace.pauseIfSilent(1000);
             grace.pause(1500);
 
-            grace.narrate(NORMAL, "Perfect! The task is now in the IN PROGRESS lane. Everyone can see that I'm actively working on it.");
+            grace.narrate(NORMAL, "Perfect! The task is now in the in-progress lane. Everyone can see that I'm actively working on it.");
             grace.pause(1500);
 
             //---------------------------------------------------------------------------------------
@@ -182,13 +231,13 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             // Filling Worklog Fields
             //---------------------------------------------------------------------------------------
 
-            grace.narrate(NORMAL, "I'll enter the time I spent today. Let's say 2 hours. Notice how the Time Remaining field automatically updates based on what I enter.");
+            grace.narrate(NORMAL, "I'll enter the time I spent today. Let's say 1 hours. Notice how the Time Remaining field automatically updates based on what I enter.");
 
-            seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "2h");
+            seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "1h");
             grace.pauseIfSilent(1000);
             grace.pause(2000);
 
-            grace.narrate(NORMAL, "See that? Originally this task had 6 hours remaining, and now it shows 4 hours after logging 2 hours of work. The system automatically calculates the burndown for us!");
+            grace.narrate(NORMAL, "See that? Originally this task had 4 hours remaining, and now it shows 3 hours after logging 1 hours of work. The system automatically calculates the burndown for us!");
             grace.pause(2000);
 
             grace.narrate(NORMAL, "In the comment field, I'll add a description of what I did. This helps the team understand what progress was made.");
@@ -217,7 +266,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             // Show Results
             //---------------------------------------------------------------------------------------
 
-            grace.narrate(NORMAL, "Look at the task card now. The remaining work has been updated to 4 hours. This is your burndown in action! The team can see that real progress is being made on this task.");
+            grace.narrate(NORMAL, "Look at the task card now. The remaining work has been updated to 3 hours. This is your burndown in action! The team can see that real progress is being made on this task.");
             grace.pause(2500);
 
             grace.narrate(NORMAL, "This information feeds into the sprint burndown chart, giving everyone visibility into how the sprint is progressing. It helps us track velocity and understand if we're on track to complete our commitments.");
@@ -229,7 +278,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         //---------------------------------------------------------------------------------------
         {
 
-            grace.narrate(NORMAL, "Let me show you one more example. I'll move another task to IN PROGRESS and log some work on it too.");
+            grace.narrate(NORMAL, "Let me show you one more example. I'll move another task to in-progress and log some work on it too.");
 
             // Use real drag and drop for second task
             String task12CardId = "task-card-" + task12.getId();
@@ -251,10 +300,10 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             grace.narrate(NORMAL, "Notice that the system automatically reduced the remaining time. But wait - sometimes you spend time on a task without actually making progress. Maybe you hit unexpected complexity or had to research something.");
             grace.pause(3000);
 
-            grace.narrate(NORMAL, "In this case, I spent an hour but realized the task will take longer than expected. So I need to adjust the remaining time back to 3 hours to reflect the actual work left.");
+            grace.narrate(NORMAL, "In this case, I spent an hour but realized the task will take longer than expected. So I need to adjust the remaining time back to 2 hours to reflect the actual work left.");
             grace.pause(2500);
 
-            seleniumHandler.setTextField(WorklogDialog.TIME_REMAINING_FIELD, "3h");
+            seleniumHandler.setTextField(WorklogDialog.TIME_REMAINING_FIELD, "2h");
             grace.pauseIfSilent(1000);
             grace.pause(1500);
 
@@ -316,26 +365,45 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         }
 
         // Story 1: Config API implementation with tasks assigned to Grace Martin
+//        {
+//            story1 = addParentTask("Config API Implementation", sprint, null, null);
+//            story1.setTaskStatus(TaskStatus.TODO);
+//            taskApi.update(story1);
+//
+//            task11 = addTask("create controller", "4h", "6h", graceMartin, sprint, story1, null);
+//            task11.setTaskStatus(TaskStatus.TODO);
+//            task11.setRemainingEstimate(Duration.ofHours(6));
+//            taskApi.update(task11);
+//
+//            task12 = addTask("api documentation", "2h", "3h", graceMartin, sprint, story1, null);
+//            task12.setTaskStatus(TaskStatus.TODO);
+//            task12.setRemainingEstimate(Duration.ofHours(3));
+//            taskApi.update(task12);
+//
+//            task13 = addTask("api error handling", "5h", "7h", graceMartin, sprint, story1, null);
+//            task13.setTaskStatus(TaskStatus.TODO);
+//            task13.setRemainingEstimate(Duration.ofHours(7));
+//            taskApi.update(task13);
+//        }
         {
-            story1 = addParentTask("Config API Implementation", sprint, null, null);
-            story1.setTaskStatus(TaskStatus.TODO);
-            taskApi.update(story1);
-
+            story1 = addParentTask("Config api implementation", sprint, null, null);
             task11 = addTask("create controller", "4h", "6h", graceMartin, sprint, story1, null);
-            task11.setTaskStatus(TaskStatus.TODO);
-            task11.setRemainingEstimate(Duration.ofHours(6));
-            taskApi.update(task11);
-
             task12 = addTask("api documentation", "2h", "3h", graceMartin, sprint, story1, null);
-            task12.setTaskStatus(TaskStatus.TODO);
-            task12.setRemainingEstimate(Duration.ofHours(3));
-            taskApi.update(task12);
-
             task13 = addTask("api error handling", "5h", "7h", graceMartin, sprint, story1, null);
-            task13.setTaskStatus(TaskStatus.TODO);
-            task13.setRemainingEstimate(Duration.ofHours(7));
-            taskApi.update(task13);
         }
+        {
+            story2 = addParentTask("Config persistence implementation", sprint, null, null);
+            task21 = addTask("create repository", "4h", "6h", graceMartin, sprint, story2, null);
+            task22 = addTask("schema documentation", "2h", "3h", graceMartin, sprint, story2, null);
+            task23 = addTask("persistence error handling", "5h", "7h", graceMartin, sprint, story2, null);
+        }
+        {
+            story3 = addParentTask("Config security implementation", sprint, null, null);
+            task31 = addTask("implement authentication", "6h", "8h", graceMartin, sprint, story3, null);
+            task32 = addTask("security documentation", "1h", "2h", graceMartin, sprint, story3, null);
+            task33 = addTask("security audit", "8h", "10h", graceMartin, sprint, story3, null);
+        }
+
 
         return sprint;
     }

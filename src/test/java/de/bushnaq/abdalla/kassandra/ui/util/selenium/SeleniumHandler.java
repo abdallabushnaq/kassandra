@@ -89,6 +89,30 @@ class SeleniumHandler {
     }
 
     /**
+     * Clicks the clear button (X) in a Vaadin text field or combo box.
+     * This method finds the clear button within the field's shadow DOM and clicks it.
+     *
+     * @param fieldId the ID of the text field or combo box
+     */
+    public void clickClearButton(String fieldId) {
+        waitUntil(ExpectedConditions.elementToBeClickable(By.id(fieldId)));
+        WebElement field = findElement(By.id(fieldId));
+
+        // Vaadin text fields have a clear button in their shadow DOM
+        // Access it via shadow root and click it
+        WebElement clearButton = expandRootElementAndFindElement(field, "[part='clear-button']");
+
+        if (clearButton != null && clearButton.isDisplayed()) {
+            moveMouseToElement(clearButton);
+            clearButton.click();
+            log.info("Clicked clear button for field with ID: " + fieldId);
+        } else {
+            log.warn("Clear button not found or not visible for field with ID: " + fieldId);
+            throw new RuntimeException("Clear button not found for field: " + fieldId);
+        }
+    }
+
+    /**
      * Clicks a WebElement directly with mouse movement support.
      * This is useful for elements that aren't part of the standard Vaadin component structure,
      * such as Keycloak login buttons or other external pages.

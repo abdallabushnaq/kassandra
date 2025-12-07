@@ -49,30 +49,34 @@ import java.util.stream.Collectors;
 @RolesAllowed({"USER", "ADMIN"})
 @Log4j2
 public class ActiveSprints extends Main implements AfterNavigationObserver {
-    public static final String                      ID_CLEAR_FILTERS_BUTTON = "clear-filters-button";
+    public static final String                      ID_CLEAR_FILTERS_BUTTON   = "clear-filters-button";
+    public static final String                      ID_GROUPING_MODE_SELECTOR = "grouping-mode-selector";
+    public static final String                      ID_SEARCH_FIELD           = "search-field";
+    public static final String                      ID_SPRINT_SELECTOR        = "sprint-selector";
+    public static final String                      ID_USER_SELECTOR          = "user-selector";
     //    public static final String                      ACTIVE_SPRINTS_PAGE_TITLE_ID = "active-sprints-title";
-    public static final String                      ROUTE                   = "active-sprints";
-    private             List<Sprint>                allSprints              = new ArrayList<>();
+    public static final String                      ROUTE                     = "active-sprints";
+    private             List<Sprint>                allSprints                = new ArrayList<>();
     private final       VerticalLayout              contentLayout;
     //    private final       DateTimeFormatter           dateFormatter      = DateTimeFormatter.ofPattern("MMM dd, yyyy");
     private final       FeatureApi                  featureApi;
-    private final       Map<Long, Feature>          featureMap              = new HashMap<>();
+    private final       Map<Long, Feature>          featureMap                = new HashMap<>();
     private             ComboBox<GroupingMode>      groupingModeSelector;
-    private             boolean                     hasUrlParameters        = false;
-    private             boolean                     isRestoringFromUrl      = false;
-    private             String                      savedGroupByValue       = null;
-    private             String                      savedSprintIds          = null;
-    private             String                      savedUserIds            = null;
-    private             String                      searchText              = "";
-    private             Set<Sprint>                 selectedSprints         = new HashSet<>();
-    private             Set<User>                   selectedUsers           = new HashSet<>();
+    private             boolean                     hasUrlParameters          = false;
+    private             boolean                     isRestoringFromUrl        = false;
+    private             String                      savedGroupByValue         = null;
+    private             String                      savedSprintIds            = null;
+    private             String                      savedUserIds              = null;
+    private             String                      searchText                = "";
+    private             Set<Sprint>                 selectedSprints           = new HashSet<>();
+    private             Set<User>                   selectedUsers             = new HashSet<>();
     private final       SprintApi                   sprintApi;
     private             MultiSelectComboBox<Sprint> sprintSelector;
     private final       TaskApi                     taskApi;
     private final       UserApi                     userApi;
-    private final       Map<Long, User>             userMap                 = new HashMap<>();
+    private final       Map<Long, User>             userMap                   = new HashMap<>();
     private             MultiSelectComboBox<User>   userSelector;
-    private             List<User>                  users                   = new ArrayList<>();
+    private             List<User>                  users                     = new ArrayList<>();
     private final       WorklogApi                  worklogApi;
 
     public ActiveSprints(FeatureApi featureApi, SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi) {
@@ -244,6 +248,8 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
         // 1. Search input box with magnifying glass icon and label for alignment
         TextField searchField = new TextField();
+        searchField.setId(ID_SEARCH_FIELD);
+        searchField.setClearButtonVisible(true);
         searchField.setLabel("Search");
         searchField.setPlaceholder("search board");
         searchField.setPrefixComponent(VaadinIcon.SEARCH.create());
@@ -260,6 +266,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
         // 2. User multi-select dropdown
         userSelector = new MultiSelectComboBox<>();
+        userSelector.setId(ID_USER_SELECTOR);
         userSelector.setLabel("User");
         userSelector.setItemLabelGenerator(User::getName);
         userSelector.setPlaceholder("Select users");
@@ -286,6 +293,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
         // 3. Sprint multi-select dropdown
         sprintSelector = new MultiSelectComboBox<>();
+        sprintSelector.setId(ID_SPRINT_SELECTOR);
         sprintSelector.setLabel("Sprint");
         sprintSelector.setItemLabelGenerator(Sprint::getName);
         sprintSelector.setPlaceholder("Select sprints");
@@ -301,6 +309,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
         // 4. Grouping mode selector
         groupingModeSelector = new ComboBox<>();
+        groupingModeSelector.setId(ID_GROUPING_MODE_SELECTOR);
         groupingModeSelector.setLabel("Group by");
         groupingModeSelector.setItems(GroupingMode.values());
         groupingModeSelector.setItemLabelGenerator(GroupingMode::getDisplayName);
@@ -322,9 +331,10 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             searchField.clear();
             userSelector.clear();
             sprintSelector.clear();
-            selectedSprints.clear();
-            selectedUsers.clear();
-            searchText = "";
+            // Create new mutable sets instead of calling clear() on potentially immutable ones
+            selectedSprints = new HashSet<>();
+            selectedUsers   = new HashSet<>();
+            searchText      = "";
             groupingModeSelector.setValue(GroupingMode.FEATURES);
             updateUrlParameters();
             applyFilters();
@@ -473,7 +483,8 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 } else if (!hasUrlParameters && !allSprints.isEmpty()) {
                     // Only select first sprint by default if NO URL parameters at all (first visit)
                     // If hasUrlParameters is true but no sprints, user explicitly cleared all sprints
-                    selectedSprints = Set.of(allSprints.get(0));
+                    selectedSprints = new HashSet<>();
+                    selectedSprints.add(allSprints.get(0));
                     sprintSelector.setValue(selectedSprints);
                 }
             }
