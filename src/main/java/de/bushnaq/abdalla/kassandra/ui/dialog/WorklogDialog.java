@@ -57,6 +57,7 @@ public class WorklogDialog extends Dialog {
     public static final String            SAVE_BUTTON          = "save-worklog-button";
     public static final String            TIME_REMAINING_FIELD = "worklog-time-remaining-field";
     public static final String            TIME_SPENT_FIELD     = "worklog-time-spent-field";
+    public static final String            TITLE_ID             = "worklog-dialog-title";
     public static final String            WORKLOG_DIALOG       = "worklog-dialog";
     private final       TextArea          commentField;
     private final       Long              currentUserId;
@@ -89,7 +90,7 @@ public class WorklogDialog extends Dialog {
 
         // Set dialog header with clock icon
         String title = "Log Work";
-        getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.CLOCK));
+        getHeader().add(VaadinUtil.createDialogHeader(title, TITLE_ID, VaadinIcon.CLOCK));
 
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);
@@ -132,31 +133,36 @@ public class WorklogDialog extends Dialog {
         timeSpentField.setHelperText("e.g., 1d 2h 30m");
         timeSpentField.setPlaceholder("1d 2h 30m");
 
-        // Add input listener to update time remaining on every keystroke
-        timeSpentField.addInputListener(e -> {
-            updateTimeRemaining();
-        });
+        // Reserve space for error message to prevent dialog resizing
+        timeSpentField.getStyle().set("min-height", "100px");
 
-        // Add value change listener for validation
+        // Set value change mode to EAGER for real-time updates
+        timeSpentField.setValueChangeMode(com.vaadin.flow.data.value.ValueChangeMode.EAGER);
+
+        // Add value change listener for both validation and real-time updates
         timeSpentField.addValueChangeListener(e -> {
             if (e.isFromClient()) {
-                try {
-                    String value = e.getValue().strip();
-                    if (!value.isEmpty()) {
+                String value = e.getValue().strip();
+
+                // Always update time remaining, even if format is invalid
+                updateTimeRemaining(value);
+
+                // Validate the format
+                if (!value.isEmpty()) {
+                    try {
                         Duration duration = DateUtil.parseWorkDayDurationString(value);
                         if (duration.isZero()) {
                             timeSpentField.setInvalid(true);
                             timeSpentField.setErrorMessage("Time spent must be greater than zero");
                         } else {
                             timeSpentField.setInvalid(false);
-                            updateTimeRemaining();
                         }
-                    } else {
-                        timeSpentField.setInvalid(false);
+                    } catch (IllegalArgumentException ex) {
+                        timeSpentField.setInvalid(true);
+                        timeSpentField.setErrorMessage("Invalid format");
                     }
-                } catch (IllegalArgumentException ex) {
-                    timeSpentField.setInvalid(true);
-                    timeSpentField.setErrorMessage("Invalid format");
+                } else {
+                    timeSpentField.setInvalid(false);
                 }
             }
         });
@@ -167,6 +173,10 @@ public class WorklogDialog extends Dialog {
         timeRemainingField.setWidth("50%");
         timeRemainingField.setHelperText("Auto-calculated");
         timeRemainingField.setPlaceholder("1d 2h 30m");
+
+        // Reserve space for error message to prevent dialog resizing
+        timeRemainingField.getStyle().set("min-height", "100px");
+
         timeRemainingField.addValueChangeListener(e -> {
             if (e.isFromClient()) {
                 String value = e.getValue().strip();
@@ -318,11 +328,11 @@ public class WorklogDialog extends Dialog {
     }
 
     /**
-     * Updates the time remaining field when time spent changes.
-     * This is called on every keystroke to provide immediate feedback.
+     * Updates the time remaining field based on the provided time spent value.
+     *
+     * @param timeSpentStr The time spent string value
      */
-    private void updateTimeRemaining() {
-        String timeSpentStr = timeSpentField.getValue();
+    private void updateTimeRemaining(String timeSpentStr) {
         if (timeSpentStr == null || timeSpentStr.isBlank()) {
             // Reset to original estimate if time spent is cleared
             if (task.getRemainingEstimate() != null && !task.getRemainingEstimate().isZero()) {

@@ -33,9 +33,29 @@
       "username": "jennifer.holleman@kassandra.org",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Test",
-      "lastName": "User",
+      "firstName": "jennifer",
+      "lastName": "kassandra",
       "email": "jennifer.holleman@kassandra.org",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "admin",
+        "user",
+        "offline_access"
+      ]
+    },
+    {
+      "username": "grace.martin@kassandra.org",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "grace",
+      "lastName": "martin",
+      "email": "grace.martin@kassandra.org",
       "credentials": [
         {
           "type": "password",

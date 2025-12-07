@@ -112,7 +112,7 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        log.info("afterNavigation start");
+//        log.info("afterNavigation start");
         // Update breadcrumbs
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
@@ -122,29 +122,21 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
                     }
                 });
 
-
-        // Check if this is likely the "first" afterNavigation on F5 (no params but UI might have them)
-        // If the event has no params but we have component state, skip this call
-//        if (queryParameters.getParameters().isEmpty() && !selectedSprints.isEmpty()) {
-//            log.info("Event has no params but we have state - likely first afterNavigation on F5, skipping");
-//            return;
-//        }
-
         // Set flag to prevent URL updates during restoration
         isRestoringFromUrl = true;
         // Load data and populate grids
         loadData();
         // Clear restoration flag after load complete
         isRestoringFromUrl = false;
-        log.info("== afterNavigation end");
-        log.info("");
+//        log.info("== afterNavigation end");
+//        log.info("");
     }
 
     /**
      * Apply filters to the displayed sprints
      */
     private void applyFilters() {
-        log.info(" * applyFilters called");
+//        log.info(" * applyFilters called");
         try {
             // Clear previous content
             contentLayout.removeAll();
@@ -200,8 +192,8 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        log.info("");
-        log.info("== beforeEnter start");
+//        log.info("");
+//        log.info("== beforeEnter start");
         // Read query parameters directly from the event
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
@@ -235,7 +227,7 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
             searchText = "";
             log.info("No search in URL, set to empty");
         }
-        log.info("== beforeEnter end");
+//        log.info("== beforeEnter end");
     }
 
     /**

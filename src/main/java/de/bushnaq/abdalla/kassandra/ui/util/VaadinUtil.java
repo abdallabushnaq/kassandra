@@ -33,6 +33,9 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import de.bushnaq.abdalla.kassandra.dto.Feature;
+import de.bushnaq.abdalla.kassandra.dto.Task;
+import de.bushnaq.abdalla.kassandra.dto.TaskStatus;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -431,15 +434,21 @@ public final class VaadinUtil {
     }
 
     public static HorizontalLayout createDialogHeader(String title, VaadinIcon icon) {
-        return createDialogHeader(title, new Icon(icon));
+        return createDialogHeader(title, null, new Icon(icon));
     }
 
-    public static HorizontalLayout createDialogHeader(String title, Icon icon) {
+    public static HorizontalLayout createDialogHeader(String title, String id, VaadinIcon icon) {
+        return createDialogHeader(title, id, new Icon(icon));
+    }
+
+    public static HorizontalLayout createDialogHeader(String title, String id, Icon icon) {
         HorizontalLayout headerLayout = new HorizontalLayout();
         headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         headerLayout.setSpacing(true);
 
         H3 titleLabel = new H3(title);
+        if (id != null)
+            titleLabel.setId(id);
         titleLabel.getStyle().set("margin", "0");
 
         if (icon != null) {
@@ -474,7 +483,47 @@ public final class VaadinUtil {
     }
 
     public static HorizontalLayout createDialogHeader(String title, String icon) {
-        return createDialogHeader(title, new Icon(icon));
+        return createDialogHeader(title, null, new Icon(icon));
+    }
+
+    /**
+     * Generates a unique lane ID for Selenium testing based on a Feature and TaskStatus enum.
+     * Type-safe method that accepts a Feature object and TaskStatus enum directly.
+     *
+     * @param feature The Feature object
+     * @param status  The TaskStatus enum value
+     * @return A lane ID in the format: feature-name-with-hyphens-STATUS
+     */
+    public static String generateFeatureLaneId(Feature feature, TaskStatus status) {
+        return generateLaneId(feature.getName(), status);
+    }
+
+    /**
+     * Generates a unique lane ID for Selenium testing based on a name and TaskStatus enum.
+     * This is used to create predictable IDs for drag-and-drop testing in Selenium.
+     *
+     * @param name   The name of the story, feature, or other entity (e.g., "Config API Implementation")
+     * @param status The TaskStatus enum value
+     * @return A lane ID in the format: name-with-hyphens-STATUS (e.g., "Config-API-Implementation-IN-PROGRESS")
+     */
+    private static String generateLaneId(String name, TaskStatus status) {
+        // Replace all non-alphanumeric characters with hyphens
+        String sanitizedName = name.replaceAll("[^a-zA-Z0-9]", "-");
+        // Replace underscores in status with hyphens
+        String sanitizedStatus = status.name().replace("_", "-");
+        return sanitizedName + "-" + sanitizedStatus;
+    }
+
+    /**
+     * Generates a unique lane ID for Selenium testing based on a Task (story) and TaskStatus enum.
+     * Type-safe method that accepts a Task object and TaskStatus enum directly.
+     *
+     * @param story  The Task object representing a story
+     * @param status The TaskStatus enum value
+     * @return A lane ID in the format: story-name-with-hyphens-STATUS
+     */
+    public static String generateStoryLaneId(Task story, TaskStatus status) {
+        return generateLaneId(story.getName(), status);
     }
 
     /**

@@ -28,6 +28,18 @@ Roadmap
    1. change status
    2. burn down work
 
+# Introduciton Videos
+
+1. Kassandra Users
+2. Kassandra User Profile & Avatar Management
+3. Kassandra User Off Days
+4. Kassandra User Locations
+5. Kassandra User Availability
+6. Kassandra Projects, Versions, Features and Sprints
+7. Kassandra Stories and Tasks
+8. Stories and Tasks - Rearranging and Copying
+9. Story and Task Relations
+
 # Screenshots
 
 ![gantt-03](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/gantt/gantt_03-3-gant-chart.svg)

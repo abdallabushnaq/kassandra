@@ -27,6 +27,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.TaskStatus;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -96,6 +97,9 @@ public class StoryCard extends Div {
 
     private VerticalLayout createLane(String title, TaskStatus status) {
         VerticalLayout lane = new VerticalLayout();
+        // Add unique ID for Selenium testing: story-name-status
+        String laneId = VaadinUtil.generateStoryLaneId(story, status);
+        lane.setId(laneId);
         lane.addClassName("task-lane");
         lane.addClassName("task-lane-" + status.name().toLowerCase().replace("_", "-"));
         lane.setWidth("33.33%");

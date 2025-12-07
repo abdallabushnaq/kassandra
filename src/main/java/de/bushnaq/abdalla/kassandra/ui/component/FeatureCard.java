@@ -28,6 +28,7 @@ import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.TaskStatus;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -158,6 +159,9 @@ public class FeatureCard extends Div {
 
     private VerticalLayout createLane(String title, TaskStatus status) {
         VerticalLayout lane = new VerticalLayout();
+        // Add unique ID for Selenium testing: feature-name-status
+        String laneId = VaadinUtil.generateFeatureLaneId(feature, status);
+        lane.setId(laneId);
         lane.addClassName("task-lane"); // Changed from story-lane to task-lane for drag-drop
         lane.addClassName("task-lane-" + status.name().toLowerCase().replace("_", "-"));
         lane.setWidth("33.33%");

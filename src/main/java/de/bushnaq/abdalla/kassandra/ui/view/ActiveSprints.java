@@ -39,7 +39,6 @@ import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.log4j.Log4j2;
 
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,29 +49,30 @@ import java.util.stream.Collectors;
 @RolesAllowed({"USER", "ADMIN"})
 @Log4j2
 public class ActiveSprints extends Main implements AfterNavigationObserver {
-    public static final String                      ACTIVE_SPRINTS_PAGE_TITLE_ID = "active-sprints-title";
-    public static final String                      ROUTE                        = "active-sprints";
-    private             List<Sprint>                allSprints                   = new ArrayList<>();
+    public static final String                      ID_CLEAR_FILTERS_BUTTON = "clear-filters-button";
+    //    public static final String                      ACTIVE_SPRINTS_PAGE_TITLE_ID = "active-sprints-title";
+    public static final String                      ROUTE                   = "active-sprints";
+    private             List<Sprint>                allSprints              = new ArrayList<>();
     private final       VerticalLayout              contentLayout;
-    private final       DateTimeFormatter           dateFormatter                = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+    //    private final       DateTimeFormatter           dateFormatter      = DateTimeFormatter.ofPattern("MMM dd, yyyy");
     private final       FeatureApi                  featureApi;
-    private final       Map<Long, Feature>          featureMap                   = new HashMap<>();
+    private final       Map<Long, Feature>          featureMap              = new HashMap<>();
     private             ComboBox<GroupingMode>      groupingModeSelector;
-    private             boolean                     hasUrlParameters             = false;
-    private             boolean                     isRestoringFromUrl           = false;
-    private             String                      savedGroupByValue            = null;
-    private             String                      savedSprintIds               = null;
-    private             String                      savedUserIds                 = null;
-    private             String                      searchText                   = "";
-    private             Set<Sprint>                 selectedSprints              = new HashSet<>();
-    private             Set<User>                   selectedUsers                = new HashSet<>();
+    private             boolean                     hasUrlParameters        = false;
+    private             boolean                     isRestoringFromUrl      = false;
+    private             String                      savedGroupByValue       = null;
+    private             String                      savedSprintIds          = null;
+    private             String                      savedUserIds            = null;
+    private             String                      searchText              = "";
+    private             Set<Sprint>                 selectedSprints         = new HashSet<>();
+    private             Set<User>                   selectedUsers           = new HashSet<>();
     private final       SprintApi                   sprintApi;
     private             MultiSelectComboBox<Sprint> sprintSelector;
     private final       TaskApi                     taskApi;
     private final       UserApi                     userApi;
-    private final       Map<Long, User>             userMap                      = new HashMap<>();
+    private final       Map<Long, User>             userMap                 = new HashMap<>();
     private             MultiSelectComboBox<User>   userSelector;
-    private             List<User>                  users                        = new ArrayList<>();
+    private             List<User>                  users                   = new ArrayList<>();
     private final       WorklogApi                  worklogApi;
 
     public ActiveSprints(FeatureApi featureApi, SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi) {
@@ -126,9 +126,9 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         com.vaadin.flow.router.Location location        = event.getLocation();
         QueryParameters                 queryParameters = location.getQueryParameters();
 
-        log.info("=== afterNavigation called (ActiveSprints) ===");
-        log.info("URL: {}", location.getPath());
-        log.info("Query params from event: {}", queryParameters.getParameters());
+//        log.info("=== afterNavigation called (ActiveSprints) ===");
+//        log.info("URL: {}", location.getPath());
+//        log.info("Query params from event: {}", queryParameters.getParameters());
 
         // Check if this is likely the "first" afterNavigation on F5 (no params but UI might have them)
         // If the event has no params but we have component state, skip this call
@@ -179,7 +179,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
         // Clear restoration flag after load complete
         isRestoringFromUrl = false;
-        log.info("=== afterNavigation complete (ActiveSprints) ===");
+//        log.info("=== afterNavigation complete (ActiveSprints) ===");
     }
 
     /**
@@ -316,6 +316,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
         // 5. Clear filter button (right after filters, no spacer)
         Button clearButton = new Button("Clear filter", VaadinIcon.CLOSE_SMALL.create());
+        clearButton.setId(ID_CLEAR_FILTERS_BUTTON);
         clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         clearButton.addClickListener(e -> {
             searchField.clear();
