@@ -275,6 +275,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             }
             Profiler.log("generate Products for test case -" + randomCase.getTestCaseIndex());
         }
+        generateRandomSickDays();
     }
 
     private int generateRandomValue(int minNumber, int maxNumberExclusive) {
@@ -381,31 +382,33 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                 LocalDateTime lunchStartTime = DateUtil.calculateLunchStartTime(day.atStartOfDay());
                 LocalDateTime lunchStopTime  = DateUtil.calculateLunchStopTime(day.atStartOfDay());
                 rest = Duration.ZERO;
+                //iterate over all tasks
                 for (Task task : sprint.getTasks()) {
-                    if (task.getChildTasks().isEmpty() && task.getOriginalEstimate() != null && !task.getOriginalEstimate().isZero()) {
+                    if (task.isTask()) {
                         Number availability = task.getAssignedUser().getAvailabilities().getLast().getAvailability();
-                        if (task.getChildTasks().isEmpty()) {
-                            if (!day.isBefore(task.getStart().toLocalDate()) /*&& !day.isAfter(task.getFinish().toLocalDate())*/) {
-                                // Day is within task start/finish date range
-
-                                if (task.getEffectiveCalendar().isWorkingDate(day)) {
-                                    if (task.getStart().isBefore(startOfDay) || task.getStart().isEqual(startOfDay)) {
-                                        if (!task.getRemainingEstimate().isZero()) {
-                                            // we have the whole day
-                                            double   minPerformance = 0.6f;
-                                            double   fraction       = minPerformance + random.nextFloat() * (1 - minPerformance) * 1.2;
-                                            Duration maxWork        = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
-                                            Duration w              = maxWork;
-                                            Duration delta          = task.getRemainingEstimate().minus(w);
-                                            if (delta.isZero() || delta.isPositive()) {
-                                            } else {
-                                                w = task.getRemainingEstimate();
-                                            }
-                                            Worklog worklog = addWorklog(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
-                                            task.addTimeSpent(w);
-                                            task.removeRemainingEstimate(w);
-                                            task.recalculate();
+                        if (!day.isBefore(task.getStart().toLocalDate())) {
+                            // Day is after task start
+                            if (task.getEffectiveCalendar().isWorkingDate(day)) {
+                                //is a working day for this user
+                                if (task.getStart().isBefore(startOfDay) || task.getStart().isEqual(startOfDay)) {
+                                    if (!task.getRemainingEstimate().isZero()) {
+                                        // we have the whole day
+                                        double   minPerformance = 0.6f;
+                                        double   fraction       = minPerformance + random.nextFloat() * (1 - minPerformance) * 1.2;
+                                        Duration maxWork        = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                        Duration w              = maxWork;
+                                        Duration delta          = task.getRemainingEstimate().minus(w);
+                                        if (delta.isZero() || delta.isPositive()) {
+                                        } else {
+                                            w = task.getRemainingEstimate();
                                         }
+                                        Worklog worklog = addWorklog(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
+                                        task.addTimeSpent(w);
+                                        task.removeRemainingEstimate(w);
+                                        task.recalculate();
+                                        task.setTaskStatus(TaskStatus.IN_PROGRESS);
+                                    } else {
+                                        task.setTaskStatus(TaskStatus.DONE);
                                     }
                                 }
                             }

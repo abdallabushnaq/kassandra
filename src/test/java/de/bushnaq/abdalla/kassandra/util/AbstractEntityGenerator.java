@@ -632,8 +632,25 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 int year = employmentYear + yearIndex;
                 random.setSeed(generateUserYearSeed(saved, year));
                 addOffDays(saved, employmentDate, 30, year, OffDayType.VACATION, 10, 20);
-                addOffDays(saved, employmentDate, random.nextInt(20), year, OffDayType.SICK, 1, 5);
                 addOffDays(saved, employmentDate, random.nextInt(5), year, OffDayType.TRIP, 1, 5);
+            }
+        }
+    }
+
+    protected void generateRandomSickDays() {
+        try (Profiler pc = new Profiler(SampleType.CPU)) {
+            List<User> all = userApi.getAll();
+            for (User user : all) {
+                user.initialize();
+                LocalDate employmentDate = ParameterOptions.getNow().toLocalDate().minusYears(1);
+
+                int employmentYear = employmentDate.getYear();
+                offDaysIterations = 0;
+                for (int yearIndex = 0; yearIndex < 2; yearIndex++) {
+                    int year = employmentYear + yearIndex;
+                    random.setSeed(generateUserYearSeed(user, year));
+                    addOffDays(user, employmentDate, random.nextInt(20), year, OffDayType.SICK, 1, 5);
+                }
             }
         }
     }
