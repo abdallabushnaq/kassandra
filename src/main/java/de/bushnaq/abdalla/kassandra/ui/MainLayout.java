@@ -34,8 +34,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
-import com.vaadin.flow.router.AfterNavigationEvent;
-import com.vaadin.flow.router.AfterNavigationObserver;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
@@ -59,18 +59,12 @@ import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 @PermitAll // When security is enabled, allow all authenticated users
 @CssImport("./styles/main-layout.css")
 //@JsModule("/tooltips.js")
-public final class MainLayout extends AppLayout implements AfterNavigationObserver {
+public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     public static final String           ID_BREADCRUMBS               = "main-layout-breadcrumbs";
     public static final String           ID_LOGO                      = "main-layout-logo";
-    public static final String           ID_NAVIGATION_TABS           = "main-layout-navigation-tabs";
     public static final String           ID_TAB_BASE                  = "main-layout-tab-";
-    public static final String           ID_TAB_FEATURES              = "main-layout-tab-features";
-    public static final String           ID_TAB_PRODUCTS              = "main-layout-tab-products";
-    public static final String           ID_TAB_SPRINTS               = "main-layout-tab-sprints";
-    public static final String           ID_TAB_TASKS                 = "main-layout-tab-tasks";
     public static final String           ID_TAB_USERS                 = "main-layout-tab-users";
-    public static final String           ID_TAB_VERSIONS              = "main-layout-tab-versions";
     public static final String           ID_THEME_TOGGLE              = "main-layout-theme-toggle";
     public static final String           ID_USER_MENU                 = "main-layout-user-menu";
     public static final String           ID_USER_MENU_AVAILABILITY    = "main-layout-user-menu-availability";
@@ -79,12 +73,11 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
     public static final String           ID_USER_MENU_MANAGE_SETTINGS = "main-layout-user-menu-manage-settings";
     public static final String           ID_USER_MENU_OFF_DAYS        = "main-layout-user-menu-off-days";
     public static final String           ID_USER_MENU_VIEW_PROFILE    = "main-layout-user-menu-view-profile";
-    // Method to get the breadcrumbs component (to be used by views)
     @Getter
     private final       Breadcrumbs      breadcrumbs                  = new Breadcrumbs();
     private             Image            logoImage;   // Store reference to logo image
     private final       Map<Tab, String> tabToPathMap                 = new HashMap<>();
-    private final       Tabs             tabs                         = new Tabs();
+    private             Tabs             tabs;
     private final       UserApi          userApi;
 
     MainLayout(UserApi userApi) {
@@ -117,26 +110,14 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
     }
 
     @Override
-    public void afterNavigation(AfterNavigationEvent event) {
-        // Get the current location path
-        String currentPath = "/" + event.getLocation().getPath();
+    public void beforeEnter(BeforeEnterEvent event) {
 
-        // Find and select the tab that matches the current path
-        boolean matchFound = false;
-        for (Map.Entry<Tab, String> entry : tabToPathMap.entrySet()) {
-            String tabPath = entry.getValue();
-            // Match if current path equals the tab path or starts with it (for sub-routes)
-            if (currentPath.equals(tabPath)) {
-                tabs.setSelectedTab(entry.getKey());
-                matchFound = true;
-                break;
+        final String pathToMatch = event.getLocation().getPath();
+        tabToPathMap.forEach((tab, path) -> {
+            if (("/" + pathToMatch).equals(path)) {
+                tabs.setSelectedTab(tab);
             }
-        }
-
-        // If no match found, deselect all tabs
-        if (!matchFound) {
-            tabs.setSelectedTab(null);
-        }
+        });
     }
 
     private Div createBreadcrumbs() {
@@ -177,7 +158,7 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
         Image logoLayout = createLogo();
 
         // Add navigation tabs to the center
-        createNavTabs();
+        tabs = createTabs();
         tabs.addClassNames(Margin.Horizontal.MEDIUM);
 
         // Create theme toggle and register theme change listener
@@ -191,48 +172,50 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
         return navbarLayout;
     }
 
-    private void createNavTabs() {
-        tabs.setOrientation(Tabs.Orientation.HORIZONTAL);
-        tabs.setId(ID_NAVIGATION_TABS);
-
-        MenuConfiguration.getMenuEntries().forEach(entry -> {
-            Tab tab = createTab(entry);
-            tabToPathMap.put(tab, entry.path());
-            tabs.add(tab);
-        });
-
-        tabs.addSelectedChangeListener(event -> {
-            Tab    selectedTab = event.getSelectedTab();
-            String targetPath  = tabToPathMap.get(selectedTab);
-            if (targetPath != null && !targetPath.isEmpty()) {
-                getUI().ifPresent(ui -> ui.navigate(targetPath));
-            }
-        });
-    }
-
     private Tab createTab(MenuEntry menuEntry) {
-        Icon icon = null;
+        Tab tab = new Tab();
+
         if (menuEntry.icon() != null) {
-            icon = new Icon(menuEntry.icon());
-            icon.addClassNames(Margin.Right.XSMALL);
-        }
+            Icon icon = new Icon(menuEntry.icon());
+            icon.getStyle().setMarginRight("8px");
 
-        Span text = new Span(menuEntry.title());
+            Span label = new Span(menuEntry.title());
 
-        Tab tab;
-        if (icon != null) {
-            tab = new Tab(new HorizontalLayout(icon, text));
+            HorizontalLayout tabLayout = new HorizontalLayout(icon, label);
+            tabLayout.setSpacing(false);
+            tabLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+
+            tab.add(tabLayout);
         } else {
-            tab = new Tab(text);
-        }
-
-        // Set ID based on the menu entry title
-        String tabId = getTabIdForTitle(menuEntry.title());
-        if (tabId != null) {
-            tab.setId(tabId);
+            tab.add(new Span(menuEntry.title()));
         }
 
         return tab;
+    }
+
+    private Tabs createTabs() {
+        var tabs = new Tabs();
+        tabs.setOrientation(Tabs.Orientation.HORIZONTAL);
+
+        // Create tabs from menu configuration
+        MenuConfiguration.getMenuEntries().forEach(entry -> {
+            Tab tab = createTab(entry);
+            tabs.add(tab);
+            tabToPathMap.put(tab, entry.path());
+        });
+
+        // Handle tab selection changes
+        tabs.addSelectedChangeListener(event -> {
+            Tab selectedTab = event.getSelectedTab();
+            if (selectedTab != null) {
+                String path = tabToPathMap.get(selectedTab);
+                if (path != null) {
+                    getUI().ifPresent(ui -> ui.navigate(path));
+                }
+            }
+        });
+
+        return tabs;
     }
 
     /**
@@ -330,20 +313,6 @@ public final class MainLayout extends AppLayout implements AfterNavigationObserv
     private String getTabIdForTitle(String title) {
         return ID_TAB_BASE + title.toLowerCase();
     }
-
-//    private String getUserEmail() {
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        String         userEmail      = authentication != null ? authentication.getName() : "Guest";
-//
-//        // If using OIDC, try to get the email address from authentication details
-//        if (authentication != null && authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
-//            String email = oidcUser.getEmail();
-//            if (email != null && !email.isEmpty()) {
-//                userEmail = email;
-//            }
-//        }
-//        return userEmail;
-//    }
 
     private void logout() {
         SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();

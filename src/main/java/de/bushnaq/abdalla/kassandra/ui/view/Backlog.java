@@ -50,7 +50,7 @@ import java.util.Set;
 
 @Route("backlog")
 @PageTitle("Backlog")
-@Menu(order = 3, icon = "vaadin:grid-v", title = "Sprints")
+@Menu(order = 3, icon = "vaadin:grid-v", title = "Backlog")
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
 @Log4j2
@@ -485,14 +485,14 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
                     sprintSelector.setValue(sprintsToSelect);
                 }
             } else if (!hasUrlParameters && !allSprints.isEmpty()) {
-//                // Only select first sprint by default if NO URL parameters at all (first visit)
-//                // If hasUrlParameters is true but no sprints, user explicitly cleared all sprints
-//                selectedSprints = Set.of(allSprints.get(0));
-//                sprintSelector.setValue(selectedSprints);
-//                // Explicitly update URL with default selection
-//                isRestoringFromUrl = false;
-//                updateUrlParameters();
-//                isRestoringFromUrl = true;
+                // Only select first sprint by default if NO URL parameters at all (first visit)
+                // If hasUrlParameters is true but no sprints, user explicitly cleared all sprints
+                selectedSprints = Set.of(allSprints.get(0));
+                sprintSelector.setValue(selectedSprints);
+                // Explicitly update URL with default selection
+                isRestoringFromUrl = false;
+                updateUrlParameters();
+                isRestoringFromUrl = true;
                 log.info("savedSprintIds is null or empty - not restoring sprints");
             }
         }
