@@ -41,7 +41,7 @@ console.log('Tooltips script loaded!');
         try {
             // Find elements matching our selectors
             const elementsWithTooltip = document.querySelectorAll(combinedSelector);
-            console.log('Found elements with tooltip attributes:', elementsWithTooltip.length);
+//            console.log('Found elements with tooltip attributes:', elementsWithTooltip.length);
 
             elementsWithTooltip.forEach(element => {
                 // Check if element already has a tooltip initialized
@@ -53,7 +53,7 @@ console.log('Tooltips script loaded!');
                 let tooltipText = element.getAttribute('title') || element.getAttribute('alt');
                 if (!tooltipText) return;
 
-                console.log('Initializing tooltip for element:', element, 'with text:', tooltipText);
+//                console.log('Initializing tooltip for element:', element, 'with text:', tooltipText);
 
                 // Store the tooltip content in a data attribute
                 element.setAttribute('data-tooltip', tooltipText);
@@ -120,12 +120,12 @@ console.log('Tooltips script loaded!');
 
     // If document is already loaded, run initialization now
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        console.log('Document already loaded, initializing tooltips now');
+//        console.log('Document already loaded, initializing tooltips now');
         initTooltips();
     } else {
         // Otherwise wait for DOMContentLoaded
-        console.log('Waiting for DOMContentLoaded event');
-        document.addEventListener('DOMContentLoaded', initTooltips);
+//        console.log('Waiting for DOMContentLoaded event');
+//        document.addEventListener('DOMContentLoaded', initTooltips);
     }
 
     // For dynamic content: Re-initialize tooltips when DOM changes
@@ -140,14 +140,13 @@ console.log('Tooltips script loaded!');
             mutations.forEach((mutation) => {
                 if (mutation.type === 'childList') {
                     shouldReinitialize = true;
-                } else if (mutation.type === 'attributes' &&
-                           attributesToObserve.includes(mutation.attributeName)) {
+                } else if (mutation.type === 'attributes' && attributesToObserve.includes(mutation.attributeName)) {
                     shouldReinitialize = true;
                 }
             });
 
             if (shouldReinitialize) {
-                console.log('DOM mutation detected, reinitializing tooltips');
+//                console.log('DOM mutation detected, reinitializing tooltips');
                 initTooltips();
             }
         });
@@ -159,7 +158,7 @@ console.log('Tooltips script loaded!');
             attributes: true,
             attributeFilter: attributesToObserve
         });
-        console.log('MutationObserver initialized and watching for changes');
+//        console.log('MutationObserver initialized and watching for changes');
     } catch (error) {
         console.error('Error setting up MutationObserver:', error);
     }

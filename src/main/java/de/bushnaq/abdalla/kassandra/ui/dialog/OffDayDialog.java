@@ -292,6 +292,8 @@ public class OffDayDialog extends Dialog {
                 // This is a weekend or holiday - end the current range if one exists
                 if (rangeStart != null) {
                     OffDay splitOffDay = new OffDay(rangeStart, current.minusDays(1), type);
+                    //todo we might be overwriting created here
+                    //todo we might be overwriting updated here
                     splitOffDay.setUser(user);
                     result.add(splitOffDay);
                     rangeStart = null;
@@ -304,6 +306,8 @@ public class OffDayDialog extends Dialog {
         // Add the final range if one is still open
         if (rangeStart != null) {
             OffDay splitOffDay = new OffDay(rangeStart, lastDay, type);
+            //todo we might be overwriting created here
+            //todo we might be overwriting updated here
             splitOffDay.setUser(user);
             result.add(splitOffDay);
         }

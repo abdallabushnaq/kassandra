@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.dto;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -31,5 +32,11 @@ public abstract class AbstractTimeAware {
     private OffsetDateTime created;
 
     private OffsetDateTime updated;
+
+    AbstractTimeAware() {
+        created = ParameterOptions.getNow();
+        updated = ParameterOptions.getNow();
+    }
+
 
 }

@@ -54,25 +54,25 @@ import java.time.LocalDate;
 @Transactional
 public class OffDayListViewTest extends AbstractUiTestUtil {
     // Test data for the first off day record
-    private final LocalDate                firstDayRecord1  = LocalDate.of(2025, 8, 1);
+    private final LocalDate                firstDayRecord1  = LocalDate.of(2025, 8, 4);
     // Test data for the second off day record
-    private final LocalDate                firstDayRecord2  = LocalDate.of(2025, 9, 10);
+    private final LocalDate                firstDayRecord2  = LocalDate.of(2025, 9, 15);
     // Test data for invalid date range
     private final LocalDate                invalidFirstDay  = LocalDate.of(2025, 11, 10);
     private final LocalDate                invalidLastDay   = LocalDate.of(2025, 11, 5);  // Before first day
-    private final LocalDate                lastDayRecord1   = LocalDate.of(2025, 8, 5);
-    private final LocalDate                lastDayRecord2   = LocalDate.of(2025, 9, 15);
+    private final LocalDate                lastDayRecord1   = LocalDate.of(2025, 8, 8);
+    private final LocalDate                lastDayRecord2   = LocalDate.of(2025, 9, 19);
     // Test data for editing
-    private final LocalDate                newFirstDay      = LocalDate.of(2025, 10, 1);
-    private final LocalDate                newLastDay       = LocalDate.of(2025, 10, 7);
+    private final LocalDate                newFirstDay      = LocalDate.of(2025, 10, 6);
+    private final LocalDate                newLastDay       = LocalDate.of(2025, 10, 10);
     private final OffDayType               newType          = OffDayType.TRIP;
     @Autowired
     private       OffDayListViewTester     offDayListViewTester;
     // Test data for overlapping off days
     private final LocalDate                overlapFirstDay1 = LocalDate.of(2025, 12, 1);
-    private final LocalDate                overlapFirstDay2 = LocalDate.of(2025, 12, 5);  // Overlaps with first record
-    private final LocalDate                overlapLastDay1  = LocalDate.of(2025, 12, 10);
-    private final LocalDate                overlapLastDay2  = LocalDate.of(2025, 12, 15);
+    private final LocalDate                overlapFirstDay2 = LocalDate.of(2025, 12, 2);  // Overlaps with first record
+    private final LocalDate                overlapLastDay1  = LocalDate.of(2025, 12, 3);
+    private final LocalDate                overlapLastDay2  = LocalDate.of(2025, 12, 5);
     @Autowired
     private       HumanizedSeleniumHandler seleniumHandler;
     // Test username
@@ -151,22 +151,22 @@ public class OffDayListViewTest extends AbstractUiTestUtil {
         // Test each type with slightly different dates
         offDayListViewTester.createOffDayConfirm(
                 LocalDate.of(2025, 7, 1),
-                LocalDate.of(2025, 7, 5),
+                LocalDate.of(2025, 7, 4),
                 OffDayType.VACATION);
 
         offDayListViewTester.createOffDayConfirm(
-                LocalDate.of(2025, 7, 10),
-                LocalDate.of(2025, 7, 12),
+                LocalDate.of(2025, 7, 7),
+                LocalDate.of(2025, 7, 9),
                 OffDayType.SICK);
 
         offDayListViewTester.createOffDayConfirm(
-                LocalDate.of(2025, 7, 20),
-                LocalDate.of(2025, 7, 20),
+                LocalDate.of(2025, 7, 21),
+                LocalDate.of(2025, 7, 21),
                 OffDayType.HOLIDAY);
 
         offDayListViewTester.createOffDayConfirm(
-                LocalDate.of(2025, 7, 25),
-                LocalDate.of(2025, 7, 30),
+                LocalDate.of(2025, 7, 28),
+                LocalDate.of(2025, 7, 31),
                 OffDayType.TRIP);
     }
 
