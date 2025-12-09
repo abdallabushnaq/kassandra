@@ -151,7 +151,7 @@ public class UserListViewTester {
                                LocalDate originalLastDay, LocalDate newLastDay) {
         // First verify the current field values before starting the edit
         verifyUserDialogFields(originalName, originalEmail, originalFirstDay, originalLastDay);
-
+        seleniumHandler.wait(500);
         seleniumHandler.click(UserListView.USER_GRID_EDIT_BUTTON_PREFIX + originalName);
         seleniumHandler.setTextField(UserDialog.USER_NAME_FIELD, newName);
         seleniumHandler.setTextField(UserDialog.USER_EMAIL_FIELD, newEmail);
