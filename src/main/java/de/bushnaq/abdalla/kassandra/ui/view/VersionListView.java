@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -59,17 +60,91 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     public static final String                              VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
     public static final String                              VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
     public static final String                              VERSION_ROW_COUNTER               = "version-row-counter";
+    private final       AiFilterService                     aiFilterService;
     private             com.vaadin.flow.component.Component headerComponent; // Track the header
+    private final       ObjectMapper                        mapper;
     private final       ProductApi                          productApi;
     private             Long                                productId;
     private final       VersionApi                          versionApi;
 
     public VersionListView(VersionApi versionApi, ProductApi productApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper) {
         super(clock);
-        this.versionApi = versionApi;
-        this.productApi = productApi;
-        // Header will be created in afterNavigation, not here
-        add(getGridPanelWrapper());
+        this.versionApi      = versionApi;
+        this.productApi      = productApi;
+        this.aiFilterService = aiFilterService;
+        this.mapper          = mapper;
+    }
+
+//    {
+//        // --- Create header with avatar and name ---
+//        com.vaadin.flow.component.Component newHeader;
+//        final String                        HEADER_ID = "version-list-header";
+//        if (product.getAvatarHash() != null && !product.getAvatarHash().isEmpty()) {
+//            com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
+//            avatar.setWidth("32px");
+//            avatar.setHeight("32px");
+//            avatar.getStyle()
+//                    .set("border-radius", "var(--lumo-border-radius)")
+//                    .set("object-fit", "cover")
+//                    .set("display", "inline-block")
+//                    .set("margin-right", "12px");
+//            // Use REST API endpoint for avatar with hash-based caching
+//            avatar.setSrc(product.getAvatarUrl());
+//            avatar.setAlt(product.getName());
+//            com.vaadin.flow.component.html.Span nameSpan = new com.vaadin.flow.component.html.Span(product.getName());
+//            nameSpan.getStyle().set("font-size", "1.5em").set("vertical-align", "middle");
+//            com.vaadin.flow.component.html.Div headerDiv = new com.vaadin.flow.component.html.Div(avatar, nameSpan);
+//            headerDiv.setId(HEADER_ID);
+//            headerDiv.getStyle().set("display", "flex").set("align-items", "center").set("gap", "8px");
+//            newHeader = headerDiv;
+//        } else {
+//            com.vaadin.flow.component.icon.Icon defaultIcon = new com.vaadin.flow.component.icon.Icon(VaadinIcon.CUBE);
+//            defaultIcon.setSize("32px");
+//            defaultIcon.getStyle().set("margin-right", "12px");
+//            com.vaadin.flow.component.html.Span nameSpan = new com.vaadin.flow.component.html.Span(product.getName());
+//            nameSpan.getStyle().set("font-size", "1.5em").set("vertical-align", "middle");
+//            com.vaadin.flow.component.html.Div headerDiv = new com.vaadin.flow.component.html.Div(defaultIcon, nameSpan);
+//            headerDiv.setId(HEADER_ID);
+//            headerDiv.getStyle().set("display", "flex").set("align-items", "center").set("gap", "8px");
+//            newHeader = headerDiv;
+//        }
+//        // Remove previous header by id if present
+//        getChildren()
+//                .filter(c -> HEADER_ID.equals(c.getId().orElse(null)))
+//                .findFirst()
+//                .ifPresent(this::remove);
+//        // Insert header before the grid panel (which is always present)
+//        addComponentAtIndex(0, newHeader);
+//        headerComponent = newHeader;
+//
+//    }
+
+    void addHeader(Product product) {
+        Image avatar = new Image();
+        avatar.setWidth("32px");
+        avatar.setHeight("32px");
+        avatar.getStyle()
+                .set("border-radius", "var(--lumo-border-radius)")
+                .set("object-fit", "cover")
+                .set("display", "inline-block")
+                .set("margin-right", "12px");
+        if (product.getAvatarHash() != null && !product.getAvatarHash().isEmpty()) {
+            avatar.setSrc(product.getAvatarUrl());
+        }
+        add(
+                createSmartHeader(
+                        product.getName(),
+                        VERSION_LIST_PAGE_TITLE,
+                        avatar,
+                        CREATE_VERSION_BUTTON,
+                        () -> openVersionDialog(null),
+                        VERSION_ROW_COUNTER,
+                        VERSION_GLOBAL_FILTER,
+                        aiFilterService, mapper, "Version"
+                ),
+                getGridPanelWrapper()
+        );
+
     }
 
     @Override
@@ -90,46 +165,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         Map<String, String> params = new HashMap<>();
                         params.put("product", String.valueOf(productId));
                         mainLayout.getBreadcrumbs().addItem("Versions", VersionListView.class, params);
-                        // --- Create header with avatar and name ---
-                        com.vaadin.flow.component.Component newHeader;
-                        final String                        HEADER_ID = "version-list-header";
-                        if (product.getAvatarHash() != null && !product.getAvatarHash().isEmpty()) {
-                            com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
-                            avatar.setWidth("32px");
-                            avatar.setHeight("32px");
-                            avatar.getStyle()
-                                    .set("border-radius", "var(--lumo-border-radius)")
-                                    .set("object-fit", "cover")
-                                    .set("display", "inline-block")
-                                    .set("margin-right", "12px");
-                            // Use REST API endpoint for avatar with hash-based caching
-                            avatar.setSrc(product.getAvatarUrl());
-                            avatar.setAlt(product.getName());
-                            com.vaadin.flow.component.html.Span nameSpan = new com.vaadin.flow.component.html.Span(product.getName());
-                            nameSpan.getStyle().set("font-size", "1.5em").set("vertical-align", "middle");
-                            com.vaadin.flow.component.html.Div headerDiv = new com.vaadin.flow.component.html.Div(avatar, nameSpan);
-                            headerDiv.setId(HEADER_ID);
-                            headerDiv.getStyle().set("display", "flex").set("align-items", "center").set("gap", "8px");
-                            newHeader = headerDiv;
-                        } else {
-                            com.vaadin.flow.component.icon.Icon defaultIcon = new com.vaadin.flow.component.icon.Icon(VaadinIcon.CUBE);
-                            defaultIcon.setSize("32px");
-                            defaultIcon.getStyle().set("margin-right", "12px");
-                            com.vaadin.flow.component.html.Span nameSpan = new com.vaadin.flow.component.html.Span(product.getName());
-                            nameSpan.getStyle().set("font-size", "1.5em").set("vertical-align", "middle");
-                            com.vaadin.flow.component.html.Div headerDiv = new com.vaadin.flow.component.html.Div(defaultIcon, nameSpan);
-                            headerDiv.setId(HEADER_ID);
-                            headerDiv.getStyle().set("display", "flex").set("align-items", "center").set("gap", "8px");
-                            newHeader = headerDiv;
-                        }
-                        // Remove previous header by id if present
-                        getChildren()
-                                .filter(c -> HEADER_ID.equals(c.getId().orElse(null)))
-                                .findFirst()
-                                .ifPresent(this::remove);
-                        // Insert header before the grid panel (which is always present)
-                        addComponentAtIndex(0, newHeader);
-                        headerComponent = newHeader;
+
+                        addHeader(product);
                     }
                 });
 

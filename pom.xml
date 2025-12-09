@@ -340,7 +340,7 @@
                         <exclude>**/ai/**/*Tests.java</exclude>
                         <exclude>**/ai/**/*TestCase.java</exclude>
                         <!-- Exclude all video/recording UI tests that require a real desktop/browser -->
-                        <exclude>**/*Video*Test.java</exclude>
+                        <exclude>**/introduction/*Video.java</exclude>
                         <!-- Exclude specific tests that wait forever until the user closes the browser-->
                         <exclude>**/ui/view/TaskListViewTest.java</exclude>
                         <exclude>**/ui/view/SprintQualityBoardTest.java</exclude>

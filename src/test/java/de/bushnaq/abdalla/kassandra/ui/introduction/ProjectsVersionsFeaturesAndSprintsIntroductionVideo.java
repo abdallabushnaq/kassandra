@@ -74,7 +74,7 @@ import java.util.Map;
 @AutoConfigureMockMvc
 @Transactional
 @Testcontainers
-public class GenerateOneSprint extends AbstractUiTestUtil {
+public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends AbstractUiTestUtil {
     public static final  NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final  NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     //    public static final  float                      EXAGGERATE_LOW    = 0.25f;

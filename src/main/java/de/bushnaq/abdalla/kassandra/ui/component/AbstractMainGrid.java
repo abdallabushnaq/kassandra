@@ -18,11 +18,13 @@
 package de.bushnaq.abdalla.kassandra.ui.component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -48,15 +50,9 @@ public abstract class AbstractMainGrid<T> extends Main {
     private final ListDataProvider<T> dataProvider;
     private final Grid<T>             grid;
     private final VerticalLayout      gridPanelWrapper;
-    private final ObjectMapper        mapper;
 
     public AbstractMainGrid(Clock clock) {
-        this(clock, null);
-    }
-
-    public AbstractMainGrid(Clock clock, ObjectMapper mapper) {
         setClassName("list-view");
-        this.mapper = mapper;
         setSizeFull();
         addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
         this.getStyle().set("padding-left", "var(--lumo-space-m)");
@@ -368,7 +364,7 @@ public abstract class AbstractMainGrid<T> extends Main {
     private <T> HorizontalLayout createSmartHeader(
             String title,
             String titleId,
-            Icon titleIcon,
+            Component titleIcon,
             String createButtonId,
             VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
             Grid<T> grid,
@@ -481,6 +477,20 @@ public abstract class AbstractMainGrid<T> extends Main {
             ObjectMapper mapper,
             String entityType) {
         return createSmartHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId, globalFilterId, aiFilterService, mapper, entityType);
+    }
+
+    public HorizontalLayout createSmartHeader(
+            String title,
+            String titleId,
+            Image image,
+            String createButtonId,
+            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
+            String rowCounterId,
+            String globalFilterId,
+            AiFilterService aiFilterService,
+            ObjectMapper mapper,
+            String entityType) {
+        return createSmartHeader(title, titleId, image, createButtonId, createButtonClickHandler, grid, rowCounterId, globalFilterId, aiFilterService, mapper, entityType);
     }
 
     protected abstract void initGrid(Clock clock);

@@ -263,8 +263,10 @@ public class SprintDialog extends Dialog {
         byte[] avatarImageOriginal = generatedImageBytesOriginal;
         String avatarPrompt        = generatedImagePrompt;
 
-        String newHash = AvatarUtil.computeHash(avatarImage);
-        sprintToSave.setAvatarHash(newHash);
+        if (avatarImage != null) {
+            String newHash = AvatarUtil.computeHash(avatarImage);
+            sprintToSave.setAvatarHash(newHash);
+        }
         try {
             if (isEditMode) {
                 // Edit mode

@@ -319,8 +319,10 @@ public class UserDialog extends Dialog {
         userToSave.setFirstWorkingDay(firstWorkingDayPicker.getValue());
         userToSave.setLastWorkingDay(lastWorkingDayPicker.getValue());
 
-        String newHash = AvatarUtil.computeHash(generatedImageBytes);
-        userToSave.setAvatarHash(newHash);
+        if (generatedImageBytes != null) {
+            String newHash = AvatarUtil.computeHash(generatedImageBytes);
+            userToSave.setAvatarHash(newHash);
+        }
         // Save user to backend
         if (isEditMode) {
             userApi.update(userToSave);

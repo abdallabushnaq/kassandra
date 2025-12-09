@@ -268,8 +268,10 @@ public class ProductDialog extends Dialog {
         byte[] avatarImageOriginal = generatedImageBytesOriginal;
         String avatarPrompt        = generatedImagePrompt;
 
-        String newHash = AvatarUtil.computeHash(avatarImage);
-        productToSave.setAvatarHash(newHash);
+        if (avatarImage != null) {
+            String newHash = AvatarUtil.computeHash(avatarImage);
+            productToSave.setAvatarHash(newHash);
+        }
         try {
             if (isEditMode) {
                 // Edit mode
