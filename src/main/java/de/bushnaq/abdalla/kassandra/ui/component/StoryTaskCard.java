@@ -203,14 +203,22 @@ public class StoryTaskCard extends VerticalLayout {
                 .set("white-space", "nowrap")
                 .set("flex", "1");
 
-        // Story status badge
+        // Story status badge with color based on status
         Span statusBadge = new Span(story.getEffectiveStatus().name());
+
+        // Determine background color based on status
+        String backgroundColor = switch (story.getEffectiveStatus()) {
+            case TODO -> "#757575"; // Gray for open/todo tasks
+            case IN_PROGRESS -> "#1976D2"; // Blue for in-progress tasks
+            case DONE -> "#388E3C"; // Green for completed tasks
+        };
+
         statusBadge.getStyle()
                 .set("padding", "1px 4px")
                 .set("border-radius", "3px")
                 .set("font-size", "var(--lumo-font-size-xs)")
                 .set("font-weight", "normal")
-                .set("background", "#1976D2") // Darker blue background
+                .set("background", backgroundColor)
                 .set("color", "white")
                 .set("white-space", "nowrap");
 

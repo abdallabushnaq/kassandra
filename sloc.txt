@@ -263,7 +263,7 @@
 | kassandra.ui.component         | MergedScrumBoard.java                                    | src      |       74 |       33 |       54 |      289 |      450 |
 | kassandra.ui.component         | OffDaysCalendarComponent.java                            | src      |       47 |       51 |       55 |      268 |      421 |
 | kassandra.ui.component         | SprintCard.java                                          | src      |       39 |       11 |       29 |      186 |      265 |
-| kassandra.ui.component         | StoryCard.java                                           | src      |       51 |       12 |       39 |      250 |      352 |
+| kassandra.ui.component         | StoryCard.java                                           | src      |       53 |       12 |       40 |      255 |      360 |
 | kassandra.ui.component         | StoryTaskCard.java                                       | src      |       36 |       19 |       28 |      178 |      261 |
 | kassandra.ui.component         | TaskCard.java                                            | src      |       36 |       17 |       41 |      190 |      284 |
 | kassandra.ui.component         | TaskClipboardHandler.java                                | src      |       28 |       61 |       33 |      157 |      279 |
@@ -299,7 +299,7 @@
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.util.selenium     | HumanizedSeleniumHandler.java                            | src      |      160 |      211 |      212 |      841 |     1424 |
 | kassandra.ui.util.selenium     | ScreenShotCreator.java                                   | src      |       15 |        7 |       35 |       80 |      137 |
-| kassandra.ui.util.selenium     | SeleniumHandler.java                                     | src      |      146 |      215 |       96 |      860 |     1317 |
+| kassandra.ui.util.selenium     | SeleniumHandler.java                                     | src      |      148 |      215 |       96 |      864 |     1323 |
 | kassandra.ui.util.selenium     | SeleniumTestResultExtension.java                         | src      |        9 |        0 |       17 |       42 |       68 |
 | kassandra.ui.util.selenium     | VideoRecorder.java                                       | src      |       48 |       32 |       56 |      480 |      616 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -431,5 +431,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 40 package(s)                  | 390 file(s)                                              | java     |     8476 |     5413 |    11239 |    43427 |    68555 |
+| 40 package(s)                  | 390 file(s)                                              | java     |     8480 |     5413 |    11240 |    43436 |    68569 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
