@@ -1269,6 +1269,12 @@ class SeleniumHandler {
      * @return true if browser was closed, false if timeout occurred
      */
     public boolean waitUntilBrowserClosed(long timeoutMillis) {
+
+        if (isSeleniumHeadless()) {
+            log.warn("Browser is running in headless mode; waitUntilBrowserClosed will return immediately.");
+            return false;
+        }
+
         log.error("Waiting {}s for browser to be closed.", timeoutMillis / 1000);
         long startTime = System.currentTimeMillis();
 
