@@ -168,7 +168,7 @@ public class FeatureCard extends Div {
         lane.setPadding(true);
         lane.setSpacing(false); // Disable default spacing
         lane.getStyle()
-                .set("background", "#F5F5F5") // Lighter gray background
+                .set("background", "var(--lumo-contrast-5pct)") // Lighter gray background
                 .set("border-radius", "8px") // Rounded corners
                 .set("min-height", "150px")
                 .set("box-sizing", "border-box")
@@ -181,7 +181,7 @@ public class FeatureCard extends Div {
         laneTitle.getStyle()
                 .set("font-weight", "bold")
                 .set("font-size", "var(--lumo-font-size-xs)") // Extra small text size
-                .set("color", "#616161"); // Dark gray color
+                .set("color", "var(--lumo-secondary-text-color)"); // Dark gray color
 
         Span storyCount = new Span(" (0)");
         storyCount.addClassName("story-count-" + status.name().toLowerCase().replace("_", "-"));
@@ -373,7 +373,7 @@ public class FeatureCard extends Div {
             }
 
             // Reset background after drop
-            lane.getStyle().set("background", "#F5F5F5");
+            lane.getStyle().set("background", "var(--lumo-contrast-5pct)");
         });
 
         // Add visual feedback on drag over
@@ -384,7 +384,7 @@ public class FeatureCard extends Div {
 
         lane.getElement().addEventListener("dragleave", e -> {
             log.debug("Drag leave on lane: {}", targetStatus);
-            lane.getStyle().set("background", "#F5F5F5");
+            lane.getStyle().set("background", "var(--lumo-contrast-5pct)");
         });
     }
 

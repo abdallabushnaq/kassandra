@@ -149,14 +149,14 @@ public class TaskCard extends Div {
         Span taskKey = new Span(formatTaskKey(task));
         taskKey.addClassName("task-card-key");
         taskKey.getStyle().set("font-weight", "bold");
-        taskKey.getStyle().set("color", "#9E9E9E"); // Gray color
+        taskKey.getStyle().set("color", "var(--lumo-secondary-text-color)"); // Gray color
         taskKey.getStyle().set("font-size", "var(--lumo-font-size-xs)"); // Smaller text size
 
         Span remainingEffort = new Span(formatDuration(task.getRemainingEstimate()));
         remainingEffort.addClassName("task-card-remaining");
         remainingEffort.getStyle().set("font-size", "var(--lumo-font-size-xs)");
-        remainingEffort.getStyle().set("color", "#616161"); // Dark gray text
-        remainingEffort.getStyle().set("background", "#E0E0E0"); // Gray background
+        remainingEffort.getStyle().set("color", "var(--lumo-secondary-text-color)"); // Dark gray text
+        remainingEffort.getStyle().set("background", "var(--lumo-contrast-20pct)"); // Gray background
         remainingEffort.getStyle().set("padding", "2px 6px"); // Padding for badge look
         remainingEffort.getStyle().set("border-radius", "4px"); // Rounded corners
 
@@ -196,7 +196,7 @@ public class TaskCard extends Div {
      */
     private String generateColorFromUserId(Long userId) {
         if (userId == null) {
-            return "#CCCCCC";
+            return "var(--lumo-contrast-30pct)";
         }
 
         // Use predefined colors for better visibility and distinction
@@ -278,7 +278,7 @@ public class TaskCard extends Div {
             return generateColorFromUserId(user.getId());
         }
         // Default gray color for unassigned tasks
-        return "#CCCCCC";
+        return "var(--lumo-contrast-30pct)";
     }
 }
 

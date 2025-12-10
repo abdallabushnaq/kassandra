@@ -82,8 +82,8 @@ public class StoryTaskCard extends VerticalLayout {
         Div containerBox = new Div();
         containerBox.setWidthFull(); // Ensure full width
         containerBox.getStyle()
-                .set("background", "#E8E8E8") // Darker gray background for better visibility
-                .set("border", "1px solid #D0D0D0") // Subtle border for definition
+                .set("background", "var(--lumo-contrast-5pct)") // Lighter gray background for subtle appearance
+                .set("border", "1px solid var(--lumo-contrast-20pct)") // Subtle border for definition
                 .set("border-radius", "8px") // Rounded edges
                 .set("padding", "8px") // Padding inside the box
                 .set("margin-bottom", "6px") // 6px margin to bottom
@@ -148,14 +148,14 @@ public class StoryTaskCard extends VerticalLayout {
         storyKey.getStyle()
                 .set("font-weight", "bold")
                 .set("font-size", "var(--lumo-font-size-xs)") // Smaller text size
-                .set("color", "#9E9E9E"); // Gray color
+                .set("color", "var(--lumo-secondary-text-color)"); // Gray color
 
         // Story title (plain black)
         Span storyTitle = new Span(story.getName());
         storyTitle.getStyle()
                 .set("font-weight", "normal")
                 .set("font-size", "var(--lumo-font-size-m)")
-                .set("color", "#000000"); // Plain black
+                .set("color", "var(--lumo-body-text-color)"); // Plain black
 
         header.add(storyKey, storyTitle);
         return header;
@@ -236,15 +236,15 @@ public class StoryTaskCard extends VerticalLayout {
         storyKey.addClassName("story-card-key");
         storyKey.getStyle()
                 .set("font-weight", "bold")
-                .set("color", "#9E9E9E") // Gray color
+                .set("color", "var(--lumo-secondary-text-color)") // Gray color
                 .set("font-size", "var(--lumo-font-size-xs)");
 
         Span taskCount = new Span(childTasks.size() + " tasks");
         taskCount.addClassName("story-card-task-count");
         taskCount.getStyle()
                 .set("font-size", "var(--lumo-font-size-xs)")
-                .set("color", "#616161")
-                .set("background", "#E0E0E0")
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("background", "var(--lumo-contrast-20pct)")
                 .set("padding", "2px 6px")
                 .set("border-radius", "4px");
 

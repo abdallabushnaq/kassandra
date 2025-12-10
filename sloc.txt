@@ -255,7 +255,7 @@
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.component         | AbstractMainGrid.java                                    | src      |       68 |       73 |       38 |      350 |      529 |
 | kassandra.ui.component         | AvailabilityCalendarComponent.java                       | src      |       67 |       70 |       55 |      302 |      494 |
-| kassandra.ui.component         | BacklogStoryCard.java                                    | src      |       34 |       11 |       27 |      165 |      237 |
+| kassandra.ui.component         | BacklogStoryCard.java                                    | src      |       36 |       11 |       28 |      170 |      245 |
 | kassandra.ui.component         | BacklogTaskCard.java                                     | src      |       34 |       15 |       23 |      163 |      235 |
 | kassandra.ui.component         | Breadcrumbs.java                                         | src      |       17 |        0 |       21 |       83 |      121 |
 | kassandra.ui.component         | FeatureCard.java                                         | src      |       64 |       15 |       48 |      302 |      429 |
@@ -264,7 +264,7 @@
 | kassandra.ui.component         | OffDaysCalendarComponent.java                            | src      |       47 |       51 |       55 |      268 |      421 |
 | kassandra.ui.component         | SprintCard.java                                          | src      |       39 |       11 |       29 |      186 |      265 |
 | kassandra.ui.component         | StoryCard.java                                           | src      |       53 |       12 |       40 |      255 |      360 |
-| kassandra.ui.component         | StoryTaskCard.java                                       | src      |       36 |       19 |       28 |      178 |      261 |
+| kassandra.ui.component         | StoryTaskCard.java                                       | src      |       38 |       19 |       29 |      183 |      269 |
 | kassandra.ui.component         | TaskCard.java                                            | src      |       36 |       17 |       41 |      190 |      284 |
 | kassandra.ui.component         | TaskClipboardHandler.java                                | src      |       28 |       61 |       33 |      157 |      279 |
 | kassandra.ui.component         | TaskGrid.java                                            | src      |      141 |       68 |      160 |      889 |     1258 |
@@ -431,5 +431,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 40 package(s)                  | 390 file(s)                                              | java     |     8480 |     5413 |    11240 |    43436 |    68569 |
+| 40 package(s)                  | 390 file(s)                                              | java     |     8484 |     5413 |    11242 |    43446 |    68585 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

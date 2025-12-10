@@ -74,8 +74,8 @@ public class BacklogStoryCard extends Div {
         Div containerBox = new Div();
         containerBox.setWidthFull();
         containerBox.getStyle()
-                .set("background", "#E8E8E8") // Gray background
-                .set("border", "1px solid #D0D0D0")
+                .set("background", "var(--lumo-contrast-5pct)") // Gray background
+                .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "8px")
                 .set("padding", "8px")
                 .set("box-sizing", "border-box");
@@ -141,9 +141,9 @@ public class BacklogStoryCard extends Div {
 
         // Determine background color based on status
         String backgroundColor = switch (story.getEffectiveStatus()) {
-            case TODO -> "#757575"; // Gray for open/todo tasks
-            case IN_PROGRESS -> "#1976D2"; // Blue for in-progress tasks
-            case DONE -> "#388E3C"; // Green for completed tasks
+            case TODO -> "var(--lumo-contrast-60pct)"; // Gray for open/todo tasks
+            case IN_PROGRESS -> "var(--lumo-primary-color)"; // Blue for in-progress tasks
+            case DONE -> "var(--lumo-success-color)"; // Green for completed tasks
         };
 
         statusBadge.getStyle()

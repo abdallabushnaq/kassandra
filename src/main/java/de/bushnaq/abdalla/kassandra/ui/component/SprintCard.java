@@ -74,7 +74,7 @@ public class SprintCard extends Div {
         Div grayContainer = new Div();
         grayContainer.setWidthFull();
         grayContainer.getStyle()
-                .set("background", "#F5F5F5") // Light gray background
+                .set("background", "var(--lumo-contrast-5pct)") // Light gray background
                 .set("border-radius", "8px") // Rounded corners
                 .set("padding", "var(--lumo-space-s) var(--lumo-space-m)") // Padding all around
                 .set("box-sizing", "border-box");
@@ -133,7 +133,7 @@ public class SprintCard extends Div {
         sprintName.getStyle()
                 .set("font-weight", "normal")
                 .set("font-size", "var(--lumo-font-size-m)")
-                .set("color", "#000000")
+                .set("color", "var(--lumo-body-text-color)")
                 .set("margin-right", "var(--lumo-space-m)");
 
         // Date range (gray, secondary)

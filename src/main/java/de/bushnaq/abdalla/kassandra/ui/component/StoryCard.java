@@ -106,7 +106,7 @@ public class StoryCard extends Div {
         lane.setPadding(true);
         lane.setSpacing(false); // Disable default spacing
         lane.getStyle()
-                .set("background", "#F5F5F5") // Lighter gray background
+                .set("background", "var(--lumo-contrast-5pct)") // Lighter gray background
                 .set("border-radius", "8px") // Rounded corners
                 .set("min-height", "150px")
                 .set("box-sizing", "border-box")
@@ -206,9 +206,9 @@ public class StoryCard extends Div {
 
         // Determine background color based on status
         String backgroundColor = switch (story.getEffectiveStatus()) {
-            case TODO -> "#757575"; // Gray for open/todo tasks
-            case IN_PROGRESS -> "#1976D2"; // Blue for in-progress tasks
-            case DONE -> "#388E3C"; // Green for completed tasks
+            case TODO -> "var(--lumo-contrast-60pct)"; // Gray for open/todo tasks
+            case IN_PROGRESS -> "var(--lumo-primary-color)"; // Blue for in-progress tasks
+            case DONE -> "var(--lumo-success-color)"; // Green for completed tasks
         };
 
         statusBadge.getStyle()
@@ -302,7 +302,7 @@ public class StoryCard extends Div {
                 }
             });
             // Reset background after drop
-            lane.getStyle().set("background", "#F5F5F5");
+            lane.getStyle().set("background", "var(--lumo-contrast-5pct)");
         });
 
         // Add visual feedback on drag over
@@ -311,7 +311,7 @@ public class StoryCard extends Div {
         });
 
         lane.getElement().addEventListener("dragleave", e -> {
-            lane.getStyle().set("background", "#F5F5F5");
+            lane.getStyle().set("background", "var(--lumo-contrast-5pct)");
         });
     }
 

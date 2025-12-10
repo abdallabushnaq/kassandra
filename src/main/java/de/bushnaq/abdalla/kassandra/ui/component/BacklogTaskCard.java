@@ -221,12 +221,12 @@ public class BacklogTaskCard extends Div {
 
     private String getUserColor() {
         if (task.getResourceId() == null) {
-            return "#E0E0E0"; // Light gray for unassigned
+            return "var(--lumo-contrast-20pct)"; // Light gray for unassigned
         }
 
         User user = userMap.get(task.getResourceId());
         if (user == null || user.getColor() == null) {
-            return "#E0E0E0";
+            return "var(--lumo-contrast-20pct)";
         }
 
         return colorToHex(user.getColor());
