@@ -129,11 +129,11 @@ public class BacklogTaskCard extends Div {
                 .set("margin-right", "var(--lumo-space-xs)");
 
         // User avatar (if assigned)
-        Div avatarContainer = getUserAvatar();
+        com.vaadin.flow.component.Component avatarComponent = getUserAvatar();
 
         line.add(taskKey, taskName, statusBadge, effort);
-        if (avatarContainer != null) {
-            line.add(avatarContainer);
+        if (avatarComponent != null) {
+            line.add(avatarComponent);
         }
 
         add(line);
@@ -165,29 +165,16 @@ public class BacklogTaskCard extends Div {
         return "T-???";
     }
 
-    private String getInitials(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            return "?";
-        }
-
-        String[] parts = name.trim().split("\\s+");
-        if (parts.length >= 2) {
-            return ("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
-        } else {
-            return name.substring(0, Math.min(2, name.length())).toUpperCase();
-        }
-    }
-
     private String getStatusColor(String status) {
         return switch (status) {
-            case "TODO" -> "#757575"; // Gray
-            case "IN_PROGRESS" -> "#1976D2"; // Blue
-            case "DONE" -> "#388E3C"; // Green
-            default -> "#9E9E9E"; // Default gray
+            case "TODO" -> "var(--lumo-contrast-60pct)"; // Gray
+            case "IN_PROGRESS" -> "var(--lumo-primary-color)"; // Blue
+            case "DONE" -> "var(--lumo-success-color)"; // Green
+            default -> "var(--lumo-secondary-text-color)"; // Default gray
         };
     }
 
-    private Div getUserAvatar() {
+    private com.vaadin.flow.component.Component getUserAvatar() {
         if (task.getResourceId() == null) {
             return null;
         }
@@ -197,24 +184,18 @@ public class BacklogTaskCard extends Div {
             return null;
         }
 
-        Div avatar = new Div();
+        // Use actual avatar image with same styling as TaskCard in ActiveSprints
+        com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
+        avatar.setWidth("24px");
+        avatar.setHeight("24px");
         avatar.getStyle()
-                .set("width", "24px")
-                .set("height", "24px")
-                .set("border-radius", "50%")
-                .set("background", colorToHex(user.getColor()))
-                .set("display", "flex")
-                .set("align-items", "center")
-                .set("justify-content", "center")
-                .set("color", "white")
-                .set("font-size", "10px")
-                .set("font-weight", "bold")
-                .set("flex-shrink", "0");
-
-        // Add initials
-        String initials     = getInitials(user.getName());
-        Span   initialsSpan = new Span(initials);
-        avatar.add(initialsSpan);
+                .set("border-radius", "4px")
+                .set("object-fit", "cover")
+                .set("display", "inline-block")
+                .set("vertical-align", "middle");
+        avatar.setSrc(user.getAvatarUrl());
+        avatar.setAlt(user.getName());
+        avatar.getElement().setProperty("title", user.getName());
 
         return avatar;
     }

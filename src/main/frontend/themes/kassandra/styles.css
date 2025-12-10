@@ -146,10 +146,7 @@ body {
 
 /* Dark theme specific styles */
 [theme~="dark"] .navbar-custom {
-  /*
     background-color: var(--lumo-base-color);
-    */
-  background-color: #FF6B70;
 }
 .qtip-shadow {
   -webkit-box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, .15);

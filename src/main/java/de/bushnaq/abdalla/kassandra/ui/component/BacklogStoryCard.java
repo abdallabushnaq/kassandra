@@ -112,7 +112,7 @@ public class BacklogStoryCard extends Div {
         // Expand/collapse arrow icon
         expandIcon = new Icon(expanded ? VaadinIcon.CHEVRON_DOWN : VaadinIcon.CHEVRON_RIGHT);
         expandIcon.getStyle()
-                .set("color", "#000000")
+                .set("color", "var(--lumo-body-text-color)")
                 .set("width", "12px")
                 .set("height", "12px")
                 .set("flex-shrink", "0");
@@ -122,7 +122,7 @@ public class BacklogStoryCard extends Div {
         storyKey.getStyle()
                 .set("font-weight", "bold")
                 .set("font-size", "var(--lumo-font-size-xs)")
-                .set("color", "#9E9E9E")
+                .set("color", "var(--lumo-secondary-text-color)")
                 .set("white-space", "nowrap")
                 .set("margin-right", "var(--lumo-space-xs)");
 
@@ -130,7 +130,7 @@ public class BacklogStoryCard extends Div {
         Span storyName = new Span(story.getName());
         storyName.getStyle()
                 .set("font-size", "var(--lumo-font-size-m)")
-                .set("color", "#000000")
+                .set("color", "var(--lumo-body-text-color)")
                 .set("flex", "1")
                 .set("overflow", "hidden")
                 .set("text-overflow", "ellipsis")
