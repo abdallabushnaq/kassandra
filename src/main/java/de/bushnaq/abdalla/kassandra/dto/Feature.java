@@ -89,7 +89,7 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
      * @return A default prompt string for generating feature avatar images
      */
     public static String getDefaultAvatarPrompt(String featureName) {
-        return "Icon representing the feature " + featureName + ", minimalist, 3D design, white background";
+        return "Icon representing the feature '" + featureName + "', minimalist, 3D design, white background";
     }
 
     @JsonIgnore

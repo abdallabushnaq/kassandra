@@ -122,7 +122,7 @@ public class User extends AbstractTimeAware implements Comparable<User> {
      * @return A default prompt string for generating user avatar images
      */
     public static String getDefaultAvatarPrompt(String userName) {
-        return "Professional avatar portrait of " + userName + ", business style, 3D, neutral background";
+        return "Professional avatar portrait of '" + userName + "', business style, 3D, neutral background";
     }
 
     @JsonIgnore

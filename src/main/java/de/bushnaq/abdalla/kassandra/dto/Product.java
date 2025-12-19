@@ -89,7 +89,7 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
      * @return A default prompt string for generating product avatar images
      */
     public static String getDefaultAvatarPrompt(String productName) {
-        return "Icon representing the product " + productName + ", minimalist, 3D design, white background";
+        return "Icon representing the product '" + productName + "', minimalist, 3D design, white background";
     }
 
     @JsonIgnore

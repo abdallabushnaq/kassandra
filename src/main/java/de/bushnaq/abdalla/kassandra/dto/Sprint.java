@@ -179,7 +179,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
      * @return A default prompt string for generating sprint avatar images
      */
     public static String getDefaultAvatarPrompt(String sprintName) {
-        return "Icon representing the city " + sprintName + ", minimalist, flat design, vector graphics, simple shapes, clean lines, modern style, centered composition, white background";
+        return "Icon representing the city '" + sprintName + "', minimalist, flat design, vector graphics, simple shapes, clean lines, modern style, centered composition, white background";
     }
 
     @JsonIgnore
