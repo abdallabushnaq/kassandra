@@ -256,7 +256,7 @@
 | kassandra.ui.component         | AbstractMainGrid.java                                    | src      |       68 |       73 |       38 |      350 |      529 |
 | kassandra.ui.component         | AvailabilityCalendarComponent.java                       | src      |       67 |       70 |       55 |      302 |      494 |
 | kassandra.ui.component         | BacklogStoryCard.java                                    | src      |       36 |       11 |       28 |      170 |      245 |
-| kassandra.ui.component         | BacklogTaskCard.java                                     | src      |       34 |       15 |       23 |      163 |      235 |
+| kassandra.ui.component         | BacklogTaskCard.java                                     | src      |       31 |       15 |       23 |      147 |      216 |
 | kassandra.ui.component         | Breadcrumbs.java                                         | src      |       17 |        0 |       21 |       83 |      121 |
 | kassandra.ui.component         | FeatureCard.java                                         | src      |       64 |       15 |       48 |      302 |      429 |
 | kassandra.ui.component         | GlobalAiFilter.java                                      | src      |       42 |        8 |       58 |      197 |      305 |
@@ -358,11 +358,12 @@
 | kassandra.ui                   | MainLayout.java                                          | src      |       58 |       17 |       37 |      241 |      353 |
 | kassandra.ui                   | SprintStatus.java                                        | src      |        2 |        0 |       16 |        4 |       22 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.util                 | AbstractEntityGenerator.java                             | src      |      112 |       48 |       59 |      740 |      959 |
+| kassandra.util                 | AbstractEntityGenerator.java                             | src      |      124 |       55 |      106 |      801 |     1086 |
 | kassandra.util                 | AbstractGanttTestUtil.java                               | src      |       51 |        6 |       55 |      506 |      618 |
 | kassandra.util                 | AbstractLegacyGanttTestUtil.java                         | src      |       10 |        0 |       19 |       87 |      116 |
 | kassandra.util                 | AbstractTestUtil.java                                    | src      |       20 |        0 |       27 |       92 |      139 |
 | kassandra.util                 | DTOAsserts.java                                          | src      |       29 |        0 |       25 |      135 |      189 |
+| kassandra.util                 | GenerateDefaultAvatarTest.java                           | src      |       19 |        7 |       23 |       52 |      101 |
 | kassandra.util                 | H2DatabaseStateManager.java                              | src      |       22 |       27 |       27 |      125 |      201 |
 | kassandra.util                 | NameGenerator.java                                       | src      |       26 |       15 |       25 |      172 |      238 |
 | kassandra.util                 | RandomCase.java                                          | src      |        7 |        0 |       16 |       65 |       88 |
@@ -431,5 +432,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 40 package(s)                  | 390 file(s)                                              | java     |     8484 |     5413 |    11242 |    43446 |    68585 |
+| 40 package(s)                  | 391 file(s)                                              | java     |     8512 |     5427 |    11312 |    43543 |    68794 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
