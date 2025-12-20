@@ -29,6 +29,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class SecurityUtils {
 
+    public static final String GUEST = "Guest";
+
     /**
      * Gets the currently authenticated user.
      *
@@ -74,10 +76,18 @@ public class SecurityUtils {
      */
     public static String getUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String         userEmail      = authentication != null ? authentication.getName() : "Guest";
 
+        // Check if authentication is null or is an anonymous token
+        if (authentication == null ||
+                authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken ||
+                !authentication.isAuthenticated()) {
+            return GUEST;
+        }
+
+
+        String userEmail = authentication.getName();
         // If using OIDC, try to get the email address from authentication details
-        if (authentication != null && authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
+        if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
             String email = oidcUser.getEmail();
             if (email != null && !email.isEmpty()) {
                 userEmail = email;

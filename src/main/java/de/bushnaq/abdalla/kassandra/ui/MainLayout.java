@@ -240,13 +240,15 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private Component createUserMenu() {
         final String userEmail = SecurityUtils.getUserEmail();
 
+        User userFromDb = null;
         // Try to get user from database to check for avatar
-        User userFromDb;
-        try {
-            userFromDb = userApi.getByEmail(userEmail);
-        } catch (Exception e) {
-            // User not found or error, will use default avatar
-            userFromDb = null;
+        if (!userEmail.equals(SecurityUtils.GUEST)) {
+            try {
+                userFromDb = userApi.getByEmail(userEmail);
+            } catch (Exception e) {
+                // User not found or error, will use default avatar
+                userFromDb = null;
+            }
         }
         final User user = userFromDb;
 
