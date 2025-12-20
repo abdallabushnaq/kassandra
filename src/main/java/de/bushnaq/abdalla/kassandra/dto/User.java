@@ -166,11 +166,11 @@ public class User extends AbstractTimeAware implements Comparable<User> {
             resourceCalendar.setName(getName());
             setCalendar(resourceCalendar);
         }
-        System.out.println("User.initialize() took " + (System.currentTimeMillis() - time) + " ms for user: " + getName());
+//        System.out.println("User.initialize() took " + (System.currentTimeMillis() - time) + " ms for user: " + getName());
 
         time = System.currentTimeMillis();
         initializeLocationsAndOffdays();
-        System.out.println("User.initializeLocationsAndOffdays() took " + (System.currentTimeMillis() - time) + " ms for user: " + getName());
+//        System.out.println("User.initializeLocationsAndOffdays() took " + (System.currentTimeMillis() - time) + " ms for user: " + getName());
     }
 
     private void initializeLocationsAndOffdays() {

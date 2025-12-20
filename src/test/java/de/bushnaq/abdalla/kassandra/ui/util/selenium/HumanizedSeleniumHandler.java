@@ -93,7 +93,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
 
         Robot robotInstance = getRobot();
         if (robotInstance == null) {
-            log.debug("Robot not available, cannot center mouse");
+            log.trace("Robot not available, cannot center mouse");
             return;
         }
 
@@ -108,7 +108,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
 
             // Move mouse to center (instantly, no smooth movement)
             robotInstance.mouseMove(centerX, centerY);
-            log.debug("Centered mouse on browser at ({}, {})", centerX, centerY);
+            log.trace("Centered mouse on browser at ({}, {})", centerX, centerY);
 
         } catch (Exception e) {
             log.warn("Failed to center mouse on browser: {}", e.getMessage());
@@ -145,15 +145,15 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                     moveMouseToElement(toggleButton);
                     clickElement(toggleButton);
 //                    toggleButton.click();
-                    log.debug("Clicked combobox toggle button via shadow DOM");
+                    log.trace("Clicked combobox toggle button via shadow DOM");
                 } else {
                     // Fallback: click on the input field if toggle button not found
-                    log.debug("Toggle button not found in shadow DOM, clicking input field to open dropdown");
+                    log.trace("Toggle button not found in shadow DOM, clicking input field to open dropdown");
                     inputElement.click();
                 }
             } catch (Exception ex) {
                 // Fallback: click on the input field if shadow DOM access fails
-                log.debug("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
+                log.trace("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
                 inputElement.click();
             }
 //            waitUntil(ExpectedConditions.attributeToBe(By.cssSelector("vaadin-multi-select-combo-box-overlay"), "opened", "true"));
@@ -257,7 +257,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 // Release
                 r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
                 wait(120 + random.nextInt(200));
-                log.info("Drag-and-drop performed (humanized) from '{}' to '{}'", sourceId, targetId);
+                log.trace("Drag-and-drop performed (humanized) from '{}' to '{}'", sourceId, targetId);
             } else {
                 // Fallback to reliable Selenium Actions
                 new org.openqa.selenium.interactions.Actions(getDriver())
@@ -270,11 +270,11 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                         .release(targetElement)
                         .build()
                         .perform();
-                log.info("Drag-and-drop performed via Selenium Actions from '{}' to '{}'", sourceId, targetId);
+                log.trace("Drag-and-drop performed via Selenium Actions from '{}' to '{}'", sourceId, targetId);
             }
         } catch (StaleElementReferenceException e) {
             // Retry once if elements went stale mid-action
-            log.debug("Elements went stale during drag-and-drop, retrying once: {}", e.getMessage());
+            log.trace("Elements went stale during drag-and-drop, retrying once: {}", e.getMessage());
             WebElement src2 = findElement(By.id(sourceId));
             WebElement dst2 = findElement(By.id(targetId));
             new org.openqa.selenium.interactions.Actions(getDriver())
@@ -385,14 +385,14 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
 
         // Don't even try to create Robot in headless mode
         if (isSeleniumHeadless()) {
-            log.debug("Headless mode detected, Robot not available");
+            log.trace("Headless mode detected, Robot not available");
             return null;
         }
 
         try {
             robot = new Robot();
             robot.setAutoDelay(0); // We'll control delays manually
-            log.info("Robot initialized successfully for mouse movement");
+            log.trace("Robot initialized successfully for mouse movement");
         } catch (AWTException e) {
             log.warn("Failed to initialize Robot for mouse movement: {}", e.getMessage());
             robot = null;
@@ -424,7 +424,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                             "}\n";
 
             executeJavaScript(script);
-            log.info("Hiding overlay with fade-out animation");
+            log.trace("Hiding overlay with fade-out animation");
 
             // Wait for fade-out animation to complete
             try {
@@ -449,7 +449,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             String script =
                     "var el=document.getElementById('video-key-title'); if(el){ el.remove(); }";
             executeJavaScript(script);
-            log.debug("Transient title removed");
+            log.trace("Transient title removed");
         } catch (Exception e) {
             log.trace("Failed to remove transient title: {}", e.getMessage());
         }
@@ -570,7 +570,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             synchronized (highlightLock) {
                 if (highlightRemovalThread != null && highlightRemovalThread.isAlive()) {
                     try {
-                        log.debug("Waiting for previous highlight removal to complete...");
+                        log.trace("Waiting for previous highlight removal to complete...");
                         highlightRemovalThread.join();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -581,7 +581,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 // Execute the highlight script
                 Object result = executeJavaScript(script, elements);
 
-                log.info("Highlighted {} element(s) for {}ms", elements.length, durationMillis);
+                log.trace("Highlighted {} element(s) for {}ms", elements.length, durationMillis);
 
                 // Create cleanup script
                 String cleanupScript =
@@ -607,7 +607,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                         Thread.sleep(durationMillis);
                         // Remove highlights
                         executeJavaScript(cleanupScript, result);
-                        log.debug("Removed highlights from {} element(s)", elements.length);
+                        log.trace("Removed highlights from {} element(s)", elements.length);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         log.warn("Highlight removal thread interrupted");
@@ -757,7 +757,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         // Initialize Robot if needed
         Robot robotInstance = getRobot();
         if (robotInstance == null) {
-            log.debug("Robot not available, skipping mouse movement");
+            log.trace("Robot not available, skipping mouse movement");
             return;
         }
 
@@ -784,7 +784,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // Perform smooth mouse movement with human-like characteristics
             humanLikeMouseMove(currentMouse.x, currentMouse.y, target.x, target.y);
 
-            log.debug("Moved mouse to element '{}' at ({}, {})", element.getText(), target.x, target.y);
+            log.trace("Moved mouse to element '{}' at ({}, {})", element.getText(), target.x, target.y);
             wait(300);
 
         } catch (Exception e) {
@@ -836,15 +836,15 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                     moveMouseToElement(toggleButton);
                     clickElement(toggleButton);
 //                    toggleButton.click();
-                    log.debug("Clicked combobox toggle button via shadow DOM");
+                    log.trace("Clicked combobox toggle button via shadow DOM");
                 } else {
                     // Fallback: click on the input field if toggle button not found
-                    log.debug("Toggle button not found in shadow DOM, clicking input field to open dropdown");
+                    log.trace("Toggle button not found in shadow DOM, clicking input field to open dropdown");
                     inputElement.click();
                 }
             } catch (Exception ex) {
                 // Fallback: click on the input field if shadow DOM access fails
-                log.debug("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
+                log.warn("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
                 inputElement.click();
             }
 
@@ -858,7 +858,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // We can query them directly without accessing shadow DOM
             List<WebElement> dropdownItems = getDriver().findElements(By.cssSelector("vaadin-combo-box-item"));
 
-            log.debug("Found {} dropdown items", dropdownItems.size());
+            log.trace("Found {} dropdown items", dropdownItems.size());
 
             // Find the item that matches the text
             WebElement matchingItem = null;
@@ -875,7 +875,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 moveMouseToElement(matchingItem);
                 wait(100);
                 matchingItem.click();
-                log.debug("Clicked on dropdown item: {}", text);
+                log.trace("Clicked on dropdown item: {}", text);
             } else {
                 log.warn("Could not find dropdown item with text: {}. Falling back to keyboard method.", text);
                 // Fallback to typing method if item not found
@@ -941,7 +941,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             moveMouseToElement(toggleButton);
             wait(100);
             toggleButton.click();
-            log.debug("Clicked date picker toggle button");
+            log.trace("Clicked date picker toggle button");
             wait(300); // Wait for calendar to appear
         }
 
@@ -949,7 +949,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         // The actual input has an id like "search-input-vaadin-date-picker-20"
         WebElement inputField = datePickerElement.findElement(By.cssSelector("input[slot='input']"));
 
-        log.debug("Found input field, typing date");
+        log.trace("Found input field, typing date");
 
         moveMouseToElement(inputField);
         wait(100);
@@ -961,20 +961,20 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         // Format the date in US format (M/d/yyyy)
         // Note: This matches the browser's default US locale
         String dateStr = date.format(DateTimeFormatter.ofPattern("M/d/yyyy"));
-        log.info("Typing date into date picker: {} (formatted as US: {})", date, dateStr);
+        log.trace("Typing date into date picker: {} (formatted as US: {})", date, dateStr);
 
         typeText(inputField, dateStr);
 
         wait(500);
         inputField.sendKeys(Keys.ENTER);// Press Enter to confirm the date and close the calendar
-        log.debug("Pressed Enter to confirm date");
+        log.trace("Pressed Enter to confirm date");
 
         // Wait for the calendar overlay to close
         wait(200);
         WebElement overlay = expandRootElementAndFindElement(datePickerElement, "vaadin-date-picker-overlay");
         waitUntil(ExpectedConditions.invisibilityOfAllElements(overlay));
-        log.debug("Date picker overlay closed successfully");
-        log.debug("Successfully set date: {}", date);
+        log.trace("Date picker overlay closed successfully");
+        log.trace("Successfully set date: {}", date);
     }
 
     public void setDateTimePickerValue(String datePickerId, LocalDateTime date) {
@@ -997,7 +997,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 moveMouseToElement(toggleButton);
                 wait(100);
                 toggleButton.click();
-                log.debug("Clicked date picker toggle button");
+                log.trace("Clicked date picker toggle button");
                 wait(300); // Wait for calendar to appear
             }
 
@@ -1005,7 +1005,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // The actual input has an id like "search-input-vaadin-date-picker-20"
             WebElement inputField = dateTimePickerElement.findElement(By.cssSelector("input[slot='input']"));
 
-            log.debug("Found input field, typing date-time");
+            log.trace("Found input field, typing date-time");
 
             moveMouseToElement(inputField);
             wait(100);
@@ -1017,26 +1017,26 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // Format the date in US format (M/d/yyyy)
             // Note: This matches the browser's default US locale
             String dateStr = date.toLocalDate().format(DateTimeFormatter.ofPattern("M/d/yyyy"));
-            log.info("Typing date into date time picker: {} (formatted as US: {})", date, dateStr);
+            log.trace("Typing date into date time picker: {} (formatted as US: {})", date, dateStr);
 
             typeText(inputField, dateStr);
 
             wait(500);
             inputField.sendKeys(Keys.ENTER);// Press Enter to confirm the date and close the calendar
-            log.debug("Pressed Enter to confirm date-time");
+            log.trace("Pressed Enter to confirm date-time");
 
             // Wait for the calendar overlay to close
             wait(200);
             WebElement overlay = expandRootElementAndFindElement(datePickerElement, "vaadin-date-picker-overlay");
             waitUntil(ExpectedConditions.invisibilityOfAllElements(overlay));
-            log.debug("Date picker overlay closed successfully");
+            log.trace("Date picker overlay closed successfully");
         }
         {
             // find the date picker element
             WebElement timePickerElement = dateTimePickerElement.findElement(By.tagName("vaadin-time-picker"));
             setTimePickerValue(timePickerElement, date.toLocalTime().format(DateTimeFormatter.ofPattern("h:mm a")));
         }
-        log.debug("Successfully set date-time: {}", date);
+        log.trace("Successfully set date-time: {}", date);
     }
 
     /**
@@ -1091,15 +1091,15 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                     moveMouseToElement(toggleButton);
                     clickElement(toggleButton);
 //                    toggleButton.click();
-                    log.debug("Clicked combobox toggle button via shadow DOM");
+                    log.trace("Clicked combobox toggle button via shadow DOM");
                 } else {
                     // Fallback: click on the input field if toggle button not found
-                    log.debug("Toggle button not found in shadow DOM, clicking input field to open dropdown");
+                    log.warn("Toggle button not found in shadow DOM, clicking input field to open dropdown");
                     inputElement.click();
                 }
             } catch (Exception ex) {
                 // Fallback: click on the input field if shadow DOM access fails
-                log.debug("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
+                log.warn("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
                 inputElement.click();
             }
 
@@ -1113,7 +1113,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // We can query them directly without accessing shadow DOM
             List<WebElement> dropdownItems = getDriver().findElements(By.cssSelector("vaadin-multi-select-combo-box-item"));
 
-            log.debug("Found {} dropdown items", dropdownItems.size());
+            log.trace("Found {} dropdown items", dropdownItems.size());
 
             // Find the item that matches the text
             WebElement matchingItem = null;
@@ -1130,7 +1130,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 moveMouseToElement(matchingItem);
                 wait(100);
                 matchingItem.click();
-                log.debug("Clicked on dropdown item: {}", text);
+                log.trace("Clicked on dropdown item: {}", text);
             } else {
                 log.warn("Could not find dropdown item with text: {}. Falling back to keyboard method.", text);
                 // Fallback to typing method if item not found
@@ -1173,15 +1173,15 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                     moveMouseToElement(toggleButton);
                     clickElement(toggleButton);
 //                    toggleButton.click();
-                    log.debug("Clicked time-picker toggle button via shadow DOM");
+                    log.trace("Clicked time-picker toggle button via shadow DOM");
                 } else {
                     // Fallback: click on the input field if toggle button not found
-                    log.debug("Toggle button not found in shadow DOM, clicking input field to open dropdown");
+                    log.warn("Toggle button not found in shadow DOM, clicking input field to open dropdown");
                     inputElement.click();
                 }
             } catch (Exception ex) {
                 // Fallback: click on the input field if shadow DOM access fails
-                log.debug("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
+                log.warn("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
                 inputElement.click();
             }
 
@@ -1195,7 +1195,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // We can query them directly without accessing shadow DOM
             List<WebElement> dropdownItems = getDriver().findElements(By.cssSelector("vaadin-time-picker-item"));
 
-            log.debug("Found {} dropdown items", dropdownItems.size());
+            log.trace("Found {} dropdown items", dropdownItems.size());
 
             // Find the item that matches the text
             WebElement matchingItem = null;
@@ -1212,7 +1212,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 moveMouseToElement(matchingItem);
                 wait(100);
                 matchingItem.click();
-                log.debug("Clicked on dropdown item: {}", text);
+                log.trace("Clicked on dropdown item: {}", text);
             } else {
                 log.warn("Could not find dropdown item with text: {}. Falling back to keyboard method.", text);
                 // Fallback to typing method if item not found
@@ -1289,7 +1289,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                             "}, 10);\n";
 
             executeJavaScript(script);
-            log.info("Displayed overlay with title: '{}'", title);
+            log.trace("Displayed overlay with title: '{}'", title);
 
             // Wait for fade-in animation to complete
             try {
@@ -1370,7 +1370,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                             "})();";
 
             executeJavaScript(script);
-            log.info("Displayed transient title: '{}' for {} ms", title, duration);
+            log.trace("Displayed transient title: '{}' for {} ms", title, duration);
         } catch (Exception e) {
             log.error("Failed to show transient title: {}", e.getMessage(), e);
         }

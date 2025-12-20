@@ -112,7 +112,7 @@ public class UserApi extends AbstractApi {
      */
     public AvatarWrapper getAvatarImage(Long userId) {
         // Log message converters
-        restTemplate.getMessageConverters().forEach(c -> System.out.println("Converter: " + c.getClass()));
+//        restTemplate.getMessageConverters().forEach(c -> System.out.println("Converter: " + c.getClass()));
         ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user/{id}/avatar",
                 HttpMethod.GET,

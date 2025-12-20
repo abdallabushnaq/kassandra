@@ -85,7 +85,7 @@ class SeleniumHandler {
         WebElement element = findElement(By.id(id));
         moveMouseToElement(element);
         element.click();
-        log.info("Clicked element with ID: " + id);
+        log.trace("Clicked element with ID: " + id);
     }
 
     /**
@@ -105,7 +105,7 @@ class SeleniumHandler {
         if (clearButton != null && clearButton.isDisplayed()) {
             moveMouseToElement(clearButton);
             clearButton.click();
-            log.info("Clicked clear button for field with ID: " + fieldId);
+            log.trace("Clicked clear button for field with ID: " + fieldId);
         } else {
             log.warn("Clear button not found or not visible for field with ID: " + fieldId);
             throw new RuntimeException("Clear button not found for field: " + fieldId);
@@ -122,7 +122,7 @@ class SeleniumHandler {
     public void clickElement(WebElement element) {
         moveMouseToElement(element);
         element.click();
-        log.info("Clicked element with mouse movement");
+        log.trace("Clicked element with mouse movement");
     }
 
     public void copy() {
@@ -146,7 +146,7 @@ class SeleniumHandler {
             driver.quit();//quit the driver and close all windows
             driver = null;
         }
-        log.info("quit selenium driver");
+        log.trace("quit selenium driver");
     }
 
     /**
@@ -174,7 +174,7 @@ class SeleniumHandler {
 
     public void ensureIsInList(String id, String userName) {
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id + userName)));
-        log.info("Element with ID: " + id + userName + " is in grid");
+        log.trace("Element with ID: " + id + userName + " is in grid");
     }
 
     public void ensureIsNotInList(String id, String name) {
@@ -182,7 +182,7 @@ class SeleniumHandler {
         setImplicitWaitDuration(Duration.ofSeconds(1));
         waitUntil(ExpectedConditions.not(ExpectedConditions.elementToBeClickable(By.id(id + name))));
         setImplicitWaitDuration(implicitTime);
-        log.info("Element with ID: " + id + name + " is not in grid");
+        log.trace("Element with ID: " + id + name + " is not in grid");
     }
 
     public void ensureIsSelected(String id, String userName) {
@@ -255,7 +255,7 @@ class SeleniumHandler {
 
     public void get(String url) {
         getDriver().get(url);
-        log.info("Navigated to URL: " + url);
+        log.trace("Navigated to URL: " + url);
     }
 
     public void getAndCheck(String url) {
@@ -282,14 +282,14 @@ class SeleniumHandler {
 
             if (outerHeight != null && innerHeight != null) {
                 browserChromeHeight = (int) (outerHeight - innerHeight);
-                log.debug("Calculated browser chrome height: {} pixels", browserChromeHeight);
+                log.trace("Calculated browser chrome height: {} pixels", browserChromeHeight);
             } else {
                 browserChromeHeight = DEFAULT_BROWSER_CHROME_HEIGHT;
-                log.debug("Using default browser chrome height: {} pixels", browserChromeHeight);
+                log.warn("Using default browser chrome height: {} pixels", browserChromeHeight);
             }
         } catch (Exception e) {
             browserChromeHeight = DEFAULT_BROWSER_CHROME_HEIGHT;
-            log.debug("Failed to calculate chrome height, using default: {} pixels", browserChromeHeight);
+            log.warn("Failed to calculate chrome height, using default: {} pixels", browserChromeHeight);
         }
 
         return browserChromeHeight;
@@ -407,7 +407,7 @@ class SeleniumHandler {
         // Check if we're running in headless mode (for CI environment)
         boolean headlessMode = isSeleniumHeadless();
         if (headlessMode) {
-            log.info("creating selenium driver, Running Chrome in headless mode");
+            log.trace("creating selenium driver, Running Chrome in headless mode");
             options.addArguments("--headless=new");
             options.addArguments("--disable-gpu");
             options.addArguments("--no-sandbox");
@@ -428,7 +428,7 @@ class SeleniumHandler {
                     )
             ));
         } else {
-            log.info("creating selenium driver");
+            log.trace("creating selenium driver");
             // Disable the "Save password?" prompt and grant clipboard permissions
             options.setExperimentalOption("prefs", Map.of(
                     "credentials_enable_service", false,
@@ -602,7 +602,7 @@ class SeleniumHandler {
 
     public void loginSubmit() {
         click(LoginView.LOGIN_VIEW_SUBMIT_BUTTON);
-        log.info("Clicked login submit button");
+        log.trace("Clicked login submit button");
         waitForPageLoaded();
     }
 
@@ -687,7 +687,7 @@ class SeleniumHandler {
                     moveMouseToElement(row);
                     row.click();
                     weClicked = true;
-                    log.info("Clicked row: " + gridRowBaseId + rowName);
+                    log.trace("Clicked row: " + gridRowBaseId + rowName);
                 } catch (StaleElementReferenceException e) {
                     //ignore and retry
                 }
@@ -866,7 +866,7 @@ class SeleniumHandler {
         sendKeys(id, Keys.RETURN);
         wait(500);
         sendKeys(id, Keys.ARROW_DOWN, Keys.TAB);
-        log.info("set ComboBox value=" + text);
+        log.trace("set ComboBox value=" + text);
     }
 
 
@@ -884,21 +884,21 @@ class SeleniumHandler {
         // The actual input has an id like "search-input-vaadin-date-picker-20"
         WebElement inputField = datePickerElement.findElement(By.cssSelector("input[slot='input']"));
 
-        log.debug("Found input field, typing date");
+        log.trace("Found input field, typing date");
 
         inputField.clear();// Clear any existing value
 
         // Format the date in US format (M/d/yyyy)
         // Note: This matches the browser's default US locale
         String dateStr = date.format(DateTimeFormatter.ofPattern("M/d/yyyy"));
-        log.info("Typing date into date picker: {} (formatted as US: {})", date, dateStr);
+        log.trace("Typing date into date picker: {} (formatted as US: {})", date, dateStr);
 
         typeText(inputField, dateStr);
 
         inputField.sendKeys(Keys.ENTER);// Press Enter to confirm the date and close the calendar
-        log.debug("Pressed Enter to confirm date");
+        log.trace("Pressed Enter to confirm date");
 
-        log.debug("Successfully set date: {}", date);
+        log.trace("Successfully set date: {}", date);
     }
 
     public void setDateTimePickerValue(String datePickerId, LocalDateTime date) {
@@ -924,7 +924,7 @@ class SeleniumHandler {
                             "  return true;" +
                             "}" +
                             "return false;";
-            log.info("set DatePicker value=" + dateStr);
+            log.trace("set DatePicker value=" + dateStr);
             executeJavaScript(dateScript);
         }
     }
@@ -951,7 +951,7 @@ class SeleniumHandler {
     public void setLoginPassword(String loginPassword) {
         WebElement passwordElement = findElement(By.id(LoginView.LOGIN_VIEW_PASSWORD));
         moveMouseToElement(passwordElement);  // Move mouse to password field before typing
-        log.info("sent loginPassword='{}' to element with name '{}}'%n", loginPassword, LoginView.LOGIN_VIEW_PASSWORD);
+        log.trace("sent loginPassword='{}' to element with name '{}}'%n", loginPassword, LoginView.LOGIN_VIEW_PASSWORD);
         // Humanized typing
         typeText(passwordElement, loginPassword);
     }
@@ -960,7 +960,7 @@ class SeleniumHandler {
         waitForElementToBeLocated(LoginView.LOGIN_VIEW_USERNAME);
         WebElement usernameElement = findElement(By.id(LoginView.LOGIN_VIEW_USERNAME));
         moveMouseToElement(usernameElement);  // Move mouse to username field before typing
-        log.info("sent loginUser='{}' to element with id '{}'%n", loginUser, LoginView.LOGIN_VIEW_USERNAME);
+        log.trace("sent loginUser='{}' to element with id '{}'%n", loginUser, LoginView.LOGIN_VIEW_USERNAME);
         // Humanized typing
         typeText(usernameElement, loginUser);
     }
@@ -990,7 +990,7 @@ class SeleniumHandler {
             i.sendKeys(Keys.CONTROL + "a");
             i.sendKeys(Keys.DELETE);
         }
-        log.info("set TextField " + id + " to '" + text + "'\n");
+        log.trace("set TextField " + id + " to '" + text + "'\n");
         // Humanized typing
         typeText(i, text);
     }
@@ -1062,7 +1062,7 @@ class SeleniumHandler {
                 // Start the recording with content-only mode, which will use JavaScript to determine
                 // the exact content area within the browser window
                 if (videoRecorder.startRecording(folderName, testName, true)) {
-                    log.info("Started video recording for test: {}", testName);
+                    log.trace("Started video recording for test: {}", testName);
                 }
             } catch (IOException | AWTException e) {
                 log.error("Failed to start video recording: {}", e.getMessage(), e);
@@ -1139,7 +1139,7 @@ class SeleniumHandler {
         }
         // Type with humanization
         typeText(element, text);
-        log.info("Typed text into element with humanization");
+        log.trace("Typed text into element with humanization");
     }
 
     /**
