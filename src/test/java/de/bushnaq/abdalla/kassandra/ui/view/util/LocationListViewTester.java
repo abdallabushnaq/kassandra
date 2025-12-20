@@ -225,7 +225,6 @@ public class LocationListViewTester {
      * @param newState          the new state/region code to assign
      */
     public void editLocationConfirm(LocalDate originalStartDate, LocalDate newStartDate, String newCountry, String newState) {
-//        seleniumHandler.waitUntilBrowserClosed(0);
         String originalDateStr = originalStartDate.format(dateFormatter);
 
         // Edit the record and confirm

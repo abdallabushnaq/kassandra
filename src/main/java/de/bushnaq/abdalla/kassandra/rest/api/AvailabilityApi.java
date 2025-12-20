@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
-import de.bushnaq.abdalla.kassandra.dto.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -42,14 +41,14 @@ public class AvailabilityApi extends AbstractApi {
     }
 
     //TODO use ids instead of objects
-    public void deleteById(User user, Availability availability) throws org.springframework.web.client.RestClientException {
+    public void deleteById(Long userId, Long availabilityId) throws org.springframework.web.client.RestClientException {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/availability/{userId}/{id}",
                 HttpMethod.DELETE,
                 createHttpEntity(),
                 Void.class,
-                user.getId(),
-                availability.getId()
+                userId,
+                availabilityId
         ));
     }
 

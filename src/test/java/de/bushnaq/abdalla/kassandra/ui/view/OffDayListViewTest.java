@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.OffDayListViewTester;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +49,7 @@ import java.time.LocalDate;
  * The tests use {@link OffDayListViewTester} to interact with the UI elements
  * and verify the expected behavior.
  */
+@Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc

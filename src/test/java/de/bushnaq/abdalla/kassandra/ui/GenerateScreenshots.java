@@ -28,6 +28,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.*;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -56,6 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -199,6 +201,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
             seleniumHandler.waitForElementToBeClickable(AvailabilityDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(AvailabilityDialog.AVAILABILITY_DIALOG), AvailabilityDialog.AVAILABILITY_DIALOG, "../kassandra.wiki/screenshots/availability-create-dialog.png");
             seleniumHandler.click(AvailabilityDialog.CANCEL_BUTTON);
+            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
         }
 
         // Edit availability dialog
@@ -209,6 +212,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
             seleniumHandler.waitForElementToBeClickable(AvailabilityDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(AvailabilityDialog.AVAILABILITY_DIALOG), AvailabilityDialog.AVAILABILITY_DIALOG, "../kassandra.wiki/screenshots/availability-edit-dialog.png");
             seleniumHandler.click(AvailabilityDialog.CANCEL_BUTTON);
+            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
         }
 
         // Delete availability dialog
@@ -220,6 +224,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
             seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/availability-delete-dialog.png");
             seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
         }
     }
 
@@ -232,18 +237,21 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(FeatureDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(FeatureDialog.FEATURE_DIALOG), FeatureDialog.FEATURE_DIALOG, "../kassandra.wiki/screenshots/feature-create-dialog.png");
         seleniumHandler.click(FeatureDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(FeatureDialog.FEATURE_DIALOG)));
 
         // Edit project dialog - open action menu first, then edit
         seleniumHandler.click(FeatureListView.FEATURE_GRID_EDIT_BUTTON_PREFIX + featureName);
         seleniumHandler.waitForElementToBeClickable(FeatureDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(FeatureDialog.FEATURE_DIALOG), FeatureDialog.FEATURE_DIALOG, "../kassandra.wiki/screenshots/feature-edit-dialog.png");
         seleniumHandler.click(FeatureDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(FeatureDialog.FEATURE_DIALOG)));
 
         // Delete project dialog - open action menu first, then delete
         seleniumHandler.click(FeatureListView.FEATURE_GRID_DELETE_BUTTON_PREFIX + featureName);
         seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/feature-delete-dialog.png");
         seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(FeatureDialog.FEATURE_DIALOG)));
     }
 
     /**
@@ -256,6 +264,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
             seleniumHandler.waitForElementToBeClickable(LocationDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(LocationDialog.LOCATION_DIALOG), LocationDialog.LOCATION_DIALOG, "../kassandra.wiki/screenshots/location-create-dialog.png");
             seleniumHandler.click(LocationDialog.CANCEL_BUTTON);
+            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
         }
 
         // Edit location dialog
@@ -266,6 +275,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
             seleniumHandler.waitForElementToBeClickable(LocationDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(LocationDialog.LOCATION_DIALOG), LocationDialog.LOCATION_DIALOG, "../kassandra.wiki/screenshots/location-edit-dialog.png");
             seleniumHandler.click(LocationDialog.CANCEL_BUTTON);
+            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
         }
 
         // Delete location dialog
@@ -276,6 +286,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
             seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/location-delete-dialog.png");
             seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
         }
     }
 
@@ -292,6 +303,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
             seleniumHandler.waitForElementToBeClickable(OffDayDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(OffDayDialog.OFFDAY_DIALOG), OffDayDialog.OFFDAY_DIALOG, "../kassandra.wiki/screenshots/offday-create-dialog.png");
             seleniumHandler.click(OffDayDialog.CANCEL_BUTTON);
+            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
         }
 
         // Edit availability dialog
@@ -303,6 +315,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
             seleniumHandler.waitForElementToBeClickable(OffDayDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(OffDayDialog.OFFDAY_DIALOG), OffDayDialog.OFFDAY_DIALOG, "../kassandra.wiki/screenshots/offday-edit-dialog.png");
             seleniumHandler.click(OffDayDialog.CANCEL_BUTTON);
+            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
         }
 
         // Delete availability dialog
@@ -311,6 +324,7 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
             seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/offday-delete-dialog.png");
             seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
         }
     }
 
@@ -323,18 +337,22 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(ProductDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ProductDialog.PRODUCT_DIALOG), ProductDialog.PRODUCT_DIALOG, "../kassandra.wiki/screenshots/product-create-dialog.png");
         seleniumHandler.click(ProductDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
+
 
         // Edit product dialog - open action menu first, then edit
         seleniumHandler.click(ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX + productName);
         seleniumHandler.waitForElementToBeClickable(ProductDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ProductDialog.PRODUCT_DIALOG), ProductDialog.PRODUCT_DIALOG, "../kassandra.wiki/screenshots/product-edit-dialog.png");
         seleniumHandler.click(ProductDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
 
         // Delete product dialog - open action menu first, then delete
         seleniumHandler.click(ProductListView.PRODUCT_GRID_DELETE_BUTTON_PREFIX + productName);
         seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/product-delete-dialog.png");
         seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
     }
 
     @ParameterizedTest
@@ -420,18 +438,21 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(SprintDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(SprintDialog.SPRINT_DIALOG), SprintDialog.SPRINT_DIALOG, "../kassandra.wiki/screenshots/sprint-create-dialog.png");
         seleniumHandler.click(SprintDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(SprintDialog.SPRINT_DIALOG)));
 
         // Edit sprint dialog - open action menu first, then edit
         seleniumHandler.click(SprintListView.SPRINT_GRID_EDIT_BUTTON_PREFIX + sprintName);
         seleniumHandler.waitForElementToBeClickable(SprintDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(SprintDialog.SPRINT_DIALOG), SprintDialog.SPRINT_DIALOG, "../kassandra.wiki/screenshots/sprint-edit-dialog.png");
         seleniumHandler.click(SprintDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(SprintDialog.SPRINT_DIALOG)));
 
         // Delete sprint dialog - open action menu first, then delete
         seleniumHandler.click(SprintListView.SPRINT_GRID_DELETE_BUTTON_PREFIX + sprintName);
         seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/sprint-delete-dialog.png");
         seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(SprintDialog.SPRINT_DIALOG)));
     }
 
     private void takeTaskDialogScreenshots() {
@@ -457,19 +478,25 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(UserDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(UserDialog.USER_DIALOG), UserDialog.USER_DIALOG, "../kassandra.wiki/screenshots/user-create-dialog.png");
         seleniumHandler.click(UserDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
+
 
         // Edit user dialog - open action menu first, then edit
         // Get first user in the list
+        seleniumHandler.wait(300);
         seleniumHandler.click(UserListView.USER_GRID_EDIT_BUTTON_PREFIX + userName);
         seleniumHandler.waitForElementToBeClickable(UserDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(UserDialog.USER_DIALOG), UserDialog.USER_DIALOG, "../kassandra.wiki/screenshots/user-edit-dialog.png");
         seleniumHandler.click(UserDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
 
         // Delete user dialog - open action menu first, then delete
+        seleniumHandler.wait(300);
         seleniumHandler.click(UserListView.USER_GRID_DELETE_BUTTON_PREFIX + userName);
         seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/user-delete-dialog.png");
         seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
     }
 
     /**
@@ -481,17 +508,21 @@ public class GenerateScreenshots extends AbstractUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(VersionDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(VersionDialog.VERSION_DIALOG), VersionDialog.VERSION_DIALOG, "../kassandra.wiki/screenshots/version-create-dialog.png");
         seleniumHandler.click(VersionDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(VersionDialog.VERSION_DIALOG)));
 
         // Edit version dialog - open action menu first, then edit
+
         seleniumHandler.click(VersionListView.VERSION_GRID_EDIT_BUTTON_PREFIX + versionName);
         seleniumHandler.waitForElementToBeClickable(VersionDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(VersionDialog.VERSION_DIALOG), VersionDialog.VERSION_DIALOG, "../kassandra.wiki/screenshots/version-edit-dialog.png");
         seleniumHandler.click(VersionDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(VersionDialog.VERSION_DIALOG)));
 
         // Delete version dialog - open action menu first, then delete
         seleniumHandler.click(VersionListView.VERSION_GRID_DELETE_BUTTON_PREFIX + versionName);
         seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/version-delete-dialog.png");
         seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(VersionDialog.VERSION_DIALOG)));
     }
 }

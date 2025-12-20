@@ -19,8 +19,10 @@ package de.bushnaq.abdalla.kassandra.ai.indextts;
 
 import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+@Tag("AiUnitTest")
 public class TestIndexTTS {
 
     @Test

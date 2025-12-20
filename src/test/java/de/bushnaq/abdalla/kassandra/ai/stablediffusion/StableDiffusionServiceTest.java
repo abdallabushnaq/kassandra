@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Test class for StableDiffusionService.
  * Tests will only run if the Stable Diffusion API is available.
  */
+@Tag("AiUnitTest")
 @SpringBootTest
 @Slf4j
 public class StableDiffusionServiceTest {

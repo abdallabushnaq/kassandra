@@ -17,8 +17,10 @@
 
 package de.bushnaq.abdalla.profiler;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+@Tag("UnitTest")
 class SimpleNestedLoggingTest extends BaseUtils {
 
     private void method1() throws Exception {

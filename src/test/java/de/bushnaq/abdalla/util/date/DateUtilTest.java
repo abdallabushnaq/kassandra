@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.util.date;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ import java.util.TimeZone;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+@Tag("UnitTest")
 class DateUtilTest {
     final private SimpleDateFormat _sdf   = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private final Logger           logger = LoggerFactory.getLogger(this.getClass());

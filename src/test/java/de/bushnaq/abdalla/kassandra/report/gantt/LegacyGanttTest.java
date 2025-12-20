@@ -28,6 +28,7 @@ import de.bushnaq.abdalla.util.date.DateUtil;
 import net.sf.mpxj.*;
 import net.sf.mpxj.reader.UniversalProjectReader;
 import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -49,6 +50,7 @@ import java.util.stream.Stream;
 
 import static de.bushnaq.abdalla.kassandra.util.NameGenerator.PROJECT_HUB_ORG;
 
+@Tag("UnitTest")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional

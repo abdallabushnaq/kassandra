@@ -15,10 +15,10 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.util;
+package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
+import de.bushnaq.abdalla.kassandra.util.AbstractEntityGenerator;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Test for the generateDefaultAvatar method in AbstractEntityGenerator.
  * Uses Spring Boot context to properly inject StableDiffusionConfig.
  */
+@Tag("AiUnitTest")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
 public class GenerateDefaultAvatarTest extends AbstractEntityGenerator {

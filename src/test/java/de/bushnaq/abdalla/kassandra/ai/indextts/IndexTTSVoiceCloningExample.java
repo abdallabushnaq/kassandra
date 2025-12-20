@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.indextts;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * NOTE: For complete voice reference management examples (upload/list/delete),
  * see IndexTTSVoiceManagementExamples.java
  */
+@Tag("AiUnitTest")
 public class IndexTTSVoiceCloningExample {
 
     /**

@@ -138,7 +138,7 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
         ConfirmDialog dialog = new ConfirmDialog("Confirm Delete", "Are you sure you want to delete this off day record?", "Delete",
                 () -> {
                     try {
-                        offDayApi.deleteById(currentUser, offDay);
+                        offDayApi.deleteById(currentUser.getId(), offDay.getId());
                         refreshOffDayGrid();
                         // Update the calendar with the fresh user data
                         if (yearCalendar != null) {

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.indextts;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.List;
 /**
  * Example tests demonstrating Index TTS voice cloning and voice reference management
  */
+@Tag("AiUnitTest")
 public class IndexTTSVoiceManagementExamples {
 
     /**

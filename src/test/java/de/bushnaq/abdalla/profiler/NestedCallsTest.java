@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.profiler;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  *
  * @author abdalla
  */
+@Tag("UnitTest")
 class NestedCallsTest extends BaseUtils {
 
     private void method1() throws Exception {

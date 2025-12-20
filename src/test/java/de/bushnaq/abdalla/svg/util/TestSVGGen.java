@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.svg.util;
 
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2DIOException;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.w3c.dom.DOMImplementation;
@@ -28,6 +29,7 @@ import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
+@Tag("UnitTest")
 public class TestSVGGen {
 
     private static final int WIDTH  = 16;

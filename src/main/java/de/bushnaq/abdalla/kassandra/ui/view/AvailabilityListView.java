@@ -143,7 +143,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
                 "Delete",
                 () -> {
                     try {
-                        availabilityApi.deleteById(currentUser, availability);
+                        availabilityApi.deleteById(currentUser.getId(), availability.getId());
                         refreshGrid();
                         Notification.show("Availability deleted", 3000, Notification.Position.MIDDLE);
                     } catch (Exception ex) {

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.util.date;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -24,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Tag("UnitTest")
 public class UtilCalculateProgressTest {
     private static final double            EPSILON   = 0.001d;
     static               DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");

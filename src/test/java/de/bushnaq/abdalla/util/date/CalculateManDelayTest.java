@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.util.date;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -26,7 +27,8 @@ import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class CalcualteManDelayTest {
+@Tag("UnitTest")
+public class CalculateManDelayTest {
     static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     @Test

@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.util.AbstractEntityGenerator;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -41,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
+@Tag("UnitTest")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -131,7 +133,7 @@ public class LocationApiTest extends AbstractEntityGenerator {
         {
             User user = expectedUsers.getFirst();
             try {
-                locationApi.deleteById(user, user.getLocations().getFirst());
+                locationApi.deleteById(user.getId(), user.getLocations().getFirst().getId());
                 fail("should not be able to delete the first location");
             } catch (ServerErrorException e) {
                 //expected
@@ -187,7 +189,7 @@ public class LocationApiTest extends AbstractEntityGenerator {
             Long     locationId = location.getId();
             location.setId(FAKE_ID);
             try {
-                locationApi.deleteById(user, user.getLocations().getFirst());
+                locationApi.deleteById(user.getId(), user.getLocations().getFirst().getId());
                 fail("should not be able to delete");
             } catch (ServerErrorException e) {
                 //expected
@@ -220,7 +222,7 @@ public class LocationApiTest extends AbstractEntityGenerator {
             Long userId = user.getId();
             user.setId(FAKE_ID);
             try {
-                locationApi.deleteById(user, user.getLocations().getFirst());
+                locationApi.deleteById(user.getId(), user.getLocations().getFirst().getId());
                 fail("should not be able to delete");
             } catch (ResponseStatusException e) {
                 //expected

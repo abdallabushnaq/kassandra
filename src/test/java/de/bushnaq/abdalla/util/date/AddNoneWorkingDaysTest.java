@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.util.date;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * calcualteEfficiency calculation.
  * calcualteWorkDaysMiliseconsDelay calculation
  */
+@Tag("UnitTest")
 public class AddNoneWorkingDaysTest {
     static DateTimeFormatter farmatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 

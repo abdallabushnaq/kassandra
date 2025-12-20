@@ -16,6 +16,7 @@
  */
 package de.bushnaq.abdalla.kassandra.ai.narrator;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -23,6 +24,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Tag("AiUnitTest")
 class TtsCacheManagerTest {
 
     @Test

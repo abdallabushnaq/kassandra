@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.SprintListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
  * and verify the expected behavior. Each test requires a product, version, and project
  * to be created first, as sprints exist within the context of a project.
  */
+@Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc

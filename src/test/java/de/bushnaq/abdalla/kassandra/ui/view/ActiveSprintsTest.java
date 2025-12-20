@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,7 @@ import java.time.LocalDateTime;
  * @version 1.0
  * @since 2025
  */
+@Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -166,7 +168,7 @@ public class ActiveSprintsTest extends AbstractKeycloakUiTestUtil {
         // takeScreenshot("active_sprints_initial");
 
         log.info("ActiveSprints view test completed successfully");
-        seleniumHandler.waitUntilBrowserClosed(0);
+        seleniumHandler.waitUntilBrowserClosed(5000);
     }
 }
 

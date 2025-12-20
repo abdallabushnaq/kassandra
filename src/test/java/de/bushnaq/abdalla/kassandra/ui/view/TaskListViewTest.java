@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,6 +49,7 @@ import java.util.List;
  * and verify the expected behavior. Each test requires a product, version, project,
  * and sprint to be created first, as tasks exist within the context of a sprint.
  */
+@Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -104,6 +106,6 @@ public class TaskListViewTest extends AbstractUiTestUtil {
         sprintListViewTester.configSprint(sprintName);
 
         taskListViewTester.createTask(taskName0);
-        seleniumHandler.waitUntilBrowserClosed(0);
+        seleniumHandler.waitUntilBrowserClosed(5000);
     }
 }

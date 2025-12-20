@@ -17,12 +17,14 @@
 
 package de.bushnaq.abdalla.kassandra.ai;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+@Tag("AiUnitTest")
 @SpringBootTest
 public class TestAi {
 

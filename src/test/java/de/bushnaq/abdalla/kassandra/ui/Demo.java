@@ -31,6 +31,7 @@ import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -51,6 +52,7 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+@Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -183,7 +185,7 @@ public class Demo extends AbstractKeycloakUiTestUtil {
 
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + firstSprint.getName());
 
-        seleniumHandler.waitUntilBrowserClosed(0);
+        seleniumHandler.waitUntilBrowserClosed(5000);
     }
 
 }

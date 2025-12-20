@@ -42,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * This test requires Ollama to be running with a model available (e.g., llama3.2:1b).
  * The test will be skipped if Ollama is not available.
  */
+@Tag("AiUnitTest")
 @SpringBootTest
 @ActiveProfiles("test")
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)

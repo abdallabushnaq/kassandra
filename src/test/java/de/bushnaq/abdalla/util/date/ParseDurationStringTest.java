@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.util.date;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -28,7 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * calcualteEfficiency calculation.
  * calcualteWorkDaysMiliseconsDelay calculation
  */
-public class parseDurationStringTest {
+@Tag("UnitTest")
+public class ParseDurationStringTest {
 
     @Test
     public void endOnSaturdayTest() {

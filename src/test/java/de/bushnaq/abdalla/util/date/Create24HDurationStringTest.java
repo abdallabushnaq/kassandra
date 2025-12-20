@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.util.date;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Tag("UnitTest")
 public class Create24HDurationStringTest {
     static DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
     //            ("yyyy-MM-dd HH:mm:ss:AAAA");

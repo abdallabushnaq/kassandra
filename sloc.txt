@@ -194,13 +194,13 @@
 | kassandra.repository           | WorklogRepository.java                                   | src      |        4 |        0 |       16 |        7 |       27 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.rest.api             | AbstractApi.java                                         | src      |       43 |       22 |       57 |      254 |      376 |
-| kassandra.rest.api             | AvailabilityApi.java                                     | src      |       10 |        0 |       17 |       60 |       87 |
+| kassandra.rest.api             | AvailabilityApi.java                                     | src      |       10 |        0 |       17 |       59 |       86 |
 | kassandra.rest.api             | AvailabilityApiTest.java                                 | src      |       35 |        0 |       46 |      237 |      318 |
 | kassandra.rest.api             | FeatureApi.java                                          | src      |       21 |       20 |       16 |      124 |      181 |
 | kassandra.rest.api             | FeatureApiTest.java                                      | src      |       33 |        0 |       31 |      195 |      259 |
-| kassandra.rest.api             | LocationApi.java                                         | src      |       11 |        0 |       17 |       60 |       88 |
+| kassandra.rest.api             | LocationApi.java                                         | src      |       11 |        0 |       17 |       59 |       87 |
 | kassandra.rest.api             | LocationApiTest.java                                     | src      |       43 |        0 |       47 |      274 |      364 |
-| kassandra.rest.api             | OffDayApi.java                                           | src      |       12 |        0 |       17 |       60 |       89 |
+| kassandra.rest.api             | OffDayApi.java                                           | src      |       12 |        0 |       17 |       59 |       88 |
 | kassandra.rest.api             | OffDayApiTest.java                                       | src      |       43 |        0 |       62 |      280 |      385 |
 | kassandra.rest.api             | ProductApi.java                                          | src      |       20 |       20 |       16 |      114 |      170 |
 | kassandra.rest.api             | ProductApiTest.java                                      | src      |       26 |        0 |       26 |      185 |      237 |
@@ -358,7 +358,7 @@
 | kassandra.ui                   | MainLayout.java                                          | src      |       58 |       17 |       37 |      241 |      353 |
 | kassandra.ui                   | SprintStatus.java                                        | src      |        2 |        0 |       16 |        4 |       22 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.util                 | AbstractEntityGenerator.java                             | src      |      124 |       55 |      106 |      801 |     1086 |
+| kassandra.util                 | AbstractEntityGenerator.java                             | src      |      125 |       55 |       63 |      782 |     1025 |
 | kassandra.util                 | AbstractGanttTestUtil.java                               | src      |       51 |        6 |       55 |      506 |      618 |
 | kassandra.util                 | AbstractLegacyGanttTestUtil.java                         | src      |       10 |        0 |       19 |       87 |      116 |
 | kassandra.util                 | AbstractTestUtil.java                                    | src      |       20 |        0 |       27 |       92 |      139 |
@@ -432,5 +432,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 40 package(s)                  | 391 file(s)                                              | java     |     8512 |     5427 |    11312 |    43543 |    68794 |
+| 40 package(s)                  | 391 file(s)                                              | java     |     8513 |     5427 |    11269 |    43521 |    68730 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

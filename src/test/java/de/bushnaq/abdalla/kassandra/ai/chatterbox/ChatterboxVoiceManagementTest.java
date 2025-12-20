@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ai.chatterbox;
 
 import de.bushnaq.abdalla.kassandra.ai.SyncResult;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import javax.sound.sampled.AudioSystem;
@@ -28,6 +29,7 @@ import java.util.List;
 /**
  * Example tests demonstrating Index TTS voice cloning and voice reference management
  */
+@Tag("AiUnitTest")
 public class ChatterboxVoiceManagementTest {
 
     private static void deleteVoiceReferences(ChatterboxTTS.VoiceReference[] refs) throws Exception {

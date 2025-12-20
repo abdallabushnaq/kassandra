@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.dto.OffDay;
-import de.bushnaq.abdalla.kassandra.dto.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -43,14 +42,14 @@ public class OffDayApi extends AbstractApi {
     }
 
     //TODO use ids instead of objects
-    public void deleteById(User user, OffDay offDay) throws org.springframework.web.client.RestClientException {
+    public void deleteById(Long userId, Long offDayId) throws org.springframework.web.client.RestClientException {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/offday/{userId}/{id}",
                 HttpMethod.DELETE,
                 createHttpEntity(),
                 Void.class,
-                user.getId(),
-                offDay.getId()
+                userId,
+                offDayId
         ));
     }
 

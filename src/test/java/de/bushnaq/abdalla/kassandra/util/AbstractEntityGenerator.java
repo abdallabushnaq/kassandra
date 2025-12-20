@@ -792,7 +792,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     }
 
     protected void removeAvailability(Availability availability, User user) {
-        availabilityApi.deleteById(user, availability);
+        availabilityApi.deleteById(user.getId(), availability.getId());
         user.removeAvailability(availability);
         expectedAvailabilities.remove(availability);
     }
@@ -815,13 +815,13 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     }
 
     protected void removeLocation(Location location, User user) {
-        locationApi.deleteById(user, location);
+        locationApi.deleteById(user.getId(), location.getId());
         user.removeLocation(location);
         expectedLocations.remove(location);
     }
 
     protected void removeOffDay(OffDay offDay, User user) {
-        offDayApi.deleteById(user, offDay);
+        offDayApi.deleteById(user.getId(), offDay.getId());
         user.removeOffDay(offDay);
         expectedOffDays.remove(offDay);
     }

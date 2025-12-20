@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.dto.Location;
-import de.bushnaq.abdalla.kassandra.dto.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -43,14 +42,14 @@ public class LocationApi extends AbstractApi {
     }
 
     //TODO use ids instead of objects
-    public void deleteById(User user, Location location) throws org.springframework.web.client.RestClientException {
+    public void deleteById(Long userId, Long locationId) throws org.springframework.web.client.RestClientException {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/location/{userId}/{id}",
                 HttpMethod.DELETE,
                 createHttpEntity(),
                 Void.class,
-                user.getId(),
-                location.getId()
+                userId,
+                locationId
         ));
     }
 

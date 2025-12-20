@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.rest.debug.DebugUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
@@ -29,6 +28,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
 import de.bushnaq.abdalla.kassandra.util.NameGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -46,6 +46,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+@Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -124,11 +125,7 @@ public class SprintQualityBoardTest extends AbstractUiTestUtil {
         versionListViewTester.selectVersion(nameGenerator.generateVersionName(0));
         featureListViewTester.selectFeature(nameGenerator.generateFeatureName(0));
         sprintListViewTester.selectSprint(nameGenerator.generateSprintName(0));
-        if (DebugUtil.DEBUG) {
-            seleniumHandler.waitUntilBrowserClosed(0);
-        } else {
-            seleniumHandler.waitUntilBrowserClosed(5000);
-        }
+        seleniumHandler.waitUntilBrowserClosed(5000);
     }
 
 }

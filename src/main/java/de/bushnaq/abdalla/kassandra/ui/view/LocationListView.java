@@ -147,7 +147,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
                 "Delete",
                 () -> {
                     try {
-                        locationApi.deleteById(currentUser, location);
+                        locationApi.deleteById(currentUser.getId(), location.getId());
                         refreshGrid();
                         Notification.show("Location deleted", 3000, Notification.Position.MIDDLE);
                     } catch (Exception ex) {
