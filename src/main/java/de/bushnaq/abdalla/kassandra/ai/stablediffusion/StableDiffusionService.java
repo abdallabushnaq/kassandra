@@ -64,43 +64,6 @@ public class StableDiffusionService {
     }
 
     /**
-     * Generate an image from a text prompt.
-     *
-     * @param prompt The text description of the image to generate
-     * @return byte array containing the generated image (PNG format, resized to configured output size)
-     * @throws StableDiffusionException if generation fails
-     */
-    public byte[] generateImage(String prompt) throws StableDiffusionException {
-        return generateImage(prompt, config.getOutputSize());
-    }
-
-    /**
-     * Generate an image from a text prompt with a specific output size.
-     *
-     * @param prompt     The text description of the image to generate
-     * @param outputSize The desired output size (square image)
-     * @return byte array containing the generated image (PNG format)
-     * @throws StableDiffusionException if generation fails
-     */
-    public byte[] generateImage(String prompt, int outputSize) throws StableDiffusionException {
-        return generateImage(prompt, outputSize, null);
-    }
-
-    /**
-     * Generate an image from a text prompt with a specific output size and progress callback.
-     *
-     * @param prompt           The text description of the image to generate
-     * @param outputSize       The desired output size (square image)
-     * @param progressCallback Callback for progress updates (can be null)
-     * @return byte array containing the generated image (PNG format)
-     * @throws StableDiffusionException if generation fails
-     */
-    public byte[] generateImage(String prompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
-        GeneratedImageResult result = generateImageWithOriginal(prompt, outputSize, progressCallback);
-        return result.getResizedImage();
-    }
-
-    /**
      * Generate an image from a text prompt with both original and resized versions.
      *
      * @param prompt The text description of the image to generate
@@ -236,20 +199,6 @@ public class StableDiffusionService {
         }
     }
 
-    /**
-     * Generate an image from an initial image and a text prompt (img2img).
-     *
-     * @param initImage        The initial image bytes (PNG or JPG)
-     * @param prompt           The text description of the image to generate
-     * @param outputSize       The desired output size (square image)
-     * @param progressCallback Callback for progress updates (can be null)
-     * @return byte array containing the generated image (PNG format)
-     * @throws StableDiffusionException if generation fails
-     */
-    public byte[] img2img(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
-        GeneratedImageResult result = img2imgWithOriginal(initImage, prompt, outputSize, progressCallback);
-        return result.getResizedImage();
-    }
 
     /**
      * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.

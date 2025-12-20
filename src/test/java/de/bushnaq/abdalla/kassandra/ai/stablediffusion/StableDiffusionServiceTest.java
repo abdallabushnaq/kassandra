@@ -70,8 +70,9 @@ public class StableDiffusionServiceTest {
     @Test
     public void testGenerateImage_Avatar() throws Exception {
         // Generate avatar-style image
-        String prompt     = "portrait of a friendly robot character, cartoon style, simple background";
-        byte[] imageBytes = stableDiffusionService.generateImage(prompt);
+        String               prompt     = "portrait of a friendly robot character, cartoon style, simple background";
+        GeneratedImageResult result     = stableDiffusionService.generateImageWithOriginal(prompt);
+        byte[]               imageBytes = result.getResizedImage();
 
         // Verify image was generated
         assertNotNull(imageBytes, "Generated image should not be null");
@@ -91,9 +92,10 @@ public class StableDiffusionServiceTest {
     @Test
     public void testGenerateImage_CustomSize() throws Exception {
         // Generate image with custom output size
-        String prompt     = "a majestic lion, wildlife photography";
-        int    customSize = 128;
-        byte[] imageBytes = stableDiffusionService.generateImage(prompt, customSize);
+        String               prompt     = "a majestic lion, wildlife photography";
+        int                  customSize = 128;
+        GeneratedImageResult result     = stableDiffusionService.generateImageWithOriginal(prompt, customSize, null);
+        byte[]               imageBytes = result.getResizedImage();
 
         // Verify image was generated
         assertNotNull(imageBytes, "Generated image should not be null");
@@ -120,8 +122,9 @@ public class StableDiffusionServiceTest {
         };
 
         for (int i = 0; i < prompts.length; i++) {
-            String prompt     = prompts[i];
-            byte[] imageBytes = stableDiffusionService.generateImage(prompt);
+            String               prompt     = prompts[i];
+            GeneratedImageResult result     = stableDiffusionService.generateImageWithOriginal(prompt);
+            byte[]               imageBytes = result.getResizedImage();
 
             // Verify each image
             assertNotNull(imageBytes, "Generated image " + i + " should not be null");
@@ -139,8 +142,9 @@ public class StableDiffusionServiceTest {
     @Test
     public void testGenerateImage_SimplePrompt() throws Exception {
         // Generate image
-        String prompt     = "a beautiful sunset over mountains, professional photography";
-        byte[] imageBytes = stableDiffusionService.generateImage(prompt);
+        String               prompt     = "a beautiful sunset over mountains, professional photography";
+        GeneratedImageResult result     = stableDiffusionService.generateImageWithOriginal(prompt);
+        byte[]               imageBytes = result.getResizedImage();
 
         // Verify image was generated
         assertNotNull(imageBytes, "Generated image should not be null");
