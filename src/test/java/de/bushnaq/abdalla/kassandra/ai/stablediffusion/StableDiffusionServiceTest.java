@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.support.ResourcePatternResolver;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -44,9 +45,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class StableDiffusionServiceTest {
 
     @Autowired
-    private StableDiffusionConfig  config;
-    private Path                   outputDir;
-    private StableDiffusionService stableDiffusionService;
+    private StableDiffusionConfig   config;
+    private Path                    outputDir;
+    @Autowired
+    private ResourcePatternResolver resourcePatternResolver;
+    private StableDiffusionService  stableDiffusionService;
 
     /**
      * Helper method to save test images for visual verification.
@@ -59,7 +62,7 @@ public class StableDiffusionServiceTest {
 
     @BeforeEach
     public void setUp() throws IOException {
-        stableDiffusionService = new StableDiffusionService(config);
+        stableDiffusionService = new StableDiffusionService(config, resourcePatternResolver);
 
         // Create output directory for test images
         outputDir = Paths.get("target", "test-output", "stablediffusion");

@@ -29,6 +29,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
@@ -265,6 +266,14 @@ public class SprintDialog extends Dialog {
 
         if (avatarImage != null) {
             String newHash = AvatarUtil.computeHash(avatarImage);
+            sprintToSave.setAvatarHash(newHash);
+        } else if (avatarUpdateRequest == null) {
+            //generate default avatar if none exists
+            GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("exit");
+            avatarImage         = image.getResizedImage();
+            avatarImageOriginal = image.getOriginalImage();
+            avatarPrompt        = image.getPrompt();
+            String newHash = AvatarUtil.computeHash(image.getResizedImage());
             sprintToSave.setAvatarHash(newHash);
         }
         try {

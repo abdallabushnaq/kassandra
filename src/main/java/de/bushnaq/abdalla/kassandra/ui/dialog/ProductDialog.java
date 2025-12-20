@@ -27,8 +27,11 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.Product;
@@ -54,6 +57,7 @@ public class ProductDialog extends Dialog {
     public static final String                 PRODUCT_NAME_FIELD    = "product-name-field";
     private final       Image                  avatarPreview;
     private final       AvatarUpdateRequest    avatarUpdateRequest;
+    private final       Binder<Product>        binder;
     private             byte[]                 generatedImageBytes;
     private             byte[]                 generatedImageBytesOriginal;
     private             String                 generatedImagePrompt;
@@ -77,6 +81,7 @@ public class ProductDialog extends Dialog {
         this.productApi             = productApi;
         this.stableDiffusionService = stableDiffusionService;
         isEditMode                  = product != null;
+        this.binder                 = new Binder<>(Product.class);
 
         // Only fetch avatar if editing an existing product
         if (product != null)
@@ -111,6 +116,14 @@ public class ProductDialog extends Dialog {
         nameField.setRequired(true);
         nameField.setHelperText("Product name must be unique");
 
+        binder.forField(nameField)
+                .asRequired("Product name is required")
+                .withValidationStatusHandler(status -> {
+                    nameField.setInvalid(status.isError());
+                    status.getMessage().ifPresent(nameField::setErrorMessage);
+                })
+                .bind(Product::getName, Product::setName);
+
         // Create name field prefix icon using avatar proxy endpoint
         nameFieldImage = new Image();
         nameFieldImage.setWidth("20px");
@@ -128,7 +141,14 @@ public class ProductDialog extends Dialog {
         nameField.setValueChangeMode(ValueChangeMode.EAGER);
 
         if (isEditMode) {
-            nameField.setValue(product.getName());
+            binder.readBean(product);
+        } else {
+            binder.readBean(new Product());
+        }
+
+        // Trigger validation to show errors for initially empty fields in create mode
+        if (!isEditMode) {
+            binder.validate();
         }
 
         // AI Image generation button (only show if service is available)
@@ -190,7 +210,7 @@ public class ProductDialog extends Dialog {
 
         dialogLayout.add(avatarPreview);
 
-        dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this));
+        dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
 
         add(dialogLayout);
     }
@@ -249,18 +269,17 @@ public class ProductDialog extends Dialog {
     }
 
     private void save() {
-        if (nameField.getValue().trim().isEmpty()) {
-            Notification.show("Please enter a product name", 3000, Notification.Position.MIDDLE);
-            return;
-        }
-
         Product productToSave;
         if (isEditMode) {
             productToSave = product;
-            productToSave.setName(nameField.getValue().trim());
         } else {
             productToSave = new Product();
-            productToSave.setName(nameField.getValue().trim());
+        }
+
+        try {
+            binder.writeBean(productToSave);
+        } catch (ValidationException e) {
+            return;
         }
 
         // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
@@ -270,6 +289,14 @@ public class ProductDialog extends Dialog {
 
         if (avatarImage != null) {
             String newHash = AvatarUtil.computeHash(avatarImage);
+            productToSave.setAvatarHash(newHash);
+        } else if (avatarUpdateRequest == null) {
+            //generate default avatar if none exists
+            GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("cube");
+            avatarImage         = image.getResizedImage();
+            avatarImageOriginal = image.getOriginalImage();
+            avatarPrompt        = image.getPrompt();
+            String newHash = AvatarUtil.computeHash(image.getResizedImage());
             productToSave.setAvatarHash(newHash);
         }
         try {

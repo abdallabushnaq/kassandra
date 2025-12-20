@@ -56,14 +56,12 @@ public class GenerateDefaultAvatarTest extends AbstractEntityGenerator {
 
         BufferedImage resizedImage = ImageIO.read(new ByteArrayInputStream(result.getResizedImage()));
         ImageIO.write(resizedImage, "PNG", new File(testDir, "default-avatar-resized-" + config.getOutputSize() + "x" + config.getOutputSize() + ".png"));
-
-        System.out.println("Test images saved to: " + testDir.getAbsolutePath());
     }
 
     @Test
     public void testGenerateDefaultAvatar() throws IOException {
-        // Generate default avatar
-        GeneratedImageResult result = generateDefaultAvatar();
+        // Generate default avatar without icon (pass null)
+        GeneratedImageResult result = stableDiffusionService.generateDefaultAvatar(null);
 
         // Verify result is not null
         assertNotNull(result, "Generated result should not be null");
@@ -92,11 +90,33 @@ public class GenerateDefaultAvatarTest extends AbstractEntityGenerator {
 
         // Save images to disk for manual inspection (optional)
         saveTestImages(result);
+    }
 
-        System.out.println("Default avatar generation test passed successfully!");
-        System.out.println("Configuration - Generation size: " + config.getGenerationSize() + ", Output size: " + config.getOutputSize());
-        System.out.println("Original image size: " + result.getOriginalImage().length + " bytes");
-        System.out.println("Resized image size: " + result.getResizedImage().length + " bytes");
+    @Test
+    public void testGenerateDefaultAvatarWithIcon() throws IOException {
+        // Generate default avatar with user icon
+        GeneratedImageResult result = stableDiffusionService.generateDefaultAvatar("user");
+
+        // Verify result is not null
+        assertNotNull(result, "Generated result should not be null");
+        assertNotNull(result.getOriginalImage(), "Original image should not be null");
+        assertNotNull(result.getResizedImage(), "Resized image should not be null");
+
+        // Save images to disk for manual inspection
+        File testDir = new File("test-results/default-avatar");
+        testDir.mkdirs();
+        BufferedImage originalImage = ImageIO.read(new ByteArrayInputStream(result.getOriginalImage()));
+        ImageIO.write(originalImage, "PNG", new File(testDir, "default-avatar-icon-original.png"));
+    }
+
+    @Test
+    public void testListSvgResources() throws IOException {
+        System.out.println("Listing all SVG resources:");
+        org.springframework.core.io.support.ResourcePatternResolver resolver  = new org.springframework.core.io.support.PathMatchingResourcePatternResolver();
+        org.springframework.core.io.Resource[]                      resources = resolver.getResources("classpath*:**/*.svg");
+        for (org.springframework.core.io.Resource resource : resources) {
+            System.out.println(resource.getURL());
+        }
+        System.out.println("End of SVG resources list.");
     }
 }
-

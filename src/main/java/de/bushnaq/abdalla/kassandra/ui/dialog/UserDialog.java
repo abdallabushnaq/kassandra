@@ -25,6 +25,8 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -172,9 +174,9 @@ public class UserDialog extends Dialog {
         }
 
         // Layout for name field and button
-        com.vaadin.flow.component.orderedlayout.HorizontalLayout nameRow = new com.vaadin.flow.component.orderedlayout.HorizontalLayout();
+        HorizontalLayout nameRow = new HorizontalLayout();
         nameRow.setWidthFull();
-        nameRow.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.END);
+        nameRow.setAlignItems(FlexComponent.Alignment.END);
         nameRow.add(nameField);
         if (generateImageButton != null) {
             nameRow.add(generateImageButton);
@@ -319,36 +321,45 @@ public class UserDialog extends Dialog {
         userToSave.setFirstWorkingDay(firstWorkingDayPicker.getValue());
         userToSave.setLastWorkingDay(lastWorkingDayPicker.getValue());
 
-        if (generatedImageBytes != null) {
-            String newHash = AvatarUtil.computeHash(generatedImageBytes);
+        // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
+        byte[] avatarImage         = generatedImageBytes;
+        byte[] avatarImageOriginal = generatedImageBytesOriginal;
+        String avatarPrompt        = generatedImagePrompt;
+
+        if (avatarImage != null) {
+            String newHash = AvatarUtil.computeHash(avatarImage);
+            userToSave.setAvatarHash(newHash);
+        } else if (avatarUpdateRequest == null) {
+            //generate default avatar if none exists
+            GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("user");
+            avatarImage         = image.getResizedImage();
+            avatarImageOriginal = image.getOriginalImage();
+            avatarPrompt        = image.getPrompt();
+            String newHash = AvatarUtil.computeHash(image.getResizedImage());
             userToSave.setAvatarHash(newHash);
         }
+
         // Save user to backend
         if (isEditMode) {
             userApi.update(userToSave);
-            if (generatedImageBytes != null) {
-                // Compute and set hash before saving
-
+            if (avatarImage != null && avatarImageOriginal != null) {
                 userApi.updateAvatarFull(
                         userToSave.getId(),
-                        generatedImageBytes,
-                        generatedImageBytesOriginal,
-                        generatedImagePrompt
+                        avatarImage,
+                        avatarImageOriginal,
+                        avatarPrompt
                 );
             }
         } else {
             User saved = userApi.persist(userToSave);
-//            userToSave.setId(saved.getId());
 
             // For create mode, save avatar now since user didn't exist before
-            if (generatedImageBytes != null) {
-                // Compute and set hash before saving
-
+            if (avatarImage != null && avatarImageOriginal != null) {
                 userApi.updateAvatarFull(
                         saved.getId(),
-                        generatedImageBytes,
-                        generatedImageBytesOriginal,
-                        generatedImagePrompt
+                        avatarImage,
+                        avatarImageOriginal,
+                        avatarPrompt
                 );
             }
         }

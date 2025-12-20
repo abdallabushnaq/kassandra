@@ -30,6 +30,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
@@ -414,11 +415,39 @@ public final class VaadinUtil {
             String cancelButtonId,
             SaveButtonClickHandler saveClickHandler,
             Dialog dialog) {
+        return createDialogButtonLayout(saveButtonText, saveButtonId, cancelButtonText, cancelButtonId, saveClickHandler, dialog, null);
+    }
+
+    /**
+     * Creates a standardized dialog button layout with Save and Cancel buttons, with validation support
+     *
+     * @param saveButtonText   Text for the save button (e.g., "Save", "Create", "Confirm")
+     * @param saveButtonId     ID for the save button
+     * @param cancelButtonText Text for the cancel button (e.g., "Cancel", "Close")
+     * @param cancelButtonId   ID for the cancel button
+     * @param saveClickHandler Click handler for the save button
+     * @param dialog           The dialog instance that contains these buttons (for closing when cancel is clicked)
+     * @param binder           Optional binder to control the save button's enabled state based on validation
+     * @return A configured HorizontalLayout containing the dialog buttons
+     */
+    public static HorizontalLayout createDialogButtonLayout(
+            String saveButtonText,
+            String saveButtonId,
+            String cancelButtonText,
+            String cancelButtonId,
+            SaveButtonClickHandler saveClickHandler,
+            Dialog dialog,
+            Binder<?> binder) {
 
         Button saveButton = new Button(saveButtonText, new Icon(VaadinIcon.CHECK));
         saveButton.setId(saveButtonId);
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.addClickListener(event -> saveClickHandler.onClick());
+
+        if (binder != null) {
+            saveButton.setEnabled(binder.isValid());
+            binder.addStatusChangeListener(event -> saveButton.setEnabled(binder.isValid()));
+        }
 
         Button cancelButton = new Button(cancelButtonText, new Icon(VaadinIcon.CLOSE));
         cancelButton.setId(cancelButtonId);

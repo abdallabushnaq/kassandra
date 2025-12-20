@@ -45,10 +45,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ServerErrorException;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -127,11 +124,11 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 image = generateFeatureAvatar(name);
             } catch (StableDiffusionException e) {
                 System.err.println("Failed to generate image for feature " + name + ": " + e.getMessage());
-                image = generateDefaultAvatar();
+                image = stableDiffusionService.generateDefaultAvatar("lightbulb");
             }
         } else {
             System.out.println("Stable Diffusion not available, using default avatar for feature: " + name);
-            image = generateDefaultAvatar();
+            image = stableDiffusionService.generateDefaultAvatar("lightbulb");
         }
         feature.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = featureApi.persist(feature);
@@ -284,11 +281,11 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 image = generateProductAvatar(name);
             } catch (StableDiffusionException e) {
                 System.err.println("Failed to generate image for product " + name + ": " + e.getMessage());
-                image = generateDefaultAvatar();
+                image = stableDiffusionService.generateDefaultAvatar("cube");
             }
         } else {
             System.out.println("Stable Diffusion not available, using default avatar for product: " + name);
-            image = generateDefaultAvatar();
+            image = stableDiffusionService.generateDefaultAvatar("cube");
         }
         product.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = productApi.persist(product);
@@ -438,10 +435,10 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 image = generateSprintAvatar(name);
             } catch (StableDiffusionException e) {
                 System.err.println("Failed to generate image for sprint " + name + ": " + e.getMessage());
-                image = generateDefaultAvatar();
+                image = stableDiffusionService.generateDefaultAvatar("exit");
             }
         } else {
-            image = generateDefaultAvatar();
+            image = stableDiffusionService.generateDefaultAvatar("exit");
         }
         sprint.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = sprintApi.persist(sprint);
@@ -530,10 +527,10 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 image = generateUserAvatar(name);
             } catch (StableDiffusionException e) {
                 System.err.println("Failed to generate avatar for user " + name + ": " + e.getMessage());
-                image = generateDefaultAvatar();
+                image = stableDiffusionService.generateDefaultAvatar("user");
             }
         } else {
-            image = generateDefaultAvatar();
+            image = stableDiffusionService.generateDefaultAvatar("user");
         }
         user.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = userApi.persist(user);
@@ -585,87 +582,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         userIndex    = 0;
         versionIndex = 0;
         nameGenerator.resetStoryPool(); // Reset story pool for each test
-    }
-
-    /**
-     * Generate a default avatar image with white background and dotted light gray border.
-     * This is used when Stable Diffusion is not available or when the user doesn't want to use AI image generation.
-     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
-     *
-     * @return GeneratedImageResult containing original and resized images
-     */
-    protected GeneratedImageResult generateDefaultAvatar() {
-        System.out.println("Stable Diffusion not available, using default avatar");
-        try {
-            // Get sizes from config
-            int originalSize = stableDiffusionConfig.getGenerationSize();
-            int resizedSize  = stableDiffusionConfig.getOutputSize();
-
-            // Calculate scaling ratio to ensure border visibility after resize
-            // We need to consider that images are often displayed at smaller sizes (e.g., 24x24)
-            // So we calculate based on a 24x24 target to ensure visibility at that size
-            int   targetDisplaySize                = 24; // Typical small icon size
-            float scalingRatioToSmallest           = (float) targetDisplaySize / (float) originalSize;
-            float minBorderThicknessInSmallestSize = 1.0f; // Want at least 1px in 24x24 display
-            float borderThickness                  = Math.max(2.0f, minBorderThicknessInSmallestSize / scalingRatioToSmallest);
-
-            // Scale dash pattern proportionally to maintain visibility
-            float dashLength = 5.0f / scalingRatioToSmallest;
-
-            // Create original size image
-            BufferedImage originalImage = new BufferedImage(originalSize, originalSize, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D    graphics      = originalImage.createGraphics();
-
-            // Enable high-quality rendering
-            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-
-            // Fill with white background
-            graphics.setColor(Color.WHITE);
-            graphics.fillRect(0, 0, originalSize, originalSize);
-
-            // Draw dotted light gray border with calculated thickness
-            graphics.setColor(new Color(211, 211, 211)); // Light gray
-            float[] dashPattern = {dashLength, dashLength}; // Scaled dash pattern
-            graphics.setStroke(new BasicStroke(borderThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, dashPattern, 0.0f));
-
-            // The stroke is centered on the path, so half extends inward and half outward
-            // To keep the entire stroke visible, we need to inset by at least half the stroke width
-            // Add a bit more margin (2px) to ensure the border is fully visible
-            float halfStroke  = borderThickness / 2.0f;
-            int   borderInset = (int) Math.ceil(halfStroke) + 2;
-
-            graphics.drawRect(borderInset, borderInset, originalSize - (2 * borderInset), originalSize - (2 * borderInset));
-
-            graphics.dispose();
-
-            // Convert original image to byte array
-            ByteArrayOutputStream originalOutputStream = new ByteArrayOutputStream();
-            ImageIO.write(originalImage, "PNG", originalOutputStream);
-            byte[] originalBytes = originalOutputStream.toByteArray();
-
-            // Create resized image
-            BufferedImage resizedImage    = new BufferedImage(resizedSize, resizedSize, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D    resizedGraphics = resizedImage.createGraphics();
-
-            // Enable high-quality rendering for resizing
-            resizedGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            resizedGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            resizedGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            // Draw scaled image
-            resizedGraphics.drawImage(originalImage, 0, 0, resizedSize, resizedSize, null);
-            resizedGraphics.dispose();
-
-            // Convert resized image to byte array
-            ByteArrayOutputStream resizedOutputStream = new ByteArrayOutputStream();
-            ImageIO.write(resizedImage, "PNG", resizedOutputStream);
-            byte[] resizedBytes = resizedOutputStream.toByteArray();
-
-            return new GeneratedImageResult(originalBytes, "Default Avatar", resizedBytes);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to generate default avatar: " + e.getMessage(), e);
-        }
     }
 
     private GeneratedImageResult generateFeatureAvatar(String name) throws StableDiffusionException {
