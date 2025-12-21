@@ -28,6 +28,24 @@ import java.util.Optional;
 public interface UserRepository extends ListCrudRepository<UserDAO, Long> {
 
     /**
+     * Check if a user with the given email exists, excluding the user with the specified ID.
+     *
+     * @param email The email to check
+     * @param id    The ID of the user to exclude from the check
+     * @return true if another user with this email exists, false otherwise
+     */
+    boolean existsByEmailAndIdNot(String email, Long id);
+
+    /**
+     * Check if a user with the given name exists, excluding the user with the specified ID.
+     *
+     * @param name The name to check
+     * @param id   The ID of the user to exclude from the check
+     * @return true if another user with this name exists, false otherwise
+     */
+    boolean existsByNameAndIdNot(String name, Long id);
+
+    /**
      * Find user by email address, ignoring case sensitivity.
      *
      * @param email The email address to search for

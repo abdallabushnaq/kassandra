@@ -46,7 +46,7 @@ public class UserDAO extends AbstractTimeAwareDAO {
     private String                avatarHash;
     @Column(nullable = false)
     private Color                 color;
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String                email;
     @Column(nullable = false)
     private LocalDate             firstWorkingDay;//first working day
@@ -59,7 +59,7 @@ public class UserDAO extends AbstractTimeAwareDAO {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<LocationDAO>     locations      = new ArrayList<>();
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String                name;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference

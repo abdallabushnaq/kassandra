@@ -20,12 +20,11 @@ package de.bushnaq.abdalla.kassandra.rest.controller;
 import de.bushnaq.abdalla.kassandra.dao.VersionDAO;
 import de.bushnaq.abdalla.kassandra.repository.ProductRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
+import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -69,7 +68,7 @@ public class VersionController {
         return productRepository.findById(version.getProductId()).map(product -> {
             // Check if a version with the same name already exists for this product
             if (versionRepository.existsByNameAndProductId(version.getName(), version.getProductId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "A version with name '" + version.getName() + "' already exists for this product");
+                throw new UniqueConstraintViolationException("Version", "name", version.getName());
             }
             VersionDAO save = versionRepository.save(version);
             return ResponseEntity.ok(save);
@@ -80,9 +79,8 @@ public class VersionController {
     @PreAuthorize("hasRole('ADMIN')")
     public void update(@RequestBody VersionDAO version) {
         // Check if another version with the same name exists in the same product (excluding the current version)
-        VersionDAO existingVersion = versionRepository.findByNameAndProductId(version.getName(), version.getProductId());
-        if (existingVersion != null && !existingVersion.getId().equals(version.getId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Another version with name '" + version.getName() + "' already exists for this product");
+        if (versionRepository.existsByNameAndProductIdAndIdNot(version.getName(), version.getProductId(), version.getId())) {
+            throw new UniqueConstraintViolationException("Version", "name", version.getName());
         }
         versionRepository.save(version);
     }

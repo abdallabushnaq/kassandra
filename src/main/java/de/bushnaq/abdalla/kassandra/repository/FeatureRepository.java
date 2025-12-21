@@ -27,6 +27,16 @@ public interface FeatureRepository extends ListCrudRepository<FeatureDAO, Long> 
 
     boolean existsByNameAndVersionId(String name, Long versionId);
 
+    /**
+     * Check if a feature with the given name and versionId exists, excluding the feature with the specified ID.
+     *
+     * @param name      The feature name to check
+     * @param versionId The version ID
+     * @param id        The ID of the feature to exclude from the check
+     * @return true if another feature with this name and versionId exists, false otherwise
+     */
+    boolean existsByNameAndVersionIdAndIdNot(String name, Long versionId, Long id);
+
     FeatureDAO findByName(String name);
 
     FeatureDAO findByNameAndVersionId(String name, Long versionId);

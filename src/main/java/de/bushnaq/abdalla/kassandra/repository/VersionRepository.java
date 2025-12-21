@@ -27,6 +27,16 @@ public interface VersionRepository extends ListCrudRepository<VersionDAO, Long> 
 
     boolean existsByNameAndProductId(String name, Long productId);
 
+    /**
+     * Check if a version with the given name and productId exists, excluding the version with the specified ID.
+     *
+     * @param name      The version name to check
+     * @param productId The product ID
+     * @param id        The ID of the version to exclude from the check
+     * @return true if another version with this name and productId exists, false otherwise
+     */
+    boolean existsByNameAndProductIdAndIdNot(String name, Long productId, Long id);
+
     VersionDAO findByName(String name);
 
     VersionDAO findByNameAndProductId(String name, Long productId);

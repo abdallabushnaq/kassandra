@@ -26,6 +26,7 @@ import de.bushnaq.abdalla.kassandra.repository.FeatureAvatarGenerationDataReposi
 import de.bushnaq.abdalla.kassandra.repository.FeatureAvatarRepository;
 import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
+import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -119,7 +119,7 @@ public class FeatureController {
         return versionRepository.findById(feature.getVersionId()).map(version -> {
             // Check if a feature with the same name already exists for this version
             if (featureRepository.existsByNameAndVersionId(feature.getName(), feature.getVersionId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "A feature with name '" + feature.getName() + "' already exists for this version");
+                throw new UniqueConstraintViolationException("Feature", "name", feature.getName());
             }
             FeatureDAO save = featureRepository.save(feature);
             return ResponseEntity.ok(save);
@@ -130,9 +130,8 @@ public class FeatureController {
     @PreAuthorize("hasRole('ADMIN')")
     public FeatureDAO update(@RequestBody FeatureDAO feature) {
         // Check if another feature with the same name exists in the same version (excluding the current feature)
-        FeatureDAO existingFeature = featureRepository.findByNameAndVersionId(feature.getName(), feature.getVersionId());
-        if (existingFeature != null && !existingFeature.getId().equals(feature.getId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Another feature with name '" + feature.getName() + "' already exists for this version");
+        if (featureRepository.existsByNameAndVersionIdAndIdNot(feature.getName(), feature.getVersionId(), feature.getId())) {
+            throw new UniqueConstraintViolationException("Feature", "name", feature.getName());
         }
         return featureRepository.save(feature);
     }

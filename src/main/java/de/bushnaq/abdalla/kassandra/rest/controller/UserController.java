@@ -28,6 +28,7 @@ import de.bushnaq.abdalla.kassandra.repository.UserAvatarGenerationDataRepositor
 import de.bushnaq.abdalla.kassandra.repository.UserAvatarRepository;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import de.bushnaq.abdalla.kassandra.rest.debug.DebugUtil;
+import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -142,6 +143,16 @@ public class UserController {
     @PostMapping(consumes = "application/json", produces = "application/json")
     @PreAuthorize("hasRole('ADMIN')")
     public UserDAO save(@RequestBody UserDAO user) {
+        // Check name uniqueness
+        if (userRepository.findByName(user.getName()).isPresent()) {
+            throw new UniqueConstraintViolationException("User", "name", user.getName());
+        }
+
+        // Check email uniqueness
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new UniqueConstraintViolationException("User", "email", user.getEmail());
+        }
+
         return userRepository.save(user);
     }
 
@@ -160,6 +171,16 @@ public class UserController {
     @PutMapping()
     @PreAuthorize("hasRole('ADMIN')")
     public void update(@RequestBody UserDAO user) {
+        // Check name uniqueness (excluding current user)
+        if (userRepository.existsByNameAndIdNot(user.getName(), user.getId())) {
+            throw new UniqueConstraintViolationException("User", "name", user.getName());
+        }
+
+        // Check email uniqueness (excluding current user)
+        if (userRepository.existsByEmailAndIdNot(user.getEmail(), user.getId())) {
+            throw new UniqueConstraintViolationException("User", "email", user.getEmail());
+        }
+
         userRepository.save(user);
     }
 

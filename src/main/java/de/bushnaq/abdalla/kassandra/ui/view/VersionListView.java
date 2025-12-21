@@ -37,8 +37,6 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.VersionDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -296,18 +294,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                     versionDialog.close();
                 }
                 refreshGrid();
-            } catch (ResponseStatusException e) {
-                if (e.getStatusCode() == HttpStatus.CONFLICT) {
-                    // This is a name uniqueness violation
-                    versionDialog.setNameFieldError(e.getReason());
-                } else {
-                    // Some other error
-                    Notification.show("Error: " + e.getMessage(), 3000, Notification.Position.MIDDLE);
-                    versionDialog.close();
-                }
-            } catch (Exception ex) {
-                Notification.show("Unexpected error: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
-                versionDialog.close();
+            } catch (Exception e) {
+                VaadinUtil.handleApiException(e, "name", versionDialog::setNameFieldError);
             }
         });
         dialog.open();

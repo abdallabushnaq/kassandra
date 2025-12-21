@@ -43,6 +43,8 @@ import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
 
@@ -372,33 +374,60 @@ public class UserDialog extends Dialog {
             userToSave.setAvatarHash(newHash);
         }
 
-        // Save user to backend
-        if (isEditMode) {
-            userApi.update(userToSave);
-            if (avatarImage != null && avatarImageOriginal != null) {
-                userApi.updateAvatarFull(
-                        userToSave.getId(),
-                        avatarImage,
-                        avatarImageOriginal,
-                        avatarPrompt
-                );
-            }
-        } else {
-            User saved = userApi.persist(userToSave);
+        try {
+            // Save user to backend
+            if (isEditMode) {
+                userApi.update(userToSave);
+                if (avatarImage != null && avatarImageOriginal != null) {
+                    userApi.updateAvatarFull(
+                            userToSave.getId(),
+                            avatarImage,
+                            avatarImageOriginal,
+                            avatarPrompt
+                    );
+                }
+            } else {
+                User saved = userApi.persist(userToSave);
 
-            // For create mode, save avatar now since user didn't exist before
-            if (avatarImage != null && avatarImageOriginal != null) {
-                userApi.updateAvatarFull(
-                        saved.getId(),
-                        avatarImage,
-                        avatarImageOriginal,
-                        avatarPrompt
-                );
+                // For create mode, save avatar now since user didn't exist before
+                if (avatarImage != null && avatarImageOriginal != null) {
+                    userApi.updateAvatarFull(
+                            saved.getId(),
+                            avatarImage,
+                            avatarImageOriginal,
+                            avatarPrompt
+                    );
+                }
             }
+
+            Notification.show("User saved successfully", 3000, Notification.Position.MIDDLE);
+            close();
+        } catch (Exception e) {
+            // Handle unique constraint violations for name and email fields
+            Map<String, VaadinUtil.FieldErrorHandler> handlers = new HashMap<>();
+            handlers.put("name", this::setNameFieldError);
+            handlers.put("email", this::setEmailFieldError);
+            VaadinUtil.handleApiException(e, handlers, null);
         }
+    }
 
-        Notification.show("User saved successfully", 3000, Notification.Position.MIDDLE);
-        close();
+    /**
+     * Sets an error message on the email field.
+     *
+     * @param errorMessage The error message to display, or null to clear the error
+     */
+    public void setEmailFieldError(String errorMessage) {
+        emailField.setInvalid(errorMessage != null);
+        emailField.setErrorMessage(errorMessage);
+    }
 
+    /**
+     * Sets an error message on the name field.
+     *
+     * @param errorMessage The error message to display, or null to clear the error
+     */
+    public void setNameFieldError(String errorMessage) {
+        nameField.setInvalid(errorMessage != null);
+        nameField.setErrorMessage(errorMessage);
     }
 }

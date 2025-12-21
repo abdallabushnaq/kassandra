@@ -26,6 +26,7 @@ import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintAvatarGenerationDataRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintAvatarRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
+import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -119,7 +119,7 @@ public class SprintController {
     public SprintDAO save(@RequestBody SprintDAO sprintDAO) {
         // Check if a sprint with the same name already exists for this feature
         if (sprintRepository.existsByNameAndFeatureId(sprintDAO.getName(), sprintDAO.getFeatureId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "A sprint with name '" + sprintDAO.getName() + "' already exists for this feature");
+            throw new UniqueConstraintViolationException("Sprint", "name", sprintDAO.getName());
         }
         SprintDAO save = sprintRepository.save(sprintDAO);
         return save;
@@ -129,9 +129,8 @@ public class SprintController {
     @PreAuthorize("hasRole('ADMIN')")
     public SprintDAO update(@RequestBody SprintDAO sprintEntity) {
         // Check if another sprint with the same name exists in the same feature (excluding the current sprint)
-        SprintDAO existingSprint = sprintRepository.findByNameAndFeatureId(sprintEntity.getName(), sprintEntity.getFeatureId());
-        if (existingSprint != null && !existingSprint.getId().equals(sprintEntity.getId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Another sprint with name '" + sprintEntity.getName() + "' already exists for this feature");
+        if (sprintRepository.existsByNameAndFeatureIdAndIdNot(sprintEntity.getName(), sprintEntity.getFeatureId(), sprintEntity.getId())) {
+            throw new UniqueConstraintViolationException("Sprint", "name", sprintEntity.getName());
         }
         return sprintRepository.save(sprintEntity);
     }

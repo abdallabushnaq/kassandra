@@ -27,6 +27,16 @@ public interface SprintRepository extends ListCrudRepository<SprintDAO, Long> {
 
     boolean existsByNameAndFeatureId(String name, Long featureId);
 
+    /**
+     * Check if a sprint with the given name and featureId exists, excluding the sprint with the specified ID.
+     *
+     * @param name      The sprint name to check
+     * @param featureId The feature ID
+     * @param id        The ID of the sprint to exclude from the check
+     * @return true if another sprint with this name and featureId exists, false otherwise
+     */
+    boolean existsByNameAndFeatureIdAndIdNot(String name, Long featureId, Long id);
+
     List<SprintDAO> findByFeatureId(Long featureId);
 
     SprintDAO findByName(String name);
