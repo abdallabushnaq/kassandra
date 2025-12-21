@@ -57,7 +57,7 @@ public class LocationApiTest extends AbstractEntityGenerator {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void add() throws Exception {
-        //create a user with australian locale
+        //create a user with Australian locale
         {
             Locale.setDefault(new Locale.Builder().setLanguage("en").setRegion("AU").build());//australian locale
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -75,7 +75,7 @@ public class LocationApiTest extends AbstractEntityGenerator {
             User user = expectedUsers.getFirst();
             //moving to Germany
             addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
-            userApi.persist(user);//persist the new location
+            userApi.update(user);//persist the new location
         }
 
         //test the new location
@@ -153,7 +153,7 @@ public class LocationApiTest extends AbstractEntityGenerator {
             User user = expectedUsers.getFirst();
             //moving to Germany
             addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
-            userApi.persist(user);//persist the new location
+            userApi.update(user);//persist the new location
         }
 
         //try to delete the second location
@@ -179,7 +179,7 @@ public class LocationApiTest extends AbstractEntityGenerator {
             User user = expectedUsers.getFirst();
             //moving to Germany
             addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
-            userApi.persist(user);//persist the new location
+            userApi.update(user);//persist the new location
         }
 
         //try to delete using fake location id
@@ -213,7 +213,7 @@ public class LocationApiTest extends AbstractEntityGenerator {
             User user = expectedUsers.getFirst();
             //moving to Germany
             addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
-            userApi.persist(user);//persist the new location
+            userApi.update(user);//persist the new location
         }
 
         //try to delete using fake user id
