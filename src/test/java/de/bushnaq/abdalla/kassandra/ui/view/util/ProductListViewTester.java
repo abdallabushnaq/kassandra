@@ -74,6 +74,7 @@ public class ProductListViewTester {
         seleniumHandler.click(ProductListView.CREATE_PRODUCT_BUTTON);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, name);
         seleniumHandler.click(ProductDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
         seleniumHandler.ensureIsNotInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
     }
 
@@ -89,6 +90,7 @@ public class ProductListViewTester {
         seleniumHandler.click(ProductListView.CREATE_PRODUCT_BUTTON);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, name);
         seleniumHandler.click(ProductDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
     }
 
@@ -105,6 +107,7 @@ public class ProductListViewTester {
         seleniumHandler.click(ProductListView.CREATE_PRODUCT_BUTTON);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, name);
         seleniumHandler.click(ProductDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(ProductDialog.PRODUCT_NAME_FIELD);
@@ -127,6 +130,7 @@ public class ProductListViewTester {
     public void deleteProductCancel(String name) {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_DELETE_BUTTON_PREFIX + name);
         seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
     }
 
@@ -142,6 +146,7 @@ public class ProductListViewTester {
     public void deleteProductConfirm(String name) {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_DELETE_BUTTON_PREFIX + name);
         seleniumHandler.click(ConfirmDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
         seleniumHandler.ensureIsNotInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
     }
 
@@ -159,6 +164,7 @@ public class ProductListViewTester {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, newName);
         seleniumHandler.click(ProductDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
         seleniumHandler.ensureIsNotInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, newName);
     }
@@ -177,6 +183,7 @@ public class ProductListViewTester {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, newName);
         seleniumHandler.click(ProductDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, newName);
         seleniumHandler.ensureIsNotInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
     }
@@ -195,6 +202,7 @@ public class ProductListViewTester {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, newName);
         seleniumHandler.click(ProductDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(ProductDialog.PRODUCT_NAME_FIELD);
@@ -203,6 +211,7 @@ public class ProductListViewTester {
         assertTrue(errorMessage.contains("already exists"), "Error message should indicate product already exists");
 
         seleniumHandler.click(ProductDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
         seleniumHandler.ensureElementCountInGrid(ProductListView.PRODUCT_GRID, PRODUCT_GRID_NAME_PREFIX, name, 1);
     }
 

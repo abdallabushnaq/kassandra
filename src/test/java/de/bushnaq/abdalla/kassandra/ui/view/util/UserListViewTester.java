@@ -75,6 +75,7 @@ public class UserListViewTester {
         seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, firstWorkingDay);
         seleniumHandler.setDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER, lastWorkingDay);
         seleniumHandler.click(UserDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
         seleniumHandler.ensureIsNotInList(UserListView.USER_GRID_NAME_PREFIX, name);
     }
 
@@ -97,6 +98,7 @@ public class UserListViewTester {
         seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, firstWorkingDay);
         seleniumHandler.setDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER, lastWorkingDay);
         seleniumHandler.click(UserDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
         seleniumHandler.ensureIsInList(UserListView.USER_GRID_NAME_PREFIX, name);
     }
 
@@ -126,6 +128,7 @@ public class UserListViewTester {
     public void deleteUserConfirm(String name) {
         seleniumHandler.click(UserListView.USER_GRID_DELETE_BUTTON_PREFIX + name);
         seleniumHandler.click(ConfirmDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
         seleniumHandler.ensureIsNotInList(UserListView.USER_GRID_NAME_PREFIX, name);
     }
 
@@ -165,6 +168,7 @@ public class UserListViewTester {
             Thread.currentThread().interrupt();
         }
         seleniumHandler.click(UserDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
         seleniumHandler.ensureIsInList(UserListView.USER_GRID_NAME_PREFIX, originalName);
         seleniumHandler.ensureIsNotInList(UserListView.USER_GRID_NAME_PREFIX, newName);
     }
@@ -190,6 +194,7 @@ public class UserListViewTester {
         seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, firstWorkingDay);
         seleniumHandler.setDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER, lastWorkingDay);
         seleniumHandler.click(UserDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
         seleniumHandler.ensureIsInList(UserListView.USER_GRID_NAME_PREFIX, newName);
         seleniumHandler.ensureIsNotInList(UserListView.USER_GRID_NAME_PREFIX, name);
     }
@@ -231,6 +236,7 @@ public class UserListViewTester {
         LocalDate formLastDay  = seleniumHandler.getDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER);
         // Close the dialog
         seleniumHandler.click(UserDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
         // Assert that all form fields are empty or default values
         Assertions.assertTrue(formName.isEmpty(), "Name field should be empty in new dialog");
         Assertions.assertTrue(formEmail.isEmpty(), "Email field should be empty in new dialog");
@@ -260,6 +266,7 @@ public class UserListViewTester {
         LocalDate actualLastDay  = seleniumHandler.getDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER);
         // Cancel the dialog to avoid making changes
         seleniumHandler.click(UserDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
         Assertions.assertEquals(name, actualName, "Name mismatch");
         Assertions.assertEquals(expectedEmail, actualEmail, "Email mismatch");
         Assertions.assertEquals(expectedFirstDay, actualFirstDay, "First working day mismatch");
