@@ -94,6 +94,7 @@ public class OffDayListViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
         seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
 
         // Verify validation error occurs
         seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(
@@ -122,6 +123,7 @@ public class OffDayListViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
         seleniumHandler.click(OffDayDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
 
         // Verify the record doesn't appear in the list
         verifyOffDayRecordNotExists(firstDay, lastDay, type);
@@ -144,6 +146,7 @@ public class OffDayListViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
         seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
         // Verify the record appears in the list
         verifyOffDayRecordExists(firstDay, lastDay, type);
     }
@@ -165,6 +168,7 @@ public class OffDayListViewTester {
         // Click delete but cancel confirmation
         seleniumHandler.click(OffDayListView.OFFDAY_GRID_DELETE_BUTTON_PREFIX + id);
         seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
 
         // Verify the record still exists
         verifyOffDayRecordExists(firstDay, lastDay, type);
@@ -188,6 +192,7 @@ public class OffDayListViewTester {
         // Click delete and confirm
         seleniumHandler.click(OffDayListView.OFFDAY_GRID_DELETE_BUTTON_PREFIX + id);
         seleniumHandler.click(ConfirmDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
 
         // Verify the record is deleted
         verifyOffDayRecordNotExists(firstDay, lastDay, type);
@@ -222,6 +227,7 @@ public class OffDayListViewTester {
 
         // Cancel the edit
         seleniumHandler.click(OffDayDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
 
         // Verify original record still exists with original values
         verifyOffDayRecordExists(originalFirstDay, originalLastDay, originalType);
@@ -259,6 +265,7 @@ public class OffDayListViewTester {
 
         // Confirm the edit
         seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
 
         // Verify updated record exists with new values
         verifyOffDayRecordExists(newFirstDay, newLastDay, newType);
@@ -342,6 +349,7 @@ public class OffDayListViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastRecord2Day);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
         seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
 
         if (shouldSucceed) {
             // Verify the second record was created
@@ -352,6 +360,7 @@ public class OffDayListViewTester {
 
             // Cancel the dialog
             seleniumHandler.click(OffDayDialog.CANCEL_BUTTON);
+            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
 
             // Verify the second record wasn't created
             verifyOffDayRecordNotExists(firstRecord2Day, lastRecord2Day, type);
