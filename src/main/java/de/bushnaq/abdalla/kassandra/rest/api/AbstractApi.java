@@ -345,6 +345,20 @@ public class AbstractApi {
                 throw new ServerErrorException(e.getMessage(), e.getCause());
             } else if (e instanceof HttpClientErrorException.NotFound) {
                 throw new ResponseStatusException(e.getStatusCode(), e.getMessage(), e.getCause());
+            } else if (e instanceof HttpClientErrorException.Conflict) {
+                // Handle 409 CONFLICT responses specially to preserve field information
+                ErrorResponse error = objectMapper.readValue(e.getResponseBodyAsString(), ErrorResponse.class);
+
+                // Create a detailed message that includes field information for UI display
+                String detailedMessage = error.getMessage();
+                if (error.getField() != null) {
+                    detailedMessage = String.format("%s|field=%s|value=%s",
+                            error.getMessage(),
+                            error.getField(),
+                            error.getValue() != null ? error.getValue().toString() : "");
+                }
+
+                throw new ResponseStatusException(HttpStatus.CONFLICT, detailedMessage, error.reconstructException());
             } else {
                 ErrorResponse error      = objectMapper.readValue(e.getResponseBodyAsString(), ErrorResponse.class);
                 HttpStatus    httpStatus = error.getHttpStatus();

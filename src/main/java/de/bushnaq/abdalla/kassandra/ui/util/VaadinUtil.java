@@ -26,6 +26,8 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -37,6 +39,8 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.TaskStatus;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -556,11 +560,115 @@ public final class VaadinUtil {
     }
 
     /**
+     * Handles exceptions from API calls, with special handling for unique constraint violations (409 CONFLICT).
+     * This method parses field-specific error information from the exception and routes it to the appropriate
+     * field error handler.
+     *
+     * @param e                   The exception to handle
+     * @param fieldErrorHandlers  Map of field names to their error handlers (e.g., "name" -> nameField::setError)
+     * @param defaultErrorHandler Optional fallback handler for fields not in the map or generic errors
+     * @return true if the error was handled, false if it should be propagated
+     */
+    public static boolean handleApiException(
+            Exception e,
+            Map<String, FieldErrorHandler> fieldErrorHandlers,
+            Consumer<String> defaultErrorHandler) {
+
+        if (e instanceof ResponseStatusException &&
+                ((ResponseStatusException) e).getStatusCode().equals(HttpStatus.CONFLICT)) {
+
+            String reason = ((ResponseStatusException) e).getReason();
+
+            // Parse field information from the error message
+            // Format: "message|field=fieldName|value=fieldValue"
+            String fieldName    = null;
+            String errorMessage = reason;
+
+            if (reason != null && reason.contains("|field=")) {
+                String[] parts = reason.split("\\|");
+                errorMessage = parts[0]; // The main message
+
+                for (String part : parts) {
+                    if (part.startsWith("field=")) {
+                        fieldName = part.substring("field=".length());
+                    }
+                }
+            }
+
+            // Try to find a specific handler for this field
+            if (fieldName != null && fieldErrorHandlers.containsKey(fieldName)) {
+                fieldErrorHandlers.get(fieldName).setError(errorMessage);
+            } else if (defaultErrorHandler != null) {
+                // Use default handler if field not found or no field specified
+                defaultErrorHandler.accept(errorMessage);
+            } else if (!fieldErrorHandlers.isEmpty()) {
+                // Fallback: use the first field handler if no default specified
+                fieldErrorHandlers.values().iterator().next().setError(errorMessage);
+            } else {
+                // Last resort: show notification
+                showErrorNotification(errorMessage);
+            }
+
+            return true; // Error was handled
+        } else {
+            // For other errors, use default handler or show notification
+            String errorMessage = "An error occurred: " + e.getMessage();
+            if (defaultErrorHandler != null) {
+                defaultErrorHandler.accept(errorMessage);
+            } else {
+                showErrorNotification(errorMessage);
+            }
+            return true; // Error was handled
+        }
+    }
+
+    /**
+     * Convenience method for handling API exceptions when you only have one field.
+     *
+     * @param e                 The exception to handle
+     * @param fieldName         The name of the field (should match the field name in the error response)
+     * @param fieldErrorHandler The error handler for this field
+     */
+    public static boolean handleApiException(
+            Exception e,
+            String fieldName,
+            FieldErrorHandler fieldErrorHandler) {
+        Map<String, FieldErrorHandler> handlers = new HashMap<>();
+        handlers.put(fieldName, fieldErrorHandler);
+        return handleApiException(e, handlers, null);
+    }
+
+    /**
+     * Shows an error notification to the user.
+     *
+     * @param message The error message to display
+     */
+    private static void showErrorNotification(String message) {
+        Notification notification = new Notification(message, 5000, Notification.Position.MIDDLE);
+        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+        notification.open();
+    }
+
+    /**
      * Functional interface for create button click handlers
      */
     @FunctionalInterface
     public interface CreateButtonClickHandler {
         void onClick();
+    }
+
+    /**
+     * Functional interface for field-specific error handlers.
+     * Implementations should set the error message on the appropriate field component.
+     */
+    @FunctionalInterface
+    public interface FieldErrorHandler {
+        /**
+         * Sets an error message on a specific field.
+         *
+         * @param errorMessage The error message to display
+         */
+        void setError(String errorMessage);
     }
 
     /**

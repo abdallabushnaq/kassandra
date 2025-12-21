@@ -23,5 +23,15 @@ import org.springframework.data.repository.ListCrudRepository;
 public interface ProductRepository extends ListCrudRepository<ProductDAO, Long> {
     boolean existsByName(String name);
 
+    /**
+     * Check if a product with the given name exists, excluding the product with the specified ID.
+     * Useful for update operations to check for name conflicts with other products.
+     *
+     * @param name The product name to check
+     * @param id   The ID of the product to exclude from the check
+     * @return true if another product with this name exists, false otherwise
+     */
+    boolean existsByNameAndIdNot(String name, Long id);
+
     ProductDAO findByName(String name);
 }

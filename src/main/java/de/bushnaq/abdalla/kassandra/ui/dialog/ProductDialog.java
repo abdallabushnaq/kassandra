@@ -38,8 +38,6 @@ import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayInputStream;
 
@@ -327,16 +325,8 @@ public class ProductDialog extends Dialog {
             }
             close();
         } catch (Exception e) {
-            if (e instanceof ResponseStatusException && ((ResponseStatusException) e).getStatusCode().equals(HttpStatus.CONFLICT)) {
-                setNameFieldError(((ResponseStatusException) e).getReason());
-                // Keep the dialog open so the user can correct the name
-            } else {
-                // For other errors, show generic message and keep dialog open
-                Notification notification = new Notification("An error occurred: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
-                notification.addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_ERROR);
-                notification.open();
-                // Keep the dialog open so the user can correct the issue
-            }
+            // Use VaadinUtil to handle the exception with field-specific error routing
+            VaadinUtil.handleApiException(e, "name", this::setNameFieldError);
         }
     }
 

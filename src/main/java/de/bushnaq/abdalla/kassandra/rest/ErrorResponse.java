@@ -30,9 +30,11 @@ import java.util.List;
 @Setter
 public class ErrorResponse {
     private String       exceptionClass;
+    private String       field;      // Field that caused the error (for unique constraint violations)
     private String       message;
     private List<String> stackTrace;
     private String       status; // Status as a string for better serialization/deserialization
+    private Object       value;      // Value that caused the error (for unique constraint violations)
 
     public ErrorResponse() {
         this.stackTrace = new ArrayList<>();

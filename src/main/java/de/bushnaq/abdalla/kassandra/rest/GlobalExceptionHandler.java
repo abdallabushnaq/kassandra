@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest;
 
+import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -60,6 +61,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleResponseStatusException(HttpClientErrorException ex) {
         ErrorResponse error = new ErrorResponse(ex.getStatusCode(), ex.getMessage(), ex);
         return ResponseEntity.status(ex.getStatusCode()).contentType(MediaType.APPLICATION_JSON).body(error);
+    }
+
+    @ExceptionHandler(UniqueConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleUniqueConstraintViolation(UniqueConstraintViolationException ex) {
+        ErrorResponse error = new ErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), ex);
+        error.setField(ex.getField());
+        error.setValue(ex.getValue());
+        return ResponseEntity.status(HttpStatus.CONFLICT).contentType(MediaType.APPLICATION_JSON).body(error);
     }
 
 }
