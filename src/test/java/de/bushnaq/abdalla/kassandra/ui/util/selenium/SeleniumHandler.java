@@ -522,10 +522,6 @@ class SeleniumHandler {
         return (String) executeJavaScript(script);
     }
 
-    public Duration getImplicitWaitDuration() {
-        return implicitWaitDuration;
-    }
-
     public String getIntegerField(String id) {
         WebElement e     = findElement(By.id(id));
         String     value = e.getAttribute("value");
@@ -551,10 +547,6 @@ class SeleniumHandler {
 
     public String getTitle() {
         return getDriver().getTitle();
-    }
-
-    public Duration getWaitDuration() {
-        return waitDuration;
     }
 
     /**

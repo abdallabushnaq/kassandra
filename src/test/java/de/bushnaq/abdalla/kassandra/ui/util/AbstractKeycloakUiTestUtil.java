@@ -101,7 +101,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         props.put("spring.security.oauth2.client.provider.keycloak.token-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/token");
         props.put("spring.security.oauth2.client.provider.keycloak.user-info-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/userinfo");
         props.put("spring.security.oauth2.client.provider.keycloak.jwk-set-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/certs");
-        props.put("spring.security.oauth2.client.registration.keycloak.client-id", "project-hub-client");
+        props.put("spring.security.oauth2.client.registration.keycloak.client-id", "kassandra-client");
         props.put("spring.security.oauth2.client.registration.keycloak.client-secret", "test-client-secret");
         props.put("spring.security.oauth2.client.registration.keycloak.scope", "openid,profile,email");
         props.put("spring.security.oauth2.client.registration.keycloak.authorization-grant-type", "authorization_code");

@@ -23,7 +23,6 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
@@ -52,7 +51,7 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-@Tag("IntegrationUiTest")
+@Tag("IntroductionVideo")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -178,12 +177,12 @@ public class Demo extends AbstractKeycloakUiTestUtil {
 //        seleniumHandler.getAndCheck("http://localhost:" + productListViewTester.getPort() + "/ui/" + "grid-row-reordering");
 
 //        // Demo the natural language search capabilities
-        demonstrateNaturalLanguageSearch();
-        productListViewTester.selectProduct(firstProduct.getName());
-        versionListViewTester.selectVersion(firstVersion.getName());
-        featureListViewTester.selectFeature(firstFeature.getName());
+//        demonstrateNaturalLanguageSearch();
+//        productListViewTester.selectProduct(firstProduct.getName());
+//        versionListViewTester.selectVersion(firstVersion.getName());
+//        featureListViewTester.selectFeature(firstFeature.getName());
 
-        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + firstSprint.getName());
+//        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + firstSprint.getName());
 
         seleniumHandler.waitUntilBrowserClosed(0);
     }

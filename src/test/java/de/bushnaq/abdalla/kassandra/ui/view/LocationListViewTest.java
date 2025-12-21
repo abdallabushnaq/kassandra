@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.LocationListViewTester;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,7 @@ import java.time.LocalDate;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
+@Slf4j
 public class LocationListViewTest extends AbstractUiTestUtil {
     private final String                   country        = "United States (US)";  // United States
     private final String                   initialCountry = "Germany (DE)";  // Germany

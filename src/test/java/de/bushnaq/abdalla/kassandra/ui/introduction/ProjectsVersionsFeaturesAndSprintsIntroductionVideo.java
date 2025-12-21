@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
-import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
@@ -26,7 +25,7 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.SprintDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.VersionDialog;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.FeatureListView;
@@ -36,6 +35,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,20 +47,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Tag("IntroductionVideo")
 @ExtendWith(SpringExtension.class)
@@ -76,56 +71,57 @@ import java.util.Map;
 @AutoConfigureMockMvc
 @Transactional
 @Testcontainers
-public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends AbstractUiTestUtil {
-    public static final  NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final  NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+@Slf4j
+public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends AbstractKeycloakUiTestUtil {
+    public static final NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     //    public static final  float                      EXAGGERATE_LOW    = 0.25f;
 //    public static final  float                      EXAGGERATE_NORMAL = 0.3f;
-    public static final  String                     VIDEO_TITLE = "Kassandra Projects, Versions, Features and Sprints";
+    public static final String                     VIDEO_TITLE = "Kassandra Projects, Versions, Features and Sprints";
     // Start Keycloak container with realm configuration
-    @Container
-    private static final KeycloakContainer          keycloak    = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
-            .withRealmImportFile("keycloak/project-hub-realm.json")
-            .withAdminUsername("admin")
-            .withAdminPassword("admin")
-            // Expose on a fixed port for more reliable testing
-            .withExposedPorts(8080, 8443)
-            // Add debugging to see container output
-            .withLogConsumer(outputFrame -> System.out.println("Keycloak: " + outputFrame.getUtf8String()))
-            // Make Keycloak accessible from outside the container
-            .withEnv("KC_HOSTNAME_STRICT", "false")
-            .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false");
+//    @Container
+//    private static final KeycloakContainer          keycloak    = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
+//            .withRealmImportFile("keycloak/project-hub-realm.json")
+//            .withAdminUsername("admin")
+//            .withAdminPassword("admin")
+//            // Expose on a fixed port for more reliable testing
+//            .withExposedPorts(8080, 8443)
+//            // Add debugging to see container output
+//            .withLogConsumer(outputFrame -> System.out.println("Keycloak: " + outputFrame.getUtf8String()))
+//            // Make Keycloak accessible from outside the container
+//            .withEnv("KC_HOSTNAME_STRICT", "false")
+//            .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false");
     @Autowired
-    private              AvailabilityListViewTester availabilityListViewTester;
+    private             AvailabilityListViewTester availabilityListViewTester;
     @Autowired
-    private              FeatureListViewTester      featureListViewTester;
-    private              String                     featureName;
+    private             FeatureListViewTester      featureListViewTester;
+    private             String                     featureName;
     //    private final        LocalDate                  firstDay        = LocalDate.of(2025, 6, 1);
 //    private final        LocalDate                  firstDayRecord1 = LocalDate.of(2025, 8, 1);
 //    private final        LocalDate                  lastDay         = LocalDate.of(2025, 6, 1);
 //    private final        LocalDate                  lastDayRecord1  = LocalDate.of(2025, 8, 5);
     @Autowired
-    private              LocationListViewTester     locationListViewTester;
+    private             LocationListViewTester     locationListViewTester;
     @Autowired
-    private              OffDayListViewTester       offDayListViewTester;
+    private             OffDayListViewTester       offDayListViewTester;
     @Autowired
-    private              ProductListViewTester      productListViewTester;
-    private              String                     productName;
+    private             ProductListViewTester      productListViewTester;
+    private             String                     productName;
     @Autowired
-    private              HumanizedSeleniumHandler   seleniumHandler;
+    private             HumanizedSeleniumHandler   seleniumHandler;
     @Autowired
-    private              SprintListViewTester       sprintListViewTester;
-    private              String                     sprintName;
+    private             SprintListViewTester       sprintListViewTester;
+    private             String                     sprintName;
     @Autowired
-    private              TaskListViewTester         taskListViewTester;
-    private              String                     taskName;
-    private final        OffDayType                 typeRecord1 = OffDayType.VACATION;
+    private             TaskListViewTester         taskListViewTester;
+    private             String                     taskName;
+    private final       OffDayType                 typeRecord1 = OffDayType.VACATION;
     @Autowired
-    private              UserListViewTester         userListViewTester;
-    private              String                     userName;
+    private             UserListViewTester         userListViewTester;
+    private             String                     userName;
     @Autowired
-    private              VersionListViewTester      versionListViewTester;
-    private              String                     versionName;
+    private             VersionListViewTester      versionListViewTester;
+    private             String                     versionName;
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
@@ -306,11 +302,11 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
     }
 
     // Method to get the public-facing URL, fixing potential redirect issues
-    private static String getPublicFacingUrl(KeycloakContainer container) {
-        return String.format("http://%s:%s",
-                container.getHost(),
-                container.getMappedPort(8080));
-    }
+//    private static String getPublicFacingUrl(KeycloakContainer container) {
+//        return String.format("http://%s:%s",
+//                container.getHost(),
+//                container.getMappedPort(8080));
+//    }
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
@@ -324,50 +320,50 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         if (authentication != null && authentication.isAuthenticated()) {
             String username = authentication.getName();
             String password = "test-password";
-            logger.info("Running demo with user: {} and password: {}", username, password);
+            log.info("Running demo with user: {} and password: {}", username, password);
         } else {
-            logger.warn("No authenticated user found. Running demo without authentication.");
+            log.warn("No authenticated user found. Running demo without authentication.");
         }
     }
 
     // Configure Spring Security to use the Keycloak container
-    @DynamicPropertySource
-    static void registerKeycloakProperties(DynamicPropertyRegistry registry) {
-        // Start the container
-        keycloak.start();
-
-        // Get the actual URL that's accessible from outside the container
-        String externalUrl = getPublicFacingUrl(keycloak);
-        System.out.println("Keycloak External URL: " + externalUrl);
-
-        // Log all container environment information for debugging
-        System.out.println("Keycloak Container:");
-        System.out.println("  Auth Server URL: " + keycloak.getAuthServerUrl());
-        System.out.println("  Container IP: " + keycloak.getHost());
-        System.out.println("  HTTP Port Mapping: " + keycloak.getMappedPort(8080));
-        System.out.println("  HTTPS Port Mapping: " + keycloak.getMappedPort(8443));
-
-        // Override the authServerUrl with our public-facing URL
-        String publicAuthServerUrl = externalUrl + "/";
-
-        // Create properties with the public URL
-        Map<String, String> props = new HashMap<>();
-        props.put("spring.security.oauth2.client.provider.keycloak.issuer-uri", publicAuthServerUrl + "realms/project-hub-realm");
-        props.put("spring.security.oauth2.client.provider.keycloak.authorization-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/auth");
-        props.put("spring.security.oauth2.client.provider.keycloak.token-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/token");
-        props.put("spring.security.oauth2.client.provider.keycloak.user-info-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/userinfo");
-        props.put("spring.security.oauth2.client.provider.keycloak.jwk-set-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/certs");
-
-        props.put("spring.security.oauth2.client.registration.keycloak.client-id", "project-hub-client");
-        props.put("spring.security.oauth2.client.registration.keycloak.client-secret", "test-client-secret");
-        props.put("spring.security.oauth2.client.registration.keycloak.scope", "openid,profile,email");
-        props.put("spring.security.oauth2.client.registration.keycloak.authorization-grant-type", "authorization_code");
-        props.put("spring.security.oauth2.client.registration.keycloak.redirect-uri", "{baseUrl}/login/oauth2/code/{registrationId}");
-
-        props.put("spring.security.oauth2.resourceserver.jwt.issuer-uri", publicAuthServerUrl + "realms/project-hub-realm");
-
-        // Register all properties
-        props.forEach((key, value) -> registry.add(key, () -> value));
-    }
+//    @DynamicPropertySource
+//    static void registerKeycloakProperties(DynamicPropertyRegistry registry) {
+//        // Start the container
+//        keycloak.start();
+//
+//        // Get the actual URL that's accessible from outside the container
+//        String externalUrl = getPublicFacingUrl(keycloak);
+//        System.out.println("Keycloak External URL: " + externalUrl);
+//
+//        // Log all container environment information for debugging
+//        System.out.println("Keycloak Container:");
+//        System.out.println("  Auth Server URL: " + keycloak.getAuthServerUrl());
+//        System.out.println("  Container IP: " + keycloak.getHost());
+//        System.out.println("  HTTP Port Mapping: " + keycloak.getMappedPort(8080));
+//        System.out.println("  HTTPS Port Mapping: " + keycloak.getMappedPort(8443));
+//
+//        // Override the authServerUrl with our public-facing URL
+//        String publicAuthServerUrl = externalUrl + "/";
+//
+//        // Create properties with the public URL
+//        Map<String, String> props = new HashMap<>();
+//        props.put("spring.security.oauth2.client.provider.keycloak.issuer-uri", publicAuthServerUrl + "realms/project-hub-realm");
+//        props.put("spring.security.oauth2.client.provider.keycloak.authorization-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/auth");
+//        props.put("spring.security.oauth2.client.provider.keycloak.token-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/token");
+//        props.put("spring.security.oauth2.client.provider.keycloak.user-info-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/userinfo");
+//        props.put("spring.security.oauth2.client.provider.keycloak.jwk-set-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/certs");
+//
+//        props.put("spring.security.oauth2.client.registration.keycloak.client-id", "project-hub-client");
+//        props.put("spring.security.oauth2.client.registration.keycloak.client-secret", "test-client-secret");
+//        props.put("spring.security.oauth2.client.registration.keycloak.scope", "openid,profile,email");
+//        props.put("spring.security.oauth2.client.registration.keycloak.authorization-grant-type", "authorization_code");
+//        props.put("spring.security.oauth2.client.registration.keycloak.redirect-uri", "{baseUrl}/login/oauth2/code/{registrationId}");
+//
+//        props.put("spring.security.oauth2.resourceserver.jwt.issuer-uri", publicAuthServerUrl + "realms/project-hub-realm");
+//
+//        // Register all properties
+//        props.forEach((key, value) -> registry.add(key, () -> value));
+//    }
 
 }

@@ -45,7 +45,7 @@ import java.time.LocalDateTime;
  * @version 1.0
  * @since 2025
  */
-@Tag("IntegrationUiTest")
+@Tag("IntroductionVideo")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
