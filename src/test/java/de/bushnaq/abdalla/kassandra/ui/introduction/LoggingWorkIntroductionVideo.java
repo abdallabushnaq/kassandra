@@ -26,7 +26,6 @@ import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.ActiveSprints;
-import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -56,7 +55,7 @@ import java.util.List;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
         properties = {
-                "server.port=8080",
+                "server.port=${test.server.port:0}",
                 "spring.profiles.active=test",
                 "spring.security.basic.enabled=false"// Disable basic authentication for these tests
         }
@@ -105,7 +104,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         grace.setSilent(false);
 
         // Login as Grace Martin
-        seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
+//        seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         productListViewTester.switchToProductListViewWithOidc("grace.martin@kassandra.org", "password", null, null, null);
 
         // Navigate directly to Active Sprints view

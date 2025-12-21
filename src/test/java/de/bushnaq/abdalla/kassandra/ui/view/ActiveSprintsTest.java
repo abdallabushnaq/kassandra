@@ -45,12 +45,12 @@ import java.time.LocalDateTime;
  * @version 1.0
  * @since 2025
  */
-@Tag("IntroductionVideo")
+@Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
         properties = {
-                "server.port=8080",
+                "server.port=${test.server.port:0}",
                 "spring.profiles.active=test",
                 "spring.security.basic.enabled=false"// Disable basic authentication for these tests
         }

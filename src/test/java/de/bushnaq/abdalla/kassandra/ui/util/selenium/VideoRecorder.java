@@ -110,8 +110,7 @@ public class VideoRecorder {
     }
 
     private Rectangle computeRecordingArea(boolean contentOnly) {
-        GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment()
-                .getDefaultScreenDevice().getDefaultConfiguration();
+        GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
 
         if (contentOnly && webDriver != null) {
             try {

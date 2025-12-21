@@ -26,7 +26,10 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,11 +42,21 @@ import java.util.Map;
 @Testcontainers
 public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     private static final Logger            logger   = LoggerFactory.getLogger(AbstractKeycloakUiTestUtil.class);
+    protected static     int               allocatedPort;
     private static       KeycloakContainer keycloakInstance;
-    // Start Keycloak container with realm configuration
-    private static final KeycloakContainer keycloak = getKeycloakContainer();
+    private static final KeycloakContainer keycloak = getKeycloakContainer();// Start Keycloak container with realm configuration
 
     private static synchronized KeycloakContainer getKeycloakContainer() {
+        // Allocate port in static initializer (runs before everything)
+        // we need to do this, as the random port must be known before the Spring context is started
+        try (ServerSocket socket = new ServerSocket(0)) {
+            allocatedPort = socket.getLocalPort();
+            System.setProperty("test.server.port", String.valueOf(allocatedPort));
+            System.out.println("=== Allocated port: " + allocatedPort + " ===");
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to allocate port", e);
+        }
+        //start container
         if (keycloakInstance == null) {
             keycloakInstance = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
                     .withRealmImportFile("keycloak/project-hub-realm.json")
@@ -76,6 +89,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         if (!keycloak.isRunning()) {
             System.out.println("=== STARTING KEYCLOAK CONTAINER ===");
             keycloak.start();
+            updateKeycloakClientRedirectUri(allocatedPort);
         } else {
             System.out.println("=== KEYCLOAK CONTAINER ALREADY RUNNING === ON PORT " + keycloakInstance.getHttpPort());
         }
@@ -118,5 +132,39 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         if (TtsCacheManager.getCacheMiss() != 0) {
             logger.warn("*** TTS CACHE MISSES: {} ***", TtsCacheManager.getCacheMiss());
         }
+    }
+
+    /**
+     * Update Keycloak client redirect URI to match the allocated random port.
+     *
+     * @param port
+     */
+    private static void updateKeycloakClientRedirectUri(int port) {
+        String redirectUri = "http://localhost:" + port + "/login/oauth2/code/*";
+        String webOrigin   = "http://localhost:" + port;
+
+        // Use Keycloak Admin API to update client
+        var adminClient = org.keycloak.admin.client.KeycloakBuilder.builder()
+                .serverUrl(keycloak.getAuthServerUrl())
+                .realm("master")
+                .username("admin")
+                .password("admin")
+                .clientId("admin-cli")
+                .build();
+
+        var client = adminClient.realm("project-hub-realm")
+                .clients()
+                .findByClientId("kassandra-client")
+                .get(0);
+
+        client.setRedirectUris(List.of(redirectUri));
+        client.setWebOrigins(List.of(webOrigin));
+
+        adminClient.realm("project-hub-realm")
+                .clients()
+                .get(client.getId())
+                .update(client);
+
+        System.out.println("=== Updated Keycloak redirect URI to: " + redirectUri + " ===");
     }
 }

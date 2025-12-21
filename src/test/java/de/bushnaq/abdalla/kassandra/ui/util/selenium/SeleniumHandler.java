@@ -407,7 +407,7 @@ class SeleniumHandler {
         // Check if we're running in headless mode (for CI environment)
         boolean headlessMode = isSeleniumHeadless();
         if (headlessMode) {
-            log.trace("creating selenium driver, Running Chrome in headless mode");
+            log.info("creating selenium driver, Running Chrome in headless mode");
             options.addArguments("--headless=new");
             options.addArguments("--disable-gpu");
             options.addArguments("--no-sandbox");
@@ -428,7 +428,7 @@ class SeleniumHandler {
                     )
             ));
         } else {
-            log.trace("creating selenium driver");
+            log.info("creating selenium driver");
             // Disable the "Save password?" prompt and grant clipboard permissions
             options.setExperimentalOption("prefs", Map.of(
                     "credentials_enable_service", false,

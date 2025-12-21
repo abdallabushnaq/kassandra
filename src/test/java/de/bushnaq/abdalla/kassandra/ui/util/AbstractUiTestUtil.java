@@ -26,12 +26,20 @@ public class AbstractUiTestUtil extends AbstractGanttTestUtil {
     @Autowired
     private HumanizedSeleniumHandler seleniumHandler;
 
+    static {
+        if (HumanizedSeleniumHandler.isSeleniumHeadless()) {
+            System.setProperty("java.awt.headless", "true");
+        } else {
+            System.setProperty("java.awt.headless", "false");
+        }
+
+    }
+
     @AfterEach
     public void tearDownTest() throws InterruptedException {
         if (seleniumHandler.isRecording())
             seleniumHandler.wait(1000); // Wait for any pending actions to complete for the recording
         seleniumHandler.destroy();
     }
-
 
 }
