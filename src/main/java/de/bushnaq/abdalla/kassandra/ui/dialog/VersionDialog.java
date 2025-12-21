@@ -56,12 +56,6 @@ public class VersionDialog extends Dialog {
         isEditMode        = version != null;
         this.binder       = new Binder<>(Version.class);
 
-        if (isEditMode) {
-            binder.readBean(version);
-        } else {
-            binder.readBean(new Version());
-        }
-
         // Set the dialog title with an icon
         String title = isEditMode ? "Edit Version" : "Create Version";
         getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.TAG));
@@ -98,6 +92,12 @@ public class VersionDialog extends Dialog {
         dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
 
         add(dialogLayout);
+
+        if (isEditMode) {
+            binder.readBean(version);
+        } else {
+            binder.readBean(new Version());
+        }
 
         // Trigger validation to show errors for initially empty fields in create mode
         if (!isEditMode) {

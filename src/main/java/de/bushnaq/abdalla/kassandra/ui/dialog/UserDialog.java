@@ -90,12 +90,6 @@ public class UserDialog extends Dialog {
         isEditMode                  = user != null;
         this.binder                 = new Binder<>(User.class);
 
-        if (isEditMode) {
-            binder.readBean(user);
-        } else {
-            binder.readBean(new User());
-        }
-
         if (isEditMode)
             this.avatarUpdateRequest = userApi.getAvatarFull(user.getId());
         else
@@ -273,6 +267,12 @@ public class UserDialog extends Dialog {
 
         dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
         add(dialogLayout);
+
+        if (isEditMode) {
+            binder.readBean(user);
+        } else {
+            binder.readBean(new User());
+        }
 
         // Trigger validation to show errors for initially empty fields in create mode
         if (!isEditMode) {

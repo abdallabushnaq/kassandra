@@ -85,12 +85,6 @@ public class SprintDialog extends Dialog {
         isEditMode                  = sprint != null;
         this.binder                 = new Binder<>(Sprint.class);
 
-        if (isEditMode) {
-            binder.readBean(sprint);
-        } else {
-            binder.readBean(new Sprint());
-        }
-
         // Only fetch avatar if editing an existing sprint
         if (sprint != null)
             this.avatarUpdateRequest = sprintApi.getAvatarFull(sprint.getId());
@@ -215,6 +209,12 @@ public class SprintDialog extends Dialog {
         dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
 
         add(dialogLayout);
+
+        if (isEditMode) {
+            binder.readBean(sprint);
+        } else {
+            binder.readBean(new Sprint());
+        }
 
         // Trigger validation to show errors for initially empty fields in create mode
         if (!isEditMode) {

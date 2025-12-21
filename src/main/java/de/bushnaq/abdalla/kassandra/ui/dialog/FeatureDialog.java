@@ -85,12 +85,6 @@ public class FeatureDialog extends Dialog {
         isEditMode                  = feature != null;
         this.binder                 = new Binder<>(Feature.class);
 
-        if (isEditMode) {
-            binder.readBean(feature);
-        } else {
-            binder.readBean(new Feature());
-        }
-
         // Only fetch avatar if editing an existing feature
         if (feature != null)
             this.avatarUpdateRequest = featureApi.getAvatarFull(feature.getId());
@@ -215,6 +209,12 @@ public class FeatureDialog extends Dialog {
         dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
 
         add(dialogLayout);
+
+        if (isEditMode) {
+            binder.readBean(feature);
+        } else {
+            binder.readBean(new Feature());
+        }
 
         // Trigger validation to show errors for initially empty fields in create mode
         if (!isEditMode) {

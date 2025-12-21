@@ -110,35 +110,104 @@ public class ProductDialog extends Dialog {
         dialogLayout.setSpacing(true);
 
         // Create name field with icon and AI button
-        nameField = new TextField("Product Name");
-        nameField.setId(PRODUCT_NAME_FIELD);
-        nameField.setWidthFull();
-        nameField.setRequired(true);
-        nameField.setHelperText("Product name must be unique");
+        {
+            nameField = new TextField("Product Name");
+            nameField.setId(PRODUCT_NAME_FIELD);
+            nameField.setWidthFull();
+            nameField.setRequired(true);
+            nameField.setHelperText("Product name must be unique");
 
-        binder.forField(nameField)
-                .asRequired("Product name is required")
-                .withValidationStatusHandler(status -> {
-                    nameField.setInvalid(status.isError());
-                    status.getMessage().ifPresent(nameField::setErrorMessage);
-                })
-                .bind(Product::getName, Product::setName);
+            binder.forField(nameField)
+                    .asRequired("Product name is required")
+                    .withValidationStatusHandler(status -> {
+                        nameField.setInvalid(status.isError());
+                        status.getMessage().ifPresent(nameField::setErrorMessage);
+                    })
+                    .bind(Product::getName, Product::setName);
 
-        // Create name field prefix icon using avatar proxy endpoint
-        nameFieldImage = new Image();
-        nameFieldImage.setWidth("20px");
-        nameFieldImage.setHeight("20px");
-        nameFieldImage.getStyle()
-                .set("border-radius", "4px")
-                .set("object-fit", "cover");
-        if (isEditMode) {
-            nameFieldImage.setSrc(product.getAvatarUrl());
+            // Create name field prefix icon using avatar proxy endpoint
+            nameFieldImage = new Image();
+            nameFieldImage.setWidth("20px");
+            nameFieldImage.setHeight("20px");
+            nameFieldImage.getStyle()
+                    .set("border-radius", "4px")
+                    .set("object-fit", "cover");
+            if (isEditMode) {
+                nameFieldImage.setSrc(product.getAvatarUrl());
+            }
+            // For create mode, leave image src empty
+            nameField.setPrefixComponent(nameFieldImage);
+
+            // Set to eager mode so value changes fire on every keystroke
+            nameField.setValueChangeMode(ValueChangeMode.EAGER);
         }
-        // For create mode, leave image src empty
-        nameField.setPrefixComponent(nameFieldImage);
 
-        // Set to eager mode so value changes fire on every keystroke
-        nameField.setValueChangeMode(ValueChangeMode.EAGER);
+        // AI Image generation button (only show if service is available)
+        {
+            Button generateImageButton = null;
+            if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+                generateImageButton = new Button(new Icon(VaadinIcon.MAGIC));
+                generateImageButton.setId(GENERATE_IMAGE_BUTTON);
+                generateImageButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+                generateImageButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
+                generateImageButton.addClickListener(e -> openImagePromptDialog());
+
+                // Disable button if name field is empty
+                boolean isNameEmpty = nameField.isEmpty();
+                generateImageButton.setEnabled(!isNameEmpty);
+                if (isNameEmpty) {
+                    generateImageButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+                    generateImageButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
+                }
+            }
+
+            // Enable/disable button when name field changes (must be after the if block)
+            final Button finalGenerateImageButton = generateImageButton;
+            if (finalGenerateImageButton != null) {
+                nameField.addValueChangeListener(e -> {
+                    boolean isEmpty = e.getValue().trim().isEmpty();
+                    finalGenerateImageButton.setEnabled(!isEmpty);
+
+                    // Update button appearance based on state
+                    if (isEmpty) {
+                        finalGenerateImageButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+                        finalGenerateImageButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
+                    } else {
+                        finalGenerateImageButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+                        finalGenerateImageButton.removeThemeVariants(ButtonVariant.LUMO_CONTRAST);
+                    }
+                });
+            }
+
+            // Layout for name field and button
+            HorizontalLayout nameRow = new HorizontalLayout();
+            nameRow.setWidthFull();
+            nameRow.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER); // Center vertically
+            nameRow.add(nameField);
+            if (generateImageButton != null) {
+                nameRow.add(generateImageButton);
+            }
+            nameRow.expand(nameField);
+            dialogLayout.add(nameRow);
+        }
+
+        // Avatar preview (if image exists or will be generated)
+        {
+            avatarPreview = new Image();
+            avatarPreview.setWidth("64px");
+            avatarPreview.setHeight("64px");
+            avatarPreview.getStyle()
+                    .set("border-radius", "var(--lumo-border-radius)")
+                    .set("object-fit", "cover")
+                    .set("border", "1px solid var(--lumo-contrast-20pct)");
+            avatarPreview.setVisible(false);
+
+            dialogLayout.add(avatarPreview);
+        }
+
+        dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
+
+        add(dialogLayout);
 
         if (isEditMode) {
             binder.readBean(product);
@@ -150,69 +219,6 @@ public class ProductDialog extends Dialog {
         if (!isEditMode) {
             binder.validate();
         }
-
-        // AI Image generation button (only show if service is available)
-        Button generateImageButton = null;
-        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            generateImageButton = new Button(new Icon(VaadinIcon.MAGIC));
-            generateImageButton.setId(GENERATE_IMAGE_BUTTON);
-            generateImageButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
-            generateImageButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
-            generateImageButton.addClickListener(e -> openImagePromptDialog());
-
-            // Disable button if name field is empty
-            boolean isNameEmpty = nameField.isEmpty();
-            generateImageButton.setEnabled(!isNameEmpty);
-            if (isNameEmpty) {
-                generateImageButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-                generateImageButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            }
-        }
-
-        // Enable/disable button when name field changes (must be after the if block)
-        final Button finalGenerateImageButton = generateImageButton;
-        if (finalGenerateImageButton != null) {
-            nameField.addValueChangeListener(e -> {
-                boolean isEmpty = e.getValue().trim().isEmpty();
-                finalGenerateImageButton.setEnabled(!isEmpty);
-
-                // Update button appearance based on state
-                if (isEmpty) {
-                    finalGenerateImageButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-                    finalGenerateImageButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
-                } else {
-                    finalGenerateImageButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-                    finalGenerateImageButton.removeThemeVariants(ButtonVariant.LUMO_CONTRAST);
-                }
-            });
-        }
-
-        // Layout for name field and button
-        HorizontalLayout nameRow = new HorizontalLayout();
-        nameRow.setWidthFull();
-        nameRow.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER); // Center vertically
-        nameRow.add(nameField);
-        if (generateImageButton != null) {
-            nameRow.add(generateImageButton);
-        }
-        nameRow.expand(nameField);
-        dialogLayout.add(nameRow);
-
-        // Avatar preview (if image exists or will be generated)
-        avatarPreview = new Image();
-        avatarPreview.setWidth("64px");
-        avatarPreview.setHeight("64px");
-        avatarPreview.getStyle()
-                .set("border-radius", "var(--lumo-border-radius)")
-                .set("object-fit", "cover")
-                .set("border", "1px solid var(--lumo-contrast-20pct)");
-        avatarPreview.setVisible(false);
-
-        dialogLayout.add(avatarPreview);
-
-        dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
-
-        add(dialogLayout);
     }
 
     private void handleGeneratedImage(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result) {
