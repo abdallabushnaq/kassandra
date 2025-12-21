@@ -185,7 +185,7 @@ public class Demo extends AbstractKeycloakUiTestUtil {
 
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + firstSprint.getName());
 
-        seleniumHandler.waitUntilBrowserClosed(5000);
+        seleniumHandler.waitUntilBrowserClosed(0);
     }
 
 }

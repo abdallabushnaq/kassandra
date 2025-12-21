@@ -1,6 +1,5 @@
 # TODO
 
-1. creating a user with no email will fail without any explanation
 3. number of tasks in lane is always 0
 4. number of task per story is only including the once in that lane.
 5. backlog. add a default sprint with the actual backlog.

@@ -20,9 +20,10 @@ package de.bushnaq.abdalla.kassandra.ui.dialog;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
@@ -33,14 +34,15 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
  */
 public class VersionDialog extends Dialog {
 
-    public static final String       CANCEL_BUTTON      = "cancel-version-button";
-    public static final String       CONFIRM_BUTTON     = "save-version-button";
-    public static final String       VERSION_DIALOG     = "version-dialog";
-    public static final String       VERSION_NAME_FIELD = "version-name-field";
-    private final       boolean      isEditMode;
-    private final       TextField    nameField;
-    private final       SaveCallback saveCallback;
-    private final       Version      version;
+    public static final String          CANCEL_BUTTON      = "cancel-version-button";
+    public static final String          CONFIRM_BUTTON     = "save-version-button";
+    public static final String          VERSION_DIALOG     = "version-dialog";
+    public static final String          VERSION_NAME_FIELD = "version-name-field";
+    private final       Binder<Version> binder;
+    private final       boolean         isEditMode;
+    private final       TextField       nameField;
+    private final       SaveCallback    saveCallback;
+    private final       Version         version;
 
     /**
      * Creates a dialog for creating or editing a version.
@@ -52,6 +54,13 @@ public class VersionDialog extends Dialog {
         this.version      = version;
         this.saveCallback = saveCallback;
         isEditMode        = version != null;
+        this.binder       = new Binder<>(Version.class);
+
+        if (isEditMode) {
+            binder.readBean(version);
+        } else {
+            binder.readBean(new Version());
+        }
 
         // Set the dialog title with an icon
         String title = isEditMode ? "Edit Version" : "Create Version";
@@ -65,30 +74,38 @@ public class VersionDialog extends Dialog {
         dialogLayout.setSpacing(true);
 
         // Create name field with icon
-        nameField = new TextField("Version Name");
-        nameField.setId(VERSION_NAME_FIELD);
-        nameField.setWidthFull();
-        nameField.setRequired(true);
-        // Add helper text explaining the uniqueness requirement
-        nameField.setHelperText("Version name must be unique");
-        nameField.setPrefixComponent(new Icon(VaadinIcon.TAG));
+        {
+            nameField = new TextField("Version Name");
+            nameField.setId(VERSION_NAME_FIELD);
+            nameField.setWidthFull();
+            nameField.setRequired(true);
+            // Add helper text explaining the uniqueness requirement
+            nameField.setHelperText("Version name must be unique");
+            nameField.setPrefixComponent(new Icon(VaadinIcon.TAG));
+            nameField.setValueChangeMode(ValueChangeMode.EAGER);
 
-        if (isEditMode) {
-            nameField.setValue(version.getName());
+            binder.forField(nameField)
+                    .asRequired("Version name is required")
+                    .withValidationStatusHandler(status -> {
+                        nameField.setInvalid(status.isError());
+                        status.getMessage().ifPresent(nameField::setErrorMessage);
+                    })
+                    .bind(Version::getName, Version::setName);
         }
 
         dialogLayout.add(nameField);
 
-        dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this));
+        dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
 
         add(dialogLayout);
+
+        // Trigger validation to show errors for initially empty fields in create mode
+        if (!isEditMode) {
+            binder.validate();
+        }
     }
 
     private void save() {
-        if (nameField.getValue().trim().isEmpty()) {
-            Notification.show("Please enter a version name", 3000, Notification.Position.MIDDLE);
-            return;
-        }
 
         Version versionToSave;
         if (isEditMode) {

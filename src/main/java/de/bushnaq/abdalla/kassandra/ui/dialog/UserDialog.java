@@ -30,6 +30,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
@@ -60,6 +61,7 @@ public class UserDialog extends Dialog {
     public static final String                 USER_NAME_FIELD               = "user-name-field";
     private final       Image                  avatarPreview;
     private final       AvatarUpdateRequest    avatarUpdateRequest;
+    private final       Binder<User>           binder;
     private final       EmailField             emailField;
     private final       DatePicker             firstWorkingDayPicker;
     private             byte[]                 generatedImageBytes;
@@ -86,6 +88,13 @@ public class UserDialog extends Dialog {
         this.stableDiffusionService = stableDiffusionService;
         this.userApi                = userApi;
         isEditMode                  = user != null;
+        this.binder                 = new Binder<>(User.class);
+
+        if (isEditMode) {
+            binder.readBean(user);
+        } else {
+            binder.readBean(new User());
+        }
 
         if (isEditMode)
             this.avatarUpdateRequest = userApi.getAvatarFull(user.getId());
@@ -114,105 +123,129 @@ public class UserDialog extends Dialog {
         dialogLayout.setSpacing(true);
 
         // Name field
-        nameField = new TextField("Name");
-        nameField.setId(USER_NAME_FIELD);
-        nameField.setWidthFull();
-        nameField.setRequired(true);
-        nameFieldAvatar = new Image();
-        nameFieldAvatar.setWidth("20px");
-        nameFieldAvatar.setHeight("20px");
-        nameFieldAvatar.getStyle()
-                .set("border-radius", "4px")
-                .set("object-fit", "cover");
-        if (isEditMode) {
-            nameFieldAvatar.setSrc(user.getAvatarUrl());
-        }
-        // For create mode, leave image src empty
-        nameField.setPrefixComponent(nameFieldAvatar);
+        {
+            nameField = new TextField("Name");
+            nameField.setId(USER_NAME_FIELD);
+            nameField.setWidthFull();
+            nameField.setRequired(true);
+            nameField.setValueChangeMode(ValueChangeMode.EAGER);
 
-        // Set to eager mode so value changes fire on every keystroke
-        nameField.setValueChangeMode(ValueChangeMode.EAGER);
+            nameFieldAvatar = new Image();
+            nameFieldAvatar.setWidth("20px");
+            nameFieldAvatar.setHeight("20px");
+            nameFieldAvatar.getStyle()
+                    .set("border-radius", "4px")
+                    .set("object-fit", "cover");
+            if (isEditMode) {
+                nameFieldAvatar.setSrc(user.getAvatarUrl());
+            }
 
-        if (isEditMode) {
-            nameField.setValue(user.getName() != null ? user.getName() : "");
+            nameField.setPrefixComponent(nameFieldAvatar);
+            binder.forField(nameField)
+                    .asRequired("User name is required")
+                    .withValidationStatusHandler(status -> {
+                        nameField.setInvalid(status.isError());
+                        status.getMessage().ifPresent(nameField::setErrorMessage);
+                    })
+                    .bind(User::getName, User::setName);
         }
 
         // AI Image generation button (only show if service is available)
-        Button generateImageButton = null;
-        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            generateImageButton = new Button(new Icon(VaadinIcon.MAGIC));
-            generateImageButton.setId(GENERATE_IMAGE_BUTTON);
-            generateImageButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
-            generateImageButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
-            generateImageButton.addClickListener(e -> openImagePromptDialog());
+        {
+            Button generateImageButton = null;
+            if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+                generateImageButton = new Button(new Icon(VaadinIcon.MAGIC));
+                generateImageButton.setId(GENERATE_IMAGE_BUTTON);
+                generateImageButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+                generateImageButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
+                generateImageButton.addClickListener(e -> openImagePromptDialog());
 
-            // Disable button if name field is empty
-            boolean isNameEmpty = nameField.isEmpty();
-            generateImageButton.setEnabled(!isNameEmpty);
-            if (isNameEmpty) {
-                generateImageButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-                generateImageButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            }
-        }
-
-        // Enable/disable button when name field changes
-        final Button finalGenerateImageButton = generateImageButton;
-        if (finalGenerateImageButton != null) {
-            nameField.addValueChangeListener(e -> {
-                boolean isEmpty = e.getValue().trim().isEmpty();
-                finalGenerateImageButton.setEnabled(!isEmpty);
-
-                // Update button appearance based on state
-                if (isEmpty) {
-                    finalGenerateImageButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-                    finalGenerateImageButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
-                } else {
-                    finalGenerateImageButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-                    finalGenerateImageButton.removeThemeVariants(ButtonVariant.LUMO_CONTRAST);
+                // Disable button if name field is empty
+                boolean isNameEmpty = nameField.isEmpty();
+                generateImageButton.setEnabled(!isNameEmpty);
+                if (isNameEmpty) {
+                    generateImageButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+                    generateImageButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
                 }
-            });
-        }
+            }
 
-        // Layout for name field and button
-        HorizontalLayout nameRow = new HorizontalLayout();
-        nameRow.setWidthFull();
-        nameRow.setAlignItems(FlexComponent.Alignment.END);
-        nameRow.add(nameField);
-        if (generateImageButton != null) {
-            nameRow.add(generateImageButton);
+            // Enable/disable button when name field changes
+            final Button finalGenerateImageButton = generateImageButton;
+            if (finalGenerateImageButton != null) {
+                nameField.addValueChangeListener(e -> {
+                    boolean isEmpty = e.getValue().trim().isEmpty();
+                    finalGenerateImageButton.setEnabled(!isEmpty);
+
+                    // Update button appearance based on state
+                    if (isEmpty) {
+                        finalGenerateImageButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+                        finalGenerateImageButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
+                    } else {
+                        finalGenerateImageButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+                        finalGenerateImageButton.removeThemeVariants(ButtonVariant.LUMO_CONTRAST);
+                    }
+                });
+            }
+
+            // Layout for name field and button
+            HorizontalLayout nameRow = new HorizontalLayout();
+            nameRow.setWidthFull();
+            nameRow.setAlignItems(FlexComponent.Alignment.END);
+            nameRow.add(nameField);
+            if (generateImageButton != null) {
+                nameRow.add(generateImageButton);
+            }
+            nameRow.expand(nameField);
+            dialogLayout.add(nameRow);
         }
-        nameRow.expand(nameField);
-        dialogLayout.add(nameRow);
 
         // Avatar preview (if image exists or will be generated)
-        avatarPreview = new Image();
-        avatarPreview.setWidth("64px");
-        avatarPreview.setHeight("64px");
-        avatarPreview.getStyle()
-                .set("border-radius", "var(--lumo-border-radius)")
-                .set("object-fit", "cover")
-                .set("border", "1px solid var(--lumo-contrast-20pct)");
-        avatarPreview.setVisible(false);
+        {
+            avatarPreview = new Image();
+            avatarPreview.setWidth("64px");
+            avatarPreview.setHeight("64px");
+            avatarPreview.getStyle()
+                    .set("border-radius", "var(--lumo-border-radius)")
+                    .set("object-fit", "cover")
+                    .set("border", "1px solid var(--lumo-contrast-20pct)");
+            avatarPreview.setVisible(false);
 
-        dialogLayout.add(avatarPreview);
+            dialogLayout.add(avatarPreview);
+        }
 
         // Email field
-        emailField = new EmailField("Email");
-        emailField.setId(USER_EMAIL_FIELD);
-        emailField.setWidthFull();
-        emailField.setPrefixComponent(new Icon(VaadinIcon.ENVELOPE));
+        {
+            emailField = new EmailField("Email");
+            emailField.setId(USER_EMAIL_FIELD);
+            emailField.setWidthFull();
+            emailField.setRequired(true);
+            emailField.setPrefixComponent(new Icon(VaadinIcon.ENVELOPE));
+            emailField.setValueChangeMode(ValueChangeMode.EAGER);
 
+            binder.forField(emailField)
+                    .asRequired("Email address is required")
+                    .withValidator(email -> email.contains("@"), "Please enter a valid email address")
+                    .withValidationStatusHandler(status -> {
+                        emailField.setInvalid(status.isError());
+                        status.getMessage().ifPresent(emailField::setErrorMessage);
+                    })
+                    .bind(User::getEmail, User::setEmail);
+        }
         // First working day picker
-        firstWorkingDayPicker = new DatePicker("First Working Day");
-        firstWorkingDayPicker.setId(USER_FIRST_WORKING_DAY_PICKER);
-        firstWorkingDayPicker.setWidthFull();
-        firstWorkingDayPicker.setPrefixComponent(new Icon(VaadinIcon.CALENDAR_USER));
+        {
+            firstWorkingDayPicker = new DatePicker("First Working Day");
+            firstWorkingDayPicker.setId(USER_FIRST_WORKING_DAY_PICKER);
+            firstWorkingDayPicker.setWidthFull();
+            firstWorkingDayPicker.setPrefixComponent(new Icon(VaadinIcon.CALENDAR_USER));
+        }
 
         // Last working day picker
-        lastWorkingDayPicker = new DatePicker("Last Working Day");
-        lastWorkingDayPicker.setId(USER_LAST_WORKING_DAY_PICKER);
-        lastWorkingDayPicker.setWidthFull();
-        lastWorkingDayPicker.setPrefixComponent(new Icon(VaadinIcon.CALENDAR_USER));
+        {
+            lastWorkingDayPicker = new DatePicker("Last Working Day");
+            lastWorkingDayPicker.setId(USER_LAST_WORKING_DAY_PICKER);
+            lastWorkingDayPicker.setWidthFull();
+            lastWorkingDayPicker.setPrefixComponent(new Icon(VaadinIcon.CALENDAR_USER));
+        }
 
         // Add validation to ensure last working day is after first working day
         firstWorkingDayPicker.addValueChangeListener(event -> {
@@ -228,7 +261,6 @@ public class UserDialog extends Dialog {
         });
 
         if (isEditMode) {
-            emailField.setValue(user.getEmail() != null ? user.getEmail() : "");
             firstWorkingDayPicker.setValue(user.getFirstWorkingDay());
             lastWorkingDayPicker.setValue(user.getLastWorkingDay());
         }
@@ -239,8 +271,13 @@ public class UserDialog extends Dialog {
                 lastWorkingDayPicker
         );
 
-        dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this));
+        dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
         add(dialogLayout);
+
+        // Trigger validation to show errors for initially empty fields in create mode
+        if (!isEditMode) {
+            binder.validate();
+        }
     }
 
     private void handleGeneratedImage(GeneratedImageResult result) {
@@ -298,10 +335,6 @@ public class UserDialog extends Dialog {
     }
 
     private void save() {
-        if (nameField.getValue().trim().isEmpty()) {
-            Notification.show("Please enter a user name", 3000, Notification.Position.MIDDLE);
-            return;
-        }
 
         User userToSave;
         if (isEditMode) {

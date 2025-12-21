@@ -273,14 +273,14 @@
 | kassandra.ui.dialog            | AvailabilityDialog.java                                  | src      |       27 |        0 |       34 |      118 |      179 |
 | kassandra.ui.dialog            | ConfirmDialog.java                                       | src      |       10 |       11 |       17 |       35 |       73 |
 | kassandra.ui.dialog            | DependencyDialog.java                                    | src      |       43 |       26 |       43 |      213 |      325 |
-| kassandra.ui.dialog            | FeatureDialog.java                                       | src      |       40 |       16 |       42 |      225 |      323 |
+| kassandra.ui.dialog            | FeatureDialog.java                                       | src      |       42 |       16 |       43 |      236 |      337 |
 | kassandra.ui.dialog            | ImagePromptDialog.java                                   | src      |       53 |       13 |       40 |      381 |      487 |
 | kassandra.ui.dialog            | LocationDialog.java                                      | src      |       42 |        0 |       42 |      223 |      307 |
 | kassandra.ui.dialog            | OffDayDialog.java                                        | src      |       39 |       21 |       58 |      199 |      317 |
 | kassandra.ui.dialog            | ProductDialog.java                                       | src      |       45 |       15 |       50 |      237 |      347 |
-| kassandra.ui.dialog            | SprintDialog.java                                        | src      |       40 |       16 |       42 |      225 |      323 |
-| kassandra.ui.dialog            | UserDialog.java                                          | src      |       50 |       10 |       49 |      262 |      371 |
-| kassandra.ui.dialog            | VersionDialog.java                                       | src      |       20 |       17 |       20 |       67 |      124 |
+| kassandra.ui.dialog            | SprintDialog.java                                        | src      |       42 |       16 |       43 |      236 |      337 |
+| kassandra.ui.dialog            | UserDialog.java                                          | src      |       54 |       10 |       50 |      281 |      395 |
+| kassandra.ui.dialog            | VersionDialog.java                                       | src      |       22 |       17 |       21 |       77 |      137 |
 | kassandra.ui.dialog            | WorklogDialog.java                                       | src      |       54 |       21 |       50 |      243 |      368 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.introduction.util | InstructionVideosUtil.java                               | src      |        2 |        0 |       16 |        8 |       26 |
@@ -430,5 +430,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 40 package(s)                  | 389 file(s)                                              | java     |     8511 |     5400 |    11082 |    43743 |    68736 |
+| 40 package(s)                  | 389 file(s)                                              | java     |     8521 |     5400 |    11086 |    43794 |    68801 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
