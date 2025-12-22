@@ -22,6 +22,9 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.FeatureDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.FeatureListView;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
+import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import static de.bushnaq.abdalla.kassandra.ui.view.FeatureListView.FEATURE_GRID_NAME_PREFIX;
@@ -39,16 +42,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * In the hierarchy: Products contain Versions, Versions contain Features, and Features contain Sprints.
  */
 @Component
-public class FeatureListViewTester {
-    private final HumanizedSeleniumHandler seleniumHandler;
+public class FeatureListViewTester extends AbstractViewTester {
 
     /**
      * Constructs a new FeatureViewTester with the given Selenium handler.
      *
      * @param seleniumHandler the handler for Selenium operations
      */
-    public FeatureListViewTester(HumanizedSeleniumHandler seleniumHandler) {
-        this.seleniumHandler = seleniumHandler;
+    public FeatureListViewTester(HumanizedSeleniumHandler seleniumHandler, @Value("${local.server.port:8080}") int port) {
+        super(seleniumHandler, port);
+    }
+
+    private void closeDialog(String cancelButton) {
+        seleniumHandler.click(cancelButton);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(FeatureDialog.FEATURE_DIALOG)));
     }
 
     /**
@@ -62,7 +69,7 @@ public class FeatureListViewTester {
     public void createFeatureCancel(String name) {
         seleniumHandler.click(FeatureListView.CREATE_FEATURE_BUTTON_ID);
         seleniumHandler.setTextField(FeatureDialog.FEATURE_NAME_FIELD, name);
-        seleniumHandler.click(FeatureDialog.CANCEL_BUTTON);
+        closeDialog(FeatureDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsNotInList(FEATURE_GRID_NAME_PREFIX, name);
     }
 
@@ -77,7 +84,7 @@ public class FeatureListViewTester {
     public void createFeatureConfirm(String name) {
         seleniumHandler.click(FeatureListView.CREATE_FEATURE_BUTTON_ID);
         seleniumHandler.setTextField(FeatureDialog.FEATURE_NAME_FIELD, name);
-        seleniumHandler.click(FeatureDialog.CONFIRM_BUTTON);
+        closeDialog(FeatureDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(FEATURE_GRID_NAME_PREFIX, name);
     }
 
@@ -93,14 +100,14 @@ public class FeatureListViewTester {
     public void createFeatureWithDuplicateName(String name) {
         seleniumHandler.click(FeatureListView.CREATE_FEATURE_BUTTON_ID);
         seleniumHandler.setTextField(FeatureDialog.FEATURE_NAME_FIELD, name);
-        seleniumHandler.click(FeatureDialog.CONFIRM_BUTTON);
+        closeDialog(FeatureDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(FeatureDialog.FEATURE_NAME_FIELD);
         assertNotNull(errorMessage, "Error message should be present on the name field");
         assertTrue(errorMessage.contains("already exists"), "Error message should indicate feature already exists");
 
-        seleniumHandler.click(FeatureDialog.CANCEL_BUTTON);
+        closeDialog(FeatureDialog.CANCEL_BUTTON);
         seleniumHandler.ensureElementCountInGrid(FeatureListView.FEATURE_GRID, FEATURE_GRID_NAME_PREFIX, name, 1);
     }
 
@@ -114,7 +121,7 @@ public class FeatureListViewTester {
      */
     public void deleteFeatureCancel(String name) {
         seleniumHandler.click(FeatureListView.FEATURE_GRID_DELETE_BUTTON_PREFIX + name);
-        seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(FEATURE_GRID_NAME_PREFIX, name);
     }
 
@@ -129,7 +136,7 @@ public class FeatureListViewTester {
      */
     public void deleteFeatureConfirm(String name) {
         seleniumHandler.click(FeatureListView.FEATURE_GRID_DELETE_BUTTON_PREFIX + name);
-        seleniumHandler.click(ConfirmDialog.CONFIRM_BUTTON);
+        closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsNotInList(FEATURE_GRID_NAME_PREFIX, name);
     }
 
@@ -146,7 +153,7 @@ public class FeatureListViewTester {
     public void editFeatureCancel(String name, String newName) {
         seleniumHandler.click(FeatureListView.FEATURE_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(FeatureDialog.FEATURE_NAME_FIELD, newName);
-        seleniumHandler.click(FeatureDialog.CANCEL_BUTTON);
+        closeDialog(FeatureDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(FEATURE_GRID_NAME_PREFIX, name);
         seleniumHandler.ensureIsNotInList(FEATURE_GRID_NAME_PREFIX, newName);
     }
@@ -164,7 +171,7 @@ public class FeatureListViewTester {
     public void editFeatureConfirm(String name, String newName) {
         seleniumHandler.click(FeatureListView.FEATURE_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(FeatureDialog.FEATURE_NAME_FIELD, newName);
-        seleniumHandler.click(FeatureDialog.CONFIRM_BUTTON);
+        closeDialog(FeatureDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(FEATURE_GRID_NAME_PREFIX, newName);
         seleniumHandler.ensureIsNotInList(FEATURE_GRID_NAME_PREFIX, name);
     }
@@ -182,14 +189,14 @@ public class FeatureListViewTester {
     public void editFeatureWithDuplicateName(String originalName, String duplicateName) {
         seleniumHandler.click(FeatureListView.FEATURE_GRID_EDIT_BUTTON_PREFIX + originalName);
         seleniumHandler.setTextField(FeatureDialog.FEATURE_NAME_FIELD, duplicateName);
-        seleniumHandler.click(FeatureDialog.CONFIRM_BUTTON);
+        closeDialog(FeatureDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(FeatureDialog.FEATURE_NAME_FIELD);
         assertNotNull(errorMessage, "Error message should be present on the name field");
         assertTrue(errorMessage.contains("already exists"), "Error message should indicate feature already exists");
 
-        seleniumHandler.click(FeatureDialog.CANCEL_BUTTON);
+        closeDialog(FeatureDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(FEATURE_GRID_NAME_PREFIX, originalName);
         seleniumHandler.ensureIsInList(FEATURE_GRID_NAME_PREFIX, duplicateName);
     }

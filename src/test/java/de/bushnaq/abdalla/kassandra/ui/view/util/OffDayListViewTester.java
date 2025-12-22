@@ -32,7 +32,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -45,11 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 @Component
 @Lazy
-public class OffDayListViewTester {
-
-    private final DateTimeFormatter        dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private final int                      port;
-    private final HumanizedSeleniumHandler seleniumHandler;
+public class OffDayListViewTester extends AbstractViewTester {
 
     /**
      * Constructs a new OffDayListViewTester with the given Selenium handler and server port.
@@ -58,8 +53,7 @@ public class OffDayListViewTester {
      * @param port            the port on which the application server is running
      */
     public OffDayListViewTester(HumanizedSeleniumHandler seleniumHandler, @Value("${local.server.port:8080}") int port) {
-        this.seleniumHandler = seleniumHandler;
-        this.port            = port;
+        super(seleniumHandler, port);
     }
 
     public void clickDeleteButtonForRecord(LocalDate firstDay) {
@@ -75,6 +69,11 @@ public class OffDayListViewTester {
     public void clickEditButtonForRecord(LocalDate firstDay) {
         String id = findOffDayRecordId(firstDay);
         seleniumHandler.click(OffDayListView.OFFDAY_GRID_EDIT_BUTTON_PREFIX + id);
+    }
+
+    private void closeDialog(String confirmButton) {
+        seleniumHandler.click(confirmButton);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
     }
 
     /**
@@ -93,15 +92,14 @@ public class OffDayListViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_START_DATE_FIELD, firstDay);
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
-        seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
+        closeDialog(OffDayDialog.CONFIRM_BUTTON);
 
         // Verify validation error occurs
         seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector("vaadin-notification-card")));
 
         // Cancel the dialog
-        seleniumHandler.click(OffDayDialog.CANCEL_BUTTON);
+        closeDialog(OffDayDialog.CANCEL_BUTTON);
 
         // Verify the record wasn't created
         verifyOffDayRecordNotExists(firstDay, lastDay, type);
@@ -122,8 +120,7 @@ public class OffDayListViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_START_DATE_FIELD, firstDay);
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
-        seleniumHandler.click(OffDayDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
+        closeDialog(OffDayDialog.CANCEL_BUTTON);
 
         // Verify the record doesn't appear in the list
         verifyOffDayRecordNotExists(firstDay, lastDay, type);
@@ -145,8 +142,7 @@ public class OffDayListViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_START_DATE_FIELD, firstDay);
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
-        seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
+        closeDialog(OffDayDialog.CONFIRM_BUTTON);
         // Verify the record appears in the list
         verifyOffDayRecordExists(firstDay, lastDay, type);
     }
@@ -167,8 +163,7 @@ public class OffDayListViewTester {
 
         // Click delete but cancel confirmation
         seleniumHandler.click(OffDayListView.OFFDAY_GRID_DELETE_BUTTON_PREFIX + id);
-        seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
+        closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
 
         // Verify the record still exists
         verifyOffDayRecordExists(firstDay, lastDay, type);
@@ -191,8 +186,7 @@ public class OffDayListViewTester {
 
         // Click delete and confirm
         seleniumHandler.click(OffDayListView.OFFDAY_GRID_DELETE_BUTTON_PREFIX + id);
-        seleniumHandler.click(ConfirmDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
+        closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
 
         // Verify the record is deleted
         verifyOffDayRecordNotExists(firstDay, lastDay, type);
@@ -226,8 +220,7 @@ public class OffDayListViewTester {
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, newType.name());
 
         // Cancel the edit
-        seleniumHandler.click(OffDayDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
+        closeDialog(OffDayDialog.CANCEL_BUTTON);
 
         // Verify original record still exists with original values
         verifyOffDayRecordExists(originalFirstDay, originalLastDay, originalType);
@@ -264,8 +257,7 @@ public class OffDayListViewTester {
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, newType.name());
 
         // Confirm the edit
-        seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
+        closeDialog(OffDayDialog.CONFIRM_BUTTON);
 
         // Verify updated record exists with new values
         verifyOffDayRecordExists(newFirstDay, newLastDay, newType);
@@ -348,8 +340,7 @@ public class OffDayListViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_START_DATE_FIELD, firstRecord2Day);
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastRecord2Day);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
-        seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
+        closeDialog(OffDayDialog.CONFIRM_BUTTON);
 
         if (shouldSucceed) {
             // Verify the second record was created
@@ -359,8 +350,7 @@ public class OffDayListViewTester {
             seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("vaadin-notification-card")));
 
             // Cancel the dialog
-            seleniumHandler.click(OffDayDialog.CANCEL_BUTTON);
-            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
+            closeDialog(OffDayDialog.CANCEL_BUTTON);
 
             // Verify the second record wasn't created
             verifyOffDayRecordNotExists(firstRecord2Day, lastRecord2Day, type);

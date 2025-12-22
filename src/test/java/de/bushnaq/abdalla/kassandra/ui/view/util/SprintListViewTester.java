@@ -22,6 +22,9 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.SprintDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintQualityBoard;
+import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import static de.bushnaq.abdalla.kassandra.ui.view.SprintListView.SPRINT_GRID_NAME_PREFIX;
@@ -40,16 +43,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * and Sprints contain Tasks.
  */
 @Component
-public class SprintListViewTester {
-    private final HumanizedSeleniumHandler seleniumHandler;
+public class SprintListViewTester extends AbstractViewTester {
 
     /**
      * Constructs a new SprintViewTester with the given Selenium handler.
      *
      * @param seleniumHandler the handler for Selenium operations
      */
-    public SprintListViewTester(HumanizedSeleniumHandler seleniumHandler) {
-        this.seleniumHandler = seleniumHandler;
+    public SprintListViewTester(HumanizedSeleniumHandler seleniumHandler, @Value("${local.server.port:8080}") int port) {
+        super(seleniumHandler, port);
+    }
+
+    private void closeDialog(String cancelButton) {
+        seleniumHandler.click(cancelButton);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(SprintDialog.SPRINT_DIALOG)));
     }
 
     public void configSprint(String sprintName) {
@@ -67,7 +74,7 @@ public class SprintListViewTester {
     public void createSprintCancel(String name) {
         seleniumHandler.click(SprintListView.CREATE_SPRINT_BUTTON);
         seleniumHandler.setTextField(SprintDialog.SPRINT_NAME_FIELD, name);
-        seleniumHandler.click(SprintDialog.CANCEL_BUTTON);
+        closeDialog(SprintDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsNotInList(SprintListView.SPRINT_GRID_NAME_PREFIX, name);
     }
 
@@ -82,7 +89,7 @@ public class SprintListViewTester {
     public void createSprintConfirm(String name) {
         seleniumHandler.click(SprintListView.CREATE_SPRINT_BUTTON);
         seleniumHandler.setTextField(SprintDialog.SPRINT_NAME_FIELD, name);
-        seleniumHandler.click(SprintDialog.CONFIRM_BUTTON);
+        closeDialog(SprintDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(SprintListView.SPRINT_GRID_NAME_PREFIX, name);
     }
 
@@ -98,14 +105,14 @@ public class SprintListViewTester {
     public void createSprintWithDuplicateName(String name) {
         seleniumHandler.click(SprintListView.CREATE_SPRINT_BUTTON);
         seleniumHandler.setTextField(SprintDialog.SPRINT_NAME_FIELD, name);
-        seleniumHandler.click(SprintDialog.CONFIRM_BUTTON);
+        closeDialog(SprintDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(SprintDialog.SPRINT_NAME_FIELD);
         assertNotNull(errorMessage, "Error message should be present on the name field");
         assertTrue(errorMessage.contains("already exists"), "Error message should indicate sprint already exists");
 
-        seleniumHandler.click(SprintDialog.CANCEL_BUTTON);
+        closeDialog(SprintDialog.CANCEL_BUTTON);
         seleniumHandler.ensureElementCountInGrid(SprintListView.SPRINT_GRID, SPRINT_GRID_NAME_PREFIX, name, 1);
     }
 
@@ -119,7 +126,7 @@ public class SprintListViewTester {
      */
     public void deleteSprintCancel(String name) {
         seleniumHandler.click(SprintListView.SPRINT_GRID_DELETE_BUTTON_PREFIX + name);
-        seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(SprintListView.SPRINT_GRID_NAME_PREFIX, name);
     }
 
@@ -134,7 +141,7 @@ public class SprintListViewTester {
      */
     public void deleteSprintConfirm(String name) {
         seleniumHandler.click(SprintListView.SPRINT_GRID_DELETE_BUTTON_PREFIX + name);
-        seleniumHandler.click(ConfirmDialog.CONFIRM_BUTTON);
+        closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsNotInList(SprintListView.SPRINT_GRID_NAME_PREFIX, name);
     }
 
@@ -151,7 +158,7 @@ public class SprintListViewTester {
     public void editSprintCancel(String name, String newName) {
         seleniumHandler.click(SprintListView.SPRINT_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(SprintDialog.SPRINT_NAME_FIELD, newName);
-        seleniumHandler.click(SprintDialog.CANCEL_BUTTON);
+        closeDialog(SprintDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(SprintListView.SPRINT_GRID_NAME_PREFIX, name);
         seleniumHandler.ensureIsNotInList(SprintListView.SPRINT_GRID_NAME_PREFIX, newName);
     }
@@ -169,7 +176,7 @@ public class SprintListViewTester {
     public void editSprintConfirm(String name, String newName) {
         seleniumHandler.click(SprintListView.SPRINT_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(SprintDialog.SPRINT_NAME_FIELD, newName);
-        seleniumHandler.click(SprintDialog.CONFIRM_BUTTON);
+        closeDialog(SprintDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(SprintListView.SPRINT_GRID_NAME_PREFIX, newName);
         seleniumHandler.ensureIsNotInList(SprintListView.SPRINT_GRID_NAME_PREFIX, name);
     }
@@ -187,14 +194,14 @@ public class SprintListViewTester {
     public void editSprintWithDuplicateName(String originalName, String duplicateName) {
         seleniumHandler.click(SprintListView.SPRINT_GRID_EDIT_BUTTON_PREFIX + originalName);
         seleniumHandler.setTextField(SprintDialog.SPRINT_NAME_FIELD, duplicateName);
-        seleniumHandler.click(SprintDialog.CONFIRM_BUTTON);
+        closeDialog(SprintDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(SprintDialog.SPRINT_NAME_FIELD);
         assertNotNull(errorMessage, "Error message should be present on the name field");
         assertTrue(errorMessage.contains("already exists"), "Error message should indicate sprint already exists");
 
-        seleniumHandler.click(SprintDialog.CANCEL_BUTTON);
+        closeDialog(SprintDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(SPRINT_GRID_NAME_PREFIX, originalName);
         seleniumHandler.ensureIsInList(SPRINT_GRID_NAME_PREFIX, duplicateName);
     }

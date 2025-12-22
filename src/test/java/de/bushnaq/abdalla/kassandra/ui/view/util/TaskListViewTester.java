@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.view.util;
 
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.TaskListView;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -34,16 +35,15 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Lazy
-public class TaskListViewTester {
-    private final HumanizedSeleniumHandler seleniumHandler;
+public class TaskListViewTester extends AbstractViewTester {
 
     /**
      * Constructs a new TaskListViewTester with the given Selenium handler.
      *
      * @param seleniumHandler the handler for Selenium operations
      */
-    public TaskListViewTester(HumanizedSeleniumHandler seleniumHandler) {
-        this.seleniumHandler = seleniumHandler;
+    public TaskListViewTester(HumanizedSeleniumHandler seleniumHandler, @Value("${local.server.port:8080}") int port) {
+        super(seleniumHandler, port);
     }
 
     public void createTask(String newTaskName) {

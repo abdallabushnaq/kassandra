@@ -32,7 +32,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -45,11 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @Component
 @Lazy
-public class LocationListViewTester {
-
-    private final DateTimeFormatter        dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private final int                      port;
-    private final HumanizedSeleniumHandler seleniumHandler;
+public class LocationListViewTester extends AbstractViewTester {
 
     /**
      * Constructs a new LocationViewTester with the given Selenium handler and server port.
@@ -58,8 +53,12 @@ public class LocationListViewTester {
      * @param port            the port on which the application server is running
      */
     public LocationListViewTester(HumanizedSeleniumHandler seleniumHandler, @Value("${local.server.port:8080}") int port) {
-        this.seleniumHandler = seleniumHandler;
-        this.port            = port;
+        super(seleniumHandler, port);
+    }
+
+    private void closeDialog(String confirmButton) {
+        seleniumHandler.click(confirmButton);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
     }
 
     /**
@@ -81,15 +80,14 @@ public class LocationListViewTester {
         seleniumHandler.setDatePickerValue(LocationDialog.LOCATION_START_DATE_FIELD, existingStartDate);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_COUNTRY_FIELD, country);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_STATE_FIELD, state);
-        seleniumHandler.click(LocationDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
+        closeDialog(LocationDialog.CONFIRM_BUTTON);
 
         // Verify the validation error occurs (dialog should still be open)
         seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector("vaadin-notification-card")));
 
         // Cancel the dialog since we expect it to still be open
-        seleniumHandler.click(LocationDialog.CANCEL_BUTTON);
+        closeDialog(LocationDialog.CANCEL_BUTTON);
     }
 
     /**
@@ -108,8 +106,7 @@ public class LocationListViewTester {
         seleniumHandler.setDatePickerValue(LocationDialog.LOCATION_START_DATE_FIELD, startDate);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_COUNTRY_FIELD, country);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_STATE_FIELD, state);
-        seleniumHandler.click(LocationDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
+        closeDialog(LocationDialog.CANCEL_BUTTON);
 
         // Verify the record doesn't appear in the list
         String startDateStr = startDate.format(dateFormatter);
@@ -132,8 +129,7 @@ public class LocationListViewTester {
         seleniumHandler.setDatePickerValue(LocationDialog.LOCATION_START_DATE_FIELD, startDate);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_COUNTRY_FIELD, country);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_STATE_FIELD, state);
-        seleniumHandler.click(LocationDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
+        closeDialog(LocationDialog.CONFIRM_BUTTON);
 
         // Verify the record appears in the list
         String startDateStr = startDate.format(dateFormatter);
@@ -155,8 +151,7 @@ public class LocationListViewTester {
     public void deleteLocationCancel(LocalDate startDate) {
         String startDateStr = startDate.format(dateFormatter);
         seleniumHandler.click(LocationListView.LOCATION_GRID_DELETE_BUTTON_PREFIX + startDateStr);
-        seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
+        closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(LocationListView.LOCATION_GRID_START_DATE_PREFIX, startDateStr);
     }
 
@@ -172,8 +167,7 @@ public class LocationListViewTester {
     public void deleteLocationConfirm(LocalDate startDate) {
         String startDateStr = startDate.format(dateFormatter);
         seleniumHandler.click(LocationListView.LOCATION_GRID_DELETE_BUTTON_PREFIX + startDateStr);
-        seleniumHandler.click(ConfirmDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
+        closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsNotInList(LocationListView.LOCATION_GRID_START_DATE_PREFIX, startDateStr);
     }
 
@@ -204,8 +198,7 @@ public class LocationListViewTester {
         seleniumHandler.setDatePickerValue(LocationDialog.LOCATION_START_DATE_FIELD, newStartDate);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_COUNTRY_FIELD, newCountry);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_STATE_FIELD, newState);
-        seleniumHandler.click(LocationDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
+        closeDialog(LocationDialog.CANCEL_BUTTON);
 
         // Verify original record still exists and new one doesn't
         seleniumHandler.ensureIsInList(LocationListView.LOCATION_GRID_START_DATE_PREFIX, originalDateStr);
@@ -238,8 +231,7 @@ public class LocationListViewTester {
         seleniumHandler.setDatePickerValue(LocationDialog.LOCATION_START_DATE_FIELD, newStartDate);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_COUNTRY_FIELD, newCountry);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_STATE_FIELD, newState);
-        seleniumHandler.click(LocationDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
+        closeDialog(LocationDialog.CONFIRM_BUTTON);
 
         String newDateStr = newStartDate.format(dateFormatter);
 
@@ -316,8 +308,7 @@ public class LocationListViewTester {
         seleniumHandler.click(LocationListView.LOCATION_GRID_EDIT_BUTTON_PREFIX + startDateStr);
         String actualCountry = seleniumHandler.getComboBoxValue(LocationDialog.LOCATION_COUNTRY_FIELD);
         String actualState   = seleniumHandler.getComboBoxValue(LocationDialog.LOCATION_STATE_FIELD);
-        seleniumHandler.click(LocationDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
+        closeDialog(LocationDialog.CANCEL_BUTTON);
         Assertions.assertEquals(expectedCountry, actualCountry, "Country mismatch for record with start date: " + startDateStr);
         Assertions.assertEquals(expectedState, actualState, "State/region mismatch for record with start date: " + startDateStr);
     }

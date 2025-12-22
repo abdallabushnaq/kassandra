@@ -22,6 +22,9 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.VersionDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.FeatureListView;
 import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
+import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import static de.bushnaq.abdalla.kassandra.ui.view.VersionListView.VERSION_GRID_NAME_PREFIX;
@@ -38,16 +41,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Versions represent a specific release of a product and contain multiple features.
  */
 @Component
-public class VersionListViewTester {
-    private final HumanizedSeleniumHandler seleniumHandler;
+public class VersionListViewTester extends AbstractViewTester {
 
     /**
      * Constructs a new VersionViewTester with the given Selenium handler.
      *
      * @param seleniumHandler the handler for Selenium operations
      */
-    public VersionListViewTester(HumanizedSeleniumHandler seleniumHandler) {
-        this.seleniumHandler = seleniumHandler;
+    public VersionListViewTester(HumanizedSeleniumHandler seleniumHandler, @Value("${local.server.port:8080}") int port) {
+        super(seleniumHandler, port);
+    }
+
+    private void closeDialog(String cancelButton) {
+        seleniumHandler.click(cancelButton);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(VersionDialog.VERSION_DIALOG)));
     }
 
     /**
@@ -61,7 +68,7 @@ public class VersionListViewTester {
     public void createVersionCancel(String name) {
         seleniumHandler.click(VersionListView.CREATE_VERSION_BUTTON);
         seleniumHandler.setTextField(VersionDialog.VERSION_NAME_FIELD, name);
-        seleniumHandler.click(VersionDialog.CANCEL_BUTTON);
+        closeDialog(VersionDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsNotInList(VersionListView.VERSION_GRID_NAME_PREFIX, name);
     }
 
@@ -76,7 +83,7 @@ public class VersionListViewTester {
     public void createVersionConfirm(String name) {
         seleniumHandler.click(VersionListView.CREATE_VERSION_BUTTON);
         seleniumHandler.setTextField(VersionDialog.VERSION_NAME_FIELD, name);
-        seleniumHandler.click(VersionDialog.CONFIRM_BUTTON);
+        closeDialog(VersionDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(VersionListView.VERSION_GRID_NAME_PREFIX, name);
     }
 
@@ -92,14 +99,14 @@ public class VersionListViewTester {
     public void createVersionWithDuplicateName(String name) {
         seleniumHandler.click(VersionListView.CREATE_VERSION_BUTTON);
         seleniumHandler.setTextField(VersionDialog.VERSION_NAME_FIELD, name);
-        seleniumHandler.click(VersionDialog.CONFIRM_BUTTON);
+        closeDialog(VersionDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(VersionDialog.VERSION_NAME_FIELD);
         assertNotNull(errorMessage, "Error message should be present on the name field");
         assertTrue(errorMessage.contains("already exists"), "Error message should indicate version already exists");
 
-        seleniumHandler.click(VersionDialog.CANCEL_BUTTON);
+        closeDialog(VersionDialog.CANCEL_BUTTON);
         seleniumHandler.ensureElementCountInGrid(VersionListView.VERSION_GRID, VERSION_GRID_NAME_PREFIX, name, 1);
     }
 
@@ -113,7 +120,8 @@ public class VersionListViewTester {
      */
     public void deleteVersionCancel(String name) {
         seleniumHandler.click(VersionListView.VERSION_GRID_DELETE_BUTTON_PREFIX + name);
-        seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(VersionDialog.VERSION_DIALOG)));
         seleniumHandler.ensureIsInList(VersionListView.VERSION_GRID_NAME_PREFIX, name);
     }
 
@@ -128,7 +136,8 @@ public class VersionListViewTester {
      */
     public void deleteVersionConfirm(String name) {
         seleniumHandler.click(VersionListView.VERSION_GRID_DELETE_BUTTON_PREFIX + name);
-        seleniumHandler.click(ConfirmDialog.CONFIRM_BUTTON);
+        closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(VersionDialog.VERSION_DIALOG)));
         seleniumHandler.ensureIsNotInList(VersionListView.VERSION_GRID_NAME_PREFIX, name);
     }
 
@@ -145,7 +154,7 @@ public class VersionListViewTester {
     public void editVersionCancel(String name, String newName) {
         seleniumHandler.click(VersionListView.VERSION_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(VersionDialog.VERSION_NAME_FIELD, newName);
-        seleniumHandler.click(VersionDialog.CANCEL_BUTTON);
+        closeDialog(VersionDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(VersionListView.VERSION_GRID_NAME_PREFIX, name);
         seleniumHandler.ensureIsNotInList(VersionListView.VERSION_GRID_NAME_PREFIX, newName);
     }
@@ -163,7 +172,7 @@ public class VersionListViewTester {
     public void editVersionConfirm(String name, String newName) {
         seleniumHandler.click(VersionListView.VERSION_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(VersionDialog.VERSION_NAME_FIELD, newName);
-        seleniumHandler.click(VersionDialog.CONFIRM_BUTTON);
+        closeDialog(VersionDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(VersionListView.VERSION_GRID_NAME_PREFIX, newName);
         seleniumHandler.ensureIsNotInList(VersionListView.VERSION_GRID_NAME_PREFIX, name);
     }
@@ -181,14 +190,14 @@ public class VersionListViewTester {
     public void editVersionWithDuplicateName(String originalName, String duplicateName) {
         seleniumHandler.click(VersionListView.VERSION_GRID_EDIT_BUTTON_PREFIX + originalName);
         seleniumHandler.setTextField(VersionDialog.VERSION_NAME_FIELD, duplicateName);
-        seleniumHandler.click(VersionDialog.CONFIRM_BUTTON);
+        closeDialog(VersionDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(VersionDialog.VERSION_NAME_FIELD);
         assertNotNull(errorMessage, "Error message should be present on the name field");
         assertTrue(errorMessage.contains("already exists"), "Error message should indicate version already exists");
 
-        seleniumHandler.click(VersionDialog.CANCEL_BUTTON);
+        closeDialog(VersionDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(VersionListView.VERSION_GRID_NAME_PREFIX, originalName);
         seleniumHandler.ensureIsInList(VersionListView.VERSION_GRID_NAME_PREFIX, duplicateName);
     }

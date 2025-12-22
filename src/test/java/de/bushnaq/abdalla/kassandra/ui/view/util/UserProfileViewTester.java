@@ -38,9 +38,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Lazy
-public class UserProfileViewTester {
-    private final int                      port;
-    private final HumanizedSeleniumHandler seleniumHandler;
+public class UserProfileViewTester extends AbstractViewTester {
 
     /**
      * Constructs a new UserProfileViewTester with the given Selenium handler and server port.
@@ -49,8 +47,7 @@ public class UserProfileViewTester {
      * @param port            the port on which the application server is running
      */
     public UserProfileViewTester(HumanizedSeleniumHandler seleniumHandler, @Value("${local.server.port:8080}") int port) {
-        this.seleniumHandler = seleniumHandler;
-        this.port            = port;
+        super(seleniumHandler, port);
     }
 
     /**

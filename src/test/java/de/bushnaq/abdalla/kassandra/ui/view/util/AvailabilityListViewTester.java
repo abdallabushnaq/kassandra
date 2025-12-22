@@ -31,7 +31,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -44,11 +43,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 @Component
 @Lazy
-public class AvailabilityListViewTester {
+public class AvailabilityListViewTester extends AbstractViewTester {
 
-    private final DateTimeFormatter        dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private final int                      port;
-    private final HumanizedSeleniumHandler seleniumHandler;
 
     /**
      * Constructs a new AvailabilityViewTester with the given Selenium handler and server port.
@@ -57,17 +53,17 @@ public class AvailabilityListViewTester {
      * @param port            the port on which the application server is running
      */
     public AvailabilityListViewTester(HumanizedSeleniumHandler seleniumHandler, @Value("${local.server.port:8080}") int port) {
-        this.seleniumHandler = seleniumHandler;
-        this.port            = port;
-    }
-
-    private static void assertNotNull(Object obj, String message) {
-        org.junit.jupiter.api.Assertions.assertNotNull(obj, message);
+        super(seleniumHandler, port);
     }
 
     // Add missing static imports at the top of the class
     private static void assertTrue(boolean condition, String message) {
         org.junit.jupiter.api.Assertions.assertTrue(condition, message);
+    }
+
+    private void closeDialog(String button) {
+        seleniumHandler.click(button);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
     }
 
     /**
@@ -84,7 +80,7 @@ public class AvailabilityListViewTester {
         seleniumHandler.click(AvailabilityListView.CREATE_AVAILABILITY_BUTTON);
         seleniumHandler.setDatePickerValue(AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, startDate);
         seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, String.valueOf(availabilityPercentage));
-        seleniumHandler.click(AvailabilityDialog.CANCEL_BUTTON);
+        closeDialog(AvailabilityDialog.CANCEL_BUTTON);
 
         // Verify the record doesn't appear in the list
         String startDateStr = startDate.format(dateFormatter);
@@ -106,7 +102,6 @@ public class AvailabilityListViewTester {
         seleniumHandler.setDatePickerValue(AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, startDate);
         seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, String.valueOf(availabilityPercentage));
         seleniumHandler.click(AvailabilityDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
 
         // Verify the record appears in the list
         String startDateStr = startDate.format(dateFormatter);
@@ -130,15 +125,14 @@ public class AvailabilityListViewTester {
         seleniumHandler.click(AvailabilityListView.CREATE_AVAILABILITY_BUTTON);
         seleniumHandler.setDatePickerValue(AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, existingStartDate);
         seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, String.valueOf(newPercentage));
-        seleniumHandler.click(AvailabilityDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
+        closeDialog(AvailabilityDialog.CONFIRM_BUTTON);
 
         // Verify the validation error occurs (dialog should still be open)
         //TODO test for the actual error text
         seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("vaadin-notification-card")));
 
         // Cancel the dialog since we expect it to still be open
-        seleniumHandler.click(AvailabilityDialog.CANCEL_BUTTON);
+        closeDialog(AvailabilityDialog.CANCEL_BUTTON);
     }
 
     /**
@@ -158,15 +152,14 @@ public class AvailabilityListViewTester {
         seleniumHandler.click(AvailabilityListView.CREATE_AVAILABILITY_BUTTON);
         seleniumHandler.setDatePickerValue(AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, startDate);
         seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, String.valueOf(invalidPercentage));
-        seleniumHandler.click(AvailabilityDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
+        closeDialog(AvailabilityDialog.CONFIRM_BUTTON);
 
         // Verify the validation error occurs (dialog should still be open)
         seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(
                 By.cssSelector("vaadin-notification-card")));
 
         // Cancel the dialog since we expect it to still be open
-        seleniumHandler.click(AvailabilityDialog.CANCEL_BUTTON);
+        closeDialog(AvailabilityDialog.CANCEL_BUTTON);
 
         // Verify the record wasn't created
         seleniumHandler.ensureIsNotInList(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX, startDateStr);
@@ -183,8 +176,7 @@ public class AvailabilityListViewTester {
     public void deleteAvailabilityCancel(LocalDate startDate) {
         String startDateStr = startDate.format(dateFormatter);
         seleniumHandler.click(AvailabilityListView.AVAILABILITY_GRID_DELETE_BUTTON_PREFIX + startDateStr);
-        seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
+        closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX, startDateStr);
     }
 
@@ -200,8 +192,7 @@ public class AvailabilityListViewTester {
     public void deleteAvailabilityConfirm(LocalDate startDate) {
         String startDateStr = startDate.format(dateFormatter);
         seleniumHandler.click(AvailabilityListView.AVAILABILITY_GRID_DELETE_BUTTON_PREFIX + startDateStr);
-        seleniumHandler.click(ConfirmDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
+        closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsNotInList(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX, startDateStr);
     }
 
@@ -227,8 +218,7 @@ public class AvailabilityListViewTester {
         seleniumHandler.click(AvailabilityListView.AVAILABILITY_GRID_EDIT_BUTTON_PREFIX + originalDateStr);
         seleniumHandler.setDatePickerValue(AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, newStartDate);
         seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, String.valueOf(newPercentage));
-        seleniumHandler.click(AvailabilityDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
+        closeDialog(AvailabilityDialog.CANCEL_BUTTON);
 
         // Verify original record still exists and new one doesn't
         seleniumHandler.ensureIsInList(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX, originalDateStr);
@@ -259,8 +249,7 @@ public class AvailabilityListViewTester {
         seleniumHandler.click(AvailabilityListView.AVAILABILITY_GRID_EDIT_BUTTON_PREFIX + originalDateStr);
         seleniumHandler.setDatePickerValue(AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, newStartDate);
         seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, String.valueOf(newPercentage));
-        seleniumHandler.click(AvailabilityDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
+        closeDialog(AvailabilityDialog.CONFIRM_BUTTON);
 
         String newDateStr = newStartDate.format(dateFormatter);
 
@@ -319,8 +308,7 @@ public class AvailabilityListViewTester {
         int    actualPercentage     = Integer.parseInt(actualPercentageText);
 
         // Cancel the dialog to avoid making changes
-        seleniumHandler.click(AvailabilityDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
+        closeDialog(AvailabilityDialog.CANCEL_BUTTON);
 
         // Allow for a small floating-point difference
         assertEquals(expectedPercentage, actualPercentage, "Availability percentage mismatch for record with start date: " + startDateStr);

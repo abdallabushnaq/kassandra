@@ -23,7 +23,6 @@ import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
-import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -46,10 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Component
 @Lazy
 @Log4j2
-public class ProductListViewTester {
-    @Getter
-    private final int                      port;
-    private final HumanizedSeleniumHandler seleniumHandler;
+public class ProductListViewTester extends AbstractViewTester {
 
     /**
      * Constructs a new ProductViewTester with the given Selenium handler and server port.
@@ -58,8 +54,12 @@ public class ProductListViewTester {
      * @param port            the port on which the application server is running
      */
     public ProductListViewTester(HumanizedSeleniumHandler seleniumHandler, @Value("${local.server.port:8080}") int port) {
-        this.seleniumHandler = seleniumHandler;
-        this.port            = port;
+        super(seleniumHandler, port);
+    }
+
+    private void closeDialog(String cancelButton) {
+        seleniumHandler.click(cancelButton);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
     }
 
     /**
@@ -73,8 +73,7 @@ public class ProductListViewTester {
     public void createProductCancel(String name) {
         seleniumHandler.click(ProductListView.CREATE_PRODUCT_BUTTON);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, name);
-        seleniumHandler.click(ProductDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
+        closeDialog(ProductDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsNotInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
     }
 
@@ -89,8 +88,7 @@ public class ProductListViewTester {
     public void createProductConfirm(String name) {
         seleniumHandler.click(ProductListView.CREATE_PRODUCT_BUTTON);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, name);
-        seleniumHandler.click(ProductDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
+        closeDialog(ProductDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
     }
 
@@ -106,8 +104,7 @@ public class ProductListViewTester {
     public void createProductWithDuplicateName(String name) {
         seleniumHandler.click(ProductListView.CREATE_PRODUCT_BUTTON);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, name);
-        seleniumHandler.click(ProductDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
+        closeDialog(ProductDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(ProductDialog.PRODUCT_NAME_FIELD);
@@ -115,7 +112,7 @@ public class ProductListViewTester {
         assertTrue(errorMessage.contains("409 CONFLICT"), "Error message should indicate a conflict");
         assertTrue(errorMessage.contains("already exists"), "Error message should indicate product already exists");
 
-        seleniumHandler.click(ProductDialog.CANCEL_BUTTON);
+        closeDialog(ProductDialog.CANCEL_BUTTON);
         seleniumHandler.ensureElementCountInGrid(ProductListView.PRODUCT_GRID, PRODUCT_GRID_NAME_PREFIX, name, 1);
     }
 
@@ -129,8 +126,7 @@ public class ProductListViewTester {
      */
     public void deleteProductCancel(String name) {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_DELETE_BUTTON_PREFIX + name);
-        seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
+        closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
     }
 
@@ -145,8 +141,7 @@ public class ProductListViewTester {
      */
     public void deleteProductConfirm(String name) {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_DELETE_BUTTON_PREFIX + name);
-        seleniumHandler.click(ConfirmDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
+        closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsNotInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
     }
 
@@ -163,8 +158,7 @@ public class ProductListViewTester {
     public void editProductCancel(String name, String newName) {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, newName);
-        seleniumHandler.click(ProductDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
+        closeDialog(ProductDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
         seleniumHandler.ensureIsNotInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, newName);
     }
@@ -182,8 +176,7 @@ public class ProductListViewTester {
     public void editProductConfirm(String name, String newName) {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, newName);
-        seleniumHandler.click(ProductDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
+        closeDialog(ProductDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, newName);
         seleniumHandler.ensureIsNotInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, name);
     }
@@ -201,8 +194,7 @@ public class ProductListViewTester {
     public void editProductWithDuplicateNameFails(String name, String newName) {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, newName);
-        seleniumHandler.click(ProductDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
+        closeDialog(ProductDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(ProductDialog.PRODUCT_NAME_FIELD);
@@ -210,8 +202,7 @@ public class ProductListViewTester {
         assertTrue(errorMessage.contains("409 CONFLICT"), "Error message should indicate a conflict");
         assertTrue(errorMessage.contains("already exists"), "Error message should indicate product already exists");
 
-        seleniumHandler.click(ProductDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
+        closeDialog(ProductDialog.CANCEL_BUTTON);
         seleniumHandler.ensureElementCountInGrid(ProductListView.PRODUCT_GRID, PRODUCT_GRID_NAME_PREFIX, name, 1);
     }
 

@@ -41,9 +41,7 @@ import java.time.LocalDate;
  */
 @Component
 @Lazy
-public class UserListViewTester {
-    private final int                      port;
-    private final HumanizedSeleniumHandler seleniumHandler;
+public class UserListViewTester extends AbstractViewTester {
 
     /**
      * Constructs a new UserViewTester with the given Selenium handler and server port.
@@ -52,8 +50,12 @@ public class UserListViewTester {
      * @param port            the port on which the application server is running
      */
     public UserListViewTester(HumanizedSeleniumHandler seleniumHandler, @Value("${local.server.port:8080}") int port) {
-        this.seleniumHandler = seleniumHandler;
-        this.port            = port;
+        super(seleniumHandler, port);
+    }
+
+    private void closeDialog(String cancelButton) {
+        seleniumHandler.click(cancelButton);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
     }
 
     /**
@@ -74,8 +76,7 @@ public class UserListViewTester {
         seleniumHandler.setTextField(UserDialog.USER_EMAIL_FIELD, email);
         seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, firstWorkingDay);
         seleniumHandler.setDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER, lastWorkingDay);
-        seleniumHandler.click(UserDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
+        closeDialog(UserDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsNotInList(UserListView.USER_GRID_NAME_PREFIX, name);
     }
 
@@ -97,8 +98,7 @@ public class UserListViewTester {
         seleniumHandler.setTextField(UserDialog.USER_EMAIL_FIELD, email);
         seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, firstWorkingDay);
         seleniumHandler.setDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER, lastWorkingDay);
-        seleniumHandler.click(UserDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
+        closeDialog(UserDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(UserListView.USER_GRID_NAME_PREFIX, name);
     }
 
@@ -112,7 +112,7 @@ public class UserListViewTester {
      */
     public void deleteUserCancel(String name) {
         seleniumHandler.click(UserListView.USER_GRID_DELETE_BUTTON_PREFIX + name);
-        seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(UserListView.USER_GRID_NAME_PREFIX, name);
     }
 
@@ -127,8 +127,7 @@ public class UserListViewTester {
      */
     public void deleteUserConfirm(String name) {
         seleniumHandler.click(UserListView.USER_GRID_DELETE_BUTTON_PREFIX + name);
-        seleniumHandler.click(ConfirmDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
+        closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsNotInList(UserListView.USER_GRID_NAME_PREFIX, name);
     }
 
@@ -167,8 +166,7 @@ public class UserListViewTester {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        seleniumHandler.click(UserDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
+        closeDialog(UserDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(UserListView.USER_GRID_NAME_PREFIX, originalName);
         seleniumHandler.ensureIsNotInList(UserListView.USER_GRID_NAME_PREFIX, newName);
     }
@@ -193,8 +191,7 @@ public class UserListViewTester {
         seleniumHandler.setTextField(UserDialog.USER_EMAIL_FIELD, email);
         seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, firstWorkingDay);
         seleniumHandler.setDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER, lastWorkingDay);
-        seleniumHandler.click(UserDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
+        closeDialog(UserDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(UserListView.USER_GRID_NAME_PREFIX, newName);
         seleniumHandler.ensureIsNotInList(UserListView.USER_GRID_NAME_PREFIX, name);
     }
@@ -235,8 +232,7 @@ public class UserListViewTester {
         LocalDate formFirstDay = seleniumHandler.getDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER);
         LocalDate formLastDay  = seleniumHandler.getDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER);
         // Close the dialog
-        seleniumHandler.click(UserDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
+        closeDialog(UserDialog.CANCEL_BUTTON);
         // Assert that all form fields are empty or default values
         Assertions.assertTrue(formName.isEmpty(), "Name field should be empty in new dialog");
         Assertions.assertTrue(formEmail.isEmpty(), "Email field should be empty in new dialog");
@@ -265,8 +261,7 @@ public class UserListViewTester {
         LocalDate actualFirstDay = seleniumHandler.getDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER);
         LocalDate actualLastDay  = seleniumHandler.getDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER);
         // Cancel the dialog to avoid making changes
-        seleniumHandler.click(UserDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
+        closeDialog(UserDialog.CANCEL_BUTTON);
         Assertions.assertEquals(name, actualName, "Name mismatch");
         Assertions.assertEquals(expectedEmail, actualEmail, "Email mismatch");
         Assertions.assertEquals(expectedFirstDay, actualFirstDay, "First working day mismatch");
