@@ -70,7 +70,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
     public static final String                        ROUTE                                  = "availability";
     private final       AvailabilityApi               availabilityApi;
     private             User                          currentUser;
-    private final       DateTimeFormatter             dateFormatter                          = DateTimeFormatter.ofPattern("yyyy-MM-dd");// Format dates consistently
+    private final       DateTimeFormatter             dateFormatter                          = DateTimeFormatter.ISO_LOCAL_DATE /*DateTimeFormatter.ofPattern("yyyy-MM-dd")*/;// Format dates consistently
     private final       UserApi                       userApi;
     private             AvailabilityCalendarComponent yearCalendar;
 
@@ -242,7 +242,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
 //                    VaadinIcon.CHART,
 //                    availability -> percentageFormat.format(availability.getAvailability())
 //            );
-            VaadinUtil.addSimpleHeader(availabilityColumn, "Start Date", VaadinIcon.CHART);
+            VaadinUtil.addSimpleHeader(availabilityColumn, "Availability", VaadinIcon.CHART);
         }
 
         // Add actions column with delete validation
