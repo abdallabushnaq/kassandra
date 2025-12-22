@@ -70,6 +70,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
     public static final String                        ROUTE                                  = "availability";
     private final       AvailabilityApi               availabilityApi;
     private             User                          currentUser;
+    private final       DateTimeFormatter             dateFormatter                          = DateTimeFormatter.ofPattern("yyyy-MM-dd");// Format dates consistently
     private final       UserApi                       userApi;
     private             AvailabilityCalendarComponent yearCalendar;
 
@@ -206,8 +207,6 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
     protected void initGrid(Clock clock) {
         getGrid().setId(AVAILABILITY_GRID);
 
-        // Format dates consistently
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         // Start Date Column
         {

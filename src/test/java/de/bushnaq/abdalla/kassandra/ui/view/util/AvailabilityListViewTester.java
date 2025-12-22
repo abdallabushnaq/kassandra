@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.AvailabilityListView;
 import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Value;
@@ -107,7 +108,21 @@ public class AvailabilityListViewTester extends AbstractViewTester {
         seleniumHandler.wait(300);
         // Verify the record appears in the list
         String startDateStr = startDate.format(dateFormatter);
-        seleniumHandler.ensureIsInList(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX, startDateStr);
+        try {
+            seleniumHandler.ensureIsInList(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX, startDateStr);
+        } catch (TimeoutException e) {
+            //list all elements that have an id starting with AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX
+            System.out.println("TimeoutException: Could not find element with id: " + AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX + startDateStr);
+            System.out.println("Listing all elements with id starting with: " + AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX);
+
+            var elements = seleniumHandler.findElements(By.cssSelector("[id^='" + AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX + "']"));
+            System.out.println("Found " + elements.size() + " matching elements:");
+            for (WebElement element : elements) {
+                System.out.println("  - id: " + element.getAttribute("id") + ", text: " + element.getText() + ", displayed: " + element.isDisplayed());
+            }
+            
+            throw e;
+        }
     }
 
     /**
