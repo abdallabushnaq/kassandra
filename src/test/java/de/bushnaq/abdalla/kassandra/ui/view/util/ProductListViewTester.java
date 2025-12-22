@@ -58,6 +58,7 @@ public class ProductListViewTester extends AbstractViewTester {
     }
 
     private void closeDialog(String cancelButton) {
+        seleniumHandler.wait(200);
         seleniumHandler.click(cancelButton);
         seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
     }

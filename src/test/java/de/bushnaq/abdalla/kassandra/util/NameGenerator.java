@@ -109,7 +109,7 @@ public class NameGenerator {
             // Capitalize first letter of city name
             String cityName = sprintNames.get(index);
             cityName = cityName.substring(0, 1).toUpperCase() + cityName.substring(1);
-            return String.format("Sprint %s", cityName);
+            return cityName;
         }
         return String.format("Sprint-%d", index);
     }

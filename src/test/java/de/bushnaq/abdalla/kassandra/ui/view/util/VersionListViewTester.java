@@ -53,6 +53,7 @@ public class VersionListViewTester extends AbstractViewTester {
     }
 
     private void closeDialog(String cancelButton) {
+        seleniumHandler.wait(200);
         seleniumHandler.click(cancelButton);
         seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(VersionDialog.VERSION_DIALOG)));
     }

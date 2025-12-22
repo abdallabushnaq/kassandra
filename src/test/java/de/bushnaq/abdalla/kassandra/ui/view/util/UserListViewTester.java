@@ -54,7 +54,7 @@ public class UserListViewTester extends AbstractViewTester {
     }
 
     private void closeDialog(String cancelButton) {
-        seleniumHandler.wait(300);
+        seleniumHandler.wait(200);
         seleniumHandler.click(cancelButton);
         seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
     }
