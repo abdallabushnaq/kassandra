@@ -882,7 +882,7 @@ class SeleniumHandler {
 
         // Format the date in US format (M/d/yyyy)
         // Note: This matches the browser's default US locale
-        String dateStr = date.format(DateTimeFormatter.ofPattern("M/d/yyyy"));
+        String dateStr = date.format(DateTimeFormatter.ISO_LOCAL_DATE);
         log.trace("Typing date into date picker: {} (formatted as US: {})", date, dateStr);
 
         typeText(inputField, dateStr);

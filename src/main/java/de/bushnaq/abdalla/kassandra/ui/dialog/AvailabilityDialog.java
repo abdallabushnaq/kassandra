@@ -110,6 +110,7 @@ public class AvailabilityDialog extends Dialog {
         FormLayout formLayout = new FormLayout();
 
         // Configure fields
+        startDateField.setI18n(new DatePicker.DatePickerI18n().setDateFormat("yyyy-MM-dd"));
         startDateField.setWidthFull();
         startDateField.setHelperText("The date when this availability level begins");
         startDateField.setId(AVAILABILITY_START_DATE_FIELD);

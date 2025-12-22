@@ -960,8 +960,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
 
         // Format the date in US format (M/d/yyyy)
         // Note: This matches the browser's default US locale
-        String dateStr = date.format(DateTimeFormatter.ofPattern("M/d/yyyy"));
-        log.trace("Typing date into date picker: {} (formatted as US: {})", date, dateStr);
+        String dateStr = date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        log.info("Typing date into date picker: {} (formatted as US: {})", date, dateStr);
 
         typeText(inputField, dateStr);
 
