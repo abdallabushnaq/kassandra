@@ -143,6 +143,7 @@ public class OffDayListViewTester extends AbstractViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
         closeDialog(OffDayDialog.CONFIRM_BUTTON);
+        seleniumHandler.wait(300);
         // Verify the record appears in the list
         verifyOffDayRecordExists(firstDay, lastDay, type);
     }
@@ -258,6 +259,7 @@ public class OffDayListViewTester extends AbstractViewTester {
 
         // Confirm the edit
         closeDialog(OffDayDialog.CONFIRM_BUTTON);
+        seleniumHandler.wait(300);
 
         // Verify updated record exists with new values
         verifyOffDayRecordExists(newFirstDay, newLastDay, newType);

@@ -109,8 +109,7 @@ public class ProductListViewTester extends AbstractViewTester {
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(ProductDialog.PRODUCT_NAME_FIELD);
         assertNotNull(errorMessage, "Error message should be present on the name field");
-        assertTrue(errorMessage.contains("409 CONFLICT"), "Error message should indicate a conflict");
-        assertTrue(errorMessage.contains("already exists"), "Error message should indicate product already exists");
+        assertTrue(errorMessage.contains("A product with name '" + name + "' already exists"), "Unexpected error message format");
 
         closeDialog(ProductDialog.CANCEL_BUTTON);
         seleniumHandler.ensureElementCountInGrid(ProductListView.PRODUCT_GRID, PRODUCT_GRID_NAME_PREFIX, name, 1);
@@ -199,8 +198,7 @@ public class ProductListViewTester extends AbstractViewTester {
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(ProductDialog.PRODUCT_NAME_FIELD);
         assertNotNull(errorMessage, "Error message should be present on the name field");
-        assertTrue(errorMessage.contains("409 CONFLICT"), "Error message should indicate a conflict");
-        assertTrue(errorMessage.contains("already exists"), "Error message should indicate product already exists");
+        assertTrue(errorMessage.contains("A product with name '" + newName + "' already exists"), "Unexpected error message format");
 
         closeDialog(ProductDialog.CANCEL_BUTTON);
         seleniumHandler.ensureElementCountInGrid(ProductListView.PRODUCT_GRID, PRODUCT_GRID_NAME_PREFIX, name, 1);

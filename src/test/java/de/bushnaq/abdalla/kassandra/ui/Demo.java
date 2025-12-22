@@ -56,7 +56,7 @@ import java.util.List;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
         properties = {
-                "server.port=8080",
+                "server.port=${test.server.port:0}",
                 "spring.profiles.active=test",
                 "spring.security.basic.enabled=false"// Disable basic authentication for these tests
         }

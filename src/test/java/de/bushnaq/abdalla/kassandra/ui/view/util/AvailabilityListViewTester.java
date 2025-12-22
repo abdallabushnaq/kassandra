@@ -101,8 +101,9 @@ public class AvailabilityListViewTester extends AbstractViewTester {
         seleniumHandler.click(AvailabilityListView.CREATE_AVAILABILITY_BUTTON);
         seleniumHandler.setDatePickerValue(AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, startDate);
         seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, String.valueOf(availabilityPercentage));
-        seleniumHandler.click(AvailabilityDialog.CONFIRM_BUTTON);
+        closeDialog(AvailabilityDialog.CONFIRM_BUTTON);
 
+        seleniumHandler.wait(300);
         // Verify the record appears in the list
         String startDateStr = startDate.format(dateFormatter);
         seleniumHandler.ensureIsInList(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX, startDateStr);
@@ -251,6 +252,7 @@ public class AvailabilityListViewTester extends AbstractViewTester {
         seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, String.valueOf(newPercentage));
         closeDialog(AvailabilityDialog.CONFIRM_BUTTON);
 
+        seleniumHandler.wait(300);
         String newDateStr = newStartDate.format(dateFormatter);
 
         // Verify the new record exists and the old one is gone (if dates are different)

@@ -38,6 +38,7 @@ public abstract class AbstractViewTester {
     }
 
     protected void closeConfirmDialog(String button) {
+        seleniumHandler.wait(300);
         seleniumHandler.click(button);
         seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ConfirmDialog.CONFIRM_DIALOG)));
     }
