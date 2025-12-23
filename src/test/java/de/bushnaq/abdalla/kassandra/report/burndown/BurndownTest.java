@@ -62,6 +62,7 @@ public class BurndownTest extends AbstractGanttTestUtil {
         savedSprint.initUserMap(userApi.getAll(savedSprint.getId()));
         savedSprint.initTaskMap(taskApi.getAll(savedSprint.getId()), worklogApi.getAll(savedSprint.getId()));
         {
+            levelResources(testInfo, savedSprint, null);
             generateBurndownChart(testInfo, savedSprint.getId());
             generateGanttChart(testInfo, savedSprint.getId(), null);
         }
