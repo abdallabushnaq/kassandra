@@ -230,6 +230,7 @@ public class UserDialog extends Dialog {
         // First working day picker
         {
             firstWorkingDayPicker = new DatePicker("First Working Day");
+            firstWorkingDayPicker.setI18n(new DatePicker.DatePickerI18n().setDateFormat("yyyy-MM-dd"));
             firstWorkingDayPicker.setId(USER_FIRST_WORKING_DAY_PICKER);
             firstWorkingDayPicker.setWidthFull();
             firstWorkingDayPicker.setPrefixComponent(new Icon(VaadinIcon.CALENDAR_USER));
@@ -238,6 +239,7 @@ public class UserDialog extends Dialog {
         // Last working day picker
         {
             lastWorkingDayPicker = new DatePicker("Last Working Day");
+            lastWorkingDayPicker.setI18n(new DatePicker.DatePickerI18n().setDateFormat("yyyy-MM-dd"));
             lastWorkingDayPicker.setId(USER_LAST_WORKING_DAY_PICKER);
             lastWorkingDayPicker.setWidthFull();
             lastWorkingDayPicker.setPrefixComponent(new Icon(VaadinIcon.CALENDAR_USER));

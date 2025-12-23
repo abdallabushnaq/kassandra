@@ -115,12 +115,15 @@ public class AvailabilityListViewTester extends AbstractViewTester {
             System.out.println("TimeoutException: Could not find element with id: " + AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX + startDateStr);
             System.out.println("Listing all elements with id starting with: " + AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX);
 
+            // Log locale information for debugging
+            logLocaleInformation();
+
             var elements = seleniumHandler.findElements(By.cssSelector("[id^='" + AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX + "']"));
             System.out.println("Found " + elements.size() + " matching elements:");
             for (WebElement element : elements) {
                 System.out.println("  - id: " + element.getAttribute("id") + ", text: " + element.getText() + ", displayed: " + element.isDisplayed());
             }
-            
+
             throw e;
         }
     }
@@ -279,6 +282,48 @@ public class AvailabilityListViewTester extends AbstractViewTester {
 
         // Verify the updated value
         verifyAvailabilityValue(newDateStr, newPercentage);
+    }
+
+    /**
+     * Logs locale information from both backend (JVM) and frontend (browser) for debugging.
+     * This helps diagnose date formatting issues related to locale mismatches.
+     */
+    private void logLocaleInformation() {
+        System.out.println("=== LOCALE INFORMATION ===");
+
+        // Backend (JVM) locale information
+        System.out.println("Backend JVM Locale: " + java.util.Locale.getDefault());
+        System.out.println("Backend JVM Language: " + java.util.Locale.getDefault().getLanguage());
+        System.out.println("Backend JVM Country: " + java.util.Locale.getDefault().getCountry());
+        System.out.println("Backend Time Zone: " + java.time.ZoneId.systemDefault());
+        System.out.println("Backend Date Format (sample): " + java.time.LocalDate.now().format(dateFormatter));
+
+        // Frontend (Browser) locale information via JavaScript
+        try {
+            Object browserLanguage = seleniumHandler.executeJavaScript("return navigator.language;");
+            System.out.println("Browser Language: " + browserLanguage);
+
+            Object browserLanguages = seleniumHandler.executeJavaScript("return navigator.languages;");
+            System.out.println("Browser Languages: " + browserLanguages);
+
+            Object timeZone = seleniumHandler.executeJavaScript("return Intl.DateTimeFormat().resolvedOptions().timeZone;");
+            System.out.println("Browser Time Zone: " + timeZone);
+
+            Object locale = seleniumHandler.executeJavaScript("return Intl.DateTimeFormat().resolvedOptions().locale;");
+            System.out.println("Browser Intl Locale: " + locale);
+
+            // Test date formatting in browser
+            Object dateFormat = seleniumHandler.executeJavaScript(
+                    "const date = new Date(2025, 0, 15); " + // January 15, 2025
+                            "return new Intl.DateTimeFormat(undefined, {year: 'numeric', month: '2-digit', day: '2-digit'}).format(date);"
+            );
+            System.out.println("Browser Date Format (sample): " + dateFormat);
+
+        } catch (Exception e) {
+            System.out.println("Error getting browser locale information: " + e.getMessage());
+        }
+
+        System.out.println("=========================");
     }
 
     /**

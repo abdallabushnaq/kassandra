@@ -444,6 +444,13 @@ class SeleniumHandler {
         options.addArguments("--disable-features=ClipboardContentSetting");
         options.setCapability(CapabilityType.ACCEPT_INSECURE_CERTS, true);
 
+        // Set browser locale if specified via system property (e.g., -Dtest.locale=de-DE)
+        String testLocale = System.getProperty("test.locale");
+        if (testLocale != null && !testLocale.isEmpty()) {
+            log.info("Setting browser locale to: " + testLocale);
+            options.addArguments("--lang=" + testLocale);
+        }
+
         // Enable browser console logging to capture JavaScript console.log messages
         // Use W3C-compliant logging preferences for modern Chrome/Selenium
         options.setCapability("goog:loggingPrefs", Map.of(

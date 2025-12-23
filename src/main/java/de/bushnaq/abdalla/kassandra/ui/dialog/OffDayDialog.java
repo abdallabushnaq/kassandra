@@ -111,11 +111,13 @@ public class OffDayDialog extends Dialog {
         FormLayout formLayout = new FormLayout();
 
         // Configure fields
+        firstDayField.setI18n(new DatePicker.DatePickerI18n().setDateFormat("yyyy-MM-dd"));
         firstDayField.setWidthFull();
         firstDayField.setHelperText("The first day of the off period");
         firstDayField.setId(OFFDAY_START_DATE_FIELD);
         firstDayField.setPrefixComponent(new Icon(VaadinIcon.CALENDAR));
 
+        lastDayField.setI18n(new DatePicker.DatePickerI18n().setDateFormat("yyyy-MM-dd"));
         lastDayField.setWidthFull();
         lastDayField.setHelperText("The last day of the off period");
         lastDayField.setId(OFFDAY_END_DATE_FIELD);

@@ -105,6 +105,7 @@ public class LocationDialog extends Dialog {
         stateComboBox.setEnabled(false); // Initially disabled until country is selected
 
         // Configure start date picker
+        startDatePicker.setI18n(new DatePicker.DatePickerI18n().setDateFormat("yyyy-MM-dd"));
         startDatePicker.setId(LOCATION_START_DATE_FIELD);
         startDatePicker.setRequired(true);
         startDatePicker.setMax(LocalDate.now().plusYears(10));
