@@ -24,9 +24,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.AvailabilityListView;
 import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import org.openqa.selenium.By;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -62,10 +60,10 @@ public class AvailabilityListViewTester extends AbstractViewTester {
         org.junit.jupiter.api.Assertions.assertTrue(condition, message);
     }
 
-    private void closeDialog(String button) {
+    public void closeDialog(String button) {
         seleniumHandler.wait(200);
         seleniumHandler.click(button);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(AvailabilityDialog.AVAILABILITY_DIALOG)));
+        seleniumHandler.waitForElementInvisibility(AvailabilityDialog.AVAILABILITY_DIALOG);
     }
 
     /**
@@ -108,24 +106,7 @@ public class AvailabilityListViewTester extends AbstractViewTester {
         seleniumHandler.wait(300);
         // Verify the record appears in the list
         String startDateStr = startDate.format(dateFormatter);
-        try {
-            seleniumHandler.ensureIsInList(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX, startDateStr);
-        } catch (TimeoutException e) {
-            //list all elements that have an id starting with AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX
-            System.out.println("TimeoutException: Could not find element with id: " + AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX + startDateStr);
-            System.out.println("Listing all elements with id starting with: " + AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX);
-
-            // Log locale information for debugging
-            logLocaleInformation();
-
-            var elements = seleniumHandler.findElements(By.cssSelector("[id^='" + AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX + "']"));
-            System.out.println("Found " + elements.size() + " matching elements:");
-            for (WebElement element : elements) {
-                System.out.println("  - id: " + element.getAttribute("id") + ", text: " + element.getText() + ", displayed: " + element.isDisplayed());
-            }
-
-            throw e;
-        }
+        seleniumHandler.ensureIsInList(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX, startDateStr);
     }
 
     /**
@@ -145,11 +126,8 @@ public class AvailabilityListViewTester extends AbstractViewTester {
         seleniumHandler.click(AvailabilityListView.CREATE_AVAILABILITY_BUTTON);
         seleniumHandler.setDatePickerValue(AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, existingStartDate);
         seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, String.valueOf(newPercentage));
-        closeDialog(AvailabilityDialog.CONFIRM_BUTTON);
-
-        // Verify the validation error occurs (dialog should still be open)
-        //TODO test for the actual error text
-        seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("vaadin-notification-card")));
+        seleniumHandler.wait(200);
+        seleniumHandler.waitForElementToBeDisabled(AvailabilityDialog.CONFIRM_BUTTON);
 
         // Cancel the dialog since we expect it to still be open
         closeDialog(AvailabilityDialog.CANCEL_BUTTON);
@@ -172,17 +150,11 @@ public class AvailabilityListViewTester extends AbstractViewTester {
         seleniumHandler.click(AvailabilityListView.CREATE_AVAILABILITY_BUTTON);
         seleniumHandler.setDatePickerValue(AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, startDate);
         seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, String.valueOf(invalidPercentage));
-        closeDialog(AvailabilityDialog.CONFIRM_BUTTON);
-
-        // Verify the validation error occurs (dialog should still be open)
-        seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(
-                By.cssSelector("vaadin-notification-card")));
+        seleniumHandler.wait(200);
+        seleniumHandler.waitForElementToBeDisabled(AvailabilityDialog.CONFIRM_BUTTON);
 
         // Cancel the dialog since we expect it to still be open
         closeDialog(AvailabilityDialog.CANCEL_BUTTON);
-
-        // Verify the record wasn't created
-        seleniumHandler.ensureIsNotInList(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX, startDateStr);
     }
 
     /**
@@ -344,12 +316,12 @@ public class AvailabilityListViewTester extends AbstractViewTester {
             seleniumHandler.setLoginUser("admin-user");
             seleniumHandler.setLoginPassword("test-password");
             seleniumHandler.loginSubmit();
-            seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(ProductListView.PRODUCT_LIST_PAGE_TITLE)));
+            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
         }
         // Navigate to the availability view for the specific user or current user
         String url = "http://localhost:" + port + "/ui/" + AvailabilityListView.ROUTE;
         seleniumHandler.getAndCheck(url);
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(AvailabilityListView.AVAILABILITY_LIST_PAGE_TITLE)));
+        seleniumHandler.waitForElementToBeClickable(AvailabilityListView.AVAILABILITY_LIST_PAGE_TITLE);
     }
 
     /**

@@ -26,6 +26,8 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.ValidationException;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.LocationApi;
@@ -47,8 +49,10 @@ public class LocationDialog extends Dialog {
     public static final String           LOCATION_DIALOG           = "location-dialog";
     public static final String           LOCATION_START_DATE_FIELD = "location-start-date-field";
     public static final String           LOCATION_STATE_FIELD      = "location-state-field";
+    private final       Binder<Location> binder                    = new Binder<>(Location.class);
     private final       ComboBox<String> countryComboBox           = new ComboBox<>("Country");
-    private             Location         location;
+    private final       boolean          isEditMode;
+    private final       Location         location;
     private final       LocationApi      locationApi;
     private final       Runnable         onSaveCallback;
     private final       DatePicker       startDatePicker           = new DatePicker("Start Date");
@@ -56,13 +60,14 @@ public class LocationDialog extends Dialog {
     private final       User             user;
 
     public LocationDialog(Location location, User user, LocationApi locationApi, Runnable onSaveCallback) {
-        this.location       = location;
+        this.location       = location != null ? location : new Location();
         this.user           = user;
         this.locationApi    = locationApi;
         this.onSaveCallback = onSaveCallback;
+        this.isEditMode     = location != null;
 
         // Set the dialog title with an icon
-        String title = location != null ? "Edit Location" : "Create Location";
+        String title = isEditMode ? "Edit Location" : "Create Location";
         getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.MAP_MARKER));
 
         setId(LOCATION_DIALOG);
@@ -71,7 +76,55 @@ public class LocationDialog extends Dialog {
         VerticalLayout content = createDialogContent();
         add(content);
 
+        configureFormBinder();
         initFormValues();
+    }
+
+    private void configureFormBinder() {
+        // Country binding
+        binder.forField(countryComboBox)
+                .asRequired("Country is required")
+                .withValidationStatusHandler(status -> {
+                    countryComboBox.setInvalid(status.isError());
+                    status.getMessage().ifPresent(countryComboBox::setErrorMessage);
+                })
+                .bind(Location::getCountry, Location::setCountry);
+
+        // State binding
+        binder.forField(stateComboBox)
+                .asRequired("State/Region is required")
+                .withValidationStatusHandler(status -> {
+                    stateComboBox.setInvalid(status.isError());
+                    status.getMessage().ifPresent(stateComboBox::setErrorMessage);
+                })
+                .bind(Location::getState, Location::setState);
+
+        // Start date binding with custom validator to ensure uniqueness
+        binder.forField(startDatePicker)
+                .asRequired("Start date is required")
+                .withValidator(this::validateStartDateUniqueness, "A location with this start date already exists")
+                .withValidationStatusHandler(status -> {
+                    startDatePicker.setInvalid(status.isError());
+                    status.getMessage().ifPresent(startDatePicker::setErrorMessage);
+                })
+                .bind(Location::getStart, Location::setStart);
+
+        // Load data into the form
+        if (isEditMode) {
+            // Important: Populate states for the selected country BEFORE reading the bean
+            // so that the state value can be properly set
+            if (location.getCountry() != null) {
+                populateStates(location.getCountry());
+            }
+            binder.readBean(location);
+        } else {
+            binder.readBean(new Location());
+        }
+
+        // Trigger validation to show errors for initially empty fields in create mode
+        if (!isEditMode) {
+            binder.validate();
+        }
     }
 
     private VerticalLayout createDialogContent() {
@@ -111,20 +164,17 @@ public class LocationDialog extends Dialog {
         startDatePicker.setMax(LocalDate.now().plusYears(10));
         startDatePicker.setPrefixComponent(new Icon(VaadinIcon.CALENDAR));
 
-        content.add(countryComboBox, stateComboBox, startDatePicker, VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this));
+        content.add(countryComboBox, stateComboBox, startDatePicker, VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
         return content;
     }
 
     private void initFormValues() {
-        if (location != null) {
-            // Edit existing location
-            countryComboBox.setValue(location.getCountry());
-            stateComboBox.setValue(location.getState());
-            startDatePicker.setValue(location.getStart());
-        } else {
+        if (!isEditMode) {
             // Set default values for new location
             startDatePicker.setValue(LocalDate.now());
         }
+        // Note: For edit mode, state population is handled in configureFormBinder()
+        // before binder.readBean() to ensure the state can be properly set
     }
 
     private void populateCountries() {
@@ -223,35 +273,34 @@ public class LocationDialog extends Dialog {
     }
 
     private void save() {
-        if (!validateForm()) {
-            return;
-        }
-
         try {
-            boolean isNewLocation = (location == null);
-            if (isNewLocation) {
-                location = new Location();
+            // Validate all fields first
+            if (!binder.validate().isOk()) {
+                return; // Stop here if validation fails
             }
+
+            // Write values to bean
+            binder.writeBean(location);
 
             // Ensure user association is set
             location.setUser(user);
-            // Set values from form
-            location.setCountry(countryComboBox.getValue());
-            location.setState(stateComboBox.getValue());
-            location.setStart(startDatePicker.getValue());
 
-            if (isNewLocation) {
-                locationApi.persist(location, user.getId());
-                Notification.show("Location added", 3000, Notification.Position.MIDDLE);
-            } else {
+            if (isEditMode) {
                 locationApi.update(location, user.getId());
                 Notification.show("Location updated", 3000, Notification.Position.MIDDLE);
+            } else {
+                locationApi.persist(location, user.getId());
+                Notification.show("Location added", 3000, Notification.Position.MIDDLE);
             }
 
             // Call the callback
             onSaveCallback.run();
             close();
+        } catch (ValidationException e) {
+            System.out.printf("Validation failed: %s%n", e.getMessage());
+            // Validation errors will already be displayed next to the fields
         } catch (Exception e) {
+            System.out.printf("Error saving location: %s%n", e.getMessage());
             Notification notification = Notification.show(
                     "Error saving location: " + e.getMessage(),
                     3000,
@@ -260,49 +309,16 @@ public class LocationDialog extends Dialog {
         }
     }
 
-    private boolean validateForm() {
-        boolean isValid = true;
+    private boolean validateStartDateUniqueness(LocalDate date) {
+        if (date == null) return true; // Let the required validator handle null values
 
-        // Validate country
-        if (countryComboBox.getValue() == null || countryComboBox.getValue().isEmpty()) {
-            countryComboBox.setInvalid(true);
-            countryComboBox.setErrorMessage("Please select a country");
-            isValid = false;
-        } else {
-            countryComboBox.setInvalid(false);
+        // If editing existing record and date hasn't changed, it's valid
+        if (isEditMode && location.getStart() != null && location.getStart().equals(date)) {
+            return true;
         }
 
-        // Validate state
-        if (stateComboBox.getValue() == null || stateComboBox.getValue().isEmpty()) {
-            stateComboBox.setInvalid(true);
-            stateComboBox.setErrorMessage("Please select a state/region");
-            isValid = false;
-        } else {
-            stateComboBox.setInvalid(false);
-        }
-
-        // Validate start date
-        if (startDatePicker.getValue() == null) {
-            startDatePicker.setInvalid(true);
-            startDatePicker.setErrorMessage("Please select a start date");
-            isValid = false;
-        } else {
-            // Check if this start date already exists for the user (unless it's the current location being edited)
-            if (location != null && user.getLocations().stream()
-                    .filter(loc -> !loc.getId().equals(location.getId()))
-                    .anyMatch(loc -> loc.getStart().equals(startDatePicker.getValue()))) {
-                startDatePicker.setInvalid(true);
-                startDatePicker.setErrorMessage("A location with this start date already exists");
-                isValid = false;
-            } else if (location == null && user.getLocations().stream().anyMatch(loc -> loc.getStart().equals(startDatePicker.getValue()))) {
-                startDatePicker.setInvalid(true);
-                startDatePicker.setErrorMessage("A location with this start date already exists");
-                isValid = false;
-            } else {
-                startDatePicker.setInvalid(false);
-            }
-        }
-
-        return isValid;
+        // Check if any other location record exists with the same date
+        return user.getLocations().stream()
+                .noneMatch(loc -> date.equals(loc.getStart()) && !loc.equals(location));
     }
 }

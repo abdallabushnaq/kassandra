@@ -75,17 +75,29 @@ public class OffDayDialog extends Dialog {
         setWidth(DIALOG_DEFAULT_WIDTH);
 
         // Setup form and actions
-        add(/*createHeader(),*/ createForm(), VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this));
+        add(/*createHeader(),*/ createForm(), VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
         configureFormBinder();
     }
 
     private void configureFormBinder() {
+        // Ensure offDay has user set and calendar is initialized for validation
+        offDay.setUser(user);
+        if (user.getCalendar() == null) {
+            user.initialize();
+        }
+
         // First day binding
         binder.forField(firstDayField)
                 .asRequired("First day is required")
                 .withValidator(date -> date == null || lastDayField.getValue() == null ||
                                 !date.isAfter(lastDayField.getValue()),
                         "First day must be before or equal to last day")
+                .withValidator(this::validateDateRangeHasWorkingDays,
+                        "The selected date range contains only weekends and holidays")
+                .withValidationStatusHandler(status -> {
+                    firstDayField.setInvalid(status.isError());
+                    status.getMessage().ifPresent(firstDayField::setErrorMessage);
+                })
                 .bind(OffDay::getFirstDay, OffDay::setFirstDay);
 
         // Last day binding
@@ -94,16 +106,33 @@ public class OffDayDialog extends Dialog {
                 .withValidator(date -> date == null || firstDayField.getValue() == null ||
                                 !date.isBefore(firstDayField.getValue()),
                         "Last day must be after or equal to first day")
+                .withValidator(this::validateDateRangeHasWorkingDays,
+                        "Please select a range that includes working days")
+                .withValidationStatusHandler(status -> {
+                    lastDayField.setInvalid(status.isError());
+                    status.getMessage().ifPresent(lastDayField::setErrorMessage);
+                })
                 .bind(OffDay::getLastDay, OffDay::setLastDay);
 
         // Type binding
         binder.forField(typeField)
                 .asRequired("Type is required")
+                .withValidationStatusHandler(status -> {
+                    typeField.setInvalid(status.isError());
+                    status.getMessage().ifPresent(typeField::setErrorMessage);
+                })
                 .bind(OffDay::getType, OffDay::setType);
 
         // Load data into the form
         if (!isNewOffDay) {
             binder.readBean(offDay);
+        } else {
+            binder.readBean(new OffDay(LocalDate.now(), LocalDate.now(), OffDayType.VACATION));
+        }
+
+        // Trigger validation to show errors for initially empty fields in create mode
+        if (isNewOffDay) {
+            binder.validate();
         }
     }
 
@@ -130,19 +159,20 @@ public class OffDayDialog extends Dialog {
         typeField.setPrefixComponent(new Icon(VaadinIcon.TAGS));
 
         // Add validation for date range relationship
-        firstDayField.addValueChangeListener(e -> lastDayField.setMin(e.getValue()));
-        lastDayField.addValueChangeListener(e -> firstDayField.setMax(e.getValue()));
+        firstDayField.addValueChangeListener(e -> {
+            lastDayField.setMin(e.getValue());
+            // Re-validate both fields when first day changes
+            binder.validate();
+        });
+        lastDayField.addValueChangeListener(e -> {
+            firstDayField.setMax(e.getValue());
+            // Re-validate both fields when last day changes
+            binder.validate();
+        });
 
         formLayout.add(typeField, firstDayField, lastDayField);
         return formLayout;
     }
-
-//    private H3 createHeader() {
-//        String title  = isNewOffDay ? "Add New Off Day" : "Edit Off Day";
-//        H3     header = new H3(title);
-//        header.getStyle().set("margin-top", "0");
-//        return header;
-//    }
 
     /**
      * Checks if a given date is a holiday (excluding user off-days like vacation, sick leave, or business trips).
@@ -165,6 +195,13 @@ public class OffDayDialog extends Dialog {
                 && !name.equals(OffDayType.TRIP.name());
     }
 
+//    private H3 createHeader() {
+//        String title  = isNewOffDay ? "Add New Off Day" : "Edit Off Day";
+//        H3     header = new H3(title);
+//        header.getStyle().set("margin-top", "0");
+//        return header;
+//    }
+
     /**
      * Checks if a given date is a weekend day.
      *
@@ -186,29 +223,16 @@ public class OffDayDialog extends Dialog {
             // Write values to bean
             binder.writeBean(offDay);
 
-            // Ensure user association is set
+            // Ensure user association is set (should already be set, but ensure it)
             offDay.setUser(user);
 
-            // Ensure the user's calendar is initialized
-            if (user.getCalendar() == null) {
-                user.initialize();
-            }
-
             // Split the off-day range to exclude weekends and holidays
+            // This will succeed because the validator already checked that working days exist
             List<OffDay> splitOffDays = splitOffDayExcludingWeekendsAndHolidays(
                     offDay.getFirstDay(),
                     offDay.getLastDay(),
                     offDay.getType()
             );
-
-            // If no valid working days were found in the range
-            if (splitOffDays.isEmpty()) {
-                firstDayField.setInvalid(true);
-                firstDayField.setErrorMessage("The selected date range contains only weekends and holidays");
-                lastDayField.setInvalid(true);
-                lastDayField.setErrorMessage("Please select a range that includes working days");
-                return;
-            }
 
             // Save to backend - save each split off-day separately
             if (isNewOffDay) {
@@ -246,23 +270,20 @@ public class OffDayDialog extends Dialog {
             System.out.printf("Validation failed: %s%n", e.getMessage());
             // Validation errors will already be displayed next to the fields
         } catch (Exception e) {
-            System.out.printf("Validation failed: %s%n", e.getMessage());
+            System.out.printf("Error saving off day: %s%n", e.getMessage());
             if (e instanceof ResponseStatusException && ((ResponseStatusException) e).getStatusCode().equals(HttpStatus.CONFLICT)) {
                 String errorMessage = ((ResponseStatusException) e).getReason();
                 firstDayField.setInvalid(errorMessage != null);
                 firstDayField.setErrorMessage(errorMessage);
                 lastDayField.setInvalid(errorMessage != null);
                 lastDayField.setErrorMessage(errorMessage);
-                // Keep the dialog open so the user can correct the name
+                // Keep the dialog open so the user can correct the error
             } else {
-                // For other errors, show generic message and close dialog
+                // For other errors, show generic message
                 Notification notification = Notification.show("Error saving off day: " + e.getMessage(), 3000, Notification.Position.MIDDLE);
                 notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
                 notification.open();
-                // dialogReference.close();
-                // Keep the dialog open so the user can correct the name
             }
-            // Only show notification for unexpected errors
         }
     }
 
@@ -315,5 +336,32 @@ public class OffDayDialog extends Dialog {
         }
 
         return result;
+    }
+
+    /**
+     * Validates that the date range contains at least one working day (excluding weekends and holidays).
+     *
+     * @param date The date to validate (can be either firstDay or lastDay)
+     * @return true if the range contains at least one working day, false otherwise
+     */
+    private boolean validateDateRangeHasWorkingDays(LocalDate date) {
+        if (date == null) return true; // Let the required validator handle null values
+
+        LocalDate firstDay = firstDayField.getValue();
+        LocalDate lastDay  = lastDayField.getValue();
+
+        // Both dates must be set to perform this validation
+        if (firstDay == null || lastDay == null) {
+            return true; // Let the required validators handle missing dates
+        }
+
+        // Check if the date range is valid (first <= last)
+        if (firstDay.isAfter(lastDay)) {
+            return true; // Let the date comparison validators handle this
+        }
+
+        // Check if there's at least one working day in the range
+        List<OffDay> splitOffDays = splitOffDayExcludingWeekendsAndHolidays(firstDay, lastDay, OffDayType.VACATION);
+        return !splitOffDays.isEmpty();
     }
 }

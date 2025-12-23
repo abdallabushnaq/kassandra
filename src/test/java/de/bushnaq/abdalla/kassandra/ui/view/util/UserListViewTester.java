@@ -24,8 +24,6 @@ import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import de.bushnaq.abdalla.kassandra.ui.view.UserListView;
 import org.junit.jupiter.api.Assertions;
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -53,10 +51,10 @@ public class UserListViewTester extends AbstractViewTester {
         super(seleniumHandler, port);
     }
 
-    private void closeDialog(String cancelButton) {
+    public void closeDialog(String cancelButton) {
         seleniumHandler.wait(200);
         seleniumHandler.click(cancelButton);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(UserDialog.USER_DIALOG)));
+        seleniumHandler.waitForElementInvisibility(UserDialog.USER_DIALOG);
     }
 
     /**
@@ -207,10 +205,10 @@ public class UserListViewTester extends AbstractViewTester {
             seleniumHandler.setLoginUser("admin-user");
             seleniumHandler.setLoginPassword("test-password");
             seleniumHandler.loginSubmit();
-            seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(ProductListView.PRODUCT_LIST_PAGE_TITLE)));
+            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
         }
         seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + UserListView.ROUTE);
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(UserListView.USER_LIST_PAGE_TITLE)));
+        seleniumHandler.waitForElementToBeClickable(UserListView.USER_LIST_PAGE_TITLE);
     }
 
     /**

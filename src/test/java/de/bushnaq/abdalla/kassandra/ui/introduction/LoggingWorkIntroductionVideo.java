@@ -34,8 +34,6 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -109,7 +107,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
 
         // Navigate directly to Active Sprints view
         seleniumHandler.getAndCheck("http://localhost:" + productListViewTester.getPort() + "/ui/" + ActiveSprints.ROUTE);
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(ActiveSprints.ID_CLEAR_FILTERS_BUTTON)));
+        seleniumHandler.waitForElementToBeClickable(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
 
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
@@ -217,7 +215,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             grace.pauseIfSilent(500);
 
             // Wait for worklog dialog to appear
-            seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(WorklogDialog.TITLE_ID)));
+            seleniumHandler.waitForElementToBeClickable(WorklogDialog.TITLE_ID);
 
             grace.pause(2000);
 
@@ -253,7 +251,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             grace.pauseIfSilent(500);
 
             // Wait for dialog to close
-            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(WorklogDialog.WORKLOG_DIALOG)));
+            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
             grace.pause(1500);
 
             grace.narrate(NORMAL, "The dialog closes and we're back at the scrum board.");
@@ -286,7 +284,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             grace.narrate(NORMAL, "Now I'll click on the API documentation task to log work.");
             seleniumHandler.click(task12CardId);
             grace.pauseIfSilent(500);
-            seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(WorklogDialog.TITLE_ID)));
+            seleniumHandler.waitForElementToBeClickable(WorklogDialog.TITLE_ID);
             grace.pause(1500);
 
             grace.narrate(NORMAL, "I'll log 1 hour of work on this task.");
@@ -315,7 +313,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             grace.narrate(NORMAL, "And I'll save this worklog entry.");
             seleniumHandler.click(WorklogDialog.SAVE_BUTTON);
             grace.pauseIfSilent(500);
-            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(WorklogDialog.WORKLOG_DIALOG)));
+            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
             grace.pause(1500);
 
             grace.narrate(NORMAL, "Perfect! The task card still shows 2 hours remaining, accurately reflecting the reality. This is exactly how you track your daily progress in Kassandra - honestly and transparently.");
@@ -347,7 +345,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             // Open worklog dialog
             seleniumHandler.click(task13CardId);
             grace.pauseIfSilent(500);
-            seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(WorklogDialog.TITLE_ID)));
+            seleniumHandler.waitForElementToBeClickable(WorklogDialog.TITLE_ID);
             grace.pause(1500);
 
             grace.narrate(NORMAL, "This task has 5 hours remaining. I'll log 5 hours of work to complete it entirely.");
@@ -366,7 +364,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
 
             seleniumHandler.click(WorklogDialog.SAVE_BUTTON);
             grace.pauseIfSilent(500);
-            seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(WorklogDialog.WORKLOG_DIALOG)));
+            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
             grace.pause(1500);
 
             grace.narrate(NORMAL, "Now I'll move this completed task to the done lane by dragging it.");

@@ -55,25 +55,25 @@ import java.util.Set;
 @RolesAllowed({"USER", "ADMIN"})
 @Log4j2
 public class Backlog extends Main implements BeforeEnterObserver, AfterNavigationObserver {
-    public static final String SPRINTS_PAGE_TITLE_ID = "backlog-title";
 
-    private       List<Sprint>                allSprints         = new ArrayList<>();
-    private final VerticalLayout              contentLayout;
-    private       boolean                     hasUrlParameters   = false;
-    private       boolean                     isRestoringFromUrl = false;
-    private       String                      savedSprintIds     = null;
-    private       String                      savedUserIds       = null;
-    private       String                      searchText         = "";
-    private       java.util.Set<Sprint>       selectedSprints    = new java.util.HashSet<>();
-    private       java.util.Set<User>         selectedUsers      = new java.util.HashSet<>();
-    private final SprintApi                   sprintApi;
-    private       MultiSelectComboBox<Sprint> sprintSelector;
-    private final TaskApi                     taskApi;
-    private final UserApi                     userApi;
-    private final java.util.Map<Long, User>   userMap            = new java.util.HashMap<>();
-    private       MultiSelectComboBox<User>   userSelector;
-    private       List<User>                  users              = new ArrayList<>();
-    private final WorklogApi                  worklogApi;
+    public static final String                      ROUTE              = "backlog";
+    private             List<Sprint>                allSprints         = new ArrayList<>();
+    private final       VerticalLayout              contentLayout;
+    private             boolean                     hasUrlParameters   = false;
+    private             boolean                     isRestoringFromUrl = false;
+    private             String                      savedSprintIds     = null;
+    private             String                      savedUserIds       = null;
+    private             String                      searchText         = "";
+    private             java.util.Set<Sprint>       selectedSprints    = new java.util.HashSet<>();
+    private             java.util.Set<User>         selectedUsers      = new java.util.HashSet<>();
+    private final       SprintApi                   sprintApi;
+    private             MultiSelectComboBox<Sprint> sprintSelector;
+    private final       TaskApi                     taskApi;
+    private final       UserApi                     userApi;
+    private final       java.util.Map<Long, User>   userMap            = new java.util.HashMap<>();
+    private             MultiSelectComboBox<User>   userSelector;
+    private             List<User>                  users              = new ArrayList<>();
+    private final       WorklogApi                  worklogApi;
 
     public Backlog(SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi) {
         this.sprintApi  = sprintApi;

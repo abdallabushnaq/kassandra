@@ -26,7 +26,6 @@ import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
 import lombok.extern.log4j.Log4j2;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -57,10 +56,10 @@ public class ProductListViewTester extends AbstractViewTester {
         super(seleniumHandler, port);
     }
 
-    private void closeDialog(String cancelButton) {
+    public void closeDialog(String cancelButton) {
         seleniumHandler.wait(200);
         seleniumHandler.click(cancelButton);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ProductDialog.PRODUCT_DIALOG)));
+        seleniumHandler.waitForElementInvisibility(ProductDialog.PRODUCT_DIALOG);
     }
 
     /**
@@ -249,7 +248,7 @@ public class ProductListViewTester extends AbstractViewTester {
             seleniumHandler.takeElementScreenShot(seleniumHandler.findElement(By.id(LoginView.LOGIN_VIEW)), LoginView.LOGIN_VIEW, screenshotFileName);
         }
         seleniumHandler.loginSubmit();
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(ProductListView.PRODUCT_LIST_PAGE_TITLE)));
+        seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
     }
 
     /**
@@ -295,7 +294,7 @@ public class ProductListViewTester extends AbstractViewTester {
                 // Check for username field
 //                System.out.println("OIDC Login: Looking for username field");
                 try {
-                    seleniumHandler.waitUntil(ExpectedConditions.presenceOfElementLocated(By.id("username")));
+                    seleniumHandler.waitForElementToBeLocated("username");
 //                    System.out.println("OIDC Login: Username field found");
 
                     // Fill in credentials with humanized typing and mouse movement
@@ -314,7 +313,7 @@ public class ProductListViewTester extends AbstractViewTester {
 
                     // Wait for redirect back
 //                    System.out.println("OIDC Login: Waiting for redirect back to application");
-                    seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(ProductListView.PRODUCT_LIST_PAGE_TITLE)));
+                    seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
 //                    System.out.println("OIDC Login: Successfully logged in with OIDC");
                 } catch (Exception e) {
                     log.error("OIDC Login: Error during Keycloak login: " + e.getMessage());

@@ -108,7 +108,7 @@ public class UserProfileViewTest extends AbstractUiTestUtil {
         userProfileViewTester.navigateToProfileFromMenu();
 
         // Verify we're on the profile page by checking for the title
-        seleniumHandler.waitUntil(org.openqa.selenium.support.ui.ExpectedConditions.elementToBeClickable(org.openqa.selenium.By.id(UserProfileView.PROFILE_PAGE_TITLE)));
+        seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
     }
 }
 

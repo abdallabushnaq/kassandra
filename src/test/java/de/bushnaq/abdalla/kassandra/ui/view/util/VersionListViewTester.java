@@ -22,8 +22,6 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.VersionDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.FeatureListView;
 import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -52,10 +50,10 @@ public class VersionListViewTester extends AbstractViewTester {
         super(seleniumHandler, port);
     }
 
-    private void closeDialog(String cancelButton) {
+    public void closeDialog(String cancelButton) {
         seleniumHandler.wait(200);
         seleniumHandler.click(cancelButton);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(VersionDialog.VERSION_DIALOG)));
+        seleniumHandler.waitForElementInvisibility(VersionDialog.VERSION_DIALOG);
     }
 
     /**
@@ -122,7 +120,7 @@ public class VersionListViewTester extends AbstractViewTester {
     public void deleteVersionCancel(String name) {
         seleniumHandler.click(VersionListView.VERSION_GRID_DELETE_BUTTON_PREFIX + name);
         closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(VersionDialog.VERSION_DIALOG)));
+        seleniumHandler.waitForElementInvisibility(VersionDialog.VERSION_DIALOG);
         seleniumHandler.ensureIsInList(VersionListView.VERSION_GRID_NAME_PREFIX, name);
     }
 
@@ -138,7 +136,7 @@ public class VersionListViewTester extends AbstractViewTester {
     public void deleteVersionConfirm(String name) {
         seleniumHandler.click(VersionListView.VERSION_GRID_DELETE_BUTTON_PREFIX + name);
         closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(VersionDialog.VERSION_DIALOG)));
+        seleniumHandler.waitForElementInvisibility(VersionDialog.VERSION_DIALOG);
         seleniumHandler.ensureIsNotInList(VersionListView.VERSION_GRID_NAME_PREFIX, name);
     }
 

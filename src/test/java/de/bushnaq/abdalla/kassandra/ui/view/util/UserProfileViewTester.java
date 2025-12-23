@@ -23,8 +23,6 @@ import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import de.bushnaq.abdalla.kassandra.ui.view.UserProfileView;
 import org.junit.jupiter.api.Assertions;
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -72,7 +70,7 @@ public class UserProfileViewTester extends AbstractViewTester {
 
         // Reload the page to verify the changes were persisted
         seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + UserProfileView.ROUTE);
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(UserProfileView.PROFILE_PAGE_TITLE)));
+        seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
 
         // Verify both fields were saved using verifyProfileFields
         verifyProfileFields(newName, currentEmail, newColor);
@@ -93,7 +91,7 @@ public class UserProfileViewTester extends AbstractViewTester {
         seleniumHandler.click(MainLayout.ID_USER_MENU_VIEW_PROFILE);
 
         // Wait for the profile page to load
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(UserProfileView.PROFILE_PAGE_TITLE)));
+        seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
     }
 
     /**
@@ -110,10 +108,10 @@ public class UserProfileViewTester extends AbstractViewTester {
             seleniumHandler.setLoginUser("admin-user");
             seleniumHandler.setLoginPassword("test-password");
             seleniumHandler.loginSubmit();
-            seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(ProductListView.PRODUCT_LIST_PAGE_TITLE)));
+            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
         }
         seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + UserProfileView.ROUTE);
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(UserProfileView.PROFILE_PAGE_TITLE)));
+        seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
     }
 
     /**
@@ -136,7 +134,7 @@ public class UserProfileViewTester extends AbstractViewTester {
 
         // Reload and verify the name wasn't changed
         seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + UserProfileView.ROUTE);
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(UserProfileView.PROFILE_PAGE_TITLE)));
+        seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
 
         // Verify all fields remain unchanged using verifyProfileFields
         verifyProfileFields(originalName, originalEmail, originalColor);

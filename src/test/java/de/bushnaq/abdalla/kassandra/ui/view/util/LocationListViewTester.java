@@ -26,7 +26,6 @@ import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import org.junit.jupiter.api.Assertions;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -56,10 +55,10 @@ public class LocationListViewTester extends AbstractViewTester {
         super(seleniumHandler, port);
     }
 
-    private void closeDialog(String confirmButton) {
+    public void closeDialog(String confirmButton) {
         seleniumHandler.wait(200);
         seleniumHandler.click(confirmButton);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(LocationDialog.LOCATION_DIALOG)));
+        seleniumHandler.waitForElementInvisibility(LocationDialog.LOCATION_DIALOG);
     }
 
     /**
@@ -81,11 +80,8 @@ public class LocationListViewTester extends AbstractViewTester {
         seleniumHandler.setDatePickerValue(LocationDialog.LOCATION_START_DATE_FIELD, existingStartDate);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_COUNTRY_FIELD, country);
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_STATE_FIELD, state);
-        closeDialog(LocationDialog.CONFIRM_BUTTON);
-
-        // Verify the validation error occurs (dialog should still be open)
-        seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(
-                By.cssSelector("vaadin-notification-card")));
+        seleniumHandler.wait(200);
+        seleniumHandler.waitForElementToBeDisabled(LocationDialog.CONFIRM_BUTTON);
 
         // Cancel the dialog since we expect it to still be open
         closeDialog(LocationDialog.CANCEL_BUTTON);
@@ -266,7 +262,7 @@ public class LocationListViewTester extends AbstractViewTester {
             seleniumHandler.setLoginUser("admin-user");
             seleniumHandler.setLoginPassword("test-password");
             seleniumHandler.loginSubmit();
-            seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(ProductListView.PRODUCT_LIST_PAGE_TITLE)));
+            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
         }
 
         // Navigate to the location view for the specific user or current user
@@ -276,7 +272,7 @@ public class LocationListViewTester extends AbstractViewTester {
         }
 
         seleniumHandler.getAndCheck(url);
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(LocationListView.LOCATION_LIST_PAGE_TITLE)));
+        seleniumHandler.waitForElementToBeClickable(LocationListView.LOCATION_LIST_PAGE_TITLE);
     }
 
     /**

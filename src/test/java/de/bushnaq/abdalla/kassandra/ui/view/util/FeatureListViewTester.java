@@ -22,8 +22,6 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.FeatureDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.FeatureListView;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -53,10 +51,10 @@ public class FeatureListViewTester extends AbstractViewTester {
         super(seleniumHandler, port);
     }
 
-    private void closeDialog(String cancelButton) {
+    public void closeDialog(String cancelButton) {
         seleniumHandler.wait(200);
         seleniumHandler.click(cancelButton);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(FeatureDialog.FEATURE_DIALOG)));
+        seleniumHandler.waitForElementInvisibility(FeatureDialog.FEATURE_DIALOG);
     }
 
     /**

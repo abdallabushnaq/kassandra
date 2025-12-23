@@ -1,11 +1,10 @@
 # TODO
 
 1. fix tests failing in github action.
-3. number of tasks in lane is always 0
-4. number of task per story is only including the once in that lane.
-5. backlog. add a default sprint with the actual backlog.
-6. GENERATOR. ensure some projects show delay, are not started or are finished closed.
-7. add better error handling in api.
+2. backlog. add a default sprint with the actual backlog.
+3. GENERATOR. ensure some projects show delay, are not started or are finished closed.
+4. add better error handling in api.
+5. add ability to edit or delete a worklog.
 
 ## Feature
 

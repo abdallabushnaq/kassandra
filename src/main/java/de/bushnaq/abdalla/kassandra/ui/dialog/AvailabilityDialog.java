@@ -29,6 +29,7 @@ import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.validator.RangeValidator;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.AvailabilityApi;
@@ -68,7 +69,7 @@ public class AvailabilityDialog extends Dialog {
         setWidth(DIALOG_DEFAULT_WIDTH);
 
         // Setup form and actions
-        add(createForm(), VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this));
+        add(createForm(), VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
         configureFormBinder();
     }
 
@@ -121,6 +122,7 @@ public class AvailabilityDialog extends Dialog {
         availabilityField.setSuffixComponent(new Span("%"));
         availabilityField.setPrefixComponent(new Icon(VaadinIcon.CHART));
         availabilityField.setId(AVAILABILITY_PERCENTAGE_FIELD);
+        availabilityField.setValueChangeMode(ValueChangeMode.EAGER);
 
         formLayout.add(startDateField, availabilityField);
         return formLayout;

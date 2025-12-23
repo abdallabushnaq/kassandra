@@ -37,8 +37,6 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -124,7 +122,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractKeycloakUiTe
         versionListViewTester.selectVersion(versionName);
         featureListViewTester.selectFeature(featureName);
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(TaskListView.TASK_LIST_PAGE_TITLE_ID)));
+        seleniumHandler.waitForElementToBeClickable(TaskListView.TASK_LIST_PAGE_TITLE_ID);
 
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);

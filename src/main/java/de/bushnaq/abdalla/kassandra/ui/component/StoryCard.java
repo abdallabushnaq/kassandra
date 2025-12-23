@@ -347,13 +347,19 @@ public class StoryCard extends Div {
 
     private void updateTaskCount(VerticalLayout lane, int count, TaskStatus status) {
         String className = "task-count-" + status.name().toLowerCase().replace("_", "-");
+        // The Span is inside the lane header Div, so we need to search recursively
         lane.getChildren()
-                .filter(component -> component.getElement().getClassList().contains(className))
+                .filter(component -> component instanceof Div)
                 .findFirst()
-                .ifPresent(component -> {
-                    if (component instanceof Span) {
-                        ((Span) component).setText(" (" + count + ")");
-                    }
+                .ifPresent(laneHeader -> {
+                    laneHeader.getChildren()
+                            .filter(component -> component.getElement().getClassList().contains(className))
+                            .findFirst()
+                            .ifPresent(component -> {
+                                if (component instanceof Span) {
+                                    ((Span) component).setText(" (" + count + ")");
+                                }
+                            });
                 });
     }
 }

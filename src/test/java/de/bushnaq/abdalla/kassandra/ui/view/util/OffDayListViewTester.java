@@ -26,7 +26,6 @@ import de.bushnaq.abdalla.kassandra.ui.view.OffDayListView;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -71,10 +70,10 @@ public class OffDayListViewTester extends AbstractViewTester {
         seleniumHandler.click(OffDayListView.OFFDAY_GRID_EDIT_BUTTON_PREFIX + id);
     }
 
-    private void closeDialog(String confirmButton) {
+    public void closeDialog(String confirmButton) {
         seleniumHandler.wait(200);
         seleniumHandler.click(confirmButton);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(OffDayDialog.OFFDAY_DIALOG)));
+        seleniumHandler.waitForElementInvisibility(OffDayDialog.OFFDAY_DIALOG);
     }
 
     /**
@@ -93,11 +92,8 @@ public class OffDayListViewTester extends AbstractViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_START_DATE_FIELD, firstDay);
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
-        closeDialog(OffDayDialog.CONFIRM_BUTTON);
-
-        // Verify validation error occurs
-        seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(
-                By.cssSelector("vaadin-notification-card")));
+        seleniumHandler.wait(200);
+        seleniumHandler.waitForElementToBeDisabled(OffDayDialog.CONFIRM_BUTTON);
 
         // Cancel the dialog
         closeDialog(OffDayDialog.CANCEL_BUTTON);
@@ -309,13 +305,13 @@ public class OffDayListViewTester extends AbstractViewTester {
             seleniumHandler.setLoginUser("admin-user");
             seleniumHandler.setLoginPassword("test-password");
             seleniumHandler.loginSubmit();
-            seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(ProductListView.PRODUCT_LIST_PAGE_TITLE)));
+            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
         }
 
         // Navigate to the off day view for the specific user
         String url = "http://localhost:" + port + "/ui/" + OffDayListView.ROUTE + (username != null ? "/" + username : "");
         seleniumHandler.getAndCheck(url);
-        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(By.id(OffDayListView.OFFDAY_LIST_PAGE_TITLE)));
+        seleniumHandler.waitForElementToBeClickable(OffDayListView.OFFDAY_LIST_PAGE_TITLE);
     }
 
     /**
@@ -350,7 +346,7 @@ public class OffDayListViewTester extends AbstractViewTester {
             verifyOffDayRecordExists(firstRecord2Day, lastRecord2Day, type);
         } else {
             // Verify validation error occurs
-            seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("vaadin-notification-card")));
+            seleniumHandler.waitForElementToBeVisible(By.cssSelector("vaadin-notification-card"));
 
             // Cancel the dialog
             closeDialog(OffDayDialog.CANCEL_BUTTON);

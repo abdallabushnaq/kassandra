@@ -200,6 +200,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         // Create tabs from menu configuration
         MenuConfiguration.getMenuEntries().forEach(entry -> {
             Tab tab = createTab(entry);
+            tab.setId(entry.path());
             tabs.add(tab);
             tabToPathMap.put(tab, entry.path());
         });

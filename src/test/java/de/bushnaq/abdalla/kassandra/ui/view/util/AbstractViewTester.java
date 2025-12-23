@@ -20,8 +20,6 @@ package de.bushnaq.abdalla.kassandra.ui.view.util;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import lombok.Getter;
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.time.format.DateTimeFormatter;
 
@@ -37,10 +35,10 @@ public abstract class AbstractViewTester {
         this.port            = port;
     }
 
-    protected void closeConfirmDialog(String button) {
+    public void closeConfirmDialog(String button) {
         seleniumHandler.wait(300);
         seleniumHandler.click(button);
-        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(ConfirmDialog.CONFIRM_DIALOG)));
+        seleniumHandler.waitForElementInvisibility(ConfirmDialog.CONFIRM_DIALOG);
     }
 
 

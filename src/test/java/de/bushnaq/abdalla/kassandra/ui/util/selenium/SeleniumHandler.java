@@ -1153,6 +1153,7 @@ class SeleniumHandler {
 
     public void wait(int milliseconds) {
         try {
+            log.trace("Waiting for {}ms.", milliseconds);
             Thread.sleep(milliseconds);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -1160,8 +1161,27 @@ class SeleniumHandler {
         }
     }
 
+    public void waitForElementInvisibility(String id) {
+        log.trace("Waiting for {} to become invisible.", id);
+        waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(id)));
+    }
+
     public void waitForElementToBeClickable(String id) {
+        log.trace("Waiting for {} to become Clickable.", id);
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
+    }
+
+    public void waitForElementToBeDisabled(String id) {
+        log.trace("Waiting for {} to become disabled.", id);
+        waitUntil(driver -> {
+            try {
+                WebElement element = driver.findElement(By.id(id));
+                return element.getAttribute("disabled") != null ||
+                        "true".equals(element.getAttribute("aria-disabled"));
+            } catch (Exception e) {
+                return false;
+            }
+        });
     }
 
     /**
@@ -1172,6 +1192,7 @@ class SeleniumHandler {
      * @param id The ID of the element to wait for
      */
     public void waitForElementToBeInteractable(String id) {
+        log.trace("Waiting for {} to become Interactable.", id);
         try {
             // Wait for the element to be visible first
             waitUntil(ExpectedConditions.visibilityOfElementLocated(By.id(id)));
@@ -1199,11 +1220,13 @@ class SeleniumHandler {
     }
 
     public void waitForElementToBeLocated(String id) {
+        log.trace("Waiting for {} to become Located.", id);
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(id)));
     }
 
-    public void waitForElementToBeNotClickable(String id) {
-        waitUntil(ExpectedConditions.not(ExpectedConditions.elementToBeClickable(By.id(id))));
+    public void waitForElementToBeVisible(By locator) {
+        log.trace("Waiting for element located by {} to become visible.", locator);
+        waitUntil(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
     /**
@@ -1215,6 +1238,7 @@ class SeleniumHandler {
      * @param notificationType the type of notification to wait for (e.g., "error")
      */
     public void waitForNotification(String notificationType) {
+        log.trace("Waiting for {} notification.", notificationType);
         // Wait for notification overlay to appear
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.cssSelector("vaadin-notification-container vaadin-notification-card")));
         // Wait specifically for notification with the given type
@@ -1226,6 +1250,7 @@ class SeleniumHandler {
     }
 
     public void waitForPageLoaded(long seconds) {
+        log.trace("Waiting for page loaded with {} seconds.", seconds);
         ExpectedCondition<Boolean> expectation = new ExpectedCondition<>() {
             @Override
             public Boolean apply(WebDriver driver) {
@@ -1241,20 +1266,21 @@ class SeleniumHandler {
     }
 
     public void waitForUrl(String url) {
+        log.trace("Waiting for {} url.", url);
         waitUntil(ExpectedConditions.urlContains(url));
         testForAnyError();
     }
 
-    public void waitForUrl(String url, String errortitle) {
-        waitUntil(ExpectedConditions.urlContains(url));
-        testForError(errortitle);
-    }
+//    public void waitForUrl(String url, String errortitle) {
+//        waitUntil(ExpectedConditions.urlContains(url));
+//        testForError(errortitle);
+//    }
 
-    public void waitForUrlNot(String url) {
-        waitUntil(ExpectedConditions.not(ExpectedConditions.urlToBe(url)));
-        //        waitUntil(ExpectedConditions.urlToBe(url));
-        testForAnyError();
-    }
+//    public void waitForUrlNot(String url) {
+//        waitUntil(ExpectedConditions.not(ExpectedConditions.urlToBe(url)));
+//        //        waitUntil(ExpectedConditions.urlToBe(url));
+//        testForAnyError();
+//    }
 
     public void waitUntil(ExpectedCondition<?> condition) {
         wait.until(condition);

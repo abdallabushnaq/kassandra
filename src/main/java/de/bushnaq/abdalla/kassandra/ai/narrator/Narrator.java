@@ -266,6 +266,7 @@ public class Narrator {
      * Sleeps the current thread for roughly one second.
      */
     public void pause() {
+        logger.trace("Pausing for 500 ms.");
         pause(500);
     }
 
@@ -278,6 +279,7 @@ public class Narrator {
     public void pause(long millis) {
         if (!silent) {
             try {
+                logger.trace("Pausing for {} ms.", millis);
                 Thread.sleep(millis);
             } catch (InterruptedException e) {
                 logger.trace(e.getMessage(), e);
