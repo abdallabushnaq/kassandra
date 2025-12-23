@@ -89,7 +89,7 @@ jobs:
 
       - name: Run tests with UI tests in headless mode
         run: |
-          mvn test -Dtest=AvailabilityListViewTest -Dselenium.headless=true
+          mvn test -Dselenium.headless=true
         env:
           # Set environment variables for headless testing
           SELENIUM_HEADLESS: "true"
