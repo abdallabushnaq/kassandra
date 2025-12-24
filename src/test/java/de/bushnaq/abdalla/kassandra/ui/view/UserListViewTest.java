@@ -50,7 +50,14 @@ import java.time.LocalDate;
  */
 @Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=${test.server.port:0}",
+                "spring.profiles.active=test",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
 @AutoConfigureMockMvc
 @Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)

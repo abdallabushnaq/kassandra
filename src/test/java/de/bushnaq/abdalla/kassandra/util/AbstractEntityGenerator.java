@@ -511,6 +511,22 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     }
 
     protected User addUser(String name, String email, String country, String state, LocalDate start, Color color, float availability) {
+        // Check if user already exists by email
+        User existingUser = null;
+        try {
+            existingUser = userApi.getByEmail(email);
+        } catch (Exception e) {
+            // User doesn't exist, which is fine - we'll create a new one
+        }
+
+        if (existingUser != null) {
+            System.out.println("User with email " + email + " already exists, skipping creation");
+            // Add to expected users if not already there
+            expectedUsers.add(existingUser);
+            return existingUser;
+        }
+
+        // User doesn't exist, create new one
         User user = new User();
         user.setName(name);
         user.setEmail(email);
