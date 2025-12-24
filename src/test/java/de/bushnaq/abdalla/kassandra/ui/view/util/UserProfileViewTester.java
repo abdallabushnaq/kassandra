@@ -19,10 +19,9 @@ package de.bushnaq.abdalla.kassandra.ui.view.util;
 
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
-import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import de.bushnaq.abdalla.kassandra.ui.view.UserProfileView;
 import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -37,6 +36,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Lazy
 public class UserProfileViewTester extends AbstractViewTester {
+
+    @Autowired
+    ProductListViewTester productListViewTester;
 
     /**
      * Constructs a new UserProfileViewTester with the given Selenium handler and server port.
@@ -100,16 +102,23 @@ public class UserProfileViewTester extends AbstractViewTester {
      * Opens the profile URL directly and waits for the page to load
      * by checking for the presence of the page title element.
      */
-    public void switchToUserProfileView(String recordingFolderName, String testName) {
+    public void switchToUserProfileView(String recordingFolderName, String testName) throws Exception {
+        productListViewTester.switchToProductListViewWithOidc(
+                "christopher.paul@kassandra.org",
+                "password",
+                null,
+                recordingFolderName,
+                testName
+        );
         // Check if we need to log in
-        if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
-            seleniumHandler.startRecording(recordingFolderName, testName);
-            seleniumHandler.setLoginUser("admin-user");
-            seleniumHandler.setLoginPassword("test-password");
-            seleniumHandler.loginSubmit();
-            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
-        }
+//        if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
+//            seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
+//            seleniumHandler.startRecording(recordingFolderName, testName);
+//            seleniumHandler.setLoginUser("admin-user");
+//            seleniumHandler.setLoginPassword("test-password");
+//            seleniumHandler.loginSubmit();
+//            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+//        }
         seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + UserProfileView.ROUTE);
         seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
     }

@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.util.selenium;
 
-import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
@@ -599,11 +598,11 @@ class SeleniumHandler {
         return Boolean.parseBoolean(System.getProperty("selenium.headless", System.getenv("SELENIUM_HEADLESS")));
     }
 
-    public void loginSubmit() {
-        click(LoginView.LOGIN_VIEW_SUBMIT_BUTTON);
-        log.trace("Clicked login submit button");
-        waitForPageLoaded();
-    }
+//    public void loginSubmit() {
+//        click(LoginView.LOGIN_VIEW_SUBMIT_BUTTON);
+//        log.trace("Clicked login submit button");
+//        waitForPageLoaded();
+//    }
 
     protected void moveMouseToElement(WebElement element) {
         //dummy implementation
@@ -947,22 +946,22 @@ class SeleniumHandler {
         typeText(i, userName);
     }
 
-    public void setLoginPassword(String loginPassword) {
-        WebElement passwordElement = findElement(By.id(LoginView.LOGIN_VIEW_PASSWORD));
-        moveMouseToElement(passwordElement);  // Move mouse to password field before typing
-        log.trace("sent loginPassword='{}' to element with name '{}}'%n", loginPassword, LoginView.LOGIN_VIEW_PASSWORD);
-        // Humanized typing
-        typeText(passwordElement, loginPassword);
-    }
+//    public void setLoginPassword(String loginPassword) {
+//        WebElement passwordElement = findElement(By.id(LoginView.LOGIN_VIEW_PASSWORD));
+//        moveMouseToElement(passwordElement);  // Move mouse to password field before typing
+//        log.trace("sent loginPassword='{}' to element with name '{}}'%n", loginPassword, LoginView.LOGIN_VIEW_PASSWORD);
+//        // Humanized typing
+//        typeText(passwordElement, loginPassword);
+//    }
 
-    public void setLoginUser(String loginUser) {
-        waitForElementToBeLocated(LoginView.LOGIN_VIEW_USERNAME);
-        WebElement usernameElement = findElement(By.id(LoginView.LOGIN_VIEW_USERNAME));
-        moveMouseToElement(usernameElement);  // Move mouse to username field before typing
-        log.trace("sent loginUser='{}' to element with id '{}'%n", loginUser, LoginView.LOGIN_VIEW_USERNAME);
-        // Humanized typing
-        typeText(usernameElement, loginUser);
-    }
+//    public void setLoginUser(String loginUser) {
+//        waitForElementToBeLocated(LoginView.LOGIN_VIEW_USERNAME);
+//        WebElement usernameElement = findElement(By.id(LoginView.LOGIN_VIEW_USERNAME));
+//        moveMouseToElement(usernameElement);  // Move mouse to username field before typing
+//        log.trace("sent loginUser='{}' to element with id '{}'%n", loginUser, LoginView.LOGIN_VIEW_USERNAME);
+//        // Humanized typing
+//        typeText(usernameElement, loginUser);
+//    }
 
     public void setTextArea(String id, String userName) {
         WebElement e = findElement(By.id(id));

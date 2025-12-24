@@ -29,6 +29,8 @@ import de.bushnaq.abdalla.kassandra.repository.UserAvatarRepository;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import de.bushnaq.abdalla.kassandra.rest.debug.DebugUtil;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.UserRoleService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +62,26 @@ public class UserController {
     private UserAvatarRepository               userAvatarRepository;
     @Autowired
     private UserRepository                     userRepository;
+    @Autowired
+    private UserRoleService                    userRoleService;
+
+    /**
+     * Check if the current user can modify the target user.
+     * Admins can modify any user, regular users can only modify themselves.
+     *
+     * @param targetUserEmail the email of the user being modified
+     * @return true if modification is allowed, false otherwise
+     */
+    private boolean canUserModifyUser(String targetUserEmail) {
+        // Admins can modify any user
+        if (SecurityUtils.isAdmin()) {
+            return true;
+        }
+
+        // Regular users can only modify themselves
+        String currentUserEmail = SecurityUtils.getUserEmail();
+        return currentUserEmail.equals(targetUserEmail);
+    }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -140,6 +162,18 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Get roles for a specific user
+     *
+     * @param id the user ID
+     * @return list of roles
+     */
+    @GetMapping("/{id}/roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<String> getRoles(@PathVariable Long id) {
+        return userRoleService.getRoles(id);
+    }
+
     @PostMapping(consumes = "application/json", produces = "application/json")
     @PreAuthorize("hasRole('ADMIN')")
     public UserDAO save(@RequestBody UserDAO user) {
@@ -169,8 +203,13 @@ public class UserController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public void update(@RequestBody UserDAO user) {
+        // Check authorization: Users can only update their own profile, admins can update any
+        if (!canUserModifyUser(user.getEmail())) {
+            throw new org.springframework.security.access.AccessDeniedException("You can only modify your own profile");
+        }
+
         // Check name uniqueness (excluding current user)
         if (userRepository.existsByNameAndIdNot(user.getName(), user.getId())) {
             throw new UniqueConstraintViolationException("User", "name", user.getName());
@@ -184,15 +223,20 @@ public class UserController {
         userRepository.save(user);
     }
 
-
     @PutMapping("/{id}/avatar/full")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
     public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
         // Verify user exists
         Optional<UserDAO> userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        // Check authorization: Users can only update their own avatar, admins can update any
+        UserDAO user = userOpt.get();
+        if (!canUserModifyUser(user.getEmail())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         // Update or create avatar image
@@ -224,5 +268,26 @@ public class UserController {
 
         log.info("UserController.updateAvatarFull: Updated avatar for userId {}", id);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Update roles for a specific user
+     *
+     * @param id    the user ID
+     * @param roles list of roles to assign
+     */
+    @PutMapping("/{id}/roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> updateRoles(@PathVariable Long id, @RequestBody List<String> roles) {
+        try {
+            userRoleService.assignRoles(id, roles);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid role update request: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        } catch (IllegalStateException e) {
+            log.error("Cannot update roles: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
     }
 }

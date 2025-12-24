@@ -22,10 +22,8 @@ import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
@@ -36,8 +34,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
@@ -50,23 +46,15 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 public class SecurityConfig extends VaadinWebSecurity {
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Autowired
-    private SecurityUserDetailsService userDetailsService;
-
     @Bean
     public AuthenticationManager authenticationManager() {
-        // Create authentication provider for the test users
+        // Create authentication provider for the test users only
         DaoAuthenticationProvider testProvider = new DaoAuthenticationProvider();
         testProvider.setPasswordEncoder(passwordEncoder());
         testProvider.setUserDetailsService(testUsers());
 
-        // Create authentication provider for the regular users
-        DaoAuthenticationProvider regularProvider = new DaoAuthenticationProvider();
-        regularProvider.setPasswordEncoder(passwordEncoder());
-        regularProvider.setUserDetailsService(userDetailsService);
-
-        // Return a provider manager with both providers
-        return new ProviderManager(testProvider, regularProvider);
+        // Return a provider manager with test provider only
+        return new ProviderManager(testProvider);
     }
 
     /**
@@ -126,8 +114,8 @@ public class SecurityConfig extends VaadinWebSecurity {
         // Call the parent configuration to handle Vaadin-specific security
         super.configure(http);
 
-        // Set the default success URL after login to ProductListView
-        http.formLogin(formLogin -> formLogin.defaultSuccessUrl("/ui/product-list", true));
+        // Note: No form login configured - OIDC authentication only
+        // Test users are available for API testing via Basic Auth
     }
 
     /**
@@ -180,22 +168,5 @@ public class SecurityConfig extends VaadinWebSecurity {
         logger.info("Created default test user/admin users.");
 
         return new InMemoryUserDetailsManager(adminUser, regularUser);
-    }
-
-    /**
-     * Configure a combined UserDetailsService that checks both test users and regular users
-     */
-    @Bean
-    @Primary
-    public UserDetailsService userDetailsService() {
-        return username -> {
-            try {
-                // First try the test users
-                return testUsers().loadUserByUsername(username);
-            } catch (UsernameNotFoundException e) {
-                // If not found among test users, try the regular user service
-                return userDetailsService.loadUserByUsername(username);
-            }
-        };
     }
 }

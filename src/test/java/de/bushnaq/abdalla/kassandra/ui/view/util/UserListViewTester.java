@@ -20,10 +20,9 @@ package de.bushnaq.abdalla.kassandra.ui.view.util;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
-import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import de.bushnaq.abdalla.kassandra.ui.view.UserListView;
 import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -40,6 +39,9 @@ import java.time.LocalDate;
 @Component
 @Lazy
 public class UserListViewTester extends AbstractViewTester {
+
+    @Autowired
+    private ProductListViewTester productListViewTester;
 
     /**
      * Constructs a new UserViewTester with the given Selenium handler and server port.
@@ -197,15 +199,16 @@ public class UserListViewTester extends AbstractViewTester {
      * Opens the user list URL directly and waits for the page to load
      * by checking for the presence of the page title element.
      */
-    public void switchToUserListView(String recordingFolderName, String testName) {
+    public void switchToUserListView(String recordingFolderName, String testName) throws Exception {
         //- Check if we need to log in
         if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
-            seleniumHandler.startRecording(recordingFolderName, testName);
-            seleniumHandler.setLoginUser("admin-user");
-            seleniumHandler.setLoginPassword("test-password");
-            seleniumHandler.loginSubmit();
-            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+            productListViewTester.switchToProductListViewWithOidc(
+                    "christopher.paul@kassandra.org",
+                    "password",
+                    null,
+                    recordingFolderName,
+                    testName
+            );
         }
         seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + UserListView.ROUTE);
         seleniumHandler.waitForElementToBeClickable(UserListView.USER_LIST_PAGE_TITLE);

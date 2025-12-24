@@ -23,7 +23,10 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import com.vaadin.flow.router.*;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -33,16 +36,16 @@ import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
-import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.List;
 
 @Route("user-list")
 @PageTitle("User List Page")
-@Menu(order = 2, icon = "vaadin:users", title = "Users")
-@PermitAll // When security is enabled, allow all authenticated users
+@RolesAllowed("ADMIN") // Only admins can access this view
 public class UserListView extends AbstractMainGrid<User> implements AfterNavigationObserver {
     public static final String                 CREATE_USER_BUTTON             = "create-user-button";
     public static final String                 ROUTE                          = "user-list";
@@ -188,6 +191,15 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
         {
             Grid.Column<User> emailColumn = getGrid().addColumn(User::getEmail);
             VaadinUtil.addSimpleHeader(emailColumn, "Email", VaadinIcon.ENVELOPE);
+        }
+
+        {
+            // Add roles column
+            Grid.Column<User> rolesColumn = getGrid().addColumn(user -> {
+                List<String> roles = user.getRoleList();
+                return roles.isEmpty() ? "USER" : String.join(", ", roles);
+            });
+            VaadinUtil.addSimpleHeader(rolesColumn, "Roles", VaadinIcon.SHIELD);
         }
 
         {

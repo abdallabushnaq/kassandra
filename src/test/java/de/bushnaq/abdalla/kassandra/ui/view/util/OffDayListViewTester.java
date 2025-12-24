@@ -21,11 +21,10 @@ import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.OffDayDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import de.bushnaq.abdalla.kassandra.ui.view.OffDayListView;
-import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -44,6 +43,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Component
 @Lazy
 public class OffDayListViewTester extends AbstractViewTester {
+
+    @Autowired
+    private ProductListViewTester productListViewTester;
 
     /**
      * Constructs a new OffDayListViewTester with the given Selenium handler and server port.
@@ -267,6 +269,8 @@ public class OffDayListViewTester extends AbstractViewTester {
         }
     }
 
+    // Helper methods
+
     /**
      * Finds the ID of an off day record based on its first day.
      *
@@ -285,8 +289,6 @@ public class OffDayListViewTester extends AbstractViewTester {
         return fullId.substring(OffDayListView.OFFDAY_GRID_START_DATE_PREFIX.length());
     }
 
-    // Helper methods
-
     /**
      * Navigates to the OffDayListView for a specific user.
      * <p>
@@ -297,15 +299,16 @@ public class OffDayListViewTester extends AbstractViewTester {
      * @param testName            The name of the test for recording
      * @param username            The username for which to view off days (optional, uses current user if null)
      */
-    public void switchToOffDayListView(String recordingFolderName, String testName, String username) {
+    public void switchToOffDayListView(String recordingFolderName, String testName, String username) throws Exception {
         //- Check if we need to log in
         if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
-            seleniumHandler.startRecording(recordingFolderName, testName);
-            seleniumHandler.setLoginUser("admin-user");
-            seleniumHandler.setLoginPassword("test-password");
-            seleniumHandler.loginSubmit();
-            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+            productListViewTester.switchToProductListViewWithOidc(
+                    "christopher.paul@kassandra.org",
+                    "password",
+                    null,
+                    recordingFolderName,
+                    testName
+            );
         }
 
         // Navigate to the off day view for the specific user

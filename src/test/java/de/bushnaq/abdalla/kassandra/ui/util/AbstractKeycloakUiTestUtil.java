@@ -19,15 +19,25 @@ package de.bushnaq.abdalla.kassandra.ui.util;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.ai.narrator.TtsCacheManager;
+import de.bushnaq.abdalla.kassandra.dao.UserDAO;
+import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.awt.*;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,10 +51,14 @@ import java.util.Map;
  */
 @Testcontainers
 public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
-    private static final Logger            logger   = LoggerFactory.getLogger(AbstractKeycloakUiTestUtil.class);
-    protected static     int               allocatedPort;
-    private static       KeycloakContainer keycloakInstance;
-    private static final KeycloakContainer keycloak = getKeycloakContainer();// Start Keycloak container with realm configuration
+    private static final Logger                     logger   = LoggerFactory.getLogger(AbstractKeycloakUiTestUtil.class);
+    protected static     int                        allocatedPort;
+    private static       KeycloakContainer          keycloakInstance;
+    private static final KeycloakContainer          keycloak = getKeycloakContainer();// Start Keycloak container with realm configuration
+    @Autowired
+    protected            PlatformTransactionManager transactionManager;
+    @Autowired
+    protected            UserRepository             userRepository;
 
     private static synchronized KeycloakContainer getKeycloakContainer() {
         // Allocate port in static initializer (runs before everything)
@@ -125,6 +139,63 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
 
         // Register all properties
         props.forEach((key, value) -> registry.add(key, () -> value));
+    }
+
+    /**
+     * Ensure the test user exists in the database with ADMIN role before each test.
+     * This is critical because OIDC authentication will look up the user by email,
+     * and if not found, assigns only USER role by default.
+     * <p>
+     * Uses explicit transaction management to ensure the user is committed
+     * and visible to all subsequent transactions including API calls.
+     */
+    @BeforeEach
+    public void setupTestUser() {
+        String testUserEmail = "christopher.paul@kassandra.org";
+
+        // Create a new transaction explicitly to ensure commit
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setName("setupTestUser");
+        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+        TransactionStatus status = transactionManager.getTransaction(def);
+
+        try {
+            // Check if user already exists
+            var existingUser = userRepository.findByEmail(testUserEmail);
+
+            if (existingUser.isEmpty()) {
+                // Create test user with ADMIN role
+                UserDAO testUser = new UserDAO();
+                testUser.setEmail(testUserEmail);
+                testUser.setName("Christopher Paul");
+                testUser.setRoles("ADMIN,USER");
+                testUser.setColor(Color.BLUE);
+                testUser.setFirstWorkingDay(LocalDate.now());
+
+                userRepository.save(testUser);
+                logger.info("Created test user in database: {} with ADMIN role", testUserEmail);
+            } else {
+                // Ensure existing user has ADMIN role
+                UserDAO user = existingUser.get();
+                if (!user.hasRole("ADMIN")) {
+                    user.addRole("ADMIN");
+                    userRepository.save(user);
+                    logger.info("Added ADMIN role to existing test user: {}", testUserEmail);
+                } else {
+                    logger.info("Test user already exists with ADMIN role: {}", testUserEmail);
+                }
+            }
+
+            // Commit the transaction explicitly
+            transactionManager.commit(status);
+//            logger.info("Test user transaction committed successfully");
+
+        } catch (Exception e) {
+            transactionManager.rollback(status);
+            logger.error("Failed to setup test user", e);
+            throw e;
+        }
     }
 
     @AfterAll

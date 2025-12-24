@@ -44,7 +44,6 @@
         }
       ],
       "realmRoles": [
-        "admin",
         "user",
         "offline_access"
       ]
@@ -64,7 +63,6 @@
         }
       ],
       "realmRoles": [
-        "admin",
         "user",
         "offline_access"
       ]

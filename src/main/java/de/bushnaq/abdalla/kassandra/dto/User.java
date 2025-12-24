@@ -36,10 +36,8 @@ import net.sf.mpxj.ProjectFile;
 import java.awt.*;
 import java.net.URL;
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Properties;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Getter
@@ -64,6 +62,7 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     private String             name;
     @JsonManagedReference
     private List<OffDay>       offDays        = new ArrayList<>();
+    private String             roles          = "USER"; // Default role for new users
 
     public void addAvailability(Availability availability) {
         availabilities.add(availability);
@@ -81,6 +80,19 @@ public class User extends AbstractTimeAware implements Comparable<User> {
 
     public void addOffday(OffDay offDay) {
         offDays.add(offDay);
+    }
+
+    /**
+     * Add a role to this user
+     *
+     * @param role the role to add (e.g., "ADMIN", "USER")
+     */
+    public void addRole(String role) {
+        List<String> roleList = getRoleList();
+        if (!roleList.contains(role)) {
+            roleList.add(role);
+            setRoleList(roleList);
+        }
     }
 
     @Override
@@ -128,6 +140,28 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     @JsonIgnore
     public String getKey() {
         return "U-" + id;
+    }
+
+    /**
+     * Get roles as a list
+     *
+     * @return list of role names
+     */
+    public List<String> getRoleList() {
+        if (roles == null || roles.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(Arrays.asList(roles.split(",")));
+    }
+
+    /**
+     * Check if user has a specific role
+     *
+     * @param role the role to check
+     * @return true if user has the role
+     */
+    public boolean hasRole(String role) {
+        return getRoleList().contains(role);
     }
 
     public void initialize(GanttContext gc) {
@@ -214,6 +248,28 @@ public class User extends AbstractTimeAware implements Comparable<User> {
 
     public void removeOffDay(OffDay offDay) {
         offDays.remove(offDay);
+    }
+
+    /**
+     * Remove a role from this user
+     *
+     * @param role the role to remove
+     */
+    public void removeRole(String role) {
+        List<String> roleList = getRoleList();
+        roleList.remove(role);
+        setRoleList(roleList);
+    }
+
+    /**
+     * Set roles from a list
+     *
+     * @param roleList list of role names
+     */
+    public void setRoleList(List<String> roleList) {
+        this.roles = roleList.stream()
+                .filter(r -> r != null && !r.isEmpty())
+                .collect(Collectors.joining(","));
     }
 
 }

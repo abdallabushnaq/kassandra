@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.dialog;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
@@ -44,6 +45,7 @@ import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
@@ -74,6 +76,7 @@ public class UserDialog extends Dialog {
     private final       DatePicker             lastWorkingDayPicker;
     private final       TextField              nameField;
     private final       Image                  nameFieldAvatar;
+    private final       CheckboxGroup<String>  rolesCheckboxGroup;
     private final       StableDiffusionService stableDiffusionService;
     private final       User                   user;
     private final       UserApi                userApi;
@@ -269,6 +272,26 @@ public class UserDialog extends Dialog {
                 lastWorkingDayPicker
         );
 
+        // Roles selection (checkbox group)
+        {
+            rolesCheckboxGroup = new CheckboxGroup<>();
+            rolesCheckboxGroup.setLabel("Roles");
+            rolesCheckboxGroup.setItems("ADMIN", "USER");
+            rolesCheckboxGroup.addThemeVariants();
+
+            if (isEditMode) {
+                // Set selected roles for existing user
+                rolesCheckboxGroup.setValue(user.getRoleList().stream()
+                        .filter(role -> role.equals("ADMIN") || role.equals("USER"))
+                        .collect(java.util.stream.Collectors.toSet()));
+            } else {
+                // Default to USER role for new users
+                rolesCheckboxGroup.setValue(java.util.Set.of("USER"));
+            }
+
+            dialogLayout.add(rolesCheckboxGroup);
+        }
+
         dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
         add(dialogLayout);
 
@@ -349,6 +372,14 @@ public class UserDialog extends Dialog {
 
         userToSave.setName(nameField.getValue().trim());
         userToSave.setEmail(emailField.getValue().trim());
+
+        // Set selected roles
+        List<String> selectedRoles = rolesCheckboxGroup.getValue().stream().toList();
+        if (selectedRoles.isEmpty()) {
+            Notification.show("At least one role must be selected", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+        userToSave.setRoleList(selectedRoles);
 
         // color is managed by the user profile now; ensure a default is present for new users
         if (!isEditMode && userToSave.getColor() == null) {

@@ -17,7 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.UserListViewTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,7 +53,8 @@ import java.time.LocalDate;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
-public class UserListViewTest extends AbstractUiTestUtil {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+public class UserListViewTest extends AbstractKeycloakUiTestUtil {
     private final String                   email              = "user.test@example.com";
     private final LocalDate                firstWorkingDay    = LocalDate.of(2025, 1, 15);
     private final LocalDate                lastWorkingDay     = LocalDate.of(2026, 12, 31);
@@ -67,7 +69,7 @@ public class UserListViewTest extends AbstractUiTestUtil {
     private       UserListViewTester       userListViewTester;
 
     @BeforeEach
-    public void setupTest(TestInfo testInfo) {
+    public void setupTest(TestInfo testInfo) throws Exception {
         userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
     }
 

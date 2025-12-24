@@ -17,7 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.AvailabilityListViewTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,10 +54,18 @@ import java.time.LocalDate;
  */
 @Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=${test.server.port:0}",
+                "spring.profiles.active=test",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
 @AutoConfigureMockMvc
 @Transactional
-public class AvailabilityListViewTest extends AbstractUiTestUtil {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       AvailabilityListViewTester availabilityListViewTester;
     private final int                        availabilityPercent    = 80;
@@ -79,7 +88,7 @@ public class AvailabilityListViewTest extends AbstractUiTestUtil {
     private final String                     testUsername           = "availability-test-user";
 
     @BeforeEach
-    public void setupTest(TestInfo testInfo) {
+    public void setupTest(TestInfo testInfo) throws Exception {
         availabilityListViewTester.switchToAvailabilityListView(
                 testInfo.getTestClass().get().getSimpleName(),
                 generateTestCaseName(testInfo),

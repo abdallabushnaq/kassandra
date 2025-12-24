@@ -17,8 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.security;
 
+import de.bushnaq.abdalla.kassandra.service.UserRoleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,7 +38,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,6 +52,9 @@ import java.util.Set;
 public class OidcApiSecurityConfig {
 
     private final Logger logger = LoggerFactory.getLogger(OidcApiSecurityConfig.class);
+
+    @Autowired
+    private UserRoleService userRoleService;
 
     /**
      * Configures Spring Security for REST API endpoints.
@@ -84,53 +89,40 @@ public class OidcApiSecurityConfig {
     }
 
     /**
-     * Extract Keycloak roles from token/userinfo claims and add them as Spring Security authorities.
-     */
-    @SuppressWarnings("unchecked")
-    private void extractKeycloakRoles(Set<GrantedAuthority> mappedAuthorities, Map<String, Object> claims) {
-        // Check for realm_access claim which contains roles
-        if (claims.containsKey("realm_access")) {
-            Map<String, Object> realmAccess = (Map<String, Object>) claims.get("realm_access");
-            if (realmAccess.containsKey("roles")) {
-                ((Iterable<String>) realmAccess.get("roles")).forEach(role -> {
-                    mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
-                });
-            }
-        }
-    }
-
-    /**
-     * Creates a JWT converter to extract roles from JWT tokens for REST API authorization.
+     * Creates a JWT converter to load roles from database for REST API authorization.
+     * This replaces OIDC token-based roles with local database roles.
      * This is crucial for the @PreAuthorize annotations in REST controllers to work properly.
      */
     @Bean
     public Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter() {
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
         jwtConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
-            // Log that this converter is being called
-//            logger.info("JWT Authentication Converter called for token with subject: {}, issued by: {}", jwt.getSubject(), jwt.getIssuer());
+            // Extract email from JWT token
+            String email = jwt.getClaim("email");
+            if (email == null || email.isEmpty()) {
+                // Fallback to preferred_username or subject
+                email = jwt.getClaim("preferred_username");
+                if (email == null || email.isEmpty()) {
+                    email = jwt.getSubject();
+                }
+            }
 
-            // Extract roles from the JWT claims
-            Map<String, Object> claims = jwt.getClaims();
-//            logger.debug("JWT Token claims: {}", claims);
+//            logger.debug("Loading roles for OIDC user: {}", email);
+
+            // Load roles from database
+            List<String> dbRoles = userRoleService.getRolesByEmail(email);
 
             Set<GrantedAuthority> authorities = new HashSet<>();
-
-            // Extract realm roles from the token
-//            logger.debug("Extracting Keycloak roles from JWT token");
-            extractKeycloakRoles(authorities, claims);
-
-            // Log the extracted authorities
-//            if (!authorities.isEmpty()) {
-//                logger.debug("Extracted authorities from JWT: {}", authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(", ")));
-//            } else {
-//                logger.warn("No authorities extracted from JWT token");
-//            }
-
-            // Add default user role if no roles are found
-            if (authorities.isEmpty()) {
+            if (!dbRoles.isEmpty()) {
+                // Use database roles
+                dbRoles.forEach(role ->
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + role))
+                );
+//                logger.debug("Loaded roles from database for {}: {}", email, dbRoles);
+            } else {
+                // No user in database - assign default USER role
                 authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-//                logger.debug("Added default ROLE_USER authority");
+                logger.warn("User {} not found in database. Assigned default USER role.", email);
             }
 
             return authorities;

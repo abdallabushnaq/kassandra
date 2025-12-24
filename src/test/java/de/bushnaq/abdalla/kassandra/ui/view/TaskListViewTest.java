@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,10 +52,18 @@ import java.util.List;
  */
 @Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=${test.server.port:0}",
+                "spring.profiles.active=test",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
 @AutoConfigureMockMvc
 @Transactional
-public class TaskListViewTest extends AbstractUiTestUtil {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+public class TaskListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       FeatureListViewTester    featureListViewTester;
     private final String                   featureName = nameGenerator.generateFeatureName(0);
@@ -99,7 +108,13 @@ public class TaskListViewTest extends AbstractUiTestUtil {
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
 
-        productListViewTester.switchToProductListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        productListViewTester.switchToProductListViewWithOidc(
+                "christopher.paul@kassandra.org",
+                "password",
+                null,
+                testInfo.getTestClass().get().getSimpleName(),
+                generateTestCaseName(testInfo)
+        );
         productListViewTester.selectProduct(productName);
         versionListViewTester.selectVersion(versionName);
         featureListViewTester.selectFeature(featureName);

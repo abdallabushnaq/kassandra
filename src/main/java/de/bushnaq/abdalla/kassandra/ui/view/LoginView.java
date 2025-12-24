@@ -18,16 +18,8 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.Key;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.*;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.PasswordField;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -40,25 +32,18 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
 
 
 /**
- * Login view that supports both Basic Authentication and OIDC authentication.
+ * Login view that supports OIDC authentication only.
+ * Form login has been removed - all authentication goes through OIDC provider.
  */
 @Route("login")
-@PageTitle("Login | Project Hub")
+@PageTitle("Login | Kassandra")
 @AnonymousAllowed
 public class LoginView extends VerticalLayout implements BeforeEnterObserver {
-    public static final String        LOGIN_VIEW               = "login-view";
-    public static final String        LOGIN_VIEW_PASSWORD      = "login-view-password";
-    public static final String        LOGIN_VIEW_SUBMIT_BUTTON = "login-view-submit-button";
-    public static final String        LOGIN_VIEW_USERNAME      = "login-view-username";
+    public static final String  LOGIN_VIEW        = "login-view";
     // ID for OIDC login button used in tests
-    public static final String        OIDC_LOGIN_BUTTON        = "oidc-login-button";
-    public static final String        ROUTE                    = "login";
-    private final       Span          errorMessage             = new Span();
-    private final       Button        loginButton              = new Button("Login");
-    private final       FormLayout    loginForm                = new FormLayout();
-    private final       boolean       oidcEnabled;
-    private final       PasswordField passwordField            = new PasswordField("Password");
-    private final       TextField     usernameField            = new TextField("Username");
+    public static final String  OIDC_LOGIN_BUTTON = "oidc-login-button";
+    public static final String  ROUTE             = "login";
+    private final       boolean oidcEnabled;
 
     public LoginView(Environment environment) {
         this.oidcEnabled = environment.getProperty("spring.security.oauth2.client.registration.keycloak.client-id") != null;
@@ -67,159 +52,120 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
-        // Create a centered container for the login form
+        // Create a centered container for the login
         VerticalLayout centeringLayout = new VerticalLayout();
         centeringLayout.setId(LOGIN_VIEW);
         centeringLayout.setWidth(DIALOG_DEFAULT_WIDTH);
         centeringLayout.setPadding(false);
-        centeringLayout.setSpacing(false);
+        centeringLayout.setSpacing(true);
         centeringLayout.setAlignSelf(Alignment.CENTER);
         centeringLayout.setAlignItems(Alignment.CENTER);
 
         H1 title = new H1("Kassandra");
         title.addClassNames(Margin.Bottom.MEDIUM);
-
         centeringLayout.add(title);
 
-        // Create a container for authentication options
-        VerticalLayout authContainer = new VerticalLayout();
-        authContainer.setMaxWidth("400px");
-        authContainer.setAlignItems(Alignment.CENTER);
-        authContainer.getStyle().set("margin", "0 auto");
-
-        // Add custom login form
-        authContainer.add(new H3("Login with username and password"));
-        authContainer.add(createLoginForm());
-
-        // Add OIDC login option if it's enabled
+        // Add authentication options
         if (oidcEnabled) {
-            Div separator = new Div();
-            separator.setText("OR");
-            separator.getStyle().set("margin", "5px 0");
-            separator.getStyle().set("text-align", "center");
-            separator.getStyle().set("width", "100%");
-            authContainer.add(separator);
-
-            // Create OIDC login button
-            Anchor loginWithOidcButton = new Anchor("/oauth2/authorization/keycloak", "Login with keycloak");
-            loginWithOidcButton.setRouterIgnore(true); // Prevent Vaadin from intercepting the link
-            loginWithOidcButton.setId(OIDC_LOGIN_BUTTON);
-            loginWithOidcButton.getStyle().set("background-color", "var(--lumo-primary-color)");
-            loginWithOidcButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
-            loginWithOidcButton.getStyle().set("padding", "10px 20px");
-            loginWithOidcButton.getStyle().set("border-radius", "4px");
-            loginWithOidcButton.getStyle().set("cursor", "pointer");
-            loginWithOidcButton.getStyle().set("text-decoration", "none");
-            loginWithOidcButton.getStyle().set("display", "block");
-            loginWithOidcButton.getStyle().set("text-align", "center");
-            loginWithOidcButton.getStyle().set("margin-top", "20px");
-
-            authContainer.add(loginWithOidcButton);
+            centeringLayout.add(createOidcLoginButton());
+        } else {
+            centeringLayout.add(createOidcNotConfiguredMessage());
         }
 
-        centeringLayout.add(authContainer);
         add(centeringLayout);
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
-        // Check if authentication error occurred
-        if (beforeEnterEvent.getLocation()
-                .getQueryParameters()
-                .getParameters()
-                .containsKey("error")) {
-            showError("Invalid username or password. Please try again.");
-        }
+        // OIDC handles authentication errors through its own mechanisms
+        // No special handling needed here
     }
 
-    private Component createLoginForm() {
-        // Configure username field
-        usernameField.setId(LOGIN_VIEW_USERNAME);
-        usernameField.setAutofocus(true);
-        usernameField.setClearButtonVisible(true);
-        usernameField.setRequiredIndicatorVisible(true);
-        usernameField.setWidthFull();
+    /**
+     * Creates the OIDC login button
+     */
+    private Component createOidcLoginButton() {
+        VerticalLayout container = new VerticalLayout();
+        container.setMaxWidth("400px");
+        container.setAlignItems(Alignment.CENTER);
+        container.setPadding(true);
+        container.setSpacing(true);
 
-        // Configure password field
-        passwordField.setId(LOGIN_VIEW_PASSWORD);
-        passwordField.setRequiredIndicatorVisible(true);
-        passwordField.setWidthFull();
+        // Instructions
+        Paragraph instructions = new Paragraph("Please sign in with your organizational account");
+        instructions.getStyle()
+                .set("text-align", "center")
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("margin-bottom", "var(--lumo-space-m)");
+        container.add(instructions);
 
-        // Configure error message
-        errorMessage.getStyle().set("color", "var(--lumo-error-color)");
-        errorMessage.getStyle().set("margin-bottom", "15px");
-        errorMessage.setVisible(false);
-
-        // Configure login button
-        loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        loginButton.setId(LOGIN_VIEW_SUBMIT_BUTTON);
-        loginButton.addClickListener(e -> login());
-        loginButton.addClickShortcut(Key.ENTER);
-
-        // Layout form fields
-        VerticalLayout formContainer = new VerticalLayout();
-        formContainer.setSpacing(true);
-        formContainer.setPadding(false);
-        formContainer.setWidthFull();
-
-        formContainer.add(errorMessage);
-
-        loginForm.add(usernameField, passwordField);
-        loginForm.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 1)
-        );
-        loginForm.setWidthFull();
-        formContainer.add(loginForm);
-
-        HorizontalLayout buttonLayout = new HorizontalLayout();
-        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
-        buttonLayout.setWidthFull();
-        buttonLayout.add(loginButton);
-        formContainer.add(buttonLayout);
-
-        // Create a form wrapper with a card-like appearance
-        Div formWrapper = new Div(formContainer);
-        formWrapper.setWidthFull();
-        formWrapper.getStyle().set("background-color", "var(--lumo-base-color)")
+        // OIDC login button
+        Anchor loginButton = new Anchor("/oauth2/authorization/keycloak", "🔐 Sign in with Keycloak");
+        loginButton.setRouterIgnore(true); // Prevent Vaadin from intercepting the link
+        loginButton.setId(OIDC_LOGIN_BUTTON);
+        loginButton.getStyle()
+                .set("background-color", "var(--lumo-primary-color)")
+                .set("color", "var(--lumo-primary-contrast-color)")
+                .set("padding", "var(--lumo-space-m) var(--lumo-space-l)")
                 .set("border-radius", "var(--lumo-border-radius-m)")
+                .set("cursor", "pointer")
+                .set("text-decoration", "none")
+                .set("display", "inline-block")
+                .set("text-align", "center")
+                .set("font-weight", "600")
+                .set("font-size", "var(--lumo-font-size-m)")
+                .set("min-width", "250px")
+                .set("transition", "all 0.2s");
+
+        // Add hover effect via JavaScript
+        loginButton.getElement().executeJs(
+                "this.addEventListener('mouseenter', () => { this.style.transform = 'translateY(-2px)'; this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'; });" +
+                        "this.addEventListener('mouseleave', () => { this.style.transform = 'translateY(0)'; this.style.boxShadow = 'none'; });"
+        );
+
+        container.add(loginButton);
+
+        // Wrap in a card-like container
+        Div wrapper = new Div(container);
+        wrapper.getStyle()
+                .set("background-color", "var(--lumo-base-color)")
+                .set("border-radius", "var(--lumo-border-radius-l)")
                 .set("box-shadow", "0 2px 10px var(--lumo-shade-20pct)")
-                .set("padding", "var(--lumo-space-m)");
+                .set("padding", "var(--lumo-space-l)");
 
-        return formWrapper;
+        return wrapper;
     }
 
-    private void login() {
-        // Instead of creating hidden components, create a proper form that Spring Security can process
-        // Create a form element using JavaScript
-        String script = "const form = document.createElement('form');" +
-                "form.method = 'post';" +
-                "form.action = 'login';" +
-                "form.style.display = 'none';" +
+    /**
+     * Creates a message when OIDC is not configured
+     */
+    private Component createOidcNotConfiguredMessage() {
+        VerticalLayout container = new VerticalLayout();
+        container.setMaxWidth("400px");
+        container.setAlignItems(Alignment.CENTER);
+        container.setPadding(true);
+        container.setSpacing(true);
 
-                // Add username field
-                "const usernameInput = document.createElement('input');" +
-                "usernameInput.type = 'text';" +
-                "usernameInput.name = 'username';" +
-                "usernameInput.value = " + "'" + usernameField.getValue() + "';" +
-                "form.appendChild(usernameInput);" +
+        H3 heading = new H3("⚠️ Authentication Not Configured");
+        heading.getStyle().set("color", "var(--lumo-error-color)");
 
-                // Add password field
-                "const passwordInput = document.createElement('input');" +
-                "passwordInput.type = 'password';" +
-                "passwordInput.name = 'password';" +
-                "passwordInput.value = " + "'" + passwordField.getValue() + "';" +
-                "form.appendChild(passwordInput);" +
+        Paragraph message = new Paragraph(
+                "OIDC authentication is not configured. " +
+                        "Please configure Keycloak settings in application.properties."
+        );
+        message.getStyle()
+                .set("text-align", "center")
+                .set("color", "var(--lumo-secondary-text-color)");
 
-                // Append form to document body and submit
-                "document.body.appendChild(form);" +
-                "form.submit();";
+        container.add(heading, message);
 
-        // Execute the JavaScript to create and submit the form
-        getElement().executeJs(script);
-    }
+        Div wrapper = new Div(container);
+        wrapper.getStyle()
+                .set("background-color", "var(--lumo-base-color)")
+                .set("border-radius", "var(--lumo-border-radius-l)")
+                .set("box-shadow", "0 2px 10px var(--lumo-shade-20pct)")
+                .set("padding", "var(--lumo-space-l)");
 
-    private void showError(String message) {
-        errorMessage.setText(message);
-        errorMessage.setVisible(true);
+        return wrapper;
     }
 }

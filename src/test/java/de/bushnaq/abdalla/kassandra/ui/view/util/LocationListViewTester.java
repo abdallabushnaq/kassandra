@@ -21,11 +21,10 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.LocationDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.LocationListView;
-import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
-import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import org.junit.jupiter.api.Assertions;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -44,6 +43,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Component
 @Lazy
 public class LocationListViewTester extends AbstractViewTester {
+    @Autowired
+    private ProductListViewTester productListViewTester;
 
     /**
      * Constructs a new LocationViewTester with the given Selenium handler and server port.
@@ -254,15 +255,16 @@ public class LocationListViewTester extends AbstractViewTester {
      * @param testName            The name of the test for recording
      * @param username            The username for which to view locations (optional, uses current user if null)
      */
-    public void switchToLocationListView(String recordingFolderName, String testName, String username) {
+    public void switchToLocationListView(String recordingFolderName, String testName, String username) throws Exception {
         //- Check if we need to log in
         if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
-            seleniumHandler.startRecording(recordingFolderName, testName);
-            seleniumHandler.setLoginUser("admin-user");
-            seleniumHandler.setLoginPassword("test-password");
-            seleniumHandler.loginSubmit();
-            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+            productListViewTester.switchToProductListViewWithOidc(
+                    "christopher.paul@kassandra.org",
+                    "password",
+                    null,
+                    recordingFolderName,
+                    testName
+            );
         }
 
         // Navigate to the location view for the specific user or current user

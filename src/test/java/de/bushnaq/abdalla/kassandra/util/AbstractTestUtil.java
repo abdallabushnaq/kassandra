@@ -68,8 +68,10 @@ public class AbstractTestUtil extends DTOAsserts {
             List<String> tableNames = getAllTableNames();
 
             for (String tableName : tableNames) {
-                // Get column names
+                // Get column names and types
                 @SuppressWarnings("unchecked") List<String> columnNames = entityManager.createNativeQuery("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " + "WHERE TABLE_SCHEMA = SCHEMA() AND TABLE_NAME = '" + tableName + "' " + "ORDER BY ORDINAL_POSITION").getResultList();
+
+                @SuppressWarnings("unchecked") List<String> columnTypes = entityManager.createNativeQuery("SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS " + "WHERE TABLE_SCHEMA = SCHEMA() AND TABLE_NAME = '" + tableName + "' " + "ORDER BY ORDINAL_POSITION").getResultList();
 
                 // Get all data
                 String  dataQuery = "SELECT * FROM " + tableName;
@@ -86,7 +88,12 @@ public class AbstractTestUtil extends DTOAsserts {
                 for (Object row : results) {
                     if (row instanceof Object[] cells) {
                         for (int i = 0; i < cells.length; i++) {
-                            String value = cells[i] != null ? cells[i].toString() : "null";
+                            String value;
+                            if (columnTypes.get(i).equalsIgnoreCase("BINARY LARGE OBJECT")) {
+                                value = cells[i] != null ? "<BLOB>" : "null";
+                            } else {
+                                value = cells[i] != null ? cells[i].toString() : "null";
+                            }
                             maxWidths[i] = Math.max(maxWidths[i], value.length());
                         }
                     } else {
@@ -116,7 +123,12 @@ public class AbstractTestUtil extends DTOAsserts {
                         output.append("|");
                         if (row instanceof Object[] cells) {
                             for (int i = 0; i < cells.length; i++) {
-                                String value = cells[i] != null ? cells[i].toString() : "null";
+                                String value;
+                                if (columnTypes.get(i).equalsIgnoreCase("BINARY LARGE OBJECT")) {
+                                    value = cells[i] != null ? "<BLOB>" : "null";
+                                } else {
+                                    value = cells[i] != null ? cells[i].toString() : "null";
+                                }
                                 output.append(String.format(" %-" + maxWidths[i] + "s |", value));
                             }
                         } else {

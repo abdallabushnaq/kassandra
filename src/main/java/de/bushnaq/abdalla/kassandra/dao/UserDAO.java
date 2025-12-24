@@ -26,7 +26,9 @@ import org.hibernate.annotations.Proxy;
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
@@ -64,12 +66,71 @@ public class UserDAO extends AbstractTimeAwareDAO {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<OffDayDAO>       offDays        = new ArrayList<>();
+    @Column(nullable = false)
+    private String                roles          = "USER"; // Default role for new users
+
+    /**
+     * Add a role to this user
+     *
+     * @param role the role to add (e.g., "ADMIN", "USER")
+     */
+    public void addRole(String role) {
+        List<String> roleList = getRoleList();
+        if (!roleList.contains(role)) {
+            roleList.add(role);
+            setRoleList(roleList);
+        }
+    }
+
+    /**
+     * Get roles as a list
+     *
+     * @return list of role names
+     */
+    public List<String> getRoleList() {
+        if (roles == null || roles.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(Arrays.asList(roles.split(",")));
+    }
+
+    /**
+     * Check if user has a specific role
+     *
+     * @param role the role to check
+     * @return true if user has the role
+     */
+    public boolean hasRole(String role) {
+        return getRoleList().contains(role);
+    }
 
     @PrePersist
     protected void onCreate() {
         super.onCreate();
         if (firstWorkingDay == null)
             firstWorkingDay = LocalDate.now();
+    }
+
+    /**
+     * Remove a role from this user
+     *
+     * @param role the role to remove
+     */
+    public void removeRole(String role) {
+        List<String> roleList = getRoleList();
+        roleList.remove(role);
+        setRoleList(roleList);
+    }
+
+    /**
+     * Set roles from a list
+     *
+     * @param roleList list of role names
+     */
+    public void setRoleList(List<String> roleList) {
+        this.roles = roleList.stream()
+                .filter(r -> r != null && !r.isEmpty())
+                .collect(Collectors.joining(","));
     }
 
 }

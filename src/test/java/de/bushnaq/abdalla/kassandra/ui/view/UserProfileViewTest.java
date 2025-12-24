@@ -17,7 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.UserProfileViewTester;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,11 +48,19 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=${test.server.port:0}",
+                "spring.profiles.active=test",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
 @AutoConfigureMockMvc
 @Transactional
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
-public class UserProfileViewTest extends AbstractUiTestUtil {
+public class UserProfileViewTest extends AbstractKeycloakUiTestUtil {
     private final String                   newColor = "#00ff00"; // Green
     private final String                   newName  = "UpdatedUser";
     @Value("${local.server.port:8080}")
@@ -62,7 +71,7 @@ public class UserProfileViewTest extends AbstractUiTestUtil {
     private       UserProfileViewTester    userProfileViewTester;
 
     @BeforeEach
-    public void setupTest(TestInfo testInfo) {
+    public void setupTest(TestInfo testInfo) throws Exception {
         userProfileViewTester.switchToUserProfileView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
     }
 

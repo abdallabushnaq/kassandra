@@ -17,7 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.dao.UserDAO;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,8 +29,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 /**
  * Integration test for the ProductListView UI component.
@@ -40,10 +43,18 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=${test.server.port:0}",
+                "spring.profiles.active=test",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
 @AutoConfigureMockMvc
-@Transactional
-public class ProductListViewTest extends AbstractUiTestUtil {
+//@Transactional
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
     private final String                   name    = "Product-2";
     private final String                   newName = "NewProduct-2";
     @Autowired
@@ -52,8 +63,17 @@ public class ProductListViewTest extends AbstractUiTestUtil {
     private       HumanizedSeleniumHandler seleniumHandler;
 
     @BeforeEach
-    public void setupTest(TestInfo testInfo) {
-        productListViewTester.switchToProductListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+    public void setupTest(TestInfo testInfo) throws Exception {
+        Optional<UserDAO> byEmail = userRepository.findByEmail("christopher.paul@kassandra.org");//debugging code
+
+
+        productListViewTester.switchToProductListViewWithOidc(
+                "christopher.paul@kassandra.org",
+                "password",
+                null,
+                testInfo.getTestClass().get().getSimpleName(),
+                generateTestCaseName(testInfo)
+        );
     }
 
     /**

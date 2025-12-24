@@ -222,13 +222,12 @@ public class ProductListViewTester extends AbstractViewTester {
      * Opens the product list URL directly and waits for the page to load
      * by checking for the presence of the page title element.
      */
-    public void switchToProductListView(String recordingFolderName, String testName) {
-        switchToProductListView(null, recordingFolderName, testName);
-    }
-
-    public void switchToProductListView(String screenshotFileName, String recordingFolderName, String testName, String userName, String Password) {
-
-    }
+//    public void switchToProductListView(String recordingFolderName, String testName) {
+//        switchToProductListView(null, recordingFolderName, testName);
+//    }
+//    public void switchToProductListView(String screenshotFileName, String recordingFolderName, String testName, String userName, String Password) {
+//
+//    }
 
     /**
      * Navigates to the ProductListView using Basic Authentication.
@@ -238,18 +237,18 @@ public class ProductListViewTester extends AbstractViewTester {
      *
      * @param screenshotFileName optional filename to save a screenshot of the login view
      */
-    public void switchToProductListView(String screenshotFileName, String recordingFolderName, String testName) {
-        seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
-//        seleniumHandler.wait(120000);
-        seleniumHandler.startRecording(recordingFolderName, testName);
-        seleniumHandler.setLoginUser("admin-user");
-        seleniumHandler.setLoginPassword("test-password");
-        if (screenshotFileName != null) {
-            seleniumHandler.takeElementScreenShot(seleniumHandler.findElement(By.id(LoginView.LOGIN_VIEW)), LoginView.LOGIN_VIEW, screenshotFileName);
-        }
-        seleniumHandler.loginSubmit();
-        seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
-    }
+//    public void switchToProductListView(String screenshotFileName, String recordingFolderName, String testName) {
+//        seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
+////        seleniumHandler.wait(120000);
+//        seleniumHandler.startRecording(recordingFolderName, testName);
+//        seleniumHandler.setLoginUser("admin-user");
+//        seleniumHandler.setLoginPassword("test-password");
+//        if (screenshotFileName != null) {
+//            seleniumHandler.takeElementScreenShot(seleniumHandler.findElement(By.id(LoginView.LOGIN_VIEW)), LoginView.LOGIN_VIEW, screenshotFileName);
+//        }
+//        seleniumHandler.loginSubmit();
+//        seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+//    }
 
     /**
      * Navigates to the ProductListView using OIDC Authentication with Keycloak.

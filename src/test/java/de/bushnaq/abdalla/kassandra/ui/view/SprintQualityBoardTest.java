@@ -19,7 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
@@ -48,11 +48,18 @@ import java.util.List;
 
 @Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=${test.server.port:0}",
+                "spring.profiles.active=test",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
 @AutoConfigureMockMvc
 @Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class SprintQualityBoardTest extends AbstractUiTestUtil {
+public class SprintQualityBoardTest extends AbstractKeycloakUiTestUtil {
     @Autowired
     private FeatureListViewTester    featureListViewTester;
     @Autowired
@@ -120,7 +127,13 @@ public class SprintQualityBoardTest extends AbstractUiTestUtil {
         levelResources(testInfo, sprint, null);
         generateWorklogs(sprint, ParameterOptions.getLocalNow());
 //        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        productListViewTester.switchToProductListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        productListViewTester.switchToProductListViewWithOidc(
+                "christopher.paul@kassandra.org",
+                "password",
+                null,
+                testInfo.getTestClass().get().getSimpleName(),
+                generateTestCaseName(testInfo)
+        );
         productListViewTester.selectProduct(nameGenerator.generateProductName(0));
         versionListViewTester.selectVersion(nameGenerator.generateVersionName(0));
         featureListViewTester.selectFeature(nameGenerator.generateFeatureName(0));

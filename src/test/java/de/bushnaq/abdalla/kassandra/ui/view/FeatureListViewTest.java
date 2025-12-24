@@ -17,7 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
@@ -30,7 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,16 +44,22 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=${test.server.port:0}",
+                "spring.profiles.active=test",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
 @AutoConfigureMockMvc
 @Transactional
-public class FeatureListViewTest extends AbstractUiTestUtil {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       FeatureListViewTester    featureListViewTester;
     private final String                   featureName    = "Project-2";
     private final String                   newProjectName = "NewProject-2";
-    @LocalServerPort
-    private       int                      port;
     @Autowired
     private       ProductListViewTester    productListViewTester;
     private final String                   productName    = "Product-2";
@@ -75,7 +81,13 @@ public class FeatureListViewTest extends AbstractUiTestUtil {
     @BeforeEach
     public void setupTest(TestInfo testInfo) throws Exception {
         // Navigate to product list and create a product
-        productListViewTester.switchToProductListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        productListViewTester.switchToProductListViewWithOidc(
+                "christopher.paul@kassandra.org",
+                "password",
+                null,
+                testInfo.getTestClass().get().getSimpleName(),
+                generateTestCaseName(testInfo)
+        );
 //        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         productListViewTester.createProductConfirm(productName);
         productListViewTester.selectProduct(productName);

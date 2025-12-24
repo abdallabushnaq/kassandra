@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.OffDayListViewTester;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,11 +53,19 @@ import java.time.LocalDate;
  */
 @Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=${test.server.port:0}",
+                "spring.profiles.active=test",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
 @AutoConfigureMockMvc
 @Transactional
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
-public class OffDayListViewTest extends AbstractUiTestUtil {
+public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
     // Test data for the first off day record
     private final LocalDate                firstDayRecord1  = LocalDate.of(2025, 8, 4);
     // Test data for the second off day record
@@ -85,7 +94,7 @@ public class OffDayListViewTest extends AbstractUiTestUtil {
     private final OffDayType               typeRecord2      = OffDayType.SICK;
 
     @BeforeEach
-    public void setupTest(TestInfo testInfo) {
+    public void setupTest(TestInfo testInfo) throws Exception {
         offDayListViewTester.switchToOffDayListView(
                 testInfo.getTestClass().get().getSimpleName(),
                 generateTestCaseName(testInfo),

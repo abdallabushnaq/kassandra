@@ -71,6 +71,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public static final String           ID_USER_MENU_LOCATION        = "main-layout-user-menu-location";
     public static final String           ID_USER_MENU_LOGOUT          = "main-layout-user-menu-logout";
     public static final String           ID_USER_MENU_MANAGE_SETTINGS = "main-layout-user-menu-manage-settings";
+    public static final String           ID_USER_MENU_MANAGE_USERS    = "main-layout-user-menu-manage-users";
     public static final String           ID_USER_MENU_OFF_DAYS        = "main-layout-user-menu-off-days";
     public static final String           ID_USER_MENU_VIEW_PROFILE    = "main-layout-user-menu-view-profile";
     @Getter
@@ -296,6 +297,12 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         var viewProfileItem = userMenuItem.getSubMenu().addItem("View Profile", e -> navigateToProfile(userEmail));
         viewProfileItem.setId(ID_USER_MENU_VIEW_PROFILE);
 
+        // Add "Manage Users" menu item for admins only
+        if (SecurityUtils.isAdmin()) {
+            var manageUsersItem = userMenuItem.getSubMenu().addItem("Manage Users", e -> navigateToUsers());
+            manageUsersItem.setId(ID_USER_MENU_MANAGE_USERS);
+        }
+
         var manageSettingsItem = userMenuItem.getSubMenu().addItem("Manage Settings");
         manageSettingsItem.setEnabled(false);
         manageSettingsItem.setId(ID_USER_MENU_MANAGE_SETTINGS);
@@ -337,6 +344,10 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     private void navigateToProfile(String userEmail) {
         getUI().ifPresent(ui -> ui.navigate("profile/" + userEmail));
+    }
+
+    private void navigateToUsers() {
+        getUI().ifPresent(ui -> ui.navigate("user-list"));
     }
 
     /**
