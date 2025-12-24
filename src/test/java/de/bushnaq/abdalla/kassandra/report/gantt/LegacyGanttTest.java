@@ -119,6 +119,7 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                 }
             }
             //populate taskMap
+            int anonymousUserIndex = 1;
             for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
                 if (isValidTask(mpxjTask)) {
                     String                                    name     = mpxjTask.getName();
@@ -141,21 +142,25 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                     } else if (!mpxjTask.hasChildTasks()) {
                         //no user assigned to this task
                         Duration work         = mpxjTask.getDuration();
-                        String   resourceName = ANONYMOUS;
-                        String   emailAddress = ANONYMOUS + PROJECT_HUB_ORG;
-                        User     user         = userMap.get(resourceName);
+                        String   resourceName = ANONYMOUS + "-" + anonymousUserIndex;
+                        String   emailAddress = ANONYMOUS + "-" + anonymousUserIndex + PROJECT_HUB_ORG;
+                        anonymousUserIndex++;
+                        User user = userMap.get(resourceName);
                         if (user == null) {
                             user = addUser(resourceName, emailAddress, "de", "nw", date.toLocalDate(), generateUserColor(userIndex), (float) 1);
+                            userMap.put(resourceName, user);//store anonymous user for reuse
                         }
                         Task task = addTask(sprint, null, mpxjTask.getName(), start, MpxjUtil.toJavaDuration(work), null, user, null, taskMode, mpxjTask.getMilestone());//parent task
                         taskMap.put(task.getName(), task);
                     } else {
                         //story
-                        String resourceName = ANONYMOUS;
-                        String emailAddress = ANONYMOUS + PROJECT_HUB_ORG;
-                        User   user         = userMap.get(resourceName);
+                        String resourceName = ANONYMOUS + "-" + anonymousUserIndex;
+                        String emailAddress = ANONYMOUS + "-" + anonymousUserIndex + PROJECT_HUB_ORG;
+                        anonymousUserIndex++;
+                        User user = userMap.get(resourceName);
                         if (user == null) {
                             user = addUser(resourceName, emailAddress, "de", "nw", date.toLocalDate(), generateUserColor(userIndex), (float) 1);
+                            userMap.put(resourceName, user);//store anonymous user for reuse
                         }
                         Task task = addTask(sprint, null, mpxjTask.getName(), start, null, null, user, null, taskMode, mpxjTask.getMilestone());//parent task
                         taskMap.put(task.getName(), task);

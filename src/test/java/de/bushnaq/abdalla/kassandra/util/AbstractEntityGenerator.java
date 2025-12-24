@@ -495,7 +495,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             task.setParentTaskId(parent.getId());
         }
         // Save the task
-        System.out.printf("trying to add %s%n", task);
+//        System.out.printf("trying to add %s%n", task);
 
         Task saved = taskApi.persist(task);
         expectedTasks.add(saved);
