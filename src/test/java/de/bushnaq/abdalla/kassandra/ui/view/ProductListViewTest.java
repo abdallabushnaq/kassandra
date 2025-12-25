@@ -29,6 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -98,6 +99,7 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin.admin@kassandra.org", roles = "ADMIN")
     public void testCreateConfirm() throws Exception {
         productListViewTester.createProductConfirm(name);
     }

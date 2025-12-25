@@ -75,7 +75,7 @@ public class CustomOidcUserService extends OidcUserService {
             log.info("✅ Loaded {} roles from database for {}: {}", dbRoles.size(), email, String.join(", ", dbRoles));
         } else {
             // No user in database - assign default USER role
-            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+//            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
             log.warn("⚠️ User {} not found in database. Assigned default USER role.", email);
         }
 

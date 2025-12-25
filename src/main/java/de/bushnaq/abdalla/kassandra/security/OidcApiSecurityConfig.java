@@ -121,7 +121,7 @@ public class OidcApiSecurityConfig {
 //                logger.debug("Loaded roles from database for {}: {}", email, dbRoles);
             } else {
                 // No user in database - assign default USER role
-                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+//                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
                 logger.warn("User {} not found in database. Assigned default USER role.", email);
             }
 

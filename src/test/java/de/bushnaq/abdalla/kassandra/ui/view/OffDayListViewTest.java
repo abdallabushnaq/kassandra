@@ -30,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
@@ -108,6 +109,7 @@ public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
      * cancels the operation, no record is created in the list.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateCancel() {
         offDayListViewTester.createOffDayCancel(firstDayRecord1, lastDayRecord1, typeRecord1);
     }
@@ -119,6 +121,7 @@ public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
      * and confirms the creation, the record appears in the list with the correct values.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateConfirm() {
         offDayListViewTester.createOffDayConfirm(firstDayRecord1, lastDayRecord1, typeRecord1);
     }
@@ -130,6 +133,7 @@ public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
      * Verifies that the record remains in the list.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteCancel() {
         // Create a record
         offDayListViewTester.createOffDayConfirm(firstDayRecord1, lastDayRecord1, typeRecord1);
@@ -145,6 +149,7 @@ public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
      * Verifies that the record is removed from the list.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteConfirm() {
         // Create a record
         offDayListViewTester.createOffDayConfirm(firstDayRecord1, lastDayRecord1, typeRecord1);
@@ -160,6 +165,7 @@ public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
      * Verifies that each type can be correctly created and displayed.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDifferentOffDayTypes() {
         // Test each type with slightly different dates
         offDayListViewTester.createOffDayConfirm(
@@ -191,6 +197,7 @@ public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
      * Verifies that the original record details remain unchanged and the new values are not applied.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditCancel() {
         // Create an initial record
         offDayListViewTester.createOffDayConfirm(firstDayRecord1, lastDayRecord1, typeRecord1);
@@ -210,6 +217,7 @@ public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
      * and the old values are no longer present.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditConfirm() {
         // Create an initial record
         offDayListViewTester.createOffDayConfirm(firstDayRecord1, lastDayRecord1, typeRecord1);
@@ -228,6 +236,7 @@ public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
      * Verifies that an error is shown and the invalid record is not created.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testInvalidDateRange() {
         offDayListViewTester.createInvalidDateRangeOffDay(invalidFirstDay, invalidLastDay, typeRecord1);
     }
@@ -239,6 +248,7 @@ public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
      * Verifies that both records appear correctly in the list.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testMultipleOffDays() {
         // Create first record
         offDayListViewTester.createOffDayConfirm(firstDayRecord1, lastDayRecord1, typeRecord1);
@@ -254,6 +264,7 @@ public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
      * that overlaps with the first. Based on business rules, this may or may not be allowed.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testOverlappingOffDays() {
         // The last parameter indicates whether the second creation should succeed
         // This depends on your business rules - if overlaps are allowed, set to true
