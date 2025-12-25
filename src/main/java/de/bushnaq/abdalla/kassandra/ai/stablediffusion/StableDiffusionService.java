@@ -78,7 +78,7 @@ public class StableDiffusionService {
      * @return GeneratedImageResult containing original and resized images
      */
     public GeneratedImageResult generateDefaultAvatar(String iconName) {
-        System.out.println("Stable Diffusion not available, using default avatar" + (iconName != null ? " with icon: " + iconName : ""));
+        log.warn("Stable Diffusion not available, using default avatar" + (iconName != null ? " with icon: " + iconName : ""));
 
         // Load PNG resource if icon name is provided
         byte[] pngImageBytes = null;
@@ -99,7 +99,7 @@ public class StableDiffusionService {
      * @return GeneratedImageResult containing original and resized images
      */
     private GeneratedImageResult generateDefaultAvatarInternal(byte[] pngImageBytes) {
-        System.out.println("Stable Diffusion not available, using default avatar");
+        log.warn("Stable Diffusion not available, using default avatar");
         try {
             // Get sizes from config
             int originalSize = config.getGenerationSize();

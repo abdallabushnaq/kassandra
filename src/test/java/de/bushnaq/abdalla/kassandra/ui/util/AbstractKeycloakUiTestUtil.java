@@ -20,7 +20,6 @@ package de.bushnaq.abdalla.kassandra.ui.util;
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.narrator.TtsCacheManager;
-import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -150,24 +149,12 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     @BeforeEach
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void setupTestUser() {
-        String testUserEmail = "christopher.paul@kassandra.org";
-//        var existingUser = userRepository.findByEmail(testUserEmail);
-//        if (existingUser.isEmpty())
-//        {
-        LocalDate firstDate = ParameterOptions.getNow().toLocalDate().minusYears(2);
-        User      saved     = addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
+        String    testUserEmail = "christopher.paul@kassandra.org";
+        LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
+        addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
+        //ensure tests that generate more users will find the correct expectations.
+        expectedUsers.clear();
         userIndex--;//ensure Christopher Paul is always the first user created
-//        } else {
-//            // Ensure existing user has ADMIN role
-//            UserDAO user = existingUser.get();
-//            if (!user.hasRole("ADMIN")) {
-//                user.addRole("ADMIN");
-//                userRepository.save(user);
-//                logger.info("Added ADMIN role to existing test user: {}", testUserEmail);
-//            } else {
-//                logger.info("Test user already exists with ADMIN role: {}", testUserEmail);
-//            }
-//        }
     }
 
     @AfterAll

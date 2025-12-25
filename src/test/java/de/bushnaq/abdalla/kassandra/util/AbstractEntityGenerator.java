@@ -32,6 +32,7 @@ import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Slf4j
 public class AbstractEntityGenerator extends AbstractTestUtil {
     public static final String                FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
     public static final String                FIRST_OFF_DAY_START_DATE  = "2024-04-01";
@@ -129,7 +131,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 image = stableDiffusionService.generateDefaultAvatar("lightbulb");
             }
         } else {
-            System.out.println("Stable Diffusion not available, using default avatar for feature: " + name);
+            log.warn("Stable Diffusion not available, using default avatar for feature: " + name);
             image = stableDiffusionService.generateDefaultAvatar("lightbulb");
         }
         feature.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
@@ -286,7 +288,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 image = stableDiffusionService.generateDefaultAvatar("cube");
             }
         } else {
-            System.out.println("Stable Diffusion not available, using default avatar for product: " + name);
+            log.warn("Stable Diffusion not available, using default avatar for product: " + name);
             image = stableDiffusionService.generateDefaultAvatar("cube");
         }
         product.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
@@ -553,18 +555,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             image = stableDiffusionService.generateDefaultAvatar("user");
         }
         user.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
-
-//        try {
-//            String  s1      = mapper.writeValueAsString(user);
-//            UserDAO userDAO = mapper.readValue(s1, UserDAO.class);
-//            String  s2      = mapper.writeValueAsString(userDAO);
-//            User    user2   = mapper.readValue(s2, User.class);
-//            logger.trace(s1);
-//            logger.trace(s2);
-//        } catch (JsonProcessingException e) {
-//            throw new RuntimeException(e);
-//        }
-
 
         saved = userApi.persist(user);
         addLocation(saved, country, state, start);
