@@ -395,12 +395,12 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             LocalDate firstDate = ParameterOptions.getNow().toLocalDate().minusYears(2);
             User      saved     = addUser(name, email, "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
             System.out.println("Adding user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms");
-//            GanttContext gc        = new GanttContext();
-//            gc.initialize();
-//            saved.initialize(gc);
             saved.initialize();
             time = System.currentTimeMillis();
-            generateRandomOffDays(saved, firstDate);
+            if (saved.getOffDays().isEmpty()) {
+                //only in case it is a new user
+                generateRandomOffDays(saved, firstDate);
+            }
             Profiler.log("generateRandomOffDays");
             System.out.println("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and %d" + offDaysIterations + "iterations");
         }
@@ -511,21 +511,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     }
 
     protected User addUser(String name, String email, String country, String state, LocalDate start, Color color, float availability) {
-        // Check if user already exists by email
-        User existingUser = null;
-        try {
-            existingUser = userApi.getByEmail(email);
-        } catch (Exception e) {
-            // User doesn't exist, which is fine - we'll create a new one
-        }
-
-        if (existingUser != null) {
-            System.out.println("User with email " + email + " already exists, skipping creation");
-            // Add to expected users if not already there
-            expectedUsers.add(existingUser);
-            return existingUser;
-        }
-
         // User doesn't exist, create new one
         User user = new User();
         user.setName(name);

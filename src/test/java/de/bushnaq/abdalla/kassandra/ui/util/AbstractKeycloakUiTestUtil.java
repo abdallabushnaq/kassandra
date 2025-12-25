@@ -19,7 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.util;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.ai.narrator.TtsCacheManager;
-import de.bushnaq.abdalla.kassandra.dao.UserDAO;
+import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -151,7 +151,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
      */
     @BeforeEach
     public void setupTestUser() {
-        String testUserEmail = "christopher.paul@kassandra.org";
+        String testUserEmail = "admin.admin@kassandra.org";
 
         // Create a new transaction explicitly to ensure commit
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
@@ -161,36 +161,17 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         TransactionStatus status = transactionManager.getTransaction(def);
 
         try {
-            // Check if user already exists
-            var existingUser = userRepository.findByEmail(testUserEmail);
-
-            if (existingUser.isEmpty()) {
-                // Create test user with ADMIN role
-                UserDAO testUser = new UserDAO();
-                testUser.setEmail(testUserEmail);
-                testUser.setName("Christopher Paul");
-                testUser.setRoles("ADMIN,USER");
-                testUser.setColor(Color.BLUE);
-                testUser.setFirstWorkingDay(LocalDate.now());
-
-                userRepository.save(testUser);
-                logger.info("Created test user in database: {} with ADMIN role", testUserEmail);
-            } else {
-                // Ensure existing user has ADMIN role
-                UserDAO user = existingUser.get();
-                if (!user.hasRole("ADMIN")) {
-                    user.addRole("ADMIN");
-                    userRepository.save(user);
-                    logger.info("Added ADMIN role to existing test user: {}", testUserEmail);
-                } else {
-                    logger.info("Test user already exists with ADMIN role: {}", testUserEmail);
-                }
-            }
-
-            // Commit the transaction explicitly
+            // Create test user with ADMIN role
+            User testUser = new User();
+            testUser.setEmail(testUserEmail);
+            testUser.setName("Admin Admin");
+            testUser.setRoles("ADMIN,USER");
+            testUser.setColor(Color.BLUE);
+            testUser.setFirstWorkingDay(LocalDate.now());
+            User saved = userApi.persist(testUser);
+            expectedUsers.add(saved);
+            logger.info("Created test user in database: {} with ADMIN role", testUserEmail);
             transactionManager.commit(status);
-//            logger.info("Test user transaction committed successfully");
-
         } catch (Exception e) {
             transactionManager.rollback(status);
             logger.error("Failed to setup test user", e);
