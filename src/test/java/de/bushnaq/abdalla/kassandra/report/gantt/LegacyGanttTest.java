@@ -110,7 +110,7 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                                 if (emailAddress == null) {
                                     emailAddress = resourceName.replaceAll(" ", "_") + "@example.com";
                                 }
-                                User user = addUser(resourceName, emailAddress, "DE", "nw", date.toLocalDate(), generateUserColor(userIndex), (float) availability);
+                                User user = addUser(resourceName, emailAddress, "USER", "DE", "nw", date.toLocalDate(), generateUserColor(userIndex), (float) availability);
 
                                 userMap.put(resourceName, user);//store users
                             }
@@ -147,7 +147,7 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                         anonymousUserIndex++;
                         User user = userMap.get(resourceName);
                         if (user == null) {
-                            user = addUser(resourceName, emailAddress, "de", "nw", date.toLocalDate(), generateUserColor(userIndex), (float) 1);
+                            user = addUser(resourceName, emailAddress, "USER", "de", "nw", date.toLocalDate(), generateUserColor(userIndex), (float) 1);
                             userMap.put(resourceName, user);//store anonymous user for reuse
                         }
                         Task task = addTask(sprint, null, mpxjTask.getName(), start, MpxjUtil.toJavaDuration(work), null, user, null, taskMode, mpxjTask.getMilestone());//parent task
@@ -159,7 +159,7 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                         anonymousUserIndex++;
                         User user = userMap.get(resourceName);
                         if (user == null) {
-                            user = addUser(resourceName, emailAddress, "de", "nw", date.toLocalDate(), generateUserColor(userIndex), (float) 1);
+                            user = addUser(resourceName, emailAddress, "USER", "de", "nw", date.toLocalDate(), generateUserColor(userIndex), (float) 1);
                             userMap.put(resourceName, user);//store anonymous user for reuse
                         }
                         Task task = addTask(sprint, null, mpxjTask.getName(), start, null, null, user, null, taskMode, mpxjTask.getMilestone());//parent task

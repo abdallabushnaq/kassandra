@@ -30,9 +30,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Integration test for the ProjectListView UI component.
@@ -53,7 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
         }
 )
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
@@ -106,6 +106,7 @@ public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateCancel() throws Exception {
         featureListViewTester.createFeatureCancel(featureName);
     }
@@ -119,6 +120,7 @@ public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateConfirm() throws Exception {
         featureListViewTester.createFeatureConfirm(featureName);
     }
@@ -132,6 +134,7 @@ public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateDuplicateNameFails() throws Exception {
         // First, create a feature
         featureListViewTester.createFeatureConfirm(featureName);
@@ -148,6 +151,7 @@ public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteCancel() throws Exception {
         featureListViewTester.createFeatureConfirm(featureName);
         featureListViewTester.deleteFeatureCancel(featureName);
@@ -162,6 +166,7 @@ public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteConfirm() throws Exception {
         featureListViewTester.createFeatureConfirm(featureName);
         featureListViewTester.deleteFeatureConfirm(featureName);
@@ -176,6 +181,7 @@ public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditCancel() throws Exception {
         featureListViewTester.createFeatureConfirm(featureName);
         featureListViewTester.editFeatureCancel(featureName, newProjectName);
@@ -190,6 +196,7 @@ public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditConfirm() throws Exception {
         featureListViewTester.createFeatureConfirm(featureName);
         featureListViewTester.editFeatureConfirm(featureName, newProjectName);
@@ -204,6 +211,7 @@ public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditDuplicateNameFails() throws Exception {
         // First, create two features with different names
         featureListViewTester.createFeatureConfirm(featureName);

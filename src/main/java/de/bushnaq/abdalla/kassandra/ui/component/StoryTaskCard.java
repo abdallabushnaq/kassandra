@@ -71,8 +71,7 @@ public class StoryTaskCard extends VerticalLayout {
         setSpacing(false);
         setWidthFull();
 
-        log.info("Creating StoryTaskCard for story: {} (ID: {}) with {} child tasks, simplified: {}",
-                story.getName(), story.getId(), childTasks.size(), showSimplifiedHeader);
+//        log.info("Creating StoryTaskCard for story: {} (ID: {}) with {} child tasks, simplified: {}", story.getName(), story.getId(), childTasks.size(), showSimplifiedHeader);
 
         createContent();
     }

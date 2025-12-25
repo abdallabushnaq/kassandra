@@ -22,12 +22,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.util.List;
 
 public class AbstractTestUtil extends DTOAsserts {
     @Autowired
-    protected EntityManager entityManager;
+    protected EntityManager              entityManager;
+    @Autowired
+    protected PlatformTransactionManager transactionManager;
 
     @AfterEach
     protected void afterEach(TestInfo testInfo) throws Exception {
@@ -41,13 +46,27 @@ public class AbstractTestUtil extends DTOAsserts {
         logger.info("==============================================");
         logger.info("start " + testInfo.getDisplayName());
         logger.info("----------------------------------------------");
-        List<String> tableNames = getAllTableNames();
-        entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE").executeUpdate();
-        for (String tableName : tableNames) {
-            entityManager.createNativeQuery("TRUNCATE TABLE " + tableName).executeUpdate();
+
+        // Manually create a transaction
+        DefaultTransactionDefinition def    = new DefaultTransactionDefinition();
+        TransactionStatus            status = transactionManager.getTransaction(def);
+
+        try {
+            List<String> tableNames = getAllTableNames();
+            entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE").executeUpdate();
+            for (String tableName : tableNames) {
+                entityManager.createNativeQuery("TRUNCATE TABLE " + tableName).executeUpdate();
+            }
+            entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE").executeUpdate();
+            entityManager.flush();
+
+            // Commit the transaction
+            transactionManager.commit(status);
+        } catch (Exception e) {
+            // Rollback on error
+            transactionManager.rollback(status);
+            throw e;
         }
-        entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE").executeUpdate();
-        entityManager.flush();
     }
 
     protected List<String> getAllTableNames() {

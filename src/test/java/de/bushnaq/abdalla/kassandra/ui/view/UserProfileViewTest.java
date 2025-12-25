@@ -30,9 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Integration test for the UserProfileView UI component.
@@ -57,7 +57,7 @@ import org.springframework.transaction.annotation.Transactional;
         }
 )
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class UserProfileViewTest extends AbstractKeycloakUiTestUtil {
@@ -82,6 +82,7 @@ public class UserProfileViewTest extends AbstractKeycloakUiTestUtil {
      * and clicks save, both changes are persisted and visible after a page reload.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditNameAndColor() {
         userProfileViewTester.editProfileNameAndColor(newName, newColor);
     }
@@ -93,6 +94,7 @@ public class UserProfileViewTest extends AbstractKeycloakUiTestUtil {
      * an error notification is shown and the change is not persisted.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEmptyNameValidation() {
         // Get the current field values first
         String originalName  = seleniumHandler.getTextField(UserProfileView.USER_NAME_FIELD);
@@ -109,6 +111,7 @@ public class UserProfileViewTest extends AbstractKeycloakUiTestUtil {
      * successfully navigates to the profile page.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testNavigateToProfileFromMenu() {
         // First navigate away from the profile page
         seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + ProductListView.ROUTE);

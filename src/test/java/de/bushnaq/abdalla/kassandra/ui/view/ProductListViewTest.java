@@ -86,6 +86,7 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateCancel() throws Exception {
         productListViewTester.createProductCancel(name);
     }
@@ -99,7 +100,7 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
-    @WithMockUser(username = "admin.admin@kassandra.org", roles = "ADMIN")
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateConfirm() throws Exception {
         productListViewTester.createProductConfirm(name);
     }
@@ -113,6 +114,7 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateDuplicateNameFails() throws Exception {
         // First, create a product
         productListViewTester.createProductConfirm(name);
@@ -129,6 +131,7 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteCancel() throws Exception {
         productListViewTester.createProductConfirm(name);
         productListViewTester.deleteProductCancel(name);
@@ -143,6 +146,7 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteConfirm() throws Exception {
         productListViewTester.createProductConfirm(name);
         productListViewTester.deleteProductConfirm(name);
@@ -157,6 +161,7 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditCancel() throws Exception {
         productListViewTester.createProductConfirm(name);
         productListViewTester.editProductCancel(name, newName);
@@ -171,12 +176,14 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditConfirm() throws Exception {
         productListViewTester.createProductConfirm(name);
         productListViewTester.editProductConfirm(name, newName);
     }
 
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditDuplicateNameFails() throws Exception {
         productListViewTester.createProductConfirm(name);
         productListViewTester.createProductConfirm(newName);

@@ -29,9 +29,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Integration test for the VersionListView UI component.
@@ -52,7 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
         }
 )
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class VersionListViewTest extends AbstractKeycloakUiTestUtil {
     private final String                   newVersionName = "NewVersion-2";
@@ -95,6 +95,7 @@ public class VersionListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateCancel() throws Exception {
         versionListViewTester.createVersionCancel(versionName);
     }
@@ -108,6 +109,7 @@ public class VersionListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateConfirm() throws Exception {
         versionListViewTester.createVersionConfirm(versionName);
     }
@@ -121,6 +123,7 @@ public class VersionListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateDuplicateNameFails() throws Exception {
         // First, create a version
         versionListViewTester.createVersionConfirm(versionName);
@@ -137,6 +140,7 @@ public class VersionListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteCancel() throws Exception {
         versionListViewTester.createVersionConfirm(versionName);
         versionListViewTester.deleteVersionCancel(versionName);
@@ -151,6 +155,7 @@ public class VersionListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteConfirm() throws Exception {
         versionListViewTester.createVersionConfirm(versionName);
         versionListViewTester.deleteVersionConfirm(versionName);
@@ -165,6 +170,7 @@ public class VersionListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditCancel() throws Exception {
         versionListViewTester.createVersionConfirm(versionName);
         versionListViewTester.editVersionCancel(versionName, newVersionName);
@@ -179,6 +185,7 @@ public class VersionListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditConfirm() throws Exception {
         versionListViewTester.createVersionConfirm(versionName);
         versionListViewTester.editVersionConfirm(versionName, newVersionName);
@@ -193,6 +200,7 @@ public class VersionListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditDuplicateNameFails() throws Exception {
         // First, create two versions with different names
         versionListViewTester.createVersionConfirm(versionName);

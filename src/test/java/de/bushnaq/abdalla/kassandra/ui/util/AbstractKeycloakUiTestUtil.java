@@ -18,23 +18,21 @@
 package de.bushnaq.abdalla.kassandra.ui.util;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.narrator.TtsCacheManager;
-import de.bushnaq.abdalla.kassandra.dao.UserDAO;
+import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.awt.*;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.LocalDate;
@@ -150,51 +148,26 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
      * and visible to all subsequent transactions including API calls.
      */
     @BeforeEach
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void setupTestUser() {
         String testUserEmail = "christopher.paul@kassandra.org";
-
-        // Create a new transaction explicitly to ensure commit
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setName("setupTestUser");
-        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-
-        TransactionStatus status = transactionManager.getTransaction(def);
-
-        try {
-            // Check if user already exists
-            var existingUser = userRepository.findByEmail(testUserEmail);
-
-            if (existingUser.isEmpty()) {
-                // Create test user with ADMIN role
-                UserDAO testUser = new UserDAO();
-                testUser.setEmail(testUserEmail);
-                testUser.setName("Christopher Paul");
-                testUser.setRoles("ADMIN,USER");
-                testUser.setColor(Color.BLUE);
-                testUser.setFirstWorkingDay(LocalDate.now());
-
-                userRepository.save(testUser);
-                logger.info("Created test user in database: {} with ADMIN role", testUserEmail);
-            } else {
-                // Ensure existing user has ADMIN role
-                UserDAO user = existingUser.get();
-                if (!user.hasRole("ADMIN")) {
-                    user.addRole("ADMIN");
-                    userRepository.save(user);
-                    logger.info("Added ADMIN role to existing test user: {}", testUserEmail);
-                } else {
-                    logger.info("Test user already exists with ADMIN role: {}", testUserEmail);
-                }
-            }
-
-            // Commit the transaction explicitly
-            transactionManager.commit(status);
-
-        } catch (Exception e) {
-            transactionManager.rollback(status);
-            logger.error("Failed to setup test user", e);
-            throw e;
-        }
+//        var existingUser = userRepository.findByEmail(testUserEmail);
+//        if (existingUser.isEmpty())
+//        {
+        LocalDate firstDate = ParameterOptions.getNow().toLocalDate().minusYears(2);
+        User      saved     = addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
+        userIndex--;//ensure Christopher Paul is always the first user created
+//        } else {
+//            // Ensure existing user has ADMIN role
+//            UserDAO user = existingUser.get();
+//            if (!user.hasRole("ADMIN")) {
+//                user.addRole("ADMIN");
+//                userRepository.save(user);
+//                logger.info("Added ADMIN role to existing test user: {}", testUserEmail);
+//            } else {
+//                logger.info("Test user already exists with ADMIN role: {}", testUserEmail);
+//            }
+//        }
     }
 
     @AfterAll

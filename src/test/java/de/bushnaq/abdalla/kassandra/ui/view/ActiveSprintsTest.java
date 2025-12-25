@@ -30,7 +30,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -56,7 +55,7 @@ import java.time.LocalDateTime;
         }
 )
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @Slf4j
 public class ActiveSprintsTest extends AbstractKeycloakUiTestUtil {
 

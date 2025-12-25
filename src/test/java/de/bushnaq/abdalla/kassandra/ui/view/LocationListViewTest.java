@@ -29,9 +29,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -64,7 +64,7 @@ import java.time.LocalDate;
         }
 )
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
@@ -99,6 +99,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
      * is disabled, preventing users from deleting their only record.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCannotDeleteOnlyLocation() {
         // Verify user cannot delete their only location record (the initial one)
         locationListViewTester.verifyCannotDeleteOnlyLocation(initialDate);
@@ -111,6 +112,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
      * cancels the operation, no record is created in the list.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateCancel() {
         locationListViewTester.createLocationCancel(startDate, country, state);
     }
@@ -122,6 +124,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
      * and confirms the creation, the record appears in the list with the correct values.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateConfirm() {
         locationListViewTester.createLocationConfirm(startDate, country, state);
     }
@@ -135,6 +138,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
      * Note: This test assumes the user already has the initial default location record.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteCancel() {
         // Create a second location record
         locationListViewTester.createLocationConfirm(startDate, country, state);
@@ -151,6 +155,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
      * Note: This test assumes the user already has the initial default location record.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteConfirm() {
         // Create a second location record
         locationListViewTester.createLocationConfirm(startDate, country, state);
@@ -165,6 +170,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
      * country and state. Verifies that an error is shown and the duplicate is not created.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDuplicateStartDate() {
         // Try to create a duplicate with the same start date as the initial record
         locationListViewTester.createDuplicateDateLocation(initialDate, newCountry, newState);
@@ -180,6 +186,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
      * Note: This test uses the initial location record that exists when the user is created.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditCancel() {
         // Edit initial record but cancel
         locationListViewTester.editLocationCancel(
@@ -196,6 +203,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
      * and the old values are no longer present.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditConfirm() {
         // Edit initial record and confirm
         locationListViewTester.editLocationConfirm(initialDate, newStartDate, newCountry, newState);

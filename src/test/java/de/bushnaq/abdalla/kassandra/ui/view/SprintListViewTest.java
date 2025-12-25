@@ -31,9 +31,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Integration test for the SprintListView UI component.
@@ -54,7 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
         }
 )
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
@@ -115,6 +115,7 @@ public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateCancel() throws Exception {
         sprintListViewTester.createSprintCancel(sprintName);
     }
@@ -128,6 +129,7 @@ public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateConfirm() throws Exception {
         sprintListViewTester.createSprintConfirm(sprintName);
     }
@@ -141,6 +143,7 @@ public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateDuplicateNameFails() throws Exception {
         // First, create a sprint
         sprintListViewTester.createSprintConfirm(sprintName);
@@ -157,6 +160,7 @@ public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteCancel() throws Exception {
         sprintListViewTester.createSprintConfirm(sprintName);
         sprintListViewTester.deleteSprintCancel(sprintName);
@@ -171,6 +175,7 @@ public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteConfirm() throws Exception {
         sprintListViewTester.createSprintConfirm(sprintName);
         sprintListViewTester.deleteSprintConfirm(sprintName);
@@ -185,6 +190,7 @@ public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditCancel() throws Exception {
         sprintListViewTester.createSprintConfirm(sprintName);
         sprintListViewTester.editSprintCancel(sprintName, newSprintName);
@@ -199,6 +205,7 @@ public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditConfirm() throws Exception {
         sprintListViewTester.createSprintConfirm(sprintName);
         sprintListViewTester.editSprintConfirm(sprintName, newSprintName);
@@ -213,6 +220,7 @@ public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditDuplicateNameFails() throws Exception {
         // First, create two sprints with different names
         sprintListViewTester.createSprintConfirm(sprintName);

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.dao;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -74,6 +75,7 @@ public class UserDAO extends AbstractTimeAwareDAO {
      *
      * @param role the role to add (e.g., "ADMIN", "USER")
      */
+    @JsonIgnore
     public void addRole(String role) {
         List<String> roleList = getRoleList();
         if (!roleList.contains(role)) {
@@ -87,6 +89,7 @@ public class UserDAO extends AbstractTimeAwareDAO {
      *
      * @return list of role names
      */
+    @JsonIgnore
     public List<String> getRoleList() {
         if (roles == null || roles.isEmpty()) {
             return new ArrayList<>();
@@ -100,6 +103,7 @@ public class UserDAO extends AbstractTimeAwareDAO {
      * @param role the role to check
      * @return true if user has the role
      */
+    @JsonIgnore
     public boolean hasRole(String role) {
         return getRoleList().contains(role);
     }
@@ -116,6 +120,7 @@ public class UserDAO extends AbstractTimeAwareDAO {
      *
      * @param role the role to remove
      */
+    @JsonIgnore
     public void removeRole(String role) {
         List<String> roleList = getRoleList();
         roleList.remove(role);
@@ -127,6 +132,7 @@ public class UserDAO extends AbstractTimeAwareDAO {
      *
      * @param roleList list of role names
      */
+    @JsonIgnore
     public void setRoleList(List<String> roleList) {
         this.roles = roleList.stream()
                 .filter(r -> r != null && !r.isEmpty())

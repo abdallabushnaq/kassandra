@@ -87,6 +87,7 @@ public class User extends AbstractTimeAware implements Comparable<User> {
      *
      * @param role the role to add (e.g., "ADMIN", "USER")
      */
+    @JsonIgnore
     public void addRole(String role) {
         List<String> roleList = getRoleList();
         if (!roleList.contains(role)) {
@@ -147,6 +148,7 @@ public class User extends AbstractTimeAware implements Comparable<User> {
      *
      * @return list of role names
      */
+    @JsonIgnore
     public List<String> getRoleList() {
         if (roles == null || roles.isEmpty()) {
             return new ArrayList<>();
@@ -160,6 +162,7 @@ public class User extends AbstractTimeAware implements Comparable<User> {
      * @param role the role to check
      * @return true if user has the role
      */
+    @JsonIgnore
     public boolean hasRole(String role) {
         return getRoleList().contains(role);
     }
@@ -255,6 +258,7 @@ public class User extends AbstractTimeAware implements Comparable<User> {
      *
      * @param role the role to remove
      */
+    @JsonIgnore
     public void removeRole(String role) {
         List<String> roleList = getRoleList();
         roleList.remove(role);
@@ -266,6 +270,7 @@ public class User extends AbstractTimeAware implements Comparable<User> {
      *
      * @param roleList list of role names
      */
+    @JsonIgnore
     public void setRoleList(List<String> roleList) {
         this.roles = roleList.stream()
                 .filter(r -> r != null && !r.isEmpty())

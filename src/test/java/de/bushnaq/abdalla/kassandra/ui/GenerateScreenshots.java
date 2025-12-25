@@ -41,7 +41,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
@@ -63,7 +62,7 @@ import java.util.List;
         }
 )
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @Testcontainers
 @Slf4j
 public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {

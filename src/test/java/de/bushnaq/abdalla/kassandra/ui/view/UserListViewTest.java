@@ -28,9 +28,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -59,7 +59,7 @@ import java.time.LocalDate;
         }
 )
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class UserListViewTest extends AbstractKeycloakUiTestUtil {
     private final String                   email              = "user.test@example.com";
@@ -89,6 +89,7 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateCancel() throws Exception {
         userListViewTester.createUserCancel(name, email, firstWorkingDay, lastWorkingDay);
         userListViewTester.verifyFormIsReset();
@@ -103,6 +104,7 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateConfirm() throws Exception {
         userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay);
         userListViewTester.verifyUserDialogFields(name, email, firstWorkingDay, lastWorkingDay);
@@ -117,6 +119,7 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteCancel() throws Exception {
         userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay);
         userListViewTester.deleteUserCancel(name);
@@ -131,6 +134,7 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteConfirm() throws Exception {
         userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay);
         userListViewTester.deleteUserConfirm(name);
@@ -146,6 +150,7 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditCancel() throws Exception {
         userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay);
         userListViewTester.editUserCancel(name, newName, email, newEmail, firstWorkingDay, newFirstWorkingDay, lastWorkingDay, newLastWorkingDay);
@@ -161,6 +166,7 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
      * @throws Exception if any error occurs during the test
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditConfirm() throws Exception {
         userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay);
         userListViewTester.editUserConfirm(name, newName, newEmail, newFirstWorkingDay, newLastWorkingDay);

@@ -28,9 +28,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -63,7 +63,7 @@ import java.time.LocalDate;
         }
 )
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
@@ -102,6 +102,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
      * is disabled, preventing users from deleting their only record.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCannotDeleteOnlyAvailability() {
         // Verify user cannot delete their only availability record (the initial one)
         availabilityListViewTester.verifyCannotDeleteOnlyAvailability(initialDate);
@@ -114,6 +115,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
      * cancels the operation, no record is created in the list.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateCancel() {
         availabilityListViewTester.createAvailabilityCancel(startDate, availabilityPercent);
     }
@@ -125,6 +127,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
      * and confirms the creation, the record appears in the list with the correct values.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateConfirm() {
         availabilityListViewTester.createAvailabilityConfirm(startDate, availabilityPercent);
     }
@@ -138,6 +141,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
      * Note: This test assumes the user already has the initial default availability record.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteCancel() {
         // Create a second availability record
         availabilityListViewTester.createAvailabilityConfirm(startDate, availabilityPercent);
@@ -154,6 +158,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
      * Note: This test assumes the user already has the initial default availability record.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteConfirm() {
         // Create a second availability record
         availabilityListViewTester.createAvailabilityConfirm(startDate, availabilityPercent);
@@ -168,6 +173,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
      * availability percentage. Verifies that an error is shown and the duplicate is not created.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDuplicateStartDate() {
         // Try to create a duplicate with the same start date as the initial record
         availabilityListViewTester.createDuplicateDateAvailability(initialDate, newAvailabilityPercent);
@@ -183,6 +189,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
      * Note: This test uses the initial availability record that exists when the user is created.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditCancel() {
         // Edit initial record but cancel
         availabilityListViewTester.editAvailabilityCancel(initialDate, newStartDate, initialPercent, newAvailabilityPercent);
@@ -196,6 +203,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
      * and the old values are no longer present.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditConfirm() {
         // Edit initial record and confirm
         availabilityListViewTester.editAvailabilityConfirm(initialDate, newStartDate, newAvailabilityPercent);
@@ -208,6 +216,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
      * Verifies that errors are shown and the invalid records are not created.
      */
     @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testInvalidPercentage() {
         // Try to create record with too high percentage
         availabilityListViewTester.createInvalidPercentageAvailability(startDate, invalidHighPercent);

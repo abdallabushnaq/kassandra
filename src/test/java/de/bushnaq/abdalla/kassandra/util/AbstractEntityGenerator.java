@@ -56,46 +56,48 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AbstractEntityGenerator extends AbstractTestUtil {
-    public static final String                 FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
-    public static final String                 FIRST_OFF_DAY_START_DATE  = "2024-04-01";
-    protected           AvailabilityApi        availabilityApi;
-    protected final     TreeSet<Availability>  expectedAvailabilities    = new TreeSet<>();
-    protected           List<Feature>          expectedFeatures          = new ArrayList<>();
-    protected final     TreeSet<Location>      expectedLocations         = new TreeSet<>();
-    protected           TreeSet<OffDay>        expectedOffDays           = new TreeSet<>();
-    protected           List<Product>          expectedProducts          = new ArrayList<>();
-    protected           List<Sprint>           expectedSprints           = new ArrayList<>();
-    protected           List<Task>             expectedTasks             = new ArrayList<>();
-    protected           TreeSet<User>          expectedUsers             = new TreeSet<>();
-    protected           List<Version>          expectedVersions          = new ArrayList<>();
-    protected           List<Worklog>          expectedWorklogs          = new ArrayList<>();
-    protected           FeatureApi             featureApi;
-    protected static    int                    featureIndex              = 0;
-    protected           LocationApi            locationApi;
-    protected           NameGenerator          nameGenerator             = new NameGenerator();
+    public static final String                FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
+    public static final String                FIRST_OFF_DAY_START_DATE  = "2024-04-01";
+    protected           AvailabilityApi       availabilityApi;
+    protected final     TreeSet<Availability> expectedAvailabilities    = new TreeSet<>();
+    protected           List<Feature>         expectedFeatures          = new ArrayList<>();
+    protected final     TreeSet<Location>     expectedLocations         = new TreeSet<>();
+    protected           TreeSet<OffDay>       expectedOffDays           = new TreeSet<>();
+    protected           List<Product>         expectedProducts          = new ArrayList<>();
+    protected           List<Sprint>          expectedSprints           = new ArrayList<>();
+    protected           List<Task>            expectedTasks             = new ArrayList<>();
+    protected           TreeSet<User>         expectedUsers             = new TreeSet<>();
+    protected           List<Version>         expectedVersions          = new ArrayList<>();
+    protected           List<Worklog>         expectedWorklogs          = new ArrayList<>();
+    protected           FeatureApi            featureApi;
+    protected static    int                   featureIndex              = 0;
+    protected           LocationApi           locationApi;
     @Autowired
-    protected           ObjectMapper           objectMapper;
-    protected           OffDayApi              offDayApi;
-    private             int                    offDaysIterations;
+    ObjectMapper mapper;
+    protected        NameGenerator          nameGenerator = new NameGenerator();
+    @Autowired
+    protected        ObjectMapper           objectMapper;
+    protected        OffDayApi              offDayApi;
+    private          int                    offDaysIterations;
     @LocalServerPort
-    private             int                    port;
-    protected           ProductApi             productApi;
-    protected static    int                    productIndex              = 0;
-    protected final     Random                 random                    = new Random();
-    protected           SprintApi              sprintApi;
-    private static      int                    sprintIndex               = 0;
+    private          int                    port;
+    protected        ProductApi             productApi;
+    protected static int                    productIndex  = 0;
+    protected final  Random                 random        = new Random();
+    protected        SprintApi              sprintApi;
+    private static   int                    sprintIndex   = 0;
     @Autowired
-    protected           StableDiffusionConfig  stableDiffusionConfig;
+    protected        StableDiffusionConfig  stableDiffusionConfig;
     @Autowired
-    protected           StableDiffusionService stableDiffusionService;
-    protected           TaskApi                taskApi;
+    protected        StableDiffusionService stableDiffusionService;
+    protected        TaskApi                taskApi;
     @Autowired
-    private             TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
-    protected           UserApi                userApi;
-    protected static    int                    userIndex                 = 0;
-    protected           VersionApi             versionApi;
-    protected static    int                    versionIndex              = 0;
-    protected           WorklogApi             worklogApi;
+    private          TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
+    protected        UserApi                userApi;
+    protected static int                    userIndex     = 0;
+    protected        VersionApi             versionApi;
+    protected static int                    versionIndex  = 0;
+    protected        WorklogApi             worklogApi;
 
     protected void addAvailability(User user, float availability, LocalDate start) {
         Availability a = new Availability(availability, start);
@@ -330,7 +332,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     protected User addRandomUser(LocalDate firstDate) {
         String       name  = nameGenerator.generateUserName(userIndex);
         String       email = nameGenerator.generateUserEmail(userIndex);
-        User         saved = addUser(name, email, "de", "nw", firstDate, generateUserColor(userIndex), 0.7f);
+        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.7f);
         GanttContext gc    = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
@@ -350,7 +352,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         String    email     = nameGenerator.generateUserEmail(userIndex);
         LocalDate firstDate = ParameterOptions.getNow().toLocalDate();
 
-        User         saved = addUser(name, email, "de", "nw", firstDate, generateUserColor(userIndex), 0.7f);
+        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.7f);
         GanttContext gc    = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
@@ -371,7 +373,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         String       name      = nameGenerator.generateUserName(index);
         String       email     = nameGenerator.generateUserEmail(userIndex);
         LocalDate    firstDate = ParameterOptions.getNow().toLocalDate().minusYears(1);
-        User         saved     = addUser(name, email, "de", "nw", firstDate, generateUserColor(userIndex), availability);
+        User         saved     = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), availability);
         GanttContext gc        = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
@@ -393,7 +395,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             String    name      = nameGenerator.generateUserName(userIndex);
             String    email     = nameGenerator.generateUserEmail(userIndex);
             LocalDate firstDate = ParameterOptions.getNow().toLocalDate().minusYears(2);
-            User      saved     = addUser(name, email, "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
+            User      saved     = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
             System.out.println("Adding user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms");
             saved.initialize();
             time = System.currentTimeMillis();
@@ -402,7 +404,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 generateRandomOffDays(saved, firstDate);
             }
             Profiler.log("generateRandomOffDays");
-            System.out.println("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and %d" + offDaysIterations + "iterations");
+            System.out.println("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and " + offDaysIterations + " iterations");
         }
 
         testUsers();
@@ -510,7 +512,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         return saved;
     }
 
-    protected User addUser(String name, String email, String country, String state, LocalDate start, Color color, float availability) {
+    protected User addUser(String name, String email, String roles, String country, String state, LocalDate start, Color color, float availability) {
         // Check if user already exists by email
         User existingUser = null;
         try {
@@ -532,6 +534,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         user.setName(name);
         user.setEmail(email);
         user.setFirstWorkingDay(start);
+        user.setRoles(roles);
         user.setColor(color);
         user.setCreated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
         user.setUpdated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
@@ -550,6 +553,19 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             image = stableDiffusionService.generateDefaultAvatar("user");
         }
         user.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+
+//        try {
+//            String  s1      = mapper.writeValueAsString(user);
+//            UserDAO userDAO = mapper.readValue(s1, UserDAO.class);
+//            String  s2      = mapper.writeValueAsString(userDAO);
+//            User    user2   = mapper.readValue(s2, User.class);
+//            logger.trace(s1);
+//            logger.trace(s2);
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(e);
+//        }
+
+
         saved = userApi.persist(user);
         addLocation(saved, country, state, start);
         addAvailability(saved, availability, start);
@@ -615,7 +631,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         return image;
     }
 
-    private void generateRandomOffDays(User saved, LocalDate employmentDate) {
+    protected void generateRandomOffDays(User saved, LocalDate employmentDate) {
         try (Profiler pc = new Profiler(SampleType.CPU)) {
 
             int employmentYear = employmentDate.getYear();
