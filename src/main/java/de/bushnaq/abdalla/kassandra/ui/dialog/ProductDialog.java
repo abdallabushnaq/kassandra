@@ -21,6 +21,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -56,6 +57,7 @@ public class ProductDialog extends Dialog {
     private final       Image                  avatarPreview;
     private final       AvatarUpdateRequest    avatarUpdateRequest;
     private final       Binder<Product>        binder;
+    private final       Span                   errorMessage;
     private             byte[]                 generatedImageBytes;
     private             byte[]                 generatedImageBytesOriginal;
     private             String                 generatedImagePrompt;
@@ -106,6 +108,10 @@ public class ProductDialog extends Dialog {
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);
         dialogLayout.setSpacing(true);
+
+        // Create dialog-level error message component (initially hidden)
+        errorMessage = VaadinUtil.createDialogErrorMessage();
+        dialogLayout.add(errorMessage);
 
         // Create name field with icon and AI button
         {
@@ -273,6 +279,9 @@ public class ProductDialog extends Dialog {
     }
 
     private void save() {
+        // Clear any previous error messages
+        VaadinUtil.hideDialogError(errorMessage);
+
         Product productToSave;
         if (isEditMode) {
             productToSave = product;
@@ -325,8 +334,10 @@ public class ProductDialog extends Dialog {
             }
             close();
         } catch (Exception e) {
-            // Use VaadinUtil to handle the exception with field-specific error routing
-            VaadinUtil.handleApiException(e, "name", this::setNameFieldError);
+            // Use VaadinUtil to handle the exception with field-specific and dialog-level error routing
+            // Field-specific errors (like CONFLICT) go to the name field
+            // Field-independent errors (like FORBIDDEN) go to the dialog-level error message
+            VaadinUtil.handleApiException(e, "name", this::setNameFieldError, msg -> VaadinUtil.showDialogError(errorMessage, msg));
         }
     }
 

@@ -114,7 +114,7 @@ public class FeatureController {
     }
 
     @PostMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<FeatureDAO> save(@RequestBody FeatureDAO feature) {
         return versionRepository.findById(feature.getVersionId()).map(version -> {
             // Check if a feature with the same name already exists for this version
@@ -127,7 +127,7 @@ public class FeatureController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public FeatureDAO update(@RequestBody FeatureDAO feature) {
         // Check if another feature with the same name exists in the same version (excluding the current feature)
         if (featureRepository.existsByNameAndVersionIdAndIdNot(feature.getName(), feature.getVersionId(), feature.getId())) {
@@ -137,7 +137,7 @@ public class FeatureController {
     }
 
     @PutMapping("/{id}/avatar/full")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
     public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
         // Verify feature exists

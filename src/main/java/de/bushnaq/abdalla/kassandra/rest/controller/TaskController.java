@@ -38,7 +38,7 @@ public class TaskController {
     private TaskRepository   taskRepository;
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public void delete(@PathVariable Long id) {
         taskRepository.deleteById(id);
     }
@@ -63,7 +63,7 @@ public class TaskController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public TaskDAO save(@RequestBody TaskDAO task) {
         // Assign the next available orderId if not set or set to 0
 
@@ -75,7 +75,7 @@ public class TaskController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public void update(@RequestBody TaskDAO task) {
         taskRepository.save(task);
     }

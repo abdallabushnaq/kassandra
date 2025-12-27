@@ -402,7 +402,7 @@ public final class VaadinUtil {
     }
 
     /**
-     * Creates a standardized dialog button layout with save and cancel buttons
+     * Creates a standardized dialog button layout with Save and Cancel buttons
      *
      * @param saveButtonText   Text for the save button (e.g., "Save", "Create", "Confirm")
      * @param saveButtonId     ID for the save button
@@ -464,6 +464,29 @@ public final class VaadinUtil {
         buttonLayout.getStyle().set("margin-top", "var(--lumo-space-xl)");
 
         return buttonLayout;
+    }
+
+    /**
+     * Creates a reusable error message component for dialogs to display field-independent errors.
+     * This component is initially hidden and can be shown/hidden and updated with error messages.
+     * Typically used for access control errors, authorization failures, or other general errors.
+     *
+     * @return A Span component configured as an error message display
+     */
+    public static Span createDialogErrorMessage() {
+        Span errorMessage = new Span();
+        errorMessage.getStyle()
+                .set("color", "var(--lumo-error-text-color)")
+                .set("background-color", "var(--lumo-error-color-10pct)")
+                .set("padding", "var(--lumo-space-s)")
+                .set("border-radius", "var(--lumo-border-radius)")
+                .set("border", "1px solid var(--lumo-error-color-50pct)")
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("gap", "var(--lumo-space-s)");
+        errorMessage.setVisible(false);
+        errorMessage.setWidthFull();
+        return errorMessage;
     }
 
     public static HorizontalLayout createDialogHeader(String title, VaadinIcon icon) {
@@ -560,9 +583,10 @@ public final class VaadinUtil {
     }
 
     /**
-     * Handles exceptions from API calls, with special handling for unique constraint violations (409 CONFLICT).
+     * Handles exceptions from API calls, with special handling for unique constraint violations (409 CONFLICT)
+     * and access control errors (403 FORBIDDEN).
      * This method parses field-specific error information from the exception and routes it to the appropriate
-     * field error handler.
+     * field error handler. Access control errors are always routed to the default handler (typically dialog-level error).
      *
      * @param e                   The exception to handle
      * @param fieldErrorHandlers  Map of field names to their error handlers (e.g., "name" -> nameField::setError)
@@ -574,52 +598,70 @@ public final class VaadinUtil {
             Map<String, FieldErrorHandler> fieldErrorHandlers,
             Consumer<String> defaultErrorHandler) {
 
-        if (e instanceof ResponseStatusException &&
-                ((ResponseStatusException) e).getStatusCode().equals(HttpStatus.CONFLICT)) {
+        if (e instanceof ResponseStatusException rse) {
 
-            String reason = ((ResponseStatusException) e).getReason();
+            // Handle access control errors (403 FORBIDDEN) - always use default handler
+            if (HttpStatus.FORBIDDEN.equals(rse.getStatusCode())) {
+                String errorMessage = rse.getReason() != null ? rse.getReason() : "Access Denied";
+                // Strip "Access Denied: " prefix if present for cleaner display
+                if (errorMessage.startsWith("Access Denied: ")) {
+                    errorMessage = errorMessage.substring("Access Denied: ".length());
+                }
 
-            // Parse field information from the error message
-            // Format: "message|field=fieldName|value=fieldValue"
-            String fieldName    = null;
-            String errorMessage = reason;
+                if (defaultErrorHandler != null) {
+                    defaultErrorHandler.accept(errorMessage);
+                } else {
+                    showErrorNotification(errorMessage);
+                }
+                return true;
+            }
 
-            if (reason != null && reason.contains("|field=")) {
-                String[] parts = reason.split("\\|");
-                errorMessage = parts[0]; // The main message
+            // Handle unique constraint violations (409 CONFLICT) - route to specific field
+            if (HttpStatus.CONFLICT.equals(rse.getStatusCode())) {
+                String reason = rse.getReason();
 
-                for (String part : parts) {
-                    if (part.startsWith("field=")) {
-                        fieldName = part.substring("field=".length());
+                // Parse field information from the error message
+                // Format: "message|field=fieldName|value=fieldValue"
+                String fieldName    = null;
+                String errorMessage = reason;
+
+                if (reason != null && reason.contains("|field=")) {
+                    String[] parts = reason.split("\\|");
+                    errorMessage = parts[0]; // The main message
+
+                    for (String part : parts) {
+                        if (part.startsWith("field=")) {
+                            fieldName = part.substring("field=".length());
+                        }
                     }
                 }
-            }
 
-            // Try to find a specific handler for this field
-            if (fieldName != null && fieldErrorHandlers.containsKey(fieldName)) {
-                fieldErrorHandlers.get(fieldName).setError(errorMessage);
-            } else if (defaultErrorHandler != null) {
-                // Use default handler if field not found or no field specified
-                defaultErrorHandler.accept(errorMessage);
-            } else if (!fieldErrorHandlers.isEmpty()) {
-                // Fallback: use the first field handler if no default specified
-                fieldErrorHandlers.values().iterator().next().setError(errorMessage);
-            } else {
-                // Last resort: show notification
-                showErrorNotification(errorMessage);
-            }
+                // Try to find a specific handler for this field
+                if (fieldName != null && fieldErrorHandlers.containsKey(fieldName)) {
+                    fieldErrorHandlers.get(fieldName).setError(errorMessage);
+                } else if (defaultErrorHandler != null) {
+                    // Use default handler if field not found or no field specified
+                    defaultErrorHandler.accept(errorMessage);
+                } else if (!fieldErrorHandlers.isEmpty()) {
+                    // Fallback: use the first field handler if no default specified
+                    fieldErrorHandlers.values().iterator().next().setError(errorMessage);
+                } else {
+                    // Last resort: show notification
+                    showErrorNotification(errorMessage);
+                }
 
-            return true; // Error was handled
-        } else {
-            // For other errors, use default handler or show notification
-            String errorMessage = "An error occurred: " + e.getMessage();
-            if (defaultErrorHandler != null) {
-                defaultErrorHandler.accept(errorMessage);
-            } else {
-                showErrorNotification(errorMessage);
+                return true; // Error was handled
             }
-            return true; // Error was handled
         }
+
+        // For other errors, use default handler or show notification
+        String errorMessage = "An error occurred: " + e.getMessage();
+        if (defaultErrorHandler != null) {
+            defaultErrorHandler.accept(errorMessage);
+        } else {
+            showErrorNotification(errorMessage);
+        }
+        return true; // Error was handled
     }
 
     /**
@@ -636,6 +678,51 @@ public final class VaadinUtil {
         Map<String, FieldErrorHandler> handlers = new HashMap<>();
         handlers.put(fieldName, fieldErrorHandler);
         return handleApiException(e, handlers, null);
+    }
+
+    /**
+     * Convenience method for handling API exceptions with a single field and a default error handler.
+     * Field-specific errors (like CONFLICT) are routed to the field handler.
+     * Field-independent errors (like FORBIDDEN) are routed to the default handler.
+     *
+     * @param e                   The exception to handle
+     * @param fieldName           The name of the field (should match the field name in the error response)
+     * @param fieldErrorHandler   The error handler for this field
+     * @param defaultErrorHandler The default error handler for non-field-specific errors
+     */
+    public static boolean handleApiException(
+            Exception e,
+            String fieldName,
+            FieldErrorHandler fieldErrorHandler,
+            Consumer<String> defaultErrorHandler) {
+        Map<String, FieldErrorHandler> handlers = new HashMap<>();
+        handlers.put(fieldName, fieldErrorHandler);
+        return handleApiException(e, handlers, defaultErrorHandler);
+    }
+
+    /**
+     * Hides the error message in a dialog error message component.
+     *
+     * @param errorMessageComponent The error message component created by createDialogErrorMessage()
+     */
+    public static void hideDialogError(Span errorMessageComponent) {
+        errorMessageComponent.setVisible(false);
+        errorMessageComponent.removeAll();
+    }
+
+    /**
+     * Shows an error message in a dialog error message component.
+     * Automatically adds an error icon and makes the component visible.
+     *
+     * @param errorMessageComponent The error message component created by createDialogErrorMessage()
+     * @param message               The error message to display
+     */
+    public static void showDialogError(Span errorMessageComponent, String message) {
+        errorMessageComponent.removeAll();
+        Icon errorIcon = new Icon(VaadinIcon.WARNING);
+        errorIcon.getStyle().set("color", "var(--lumo-error-text-color)");
+        errorMessageComponent.add(errorIcon, new Span(message));
+        errorMessageComponent.setVisible(true);
     }
 
     /**

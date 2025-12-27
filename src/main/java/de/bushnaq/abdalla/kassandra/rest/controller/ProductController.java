@@ -50,7 +50,7 @@ public class ProductController {
     private ProductRepository                     productRepository;
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
     public void delete(@PathVariable Long id) {
         // Delete avatars first (cascade delete)
@@ -106,7 +106,7 @@ public class ProductController {
     }
 
     @PostMapping(consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ProductDAO save(@RequestBody ProductDAO product) {
         // Check if a product with the same name already exists
         if (productRepository.existsByName(product.getName())) {
@@ -116,7 +116,7 @@ public class ProductController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public void update(@RequestBody ProductDAO product) {
         // Check if another product with the same name exists (excluding the current product)
         if (productRepository.existsByNameAndIdNot(product.getName(), product.getId())) {
@@ -127,7 +127,7 @@ public class ProductController {
 
 
     @PutMapping("/{id}/avatar/full")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
     public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
         // Verify product exists

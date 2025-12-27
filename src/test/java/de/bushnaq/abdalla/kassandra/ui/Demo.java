@@ -171,7 +171,8 @@ public class Demo extends AbstractKeycloakUiTestUtil {
         List<Sprint>  sprints      = sprintApi.getAll(firstFeature.getId());
         Sprint        firstSprint  = sprints.getFirst();
 
-        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+//        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        productListViewTester.switchToProductListViewWithOidc("jennifer.holleman@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 //        productListViewTester.switchToProductListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 //        seleniumHandler.getAndCheck("http://localhost:" + productListViewTester.getPort() + "/ui/" + "grid-row-reordering");
 
@@ -183,7 +184,7 @@ public class Demo extends AbstractKeycloakUiTestUtil {
 
 //        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + firstSprint.getName());
 
-        seleniumHandler.waitUntilBrowserClosed(0);
+        seleniumHandler.waitUntilBrowserClosed(5000);
     }
 
 }

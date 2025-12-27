@@ -64,7 +64,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public static final String           ID_BREADCRUMBS               = "main-layout-breadcrumbs";
     public static final String           ID_LOGO                      = "main-layout-logo";
     public static final String           ID_TAB_BASE                  = "main-layout-tab-";
-    public static final String           ID_TAB_USERS                 = "main-layout-tab-users";
+    //    public static final String           ID_TAB_USERS                 = "main-layout-tab-users";
     public static final String           ID_THEME_TOGGLE              = "main-layout-theme-toggle";
     public static final String           ID_USER_MENU                 = "main-layout-user-menu";
     public static final String           ID_USER_MENU_AVAILABILITY    = "main-layout-user-menu-availability";

@@ -38,7 +38,7 @@ public class AvailabilityController {
     private UserRepository userRepository;
 
     @DeleteMapping("/{userId}/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Object> delete(@PathVariable Long userId, @PathVariable Long id) {
         return userRepository.findById(userId).map(user ->
                 availabilityRepository.findById(id).map(availability -> {
@@ -59,7 +59,7 @@ public class AvailabilityController {
     }
 
     @PostMapping("/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<AvailabilityDAO> save(@RequestBody AvailabilityDAO availability, @PathVariable Long userId) {
         return userRepository.findById(userId).map(user -> {
             availability.setUser(user);
@@ -69,7 +69,7 @@ public class AvailabilityController {
     }
 
     @PutMapping("/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Object> update(@RequestBody AvailabilityDAO availability, @PathVariable Long userId) {
         return userRepository.findById(userId).map(user -> {
             availability.setUser(user);

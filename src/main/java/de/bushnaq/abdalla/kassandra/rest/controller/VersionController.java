@@ -38,7 +38,7 @@ public class VersionController {
     private VersionRepository versionRepository;
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public void delete(@PathVariable Long id) {
         versionRepository.deleteById(id);
     }
@@ -63,7 +63,7 @@ public class VersionController {
     }
 
     @PostMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<VersionDAO> persist(@RequestBody VersionDAO version) {
         return productRepository.findById(version.getProductId()).map(product -> {
             // Check if a version with the same name already exists for this product
@@ -76,7 +76,7 @@ public class VersionController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public void update(@RequestBody VersionDAO version) {
         // Check if another version with the same name exists in the same product (excluding the current version)
         if (versionRepository.existsByNameAndProductIdAndIdNot(version.getName(), version.getProductId(), version.getId())) {

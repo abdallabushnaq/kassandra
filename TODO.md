@@ -16,6 +16,7 @@
    create/edit/delete user groups.
    Whoever creates a Product is automatically added to the access-control-list. Whoever has access to a product and its
    child entities can edit the access-control-list.
+   admin users can edit the access-control-list.
 
 # Bugs
 

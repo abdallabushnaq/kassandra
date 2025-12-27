@@ -32,10 +32,13 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
+import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
@@ -61,11 +64,12 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
     public static final String                                        USER_EMAIL_FIELD       = "user-email-field";
     public static final String                                        USER_NAME_FIELD        = "user-name-field";
     private             com.vaadin.flow.component.html.Image          avatarPreview;
+    private             AvatarUpdateRequest                           avatarUpdateRequest;
     private             ColorPicker                                   colorPicker;
     private             User                                          currentUser;
-    private             byte[]                                        generatedAvatarBytes;
-    private             byte[]                                        generatedAvatarBytesOriginal;
-    private             String                                        generatedAvatarPrompt;
+    //    private             byte[]                                        generatedAvatarBytes;
+//    private             byte[]                                        generatedAvatarBytesOriginal;
+//    private             String                                        generatedAvatarPrompt;
     private             com.vaadin.flow.component.html.Image          headerAvatarImage;
     private             com.vaadin.flow.component.textfield.TextField nameField;
     private             com.vaadin.flow.component.html.Image          nameFieldAvatarImage;
@@ -106,6 +110,13 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                 if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                     // Create a new user since one wasn't found
                     User newUser = createDefaultUser(userEmail);
+                    //generate default avatar if none exists
+                    GeneratedImageResult image               = stableDiffusionService.generateDefaultAvatar("user");
+                    byte[]               avatarImage         = image.getResizedImage();
+                    byte[]               avatarImageOriginal = image.getOriginalImage();
+                    String               avatarPrompt        = image.getPrompt();
+                    String               newHash             = AvatarUtil.computeHash(image.getResizedImage());
+                    newUser.setAvatarHash(newHash);
                     currentUser = userApi.persist(newUser);
                     initializeView();
                     Notification notification = Notification.show("Created new user: " + userEmail, 3000, Notification.Position.MIDDLE);
@@ -114,6 +125,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                     throw ex;
                 }
             }
+            this.avatarUpdateRequest = userApi.getAvatarFull(currentUser.getId());
         } else {
             // Redirect to main page if no username and not authenticated
             event.forwardTo("");
@@ -140,9 +152,9 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
     }
 
     private void handleGeneratedAvatar(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result) {
-        this.generatedAvatarBytes         = result.getResizedImage();
-        this.generatedAvatarBytesOriginal = result.getOriginalImage();
-        this.generatedAvatarPrompt        = result.getPrompt();
+        avatarUpdateRequest.setAvatarImage(result.getResizedImage());
+        avatarUpdateRequest.setAvatarImageOriginal(result.getOriginalImage());
+        avatarUpdateRequest.setAvatarPrompt(result.getPrompt());
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -335,37 +347,17 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         add(headerLayout, formLayout);
     }
 
-    private void openAvatarPromptDialog() {
-        String defaultPrompt = nameField.getValue().isEmpty()
-                ? "Professional portrait avatar, minimalist, flat design, simple background"
-                : "Professional portrait avatar of " + nameField.getValue() + ", minimalist, flat design, simple background, icon style";
-
-        ImagePromptDialog imageDialog = new ImagePromptDialog(
-                stableDiffusionService,
-                defaultPrompt,
-                this::handleGeneratedAvatar
-        ); // Do not pass initial image
-        imageDialog.open();
-    }
-
     private void openAvatarPromptDialogWithInitialImage() {
-        String defaultPrompt = nameField.getValue().isEmpty()
-                ? "Professional portrait avatar, minimalist, flat design, simple background"
-                : "Professional portrait avatar of " + nameField.getValue() + ", minimalist, flat design, simple background, icon style";
-
-        // Fetch avatar image if it exists (needed for img2img)
-        byte[] initialImage = null;
-//        if (currentUser.getAvatarPrompt() != null && !currentUser.getAvatarPrompt().isEmpty())
-        {
-            try {
-                // Fetch the avatar image from the REST API
-                initialImage = userApi.getAvatarImage(currentUser.getId()).getAvatar();
-            } catch (Exception e) {
-                // If fetch fails, continue without initial image
-                System.err.println("Failed to fetch avatar image: " + e.getMessage());
-            }
+        // Use stored prompt if available, otherwise generate default prompt
+        String defaultPrompt;
+        if (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarPrompt() != null && !avatarUpdateRequest.getAvatarPrompt().isEmpty()) {
+            defaultPrompt = avatarUpdateRequest.getAvatarPrompt();
+        } else {
+            defaultPrompt = User.getDefaultAvatarPrompt(nameField.getValue());
         }
 
+        // Fetch avatar image if it exists (needed for img2img)
+        byte[] initialImage = avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 stableDiffusionService,
                 defaultPrompt,
@@ -393,12 +385,34 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                 currentUser.setColor(Color.decode(colorValue));
             }
 
+            // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
+            byte[] avatarImage         = avatarUpdateRequest.getAvatarImage();
+            byte[] avatarImageOriginal = avatarUpdateRequest.getAvatarImageOriginal();
+            String avatarPrompt        = avatarUpdateRequest.getAvatarPrompt();
+
+            if (avatarImage != null) {
+                String newHash = AvatarUtil.computeHash(avatarImage);
+                currentUser.setAvatarHash(newHash);
+            } else if (avatarUpdateRequest == null) {
+                //generate default avatar if none exists
+                GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("user");
+                avatarImage         = image.getResizedImage();
+                avatarImageOriginal = image.getOriginalImage();
+                avatarPrompt        = image.getPrompt();
+                String newHash = AvatarUtil.computeHash(image.getResizedImage());
+                currentUser.setAvatarHash(newHash);
+            }
+
+
             // Save user (without avatar - it's @JsonIgnore)
             userApi.update(currentUser);
-
-            // Update avatar separately if available
-            if (generatedAvatarBytes != null && generatedAvatarBytesOriginal != null) {
-                userApi.updateAvatarFull(currentUser.getId(), generatedAvatarBytes, generatedAvatarBytesOriginal, generatedAvatarPrompt);
+            if (avatarImage != null && avatarImageOriginal != null) {
+                userApi.updateAvatarFull(
+                        currentUser.getId(),
+                        avatarImage,
+                        avatarImageOriginal,
+                        avatarPrompt
+                );
             }
 
             Notification notification = Notification.show("Profile updated successfully", 3000, Notification.Position.MIDDLE);

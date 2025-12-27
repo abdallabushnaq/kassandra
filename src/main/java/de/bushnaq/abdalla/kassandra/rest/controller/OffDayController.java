@@ -41,7 +41,7 @@ public class OffDayController {
     private UserRepository userRepository;
 
     @DeleteMapping("/{userId}/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Object> delete(@PathVariable Long userId, @PathVariable Long id) {
         return userRepository.findById(userId).map(
                 user -> {
@@ -62,7 +62,7 @@ public class OffDayController {
     }
 
     @PostMapping("/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<OffDayDAO> save(@RequestBody OffDayDAO offDay, @PathVariable Long userId) {
         return userRepository.findById(userId).map(user -> {
             // Check for overlapping OffDays
@@ -87,7 +87,7 @@ public class OffDayController {
     }
 
     @PutMapping("/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Object> update(@RequestBody OffDayDAO offDay, @PathVariable Long userId) {
         return userRepository.findById(userId).map(user -> {
             // Check for overlapping OffDays, excluding the current offDay being updated

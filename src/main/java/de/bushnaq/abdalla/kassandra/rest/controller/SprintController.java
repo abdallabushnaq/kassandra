@@ -53,7 +53,7 @@ public class SprintController {
     private SprintRepository                     sprintRepository;
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
     public void delete(@PathVariable Long id) {
         // Delete avatars first (cascade delete)
@@ -115,7 +115,7 @@ public class SprintController {
     }
 
     @PostMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public SprintDAO save(@RequestBody SprintDAO sprintDAO) {
         // Check if a sprint with the same name already exists for this feature
         if (sprintRepository.existsByNameAndFeatureId(sprintDAO.getName(), sprintDAO.getFeatureId())) {
@@ -126,7 +126,7 @@ public class SprintController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public SprintDAO update(@RequestBody SprintDAO sprintEntity) {
         // Check if another sprint with the same name exists in the same feature (excluding the current sprint)
         if (sprintRepository.existsByNameAndFeatureIdAndIdNot(sprintEntity.getName(), sprintEntity.getFeatureId(), sprintEntity.getId())) {
@@ -136,7 +136,7 @@ public class SprintController {
     }
 
     @PutMapping("/{id}/avatar/full")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
     public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
         // Verify sprint exists

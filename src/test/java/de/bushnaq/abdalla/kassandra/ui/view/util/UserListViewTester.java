@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view.util;
 
+import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -200,17 +201,16 @@ public class UserListViewTester extends AbstractViewTester {
      * by checking for the presence of the page title element.
      */
     public void switchToUserListView(String recordingFolderName, String testName) throws Exception {
+        switchToUserListView(recordingFolderName, testName, null, null);
+    }
+
+    public void switchToUserListView(String recordingFolderName, String testName, String username, String password) throws Exception {
         //- Check if we need to log in
         if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            productListViewTester.switchToProductListViewWithOidc(
-                    "christopher.paul@kassandra.org",
-                    "password",
-                    null,
-                    recordingFolderName,
-                    testName
-            );
+            productListViewTester.switchToProductListViewWithOidc(username, password, null, recordingFolderName, testName);
         }
-        seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + UserListView.ROUTE);
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_USERS);
         seleniumHandler.waitForElementToBeClickable(UserListView.USER_LIST_PAGE_TITLE);
     }
 
