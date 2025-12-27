@@ -45,7 +45,7 @@ public class Narrator {
 
     private static final Logger            logger = LoggerFactory.getLogger(Narrator.class);
     private final        AudioPlayer       audioPlayer;  // playback queue/handles
-    private static       TtsCacheManager   cacheManager; // chronological file coordinator
+    private static       TtsCacheManager   cacheManager; // chronological file coordinator, static to support mixing narrators
     @Getter
     @Setter
     private              NarratorAttribute defaultAttributes; // default TTS attributes for this narrator
@@ -300,6 +300,10 @@ public class Narrator {
                 logger.trace(e.getMessage(), e);
             }
         }
+    }
+
+    public static void resetCache() {
+        cacheManager.reset();
     }
 
     public static Narrator withChatterboxTTS(String relativeFolder) throws Exception {

@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -39,6 +40,7 @@ public class VersionDialog extends Dialog {
     public static final String          VERSION_DIALOG     = "version-dialog";
     public static final String          VERSION_NAME_FIELD = "version-name-field";
     private final       Binder<Version> binder;
+    private final       Span            errorMessage;
     private final       boolean         isEditMode;
     private final       TextField       nameField;
     private final       SaveCallback    saveCallback;
@@ -66,6 +68,10 @@ public class VersionDialog extends Dialog {
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);
         dialogLayout.setSpacing(true);
+
+        // Create dialog-level error message component (initially hidden)
+        errorMessage = VaadinUtil.createDialogErrorMessage();
+        dialogLayout.add(errorMessage);
 
         // Create name field with icon
         {
@@ -106,6 +112,8 @@ public class VersionDialog extends Dialog {
     }
 
     private void save() {
+        // Clear any previous error messages
+        VaadinUtil.hideDialogError(errorMessage);
 
         Version versionToSave;
         if (isEditMode) {
@@ -129,6 +137,15 @@ public class VersionDialog extends Dialog {
     public void setNameFieldError(String errorMessage) {
         nameField.setInvalid(errorMessage != null);
         nameField.setErrorMessage(errorMessage);
+    }
+
+    /**
+     * Shows a dialog-level error message (for field-independent errors like access control).
+     *
+     * @param message The error message to display
+     */
+    public void showDialogError(String message) {
+        VaadinUtil.showDialogError(errorMessage, message);
     }
 
     /**

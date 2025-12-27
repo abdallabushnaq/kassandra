@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view.util;
 
+import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -260,6 +261,7 @@ public class ProductListViewTester extends AbstractViewTester {
      */
     public void switchToProductListViewWithOidc(String username, String password, String screenshotFileName, String recordingFolderName, String testName) throws Exception {
         try {
+            Narrator.resetCache();
 
             // Navigate to the application login page
 //            System.out.println("OIDC Login: Navigating to login page");

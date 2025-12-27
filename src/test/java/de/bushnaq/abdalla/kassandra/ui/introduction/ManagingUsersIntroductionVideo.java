@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.kassandra.ui.introduction;
 
 import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
-import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserDialog;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
@@ -60,10 +59,10 @@ import java.util.List;
 )
 @AutoConfigureMockMvc
 @Transactional
-public class UsersIntroductionVideo extends AbstractKeycloakUiTestUtil {
+public class ManagingUsersIntroductionVideo extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute        INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                   VIDEO_TITLE = "Kassandra Users";
+    public static final String                   VIDEO_TITLE = "Managing Users";
     @Autowired
     private             ProductListViewTester    productListViewTester;
     @Autowired
@@ -96,8 +95,8 @@ public class UsersIntroductionVideo extends AbstractKeycloakUiTestUtil {
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.setHighlightEnabled(true);//highlight elements starting now
-        paul.narrateAsync(NORMAL, "Let's navigate to the Users page from the main menu.");
-        seleniumHandler.click(MainLayout.ID_TAB_USERS);
+        paul.narrateAsync(NORMAL, "Lets open the user menu and switch to the Users page. This menu item is only visible to administrators.");
+        userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), "christopher.paul@kassandra.org", "password");
 
         //---------------------------------------------------------------------------------------
         // Explain User List Page Purpose

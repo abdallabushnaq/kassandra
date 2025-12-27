@@ -178,6 +178,10 @@ public class TtsCacheManager {
         return new ChronoPlan(target, false, idPrefix);
     }
 
+    public void reset() {
+        initNextId();
+    }
+
     /**
      * Sanitizes a file name prefix derived from user text to be filesystem-friendly.
      * Collapses whitespace to underscores and removes non-alphanumeric characters except [._-].

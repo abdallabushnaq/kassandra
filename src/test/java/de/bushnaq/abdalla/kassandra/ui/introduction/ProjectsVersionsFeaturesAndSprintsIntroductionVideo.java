@@ -77,7 +77,7 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
     public static final NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     //    public static final  float                      EXAGGERATE_LOW    = 0.25f;
 //    public static final  float                      EXAGGERATE_NORMAL = 0.3f;
-    public static final String                     VIDEO_TITLE = "Kassandra Projects, Versions, Features and Sprints";
+    public static final String                     VIDEO_TITLE = "Projects, Versions, Features and Sprints";
     // Start Keycloak container with realm configuration
 //    @Container
 //    private static final KeycloakContainer          keycloak    = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")

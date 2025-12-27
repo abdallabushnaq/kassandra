@@ -63,7 +63,7 @@ import java.util.List;
 public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute        EXCITED     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
     public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.6f).withCfgWeight(.2f).withTemperature(1f);
-    public static final String                   VIDEO_TITLE = "Logging Work in Kassandra";
+    public static final String                   VIDEO_TITLE = "Logging Work";
     private             String                   featureName;
     @Autowired
     private             ProductListViewTester    productListViewTester;

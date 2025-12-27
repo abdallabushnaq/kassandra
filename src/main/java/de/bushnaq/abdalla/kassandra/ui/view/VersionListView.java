@@ -295,7 +295,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                 }
                 refreshGrid();
             } catch (Exception e) {
-                VaadinUtil.handleApiException(e, "name", versionDialog::setNameFieldError);
+                // Handle both field-specific and dialog-level errors
+                VaadinUtil.handleApiException(e, "name", versionDialog::setNameFieldError, versionDialog::showDialogError);
             }
         });
         dialog.open();

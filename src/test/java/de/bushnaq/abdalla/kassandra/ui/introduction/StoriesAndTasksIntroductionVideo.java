@@ -71,7 +71,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
     public static final String                     NEW_STORY     = "New Story-";
     public static final String                     NEW_TASK      = "New Task-";
     public static final NarratorAttribute          NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                     VIDEO_TITLE   = "Kassandra Stories and Tasks";
+    public static final String                     VIDEO_TITLE   = "Stories and Tasks";
     @Autowired
     private             AvailabilityListViewTester availabilityListViewTester;
     @Autowired

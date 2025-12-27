@@ -62,7 +62,7 @@ import java.util.List;
 public class UserAvailabilityIntroductionVideo extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                     VIDEO_TITLE = "Kassandra User Availability";
+    public static final String                     VIDEO_TITLE = "User Availability";
     @Autowired
     private             AvailabilityListViewTester availabilityListViewTester;
     @Autowired

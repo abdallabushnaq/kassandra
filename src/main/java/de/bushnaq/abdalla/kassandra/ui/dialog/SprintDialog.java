@@ -21,6 +21,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -55,6 +56,7 @@ public class SprintDialog extends Dialog {
     private final       Image                  avatarPreview;
     private final       AvatarUpdateRequest    avatarUpdateRequest;
     private final       Binder<Sprint>         binder;
+    private final       Span                   errorMessage;
     private final       Long                   featureId;
     private             byte[]                 generatedImageBytes;
     private             byte[]                 generatedImageBytesOriginal;
@@ -108,6 +110,10 @@ public class SprintDialog extends Dialog {
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);
         dialogLayout.setSpacing(true);
+
+        // Create dialog-level error message component (initially hidden)
+        errorMessage = VaadinUtil.createDialogErrorMessage();
+        dialogLayout.add(errorMessage);
 
         // Create name field with icon and AI button
         {
@@ -265,6 +271,8 @@ public class SprintDialog extends Dialog {
     }
 
     private void save() {
+        // Clear any previous error messages
+        VaadinUtil.hideDialogError(errorMessage);
 
         Sprint sprintToSave;
         if (isEditMode) {
@@ -315,7 +323,8 @@ public class SprintDialog extends Dialog {
             }
             close();
         } catch (Exception e) {
-            VaadinUtil.handleApiException(e, "name", this::setNameFieldError);
+            // Use VaadinUtil to handle the exception with field-specific and dialog-level error routing
+            VaadinUtil.handleApiException(e, "name", this::setNameFieldError, msg -> VaadinUtil.showDialogError(errorMessage, msg));
         }
     }
 

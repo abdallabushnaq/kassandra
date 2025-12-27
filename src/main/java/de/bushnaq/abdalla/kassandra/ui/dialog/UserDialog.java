@@ -23,6 +23,7 @@ import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -67,6 +68,7 @@ public class UserDialog extends Dialog {
     private final       AvatarUpdateRequest    avatarUpdateRequest;
     private final       Binder<User>           binder;
     private final       EmailField             emailField;
+    private final       Span                   errorMessage;
     private final       DatePicker             firstWorkingDayPicker;
     private             byte[]                 generatedImageBytes;
     private             byte[]                 generatedImageBytesOriginal;
@@ -120,6 +122,10 @@ public class UserDialog extends Dialog {
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);
         dialogLayout.setSpacing(true);
+
+        // Create dialog-level error message component (initially hidden)
+        errorMessage = VaadinUtil.createDialogErrorMessage();
+        dialogLayout.add(errorMessage);
 
         // Name field
         {
@@ -362,6 +368,8 @@ public class UserDialog extends Dialog {
     }
 
     private void save() {
+        // Clear any previous error messages
+        VaadinUtil.hideDialogError(errorMessage);
 
         User userToSave;
         if (isEditMode) {
@@ -437,10 +445,11 @@ public class UserDialog extends Dialog {
             close();
         } catch (Exception e) {
             // Handle unique constraint violations for name and email fields
+            // Field-independent errors (like FORBIDDEN) go to dialog-level error message
             Map<String, VaadinUtil.FieldErrorHandler> handlers = new HashMap<>();
             handlers.put("name", this::setNameFieldError);
             handlers.put("email", this::setEmailFieldError);
-            VaadinUtil.handleApiException(e, handlers, null);
+            VaadinUtil.handleApiException(e, handlers, msg -> VaadinUtil.showDialogError(errorMessage, msg));
         }
     }
 

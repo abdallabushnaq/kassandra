@@ -61,7 +61,7 @@ import java.util.List;
 @Transactional
 public class UserProfileIntroductionVideo extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                   VIDEO_TITLE = "Kassandra User Profile & Avatar Management";
+    public static final String                   VIDEO_TITLE = "User Profile";
     @Autowired
     private             ProductListViewTester    productListViewTester;
     @Autowired
