@@ -397,9 +397,9 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-3");
         // select the milestone
-        seleniumHandler.click(TaskGrid.TASK_GRID_PREFIX + "New Milestone-34");
+        seleniumHandler.click(TaskGrid.TASK_GRID_NAME_PREFIX + "New Milestone-34");
         // select start cell
-        seleniumHandler.click(TaskGrid.TASK_GRID_PREFIX + "New Milestone-34" + "-start-cell");
+        seleniumHandler.click(TaskGrid.TASK_GRID_START_PREFIX + "New Milestone-34");
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, "../kassandra.wiki/screenshots/task-view-list.png");
     }
 

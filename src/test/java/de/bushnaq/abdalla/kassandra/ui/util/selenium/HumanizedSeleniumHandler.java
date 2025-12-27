@@ -46,14 +46,15 @@ import java.util.Random;
 @Component
 @Log4j2
 public class HumanizedSeleniumHandler extends SeleniumHandler {
+    public static final int     SHIFTY                   = 6;
     @Getter
     @Setter
-    private        boolean highlightEnabled         = true;
-    private final  Object  highlightLock            = new Object();// Synchronization for highlight removal
-    private        Thread  highlightRemovalThread   = null;
+    private             boolean highlightEnabled         = true;
+    private final       Object  highlightLock            = new Object();// Synchronization for highlight removal
+    private             Thread  highlightRemovalThread   = null;
     @Getter
     @Setter
-    private static boolean humanize                 = false;
+    private static      boolean humanize                 = false;
     /**
      * -- GETTER --
      * Get the current mouse move delay multiplier.
@@ -61,20 +62,20 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     // --- New configurable mouse movement speed controls ---
     // Multiplies per-step delays during human-like mouse movement. >1 slows down, <1 speeds up. Default 1.0 retains current behavior.
     @Getter
-    private        double  mouseMoveDelayMultiplier = 1.0;
+    private             double  mouseMoveDelayMultiplier = 1.0;
     /**
      * -- GETTER --
      * Get the current mouse move steps multiplier.
      */
     // Multiplies the number of movement steps. >1 adds more steps (smoother and slower overall), <1 reduces steps. Default 1.0.
     @Getter
-    private        double  mouseMoveStepsMultiplier = 1.0;
+    private             double  mouseMoveStepsMultiplier = 1.0;
     @Setter
     @Getter
-    private        boolean moveMouse                = true;// Enable or disable mouse movement entirely
-    private final  Random  random                   = new Random(); // For human-like randomness
-    private        Robot   robot                    = null; // Lazily initialized
-    private final  int     typingDelayMillis        = 50;
+    private             boolean moveMouse                = true;// Enable or disable mouse movement entirely
+    private final       Random  random                   = new Random(); // For human-like randomness
+    private             Robot   robot                    = null; // Lazily initialized
+    private final       int     typingDelayMillis        = 50;
 
     /**
      * Centers the mouse cursor on the browser window.
@@ -182,7 +183,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param targetId
      */
     public void dragAndDropAbove(String sourceId, String targetId) {
-        dragAndDropShift(sourceId, targetId, 0, -6);
+        dragAndDropShift(sourceId, targetId, 0, -SHIFTY);
     }
 
     /**
@@ -192,7 +193,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param targetId
      */
     public void dragAndDropBelow(String sourceId, String targetId) {
-        dragAndDropShift(sourceId, targetId, 0, 6);
+        dragAndDropShift(sourceId, targetId, 0, SHIFTY);
     }
 
     /**
@@ -716,7 +717,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 baseDelay = 2 + random.nextInt(4);
             } else {
                 // Slow end for precision
-                baseDelay = 3 + random.nextInt(6);
+                baseDelay = 3 + random.nextInt(SHIFTY);
             }
 
             // Apply configurable delay multiplier

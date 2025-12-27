@@ -150,7 +150,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractKeycloakUiTe
         paul.narrate(NORMAL, "To create a dependency, we hold down the Control key and drag one task or story onto another. Let's make the API story depend on the persistence story.");
 
         paul.narrate(NORMAL, "First, I'll hold down Control and drag the API story onto the persistence story.");
-        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + story1.getName(), TaskGrid.TASK_GRID_PREFIX + story2.getName());
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story1.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + story2.getName());
         paul.pauseIfSilent(1000);
         paul.pause(1500);
 
@@ -164,7 +164,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractKeycloakUiTe
         paul.narrate(NORMAL, "We can also create dependencies between individual tasks. Let's say we need to create the controller before we can write the API documentation.");
 
         paul.narrate(NORMAL, "I'll hold Control and drag the API documentation task onto the create controller task.");
-        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + task12.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + task12.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task11.getName());
         paul.pauseIfSilent(1000);
         paul.pause(1500);
 
@@ -178,7 +178,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractKeycloakUiTe
         paul.narrate(NORMAL, "Dependencies can even cross story boundaries. Let's say the security audit task depends on the API error handling task being complete.");
 
         paul.narrate(NORMAL, "I'll hold Control and drag the security audit task from the security story onto the API error handling task in the API story.");
-        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + task33.getName(), TaskGrid.TASK_GRID_PREFIX + task13.getName());
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + task33.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task13.getName());
         paul.pauseIfSilent(1000);
         paul.pause(1500);
 
@@ -192,7 +192,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractKeycloakUiTe
         paul.narrate(NORMAL, "What if we need to remove a dependency? It's just as easy. We simply hold Control and drag the task onto the same predecessor again. It acts like a toggle.");
 
         paul.narrate(NORMAL, "Let's remove the dependency between the security audit and API error handling.");
-        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + task33.getName(), TaskGrid.TASK_GRID_PREFIX + task13.getName());
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + task33.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task13.getName());
         paul.pauseIfSilent(1000);
         paul.pause(1500);
 
@@ -206,12 +206,12 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractKeycloakUiTe
         paul.narrate(NORMAL, "Tasks can have multiple dependencies. Let's make the security implementation story depend on both the API and persistence stories.");
 
         paul.narrate(NORMAL, "I'll add a dependency from the security story to the API story.");
-        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + story3.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story3.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + story1.getName());
         paul.pauseIfSilent(1000);
         paul.pause(1500);
 
         paul.narrate(NORMAL, "And now I'll add another dependency from the security story to the persistence story.");
-        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_PREFIX + story3.getName(), TaskGrid.TASK_GRID_PREFIX + story2.getName());
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story3.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + story2.getName());
         paul.pauseIfSilent(1000);
         paul.pause(1500);
 

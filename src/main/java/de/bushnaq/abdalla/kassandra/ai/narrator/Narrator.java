@@ -303,7 +303,8 @@ public class Narrator {
     }
 
     public static void resetCache() {
-        cacheManager.reset();
+        if (cacheManager != null)
+            cacheManager = null;
     }
 
     public static Narrator withChatterboxTTS(String relativeFolder) throws Exception {

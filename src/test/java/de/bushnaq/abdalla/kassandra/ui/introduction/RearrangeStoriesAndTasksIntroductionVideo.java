@@ -146,20 +146,24 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         seleniumHandler.setMouseMoveDelayMultiplier(2);
         // Move Story-5 before Story-1
         paul.narrate(NORMAL, "Now, let's see how we can rearrange stories and tasks using drag and drop. First, we'll move the second story before first story to prioritize it higher in our sprint backlog. So, first the persistence, then the API");
-        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + story2.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
+        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_NAME_PREFIX + story2.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + story1.getName());
 
         paul.narrate(NORMAL, "Next, lets move the story back.");
-        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_PREFIX + story2.getName(), TaskGrid.TASK_GRID_PREFIX + story1.getName());
+        paul.pauseIfSilent(500);
+        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_NAME_PREFIX + story2.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + story1.getName());
         paul.narrate(NORMAL, "Have you noticed that Kassandra only allowed me to drop the story above or below another story and that the child tasks always follow the story? This makes rearranging blocks of work really easy.");
 
         paul.narrate(NORMAL, "Great! Now, let's rearrange some tasks within the API story. I like open API first approach. We'll move API documentation before creating the controller.");
-        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + task12.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
+        paul.pauseIfSilent(500);
+        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_NAME_PREFIX + task12.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task11.getName());
 
         paul.narrate(NORMAL, "Finally, let's say we need to address error handling first to ensure robustness. We'll move API error handling to the top of our task list into the persistence story.");
-        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_PREFIX + task13.getName(), TaskGrid.TASK_GRID_PREFIX + task21.getName());
+        paul.pauseIfSilent(500);
+        seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_NAME_PREFIX + task13.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task21.getName());
 
         paul.narrate(NORMAL, "Lets redo that. We do not want API related tasks in the story that is all about persistence.");
-        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_PREFIX + task13.getName(), TaskGrid.TASK_GRID_PREFIX + task11.getName());
+        paul.pauseIfSilent(500);
+        seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_NAME_PREFIX + task13.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task11.getName());
 
         //---------------------------------------------------------------------------------------
         // Copy/Paste Introduction
@@ -168,7 +172,8 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         paul.narrate(NORMAL, "Now, let's learn about another powerful feature: copying tasks and stories. Sometimes you need to duplicate a story with all its child tasks. Kassandra makes this incredibly easy with copy and paste.");
 
         paul.narrate(NORMAL, "First, I'll select the first story, Config API implementation, by clicking on it.");
-        seleniumHandler.selectGridRow(TaskGrid.TASK_GRID_PREFIX, TaskListView.class, story1.getName());
+//        seleniumHandler.waitUntilBrowserClosed(0);
+        seleniumHandler.selectGridRow(TaskGrid.TASK_GRID_ID_PREFIX, TaskListView.class, story1.getName());
 
         paul.pause(500);
 
@@ -205,14 +210,14 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         seleniumHandler.waitForPageLoaded();
 
         paul.narrate(NORMAL, "Let's rename the copied story to Config security implementation.");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedStory1Name + TaskGrid.NAME_FIELD, "Config security implementation");
+        seleniumHandler.setTextField(TaskGrid.TASK_GRID_NAME_PREFIX + copiedStory1Name, "Config security implementation");
 
         paul.narrate(NORMAL, "Now we'll update the tasks to match the security theme.");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask11Name + TaskGrid.NAME_FIELD, "implement authentication");
+        seleniumHandler.setTextField(TaskGrid.TASK_GRID_NAME_PREFIX + copiedTask11Name, "implement authentication");
 
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask12Name + TaskGrid.NAME_FIELD, "security documentation");
+        seleniumHandler.setTextField(TaskGrid.TASK_GRID_NAME_PREFIX + copiedTask12Name, "security documentation");
 
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask13Name + TaskGrid.NAME_FIELD, "security audit");
+        seleniumHandler.setTextField(TaskGrid.TASK_GRID_NAME_PREFIX + copiedTask13Name, "security audit");
 
         seleniumHandler.click(TaskListView.SAVE_BUTTON_ID);
 
@@ -233,16 +238,16 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         seleniumHandler.waitForPageLoaded();
 
         grace.narrateAsync(NORMAL, "Authentication will need more time. Let's set minimum to 6 hours and maximum to 8 hours.");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask11Name + TaskGrid.MIN_ESTIMATE_FIELD, "6h");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask11Name + TaskGrid.MAX_ESTIMATE_FIELD, "8h");
+        seleniumHandler.setTextField(TaskGrid.TASK_GRID_MIN_EST_PREFIX + copiedTask11Name, "6h");
+        seleniumHandler.setTextField(TaskGrid.TASK_GRID_MAX_EST_PREFIX + copiedTask11Name, "8h");
 
         grace.narrateAsync(NORMAL, "Security documentation is quick. Minimum 1 hour and maximum 2 hours.");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask12Name + TaskGrid.MIN_ESTIMATE_FIELD, "1h");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask12Name + TaskGrid.MAX_ESTIMATE_FIELD, "2h");
+        seleniumHandler.setTextField(TaskGrid.TASK_GRID_MIN_EST_PREFIX + copiedTask12Name, "1h");
+        seleniumHandler.setTextField(TaskGrid.TASK_GRID_MAX_EST_PREFIX + copiedTask12Name, "2h");
 
         grace.narrateAsync(NORMAL, "Security audit requires thorough testing. Minimum 8 hours and maximum 10 hours.");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask13Name + TaskGrid.MIN_ESTIMATE_FIELD, "8h");
-        seleniumHandler.setTextField(TaskGrid.TASK_GRID_PREFIX + copiedTask13Name + TaskGrid.MAX_ESTIMATE_FIELD, "10h");
+        seleniumHandler.setTextField(TaskGrid.TASK_GRID_MIN_EST_PREFIX + copiedTask13Name, "8h");
+        seleniumHandler.setTextField(TaskGrid.TASK_GRID_MAX_EST_PREFIX + copiedTask13Name, "10h");
 
         seleniumHandler.click(TaskListView.SAVE_BUTTON_ID);
 

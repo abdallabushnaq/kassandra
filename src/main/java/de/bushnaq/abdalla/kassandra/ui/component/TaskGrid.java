@@ -55,27 +55,36 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class TaskGrid extends TreeGrid<Task> {
-    public static final String               ASSIGNED_FIELD     = "-assigned-field";
-    public static final String               MAX_ESTIMATE_FIELD = "-max-estimate-field";
-    public static final String               MIN_ESTIMATE_FIELD = "-min-estimate-field";
-    public static final String               NAME_FIELD         = "-name-field";
-    public static final String               START_FIELD        = "-start-field";
-    public static final String               TASK_GRID_PREFIX   = "task-grid-";
-    private final       List<User>           allUsers           = new ArrayList<>();
+    public static final String               ASSIGNED_FIELD              = "-assigned-field";
+    //    public static final String               MAX_ESTIMATE_FIELD          = "-max-estimate-field";
+//    public static final String               MIN_ESTIMATE_FIELD          = "-min-estimate-field";
+    public static final String               TASK_GRID_ASSIGNED_PREFIX   = "task-grid-assigned-";
+    public static final String               TASK_GRID_DEPENDENCY_PREFIX = "task-grid-dependency-";
+    public static final String               TASK_GRID_ID_PREFIX         = "task-grid-id-";
+    public static final String               TASK_GRID_KEY_PREFIX        = "task-grid-key-";
+    public static final String               TASK_GRID_MAX_EST_PREFIX    = "task-grid-max-est-";
+    public static final String               TASK_GRID_MIN_EST_PREFIX    = "task-grid-min-est-";
+    public static final String               TASK_GRID_NAME_PREFIX       = "task-grid-name-";
+    public static final String               TASK_GRID_PARENT_PREFIX     = "task-grid-parent-";
+    //    public static final String               NAME_FIELD         = "-name-field";
+//    public static final String               START_FIELD        = "-start-field";
+//    public static final String               TASK_GRID_PREFIX            = "task-grid-";
+    public static final String               TASK_GRID_START_PREFIX      = "task-grid-start-";
+    private final       List<User>           allUsers                    = new ArrayList<>();
     private final       TaskClipboardHandler clipboardHandler;
     private final       Clock                clock;
     private             String               dragMode;
     private             Task                 draggedTask;          // Track the currently dragged task
-    private final       DateTimeFormatter    dtfymdhm           = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
-    private             boolean              expandInitially    = true; // Control whether to expand all items on first load
-    private final       Set<Task>            expandedTasks      = new HashSet<>(); // Track expanded tasks for state preservation
-    private             boolean              isCtrlKeyPressed   = false; // Track if Ctrl key is pressed during drop
+    private final       DateTimeFormatter    dtfymdhm                    = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
+    private             boolean              expandInitially             = true; // Control whether to expand all items on first load
+    private final       Set<Task>            expandedTasks               = new HashSet<>(); // Track expanded tasks for state preservation
+    private             boolean              isCtrlKeyPressed            = false; // Track if Ctrl key is pressed during drop
     @Getter
     @Setter
-    private             boolean              isEditMode         = false;// Edit mode state management
+    private             boolean              isEditMode                  = false;// Edit mode state management
     private final       Locale               locale;
     @Getter
-    private final       Set<Task>            modifiedTasks      = new HashSet<>();
+    private final       Set<Task>            modifiedTasks               = new HashSet<>();
     private final       ObjectMapper         objectMapper;
     @Setter
     private             Consumer<Task>       onPersistTask;
@@ -83,7 +92,7 @@ public class TaskGrid extends TreeGrid<Task> {
     private             Runnable             onSaveAllChangesAndRefresh;
     private             Sprint               sprint;
     @Getter
-    private             List<Task>           taskOrder          = new ArrayList<>(); // Track current order in memory
+    private             List<Task>           taskOrder                   = new ArrayList<>(); // Track current order in memory
 
 
     public TaskGrid(Clock clock, Locale locale, ObjectMapper objectMapper) {
@@ -230,14 +239,26 @@ public class TaskGrid extends TreeGrid<Task> {
 
         //Key
         {
-            addColumn(Task::getKey).setHeader("Key").setAutoWidth(true);
+//            addColumn(Task::getKey).setHeader("Key").setAutoWidth(true);
+            Column<Task> key = addColumn(new ComponentRenderer<>((Task task) -> {
+                Div div = new Div();
+                div.setText(task.getKey());
+                div.setId(TASK_GRID_KEY_PREFIX + task.getName());
+                // Store task ID as element property for JavaScript access
+                div.getElement().setProperty("taskId", task.getId().toString());
+                return div;
+            })).setHeader("Key").setAutoWidth(true);
+            key.setKey("task-key-column");
         }
 
         //ID
         {
-//            Grid.Column<Task> id = grid.addColumn(Task::getOrderId).setHeader("ID").setAutoWidth(true);
-//            id.setId("task-grid-id-column");
-            addColumn(Task::getOrderId).setHeader("#").setAutoWidth(true).setId("task-grid-#-column");
+            addColumn(new ComponentRenderer<>((Task task) -> {
+                Div div = new Div();
+                div.setText(String.valueOf(task.getOrderId()));
+                div.setId(TASK_GRID_ID_PREFIX + task.getName());
+                return div;
+            })).setHeader("#").setAutoWidth(true).setId("task-grid-#-column");
         }
         //Dependency
         {
@@ -245,6 +266,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 if (isEditMode) {
                     // Editable - show current dependencies as text with an edit button
                     HorizontalLayout container = new HorizontalLayout();
+                    container.setId(TASK_GRID_DEPENDENCY_PREFIX + task.getName());
                     container.setSpacing(false);
                     container.setPadding(false);
                     container.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
@@ -306,6 +328,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 } else {
                     // Read-only - show dependencies as text
                     Div div = new Div();
+                    div.setId(TASK_GRID_DEPENDENCY_PREFIX + task.getName());
                     div.setText(getDependencyText(task));
                     return div;
                 }
@@ -313,7 +336,12 @@ public class TaskGrid extends TreeGrid<Task> {
         }
         //Parent
         {
-            addColumn(task -> task.getParentTask() != null ? task.getParentTask().getOrderId() : "").setHeader("Parent").setAutoWidth(true);
+            addColumn(new ComponentRenderer<>((Task task) -> {
+                Div div = new Div();
+                div.setText(task.getParentTask() != null ? String.valueOf(task.getParentTask().getOrderId()) : "");
+                div.setId(TASK_GRID_PARENT_PREFIX + task.getName());
+                return div;
+            })).setHeader("Parent").setAutoWidth(true);
         }
         //name - Editable for all task types, with icon on the left
         {
@@ -364,7 +392,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 // Add name field or text
                 if (isEditMode) {
                     TextField nameField = new TextField();
-                    nameField.setId(TASK_GRID_PREFIX + task.getName() + NAME_FIELD);
+                    nameField.setId(TASK_GRID_NAME_PREFIX + task.getName());
                     nameField.setValue(task.getName() != null ? task.getName() : "");
                     nameField.setWidthFull();
 
@@ -379,7 +407,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 } else {
                     Div div = new Div();
                     div.setText(task.getName() != null ? task.getName() : "");
-                    div.setId(TASK_GRID_PREFIX + task.getName());
+                    div.setId(TASK_GRID_NAME_PREFIX + task.getName());
                     container.add(div);
                     container.setFlexGrow(1, div);
                 }
@@ -396,7 +424,7 @@ public class TaskGrid extends TreeGrid<Task> {
                     DateTimePicker startField = new DateTimePicker();
                     startField.setValue(task.getStart() != null ? task.getStart() : LocalDateTime.now());
                     startField.setWidthFull();
-                    startField.setId(TASK_GRID_PREFIX + task.getName() + START_FIELD);
+                    startField.setId(TASK_GRID_START_PREFIX + task.getName());
 
                     startField.addValueChangeListener(e -> {
                         if (e.isFromClient()) {
@@ -422,6 +450,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 } else {
                     // Read-only for Story and Task tasks
                     Div div = new Div();
+                    div.setId(TASK_GRID_START_PREFIX + task.getName());
                     if (task.isMilestone())
                         div.setText(task.getStart() != null ? DateUtil.createDateString(task.getStart(), dtfymdhm) : "");
                     else
@@ -436,7 +465,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     ComboBox<User> userComboBox = new ComboBox<>();
-                    userComboBox.setId(TASK_GRID_PREFIX + task.getName() + ASSIGNED_FIELD);
+                    userComboBox.setId(TASK_GRID_ASSIGNED_PREFIX + task.getName());
                     userComboBox.setAllowCustomValue(false);
                     userComboBox.setClearButtonVisible(true);
                     userComboBox.setWidthFull();
@@ -470,6 +499,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 } else {
                     // Read-only for Milestone and Story tasks
                     Div div = new Div();
+                    div.setId(TASK_GRID_ASSIGNED_PREFIX + task.getName());
                     if (task.isTask())
                         div.setText(task.getResourceId() != null ? sprint.getuser(task.getResourceId()).getName() : "");
                     else
@@ -485,7 +515,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     TextField estimateField = new TextField();
-                    estimateField.setId(TASK_GRID_PREFIX + task.getName() + MIN_ESTIMATE_FIELD);
+                    estimateField.setId(TASK_GRID_MIN_EST_PREFIX + task.getName());
                     estimateField.setValue(!task.getMinEstimate().equals(Duration.ZERO) ?
                             DateUtil.createWorkDayDurationString(task.getMinEstimate()) : "");
                     estimateField.setWidthFull();
@@ -509,6 +539,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 } else {
                     // Read-only for Milestone and Story tasks
                     Div div = new Div();
+                    div.setId(TASK_GRID_MIN_EST_PREFIX + task.getName());
                     if (task.isTask())
                         div.setText(!task.getMinEstimate().equals(Duration.ZERO) ? DateUtil.createWorkDayDurationString(task.getMinEstimate()) : "");
                     else
@@ -523,7 +554,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     TextField estimateField = new TextField();
-                    estimateField.setId(TASK_GRID_PREFIX + task.getName() + MAX_ESTIMATE_FIELD);
+                    estimateField.setId(TASK_GRID_MAX_EST_PREFIX + task.getName());
                     estimateField.setValue(!task.getMaxEstimate().equals(Duration.ZERO) ?
                             DateUtil.createWorkDayDurationString(task.getMaxEstimate()) : "");
                     estimateField.setWidthFull();
@@ -547,6 +578,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 } else {
                     // Read-only for Milestone and Story tasks
                     Div div = new Div();
+                    div.setId(TASK_GRID_MAX_EST_PREFIX + task.getName());
                     if (task.isTask())
                         div.setText(!task.getMaxEstimate().equals(Duration.ZERO) ? DateUtil.createWorkDayDurationString(task.getMaxEstimate()) : "");
                     else
@@ -1116,41 +1148,8 @@ public class TaskGrid extends TreeGrid<Task> {
                                 // Handle Ctrl+C or Cmd+C (copy)
                                 if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
                                     console.warn('--- copy shortcut detected');
-                                    const selectedItems = grid.selectedItems;
-                                    console.log('selectedItems:', selectedItems);
-                        
-                                    if (selectedItems && selectedItems.length > 0) {
-                                        console.warn('--- items selected, count:', selectedItems.length);
-                        
-                                        // Get the first selected item
-                                        const selectedItem = selectedItems[0];
-                                        console.log('selectedItem:', selectedItem);
-                        
-                                        // Extract task key from col2 (format: "T-{ID}")
-                                        const taskKey = selectedItem.col2;
-                                        console.log('taskKey from col2:', taskKey);
-                        
-                                        if (taskKey && taskKey.startsWith('T-')) {
-                                            // Extract ID from "T-{ID}" format
-                                            const taskId = taskKey.substring(2);
-                                            console.log('Extracted task ID:', taskId);
-                        
-                                            if (taskId) {
-                                                console.warn('--- dispatching copy event with taskId:', taskId);
-                                                // Dispatch copy event to server
-                                                grid.dispatchEvent(new CustomEvent('copy-task', {
-                                                    detail: { taskId: taskId }
-                                                }));
-                                                e.preventDefault();
-                                            } else {
-                                                console.warn('Could not parse task ID from key:', taskKey);
-                                            }
-                                        } else {
-                                            console.warn('Task key not in expected format (T-{ID}):', taskKey);
-                                        }
-                                    } else {
-                                        console.log('No items selected');
-                                    }
+                                    grid.dispatchEvent(new CustomEvent('copy-task'));
+                                    e.preventDefault();
                                 }
                         
                                 // Handle Ctrl+V or Cmd+V (paste)
@@ -1213,22 +1212,24 @@ public class TaskGrid extends TreeGrid<Task> {
 
         // Register server-side event listener for copy (Ctrl+C)
         getElement().addEventListener("copy-task", event -> {
-            String taskIdStr = event.getEventData().getString("event.detail.taskId");
-            if (taskIdStr != null && !taskIdStr.isEmpty()) {
-                try {
-                    Long taskId = Long.parseLong(taskIdStr);
-                    Task task = taskOrder.stream()
-                            .filter(t -> t.getId().equals(taskId))
-                            .findFirst()
-                            .orElse(null);
-                    if (task != null && !isEditMode) {
-                        clipboardHandler.handleCopy(task);
-                    }
-                } catch (NumberFormatException ex) {
-                    log.warn("Invalid task ID for copy operation: {}", taskIdStr);
+            // Get the selected task from the grid's selection
+            Set<Task> selectedItems = getSelectedItems();
+            if (selectedItems != null && !selectedItems.isEmpty() && !isEditMode) {
+                Task selectedTask = selectedItems.iterator().next();
+                if (selectedTask != null) {
+                    log.info("Copy operation detected for task: {} (ID: {})", selectedTask.getKey(), selectedTask.getId());
+                    clipboardHandler.handleCopy(selectedTask);
+                } else {
+                    log.warn("Selected task is null");
+                }
+            } else {
+                if (isEditMode) {
+                    log.debug("Copy operation ignored - grid is in edit mode");
+                } else {
+                    log.debug("Copy operation detected but no task is selected");
                 }
             }
-        }).addEventData("event.detail.taskId");
+        });
 
         // Register server-side event listener for paste (Ctrl+V)
         getElement().addEventListener("paste-task", event -> {

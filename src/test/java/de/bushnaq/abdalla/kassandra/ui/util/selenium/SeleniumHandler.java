@@ -275,13 +275,22 @@ class SeleniumHandler {
         }
 
         try {
+            Boolean isFullscreen = (Boolean) executeJavaScript(
+                    "return window.fullScreen || " +
+                            "(window.innerWidth === screen.width && window.innerHeight === screen.height);"
+            );
             // Use JavaScript to calculate the chrome height
             Long outerHeight = (Long) executeJavaScript("return window.outerHeight;");
             Long innerHeight = (Long) executeJavaScript("return window.innerHeight;");
 
             if (outerHeight != null && innerHeight != null) {
                 browserChromeHeight = (int) (outerHeight - innerHeight);
-                log.trace("Calculated browser chrome height: {} pixels", browserChromeHeight);
+                if (isFullscreen != null && !isFullscreen) {
+                    browserChromeHeight -= 7;
+                    log.trace("Browser in windowed mode, subtracting 7px offset. Chrome height: {}", browserChromeHeight);
+                } else {
+                    log.trace("Browser in fullscreen mode. Chrome height: {}", browserChromeHeight);
+                }
             } else {
                 browserChromeHeight = DEFAULT_BROWSER_CHROME_HEIGHT;
                 log.warn("Using default browser chrome height: {} pixels", browserChromeHeight);
@@ -1012,6 +1021,7 @@ class SeleniumHandler {
         // If driver is already initialized, resize the current window
         if (driver != null) {
             driver.manage().window().setSize(windowSize);
+            driver.manage().window().setPosition(new Point(0, 0));
         }
     }
 
