@@ -167,7 +167,7 @@ public class UserAvailabilityIntroductionVideo extends AbstractKeycloakUiTestUti
         seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, "80");
 
         paul.narrateAsync(NORMAL, "Now click Save to create the availability record.");
-        seleniumHandler.click(AvailabilityDialog.CONFIRM_BUTTON);
+        availabilityListViewTester.closeDialog(AvailabilityDialog.CONFIRM_BUTTON);
 
         //---------------------------------------------------------------------------------------
         // Verify Creation & Explain Impact

@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.util;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.narrator.TtsCacheManager;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import org.junit.jupiter.api.AfterAll;
@@ -162,6 +163,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         if (TtsCacheManager.getCacheMiss() != 0) {
             logger.warn("*** TTS CACHE MISSES: {} ***", TtsCacheManager.getCacheMiss());
         }
+        Narrator.resetCache();
     }
 
     /**

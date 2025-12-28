@@ -189,8 +189,8 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
             paul.narrate(NORMAL, "We can now edit all valid milestone, story or task cells.").pause();
             paul.narrate(NORMAL, "Lets give the milestone a name and fixed start date and time. We want our developers to start working first thing Monday morning.");
             paul.narrate(NORMAL, "Start is a short and descriptive name.");
-            paul.pauseIfSilent(500);// for debugging purposes only, has an effect if narrator is set to silent
             seleniumHandler.waitForPageLoaded();
+            paul.pause(500);// for debugging purposes only, has an effect if narrator is set to silent
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_NAME_PREFIX + milestone1Name, "Start");
             paul.narrate(NORMAL, "Monday morning would be 8 AM.");
             final LocalDateTime startDateTime = LocalDateTime.of(2025, 5, 5, 8, 0);
@@ -226,8 +226,8 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
             grace.narrate(NORMAL, "Lets got to edit mode.");
 
             seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
-            grace.pauseIfSilent(500);// for debugging purposes only, has an effect if narrator is set to silent
             seleniumHandler.waitForPageLoaded();
+            grace.pause(500);// for debugging purposes only, has an effect if narrator is set to silent
 
             grace.narrateAsync(NORMAL, "Lets set minimum to 4 hours and maximum to 6 hours.");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_MIN_EST_PREFIX + task11Name, "4h");
@@ -265,8 +265,8 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
 
             //edit
             seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
-            paul.pauseIfSilent(500);// for debugging purposes only, has an effect if narrator is set to silent
             seleniumHandler.waitForPageLoaded();
+            paul.pause(500);// for debugging purposes only, has an effect if narrator is set to silent
 
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_NAME_PREFIX + story2Name, "Config persistence implementation");
 
@@ -288,8 +288,8 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
             grace.narrate(NORMAL, "Edit mode...");
 
             seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
-            grace.pauseIfSilent(500);// for debugging purposes only, has an effect if narrator is set to silent
             seleniumHandler.waitForPageLoaded();
+            grace.pause(500);// for debugging purposes only, has an effect if narrator is set to silent
 
             seleniumHandler.setMoveMouse(false);
             grace.narrate(NORMAL, "I will need minimum 4 hours.").pause();
@@ -318,6 +318,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
         paul.narrate(NORMAL, "Defining such a dependency between a task or story to other tasks or stories can be done in 3 different ways...");
 
 
+        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 

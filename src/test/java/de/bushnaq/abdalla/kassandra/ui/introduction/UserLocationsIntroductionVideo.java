@@ -176,7 +176,7 @@ public class UserLocationsIntroductionVideo extends AbstractKeycloakUiTestUtil {
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_STATE_FIELD, "California (ca)");
 
         paul.narrateAsync(NORMAL, "Now click Save to create the location record.");
-        seleniumHandler.click(LocationDialog.CONFIRM_BUTTON);
+        locationListViewTester.closeDialog(LocationDialog.CONFIRM_BUTTON);
 
         //---------------------------------------------------------------------------------------
         // Verify Creation & Explain Impact

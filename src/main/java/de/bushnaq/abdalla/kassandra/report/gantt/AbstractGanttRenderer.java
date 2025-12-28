@@ -430,28 +430,30 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
             graphics2D.setStroke(new BasicStroke(FINE_LINE_STROKE_WIDTH));
             LocalDateTime start = task.getStart();
             LocalDateTime stop  = task.getFinish();
-            int           x1    = calculateX(start, start.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
-            int           x2    = calculateX(stop, stop.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
-            Integer       lane  = taskHeight.get(gantUniqueId * 10000 + task.getId());
-            int           y     = lane + getTaskHeight() / 2;
+            if (start != null && stop != null) {
+                int     x1   = calculateX(start, start.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
+                int     x2   = calculateX(stop, stop.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
+                Integer lane = taskHeight.get(gantUniqueId * 10000 + task.getId());
+                int     y    = lane + getTaskHeight() / 2;
 //            if (drawOutOfOffice) {
 //                drawOutOfOffice(task, y);
 //            }
-            drawTask(task, x1, x2, y, labelInside, alien, marker, conflict);
-            if (drawId) {
-                drawId(task, y);
-            }
-            if (drawRelations) {
-                List<Relation> predecessors = task.getPredecessors();
-                if (predecessors != null && !predecessors.isEmpty()) {
-                    for (Relation relation : predecessors) {
-                        Task sourceTask = task;
-                        Task targetTask = task.getSprint().getTaskById(relation.getPredecessorId());
-                        //TODO implement this
-                        if (relation.isVisible()) {
-                            int y1 = taskHeight.get(gantUniqueId * 10000 + targetTask.getId()) + getTaskHeight() / 2;
-                            int y2 = taskHeight.get(gantUniqueId * 10000 + sourceTask.getId()) + getTaskHeight() / 2;
-                            drawRelation(sourceTask, y2, targetTask, y1);
+                drawTask(task, x1, x2, y, labelInside, alien, marker, conflict);
+                if (drawId) {
+                    drawId(task, y);
+                }
+                if (drawRelations) {
+                    List<Relation> predecessors = task.getPredecessors();
+                    if (predecessors != null && !predecessors.isEmpty()) {
+                        for (Relation relation : predecessors) {
+                            Task sourceTask = task;
+                            Task targetTask = task.getSprint().getTaskById(relation.getPredecessorId());
+                            //TODO implement this
+                            if (relation.isVisible()) {
+                                int y1 = taskHeight.get(gantUniqueId * 10000 + targetTask.getId()) + getTaskHeight() / 2;
+                                int y2 = taskHeight.get(gantUniqueId * 10000 + sourceTask.getId()) + getTaskHeight() / 2;
+                                drawRelation(sourceTask, y2, targetTask, y1);
+                            }
                         }
                     }
                 }

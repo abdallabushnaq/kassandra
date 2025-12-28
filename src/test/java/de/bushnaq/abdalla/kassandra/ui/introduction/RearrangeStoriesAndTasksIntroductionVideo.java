@@ -172,6 +172,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         paul.narrate(NORMAL, "Now, let's learn about another powerful feature: copying tasks and stories. Sometimes you need to duplicate a story with all its child tasks. Kassandra makes this incredibly easy with copy and paste.");
 
         paul.narrate(NORMAL, "First, I'll select the first story, Config API implementation, by clicking on it.");
+        paul.pauseIfSilent(500);
 //        seleniumHandler.waitUntilBrowserClosed(0);
         seleniumHandler.selectGridRow(TaskGrid.TASK_GRID_ID_PREFIX, TaskListView.class, story1.getName());
 
@@ -234,8 +235,8 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         grace.narrate(NORMAL, "Let's go to edit mode.");
 
         seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
-        grace.pauseIfSilent(500);
         seleniumHandler.waitForPageLoaded();
+        grace.pause(500);
 
         grace.narrateAsync(NORMAL, "Authentication will need more time. Let's set minimum to 6 hours and maximum to 8 hours.");
         seleniumHandler.setTextField(TaskGrid.TASK_GRID_MIN_EST_PREFIX + copiedTask11Name, "6h");

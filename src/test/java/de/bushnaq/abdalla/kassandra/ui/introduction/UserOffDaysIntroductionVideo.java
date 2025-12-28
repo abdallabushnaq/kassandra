@@ -126,7 +126,7 @@ public class UserOffDaysIntroductionVideo extends AbstractKeycloakUiTestUtil {
         paul.narrate(NORMAL, "The vacation, business trip and sick leave days are all created by me.");
         seleniumHandler.click(OffDaysCalendarComponent.CALENDAR_NEXT_YEAR_BTN);
         paul.narrate(NORMAL, "I am located in Germany North Rhine Westphalia and so you can see the holidays of that region in Germany.");
-        paul.narrate(NORMAL, "Ok, i just noticed, that I have not taken any vacation days this year. So let me plan my summer vacation.");
+        paul.narrate(NORMAL, "Ok, i just noticed, that I have not taken any vacation days this year. So let me plan my autumn vacation.");
         paul.narrateAsync(NORMAL, "Select the create button.");
         seleniumHandler.click(OffDayListView.CREATE_OFFDAY_BUTTON);
 
@@ -134,15 +134,16 @@ public class UserOffDaysIntroductionVideo extends AbstractKeycloakUiTestUtil {
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, OffDayType.VACATION.name());
 
         paul.narrateAsync(NORMAL, "Select the start date.");
-        final LocalDate firstDay = LocalDate.of(2025, 6, 2);
+        final LocalDate firstDay = LocalDate.of(2025, 10, 1);
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_START_DATE_FIELD, firstDay);
 
         paul.narrate(NORMAL, "and select the end date.");
-        paul.narrateAsync(NORMAL, "I am really looking forward to a long summer vacation with my family.");
-        final LocalDate lastDay = LocalDate.of(2025, 6, 27);
+        paul.narrateAsync(NORMAL, "I am really looking forward to a long autumn vacation with my family.");
+        final LocalDate lastDay = LocalDate.of(2025, 10, 24);
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
         paul.narrateAsync(NORMAL, "Select Save to close the dialog and persist our vacation.").pause();
-        seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
+        offDayListViewTester.closeDialog(OffDayDialog.CONFIRM_BUTTON);
+
         paul.narrate(NORMAL, "the vacation immediately becomes visible in the calendar. Kassandra skips any weekend day or holiday that falls in your vacation.").pause();
 
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
