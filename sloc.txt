@@ -210,7 +210,7 @@
 | kassandra.rest.api             | OffDayApi.java                                           | src      |       12 |        0 |       17 |       59 |       88 |
 | kassandra.rest.api             | OffDayApiTest.java                                       | src      |       43 |        0 |       62 |      282 |      387 |
 | kassandra.rest.api             | ProductAclApi.java                                       | src      |       13 |        0 |       16 |       82 |      111 |
-| kassandra.rest.api             | ProductAclApiTest.java                                   | src      |       61 |        3 |       62 |      259 |      385 |
+| kassandra.rest.api             | ProductAclApiTest.java                                   | src      |       69 |        3 |       68 |      287 |      427 |
 | kassandra.rest.api             | ProductApi.java                                          | src      |       20 |       20 |       16 |      114 |      170 |
 | kassandra.rest.api             | ProductApiTest.java                                      | src      |       57 |        0 |       54 |      275 |      386 |
 | kassandra.rest.api             | SprintApi.java                                           | src      |       21 |       20 |       16 |      128 |      185 |
@@ -451,5 +451,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 42 package(s)                  | 408 file(s)                                              | java     |     8958 |     6161 |    11662 |    45952 |    72733 |
+| 42 package(s)                  | 408 file(s)                                              | java     |     8966 |     6161 |    11668 |    45980 |    72775 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

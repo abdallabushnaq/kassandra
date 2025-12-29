@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
-import de.bushnaq.abdalla.kassandra.dao.UserDAO;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -45,7 +44,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.fail;
@@ -78,8 +76,6 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         user1  = userApi.getByEmail("kristen.hubbell@kassandra.org");
         user2  = userApi.getByEmail("claudine.fick@kassandra.org");
         user3  = userApi.getByEmail("randy.asmus@kassandra.org");
-
-        Optional<UserDAO> email = userRepository.findByEmail("christopher.paul@kassandra.org");
 
         setUser(roleAdmin);
     }
@@ -224,6 +220,49 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         // Product no longer exists, so ACL access should fail
         List<ProductAclEntry> acl1 = productAclApi.getAcl(product.getId());
         assertEquals(0, acl1.size(), "ACL entries should be cleaned up after product deletion");
+    }
+
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    public void testGetAllOnlyReturnsProductsWithAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+
+        // User1 creates a product
+        setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = addProduct("User1 Product");
+
+        // User2 creates another product
+        setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = addProduct("User2 Product");
+
+        // User1 should only see their own product
+        setUser(user1.getEmail(), "ROLE_USER");
+        List<Product> user1Products = productApi.getAll();
+        assertEquals(1, user1Products.size(), "User1 should only see their own product");
+        assertEquals(product1.getId(), user1Products.get(0).getId());
+        assertEquals("User1 Product", user1Products.get(0).getName());
+
+        // User2 should only see their own product
+        setUser(user2.getEmail(), "ROLE_USER");
+        List<Product> user2Products = productApi.getAll();
+        assertEquals(1, user2Products.size(), "User2 should only see their own product");
+        assertEquals(product2.getId(), user2Products.get(0).getId());
+        assertEquals("User2 Product", user2Products.get(0).getName());
+
+        // Now grant user1 access to product2
+        productAclApi.grantUserAccess(product2.getId(), user1.getId());
+
+        // User1 should now see both products
+        setUser(user1.getEmail(), "ROLE_USER");
+        List<Product> user1ProductsAfterGrant = productApi.getAll();
+        assertEquals(2, user1ProductsAfterGrant.size(), "User1 should see both products after being granted access");
+
+        // Verify both products are in the list
+        List<Long> productIds = user1ProductsAfterGrant.stream()
+                .map(Product::getId)
+                .toList();
+        assertTrue(productIds.contains(product1.getId()), "Should contain product1");
+        assertTrue(productIds.contains(product2.getId()), "Should contain product2");
     }
 
     @ParameterizedTest
