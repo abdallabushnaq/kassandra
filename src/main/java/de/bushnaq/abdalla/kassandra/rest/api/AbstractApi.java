@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.rest.ErrorResponse;
+import de.bushnaq.abdalla.kassandra.security.SecurityConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -41,9 +42,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.web.client.DefaultResponseErrorHandler;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.*;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
@@ -246,7 +245,7 @@ public class AbstractApi {
             String username = authentication.getName();
             // For simplicity in this demo environment, we use a fixed password for API calls
             // In production, this would need a more secure approach
-            String password = "test-password";
+            String password = SecurityConfig.TEST_PASSWORD;
 
             String auth        = username + ":" + password;
             byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
@@ -283,7 +282,7 @@ public class AbstractApi {
     protected <T> T executeWithErrorHandling(RestOperationWithResult<T> operation) {
         try {
             return operation.execute();
-        } catch (HttpClientErrorException e) {
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
             logger.error("REST API call failed with status: {} and response: {}", e.getStatusCode(), e.getResponseBodyAsString());
             handleExceptions(e);
             return null;
@@ -303,6 +302,16 @@ public class AbstractApi {
             logger.error(e.getMessage(), e);
             throw new ServerErrorException("Failed to execute REST API call", e);
         }
+    }
+
+    private String extractErrorFromHtml(String html) {
+        if (html.contains("Bad credentials")) {
+            return "Bad credentials - Invalid username or password";
+        }
+        if (html.contains("Access Denied")) {
+            return "Access denied";
+        }
+        return "Authentication error occurred"; // Fixed: Added return statement
     }
 
     protected String getBaseUrl() {
@@ -331,7 +340,9 @@ public class AbstractApi {
         return configuredBaseUrl;
     }
 
-    private void handleExceptions(HttpClientErrorException e) {
+    private void handleExceptions(HttpStatusCodeException e) {
+
+
         try {
             // Handle authentication/authorization errors specifically for test cases
             if (e instanceof HttpClientErrorException.Unauthorized) {
@@ -360,9 +371,43 @@ public class AbstractApi {
 
                 throw new ResponseStatusException(HttpStatus.CONFLICT, detailedMessage, error.reconstructException());
             } else {
-                ErrorResponse error      = objectMapper.readValue(e.getResponseBodyAsString(), ErrorResponse.class);
-                HttpStatus    httpStatus = error.getHttpStatus();
-                throw new ResponseStatusException(httpStatus != null ? httpStatus : HttpStatus.INTERNAL_SERVER_ERROR, error.getMessage(), error.reconstructException());
+                try {
+                    String responseBody = e.getResponseBodyAsString();
+
+
+                    // Check if response is HTML (error page) instead of JSON
+                    // Fixed: Use MediaType.TEXT_HTML instead of string comparison
+                    boolean isHtml = responseBody.trim().startsWith("<") ||
+                            (e.getResponseHeaders().getContentType() != null &&
+                                    e.getResponseHeaders().getContentType().includes(org.springframework.http.MediaType.TEXT_HTML));
+
+                    if (isHtml) {
+                        logger.error("Server returned HTML error page instead of JSON. Status: {}, Body: {}",
+                                e.getStatusCode(), responseBody);
+
+                        String errorMessage = extractErrorFromHtml(responseBody);
+
+                        if (e instanceof HttpClientErrorException.Unauthorized) {
+                            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
+                                    "Authentication failed: " + errorMessage);
+                        } else if (e instanceof HttpClientErrorException.Forbidden) {
+                            throw new org.springframework.security.access.AccessDeniedException(
+                                    "Access denied: " + errorMessage);
+                        } else {
+                            throw new ServerErrorException("Server error: " + errorMessage, e);
+                        }
+                    } else {
+                        ErrorResponse error      = objectMapper.readValue(responseBody, ErrorResponse.class);
+                        HttpStatus    httpStatus = error.getHttpStatus();
+                        throw new ResponseStatusException(
+                                httpStatus != null ? httpStatus : HttpStatus.INTERNAL_SERVER_ERROR,
+                                error.getMessage(),
+                                error.reconstructException());
+                    }
+                } catch (JsonProcessingException ex) {
+                    throw new IllegalArgumentException(
+                            String.format("Error processing server response '%s'.", e.getResponseBodyAsString()));
+                }
             }
         } catch (JsonProcessingException ex) {
             throw new IllegalArgumentException(String.format("Error processing server response '%s'.", e.getResponseBodyAsString()));

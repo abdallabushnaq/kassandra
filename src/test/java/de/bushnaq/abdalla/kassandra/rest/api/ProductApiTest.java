@@ -84,7 +84,7 @@ public class ProductApiTest extends AbstractEntityGenerator {
     }
 
     @Test
-    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    @WithMockUser(username = "admin-user", roles = "ADMIN")//works
     public void create() throws Exception {
         addRandomProducts(1);
     }
@@ -139,7 +139,7 @@ public class ProductApiTest extends AbstractEntityGenerator {
     public void getByFakeId() throws Exception {
         setUser("admin-user", "ROLE_ADMIN");
         addRandomProducts(1);
-        setUser("user", "ROLE_USER");
+        // Try to get non-existent product (admin)
         try {
             productApi.getById(FAKE_ID);
             fail("Product should not exist");
@@ -155,6 +155,157 @@ public class ProductApiTest extends AbstractEntityGenerator {
         setUser("user", "ROLE_USER");
         Product product = productApi.getById(expectedProducts.getFirst().getId());
         assertProductEquals(expectedProducts.getFirst(), product, true);//shallow test
+    }
+
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testAdminCanAccessAnyProduct() throws Exception {
+        // Create product as one user
+        Product product = addProduct("Admin Access Test");
+
+        // Admin should always have access regardless of ACL
+        Product retrieved = productApi.getById(product.getId());
+        assertNotNull(retrieved);
+
+        // Admin can update
+        product.setName("Admin Updated");
+        updateProduct(product);
+
+        // Admin can delete
+        removeProduct(product.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "creator@example.com", roles = "USER")
+    public void testCreatorAutoGrantedAccess() throws Exception {
+        // When a user creates a product, they should automatically get access
+        Product product = addProduct("Creator Test Product");
+
+        // Creator should be able to access their own product
+        Product retrieved = productApi.getById(product.getId());
+        assertNotNull(retrieved);
+        assertEquals(product.getName(), retrieved.getName());
+
+        // Creator should be able to update their product
+        product.setName("Updated Creator Product");
+        updateProduct(product);
+
+        Product updated = productApi.getById(product.getId());
+        assertEquals("Updated Creator Product", updated.getName());
+    }
+
+    @Test
+    public void testDeleteProductRemovesAclEntries() {
+        // Create product as user
+        setUser("creator@example.com", "ROLE_USER");
+        Product product = addProduct("Product To Delete");
+
+        // Verify creator has access
+        Product retrieved = productApi.getById(product.getId());
+        assertNotNull(retrieved);
+
+        // Delete product
+        removeProduct(product.getId());
+
+        // Product should no longer exist
+        assertThrows(ServerErrorException.class, () -> {
+            productApi.getById(product.getId());
+        });
+    }
+
+    @Test
+    public void testGetAllOnlyReturnsAccessibleProducts() {
+        setUser("admin-user", "ROLE_ADMIN");
+        addRandomProducts(3);
+
+        // Admin sees all products
+        List<Product> adminProducts = productApi.getAll();
+        assertEquals(3, adminProducts.size());
+
+        // Regular user without any ACL entries sees no products
+        setUser("user-no-access", "ROLE_USER");
+        List<Product> userProducts = productApi.getAll();
+        assertEquals(0, userProducts.size());
+    }
+
+    @Test
+    public void testMultipleUsersCreateProducts() {
+        // User 1 creates product
+        setUser("user1@example.com", "ROLE_USER");
+        Product p1 = addProduct("Product 1");
+
+        // User 2 creates product
+        setUser("user2@example.com", "ROLE_USER");
+        Product p2 = addProduct("Product 2");
+
+        // User 3 creates product
+        setUser("user3@example.com", "ROLE_USER");
+        Product p3 = addProduct("Product 3");
+
+        // Each user can only see their own product
+        List<Product> user3Products = productApi.getAll();
+        assertEquals(1, user3Products.size());
+        assertEquals("Product 3", user3Products.get(0).getName());
+
+        setUser("user1@example.com", "ROLE_USER");
+        List<Product> user1Products = productApi.getAll();
+        assertEquals(1, user1Products.size());
+        assertEquals("Product 1", user1Products.get(0).getName());
+
+        // Admin can see all products
+        setUser("admin-user", "ROLE_ADMIN");
+        List<Product> adminProducts = productApi.getAll();
+        assertEquals(3, adminProducts.size());
+    }
+
+    @Test
+    public void testProductCreatorGetsAutomaticAccess() {
+        // User 1 creates a product
+        setUser("user1@example.com", "ROLE_USER");
+        Product product1 = addProduct("User1 Product");
+
+        // User 1 should be able to access their product
+        Product retrieved = productApi.getById(product1.getId());
+        assertNotNull(retrieved);
+        assertEquals("User1 Product", retrieved.getName());
+
+        // User 2 creates a different product
+        setUser("user2@example.com", "ROLE_USER");
+        Product product2 = addProduct("User2 Product");
+
+        // User 2 can access their own product
+        Product retrieved2 = productApi.getById(product2.getId());
+        assertNotNull(retrieved2);
+
+        // User 2 cannot access User 1's product
+        assertThrows(AccessDeniedException.class, () -> {
+            productApi.getById(product1.getId());
+        });
+    }
+
+    @Test
+    public void testUserWithoutAclCannotAccessProduct() {
+        // Admin creates a product
+        setUser("admin-user", "ROLE_ADMIN");
+        addRandomProducts(1);
+        Product product = expectedProducts.getFirst();
+
+        // Different user tries to access - should fail
+        setUser("user-without-access", "ROLE_USER");
+        assertThrows(AccessDeniedException.class, () -> {
+            productApi.getById(product.getId());
+        });
+
+        // User cannot update
+        assertThrows(AccessDeniedException.class, () -> {
+            product.setName("Hacked Name");
+            updateProduct(product);
+        });
+
+        // User cannot delete
+        assertThrows(AccessDeniedException.class, () -> {
+            removeProduct(product.getId());
+        });
     }
 
     @Test
@@ -216,22 +367,18 @@ public class ProductApiTest extends AbstractEntityGenerator {
             addRandomProducts(1);
         }
         setUser("user", "ROLE_USER");
+        // User without ACL cannot access products
         assertThrows(AccessDeniedException.class, () -> {
-            addRandomProducts(1);
+            productApi.getById(expectedProducts.getFirst().getId());
         });
-        {
+
+        assertThrows(AccessDeniedException.class, () -> {
             Product product = expectedProducts.getFirst();
             String  name    = product.getName();
             product.setName(SECOND_NAME);
-            try {
-                updateProduct(product);
-                fail("should not be able to update");
-            } catch (AccessDeniedException e) {
-                //restore fields to match db for later tests in @AfterEach
-                product.setName(name);
-            }
+            updateProduct(product);
+        });
 
-        }
         assertThrows(AccessDeniedException.class, () -> {
             removeProduct(expectedProducts.get(0).getId());
         });

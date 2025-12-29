@@ -25,7 +25,10 @@ import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
 import de.bushnaq.abdalla.kassandra.repository.ProductAvatarGenerationDataRepository;
 import de.bushnaq.abdalla.kassandra.repository.ProductAvatarRepository;
 import de.bushnaq.abdalla.kassandra.repository.ProductRepository;
+import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.ProductAclService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,17 +46,23 @@ import java.util.Optional;
 public class ProductController {
 
     @Autowired
+    private ProductAclService                     productAclService;
+    @Autowired
     private ProductAvatarGenerationDataRepository productAvatarGenerationDataRepository;
     @Autowired
     private ProductAvatarRepository               productAvatarRepository;
     @Autowired
     private ProductRepository                     productRepository;
+    @Autowired
+    private UserRepository                        userRepository;
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     @Transactional
     public void delete(@PathVariable Long id) {
-        // Delete avatars first (cascade delete)
+        // Delete ACL entries first
+        productAclService.deleteProductAcl(id);
+        // Delete avatars
         productAvatarRepository.deleteByProductId(id);
         productAvatarGenerationDataRepository.deleteByProductId(id);
         // Then delete product
@@ -61,7 +70,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     public Optional<ProductDAO> get(@PathVariable Long id) {
         ProductDAO productEntity = productRepository.findById(id).orElseThrow();
         return Optional.of(productEntity);
@@ -70,11 +79,29 @@ public class ProductController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<ProductDAO> getAll() {
-        return productRepository.findAll();
+        // Get current user
+        String userEmail = SecurityUtils.getUserEmail();
+
+        // Admin can see all products
+        if (SecurityUtils.isAdmin()) {
+            return productRepository.findAll();
+        }
+
+        // Regular users only see products they have access to
+        if (!SecurityUtils.GUEST.equals(userEmail)) {
+            return userRepository.findByEmail(userEmail)
+                    .map(user -> {
+                        List<Long> accessibleProductIds = productAclService.getAccessibleProductIds(user.getId());
+                        return productRepository.findAllById(accessibleProductIds);
+                    })
+                    .orElse(List.of());
+        }
+
+        return List.of();
     }
 
     @GetMapping("/{id}/avatar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable Long id) {
         return productAvatarRepository.findByProductId(id)
                 .map(avatar -> {
@@ -87,7 +114,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}/avatar/full")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable Long id) {
         AvatarUpdateRequest response = new AvatarUpdateRequest();
 
@@ -107,17 +134,43 @@ public class ProductController {
 
     @PostMapping(consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Transactional
     public ProductDAO save(@RequestBody ProductDAO product) {
         // Check if a product with the same name already exists
         if (productRepository.existsByName(product.getName())) {
             throw new UniqueConstraintViolationException("Product", "name", product.getName());
         }
-        return productRepository.save(product);
+
+        // Save the product
+        ProductDAO savedProduct = productRepository.save(product);
+
+        // Grant creator access to the product
+        String userEmail = SecurityUtils.getUserEmail();
+
+        if (!SecurityUtils.GUEST.equals(userEmail)) {
+            userRepository.findByEmail(userEmail).ifPresent(user -> {
+                try {
+                    productAclService.grantCreatorAccess(savedProduct.getId(), user.getId());
+                    log.info("Granted creator access to product {} for user {}", savedProduct.getId(), user.getName());
+                } catch (Exception e) {
+                    log.error("Failed to grant creator access to product {} for user {}", savedProduct.getId(), user.getName(), e);
+                }
+            });
+        }
+
+        return savedProduct;
     }
 
     @PutMapping()
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public void update(@RequestBody ProductDAO product) {
+        // Check if user has access to the product (unless admin)
+        if (!SecurityUtils.isAdmin() &&
+                !productAclService.hasAccess(product.getId(), SecurityUtils.getUserEmail())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Access denied: You do not have permission to update this product");
+        }
+
         // Check if another product with the same name exists (excluding the current product)
         if (productRepository.existsByNameAndIdNot(product.getName(), product.getId())) {
             throw new UniqueConstraintViolationException("Product", "name", product.getName());
@@ -127,7 +180,7 @@ public class ProductController {
 
 
     @PutMapping("/{id}/avatar/full")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     @Transactional
     public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
         // Verify product exists

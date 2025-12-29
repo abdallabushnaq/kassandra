@@ -76,7 +76,7 @@ public class VersionController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasVersionAccess(#version.id) or hasRole('ADMIN')")
     public void update(@RequestBody VersionDAO version) {
         // Check if another version with the same name exists in the same product (excluding the current version)
         if (versionRepository.existsByNameAndProductIdAndIdNot(version.getName(), version.getProductId(), version.getId())) {

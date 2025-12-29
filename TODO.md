@@ -4,6 +4,7 @@
 2. GENERATOR. ensure some projects show delay, are not started or are finished closed.
 3. add better error handling in api.
 4. add ability to edit or delete a worklog.
+5. remove default test password from AbstractApi.
 
 ## Feature
 
@@ -14,12 +15,4 @@
    admin users can edit the access-control-list.
 
 # Bugs
-
-1. RearrangeStoriesAndTasksIntroductionVideo: org.openqa.selenium.StaleElementReferenceException
-2. StoryAndTaskRelationsIntroductionVideo: several java.lang.NullPointerException, all related to start being null. (
-   fixedß)
-2. UserOffDaysIntroductionVideo: Error saving off day: 409 CONFLICT "409 CONFLICT "This off day overlaps with existing
-   off days for the user"", (fixed?)
-3. StoriesAndTasksIntroductionVideo: org.openqa.selenium.StaleElementReferenceException:
-4. 
 

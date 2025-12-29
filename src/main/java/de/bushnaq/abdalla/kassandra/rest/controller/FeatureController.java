@@ -137,7 +137,7 @@ public class FeatureController {
     }
 
     @PutMapping("/{id}/avatar/full")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasFeatureAccess(#id) or hasRole('ADMIN')")
     @Transactional
     public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
         // Verify feature exists

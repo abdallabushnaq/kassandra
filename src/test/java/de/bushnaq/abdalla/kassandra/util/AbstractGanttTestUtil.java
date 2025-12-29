@@ -62,7 +62,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-//@Transactional
 @TestMethodOrder(MethodOrderer.MethodName.class)
 public class AbstractGanttTestUtil extends AbstractEntityGenerator {
     private static final String                 ANSI_BLUE                 = "\u001B[36m";

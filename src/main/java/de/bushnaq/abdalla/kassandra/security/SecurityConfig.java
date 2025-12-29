@@ -44,6 +44,8 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 @Configuration
 public class SecurityConfig extends VaadinWebSecurity {
+    public static final String OIDC_PASSWORD = "password";
+    public static final String TEST_PASSWORD = "test-password";
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Bean
@@ -151,22 +153,44 @@ public class SecurityConfig extends VaadinWebSecurity {
      */
     @Bean
     public InMemoryUserDetailsManager testUsers() {
-        // Create an admin user for admin role tests
         UserDetails adminUser = User.builder()
                 .username("admin-user")
-                .password(passwordEncoder().encode("test-password"))
+                .password(passwordEncoder().encode(TEST_PASSWORD))
                 .roles("ADMIN")
                 .build();
 
-        // Create a regular user for USER role tests
-        UserDetails regularUser = User.builder()
+        UserDetails user = User.builder()
                 .username("user")
-                .password(passwordEncoder().encode("test-password"))
+                .password(passwordEncoder().encode(TEST_PASSWORD))
+                .roles("USER")  // Only USER role, no ADMIN privileges
+                .build();
+
+        UserDetails admin1 = User.builder()
+                .username("christopher.paul@kassandra.org")
+                .password(passwordEncoder().encode(TEST_PASSWORD))
+                .roles("ADMIN")
+                .build();
+
+        UserDetails user1 = User.builder()
+                .username("kristen.hubbell@kassandra.org")
+                .password(passwordEncoder().encode(TEST_PASSWORD))
+                .roles("USER")  // Only USER role, no ADMIN privileges
+                .build();
+
+        UserDetails user2 = User.builder()
+                .username("claudine.fick@kassandra.org")
+                .password(passwordEncoder().encode(TEST_PASSWORD))
+                .roles("USER")  // Only USER role, no ADMIN privileges
+                .build();
+
+        UserDetails user3 = User.builder()
+                .username("randy.asmus@kassandra.org")
+                .password(passwordEncoder().encode(TEST_PASSWORD))
                 .roles("USER")  // Only USER role, no ADMIN privileges
                 .build();
 
         logger.info("Created default test user/admin users.");
 
-        return new InMemoryUserDetailsManager(adminUser, regularUser);
+        return new InMemoryUserDetailsManager(adminUser, user, admin1, user1, user2, user3);
     }
 }

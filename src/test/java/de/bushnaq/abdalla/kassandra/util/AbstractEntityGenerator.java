@@ -43,6 +43,7 @@ import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ServerErrorException;
 
@@ -83,6 +84,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     private          int                    offDaysIterations;
     @LocalServerPort
     private          int                    port;
+    protected        ProductAclApi          productAclApi;
     protected        ProductApi             productApi;
     protected static int                    productIndex  = 0;
     protected final  Random                 random        = new Random();
@@ -96,6 +98,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     @Autowired
     private          TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
     protected        UserApi                userApi;
+    protected        UserGroupApi           userGroupApi;
     protected static int                    userIndex     = 0;
     protected        VersionApi             versionApi;
     protected static int                    versionIndex  = 0;
@@ -397,7 +400,11 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             String    name      = nameGenerator.generateUserName(userIndex);
             String    email     = nameGenerator.generateUserEmail(userIndex);
             LocalDate firstDate = ParameterOptions.getNow().toLocalDate().minusYears(2);
-            User      saved     = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
+            User      saved;
+            if (email.equalsIgnoreCase("christopher.paul@kassandra.org"))
+                saved = addUser(name, email, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
+            else
+                saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
             System.out.println("Adding user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms");
             saved.initialize();
             time = System.currentTimeMillis();
@@ -616,7 +623,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
     private @NonNull GeneratedImageResult generateProductAvatar(String name) throws StableDiffusionException {
         String prompt = Product.getDefaultAvatarPrompt(name);
-        System.out.println("Generating image for product: " + name + " with prompt: " + prompt);
+        log.trace("Generating image for product: " + name + " with prompt: " + prompt);
         GeneratedImageResult image = stableDiffusionService.generateImageWithOriginal(prompt);
         return image;
     }
@@ -728,6 +735,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         versionApi      = new VersionApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
         sprintApi       = new SprintApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
         worklogApi      = new WorklogApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
+        userGroupApi    = new UserGroupApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
+        productAclApi   = new ProductAclApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
     }
 
     protected void removeAvailability(Availability availability, User user) {
@@ -846,13 +855,25 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         }
     }
 
-    protected static void setUser(String principal, String ROLE_ADMIN) {
-        SecurityContextHolder.getContext().setAuthentication(
-                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                        principal, "password",
-                        List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(ROLE_ADMIN))
-                )
-        );
+    protected static void setUser(Authentication authentication) {
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    protected static Authentication setUser(String email, String role) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // If both email and role are null, clear the security context (anonymous user)
+        if (email == null && role == null) {
+            SecurityContextHolder.clearContext();
+        } else {
+            SecurityContextHolder.getContext().setAuthentication(
+                    new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                            email, "password",
+                            List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(role))
+                    )
+            );
+        }
+        return authentication;
     }
 
     protected void testAll() {
