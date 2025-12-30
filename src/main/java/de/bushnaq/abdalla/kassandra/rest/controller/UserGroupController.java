@@ -43,7 +43,7 @@ public class UserGroupController {
     @Autowired
     private UserGroupRepository userGroupRepository;
     @Autowired
-    private UserGroupService userGroupService;
+    private UserGroupService    userGroupService;
 
     /**
      * Add a user to a group

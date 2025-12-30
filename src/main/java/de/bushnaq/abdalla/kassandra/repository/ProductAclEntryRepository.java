@@ -86,7 +86,7 @@ public interface ProductAclEntryRepository extends ListCrudRepository<ProductAcl
      */
     @Query("SELECT DISTINCT acl.productId FROM ProductAclEntryDAO acl " +
             "WHERE acl.userId = :userId OR acl.groupId IN " +
-            "(SELECT g.id FROM UserGroupDAO g JOIN g.members m WHERE m.id = :userId)")
+            "(SELECT g.id FROM UserGroupDAO g WHERE :userId MEMBER OF g.memberIds)")
     List<Long> findProductIdsByUserAccess(@Param("userId") Long userId);
 
     /**
@@ -100,7 +100,7 @@ public interface ProductAclEntryRepository extends ListCrudRepository<ProductAcl
             "FROM ProductAclEntryDAO acl " +
             "WHERE acl.productId = :productId AND " +
             "(acl.userId = :userId OR acl.groupId IN " +
-            "(SELECT g.id FROM UserGroupDAO g JOIN g.members m WHERE m.id = :userId))")
+            "(SELECT g.id FROM UserGroupDAO g WHERE :userId MEMBER OF g.memberIds))")
     boolean hasUserAccessToProduct(
             @Param("productId") Long productId,
             @Param("userId") Long userId

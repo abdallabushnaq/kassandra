@@ -25,17 +25,19 @@ import java.util.Set;
 
 /**
  * DTO representing a user group for ACL management.
+ * Uses memberIds instead of full User objects to avoid Jackson serialization issues
+ * when the same user belongs to multiple groups.
  */
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(callSuper = true, exclude = {"members"})
+@ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class UserGroup extends AbstractTimeAware implements Comparable<UserGroup> {
 
     private String    description;
     private Long      id;
-    private Set<User> members = new HashSet<>();
+    private Set<Long> memberIds = new HashSet<>();
     private String    name;
 
     @Override
@@ -55,7 +57,7 @@ public class UserGroup extends AbstractTimeAware implements Comparable<UserGroup
      */
     @JsonIgnore
     public int getMemberCount() {
-        return members != null ? members.size() : 0;
+        return memberIds != null ? memberIds.size() : 0;
     }
 }
 

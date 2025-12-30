@@ -59,12 +59,14 @@ public class UserGroupService {
     public void addUserToGroup(Long groupId, Long userId) {
         UserGroupDAO group = userGroupRepository.findById(groupId)
                 .orElseThrow(() -> new EntityNotFoundException("Group not found: " + groupId));
-        UserDAO user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
+        // Verify user exists
+        if (!userRepository.existsById(userId)) {
+            throw new EntityNotFoundException("User not found: " + userId);
+        }
 
-        group.addMember(user);
+        group.addMember(userId);
         userGroupRepository.save(group);
-        log.info("Added user {} to group {}", user.getName(), group.getName());
+        log.info("Added user {} to group {}", userId, group.getName());
     }
 
     /**
@@ -88,8 +90,12 @@ public class UserGroupService {
         group.setDescription(description);
 
         if (memberIds != null && !memberIds.isEmpty()) {
-            Set<UserDAO> members = new HashSet<>(userRepository.findAllById(memberIds));
-            group.setMembers(members);
+            // Verify all users exist
+            List<UserDAO> existingUsers = userRepository.findAllById(memberIds);
+            if (existingUsers.size() != memberIds.size()) {
+                throw new EntityNotFoundException("One or more users not found");
+            }
+            group.setMemberIds(memberIds);
         }
 
         UserGroupDAO savedGroup = userGroupRepository.save(group);
@@ -111,6 +117,7 @@ public class UserGroupService {
 
     /**
      * Get all groups
+     * memberIds are eagerly loaded via @ElementCollection
      *
      * @return list of all groups
      */
@@ -156,7 +163,7 @@ public class UserGroupService {
         UserGroupDAO group = userGroupRepository.findById(groupId)
                 .orElseThrow(() -> new EntityNotFoundException("Group not found: " + groupId));
 
-        group.getMembers().removeIf(user -> user.getId().equals(userId));
+        group.removeMember(userId);
         userGroupRepository.save(group);
         log.info("Removed user {} from group {}", userId, group.getName());
     }
@@ -185,8 +192,14 @@ public class UserGroupService {
         group.setName(name);
         group.setDescription(description);
 
-        Set<UserDAO> members = new HashSet<>(userRepository.findAllById(memberIds));
-        group.setMembers(members);
+        // Verify all users exist
+        if (memberIds != null && !memberIds.isEmpty()) {
+            List<UserDAO> existingUsers = userRepository.findAllById(memberIds);
+            if (existingUsers.size() != memberIds.size()) {
+                throw new EntityNotFoundException("One or more users not found");
+            }
+        }
+        group.setMemberIds(memberIds != null ? memberIds : new HashSet<>());
 
         UserGroupDAO updatedGroup = userGroupRepository.save(group);
         log.info("Updated user group: {} now has {} members", name, updatedGroup.getMemberCount());

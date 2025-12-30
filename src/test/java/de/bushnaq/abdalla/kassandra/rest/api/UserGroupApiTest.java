@@ -31,9 +31,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -53,18 +53,30 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 public class UserGroupApiTest extends AbstractUiTestUtil {
+    private User admin1;
+    private User user1;
+    private User user2;
+    private User user3;
+
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
+        admin1 = userApi.getByEmail("christopher.paul@kassandra.org");
+        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org");
+        user2  = userApi.getByEmail("claudine.fick@kassandra.org");
+        user3  = userApi.getByEmail("randy.asmus@kassandra.org");
+
+        setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 3, 6, 13)//
+                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 13)//
         };
         return Arrays.stream(randomCases).toList();
     }
@@ -74,8 +86,6 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testAdminCanAddMemberToGroup(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        User user1 = userApi.getByEmail("jennifer.holleman@kassandra.org");
-        User user2 = userApi.getByEmail("grace.martin@kassandra.org");
 
         // Create group with user1
         UserGroup group = userGroupApi.create("Team", "A team", Set.of(user1.getId()));
@@ -95,8 +105,6 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     public void testAdminCanCreateGroup(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Admin creates users
-        User user1 = userApi.getByEmail("jennifer.holleman@kassandra.org");
-        User user2 = userApi.getByEmail("grace.martin@kassandra.org");
 
         // Admin creates a group
         Set<Long> memberIds = Set.of(user1.getId(), user2.getId());
@@ -114,7 +122,6 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testAdminCanDeleteGroup(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        User user1 = userApi.getByEmail("jennifer.holleman@kassandra.org");
 
         UserGroup group = userGroupApi.create("To Delete", "Will be deleted", Set.of(user1.getId()));
         assertNotNull(group.getId());
@@ -132,13 +139,12 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testAdminCanGetAllGroups(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        User user1 = userApi.getByEmail("jennifer.holleman@kassandra.org");
 
         // Create multiple groups
         userGroupApi.create("Group 1", "First group", Set.of(user1.getId()));
         userGroupApi.create("Group 2", "Second group", new HashSet<>());
         userGroupApi.create("Group 3", "Third group", Set.of(user1.getId()));
-
+        printTables();
         List<UserGroup> groups = userGroupApi.getAll();
         assertEquals(3, groups.size());
     }
@@ -148,8 +154,6 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testAdminCanRemoveMemberFromGroup(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        User user1 = userApi.getByEmail("jennifer.holleman@kassandra.org");
-        User user2 = userApi.getByEmail("grace.martin@kassandra.org");
 
         // Create group with both users
         UserGroup group = userGroupApi.create("Team", "A team", Set.of(user1.getId(), user2.getId()));
@@ -168,9 +172,6 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testAdminCanUpdateGroup(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        User user1 = userApi.getByEmail("jennifer.holleman@kassandra.org");
-        User user2 = userApi.getByEmail("grace.martin@kassandra.org");
-        User user3 = userApi.getByEmail("testuser@kassandra.org");
 
         // Create group with user1
         UserGroup group = userGroupApi.create("Original", "Original desc", Set.of(user1.getId()));
@@ -203,7 +204,6 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCannotCreateGroupWithDuplicateName(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        User user1 = userApi.getByEmail("jennifer.holleman@kassandra.org");
 
         // Create first group
         userGroupApi.create("Developers", "Dev team", Set.of(user1.getId()));
@@ -232,7 +232,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
-    @WithMockUser(username = "regular-user", roles = "USER")
+    @WithMockUser(username = "user", roles = "USER")
     public void testRegularUserCannotCreateGroup(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Regular user tries to create a group - should fail
@@ -243,7 +243,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
-    @WithMockUser(username = "regular-user", roles = "USER")
+    @WithMockUser(username = "user", roles = "USER")
     public void testRegularUserCannotGetAllGroups(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         assertThrows(AccessDeniedException.class, () -> {
@@ -256,7 +256,6 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testUpdateGroupName(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        User      user1 = userApi.getByEmail("jennifer.holleman@kassandra.org");
         UserGroup group = userGroupApi.create("Old Name", "Description", Set.of(user1.getId()));
 
         // Update only the name

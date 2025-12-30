@@ -26,14 +26,15 @@ import java.util.Set;
 
 /**
  * Entity representing a user group for ACL management.
- * Groups can contain multiple users and be assigned access to products.
+ * Groups can contain multiple users (stored as IDs) and be assigned access to products.
+ * Uses @ElementCollection to store member user IDs in a join table without needing full User entities.
  */
 @Entity
 @Table(name = "user_groups")
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(callSuper = true, exclude = {"members"})
+@ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @Proxy(lazy = false)
 public class UserGroupDAO extends AbstractTimeAwareDAO {
@@ -43,24 +44,30 @@ public class UserGroupDAO extends AbstractTimeAwareDAO {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
+    private Long   id;
+
+    /**
+     * Member user IDs stored in a join table.
+     * This is more efficient than maintaining full User entity references.
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
             name = "user_group_members",
-            joinColumns = @JoinColumn(name = "group_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
+            joinColumns = @JoinColumn(name = "group_id")
     )
-    private Set<UserDAO> members = new HashSet<>();
+    @Column(name = "user_id")
+    private Set<Long> memberIds = new HashSet<>();
+
     @Column(nullable = false, unique = true)
     private String name;
 
     /**
-     * Add a user to this group
+     * Add a user to this group by ID
      *
-     * @param user the user to add
+     * @param userId the user ID to add
      */
-    public void addMember(UserDAO user) {
-        members.add(user);
+    public void addMember(Long userId) {
+        memberIds.add(userId);
     }
 
     /**
@@ -69,16 +76,16 @@ public class UserGroupDAO extends AbstractTimeAwareDAO {
      * @return member count
      */
     public int getMemberCount() {
-        return members != null ? members.size() : 0;
+        return memberIds != null ? memberIds.size() : 0;
     }
 
     /**
-     * Remove a user from this group
+     * Remove a user from this group by ID
      *
-     * @param user the user to remove
+     * @param userId the user ID to remove
      */
-    public void removeMember(UserDAO user) {
-        members.remove(user);
+    public void removeMember(Long userId) {
+        memberIds.remove(userId);
     }
 }
 

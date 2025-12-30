@@ -32,11 +32,12 @@ public interface UserGroupRepository extends ListCrudRepository<UserGroupDAO, Lo
 
     /**
      * Count the number of members in a group
+     * Now works with memberIds collection
      *
      * @param groupId the group ID
      * @return number of members
      */
-    @Query("SELECT COUNT(m) FROM UserGroupDAO g JOIN g.members m WHERE g.id = :groupId")
+    @Query("SELECT SIZE(g.memberIds) FROM UserGroupDAO g WHERE g.id = :groupId")
     long countMembersByGroupId(@Param("groupId") Long groupId);
 
     /**
@@ -66,11 +67,12 @@ public interface UserGroupRepository extends ListCrudRepository<UserGroupDAO, Lo
 
     /**
      * Find all groups that a user belongs to
+     * Uses MEMBER OF to check if userId is in the memberIds collection
      *
      * @param userId the user ID
      * @return list of groups containing this user
      */
-    @Query("SELECT g FROM UserGroupDAO g JOIN g.members m WHERE m.id = :userId")
+    @Query("SELECT g FROM UserGroupDAO g WHERE :userId MEMBER OF g.memberIds")
     List<UserGroupDAO> findGroupsByUserId(@Param("userId") Long userId);
 }
 
