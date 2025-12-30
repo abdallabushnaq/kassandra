@@ -324,7 +324,6 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
         }
     }
 
-    //TODO only admin or the user can change user availability
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void userSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {

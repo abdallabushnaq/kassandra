@@ -20,9 +20,5 @@
 1. adapt ProductApiTest to ACL changes.
 2. adapt VersionApiTest to ACL changes.
 3. adapt FeatureApiTest to ACL changes.
-4. ~~adapt AvailabilityApiTest.userSecurity to ACL changes.~~
-5. ~~adapt LocationApiTest to ACL changes.~~
-6. ~~adapt OffDayApiTest to ACL changes.~~
-7. adapt TaskApiTest to ACL changes.
-8. adapt SprintApiTest to ACL changes.
+4. adapt SprintApiTest to ACL changes.
  
