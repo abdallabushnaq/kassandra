@@ -43,9 +43,9 @@ public class AclSecurityService {
     @Autowired
     private ProductAclService productAclService;
     @Autowired
-    private SprintRepository sprintRepository;
+    private SprintRepository  sprintRepository;
     @Autowired
-    private UserRepository userRepository;
+    private UserRepository    userRepository;
     @Autowired
     private VersionRepository versionRepository;
 
@@ -140,8 +140,7 @@ public class AclSecurityService {
 
         // Check ACL
         Optional<UserDAO> user = userRepository.findByEmail(userEmail);
-        return user.isPresent() &&
-                productAclService.hasUserAccess(productId, user.get().getId());
+        return user.isPresent() && productAclService.hasUserAccess(productId, user.get().getId());
     }
 
     /**

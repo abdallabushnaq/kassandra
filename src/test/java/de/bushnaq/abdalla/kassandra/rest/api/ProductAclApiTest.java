@@ -101,6 +101,8 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         setUser("admin-user", "ROLE_ADMIN");
         List<ProductAclEntry> acl = productAclApi.getAcl(product.getId());
         assertNotNull(acl);
+        List<Product> all = productApi.getAll();
+        assertEquals(1, all.size(), "Admin should see all");
     }
 
     @ParameterizedTest
