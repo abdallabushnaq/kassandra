@@ -5,6 +5,7 @@
 3. add better error handling in api.
 4. add ability to edit or delete a worklog.
 5. remove default test password from AbstractApi.
+6. make sure getAll will filter via alc in db, not in memory.
 
 ## Feature
 

@@ -27,6 +27,8 @@ import de.bushnaq.abdalla.kassandra.repository.FeatureAvatarRepository;
 import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.ProductAclService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +39,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/feature")
@@ -50,10 +53,12 @@ public class FeatureController {
     @Autowired
     private FeatureRepository                     featureRepository;
     @Autowired
+    private ProductAclService                     productAclService;
+    @Autowired
     private VersionRepository                     versionRepository;
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@aclSecurityService.hasFeatureAccess(#id) or hasRole('ADMIN')")
     @Transactional
     public void delete(@PathVariable Long id) {
         // Delete avatars first (cascade delete)
@@ -64,13 +69,13 @@ public class FeatureController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasFeatureAccess(#id) or hasRole('ADMIN')")
     public ResponseEntity<FeatureDAO> get(@PathVariable Long id) {
         return featureRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/version/{versionId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasVersionAccess(#versionId) or hasRole('ADMIN')")
     public List<FeatureDAO> getAll(@PathVariable Long versionId) {
         return featureRepository.findByVersionId(versionId);
     }
@@ -78,7 +83,20 @@ public class FeatureController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<FeatureDAO> getAll() {
-        return featureRepository.findAll();
+        // Admin can see all features
+        if (SecurityUtils.isAdmin()) {
+            return featureRepository.findAll();
+        }
+
+        // Regular users only see features of products they have access to
+        return featureRepository.findAll().stream()
+                .filter(feature -> {
+                    Long productId = versionRepository.findById(feature.getVersionId())
+                            .map(version -> version.getProductId())
+                            .orElse(null);
+                    return productId != null && productAclService.hasAccess(productId, SecurityUtils.getUserEmail());
+                })
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}/avatar")
@@ -114,7 +132,8 @@ public class FeatureController {
     }
 
     @PostMapping()
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasVersionAccess(#feature.versionId) or hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<FeatureDAO> save(@RequestBody FeatureDAO feature) {
         return versionRepository.findById(feature.getVersionId()).map(version -> {
             // Check if a feature with the same name already exists for this version
@@ -127,7 +146,8 @@ public class FeatureController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasFeatureAccess(#feature.id) or hasRole('ADMIN')")
+    @Transactional
     public FeatureDAO update(@RequestBody FeatureDAO feature) {
         // Check if another feature with the same name exists in the same version (excluding the current feature)
         if (featureRepository.existsByNameAndVersionIdAndIdNot(feature.getName(), feature.getVersionId(), feature.getId())) {
