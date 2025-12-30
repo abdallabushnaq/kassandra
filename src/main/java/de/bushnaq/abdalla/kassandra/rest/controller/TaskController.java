@@ -19,39 +19,52 @@ package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import de.bushnaq.abdalla.kassandra.dao.TaskDAO;
+import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
 import de.bushnaq.abdalla.kassandra.repository.TaskRepository;
+import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.ProductAclService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/task")
 public class TaskController {
 
     @Autowired
-    private SprintRepository sprintRepository;
+    private FeatureRepository featureRepository;
     @Autowired
-    private TaskRepository   taskRepository;
+    private ProductAclService productAclService;
+    @Autowired
+    private SprintRepository  sprintRepository;
+    @Autowired
+    private TaskRepository    taskRepository;
+    @Autowired
+    private VersionRepository versionRepository;
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasTaskAccess(#id) or hasRole('ADMIN')")
+    @Transactional
     public void delete(@PathVariable Long id) {
         taskRepository.deleteById(id);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasTaskAccess(#id) or hasRole('ADMIN')")
     public Optional<TaskDAO> get(@PathVariable Long id) throws JsonProcessingException {
         Optional<TaskDAO> task = taskRepository.findById(id);
         return task;
     }
 
     @GetMapping("/sprint/{sprintId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasSprintAccess(#sprintId) or hasRole('ADMIN')")
     public List<TaskDAO> getAll(@PathVariable Long sprintId) {
         return taskRepository.findBySprintIdOrderByOrderIdAsc(sprintId);
     }
@@ -59,11 +72,27 @@ public class TaskController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<TaskDAO> getAll() {
-        return taskRepository.findAllByOrderByOrderIdAsc();
+        // Admin can see all tasks
+        if (SecurityUtils.isAdmin()) {
+            return taskRepository.findAllByOrderByOrderIdAsc();
+        }
+
+        // Regular users only see tasks of products they have access to
+        return taskRepository.findAllByOrderByOrderIdAsc().stream()
+                .filter(task -> {
+                    Long productId = sprintRepository.findById(task.getSprintId())
+                            .flatMap(sprint -> featureRepository.findById(sprint.getFeatureId()))
+                            .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
+                            .map(version -> version.getProductId())
+                            .orElse(null);
+                    return productId != null && productAclService.hasAccess(productId, SecurityUtils.getUserEmail());
+                })
+                .collect(Collectors.toList());
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasSprintAccess(#task.sprintId) or hasRole('ADMIN')")
+    @Transactional
     public TaskDAO save(@RequestBody TaskDAO task) {
         // Assign the next available orderId if not set or set to 0
 
@@ -75,13 +104,15 @@ public class TaskController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasTaskAccess(#task.id) or hasRole('ADMIN')")
+    @Transactional
     public void update(@RequestBody TaskDAO task) {
         taskRepository.save(task);
     }
 
     @PutMapping("/{id}/status/{status}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasTaskAccess(#id) or hasRole('ADMIN')")
+    @Transactional
     public void updateStatus(@PathVariable Long id, @PathVariable de.bushnaq.abdalla.kassandra.dto.TaskStatus status) {
         Optional<TaskDAO> taskOptional = taskRepository.findById(id);
         if (taskOptional.isPresent()) {

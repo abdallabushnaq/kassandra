@@ -251,6 +251,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         try (Profiler pc = new Profiler(SampleType.JPA)) {
             addRandomUsers(randomCase.getMaxNumberOfUsers());
         }
+//        UserGroup group = userGroupApi.create("Team", "Dev team", Set.of(expectedUsers.toArray()));
         Profiler.log("generating users for test case " + randomCase.getTestCaseIndex());
         {
             int numberOfProducts = generateRandomValue(randomCase.getMinNumberOfProducts(), randomCase.getMaxNumberOfProducts());

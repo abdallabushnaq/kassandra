@@ -19,10 +19,7 @@ package de.bushnaq.abdalla.kassandra.service;
 
 import de.bushnaq.abdalla.kassandra.dao.UserDAO;
 import de.bushnaq.abdalla.kassandra.dao.VersionDAO;
-import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
-import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
-import de.bushnaq.abdalla.kassandra.repository.UserRepository;
-import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
+import de.bushnaq.abdalla.kassandra.repository.*;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +41,8 @@ public class AclSecurityService {
     private ProductAclService productAclService;
     @Autowired
     private SprintRepository  sprintRepository;
+    @Autowired
+    private TaskRepository    taskRepository;
     @Autowired
     private UserRepository    userRepository;
     @Autowired
@@ -86,6 +85,22 @@ public class AclSecurityService {
      */
     public Long getProductIdForSprint(Long sprintId) {
         return sprintRepository.findById(sprintId)
+                .flatMap(sprint -> featureRepository.findById(sprint.getFeatureId()))
+                .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
+                .map(VersionDAO::getProductId)
+                .orElse(null);
+    }
+
+    /**
+     * Get the product ID for a task
+     * Helper method for ACL checks
+     *
+     * @param taskId the task ID
+     * @return the product ID, or null if not found
+     */
+    public Long getProductIdForTask(Long taskId) {
+        return taskRepository.findById(taskId)
+                .flatMap(task -> sprintRepository.findById(task.getSprintId()))
                 .flatMap(sprint -> featureRepository.findById(sprint.getFeatureId()))
                 .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
                 .map(VersionDAO::getProductId)
@@ -152,6 +167,23 @@ public class AclSecurityService {
      */
     public boolean hasSprintAccess(Long sprintId) {
         return sprintRepository.findById(sprintId)
+                .flatMap(sprint -> featureRepository.findById(sprint.getFeatureId()))
+                .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
+                .map(VersionDAO::getProductId)
+                .map(this::hasProductAccess)
+                .orElse(false);
+    }
+
+    /**
+     * Check if current user has access to a task
+     * Access is inherited from sprint's feature's version's product
+     *
+     * @param taskId the task ID
+     * @return true if user has access
+     */
+    public boolean hasTaskAccess(Long taskId) {
+        return taskRepository.findById(taskId)
+                .flatMap(task -> sprintRepository.findById(task.getSprintId()))
                 .flatMap(sprint -> featureRepository.findById(sprint.getFeatureId()))
                 .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
                 .map(VersionDAO::getProductId)
