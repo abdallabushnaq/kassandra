@@ -87,6 +87,13 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         return Arrays.stream(randomCases).toList();
     }
 
+    /**
+     * Verifies that admin users have unrestricted access to view ACLs and products regardless of ownership.
+     * Tests admin privileges:
+     * - Admin can view ACL of any product (even those created by other users)
+     * - Admin can see all products via getAll() regardless of ACL
+     * This is the only test that validates full admin override capabilities for ACL viewing.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
@@ -105,6 +112,12 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         assertEquals(1, all.size(), "Admin should see all");
     }
 
+    /**
+     * Validates that unauthenticated (anonymous) users cannot access ACL endpoints.
+     * Tests security requirement:
+     * - Anonymous users (no authentication credentials) must be rejected with AuthenticationCredentialsNotFoundException
+     * This is the only test that validates authentication requirement for ACL operations.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testAnonymousCannotAccessAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -120,6 +133,13 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         });
     }
 
+    /**
+     * Validates that duplicate ACL grants are prevented.
+     * Tests idempotency constraint:
+     * - Attempting to grant access to the same user twice should fail
+     * - System should return an error indicating the entry already exists
+     * This is the only test that validates ACL uniqueness constraints.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "kristen.hubbell@kassandra.org", roles = "USER")
@@ -139,6 +159,14 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         }
     }
 
+    /**
+     * Validates that product creators can grant user-level access.
+     * Tests the basic ACL grant workflow:
+     * - Creator successfully grants access to another user
+     * - ACL entry is properly created with correct productId and userId
+     * - Granted user can subsequently access the product
+     * This is the only test that validates the complete creator-grants-user workflow with verification.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "kristen.hubbell@kassandra.org", roles = "USER")
@@ -160,6 +188,14 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         assertNotNull(accessed);
     }
 
+    /**
+     * Validates that product creators can revoke user access.
+     * Tests the ACL revocation workflow:
+     * - User is granted access and can access the product
+     * - Creator revokes the access
+     * - User can no longer access the product (AccessDeniedException)
+     * This is the only test that validates the complete creator-revokes-user workflow.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "kristen.hubbell@kassandra.org", roles = "USER")
@@ -185,6 +221,14 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         });
     }
 
+    /**
+     * Validates that product creators can view their own product's ACL.
+     * Tests basic ownership access to ACL viewing:
+     * - Creator creates a product
+     * - Creator can successfully retrieve the ACL entries
+     * - ACL contains at least the creator's entry
+     * This is the only test that validates the creator's ability to view ACL (as opposed to admin viewing any ACL).
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "kristen.hubbell@kassandra.org", roles = "USER")
@@ -200,6 +244,14 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         assertTrue(acl.size() >= 1);
     }
 
+    /**
+     * Validates that ACL entries are automatically cleaned up when a product is deleted.
+     * Tests cascade deletion behavior:
+     * - Product is created with multiple ACL entries (multiple users granted access)
+     * - Product is deleted
+     * - All associated ACL entries are automatically removed (cascade delete)
+     * This is the only test that validates ACL cleanup on product deletion.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
@@ -224,6 +276,15 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         assertEquals(0, acl1.size(), "ACL entries should be cleaned up after product deletion");
     }
 
+    /**
+     * Validates that the getAll() endpoint respects ACL permissions and only returns accessible products.
+     * Tests comprehensive access filtering:
+     * - Users initially see only their own created products
+     * - Different users see different sets of products based on ownership
+     * - After granting access, users see both owned and shared products
+     * - Product list dynamically reflects current ACL state
+     * This is the only test that validates the getAll() filtering mechanism comprehensively.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testGetAllOnlyReturnsProductsWithAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -267,6 +328,15 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         assertTrue(productIds.contains(product2.getId()), "Should contain product2");
     }
 
+    /**
+     * Validates that group-based ACL grants work correctly.
+     * Tests group access mechanism:
+     * - Admin can grant access to a user group
+     * - ACL entry is properly created with groupId (not userId)
+     * - All members of the group gain access to the product
+     * - Access is inherited through group membership
+     * This is the only test that validates the basic group-based (as opposed to user-based) ACL grant.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
@@ -294,6 +364,15 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         assertNotNull(accessed2);
     }
 
+    /**
+     * Validates that ACLs can contain multiple mixed entries (users and groups).
+     * Tests complex ACL scenarios:
+     * - Multiple groups can be granted access to the same product
+     * - Individual users and groups can coexist in the same ACL
+     * - All grant types (user + multiple groups) work simultaneously
+     * - All granted users (direct or via group) can access the product
+     * This is the only test that validates complex multi-entry ACL configurations.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
@@ -327,6 +406,15 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         assertNotNull(productApi.getById(product.getId()));
     }
 
+    /**
+     * Validates that group-based access can be revoked.
+     * Tests group revocation workflow:
+     * - Group is granted access to a product
+     * - Group members can access the product
+     * - Admin revokes group access
+     * - Group members lose access (AccessDeniedException)
+     * This is the only test that validates group-based ACL revocation.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
@@ -355,6 +443,14 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         });
     }
 
+    /**
+     * Validates that users granted access can themselves manage the ACL (not just the creator).
+     * Tests transitive ACL management:
+     * - Creator grants access to user2
+     * - User2 (non-creator but has access) can grant access to user3
+     * - User3 gains access through user2's grant
+     * This is the only test that validates non-creator ACL management capabilities.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "kristen.hubbell@kassandra.org", roles = "USER")
@@ -377,6 +473,13 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         assertNotNull(accessed);
     }
 
+    /**
+     * Validates that users without product access cannot grant access to others.
+     * Tests access control enforcement on grant operations:
+     * - User without access to a product attempts to grant access
+     * - System rejects the operation with AccessDeniedException
+     * This is the only test that validates unauthorized grant attempt prevention.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testUserWithoutAccessCannotGrantAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -392,6 +495,14 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         });
     }
 
+    /**
+     * Validates that users without product access cannot revoke access from others.
+     * Tests access control enforcement on revoke operations:
+     * - Admin grants access to user1
+     * - User2 (who has no access) attempts to revoke user1's access
+     * - System rejects the operation with AccessDeniedException
+     * This is the only test that validates unauthorized revoke attempt prevention.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testUserWithoutAccessCannotRevokeAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -407,6 +518,13 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         });
     }
 
+    /**
+     * Validates that users without product access cannot view the product's ACL.
+     * Tests access control enforcement on ACL viewing:
+     * - User without access to a product attempts to view its ACL
+     * - System rejects the operation with AccessDeniedException
+     * This is the only test that validates unauthorized ACL viewing prevention.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testUserWithoutAccessCannotViewAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {

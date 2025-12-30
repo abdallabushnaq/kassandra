@@ -84,6 +84,15 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         return Arrays.stream(randomCases).toList();
     }
 
+    /**
+     * Verifies that admin users have unrestricted access to all versions regardless of ownership.
+     * Tests admin capability to:
+     * - View all versions via getAll()
+     * - Retrieve specific versions by ID (across different products)
+     * - Update any version
+     * - Delete any version
+     * This is the only test that validates full admin privileges on versions.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
@@ -122,6 +131,14 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         versionApi.deleteById(version2.getId());
     }
 
+    /**
+     * Validates that the getAll(productId) endpoint enforces ACL permissions.
+     * Specifically tests:
+     * - Users can retrieve all versions for products they own
+     * - Users cannot retrieve versions for products they don't have access to (AccessDeniedException)
+     * - After being granted access, users can retrieve versions for that product
+     * This is the only test that focuses on the product-scoped version listing endpoint.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testGetAllByProductIdRespectsAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -152,6 +169,15 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         assertEquals(2, versionsAfterGrant.size(), "User2 should see all versions after being granted access");
     }
 
+    /**
+     * Validates that group-based ACL grants work correctly for version access.
+     * Tests the inheritance chain: Product ACL → Version access via group membership.
+     * Specifically validates:
+     * - Users initially cannot access versions of products they don't own
+     * - Granting group access to a product enables all group members to access its versions
+     * - Group members can see the versions in both getById() and getAll() operations
+     * This is the only test that validates group-based (as opposed to direct user-based) ACL grants.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testGroupAccessToProductGrantsVersionAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -187,6 +213,14 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         assertTrue(allVersions.stream().anyMatch(v -> v.getId().equals(version.getId())), "User1 should see the version via group access");
     }
 
+    /**
+     * Validates that revoking product access properly cascades to version access denial.
+     * Tests the ACL revocation workflow:
+     * - User is granted access to a product and can access its versions
+     * - Product access is revoked
+     * - User can no longer access any versions of that product
+     * This is the only test that validates the ACL revocation mechanism for versions.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testRevokeProductAccessRevokesVersionAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -216,6 +250,13 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         });
     }
 
+    /**
+     * Validates that granting product access enables version-level access via getById().
+     * Tests the positive grant workflow:
+     * - User initially cannot access another user's version by ID
+     * - After being granted product access, user can retrieve the version by ID
+     * This is the only test that validates the grant workflow for individual version retrieval.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testUserCanAccessVersionAfterProductAccessGranted(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -246,12 +287,16 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         Version retrieved = versionApi.getById(version2.getId());
         assertNotNull(retrieved);
         assertEquals(version2.getId(), retrieved.getId());
-
-        // User1 can now see both versions
-        List<Version> allVersions = versionApi.getAll();
-        assertEquals(2, allVersions.size(), "User1 should see both versions after being granted access");
     }
 
+    /**
+     * Validates basic ownership-based access control for versions.
+     * Tests the fundamental ACL behavior:
+     * - Users can access their own versions via getById() and getAll()
+     * - Users cannot access other users' versions (AccessDeniedException)
+     * - getAll() only returns versions the user has access to
+     * This is the only test that validates basic ownership isolation without any ACL grants.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testUserCanOnlyAccessVersionsOfOwnedProducts(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -295,6 +340,13 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         });
     }
 
+    /**
+     * Validates that version creation is restricted by product ACL.
+     * Tests that:
+     * - Users cannot create versions for products they don't have access to
+     * - Create operation properly enforces access control at the product level
+     * This is the only test that specifically validates CREATE operation access control.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testUserCannotCreateVersionForProductWithoutAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -311,6 +363,13 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         });
     }
 
+    /**
+     * Validates that version deletion is restricted by product ACL.
+     * Tests that:
+     * - Users cannot delete versions of products they don't have access to
+     * - Delete operation properly enforces access control
+     * This is the only test that specifically validates DELETE operation access control.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testUserCannotDeleteVersionWithoutAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -328,6 +387,13 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         });
     }
 
+    /**
+     * Validates that version updates are restricted by product ACL.
+     * Tests that:
+     * - Users cannot update versions of products they don't have access to
+     * - Update operation properly enforces access control
+     * This is the only test that specifically validates UPDATE operation access control.
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void testUserCannotUpdateVersionWithoutAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {

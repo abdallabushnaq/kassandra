@@ -210,7 +210,7 @@
 | kassandra.rest.api             | OffDayApi.java                                           | src      |       12 |        0 |       17 |       59 |       88 |
 | kassandra.rest.api             | OffDayApiTest.java                                       | src      |       43 |        0 |       62 |      282 |      387 |
 | kassandra.rest.api             | ProductAclApi.java                                       | src      |       13 |        0 |       16 |       82 |      111 |
-| kassandra.rest.api             | ProductAclApiTest.java                                   | src      |       68 |        3 |       68 |      284 |      423 |
+| kassandra.rest.api             | ProductAclApiTest.java                                   | src      |       68 |        3 |       68 |      286 |      425 |
 | kassandra.rest.api             | ProductApi.java                                          | src      |       20 |       20 |       16 |      114 |      170 |
 | kassandra.rest.api             | ProductApiTest.java                                      | src      |       57 |        0 |       54 |      275 |      386 |
 | kassandra.rest.api             | SprintApi.java                                           | src      |       21 |       20 |       16 |      128 |      185 |
@@ -221,7 +221,7 @@
 | kassandra.rest.api             | UserApiTest.java                                         | src      |       35 |        0 |       31 |      169 |      235 |
 | kassandra.rest.api             | UserGroupApi.java                                        | src      |       17 |        0 |       16 |      105 |      138 |
 | kassandra.rest.api             | UserGroupApiTest.java                                    | src      |       40 |        3 |       35 |      196 |      274 |
-| kassandra.rest.api             | VersionAclApiTest.java                                   | src      |       62 |        4 |       56 |      228 |      350 |
+| kassandra.rest.api             | VersionAclApiTest.java                                   | src      |       61 |       74 |       55 |      225 |      415 |
 | kassandra.rest.api             | VersionApi.java                                          | src      |       14 |        0 |       16 |       77 |      107 |
 | kassandra.rest.api             | VersionApiTest.java                                      | src      |       33 |        0 |       31 |      205 |      269 |
 | kassandra.rest.api             | WorklogApi.java                                          | src      |       14 |        0 |       16 |       77 |      107 |
@@ -263,7 +263,7 @@
 | kassandra.security             | SecurityConfig.java                                      | src      |       22 |       11 |       27 |      136 |      196 |
 | kassandra.security             | SecurityUtils.java                                       | src      |       17 |       31 |       18 |       62 |      128 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.service              | AclSecurityService.java                                  | src      |       16 |       60 |       18 |       83 |      177 |
+| kassandra.service              | AclSecurityService.java                                  | src      |       16 |       60 |       18 |       82 |      176 |
 | kassandra.service              | ProductAclService.java                                   | src      |       25 |       73 |       16 |      116 |      230 |
 | kassandra.service              | UserGroupService.java                                    | src      |       24 |       61 |       16 |       95 |      196 |
 | kassandra.service              | UserRoleMigrationService.java                            | src      |       18 |       17 |       22 |       72 |      129 |
@@ -452,5 +452,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 42 package(s)                  | 409 file(s)                                              | java     |     9028 |     6165 |    11726 |    46219 |    73138 |
+| 42 package(s)                  | 409 file(s)                                              | java     |     9027 |     6235 |    11725 |    46217 |    73204 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
