@@ -22,11 +22,10 @@ import de.bushnaq.abdalla.kassandra.dao.SprintAvatarGenerationDataDAO;
 import de.bushnaq.abdalla.kassandra.dao.SprintDAO;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
-import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
-import de.bushnaq.abdalla.kassandra.repository.SprintAvatarGenerationDataRepository;
-import de.bushnaq.abdalla.kassandra.repository.SprintAvatarRepository;
-import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
+import de.bushnaq.abdalla.kassandra.repository.*;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.ProductAclService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +36,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/sprint")
@@ -46,14 +46,18 @@ public class SprintController {
     @Autowired
     private FeatureRepository                    featureRepository;
     @Autowired
+    private ProductAclService                    productAclService;
+    @Autowired
     private SprintAvatarGenerationDataRepository sprintAvatarGenerationDataRepository;
     @Autowired
     private SprintAvatarRepository               sprintAvatarRepository;
     @Autowired
     private SprintRepository                     sprintRepository;
+    @Autowired
+    private VersionRepository                    versionRepository;
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasSprintAccess(#id) or hasRole('ADMIN')")
     @Transactional
     public void delete(@PathVariable Long id) {
         // Delete avatars first (cascade delete)
@@ -64,7 +68,7 @@ public class SprintController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasSprintAccess(#id) or hasRole('ADMIN')")
     public SprintDAO get(@PathVariable Long id) {
         SprintDAO sprintEntity = sprintRepository.findById(id).orElseThrow();
         return sprintEntity;
@@ -73,11 +77,25 @@ public class SprintController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<SprintDAO> getAll() {
-        return sprintRepository.findAll();
+        // Admin can see all sprints
+        if (SecurityUtils.isAdmin()) {
+            return sprintRepository.findAll();
+        }
+
+        // Regular users only see sprints of products they have access to
+        return sprintRepository.findAll().stream()
+                .filter(sprint -> {
+                    Long productId = featureRepository.findById(sprint.getFeatureId())
+                            .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
+                            .map(version -> version.getProductId())
+                            .orElse(null);
+                    return productId != null && productAclService.hasAccess(productId, SecurityUtils.getUserEmail());
+                })
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/feature/{featureId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasFeatureAccess(#featureId) or hasRole('ADMIN')")
     public List<SprintDAO> getAll(@PathVariable Long featureId) {
         return sprintRepository.findByFeatureId(featureId);
     }
@@ -115,7 +133,8 @@ public class SprintController {
     }
 
     @PostMapping()
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasFeatureAccess(#sprintDAO.featureId) or hasRole('ADMIN')")
+    @Transactional
     public SprintDAO save(@RequestBody SprintDAO sprintDAO) {
         // Check if a sprint with the same name already exists for this feature
         if (sprintRepository.existsByNameAndFeatureId(sprintDAO.getName(), sprintDAO.getFeatureId())) {
@@ -126,7 +145,8 @@ public class SprintController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasSprintAccess(#sprintEntity.id) or hasRole('ADMIN')")
+    @Transactional
     public SprintDAO update(@RequestBody SprintDAO sprintEntity) {
         // Check if another sprint with the same name exists in the same feature (excluding the current sprint)
         if (sprintRepository.existsByNameAndFeatureIdAndIdNot(sprintEntity.getName(), sprintEntity.getFeatureId(), sprintEntity.getId())) {
