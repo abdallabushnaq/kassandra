@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.rest.controller;
 import de.bushnaq.abdalla.kassandra.dao.OffDayDAO;
 import de.bushnaq.abdalla.kassandra.repository.OffDayRepository;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,9 +41,34 @@ public class OffDayController {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Check if the current user can modify the availability of the target user.
+     * Admins can modify any user's availability, regular users can only modify their own.
+     *
+     * @param targetUserId the ID of the user whose availability is being modified
+     * @return true if modification is allowed, false otherwise
+     */
+    private boolean canUserModifyOffDay(Long targetUserId) {
+        // Admins can modify any user's availability
+        if (SecurityUtils.isAdmin()) {
+            return true;
+        }
+
+        // Regular users can only modify their own availability
+        String currentUserEmail = SecurityUtils.getUserEmail();
+        return userRepository.findById(targetUserId)
+                .map(user -> currentUserEmail.equals(user.getEmail()))
+                .orElse(false);
+    }
+
     @DeleteMapping("/{userId}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Object> delete(@PathVariable Long userId, @PathVariable Long id) {
+        // Check authorization: Users can only delete their own offday, admins can delete for any user
+        if (!canUserModifyOffDay(userId)) {
+            throw new org.springframework.security.access.AccessDeniedException("You can only modify your own availability");
+        }
+
         return userRepository.findById(userId).map(
                 user -> {
                     OffDayDAO offDay = offDayRepository.findById(id).orElseThrow();
@@ -64,6 +90,11 @@ public class OffDayController {
     @PostMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<OffDayDAO> save(@RequestBody OffDayDAO offDay, @PathVariable Long userId) {
+        // Check authorization: Users can only delete their own offday, admins can delete for any user
+        if (!canUserModifyOffDay(userId)) {
+            throw new org.springframework.security.access.AccessDeniedException("You can only modify your own availability");
+        }
+
         return userRepository.findById(userId).map(user -> {
             // Check for overlapping OffDays
             List<OffDayDAO> overlappingOffDays = offDayRepository.findOverlappingOffDays(
@@ -89,6 +120,11 @@ public class OffDayController {
     @PutMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Object> update(@RequestBody OffDayDAO offDay, @PathVariable Long userId) {
+        // Check authorization: Users can only delete their own offday, admins can delete for any user
+        if (!canUserModifyOffDay(userId)) {
+            throw new org.springframework.security.access.AccessDeniedException("You can only modify your own availability");
+        }
+
         return userRepository.findById(userId).map(user -> {
             // Check for overlapping OffDays, excluding the current offDay being updated
             List<OffDayDAO> overlappingOffDays = offDayRepository.findOverlappingOffDays(

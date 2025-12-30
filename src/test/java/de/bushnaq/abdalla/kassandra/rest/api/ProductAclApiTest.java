@@ -21,7 +21,6 @@ import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
-import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -30,7 +29,6 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.access.AccessDeniedException;
@@ -62,9 +60,6 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     private User user1;
     private User user2;
     private User user3;
-
-    @Autowired
-    UserRepository userRepository;
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
         Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");

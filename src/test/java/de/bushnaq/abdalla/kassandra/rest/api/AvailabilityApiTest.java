@@ -19,22 +19,29 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.Availability;
 import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.util.AbstractEntityGenerator;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.RandomCase;
+import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerErrorException;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -43,16 +50,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@Transactional
-public class AvailabilityApiTest extends AbstractEntityGenerator {
+public class AvailabilityApiTest extends AbstractUiTestUtil {
     private static final long   FAKE_ID             = 999999L;
     private static final String FIRST_START_DATE    = "2024-03-14";
     private static final float  SECOND_AVAILABILITY = 0.6f;
     private static final String SECOND_START_DATE   = "2025-07-01";
 
-    @Test
+    private User admin1;
+    private User user1;
+    private User user2;
+    private User user3;
+
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void addAvailability() throws Exception {
+    public void addAvailability(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
         //create a user with australian locale
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -68,26 +81,20 @@ public class AvailabilityApiTest extends AbstractEntityGenerator {
         printTables();
     }
 
-    @Test
-    public void anonymousSecurity() {
-        {
-            setUser("admin-user", "ROLE_ADMIN");
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
-            SecurityContextHolder.clearContext();
-        }
-
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    public void anonymousSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User user = expectedUsers.getFirst();
-            addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
+            addAvailability(user1, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         });
 
         {
-            User         user                 = expectedUsers.getFirst();
-            Availability availability         = user.getAvailabilities().getFirst();
+            Availability availability         = user1.getAvailabilities().getFirst();
             float        originalAvailability = availability.getAvailability();
             availability.setAvailability(SECOND_AVAILABILITY);
             try {
-                updateAvailability(availability, user);
+                updateAvailability(availability, user1);
                 fail("should not be able to update");
             } catch (AuthenticationCredentialsNotFoundException e) {
                 //restore fields to match db for later tests in @AfterEach
@@ -95,20 +102,21 @@ public class AvailabilityApiTest extends AbstractEntityGenerator {
             }
         }
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            Availability availability = availabilityApi.getById(expectedAvailabilities.getFirst().getId());
+            Availability availability = availabilityApi.getById(user1.getAvailabilities().getFirst().getId());
 
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User         user         = expectedUsers.getFirst();
-            Availability availability = user.getAvailabilities().getFirst();
-            removeAvailability(availability, user);
+            Availability availability = user1.getAvailabilities().getFirst();
+            removeAvailability(availability, user1);
         });
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void deleteFirstAvailability() throws Exception {
+    public void deleteFirstAvailability(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
         //create a user with australian locale
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -127,9 +135,11 @@ public class AvailabilityApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void deleteSecondAvailability() throws Exception {
+    public void deleteSecondAvailability(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
         //create a user with australian locale
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -150,9 +160,11 @@ public class AvailabilityApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void deleteUsingFakeId() throws Exception {
+    public void deleteUsingFakeId(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
         //create a user with australian locale
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -181,9 +193,11 @@ public class AvailabilityApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void deleteUsingFakeUserId() throws Exception {
+    public void deleteUsingFakeUserId(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
         //create a user with australian locale
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -212,9 +226,32 @@ public class AvailabilityApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
+        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+        generateProductsIfNeeded(testInfo, randomCase);
+        admin1 = userApi.getByEmail("christopher.paul@kassandra.org");
+        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org");
+        user2  = userApi.getByEmail("claudine.fick@kassandra.org");
+        user3  = userApi.getByEmail("randy.asmus@kassandra.org");
+
+        setUser(roleAdmin);
+    }
+
+    private static List<RandomCase> listRandomCases() {
+        RandomCase[] randomCases = new RandomCase[]{//
+                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 13)//
+        };
+        return Arrays.stream(randomCases).toList();
+    }
+
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void updateAvailability() throws Exception {
+    public void updateAvailability(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
         //create the user with australian locale
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -229,9 +266,11 @@ public class AvailabilityApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void updateUsingFakeAvailabilityId() throws Exception {
+    public void updateUsingFakeAvailabilityId(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
         //create the user with australian locale
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -256,9 +295,11 @@ public class AvailabilityApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void updateUsingFakeUserId() throws Exception {
+    public void updateUsingFakeUserId(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
         //create the user with australian locale
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -283,26 +324,23 @@ public class AvailabilityApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
-    public void userSecurity() {
-        {
-            setUser("admin-user", "ROLE_ADMIN");
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
-            setUser("user", "ROLE_USER");
-        }
+    //TODO only admin or the user can change user availability
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    public void userSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        setUser(user1.getEmail(), "ROLE_USER");
 
         assertThrows(AccessDeniedException.class, () -> {
-            User user = expectedUsers.getFirst();
-            addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
+            addAvailability(user2, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         });
 
         {
-            User         user                 = expectedUsers.getFirst();
-            Availability availability         = user.getAvailabilities().getFirst();
+            Availability availability         = user2.getAvailabilities().getFirst();
             float        originalAvailability = availability.getAvailability();
             try {
                 availability.setAvailability(SECOND_AVAILABILITY);
-                updateAvailability(availability, user);
+                updateAvailability(availability, user2);
                 fail("Should not be able to update availability");
             } catch (AccessDeniedException e) {
                 // Restore original values
@@ -311,9 +349,8 @@ public class AvailabilityApiTest extends AbstractEntityGenerator {
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            User         user         = expectedUsers.getFirst();
-            Availability availability = user.getAvailabilities().getFirst();
-            removeAvailability(availability, user);
+            Availability availability = user2.getAvailabilities().getFirst();
+            removeAvailability(availability, user2);
         });
     }
 }

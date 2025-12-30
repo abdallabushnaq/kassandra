@@ -19,22 +19,30 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.util.AbstractEntityGenerator;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.RandomCase;
+import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerErrorException;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.fail;
@@ -46,17 +54,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@Transactional
-public class LocationApiTest extends AbstractEntityGenerator {
+public class LocationApiTest extends AbstractUiTestUtil {
     private static final long   FAKE_ID           = 999999L;
     private static final String FIRST_START_DATE  = "2024-03-14";
     private static final String SECOND_COUNTRY    = "us";
     private static final String SECOND_START_DATE = "2025-07-01";
     private static final String SECOND_STATE      = "fl";
 
-    @Test
+    private User admin1;
+    private User user1;
+    private User user2;
+    private User user3;
+
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void add() throws Exception {
+    public void add(RandomCase randomCase, TestInfo testInfo) throws Exception {
         //create a user with Australian locale
         {
             Locale.setDefault(new Locale.Builder().setLanguage("en").setRegion("AU").build());//australian locale
@@ -85,8 +98,9 @@ public class LocationApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
-    public void anonymousSecurity() {
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    public void anonymousSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
             setUser("admin-user", "ROLE_ADMIN");
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -122,9 +136,10 @@ public class LocationApiTest extends AbstractEntityGenerator {
         });
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void deleteFirstLocation() throws Exception {
+    public void deleteFirstLocation(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
@@ -141,9 +156,10 @@ public class LocationApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void deleteSecondLocation() throws Exception {
+    public void deleteSecondLocation(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
@@ -164,9 +180,10 @@ public class LocationApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void deleteUsingFakeId() throws Exception {
+    public void deleteUsingFakeId(RandomCase randomCase, TestInfo testInfo) throws Exception {
         //create a user with australian locale
         {
             Locale.setDefault(new Locale.Builder().setLanguage("en").setRegion("AU").build());//australian locale
@@ -198,10 +215,11 @@ public class LocationApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void deleteUsingFakeUserId() throws Exception {
-        //create a user with australian locale
+    public void deleteUsingFakeUserId(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        //create a user with Australian locale
         {
             Locale.setDefault(new Locale.Builder().setLanguage("en").setRegion("AU").build());//australian locale
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -231,9 +249,31 @@ public class LocationApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
+        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+        generateProductsIfNeeded(testInfo, randomCase);
+        admin1 = userApi.getByEmail("christopher.paul@kassandra.org");
+        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org");
+        user2  = userApi.getByEmail("claudine.fick@kassandra.org");
+        user3  = userApi.getByEmail("randy.asmus@kassandra.org");
+
+        setUser(roleAdmin);
+    }
+
+    private static List<RandomCase> listRandomCases() {
+        RandomCase[] randomCases = new RandomCase[]{//
+                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 13)//
+        };
+        return Arrays.stream(randomCases).toList();
+    }
+
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void updateLocation() throws Exception {
+    public void updateLocation(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
@@ -257,9 +297,10 @@ public class LocationApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void updateUsingFakeId() throws Exception {
+    public void updateUsingFakeId(RandomCase randomCase, TestInfo testInfo) throws Exception {
 
         //create the user with german locale
         {
@@ -291,9 +332,10 @@ public class LocationApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void updateUsingFakeUserId() throws Exception {
+    public void updateUsingFakeUserId(RandomCase randomCase, TestInfo testInfo) throws Exception {
 
         {
             User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
@@ -326,28 +368,24 @@ public class LocationApiTest extends AbstractEntityGenerator {
         }
     }
 
-    @Test
-    public void userSecurity() {
-        {
-            setUser("admin-user", "ROLE_ADMIN");
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
-            setUser("user", "ROLE_USER");
-        }
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    public void userSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        setUser(user1.getEmail(), "ROLE_USER");
 
         assertThrows(AccessDeniedException.class, () -> {
-            User user = expectedUsers.getFirst();
-            addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
+            addLocation(user2, "de", "nw", LocalDate.parse(SECOND_START_DATE));
         });
 
         {
-            User     user            = expectedUsers.getFirst();
-            Location location        = user.getLocations().getFirst();
+            Location location        = user2.getLocations().getFirst();
             String   originalCountry = location.getCountry();
             String   originalState   = location.getState();
             try {
                 location.setCountry(SECOND_COUNTRY);
                 location.setState(SECOND_STATE);
-                updateLocation(location, user);
+                updateLocation(location, user2);
                 fail("Should not be able to update location");
             } catch (AccessDeniedException e) {
                 // Restore original values
@@ -357,9 +395,8 @@ public class LocationApiTest extends AbstractEntityGenerator {
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            User     user     = expectedUsers.getFirst();
-            Location location = user.getLocations().getFirst();
-            removeLocation(location, user);
+            Location location = user2.getLocations().getFirst();
+            removeLocation(location, user2);
         });
     }
 }
