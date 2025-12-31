@@ -132,19 +132,20 @@ public class VersionApiTest extends AbstractEntityGenerator {
         {
             setUser("admin-user", "ROLE_ADMIN");
             addRandomProducts(3);
-            setUser("user", "ROLE_USER");
+            List<Version> allVersions = versionApi.getAll();
+            assertEquals(3, allVersions.size());
         }
-        List<Version> allVersions = versionApi.getAll();
-        assertEquals(3, allVersions.size());
+        {
+            setUser("user", "ROLE_USER");
+            List<Version> allVersions = versionApi.getAll();
+            assertEquals(0, allVersions.size());
+        }
     }
 
     @Test
     public void getAllByProductId() throws Exception {
-        {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(3);
-            setUser("user", "ROLE_USER");
-        }
+        setUser("admin-user", "ROLE_ADMIN");
+        addRandomProducts(3);
         List<Version> allVersions = versionApi.getAll(expectedProducts.getFirst().getId());
         assertEquals(1, allVersions.size());
     }
@@ -158,11 +159,8 @@ public class VersionApiTest extends AbstractEntityGenerator {
 
     @Test
     public void getByFakeId() throws Exception {
-        {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
-            setUser("user", "ROLE_USER");
-        }
+        setUser("admin-user", "ROLE_ADMIN");
+        addRandomProducts(1);
         try {
             versionApi.getById(FAKE_ID);
             fail("Version should not exist");
@@ -173,11 +171,8 @@ public class VersionApiTest extends AbstractEntityGenerator {
 
     @Test
     public void getById() throws Exception {
-        {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
-            setUser("user", "ROLE_USER");
-        }
+        setUser("admin-user", "ROLE_ADMIN");
+        addRandomProducts(1);
         Version version = versionApi.getById(expectedVersions.getFirst().getId());
         assertEquals(expectedVersions.getFirst().getId(), version.getId());
     }
