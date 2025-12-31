@@ -128,10 +128,14 @@ public class SprintApiTest extends AbstractEntityGenerator {
         {
             setUser("admin-user", "ROLE_ADMIN");
             addRandomProducts(3);
-            setUser("user", "ROLE_USER");
+            List<Sprint> allSprints = sprintApi.getAll();
+            assertEquals(3, allSprints.size());
         }
-        List<Sprint> allSprints = sprintApi.getAll();
-        assertEquals(3, allSprints.size());
+        {
+            setUser("user", "ROLE_USER");
+            List<Sprint> allSprints = sprintApi.getAll();
+            assertEquals(0, allSprints.size());
+        }
     }
 
     @Test
@@ -143,11 +147,8 @@ public class SprintApiTest extends AbstractEntityGenerator {
 
     @Test
     public void getByFakeId() throws Exception {
-        {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
-            setUser("user", "ROLE_USER");
-        }
+        setUser("admin-user", "ROLE_ADMIN");
+        addRandomProducts(1);
         try {
             sprintApi.getById(FAKE_ID);
             fail("Sprint should not exist");
@@ -158,11 +159,8 @@ public class SprintApiTest extends AbstractEntityGenerator {
 
     @Test
     public void getById() throws Exception {
-        {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
-            setUser("user", "ROLE_USER");
-        }
+        setUser("admin-user", "ROLE_ADMIN");
+        addRandomProducts(1);
         Sprint sprint = sprintApi.getById(expectedSprints.getFirst().getId());
         assertSprintEquals(expectedSprints.getFirst(), sprint, true);
     }
@@ -229,9 +227,12 @@ public class SprintApiTest extends AbstractEntityGenerator {
             setUser("user", "ROLE_USER");
         }
 
-        // Regular users should be able to view sprints
-        List<Sprint> allSprints = sprintApi.getAll();
-        Sprint       sprint     = sprintApi.getById(expectedSprints.getFirst().getId());
+        // User without ACL cannot access products
+        assertThrows(AccessDeniedException.class, () -> {
+            // Regular users should be able to view sprints
+            List<Sprint> allSprints = sprintApi.getAll();
+            Sprint       sprint     = sprintApi.getById(expectedSprints.getFirst().getId());
+        });
 
         // But not modify them
         {
