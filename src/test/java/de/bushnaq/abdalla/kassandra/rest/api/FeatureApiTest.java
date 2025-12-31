@@ -134,10 +134,14 @@ public class FeatureApiTest extends AbstractEntityGenerator {
         {
             setUser("admin-user", "ROLE_ADMIN");
             addRandomProducts(3);
-            setUser("user", "ROLE_USER");
+            List<Feature> allFeatures = featureApi.getAll();
+            assertEquals(3, allFeatures.size());
         }
-        List<Feature> allFeatures = featureApi.getAll();
-        assertEquals(3, allFeatures.size());
+        {
+            setUser("user", "ROLE_USER");
+            List<Feature> allFeatures = featureApi.getAll();
+            assertEquals(0, allFeatures.size());
+        }
     }
 
     @Test
@@ -149,11 +153,8 @@ public class FeatureApiTest extends AbstractEntityGenerator {
 
     @Test
     public void getByFakeId() throws Exception {
-        {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
-            setUser("user", "ROLE_USER");
-        }
+        setUser("admin-user", "ROLE_ADMIN");
+        addRandomProducts(1);
         try {
             featureApi.getById(FAKE_ID);
             fail("Feature should not exist");
@@ -164,11 +165,8 @@ public class FeatureApiTest extends AbstractEntityGenerator {
 
     @Test
     public void getById() throws Exception {
-        {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
-            setUser("user", "ROLE_USER");
-        }
+        setUser("admin-user", "ROLE_ADMIN");
+        addRandomProducts(1);
         Feature feature = featureApi.getById(expectedFeatures.getFirst().getId());
         assertFeatureEquals(expectedFeatures.getFirst(), feature, true); // shallow test
     }

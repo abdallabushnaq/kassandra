@@ -17,8 +17,6 @@
 
 # Bugs
 
-1. adapt ProductApiTest to ACL changes.
-2. adapt VersionApiTest to ACL changes.
-3. adapt FeatureApiTest to ACL changes.
-4. adapt SprintApiTest to ACL changes.
+1. adapt FeatureApiTest to ACL changes.
+2. adapt SprintApiTest to ACL changes.
  
