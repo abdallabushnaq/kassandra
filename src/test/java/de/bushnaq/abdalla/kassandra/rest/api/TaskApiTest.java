@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -53,7 +53,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@Transactional
+@Slf4j
 public class TaskApiTest extends AbstractUiTestUtil {
     private static final long   FAKE_ID     = 999999L;
     private static final String SECOND_NAME = "SECOND_NAME";
@@ -193,6 +193,7 @@ public class TaskApiTest extends AbstractUiTestUtil {
         List<Task> allTasks = taskApi.getAll();
         assertThrows(AccessDeniedException.class, () -> {
             Task task = taskApi.getById(expectedTasks.getFirst().getId());
+            log.trace("Task retrieved by regular user: {}", task);
         });
 
         // But not modify them

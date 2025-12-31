@@ -53,7 +53,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-//@Transactional
 public class UserGroupApiTest extends AbstractUiTestUtil {
     private User admin1;
     private User user1;

@@ -17,6 +17,5 @@
 
 # Bugs
 
-1. adapt FeatureApiTest to ACL changes.
 2. adapt SprintApiTest to ACL changes.
  
