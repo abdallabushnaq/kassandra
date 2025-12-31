@@ -59,7 +59,6 @@ import java.time.LocalDate;
         }
 )
 @AutoConfigureMockMvc
-//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class UserListViewTest extends AbstractKeycloakUiTestUtil {
     private final String                   email              = "user.test@example.com";
@@ -77,7 +76,7 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
 
     @BeforeEach
     public void setupTest(TestInfo testInfo) throws Exception {
-        userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), "christopher.paul@kassandra.org", "password");
     }
 
     /**
