@@ -135,7 +135,7 @@ public class ProductController {
     @PostMapping(consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
-    public ProductDAO save(@RequestBody ProductDAO product) {
+    public ResponseEntity<ProductDAO> save(@RequestBody ProductDAO product) {
         // Check if a product with the same name already exists
         if (productRepository.existsByName(product.getName())) {
             throw new UniqueConstraintViolationException("Product", "name", product.getName());
@@ -158,7 +158,7 @@ public class ProductController {
             });
         }
 
-        return savedProduct;
+        return ResponseEntity.ok(savedProduct);
     }
 
     @PutMapping()
