@@ -19,26 +19,61 @@ tbd
 
 [ER Diagram](https://github.com/kunterbunt2/project-hub/wiki/ER-Diagram)
 
-Roadmap
+# Roadmap
 
-1. add logout button
-2. add authorization
-3. fix resource leveling not handling dependency to later story.
-4. sprint view
-   1. change status
-   2. burn down work
+## Phase 1
 
-# Introduciton Videos
+1. ✅Basic functionality
+2. ✅Product, Version, project
+3. ✅project list.
+4. ✅every project has list of sprints.
+5. ✅every sprint contains stories and tasks.
+6. ✅every task has start, end, effort estimation, effort worked, dependency to other tasks or stories.
+1. ✅Authentication via oidc
+3. ✅User availability time-frames
+4. ✅User location time-frames
+5. ✅User work week time-frames
+6. ✅User Work hours time-frames
+1. ✅Authorization, access control using user groups on project level.
+7. ❌gantt chart generation with resource conflict visualization.
+    1. ✅Gantt task only on working days.
+    2. ✅X-axis calendar make none working day gray.
+8. ✅burn down chart for every sprint.
+9. ❌keep number of clicks to minimum for daily work of developer.
+10. ❌Close project Release Date.
+11. ✅National Holidays
+12. ❌data scenario simulation generator
+    1. ✅Simulator Write the use case as a Story in the project or product
+    2. ❌include closed and delayed sprints.
 
-1. Kassandra Users
-2. Kassandra User Profile & Avatar Management
-3. Kassandra User Off Days
-4. Kassandra User Locations
-5. Kassandra User Availability
-6. Kassandra Projects, Versions, Features and Sprints
-7. Kassandra Stories and Tasks
-8. Stories and Tasks - Rearranging and Copying
-9. Story and Task Relations
+## Phase 2
+
+2. ❌Audit logs
+
+## Phase 3
+
+2. ❌Admin hub
+
+## Phase 4
+
+1. ❌Performance
+2. ❌Live updates to your inputs
+3. ❌Live response to your Input.
+4. product page.
+5. ❌GDPR
+
+# Kassandra Introduction Videos
+
+1. Managing Users
+2. User Profile Introduction Video
+3. User Off Days Introduction Video
+4. User Locations Introduction Video
+5. User Availability Introduction Video
+6. Projects, Versions, Features and Sprints Introduction Video
+7. Stories and Tasks Introduction Video
+8. Rearranging Stories and Tasks Introduction Video
+9. Story and Task Relations Introduction Video
+10. Logging Work Introduction Video
 
 # Screenshots
 
@@ -64,19 +99,6 @@ Roadmap
 - Projects can be locked for change, which will lock start/end dates and all milestones
 - project priority can be changed by moving them within the list
 - sprint priority can be changed by moving them within the list
-
-# Issues
-
-- sometimes adding a story and two tasks will add additionally one task.
-- changing assignment must also change hidden dependencies
-- some tests fail with java.awt.HeadlessException.
-- some ai filter test fail all the time, as the tests are vague.
-- users are retired by their name instead of their email address.
-- user email addresses must be unique.
-- LocationDialog not showing errors in dialog.
-- AvailabilityTest.userSecurity() generates several exceptions on server side that the test does not catch.
-- gantt calendar too light.
-- gantt calendar should be using sprint calendar.
 
 # License
 

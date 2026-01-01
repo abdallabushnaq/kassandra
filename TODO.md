@@ -9,13 +9,16 @@
 
 ## Feature
 
-1. We want to restrict access to a Product and its Version/Features/Sprints using access-control-list. admin users can
-   create/edit/delete user groups.
-   Whoever creates a Product is automatically added to the access-control-list. Whoever has access to a product and its
-   child entities can edit the access-control-list.
-   admin users can edit the access-control-list.
-
 # Bugs
 
-2. adapt SprintApiTest to ACL changes.
- 
+- sometimes adding a story and two tasks will add additionally one task.
+- changing assignment must also change hidden dependencies
+- some tests fail with java.awt.HeadlessException.
+- users are retired by their name instead of their email address.
+- LocationDialog not showing errors in dialog.
+- AvailabilityTest.userSecurity() generates several exceptions on server side that the test does not catch.
+- gantt resource leveling fails sometimes with circular dependency error.
+- fix resource leveling not handling dependency to later story.
+- gantt calendar too light.
+- gantt calendar should be using sprint calendar.
+- some ai filter test fail all the time, as the tests are vague.

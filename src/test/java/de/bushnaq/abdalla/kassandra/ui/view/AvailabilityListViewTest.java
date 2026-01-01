@@ -63,27 +63,21 @@ import java.time.LocalDate;
         }
 )
 @AutoConfigureMockMvc
-//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       AvailabilityListViewTester availabilityListViewTester;
     private final int                        availabilityPercent    = 80;
-    // Initial availability record that exists when the user is created (today's date)
     private final LocalDate                  initialDate            = LocalDate.now();
     private final int                        initialPercent         = 100;
-    // Invalid test data for validation tests
     private final int                        invalidHighPercent     = 160; // Above 150% limit
     private final int                        invalidLowPercent      = -10; // Below 0% limit
     private final int                        newAvailabilityPercent = 50;
-    // Test data for updating availability records
     private final LocalDate                  newStartDate           = LocalDate.of(2025, 8, 1);
     private final int                        secondAvailPercent     = 75;
-    // Test data for the second availability record (for create operations)
     private final LocalDate                  secondStartDate        = LocalDate.of(2025, 7, 1);
     @Autowired
     private       HumanizedSeleniumHandler   seleniumHandler;
-    // Test data for the first new availability record
     private final LocalDate                  startDate              = LocalDate.of(2025, 6, 1);
     private final String                     testUsername           = "availability-test-user";
 
