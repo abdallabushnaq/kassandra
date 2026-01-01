@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.dao.UserGroupDAO;
+import de.bushnaq.abdalla.kassandra.dto.AbstractTimeAware;
 import de.bushnaq.abdalla.kassandra.repository.UserGroupRepository;
 import de.bushnaq.abdalla.kassandra.service.UserGroupService;
 import jakarta.transaction.Transactional;
@@ -152,7 +153,7 @@ public class UserGroupController {
  * Request DTO for creating/updating user groups
  */
 @Data
-class UserGroupRequest {
+class UserGroupRequest extends AbstractTimeAware {
     private String    description;
     private Set<Long> memberIds;
     private String    name;

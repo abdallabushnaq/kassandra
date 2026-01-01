@@ -40,8 +40,15 @@ public class UserGroupApi extends AbstractApi {
     }
 
     public UserGroupApi() {
+
     }
 
+    /**
+     * Add a user to a group
+     *
+     * @param groupId the group ID
+     * @param userId  the user ID
+     */
     public void addMember(Long groupId, Long userId) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user-group/{groupId}/members/{userId}",
@@ -53,23 +60,27 @@ public class UserGroupApi extends AbstractApi {
         ));
     }
 
+    /**
+     * Create a new user group (legacy method for tests)
+     *
+     * @param name        the group name
+     * @param description the group description
+     * @param memberIds   the IDs of users to add as members
+     * @return the created group
+     */
     public UserGroup create(String name, String description, Set<Long> memberIds) {
-        return executeWithErrorHandling(() -> {
-            Map<String, Object> request = new HashMap<>();
-            request.put("name", name);
-            request.put("description", description);
-            request.put("memberIds", memberIds);
-
-            ResponseEntity<UserGroup> response = restTemplate.exchange(
-                    getBaseUrl() + "/user-group",
-                    HttpMethod.POST,
-                    createHttpEntity(request),
-                    UserGroup.class
-            );
-            return response.getBody();
-        });
+        UserGroup userGroup = new UserGroup();
+        userGroup.setName(name);
+        userGroup.setDescription(description);
+        userGroup.setMemberIds(memberIds != null ? memberIds : new HashSet<>());
+        return persist(userGroup);
     }
 
+    /**
+     * Delete a user group by ID
+     *
+     * @param id the group ID
+     */
     public void deleteById(Long id) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user-group/{id}",
@@ -80,32 +91,60 @@ public class UserGroupApi extends AbstractApi {
         ));
     }
 
+    /**
+     * Get all user groups
+     *
+     * @return list of all groups
+     */
     public List<UserGroup> getAll() {
-        return executeWithErrorHandling(() -> {
-            ResponseEntity<UserGroup[]> response = restTemplate.exchange(
-                    getBaseUrl() + "/user-group",
-                    HttpMethod.GET,
-                    createHttpEntity(),
-                    UserGroup[].class
-            );
-            UserGroup[] groups = response.getBody();
-            return groups != null ? Arrays.asList(groups) : new ArrayList<>();
-        });
+        ResponseEntity<UserGroup[]> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/user-group",
+                HttpMethod.GET,
+                createHttpEntity(),
+                UserGroup[].class
+        ));
+        return Arrays.asList(response.getBody());
     }
 
+    /**
+     * Get a single user group by ID
+     *
+     * @param id the group ID
+     * @return the group
+     */
     public UserGroup getById(Long id) {
-        return executeWithErrorHandling(() -> {
-            ResponseEntity<UserGroup> response = restTemplate.exchange(
-                    getBaseUrl() + "/user-group/{id}",
-                    HttpMethod.GET,
-                    createHttpEntity(),
-                    UserGroup.class,
-                    id
-            );
-            return response.getBody();
-        });
+        ResponseEntity<UserGroup> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/user-group/{id}",
+                HttpMethod.GET,
+                createHttpEntity(),
+                UserGroup.class,
+                id
+        ));
+        return response.getBody();
     }
 
+    /**
+     * Create a new user group
+     *
+     * @param userGroup the group to create
+     * @return the created group
+     */
+    public UserGroup persist(UserGroup userGroup) {
+        ResponseEntity<UserGroup> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/user-group",
+                HttpMethod.POST,
+                createHttpEntity(userGroup),
+                UserGroup.class
+        ));
+        return response.getBody();
+    }
+
+    /**
+     * Remove a user from a group
+     *
+     * @param groupId the group ID
+     * @param userId  the user ID
+     */
     public void removeMember(Long groupId, Long userId) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user-group/{groupId}/members/{userId}",
@@ -117,22 +156,44 @@ public class UserGroupApi extends AbstractApi {
         ));
     }
 
-    public UserGroup update(Long id, String name, String description, Set<Long> memberIds) {
-        return executeWithErrorHandling(() -> {
-            Map<String, Object> request = new HashMap<>();
-            request.put("name", name);
-            request.put("description", description);
-            request.put("memberIds", memberIds);
+    /**
+     * Update an existing user group
+     *
+     * @param userGroup the group to update
+     */
+    public void update(UserGroup userGroup) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", userGroup.getName());
+        body.put("description", userGroup.getDescription());
+        body.put("memberIds", userGroup.getMemberIds());
 
-            ResponseEntity<UserGroup> response = restTemplate.exchange(
-                    getBaseUrl() + "/user-group/{id}",
-                    HttpMethod.PUT,
-                    createHttpEntity(request),
-                    UserGroup.class,
-                    id
-            );
-            return response.getBody();
-        });
+        executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/user-group/{id}",
+                HttpMethod.PUT,
+                createHttpEntity(body),
+                Void.class,
+                userGroup.getId()
+        ));
+    }
+
+    /**
+     * Update an existing user group (legacy method for tests)
+     *
+     * @param id          the group ID
+     * @param name        the group name
+     * @param description the group description
+     * @param memberIds   the IDs of users in the group
+     * @return the updated group
+     */
+    public UserGroup update(Long id, String name, String description, Set<Long> memberIds) {
+        UserGroup userGroup = getById(id);
+        userGroup.setName(name);
+        userGroup.setDescription(description);
+        userGroup.setMemberIds(memberIds != null ? memberIds : new HashSet<>());
+
+        update(userGroup);
+
+        return getById(id);
     }
 }
 

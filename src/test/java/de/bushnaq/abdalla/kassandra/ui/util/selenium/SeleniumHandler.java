@@ -552,6 +552,14 @@ class SeleniumHandler {
         return null;
     }
 
+    public String getTextArea(String id) {
+        waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
+        WebElement e     = findElement(By.id(id));
+        WebElement i     = e.findElement(By.tagName("textarea"));
+        String     value = i.getAttribute("value");
+        return value;
+    }
+
     public String getTextField(String id) {
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
         WebElement e     = findElement(By.id(id));

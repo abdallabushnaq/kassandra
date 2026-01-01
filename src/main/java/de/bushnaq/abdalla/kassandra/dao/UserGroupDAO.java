@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.dao;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Proxy;
@@ -66,6 +67,7 @@ public class UserGroupDAO extends AbstractTimeAwareDAO {
      *
      * @param userId the user ID to add
      */
+    @JsonIgnore
     public void addMember(Long userId) {
         memberIds.add(userId);
     }
@@ -75,6 +77,7 @@ public class UserGroupDAO extends AbstractTimeAwareDAO {
      *
      * @return member count
      */
+    @JsonIgnore
     public int getMemberCount() {
         return memberIds != null ? memberIds.size() : 0;
     }
@@ -84,6 +87,7 @@ public class UserGroupDAO extends AbstractTimeAwareDAO {
      *
      * @param userId the user ID to remove
      */
+    @JsonIgnore
     public void removeMember(Long userId) {
         memberIds.remove(userId);
     }

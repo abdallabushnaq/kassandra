@@ -61,23 +61,24 @@ import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 //@JsModule("/tooltips.js")
 public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
-    public static final String           ID_BREADCRUMBS               = "main-layout-breadcrumbs";
-    public static final String           ID_LOGO                      = "main-layout-logo";
-    public static final String           ID_TAB_BASE                  = "main-layout-tab-";
+    public static final String           ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
+    public static final String           ID_LOGO                         = "main-layout-logo";
+    public static final String           ID_TAB_BASE                     = "main-layout-tab-";
     //    public static final String           ID_TAB_USERS                 = "main-layout-tab-users";
-    public static final String           ID_THEME_TOGGLE              = "main-layout-theme-toggle";
-    public static final String           ID_USER_MENU                 = "main-layout-user-menu";
-    public static final String           ID_USER_MENU_AVAILABILITY    = "main-layout-user-menu-availability";
-    public static final String           ID_USER_MENU_LOCATION        = "main-layout-user-menu-location";
-    public static final String           ID_USER_MENU_LOGOUT          = "main-layout-user-menu-logout";
-    public static final String           ID_USER_MENU_MANAGE_SETTINGS = "main-layout-user-menu-manage-settings";
-    public static final String           ID_USER_MENU_MANAGE_USERS    = "main-layout-user-menu-manage-users";
-    public static final String           ID_USER_MENU_OFF_DAYS        = "main-layout-user-menu-off-days";
-    public static final String           ID_USER_MENU_VIEW_PROFILE    = "main-layout-user-menu-view-profile";
+    public static final String           ID_THEME_TOGGLE                 = "main-layout-theme-toggle";
+    public static final String           ID_USER_MENU                    = "main-layout-user-menu";
+    public static final String           ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
+    public static final String           ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
+    public static final String           ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
+    public static final String           ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
+    public static final String           ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
+    public static final String           ID_USER_MENU_MANAGE_USER_GROUPS = "main-layout-user-menu-manage-user-groups";
+    public static final String           ID_USER_MENU_OFF_DAYS           = "main-layout-user-menu-off-days";
+    public static final String           ID_USER_MENU_VIEW_PROFILE       = "main-layout-user-menu-view-profile";
     @Getter
-    private final       Breadcrumbs      breadcrumbs                  = new Breadcrumbs();
+    private final       Breadcrumbs      breadcrumbs                     = new Breadcrumbs();
     private             Image            logoImage;   // Store reference to logo image
-    private final       Map<Tab, String> tabToPathMap                 = new HashMap<>();
+    private final       Map<Tab, String> tabToPathMap                    = new HashMap<>();
     private             Tabs             tabs;
     private final       UserApi          userApi;
 
@@ -297,8 +298,11 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         var viewProfileItem = userMenuItem.getSubMenu().addItem("View Profile", e -> navigateToProfile(userEmail));
         viewProfileItem.setId(ID_USER_MENU_VIEW_PROFILE);
 
-        // Add "Manage Users" menu item for admins only
+        // Add "Manage User Groups" and "Manage Users" menu items for admins only
         if (SecurityUtils.isAdmin()) {
+            var manageUserGroupsItem = userMenuItem.getSubMenu().addItem("Manage User Groups", e -> navigateToUserGroups());
+            manageUserGroupsItem.setId(ID_USER_MENU_MANAGE_USER_GROUPS);
+
             var manageUsersItem = userMenuItem.getSubMenu().addItem("Manage Users", e -> navigateToUsers());
             manageUsersItem.setId(ID_USER_MENU_MANAGE_USERS);
         }
@@ -344,6 +348,10 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     private void navigateToProfile(String userEmail) {
         getUI().ifPresent(ui -> ui.navigate("profile/" + userEmail));
+    }
+
+    private void navigateToUserGroups() {
+        getUI().ifPresent(ui -> ui.navigate("user-group-list"));
     }
 
     private void navigateToUsers() {

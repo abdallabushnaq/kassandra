@@ -33,7 +33,7 @@ public abstract class AbstractTimeAware {
 
     private OffsetDateTime updated;
 
-    AbstractTimeAware() {
+    public AbstractTimeAware() {
         created = ParameterOptions.getNow();
         updated = ParameterOptions.getNow();
     }

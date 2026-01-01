@@ -12,6 +12,7 @@
 
 # Bugs
 
+- add gantt buffer calculation.
 - editing estimation will not change gantt chart task duration.
 - new task at the end will not take over last user assignment.
 - sometimes adding a story and two tasks will add additionally one task.
