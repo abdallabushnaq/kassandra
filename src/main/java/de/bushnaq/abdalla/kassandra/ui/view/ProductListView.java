@@ -21,14 +21,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
+import de.bushnaq.abdalla.kassandra.rest.api.ProductAclApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UserGroupApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
@@ -41,6 +47,7 @@ import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Route("product-list")
@@ -52,18 +59,26 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     public static final String                 CREATE_PRODUCT_BUTTON             = "create-product-button";
     public static final String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
     public static final String                 PRODUCT_GRID                      = "product-grid";
+    public static final String                 PRODUCT_GRID_ACCESS_PREFIX        = "product-grid-access-";
     public static final String                 PRODUCT_GRID_DELETE_BUTTON_PREFIX = "product-grid-delete-button-prefix-";
     public static final String                 PRODUCT_GRID_EDIT_BUTTON_PREFIX   = "product-grid-edit-button-prefix-";
     public static final String                 PRODUCT_GRID_NAME_PREFIX          = "product-grid-name-";
     public static final String                 PRODUCT_LIST_PAGE_TITLE           = "product-list-page-title";
     public static final String                 PRODUCT_ROW_COUNTER               = "product-row-counter";
     public static final String                 ROUTE                             = "product-list";
+    private final       ProductAclApi          productAclApi;
     private final       ProductApi             productApi;
     private final       StableDiffusionService stableDiffusionService;
+    private final       UserApi                userApi;
+    private final       UserGroupApi           userGroupApi;
 
-    public ProductListView(ProductApi productApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper, StableDiffusionService stableDiffusionService) {
+    public ProductListView(ProductApi productApi, ProductAclApi productAclApi, UserApi userApi, UserGroupApi userGroupApi,
+                           Clock clock, AiFilterService aiFilterService, ObjectMapper mapper, StableDiffusionService stableDiffusionService) {
         super(clock);
         this.productApi             = productApi;
+        this.productAclApi          = productAclApi;
+        this.userApi                = userApi;
+        this.userGroupApi           = userGroupApi;
         this.stableDiffusionService = stableDiffusionService;
 
         add(
@@ -213,6 +228,66 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
             VaadinUtil.addSimpleHeader(nameColumn, "Name", VaadinIcon.CUBE);
         }
         {
+            // Add ACL column showing who has access
+            Grid.Column<Product> aclColumn = getGrid().addColumn(new ComponentRenderer<>(product -> {
+                List<ProductAclEntry> aclEntries = productAclApi.getAcl(product.getId());
+
+                if (aclEntries.isEmpty()) {
+                    Span badge = new Span("Owner only");
+                    badge.getStyle()
+                            .set("display", "inline-block")
+                            .set("padding", "2px 8px")
+                            .set("border-radius", "12px")
+                            .set("background-color", "var(--lumo-contrast-10pct)")
+                            .set("font-size", "var(--lumo-font-size-s)")
+                            .set("color", "var(--lumo-secondary-text-color)");
+                    return badge;
+                }
+
+                // Count users and groups
+                long userCount  = aclEntries.stream().filter(ProductAclEntry::isUserEntry).count();
+                long groupCount = aclEntries.stream().filter(ProductAclEntry::isGroupEntry).count();
+
+                // Create horizontal layout for badges
+                HorizontalLayout layout = new HorizontalLayout();
+                layout.setId(PRODUCT_GRID_ACCESS_PREFIX + product.getName());
+                layout.setSpacing(true);
+                layout.setPadding(false);
+                layout.getStyle().set("flex-wrap", "wrap");
+
+                if (userCount > 0) {
+                    Span userBadge = new Span(userCount + " " + (userCount == 1 ? "user" : "users"));
+                    userBadge.getElement().getThemeList().add("badge");
+                    userBadge.getStyle()
+                            .set("display", "inline-block")
+                            .set("padding", "2px 8px")
+                            .set("border-radius", "12px")
+                            .set("background-color", "var(--lumo-primary-color-10pct)")
+                            .set("color", "var(--lumo-primary-text-color)")
+                            .set("font-size", "var(--lumo-font-size-s)")
+                            .set("font-weight", "500");
+                    layout.add(userBadge);
+                }
+
+                if (groupCount > 0) {
+                    Span groupBadge = new Span(groupCount + " " + (groupCount == 1 ? "group" : "groups"));
+                    groupBadge.getElement().getThemeList().add("badge");
+                    groupBadge.getStyle()
+                            .set("display", "inline-block")
+                            .set("padding", "2px 8px")
+                            .set("border-radius", "12px")
+                            .set("background-color", "var(--lumo-success-color-10pct)")
+                            .set("color", "var(--lumo-success-text-color)")
+                            .set("font-size", "var(--lumo-font-size-s)")
+                            .set("font-weight", "500");
+                    layout.add(groupBadge);
+                }
+
+                return layout;
+            }));
+            VaadinUtil.addSimpleHeader(aclColumn, "Access", VaadinIcon.LOCK);
+        }
+        {
             Grid.Column<Product> createdColumn = getGrid().addColumn(product -> dateTimeFormatter.format(product.getCreated()));
             VaadinUtil.addSimpleHeader(createdColumn, "Created", VaadinIcon.CALENDAR);
         }
@@ -233,7 +308,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     }
 
     private void openProductDialog(Product product) {
-        ProductDialog dialog = new ProductDialog(product, stableDiffusionService, productApi);
+        ProductDialog dialog = new ProductDialog(product, stableDiffusionService, productApi, productAclApi, userApi, userGroupApi);
         dialog.addOpenedChangeListener(event -> {
             if (!event.isOpened()) {
                 // Dialog was closed, refresh the grid

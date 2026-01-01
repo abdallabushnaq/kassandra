@@ -26,3 +26,11 @@
 - gantt calendar too light.
 - gantt calendar should be using sprint calendar.
 - some ai filter test fail all the time, as the tests are vague.
+- fix none humanized version of setMultiSelectComboBoxValue.
+
+- fix testCreateProductWithGroupAcl
+- fix testCreateProductWithMixedAcl
+- fix testCreateProductWithoutAcl
+- fix testEditProductAddAcl
+- fix testEditProductModifyAcl
+  fix testEditProductRemoveAcl

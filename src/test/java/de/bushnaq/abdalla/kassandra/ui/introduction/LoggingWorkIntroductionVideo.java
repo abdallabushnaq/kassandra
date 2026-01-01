@@ -142,7 +142,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         grace.narrate(NORMAL, "Next is the User filter. You can select one or more team members to see only their tasks. Let me filter to show only my tasks by selecting Grace Martin.");
         grace.pause(2500);
 
-        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_USER_SELECTOR, "Grace Martin");
+        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_USER_SELECTOR, new String[]{"Grace Martin"});
         seleniumHandler.closeMultiSelectComboBoxValue(ActiveSprints.ID_USER_SELECTOR);
         grace.pauseIfSilent(1000);
         grace.pause(2000);

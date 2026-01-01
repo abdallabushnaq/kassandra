@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.dialog;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
@@ -30,17 +31,24 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
-import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
-import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
+import de.bushnaq.abdalla.kassandra.rest.api.ProductAclApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UserGroupApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.io.ByteArrayInputStream;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
 
@@ -49,25 +57,34 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
  */
 public class ProductDialog extends Dialog {
 
-    public static final String                 CANCEL_BUTTON         = "cancel-product-button";
-    public static final String                 CONFIRM_BUTTON        = "save-product-button";
-    public static final String                 GENERATE_IMAGE_BUTTON = "generate-product-image-button";
-    public static final String                 PRODUCT_DIALOG        = "product-dialog";
-    public static final String                 PRODUCT_NAME_FIELD    = "product-name-field";
-    private final       Image                  avatarPreview;
-    private final       AvatarUpdateRequest    avatarUpdateRequest;
-    private final       Binder<Product>        binder;
-    private final       Span                   errorMessage;
-    private             byte[]                 generatedImageBytes;
-    private             byte[]                 generatedImageBytesOriginal;
-    private             String                 generatedImagePrompt;
-    private final       Image                  headerIcon;
-    private final       boolean                isEditMode;
-    private final       TextField              nameField;
-    private final       Image                  nameFieldImage;
-    private final       Product                product;
-    private final       ProductApi             productApi;
-    private final       StableDiffusionService stableDiffusionService;
+    public static final String                         CANCEL_BUTTON            = "cancel-product-button";
+    public static final String                         CONFIRM_BUTTON           = "save-product-button";
+    public static final String                         GENERATE_IMAGE_BUTTON    = "generate-product-image-button";
+    public static final String                         PRODUCT_ACL_GROUPS_FIELD = "product-acl-groups-field";
+    public static final String                         PRODUCT_ACL_USERS_FIELD  = "product-acl-users-field";
+    public static final String                         PRODUCT_DIALOG           = "product-dialog";
+    public static final String                         PRODUCT_NAME_FIELD       = "product-name-field";
+    private final       MultiSelectComboBox<UserGroup> aclGroupsField;
+    private final       MultiSelectComboBox<User>      aclUsersField;
+    private final       List<UserGroup>                allUserGroups;
+    private final       List<User>                     allUsers;
+    private final       Image                          avatarPreview;
+    private final       AvatarUpdateRequest            avatarUpdateRequest;
+    private final       Binder<Product>                binder;
+    private final       Span                           errorMessage;
+    private             byte[]                         generatedImageBytes;
+    private             byte[]                         generatedImageBytesOriginal;
+    private             String                         generatedImagePrompt;
+    private final       Image                          headerIcon;
+    private final       Set<Long>                      initialGroupIds;
+    private final       Set<Long>                      initialUserIds;
+    private final       boolean                        isEditMode;
+    private final       TextField                      nameField;
+    private final       Image                          nameFieldImage;
+    private final       Product                        product;
+    private final       ProductAclApi                  productAclApi;
+    private final       ProductApi                     productApi;
+    private final       StableDiffusionService         stableDiffusionService;
 
     /**
      * Creates a dialog for creating or editing a product.
@@ -75,13 +92,38 @@ public class ProductDialog extends Dialog {
      * @param product                The product to edit, or null for creating a new product
      * @param stableDiffusionService The AI image generation service (optional, can be null)
      * @param productApi             The product API for saving product data
+     * @param productAclApi          The product ACL API for managing access control
+     * @param userApi                The user API for loading available users
+     * @param userGroupApi           The user group API for loading available groups
      */
-    public ProductDialog(Product product, StableDiffusionService stableDiffusionService, ProductApi productApi) {
+    public ProductDialog(Product product, StableDiffusionService stableDiffusionService, ProductApi productApi,
+                         ProductAclApi productAclApi, UserApi userApi, UserGroupApi userGroupApi) {
         this.product                = product;
         this.productApi             = productApi;
+        this.productAclApi          = productAclApi;
         this.stableDiffusionService = stableDiffusionService;
         isEditMode                  = product != null;
         this.binder                 = new Binder<>(Product.class);
+
+        // Load all users and groups for ACL selection
+        this.allUsers      = userApi.getAll();
+        this.allUserGroups = userGroupApi.getAll();
+
+        // Load existing ACL entries if editing
+        if (isEditMode) {
+            List<ProductAclEntry> aclEntries = productAclApi.getAcl(product.getId());
+            this.initialUserIds  = aclEntries.stream()
+                    .filter(ProductAclEntry::isUserEntry)
+                    .map(ProductAclEntry::getUserId)
+                    .collect(Collectors.toSet());
+            this.initialGroupIds = aclEntries.stream()
+                    .filter(ProductAclEntry::isGroupEntry)
+                    .map(ProductAclEntry::getGroupId)
+                    .collect(Collectors.toSet());
+        } else {
+            this.initialUserIds  = new HashSet<>();
+            this.initialGroupIds = new HashSet<>();
+        }
 
         // Only fetch avatar if editing an existing product
         if (product != null)
@@ -209,6 +251,81 @@ public class ProductDialog extends Dialog {
             dialogLayout.add(avatarPreview);
         }
 
+        // ACL: Users field (multi-select combo box)
+        aclUsersField = new MultiSelectComboBox<>("Grant Access to Users");
+        aclUsersField.setId(PRODUCT_ACL_USERS_FIELD);
+        aclUsersField.setWidthFull();
+        aclUsersField.setItems(allUsers);
+        aclUsersField.setItemLabelGenerator(User::getName);
+        aclUsersField.setHelperText("Select users who can access this product");
+
+        // Render users with their avatars in the dropdown
+        aclUsersField.setRenderer(new ComponentRenderer<>(user -> {
+            var layout = new HorizontalLayout();
+            layout.setSpacing(true);
+            layout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+
+            // User avatar
+            Image avatar = new Image();
+            avatar.setWidth("24px");
+            avatar.setHeight("24px");
+            avatar.getStyle()
+                    .set("border-radius", "4px")
+                    .set("object-fit", "cover");
+            avatar.setSrc(user.getAvatarUrl());
+
+            // User name
+            Span nameSpan = new Span(user.getName());
+
+            layout.add(avatar, nameSpan);
+            return layout;
+        }));
+
+        // Set initial selected users (only in edit mode)
+        if (isEditMode) {
+            Set<User> selectedUsers = allUsers.stream()
+                    .filter(user -> initialUserIds.contains(user.getId()))
+                    .collect(Collectors.toSet());
+            aclUsersField.setValue(selectedUsers);
+        }
+
+        dialogLayout.add(aclUsersField);
+
+        // ACL: Groups field (multi-select combo box)
+        aclGroupsField = new MultiSelectComboBox<>("Grant Access to Groups");
+        aclGroupsField.setId(PRODUCT_ACL_GROUPS_FIELD);
+        aclGroupsField.setWidthFull();
+        aclGroupsField.setItems(allUserGroups);
+        aclGroupsField.setItemLabelGenerator(UserGroup::getName);
+        aclGroupsField.setHelperText("Select user groups who can access this product");
+
+        // Render groups with member count
+        aclGroupsField.setRenderer(new ComponentRenderer<>(group -> {
+            var layout = new HorizontalLayout();
+            layout.setSpacing(true);
+            layout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+
+            // Group icon
+            Icon groupIcon = new Icon(VaadinIcon.GROUP);
+            groupIcon.setSize("20px");
+
+            // Group name and member count
+            Span nameSpan = new Span(group.getName() + " (" + group.getMemberCount() + " members)");
+
+            layout.add(groupIcon, nameSpan);
+            return layout;
+        }));
+
+        // Set initial selected groups (only in edit mode)
+        if (isEditMode) {
+            Set<UserGroup> selectedGroups = allUserGroups.stream()
+                    .filter(group -> initialGroupIds.contains(group.getId()))
+                    .collect(Collectors.toSet());
+            aclGroupsField.setValue(selectedGroups);
+        }
+
+        dialogLayout.add(aclGroupsField);
+
         dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
 
         add(dialogLayout);
@@ -222,6 +339,33 @@ public class ProductDialog extends Dialog {
         // Trigger validation to show errors for initially empty fields in create mode
         if (!isEditMode) {
             binder.validate();
+        }
+    }
+
+    /**
+     * Apply initial ACL entries for a newly created product.
+     * Grants access to all users and groups selected in the dialog.
+     *
+     * @param productId The product ID to set ACL for
+     */
+    private void applyInitialAclEntries(Long productId) {
+        // Get selected users and groups
+        Set<Long> selectedUserIds = aclUsersField.getValue().stream()
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        Set<Long> selectedGroupIds = aclGroupsField.getValue().stream()
+                .map(UserGroup::getId)
+                .collect(Collectors.toSet());
+
+        // Grant access to selected users
+        for (Long userId : selectedUserIds) {
+            productAclApi.grantUserAccess(productId, userId);
+        }
+
+        // Grant access to selected groups
+        for (Long groupId : selectedGroupIds) {
+            productAclApi.grantGroupAccess(productId, groupId);
         }
     }
 
@@ -321,6 +465,9 @@ public class ProductDialog extends Dialog {
                     productApi.updateAvatarFull(productToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
                 }
 
+                // Update ACL entries if in edit mode
+                updateAclEntries(productToSave.getId());
+
                 Notification.show("Product updated", 3000, Notification.Position.BOTTOM_START);
             } else {
                 // Create mode
@@ -328,6 +475,11 @@ public class ProductDialog extends Dialog {
 
                 if (avatarImage != null && avatarImageOriginal != null && createdProduct != null) {
                     productApi.updateAvatarFull(createdProduct.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
+                }
+
+                // Apply ACL entries for newly created product
+                if (createdProduct != null) {
+                    applyInitialAclEntries(createdProduct.getId());
                 }
 
                 Notification.show("Product created", 3000, Notification.Position.BOTTOM_START);
@@ -349,6 +501,63 @@ public class ProductDialog extends Dialog {
     public void setNameFieldError(String errorMessage) {
         nameField.setInvalid(errorMessage != null);
         nameField.setErrorMessage(errorMessage);
+    }
+
+    /**
+     * Update ACL entries based on changes made in the dialog.
+     * Compares initial selections with current selections and applies grants/revokes.
+     *
+     * @param productId The product ID to update ACL for
+     */
+    private void updateAclEntries(Long productId) {
+        if (!isEditMode) {
+            return; // ACL is only managed in edit mode
+        }
+
+        // Get current selected users and groups
+        Set<Long> currentUserIds = aclUsersField.getValue().stream()
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        Set<Long> currentGroupIds = aclGroupsField.getValue().stream()
+                .map(UserGroup::getId)
+                .collect(Collectors.toSet());
+
+        // Find users to add (in current but not in initial)
+        Set<Long> usersToAdd = new HashSet<>(currentUserIds);
+        usersToAdd.removeAll(initialUserIds);
+
+        // Find users to remove (in initial but not in current)
+        Set<Long> usersToRemove = new HashSet<>(initialUserIds);
+        usersToRemove.removeAll(currentUserIds);
+
+        // Find groups to add (in current but not in initial)
+        Set<Long> groupsToAdd = new HashSet<>(currentGroupIds);
+        groupsToAdd.removeAll(initialGroupIds);
+
+        // Find groups to remove (in initial but not in current)
+        Set<Long> groupsToRemove = new HashSet<>(initialGroupIds);
+        groupsToRemove.removeAll(currentGroupIds);
+
+        // Apply user grants
+        for (Long userId : usersToAdd) {
+            productAclApi.grantUserAccess(productId, userId);
+        }
+
+        // Apply user revokes
+        for (Long userId : usersToRemove) {
+            productAclApi.revokeUserAccess(productId, userId);
+        }
+
+        // Apply group grants
+        for (Long groupId : groupsToAdd) {
+            productAclApi.grantGroupAccess(productId, groupId);
+        }
+
+        // Apply group revokes
+        for (Long groupId : groupsToRemove) {
+            productAclApi.revokeGroupAccess(productId, groupId);
+        }
     }
 }
 
