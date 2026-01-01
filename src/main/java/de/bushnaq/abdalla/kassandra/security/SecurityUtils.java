@@ -24,6 +24,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -85,15 +86,19 @@ public class SecurityUtils {
         }
 
 
-        String userEmail = authentication.getName();
         // If using OIDC, try to get the email address from authentication details
-        if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
+        if (authentication.getPrincipal() instanceof Jwt oidcUser) {
+            String email = oidcUser.getClaim("email");
+            if (email != null && !email.isEmpty()) {
+                return email;
+            }
+        } else if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
             String email = oidcUser.getEmail();
             if (email != null && !email.isEmpty()) {
-                userEmail = email;
+                return email;
             }
         }
-        return userEmail;
+        return authentication.getName();
     }
 
     /**

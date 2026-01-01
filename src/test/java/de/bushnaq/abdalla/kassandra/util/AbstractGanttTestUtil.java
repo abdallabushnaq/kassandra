@@ -53,10 +53,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -251,14 +248,15 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         try (Profiler pc = new Profiler(SampleType.JPA)) {
             addRandomUsers(randomCase.getMaxNumberOfUsers());
         }
-//        UserGroup group = userGroupApi.create("Team", "Dev team", Set.of(expectedUsers.toArray()));
+        UserGroup group = userGroupApi.create("Team", "Dev team", new HashSet<>(expectedUsers.stream().map(User::getId).toList()));
         Profiler.log("generating users for test case " + randomCase.getTestCaseIndex());
         {
             int numberOfProducts = generateRandomValue(randomCase.getMinNumberOfProducts(), randomCase.getMaxNumberOfProducts());
             try (Profiler pc = new Profiler(SampleType.JPA)) {
                 for (int p = 0; p < numberOfProducts; p++) {
-                    Product product          = addProduct(nameGenerator.generateProductName(productIndex));
-                    int     numberOfVersions = generateRandomValue(randomCase.getMinNumberOfVersions(), randomCase.getMaxNumberOfVersions());
+                    Product product = addProduct(nameGenerator.generateProductName(productIndex));
+                    productAclApi.grantGroupAccess(product.getId(), group.getId());
+                    int numberOfVersions = generateRandomValue(randomCase.getMinNumberOfVersions(), randomCase.getMaxNumberOfVersions());
                     for (int v = 0; v < numberOfVersions; v++) {
                         Version version          = addVersion(product, nameGenerator.generateVersionName(v));
                         int     numberOfFeatures = generateRandomValue(randomCase.getMinNumberOfFeatures(), randomCase.getMaxNumberOfFeatures());

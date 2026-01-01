@@ -395,12 +395,14 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
     }
 
     private Sprint generateData() {
+        UserGroup group = userGroupApi.getAll().getFirst();
         productName = "Jupiter";
         versionName = "1.0.0";
         featureName = "Property request api";
         sprintName  = "Minimum Viable Product";
 
         Product product = addProduct(productName);
+        productAclApi.grantGroupAccess(product.getId(), group.getId());
         Version version = addVersion(product, versionName);
         Feature feature = addFeature(version, featureName);
         Sprint  sprint  = addSprint(feature, sprintName);
