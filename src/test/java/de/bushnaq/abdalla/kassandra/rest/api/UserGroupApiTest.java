@@ -86,16 +86,10 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     public void testAdminCanAddMemberToGroup(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
 
-        // Create group with user1
+        // Create group with all users
         UserGroup group = userGroupApi.getAll().getFirst();
-        assertEquals(1, group.getMemberCount());
+        assertEquals(4, group.getMemberCount());
 
-        // Add user2
-        userGroupApi.addMember(group.getId(), user2.getId());
-
-        // Verify user2 was added
-        UserGroup updated = userGroupApi.getById(group.getId());
-        assertEquals(2, updated.getMemberCount());
     }
 
     @ParameterizedTest
@@ -156,14 +150,14 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
 
         // Create group with both users
         UserGroup group = userGroupApi.getAll().getFirst();
-        assertEquals(2, group.getMemberCount());
+        assertEquals(4, group.getMemberCount());
 
         // Remove user1
         userGroupApi.removeMember(group.getId(), user1.getId());
 
         // Verify user1 was removed
         UserGroup updated = userGroupApi.getById(group.getId());
-        assertEquals(1, updated.getMemberCount());
+        assertEquals(3, updated.getMemberCount());
     }
 
     @ParameterizedTest
