@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.MpxjUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
+import lombok.Getter;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.TimeUnit;
 import org.slf4j.Logger;
@@ -45,6 +46,7 @@ public class GanttUtil {
     private static final String    ERROR_103_TASK_IS_MANUALLY_SCHEDULED_AND_CANNOT_FULLFILL_ITS_DEPENDENCY = "Error #103: Task [%d]'%s' is manually scheduled and cannot fullfill its dependency to task [%d]'%s'.";
     private static final String    ERROR_104_TASK_CANNOT_FULLFILL_ITS_DEPENDENCY                           = "Error #104: Task [%d]'%s' start %s cannot fullfill its dependency to task [%d]'%s' finish %s.";
     private final        Context   context;
+    @Getter
     private final        Task      deliveryBufferTask                                                      = null;
     private final        Set<Task> finishSet                                                               = new HashSet<>();
     //    private long count = 0;
@@ -240,17 +242,13 @@ public class GanttUtil {
     }
 
 
-    public Task getDeliveryBufferTask() {
-        return deliveryBufferTask;
-    }
-
     private Duration getDurationFromWork(GanttErrorHandler eh, Task task) {
         float availability = 1;//tasks without resources have 100% availability
         if (task.getAssignedUser() != null) {
             User resourceAssignment = task.getAssignedUser();
             availability = resourceAssignment.getAvailabilities().getLast().getAvailability();
         }
-        Duration work = task.getOriginalEstimate();
+        Duration work = task.getMinEstimate();
         if (work != null) {
             {
                 double inverseAvailability = 1 / availability;

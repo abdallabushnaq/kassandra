@@ -600,8 +600,8 @@ public class TaskGrid extends TreeGrid<Task> {
         task.setName("New Task-" + nextOrderId);
         Duration work = Duration.ofHours(7).plus(Duration.ofMinutes(30));
         task.setMinEstimate(work);
-        task.setOriginalEstimate(work);
         task.setRemainingEstimate(work);
+        taskOrder.add(task);
         assignUserToNewTask(task, loggedInUser);
         addTask(task);
     }

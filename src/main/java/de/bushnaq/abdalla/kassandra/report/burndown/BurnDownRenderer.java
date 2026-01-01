@@ -734,7 +734,7 @@ public class BurnDownRenderer extends AbstractRenderer {
                 if (task.isImpactOnCost()) {
                     calculateWorkPerDay(context, task, ganttWorkWithoutBufferPerDayAccumulated);
                 } else {
-                    Duration d = task.getOriginalEstimate();
+                    Duration d = task.getMinEstimate();
 //                        if (task.getResourceAssignments().size() > 0)
                     {
 //                            net.sf.mpxj.Duration d = task.getResourceAssignments().get(0).getWork();

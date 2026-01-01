@@ -478,7 +478,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         task.setStart(start);
         if (minWork != null) {
             task.setMinEstimate(minWork);
-            task.setOriginalEstimate(minWork);
             task.setRemainingEstimate(minWork);
         }
         if (maxWork != null && !maxWork.isZero()) {

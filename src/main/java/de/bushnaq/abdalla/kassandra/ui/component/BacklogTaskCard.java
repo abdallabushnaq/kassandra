@@ -121,7 +121,7 @@ public class BacklogTaskCard extends Div {
                 .set("margin-right", "var(--lumo-space-xs)");
 
         // Effort estimate
-        Span effort = new Span(formatDuration(task.getOriginalEstimate()));
+        Span effort = new Span(formatDuration(task.getMinEstimate()));
         effort.getStyle()
                 .set("font-size", "var(--lumo-font-size-xs)")
                 .set("color", "var(--lumo-secondary-text-color)")

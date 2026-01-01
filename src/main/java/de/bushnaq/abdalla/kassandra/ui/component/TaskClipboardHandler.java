@@ -67,7 +67,8 @@ public class TaskClipboardHandler {
         task.setParentTask(null);
         task.setParentTaskId(null);
         task.setOrderId(null);
-        task.setOriginalEstimate(null);
+        task.setMinEstimate(null);
+        task.setMaxEstimate(null);
         task.setPredecessors(null);
         task.setProgress(null);
         task.setRemainingEstimate(null);
@@ -268,7 +269,7 @@ public class TaskClipboardHandler {
         task.setOrderId(-1);
         task.setCritical(false);
         task.setProgress(0);
-        task.setOriginalEstimate(task.getMinEstimate());
+//        task.getMinEstimate(task.getMinEstimate());
         task.setRemainingEstimate(task.getMinEstimate());
         if (task.getName() == null || task.getName().isBlank()) {
             throw new IllegalArgumentException("Task name cannot be null or blank");

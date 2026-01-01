@@ -128,13 +128,6 @@ public class Task implements Comparable<Task> {
     private Integer orderId = -1;
 
     /**
-     * The original estimated person days when the task was created.
-     */
-    @JsonSerialize(using = DurationSerializer.class)
-    @JsonDeserialize(using = DurationDeserializer.class)
-    private Duration originalEstimate = Duration.ZERO;
-
-    /**
      * Reference to the parent task in the hierarchy. Parent tasks are always Stories.
      */
     @JsonIgnore

@@ -158,7 +158,7 @@ public class BacklogStoryCard extends Div {
                 .set("margin-right", "var(--lumo-space-s)");
 
         // Effort estimate
-        Span effort = new Span(formatDuration(story.getOriginalEstimate()));
+        Span effort = new Span(formatDuration(story.getMinEstimate()));
         effort.getStyle()
                 .set("font-size", "var(--lumo-font-size-s)")
                 .set("color", "var(--lumo-secondary-text-color)")

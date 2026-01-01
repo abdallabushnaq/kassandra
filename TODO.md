@@ -6,11 +6,14 @@
 4. add ability to edit or delete a worklog.
 5. remove default test password from AbstractApi.
 6. make sure getAll will filter via alc in db, not in memory.
+7. need ability to delete a task/story.
 
 ## Feature
 
 # Bugs
 
+- editing estimation will not change gantt chart task duration.
+- new task at the end will not take over last user assignment.
 - sometimes adding a story and two tasks will add additionally one task.
 - changing assignment must also change hidden dependencies
 - some tests fail with java.awt.HeadlessException.

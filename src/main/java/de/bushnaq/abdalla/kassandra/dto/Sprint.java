@@ -378,7 +378,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
         remaining          = Duration.ZERO;
         for (Task task : getTasks()) {
             worked             = worked.plus(task.getTimeSpent());
-            originalEstimation = originalEstimation.plus(task.getOriginalEstimate());
+            originalEstimation = originalEstimation.plus(task.getMinEstimate());
             remaining          = remaining.plus(task.getRemainingEstimate());
         }
     }

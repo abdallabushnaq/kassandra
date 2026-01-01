@@ -75,10 +75,6 @@ public class TaskDAO {
     @Column(nullable = false)
     private Integer                                     orderId           = -1;
     @Column(nullable = true)
-    @JsonSerialize(using = DurationSerializer.class)
-    @JsonDeserialize(using = DurationDeserializer.class)
-    private Duration                                    originalEstimate  = Duration.ZERO;
-    @Column(nullable = true)
     private Long                                        parentTaskId;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "task_id", referencedColumnName = "id")
