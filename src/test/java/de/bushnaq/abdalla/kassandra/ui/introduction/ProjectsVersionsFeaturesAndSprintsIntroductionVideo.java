@@ -165,9 +165,18 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         seleniumHandler.click(ProductListView.CREATE_PRODUCT_BUTTON);
         paul.narrate(INTENSE, "Lets call it Jupiter!").pause();
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, productName);
-        paul.narrate(NORMAL, "Select Save to close the dialog and persist our product.").pause();
-        seleniumHandler.click(ProductDialog.CONFIRM_BUTTON);
-        paul.narrate(INTENSE, "And we got ourself a new product!").pause();
+
+        //---------------------------------------------------------------------------------------..
+        // Grant access to Team group via ACL
+        //---------------------------------------------------------------------------------------..
+        paul.narrate(NORMAL, "Kassandra supports Access Control Lists, or A C L for short. This allows us to control who can access our product.").pause();
+        paul.narrate(NORMAL, "Lets grant access to our Team group, so all team members can collaborate on this product.");
+        seleniumHandler.setMultiSelectComboBoxValue(ProductDialog.PRODUCT_ACL_GROUPS_FIELD, new String[]{"Team"});
+        paul.narrate(NORMAL, "Perfect! Now all members of the Team group will have access to the Jupiter product, all its versions, features and sprints.").pause();
+
+        paul.narrate(NORMAL, "Select Save to close the dialog and persist our new product with its access control settings.").pause();
+        productListViewTester.closeDialog(ProductDialog.CONFIRM_BUTTON);
+        paul.narrate(INTENSE, "And we got ourself a new product! Notice the access column shows that one group has access to this product.").pause();
 
 
         paul.narrate(NORMAL, "With the little notepad and trashcan icons, on the right side, you can edit or delete your product.").pause();

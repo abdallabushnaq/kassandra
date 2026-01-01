@@ -310,7 +310,7 @@
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.introduction      | LoggingWorkIntroductionVideo.java                        | src      |       94 |        0 |       66 |      295 |      455 |
 | kassandra.ui.introduction      | ManagingUsersIntroductionVideo.java                      | src      |       40 |        0 |       66 |      113 |      219 |
-| kassandra.ui.introduction      | ProjectsVersionsFeaturesAndSprintsIntroductionVideo.java | src      |       28 |        0 |      162 |      179 |      369 |
+| kassandra.ui.introduction      | ProjectsVersionsFeaturesAndSprintsIntroductionVideo.java | src      |       30 |        0 |      165 |      183 |      378 |
 | kassandra.ui.introduction      | RearrangeStoriesAndTasksIntroductionVideo.java           | src      |       50 |        0 |       35 |      220 |      305 |
 | kassandra.ui.introduction      | StoriesAndTasksIntroductionVideo.java                    | src      |       57 |        0 |       28 |      247 |      332 |
 | kassandra.ui.introduction      | StoryAndTaskRelationsIntroductionVideo.java              | src      |       42 |        0 |       37 |      195 |      274 |
@@ -319,7 +319,7 @@
 | kassandra.ui.introduction      | UserOffDaysIntroductionVideo.java                        | src      |       18 |        0 |       21 |      122 |      161 |
 | kassandra.ui.introduction      | UserProfileIntroductionVideo.java                        | src      |       49 |        0 |       71 |      143 |      263 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.ui.util.selenium     | HumanizedSeleniumHandler.java                            | src      |      160 |      211 |      212 |      842 |     1425 |
+| kassandra.ui.util.selenium     | HumanizedSeleniumHandler.java                            | src      |      158 |      211 |      242 |      822 |     1433 |
 | kassandra.ui.util.selenium     | ScreenShotCreator.java                                   | src      |       15 |        7 |       35 |       80 |      137 |
 | kassandra.ui.util.selenium     | SeleniumHandler.java                                     | src      |      150 |      215 |      123 |      877 |     1365 |
 | kassandra.ui.util.selenium     | SeleniumTestResultExtension.java                         | src      |        9 |        0 |       17 |       42 |       68 |
@@ -337,7 +337,7 @@
 | kassandra.ui.view.util         | FeatureListViewTester.java                               | src      |       19 |       95 |       18 |       82 |      214 |
 | kassandra.ui.view.util         | LocationListViewTester.java                              | src      |       34 |      117 |       31 |      134 |      316 |
 | kassandra.ui.view.util         | OffDayListViewTester.java                                | src      |       51 |      142 |       55 |      154 |      402 |
-| kassandra.ui.view.util         | ProductListViewTester.java                               | src      |       47 |      155 |       95 |      187 |      484 |
+| kassandra.ui.view.util         | ProductListViewTester.java                               | src      |       47 |      154 |       89 |      167 |      457 |
 | kassandra.ui.view.util         | SprintListViewTester.java                                | src      |       20 |       96 |       18 |       85 |      219 |
 | kassandra.ui.view.util         | TaskListViewTester.java                                  | src      |        6 |       15 |       16 |       16 |       53 |
 | kassandra.ui.view.util         | UserGroupListViewTester.java                             | src      |       35 |      153 |       40 |      126 |      354 |
@@ -361,8 +361,8 @@
 | kassandra.ui.view              | MainView.java                                            | src      |        7 |        7 |       18 |       25 |       57 |
 | kassandra.ui.view              | OffDayListView.java                                      | src      |       35 |       11 |       60 |      223 |      329 |
 | kassandra.ui.view              | OffDayListViewTest.java                                  | src      |       23 |       77 |       36 |      139 |      275 |
-| kassandra.ui.view              | ProductListView.java                                     | src      |       36 |        3 |       48 |      248 |      335 |
-| kassandra.ui.view              | ProductListViewTest.java                                 | src      |       32 |      119 |       25 |      160 |      336 |
+| kassandra.ui.view              | ProductListView.java                                     | src      |       36 |        3 |       48 |      250 |      337 |
+| kassandra.ui.view              | ProductListViewTest.java                                 | src      |       35 |      119 |       24 |      216 |      394 |
 | kassandra.ui.view              | SprintListView.java                                      | src      |       35 |        0 |       37 |      266 |      338 |
 | kassandra.ui.view              | SprintListViewTest.java                                  | src      |       15 |       82 |       25 |      110 |      232 |
 | kassandra.ui.view              | SprintQualityBoard.java                                  | src      |       50 |        0 |       47 |      370 |      467 |
@@ -459,5 +459,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 42 package(s)                  | 416 file(s)                                              | java     |     9441 |     7064 |    12105 |    48151 |    76761 |
+| 42 package(s)                  | 416 file(s)                                              | java     |     9444 |     7063 |    12131 |    48173 |    76811 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

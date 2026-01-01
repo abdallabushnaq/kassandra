@@ -7,6 +7,8 @@
 5. remove default test password from AbstractApi.
 6. make sure getAll will filter via alc in db, not in memory.
 7. need ability to delete a task/story.
+8. in case a user wants to remove himself from the ACL, we automatically add him back. you cannot remove yourself from
+   ACL.
 
 ## Feature
 
@@ -27,10 +29,3 @@
 - gantt calendar should be using sprint calendar.
 - some ai filter test fail all the time, as the tests are vague.
 - fix none humanized version of setMultiSelectComboBoxValue.
-
-- fix testCreateProductWithGroupAcl
-- fix testCreateProductWithMixedAcl
-- fix testCreateProductWithoutAcl
-- fix testEditProductAddAcl
-- fix testEditProductModifyAcl
-  fix testEditProductRemoveAcl
