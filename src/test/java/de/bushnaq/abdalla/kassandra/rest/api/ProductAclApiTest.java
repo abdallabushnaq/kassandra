@@ -337,8 +337,7 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
     public void testGrantGroupAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        // Admin creates users and a group
-        UserGroup group = userGroupApi.create("Team", "Dev team", Set.of(user1.getId(), user2.getId()));
+        UserGroup group = userGroupApi.getAll().getFirst();
 
         // Admin creates a product
         Product product = addProduct("Team Product");
@@ -415,8 +414,7 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
     public void testRevokeGroupAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        // Create users and group
-        UserGroup group = userGroupApi.create("Team", "Dev team", Set.of(user1.getId()));
+        UserGroup group = userGroupApi.getAll().getFirst();
 
         // Create product and grant group access
         Product product = addProduct("Team Product");

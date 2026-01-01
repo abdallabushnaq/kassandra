@@ -87,7 +87,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // Create group with user1
-        UserGroup group = userGroupApi.create("Team", "A team", Set.of(user1.getId()));
+        UserGroup group = userGroupApi.getAll().getFirst();
         assertEquals(1, group.getMemberCount());
 
         // Add user2
@@ -125,12 +125,12 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         UserGroup group = userGroupApi.create("To Delete", "Will be deleted", Set.of(user1.getId()));
         assertNotNull(group.getId());
 
+        assertEquals(2, userGroupApi.getAll().size());
         // Delete the group
         userGroupApi.deleteById(group.getId());
 
         // Verify it's gone
-        List<UserGroup> groups = userGroupApi.getAll();
-        assertEquals(0, groups.size());
+        assertEquals(1, userGroupApi.getAll().size());
     }
 
     @ParameterizedTest
@@ -145,7 +145,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         userGroupApi.create("Group 3", "Third group", Set.of(user1.getId()));
         printTables();
         List<UserGroup> groups = userGroupApi.getAll();
-        assertEquals(3, groups.size());
+        assertEquals(4, groups.size());//default Team group + 3 created
     }
 
     @ParameterizedTest
@@ -155,7 +155,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // Create group with both users
-        UserGroup group = userGroupApi.create("Team", "A team", Set.of(user1.getId(), user2.getId()));
+        UserGroup group = userGroupApi.getAll().getFirst();
         assertEquals(2, group.getMemberCount());
 
         // Remove user1
