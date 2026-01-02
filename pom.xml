@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.8</version>
+        <version>3.5.9</version>
     </parent>
 
     <groupId>de.bushnaq.abdalla</groupId>
@@ -33,6 +33,17 @@
     <name>kassandra</name>
     <packaging>jar</packaging>
     <description>kassandra</description>
+
+    <properties>
+        <source.level>25</source.level>
+        <target.level>25</target.level>
+        <file.encoding>utf-8</file.encoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.libraray.path>${env.JAVA_HOME}\bin</java.libraray.path>
+        <vaadin.version>24.9.8</vaadin.version>
+        <flow.server.version>3.1.6</flow.server.version>
+        <selenium.version>4.39.0</selenium.version>
+    </properties>
 
     <dependencies>
         <!-- Vaadin -->
@@ -214,7 +225,7 @@
         <dependency>
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>
-            <version>6.1.0</version>
+            <version>6.3.3</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
@@ -435,17 +446,6 @@
             </plugin>
         </plugins>
     </build>
-
-    <properties>
-        <source.level>21</source.level>
-        <target.level>21</target.level>
-        <file.encoding>utf-8</file.encoding>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.libraray.path>${env.JAVA_HOME}\bin</java.libraray.path>
-        <vaadin.version>24.9.6</vaadin.version>
-        <flow.server.version>3.1.6</flow.server.version>
-        <selenium.version>4.25.0</selenium.version>
-    </properties>
 
     <licenses>
         <license>

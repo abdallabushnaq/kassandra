@@ -52,10 +52,10 @@ jobs:
             fs.mkdirSync('~/.m2', { recursive: true });
             fs.writeFileSync('~/.m2/settings.xml', settingsXml);
 
-      - name: Set up JDK 21 for project
+      - name: Set up JDK 25 for project
         uses: actions/setup-java@v3
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'temurin'
           cache: maven
 
