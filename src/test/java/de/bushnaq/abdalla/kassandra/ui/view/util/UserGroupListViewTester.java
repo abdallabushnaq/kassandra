@@ -109,11 +109,7 @@ public class UserGroupListViewTester extends AbstractViewTester {
         seleniumHandler.setTextField(UserGroupDialog.GROUP_NAME_FIELD, name);
         seleniumHandler.setTextArea(UserGroupDialog.GROUP_DESCRIPTION_FIELD, description);
 
-        // TODO: Select members using multi-select combo box
-        // This functionality needs to be implemented in SeleniumHandler
-        // for (String memberName : memberNames) {
-        //     seleniumHandler.selectMultiSelectComboBoxItem(UserGroupDialog.GROUP_MEMBERS_FIELD, memberName);
-        // }
+        seleniumHandler.setMultiSelectComboBoxValue(UserGroupDialog.GROUP_MEMBERS_FIELD, memberNames);
 
         closeDialog(UserGroupDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(UserGroupListView.GROUP_GRID_NAME_PREFIX, name);

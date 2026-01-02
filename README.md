@@ -64,16 +64,17 @@ tbd
 
 # Kassandra Introduction Videos
 
-1. Managing Users
-2. User Profile Introduction Video
-3. User Off Days Introduction Video
-4. User Locations Introduction Video
-5. User Availability Introduction Video
-6. Projects, Versions, Features and Sprints Introduction Video
-7. Stories and Tasks Introduction Video
-8. Rearranging Stories and Tasks Introduction Video
-9. Story and Task Relations Introduction Video
-10. Logging Work Introduction Video
+1. Managing Users Introduction Video
+2. Managing User Groups Introduction Video
+3. User Profile Introduction Video
+4. User Off Days Introduction Video
+5. User Locations Introduction Video
+6. User Availability Introduction Video
+7. Projects, Versions, Features and Sprints Introduction Video
+8. Stories and Tasks Introduction Video
+9. Rearranging Stories and Tasks Introduction Video
+10. Story and Task Relations Introduction Video
+11. Logging Work Introduction Video
 
 # Screenshots
 

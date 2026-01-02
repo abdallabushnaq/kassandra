@@ -309,6 +309,7 @@
 | kassandra.ui.introduction.util | InstructionVideosUtil.java                               | src      |        2 |        0 |       16 |        8 |       26 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.introduction      | LoggingWorkIntroductionVideo.java                        | src      |       94 |        0 |       66 |      295 |      455 |
+| kassandra.ui.introduction      | ManagingUserGroupsIntroductionVideo.java                 | src      |       43 |       13 |       63 |      114 |      233 |
 | kassandra.ui.introduction      | ManagingUsersIntroductionVideo.java                      | src      |       40 |        0 |       66 |      113 |      219 |
 | kassandra.ui.introduction      | ProjectsVersionsFeaturesAndSprintsIntroductionVideo.java | src      |       30 |        0 |      165 |      183 |      378 |
 | kassandra.ui.introduction      | RearrangeStoriesAndTasksIntroductionVideo.java           | src      |       50 |        0 |       35 |      220 |      305 |
@@ -340,7 +341,7 @@
 | kassandra.ui.view.util         | ProductListViewTester.java                               | src      |       47 |      154 |       89 |      167 |      457 |
 | kassandra.ui.view.util         | SprintListViewTester.java                                | src      |       20 |       96 |       18 |       85 |      219 |
 | kassandra.ui.view.util         | TaskListViewTester.java                                  | src      |        6 |       15 |       16 |       16 |       53 |
-| kassandra.ui.view.util         | UserGroupListViewTester.java                             | src      |       35 |      153 |       40 |      126 |      354 |
+| kassandra.ui.view.util         | UserGroupListViewTester.java                             | src      |       35 |      153 |       35 |      127 |      350 |
 | kassandra.ui.view.util         | UserListViewTester.java                                  | src      |       18 |      109 |       25 |      116 |      268 |
 | kassandra.ui.view.util         | UserProfileViewTester.java                               | src      |       21 |       55 |       36 |       61 |      173 |
 | kassandra.ui.view.util         | VersionListViewTester.java                               | src      |       19 |       94 |       18 |       84 |      215 |
@@ -459,5 +460,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 42 package(s)                  | 416 file(s)                                              | java     |     9444 |     7063 |    12131 |    48173 |    76811 |
+| 42 package(s)                  | 417 file(s)                                              | java     |     9487 |     7076 |    12189 |    48288 |    77040 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
