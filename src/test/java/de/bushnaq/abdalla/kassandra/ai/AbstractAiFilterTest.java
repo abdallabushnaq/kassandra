@@ -18,10 +18,11 @@
 package de.bushnaq.abdalla.kassandra.ai;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.cfg.MapperConfig;
+import tools.jackson.databind.introspect.AnnotatedMember;
+import tools.jackson.databind.json.JsonMapper;
 
 import javax.script.ScriptException;
 import java.time.LocalDate;
@@ -32,15 +33,15 @@ import java.util.stream.Collectors;
 
 public class AbstractAiFilterTest<T> {
     private final   AiFilterService aiFilterService;
-    protected final ObjectMapper    filterMapper;
+    protected final JsonMapper      filterMapper;
     protected       String          javascriptFunction;
     protected final Logger          logger = LoggerFactory.getLogger(this.getClass());
     protected final LocalDate       now;
     protected       String          regexString;
     protected       List<T>         testProducts;
 
-    public AbstractAiFilterTest(ObjectMapper mapper, AiFilterService aiFilterService, LocalDate now) {
-        this.filterMapper    = mapper.copy();
+    public AbstractAiFilterTest(JsonMapper mapper, AiFilterService aiFilterService, LocalDate now) {
+        this.filterMapper    = mapper;
         this.aiFilterService = aiFilterService;
         this.now             = now;
     }
@@ -131,15 +132,15 @@ public class AbstractAiFilterTest<T> {
      * Custom annotation introspector that ignores @JsonIgnore annotations
      * but preserves all other Jackson annotations.
      */
-    private static class FilterAnnotationIntrospector extends JacksonAnnotationIntrospector {
+    private static class FilterAnnotationIntrospector extends tools.jackson.databind.introspect.JacksonAnnotationIntrospector {
         @Override
-        public boolean hasIgnoreMarker(com.fasterxml.jackson.databind.introspect.AnnotatedMember m) {
+        public boolean hasIgnoreMarker(MapperConfig<?> config, AnnotatedMember m) {
             // Don't ignore fields marked with @JsonIgnore for filtering purposes
             // but still process other ignore markers from the parent class
             if (m.hasAnnotation(JsonIgnore.class)) {
                 return false;
             }
-            return super.hasIgnoreMarker(m);
+            return super.hasIgnoreMarker(config, m);
         }
     }
 }

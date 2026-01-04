@@ -17,8 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -38,9 +36,11 @@ import net.sf.mpxj.ProjectFile;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.openqa.selenium.json.JsonException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import tools.jackson.core.type.TypeReference;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,13 +94,13 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         try {
             TypeReference<Map<String, Object>> typeRef = new TypeReference<>() {
             };
-            Map<String, Object> referenceMap = objectMapper.readValue(expectedJson, typeRef);
-            Map<String, Object> map          = objectMapper.readValue(actualJson, typeRef);
+            Map<String, Object> referenceMap = jsonMapper.readValue(expectedJson, typeRef);
+            Map<String, Object> map          = jsonMapper.readValue(actualJson, typeRef);
 
             // Compare users
-            Map<String, User> referenceUsers = objectMapper.convertValue(referenceMap.get("users"), new TypeReference<Map<String, User>>() {
+            Map<String, User> referenceUsers = jsonMapper.convertValue(referenceMap.get("users"), new TypeReference<Map<String, User>>() {
             });
-            Map<String, User> users = objectMapper.convertValue(map.get("users"), new TypeReference<Map<String, User>>() {
+            Map<String, User> users = jsonMapper.convertValue(map.get("users"), new TypeReference<Map<String, User>>() {
             });
             assertEquals(referenceUsers.size(), users.size(), "Number of users differs");
             for (String key : referenceUsers.keySet()) {
@@ -109,14 +109,14 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             }
 
             // Compare sprints
-            Sprint referenceSprint = objectMapper.convertValue(referenceMap.get("sprint"), Sprint.class);
-            Sprint sprint          = objectMapper.convertValue(map.get("sprint"), Sprint.class);
+            Sprint referenceSprint = jsonMapper.convertValue(referenceMap.get("sprint"), Sprint.class);
+            Sprint sprint          = jsonMapper.convertValue(map.get("sprint"), Sprint.class);
             assertSprintEquals(referenceSprint, sprint);
 
             // Compare tasks
-            List<Task> referenceTasks = objectMapper.convertValue(referenceMap.get("tasks"), new TypeReference<List<Task>>() {
+            List<Task> referenceTasks = jsonMapper.convertValue(referenceMap.get("tasks"), new TypeReference<List<Task>>() {
             });
-            List<Task> tasks = objectMapper.convertValue(map.get("tasks"), new TypeReference<List<Task>>() {
+            List<Task> tasks = jsonMapper.convertValue(map.get("tasks"), new TypeReference<List<Task>>() {
             });
             for (Task task : tasks)
                 sprint.addTask(task);
@@ -139,7 +139,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
 
             logProjectTasks(testResultFolder + "/" + TestInfoUtil.getTestMethodName(testInfo) + ".json", sprint, testReferenceResultFolder + "/" + TestInfoUtil.getTestMethodName(testInfo) + ".json", referenceSprint);
             compareTasks(tasks, referenceTasks);
-        } catch (JsonProcessingException e) {
+        } catch (JsonException e) {
             fail("Failed to parse JSON: " + e.getMessage());
         }
 
@@ -594,7 +594,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             container.put("sprint", sprint);
             container.put("tasks", sprint.getTasks());
 
-            String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(container);
+            String json = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(container);
             Files.writeString(filePath, json, StandardCharsets.UTF_8);
         }
     }

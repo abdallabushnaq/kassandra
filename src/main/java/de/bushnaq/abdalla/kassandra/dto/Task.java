@@ -19,12 +19,12 @@ package de.bushnaq.abdalla.kassandra.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.bushnaq.abdalla.util.DurationDeserializer;
 import de.bushnaq.abdalla.util.DurationSerializer;
 import lombok.*;
 import net.sf.mpxj.ProjectCalendar;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -226,7 +226,7 @@ public class Task implements Comparable<Task> {
      * @param isVisible  whether the dependency relationship should be visible in the UI
      */
     public void addPredecessor(Task dependency, boolean isVisible) {
-        predecessors.add(new Relation(dependency, isVisible));
+        predecessors.add(new Relation(dependency.getId(), isVisible));
     }
 
     /**

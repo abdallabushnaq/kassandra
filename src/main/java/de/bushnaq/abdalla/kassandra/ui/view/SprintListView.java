@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -48,6 +47,7 @@ import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -80,7 +80,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     private final       VersionApi             versionApi;
     private             Long                   versionId;
 
-    public SprintListView(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper, StableDiffusionService stableDiffusionService) {
+    public SprintListView(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService) {
         super(clock);
         this.sprintApi              = sprintApi;
         this.productApi             = productApi;

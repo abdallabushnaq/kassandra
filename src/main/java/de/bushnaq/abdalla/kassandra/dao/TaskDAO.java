@@ -18,14 +18,14 @@
 package de.bushnaq.abdalla.kassandra.dao;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.util.DurationDeserializer;
 import de.bushnaq.abdalla.util.DurationSerializer;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Proxy;
+import org.hibernate.annotations.BatchSize;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -42,7 +42,7 @@ import java.util.List;
 @NoArgsConstructor
 @ToString(callSuper = false)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
+@BatchSize(size = 10)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TaskDAO {
     @Column(nullable = false)

@@ -17,13 +17,13 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import lombok.extern.log4j.Log4j2;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.HashMap;
 import java.util.List;
@@ -40,18 +40,18 @@ import java.util.Map;
  */
 @Log4j2
 public class TaskClipboardHandler {
-    private final TaskGrid     grid;
-    private final ObjectMapper objectMapper;
+    private final TaskGrid   grid;
+    private final JsonMapper jsonMapper;
 
     /**
      * Constructor for TaskClipboardHandler
      *
-     * @param grid         The grid component for JavaScript execution
-     * @param objectMapper Jackson ObjectMapper for JSON serialization
+     * @param grid       The grid component for JavaScript execution
+     * @param jsonMapper Jackson jsonMapper for JSON serialization
      */
-    public TaskClipboardHandler(TaskGrid grid, ObjectMapper objectMapper) {
-        this.grid         = grid;
-        this.objectMapper = objectMapper;
+    public TaskClipboardHandler(TaskGrid grid, JsonMapper jsonMapper) {
+        this.grid       = grid;
+        this.jsonMapper = jsonMapper;
     }
 
     /**
@@ -90,17 +90,17 @@ public class TaskClipboardHandler {
     private Task deserializeTask(String json) throws Exception {
         try {
             // Try to deserialize as a single task
-            return objectMapper.readValue(json, Task.class);
+            return jsonMapper.readValue(json, Task.class);
         } catch (Exception e) {
             // Try to deserialize as a story with children wrapper
             try {
-                Map<String, Object> wrapper = objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {
+                Map<String, Object> wrapper = jsonMapper.readValue(json, new TypeReference<Map<String, Object>>() {
                 });
                 if (wrapper.containsKey("story") && wrapper.containsKey("children")) {
-                    Task story = objectMapper.convertValue(wrapper.get("story"), Task.class);
-                    List<Task> children = objectMapper.convertValue(
+                    Task story = jsonMapper.convertValue(wrapper.get("story"), Task.class);
+                    List<Task> children = jsonMapper.convertValue(
                             wrapper.get("children"),
-                            objectMapper.getTypeFactory().constructCollectionType(List.class, Task.class)
+                            jsonMapper.getTypeFactory().constructCollectionType(List.class, Task.class)
                     );
                     story.getChildTasks().clear();
                     story.getChildTasks().addAll(children);
@@ -255,10 +255,10 @@ public class TaskClipboardHandler {
             Map<String, Object> wrapper = new HashMap<>();
             wrapper.put("story", task);
             wrapper.put("children", task.getChildTasks());
-            return objectMapper.writeValueAsString(wrapper);
+            return jsonMapper.writeValueAsString(wrapper);
         } else {
             // For simple tasks/milestones, serialize directly
-            return objectMapper.writeValueAsString(task);
+            return jsonMapper.writeValueAsString(task);
         }
     }
 

@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.Svg;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -49,6 +48,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -87,8 +87,8 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     private             GanttUtil               ganttUtil;
     private final       TaskGrid                grid;
     private final       HorizontalLayout        headerLayout;
+    private final       JsonMapper              jsonMapper;
     private             User                    loggedInUser               = null;
-    private final       ObjectMapper            objectMapper;
     private final       ProductApi              productApi;
     private             Long                    productId;
     private             Button                  saveButton;
@@ -102,16 +102,16 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     private             Long                    versionId;
     private final       WorklogApi              worklogApi;
 
-    public TaskListView(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock, ObjectMapper objectMapper) {
-        this.worklogApi   = worklogApi;
-        this.taskApi      = taskApi;
-        this.sprintApi    = sprintApi;
-        this.productApi   = productApi;
-        this.versionApi   = versionApi;
-        this.featureApi   = featureApi;
-        this.userApi      = userApi;
-        this.clock        = clock;
-        this.objectMapper = objectMapper;
+    public TaskListView(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock, JsonMapper jsonMapper) {
+        this.worklogApi = worklogApi;
+        this.taskApi    = taskApi;
+        this.sprintApi  = sprintApi;
+        this.productApi = productApi;
+        this.versionApi = versionApi;
+        this.featureApi = featureApi;
+        this.userApi    = userApi;
+        this.clock      = clock;
+        this.jsonMapper = jsonMapper;
 
         try {
             // Set width full but not height - let content determine height for scrolling
@@ -215,7 +215,7 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     }
 
     private TaskGrid createGrid(Clock clock) {
-        TaskGrid grid = new TaskGrid(clock, getLocale(), objectMapper);
+        TaskGrid grid = new TaskGrid(clock, getLocale(), jsonMapper);
         // Set up callbacks for grid actions
         grid.setOnPersistTask(this::onPersistTask);
         grid.setOnSaveAllChangesAndRefresh(this::saveAllChangesAndRefresh);
@@ -325,31 +325,31 @@ public class TaskListView extends Main implements AfterNavigationObserver {
     private Sprint createSprintSnapshot(Sprint original) {
         try {
             // Use Jackson to create a deep copy through serialization/deserialization
-            String sprintJson = objectMapper.writeValueAsString(original);
-            Sprint snapshot   = objectMapper.readValue(sprintJson, Sprint.class);
+            String sprintJson = jsonMapper.writeValueAsString(original);
+            Sprint snapshot   = jsonMapper.readValue(sprintJson, Sprint.class);
 
             // Need to reconstruct the relationships and initialize the sprint
             // Get a copy of the tasks list
             List<Task> tasksCopy = new ArrayList<>();
             for (Task originalTask : original.getTasks()) {
-                String taskJson = objectMapper.writeValueAsString(originalTask);
-                Task   taskCopy = objectMapper.readValue(taskJson, Task.class);
+                String taskJson = jsonMapper.writeValueAsString(originalTask);
+                Task   taskCopy = jsonMapper.readValue(taskJson, Task.class);
                 tasksCopy.add(taskCopy);
             }
 
             // Get a copy of worklogs
             List<Worklog> worklogsCopy = new ArrayList<>();
             for (Worklog originalWorklog : original.getWorklogs()) {
-                String  worklogJson = objectMapper.writeValueAsString(originalWorklog);
-                Worklog worklogCopy = objectMapper.readValue(worklogJson, Worklog.class);
+                String  worklogJson = jsonMapper.writeValueAsString(originalWorklog);
+                Worklog worklogCopy = jsonMapper.readValue(worklogJson, Worklog.class);
                 worklogsCopy.add(worklogCopy);
             }
 
             // Get a copy of users (serialize/deserialize to ensure deep copy)
             List<User> usersCopy = new ArrayList<>();
             for (User originalUser : original.getUserMap().values()) {
-                String userJson = objectMapper.writeValueAsString(originalUser);
-                User   userCopy = objectMapper.readValue(userJson, User.class);
+                String userJson = jsonMapper.writeValueAsString(originalUser);
+                User   userCopy = jsonMapper.readValue(userJson, User.class);
                 usersCopy.add(userCopy);
             }
 

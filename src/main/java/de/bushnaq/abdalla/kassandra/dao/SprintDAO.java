@@ -17,8 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.dao;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.util.DurationDeserializer;
 import de.bushnaq.abdalla.util.DurationSerializer;
@@ -26,7 +24,9 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Proxy;
+import org.hibernate.annotations.BatchSize;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -41,7 +41,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
+@BatchSize(size = 10)
 @Hidden
 @Schema(hidden = true)
 public class SprintDAO extends AbstractTimeAwareDAO {

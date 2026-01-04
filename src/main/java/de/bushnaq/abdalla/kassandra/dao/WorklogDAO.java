@@ -19,7 +19,7 @@ package de.bushnaq.abdalla.kassandra.dao;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Proxy;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -31,7 +31,7 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
+@BatchSize(size = 10)
 public class WorklogDAO extends AbstractTimeAwareDAO {
 
     @Column(nullable = false)

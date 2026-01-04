@@ -18,16 +18,17 @@
 package de.bushnaq.abdalla.kassandra.rest;
 
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 
 import java.awt.*;
-import java.io.IOException;
 
-public class ColorDeserializer extends JsonDeserializer<Color> {
+@Slf4j
+public class ColorDeserializer extends ValueDeserializer<Color> {
     @Override
-    public Color deserialize(JsonParser p, DeserializationContext ctx) throws IOException {
+    public Color deserialize(JsonParser p, DeserializationContext ctx) {
         String json = p.getText();
         if (json == null || json.isEmpty()) {
             return null;
@@ -42,7 +43,8 @@ public class ColorDeserializer extends JsonDeserializer<Color> {
                 return new Color((int) Long.parseLong(json, 16), true);
             }
         } catch (NumberFormatException e) {
-            throw new IOException("Invalid color format: " + json, e);
+            log.error("Invalid color format: " + json, e);
         }
+        return null;
     }
 }

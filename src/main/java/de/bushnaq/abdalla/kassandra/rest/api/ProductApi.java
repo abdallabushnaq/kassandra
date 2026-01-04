@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
 import de.bushnaq.abdalla.kassandra.dto.Product;
@@ -26,6 +25,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,13 +33,13 @@ import java.util.List;
 @Service
 public class ProductApi extends AbstractApi {
 
-    public ProductApi(RestTemplate restTemplate, ObjectMapper objectMapper, String baseUrl) {
-        super(restTemplate, objectMapper, baseUrl);
+    public ProductApi(RestTemplate restTemplate, JsonMapper jsonMapper, String baseUrl) {
+        super(restTemplate, jsonMapper, baseUrl);
     }
 
     @Autowired
-    public ProductApi(RestTemplate restTemplate, ObjectMapper objectMapper) {
-        super(restTemplate, objectMapper);
+    public ProductApi(RestTemplate restTemplate, JsonMapper jsonMapper) {
+        super(restTemplate, jsonMapper);
     }
 
     public ProductApi() {

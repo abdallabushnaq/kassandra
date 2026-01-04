@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
@@ -42,6 +41,7 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -73,7 +73,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     private final       UserGroupApi           userGroupApi;
 
     public ProductListView(ProductApi productApi, ProductAclApi productAclApi, UserApi userApi, UserGroupApi userGroupApi,
-                           Clock clock, AiFilterService aiFilterService, ObjectMapper mapper, StableDiffusionService stableDiffusionService) {
+                           Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService) {
         super(clock);
         this.productApi             = productApi;
         this.productAclApi          = productAclApi;

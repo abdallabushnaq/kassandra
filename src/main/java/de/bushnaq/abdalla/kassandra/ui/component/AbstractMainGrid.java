@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -40,6 +39,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import lombok.Getter;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.util.ArrayList;
@@ -357,7 +357,7 @@ public abstract class AbstractMainGrid<T> extends Main {
      * @param rowCounterId             Optional ID for row counter (can be null if grid is null)
      * @param globalFilterId           ID for the global filter field
      * @param aiFilterService          Natural language search service
-     * @param mapper                   ObjectMapper for JSON serialization
+     * @param mapper                   JsonMapper for JSON serialization
      * @param entityType               The type of entity being searched (e.g., "Product", "Version")
      * @return A configured HorizontalLayout containing the header elements
      */
@@ -371,7 +371,7 @@ public abstract class AbstractMainGrid<T> extends Main {
             String rowCounterId,
             String globalFilterId,
             AiFilterService aiFilterService,
-            ObjectMapper mapper,
+            JsonMapper mapper,
             String entityType) {
 
         HorizontalLayout headerLayout = new HorizontalLayout();
@@ -457,7 +457,7 @@ public abstract class AbstractMainGrid<T> extends Main {
             String rowCounterId,
             String globalFilterId,
             AiFilterService aiFilterService,
-            ObjectMapper mapper,
+            JsonMapper mapper,
             String entityType) {
         return createSmartHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId, globalFilterId, aiFilterService, mapper, entityType);
     }
@@ -474,7 +474,7 @@ public abstract class AbstractMainGrid<T> extends Main {
             String rowCounterId,
             String globalFilterId,
             AiFilterService aiFilterService,
-            ObjectMapper mapper,
+            JsonMapper mapper,
             String entityType) {
         return createSmartHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId, globalFilterId, aiFilterService, mapper, entityType);
     }
@@ -488,7 +488,7 @@ public abstract class AbstractMainGrid<T> extends Main {
             String rowCounterId,
             String globalFilterId,
             AiFilterService aiFilterService,
-            ObjectMapper mapper,
+            JsonMapper mapper,
             String entityType) {
         return createSmartHeader(title, titleId, image, createButtonId, createButtonClickHandler, grid, rowCounterId, globalFilterId, aiFilterService, mapper, entityType);
     }

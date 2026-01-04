@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -45,6 +44,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.text.NumberFormat;
 import java.time.Clock;
@@ -74,7 +74,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
     private final       UserApi                       userApi;
     private             AvailabilityCalendarComponent yearCalendar;
 
-    public AvailabilityListView(AvailabilityApi availabilityApi, UserApi userApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper) {
+    public AvailabilityListView(AvailabilityApi availabilityApi, UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper) {
         super(clock);
         this.availabilityApi = availabilityApi;
         this.userApi         = userApi;

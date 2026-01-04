@@ -17,12 +17,11 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.rest.ErrorResponse;
 import de.bushnaq.abdalla.kassandra.security.SecurityConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.openqa.selenium.json.JsonException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,6 +45,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerErrorException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -69,7 +68,7 @@ public class AbstractApi {
     private              String                           configuredBaseUrl;
     @Autowired(required = false)
     private              Environment                      environment;
-    protected            ObjectMapper                     objectMapper;
+    protected            JsonMapper                       jsonMapper;
     @Value("${server.port:8080}")
     private              int                              port;
     protected            RestTemplate                     restTemplate;
@@ -78,20 +77,20 @@ public class AbstractApi {
      * used for uni tests to enforce in-memory db.
      *
      * @param restTemplate the rest template
-     * @param objectMapper the object mapper
+     * @param jsonMapper   the object mapper
      * @param baseUrl      the base url to the local rest server
      */
-    protected AbstractApi(RestTemplate restTemplate, ObjectMapper objectMapper, String baseUrl) {
+    protected AbstractApi(RestTemplate restTemplate, JsonMapper jsonMapper, String baseUrl) {
         this.restTemplate      = restTemplate;
-        this.objectMapper      = objectMapper;
+        this.jsonMapper        = jsonMapper;
         this.configuredBaseUrl = baseUrl;
-        initialize(restTemplate, objectMapper);
+        initialize(restTemplate, jsonMapper);
     }
 
-    protected AbstractApi(RestTemplate restTemplate, ObjectMapper objectMapper) {
+    protected AbstractApi(RestTemplate restTemplate, JsonMapper jsonMapper) {
         this.restTemplate = restTemplate;
-        this.objectMapper = objectMapper;
-        initialize(restTemplate, objectMapper);
+        this.jsonMapper   = jsonMapper;
+        initialize(restTemplate, jsonMapper);
     }
 
     protected AbstractApi() {
@@ -286,6 +285,12 @@ public class AbstractApi {
             logger.error("REST API call failed with status: {} and response: {}", e.getStatusCode(), e.getResponseBodyAsString());
             handleExceptions(e);
             return null;
+        } catch (UnknownContentTypeException e) {
+            if (e.getContentType().getType().startsWith("text/html"))
+                logger.error("Server returned HTML error page instead of JSON. Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            else
+                logger.error("Server returned unknown content type. Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new ServerErrorException("Failed to execute REST API call due to unknown content type", e);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             throw new ServerErrorException("Failed to execute REST API call", e);
@@ -342,8 +347,8 @@ public class AbstractApi {
 
     private void handleExceptions(HttpStatusCodeException e) {
 
-
         try {
+
             // Handle authentication/authorization errors specifically for test cases
             if (e instanceof HttpClientErrorException.Unauthorized) {
                 // Convert 401 Unauthorized to AuthenticationCredentialsNotFoundException
@@ -358,7 +363,7 @@ public class AbstractApi {
                 throw new ResponseStatusException(e.getStatusCode(), e.getMessage(), e.getCause());
             } else if (e instanceof HttpClientErrorException.Conflict) {
                 // Handle 409 CONFLICT responses specially to preserve field information
-                ErrorResponse error = objectMapper.readValue(e.getResponseBodyAsString(), ErrorResponse.class);
+                ErrorResponse error = jsonMapper.readValue(e.getResponseBodyAsString(), ErrorResponse.class);
 
                 // Create a detailed message that includes field information for UI display
                 String detailedMessage = error.getMessage();
@@ -397,30 +402,26 @@ public class AbstractApi {
                             throw new ServerErrorException("Server error: " + errorMessage, e);
                         }
                     } else {
-                        ErrorResponse error      = objectMapper.readValue(responseBody, ErrorResponse.class);
+                        ErrorResponse error      = jsonMapper.readValue(responseBody, ErrorResponse.class);
                         HttpStatus    httpStatus = error.getHttpStatus();
                         throw new ResponseStatusException(
                                 httpStatus != null ? httpStatus : HttpStatus.INTERNAL_SERVER_ERROR,
                                 error.getMessage(),
                                 error.reconstructException());
                     }
-                } catch (JsonProcessingException ex) {
-                    throw new IllegalArgumentException(
-                            String.format("Error processing server response '%s'.", e.getResponseBodyAsString()));
+                } catch (JsonException ex) {
+                    throw new IllegalArgumentException(String.format("Error processing server response '%s'.", e.getResponseBodyAsString()));
                 }
             }
-        } catch (JsonProcessingException ex) {
+        } catch (JsonException ex) {
             throw new IllegalArgumentException(String.format("Error processing server response '%s'.", e.getResponseBodyAsString()));
         }
     }
 
-    private void initialize(RestTemplate restTemplate, ObjectMapper objectMapper) {
+    private void initialize(RestTemplate restTemplate, JsonMapper jsonMapper) {
         this.restTemplate.setErrorHandler(new DefaultResponseErrorHandler());
-        // Configure message converters for JSON
-        restTemplate.getMessageConverters().clear();
-        MappingJackson2HttpMessageConverter messageConverter = new MappingJackson2HttpMessageConverter();
-        messageConverter.setObjectMapper(objectMapper);
-        restTemplate.getMessageConverters().add(messageConverter);
+        // Note: RestTemplate's default message converters in Spring Boot 4 automatically support Jackson 3.x
+        // No need to manually configure converters - Spring Boot handles Jackson 3.x compatibility
     }
 
     @FunctionalInterface

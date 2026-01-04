@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.dao;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Proxy;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDate;
 
@@ -31,7 +31,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
+@BatchSize(size = 10)
 public class LocationDAO extends AbstractTimeAwareDAO {
     @Column(nullable = false)
     private String country;

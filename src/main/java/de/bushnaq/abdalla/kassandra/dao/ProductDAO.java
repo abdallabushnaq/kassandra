@@ -19,7 +19,7 @@ package de.bushnaq.abdalla.kassandra.dao;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Proxy;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "products")
@@ -28,7 +28,7 @@ import org.hibernate.annotations.Proxy;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
+@BatchSize(size = 10)
 public class ProductDAO extends AbstractTimeAwareDAO {
 
     @Column(name = "avatar_hash", length = 16)

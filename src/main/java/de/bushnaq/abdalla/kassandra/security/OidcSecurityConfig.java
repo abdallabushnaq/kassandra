@@ -17,20 +17,22 @@
 
 package de.bushnaq.abdalla.kassandra.security;
 
-import com.vaadin.flow.spring.security.VaadinWebSecurity;
-import de.bushnaq.abdalla.kassandra.service.UserRoleService;
 import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.SecurityFilterChain;
+
+import static com.vaadin.flow.spring.security.VaadinSecurityConfigurer.vaadin;
 
 /**
  * Security configuration for OAuth2/OIDC authentication.
@@ -40,23 +42,33 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @EnableWebSecurity
 @Configuration
 @ConditionalOnProperty(name = "spring.security.oauth2.client.registration.keycloak.client-id")
-public class OidcSecurityConfig extends VaadinWebSecurity {
+public class OidcSecurityConfig {
 
     @Autowired(required = false)
     private       ClientRegistrationRepository clientRegistrationRepository;
     @Autowired
-    private CustomOidcUserService customOidcUserService;
+    private       CustomOidcUserService        customOidcUserService;
     private final Logger                       logger = LoggerFactory.getLogger(OidcSecurityConfig.class);
-    @Autowired
-    private       UserRoleService              userRoleService;
+
+    /**
+     * Configure the OAuth2 logout success handler.
+     */
+    private OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler() {
+        OidcClientInitiatedLogoutSuccessHandler logoutSuccessHandler =
+                new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+        // Set the URL to redirect to after logout
+        logoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}");
+        return logoutSuccessHandler;
+    }
 
     /**
      * Configures Spring Security to use OAuth2 login for Vaadin UI pages.
      * This security configuration is now specifically for Vaadin UI endpoints,
      * separate from the API security configuration.
      */
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    @Bean
+    @Order(3) // Lower precedence than API security
+    public SecurityFilterChain oidcSecurityFilterChain(HttpSecurity http) throws Exception {
         logger.info(">>> Configuring security chain (2/4) OAuth2/OIDC security for Vaadin UI");
 
         // Check if client registration repository is available
@@ -72,21 +84,21 @@ public class OidcSecurityConfig extends VaadinWebSecurity {
             }
         }
 
-        // Set up Vaadin specific security configuration first
-        setLoginView(http, LoginView.class);
+        // Set up Vaadin specific security configuration
+        http.with(vaadin(), vaadin -> vaadin.loginView("/login", "/"));
 
         // Allow access to the login page and static resources without authentication
         http.authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(new AntPathRequestMatcher("/")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/" + LoginView.ROUTE)).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/VAADIN/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/ui/icons/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/ui/images/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/frontend/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/frontend-es5/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/frontend-es6/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/oauth2/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/login/oauth2/**")).permitAll());
+                .requestMatchers("/").permitAll()
+                .requestMatchers("/" + LoginView.ROUTE).permitAll()
+                .requestMatchers("/VAADIN/**").permitAll()
+                .requestMatchers("/ui/icons/**").permitAll()
+                .requestMatchers("/ui/images/**").permitAll()
+                .requestMatchers("/frontend/**").permitAll()
+                .requestMatchers("/frontend-es5/**").permitAll()
+                .requestMatchers("/frontend-es6/**").permitAll()
+                .requestMatchers("/oauth2/**").permitAll()
+                .requestMatchers("/login/oauth2/**").permitAll());
 
         // Configure OAuth2 login support for Vaadin UI
         if (clientRegistrationRepository != null) {
@@ -109,19 +121,6 @@ public class OidcSecurityConfig extends VaadinWebSecurity {
             // Note: We no longer configure JWT resource server here, as it's now in ApiSecurityConfig
         }
 
-        // Complete Vaadin security configuration
-        super.configure(http);
-    }
-
-
-    /**
-     * Configure the OAuth2 logout success handler.
-     */
-    private OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler() {
-        OidcClientInitiatedLogoutSuccessHandler logoutSuccessHandler =
-                new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
-        // Set the URL to redirect to after logout
-        logoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}");
-        return logoutSuccessHandler;
+        return http.build();
     }
 }

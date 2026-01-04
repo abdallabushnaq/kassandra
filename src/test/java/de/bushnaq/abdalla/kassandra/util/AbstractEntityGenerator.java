@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
@@ -41,11 +40,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ServerErrorException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.awt.*;
 import java.time.Duration;
@@ -59,50 +59,50 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 public class AbstractEntityGenerator extends AbstractTestUtil {
-    public static final String                FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
-    public static final String                FIRST_OFF_DAY_START_DATE  = "2024-04-01";
-    protected           AvailabilityApi       availabilityApi;
-    protected final     TreeSet<Availability> expectedAvailabilities    = new TreeSet<>();
-    protected           List<Feature>         expectedFeatures          = new ArrayList<>();
-    protected final     TreeSet<Location>     expectedLocations         = new TreeSet<>();
-    protected           TreeSet<OffDay>       expectedOffDays           = new TreeSet<>();
-    protected           List<Product>         expectedProducts          = new ArrayList<>();
-    protected           List<Sprint>          expectedSprints           = new ArrayList<>();
-    protected           List<Task>            expectedTasks             = new ArrayList<>();
-    protected           TreeSet<User>         expectedUsers             = new TreeSet<>();
-    protected           List<Version>         expectedVersions          = new ArrayList<>();
-    protected           List<Worklog>         expectedWorklogs          = new ArrayList<>();
-    protected           FeatureApi            featureApi;
-    protected static    int                   featureIndex              = 0;
-    protected           LocationApi           locationApi;
+    public static final String                 FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
+    public static final String                 FIRST_OFF_DAY_START_DATE  = "2024-04-01";
+    protected           AvailabilityApi        availabilityApi;
+    protected final     TreeSet<Availability>  expectedAvailabilities    = new TreeSet<>();
+    protected           List<Feature>          expectedFeatures          = new ArrayList<>();
+    protected final     TreeSet<Location>      expectedLocations         = new TreeSet<>();
+    protected           TreeSet<OffDay>        expectedOffDays           = new TreeSet<>();
+    protected           List<Product>          expectedProducts          = new ArrayList<>();
+    protected           List<Sprint>           expectedSprints           = new ArrayList<>();
+    protected           List<Task>             expectedTasks             = new ArrayList<>();
+    protected           TreeSet<User>          expectedUsers             = new TreeSet<>();
+    protected           List<Version>          expectedVersions          = new ArrayList<>();
+    protected           List<Worklog>          expectedWorklogs          = new ArrayList<>();
+    protected           FeatureApi             featureApi;
+    protected static    int                    featureIndex              = 0;
     @Autowired
-    ObjectMapper mapper;
-    protected        NameGenerator          nameGenerator = new NameGenerator();
-    @Autowired
-    protected        ObjectMapper           objectMapper;
-    protected        OffDayApi              offDayApi;
-    private          int                    offDaysIterations;
+    protected           JsonMapper             jsonMapper;
+    protected           LocationApi            locationApi;
+    //    @Autowired
+//    JsonMapper mapper;
+    protected           NameGenerator          nameGenerator             = new NameGenerator();
+    protected           OffDayApi              offDayApi;
+    private             int                    offDaysIterations;
     @LocalServerPort
-    private          int                    port;
-    protected        ProductAclApi          productAclApi;
-    protected        ProductApi             productApi;
-    protected static int                    productIndex  = 0;
-    protected final  Random                 random        = new Random();
-    protected        SprintApi              sprintApi;
-    private static   int                    sprintIndex   = 0;
+    private             int                    port;
+    protected           ProductAclApi          productAclApi;
+    protected           ProductApi             productApi;
+    protected static    int                    productIndex              = 0;
+    protected final     Random                 random                    = new Random();
+    protected           SprintApi              sprintApi;
+    private static      int                    sprintIndex               = 0;
     @Autowired
-    protected        StableDiffusionConfig  stableDiffusionConfig;
+    protected           StableDiffusionConfig  stableDiffusionConfig;
     @Autowired
-    protected        StableDiffusionService stableDiffusionService;
-    protected        TaskApi                taskApi;
+    protected           StableDiffusionService stableDiffusionService;
+    protected           TaskApi                taskApi;
     @Autowired
-    private          TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
-    protected        UserApi                userApi;
-    protected        UserGroupApi           userGroupApi;
-    protected static int                    userIndex     = 0;
-    protected        VersionApi             versionApi;
-    protected static int                    versionIndex  = 0;
-    protected        WorklogApi             worklogApi;
+    private             TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
+    protected           UserApi                userApi;
+    protected           UserGroupApi           userGroupApi;
+    protected static    int                    userIndex                 = 0;
+    protected           VersionApi             versionApi;
+    protected static    int                    versionIndex              = 0;
+    protected           WorklogApi             worklogApi;
 
     protected void addAvailability(User user, float availability, LocalDate start) {
         Availability a = new Availability(availability, start);
@@ -724,18 +724,18 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
         // Set the correct port after injection
         String baseUrl = "http://localhost:" + port + "/api";
-        productApi      = new ProductApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
-        featureApi      = new FeatureApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
-        userApi         = new UserApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
-        availabilityApi = new AvailabilityApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
-        locationApi     = new LocationApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
-        offDayApi       = new OffDayApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
-        taskApi         = new TaskApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
-        versionApi      = new VersionApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
-        sprintApi       = new SprintApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
-        worklogApi      = new WorklogApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
-        userGroupApi    = new UserGroupApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
-        productAclApi   = new ProductAclApi(testRestTemplate.getRestTemplate(), objectMapper, baseUrl);
+        productApi      = new ProductApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        featureApi      = new FeatureApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        userApi         = new UserApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        availabilityApi = new AvailabilityApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        locationApi     = new LocationApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        offDayApi       = new OffDayApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        taskApi         = new TaskApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        versionApi      = new VersionApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        sprintApi       = new SprintApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        worklogApi      = new WorklogApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        userGroupApi    = new UserGroupApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        productAclApi   = new ProductAclApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
     }
 
     protected void removeAvailability(Availability availability, User user) {

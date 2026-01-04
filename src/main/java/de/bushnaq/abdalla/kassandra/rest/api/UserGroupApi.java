@@ -17,26 +17,26 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.*;
 
 @Service
 public class UserGroupApi extends AbstractApi {
 
-    public UserGroupApi(RestTemplate restTemplate, ObjectMapper objectMapper, String baseUrl) {
-        super(restTemplate, objectMapper, baseUrl);
+    public UserGroupApi(RestTemplate restTemplate, JsonMapper jsonMapper, String baseUrl) {
+        super(restTemplate, jsonMapper, baseUrl);
     }
 
     @Autowired
-    public UserGroupApi(RestTemplate restTemplate, ObjectMapper objectMapper) {
-        super(restTemplate, objectMapper);
+    public UserGroupApi(RestTemplate restTemplate, JsonMapper jsonMapper) {
+        super(restTemplate, jsonMapper);
     }
 
     public UserGroupApi() {

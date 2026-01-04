@@ -17,24 +17,26 @@
 
 package de.bushnaq.abdalla.kassandra.rest;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
 
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class OffsetDateTimeSerializer extends JsonSerializer<OffsetDateTime> {
+@Slf4j
+@Deprecated
+public class OffsetDateTimeSerializer extends ValueSerializer<OffsetDateTime> {
     //    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss XXX");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     @Override
-    public void serialize(OffsetDateTime value, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
-            throws IOException {
+    public void serialize(OffsetDateTime value, JsonGenerator jsonGenerator, SerializationContext serializerProvider) {
         if (value == null) {
-            throw new IOException("OffsetDateTime argument is null.");
+            log.error("OffsetDateTime argument is null.");
         }
         jsonGenerator.writeString(DATE_TIME_FORMATTER.format(value));
     }
+
 }

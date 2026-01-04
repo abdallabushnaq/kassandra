@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -46,6 +45,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -74,7 +74,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
     private final       UserApi                  userApi;
     private             OffDaysCalendarComponent yearCalendar;
 
-    public LocationListView(LocationApi locationApi, UserApi userApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper) {
+    public LocationListView(LocationApi locationApi, UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper) {
         super(clock);
         this.locationApi = locationApi;
         this.userApi     = userApi;

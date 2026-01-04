@@ -17,12 +17,12 @@
 
 package de.bushnaq.abdalla.kassandra.ai;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestConstructor;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.awt.*;
 import java.time.LocalDate;
@@ -51,7 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 class UserAiFilterTest extends AbstractAiFilterTest<User> {
 
-    public UserAiFilterTest(ObjectMapper mapper, AiFilterService aiFilterService) {
+    public UserAiFilterTest(JsonMapper mapper, AiFilterService aiFilterService) {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
     }
 

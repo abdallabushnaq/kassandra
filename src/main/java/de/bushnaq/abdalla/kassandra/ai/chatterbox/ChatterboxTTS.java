@@ -17,9 +17,9 @@
 
 package de.bushnaq.abdalla.kassandra.ai.chatterbox;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.ai.AbstractTtsEngine;
 import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -31,8 +31,8 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class ChatterboxTTS extends AbstractTtsEngine {
-    private static final ObjectMapper objectMapper    = new ObjectMapper();
-    private static       String       TTS_SERVICE_URL = "http://localhost:4123";
+    private static final JsonMapper jsonMapper      = new JsonMapper();
+    private static       String     TTS_SERVICE_URL = "http://localhost:4123";
 
     /**
      * Delete a voice reference file from the server
@@ -77,7 +77,7 @@ public class ChatterboxTTS extends AbstractTtsEngine {
         jsonMap.put("temperature", temperature);
         jsonMap.put("exaggeration", exaggeration);
         jsonMap.put("cfg_weight", cfgWeight);
-        String jsonPayload = objectMapper.writeValueAsString(jsonMap);
+        String jsonPayload = jsonMapper.writeValueAsString(jsonMap);
         try (OutputStream os = conn.getOutputStream()) {
             byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
             os.write(input, 0, input.length);
@@ -113,7 +113,7 @@ public class ChatterboxTTS extends AbstractTtsEngine {
         }
         String response = readProcessOutput(conn.getInputStream());
         // Parse as Map and extract 'languages' array
-        java.util.Map<?, ?> map          = objectMapper.readValue(response, java.util.Map.class);
+        java.util.Map<?, ?> map          = jsonMapper.readValue(response, java.util.Map.class);
         Object              languagesObj = map.get("languages");
         if (languagesObj instanceof List<?> languagesList) {
             List<String> codes = new java.util.ArrayList<>();
@@ -146,7 +146,7 @@ public class ChatterboxTTS extends AbstractTtsEngine {
         }
 
         String              response = readProcessOutput(conn.getInputStream());
-        java.util.Map<?, ?> jsonMap  = objectMapper.readValue(response, java.util.Map.class);
+        java.util.Map<?, ?> jsonMap  = jsonMapper.readValue(response, java.util.Map.class);
         List<?>             refsData = (List<?>) jsonMap.get("voice_references");
 
         VoiceReference[] refs = new VoiceReference[refsData.size()];
@@ -238,7 +238,7 @@ public class ChatterboxTTS extends AbstractTtsEngine {
         }
 
         String              response = readProcessOutput(conn.getInputStream());
-        java.util.Map<?, ?> jsonMap  = objectMapper.readValue(response, java.util.Map.class);
+        java.util.Map<?, ?> jsonMap  = jsonMapper.readValue(response, java.util.Map.class);
         return new VoiceReference(
                 (String) jsonMap.get("filename"),
                 (String) jsonMap.get("path"),

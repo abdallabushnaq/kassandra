@@ -19,7 +19,7 @@ package de.bushnaq.abdalla.kassandra.dao;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Proxy;
+import org.hibernate.annotations.BatchSize;
 
 /**
  * Entity representing an Access Control List entry for a product.
@@ -38,7 +38,7 @@ import org.hibernate.annotations.Proxy;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
+@BatchSize(size = 10)
 public class ProductAclEntryDAO extends AbstractTimeAwareDAO {
 
     @Column(name = "group_id")

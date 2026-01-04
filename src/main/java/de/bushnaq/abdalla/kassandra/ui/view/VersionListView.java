@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
@@ -37,6 +36,7 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.VersionDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -60,12 +60,12 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     public static final String                              VERSION_ROW_COUNTER               = "version-row-counter";
     private final       AiFilterService                     aiFilterService;
     private             com.vaadin.flow.component.Component headerComponent; // Track the header
-    private final       ObjectMapper                        mapper;
+    private final       JsonMapper                          mapper;
     private final       ProductApi                          productApi;
     private             Long                                productId;
     private final       VersionApi                          versionApi;
 
-    public VersionListView(VersionApi versionApi, ProductApi productApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper) {
+    public VersionListView(VersionApi versionApi, ProductApi productApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper) {
         super(clock);
         this.versionApi      = versionApi;
         this.productApi      = productApi;

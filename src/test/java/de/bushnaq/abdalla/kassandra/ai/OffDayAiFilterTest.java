@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ai;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.dto.OffDay;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -25,6 +24,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestConstructor;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -50,7 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 class OffDayAiFilterTest extends AbstractAiFilterTest<OffDay> {
 
-    public OffDayAiFilterTest(ObjectMapper mapper, AiFilterService aiFilterService) {
+    public OffDayAiFilterTest(JsonMapper mapper, AiFilterService aiFilterService) {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
     }
 

@@ -17,9 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.rest.debug;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.rest.ErrorResponse;
+import org.openqa.selenium.json.JsonException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,13 +29,14 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
+import tools.jackson.databind.json.JsonMapper;
 
 @ControllerAdvice
 public class JsonResponseLogger implements ResponseBodyAdvice<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(JsonResponseLogger.class);
     @Autowired
-    ObjectMapper objectMapper;
+    JsonMapper jsonMapper;
 
 
     @Override
@@ -54,11 +54,11 @@ public class JsonResponseLogger implements ResponseBodyAdvice<Object> {
                 }
             } else {
                 if (DebugUtil.DEBUG) {
-                    String jsonString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(body);
+                    String jsonString = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(body);
                     System.out.format("Response JSON: %s\n", jsonString);
                 }
             }
-        } catch (JsonProcessingException e) {
+        } catch (JsonException e) {
             throw new RuntimeException(e);
         }
 

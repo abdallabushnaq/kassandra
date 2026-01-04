@@ -17,13 +17,13 @@
 
 package de.bushnaq.abdalla.kassandra.ai;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestConstructor;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.*;
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 class SprintAiFilterTest extends AbstractAiFilterTest<Sprint> {
 
-    public SprintAiFilterTest(ObjectMapper mapper, AiFilterService aiFilterService) {
+    public SprintAiFilterTest(JsonMapper mapper, AiFilterService aiFilterService) {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
     }
 

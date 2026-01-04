@@ -24,14 +24,16 @@ import de.bushnaq.abdalla.kassandra.util.AbstractGanttTestUtil;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import de.bushnaq.abdalla.util.Util;
 import org.junit.jupiter.api.*;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
 @Tag("UnitTest")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
 @Transactional
 @TestMethodOrder(MethodOrderer.MethodName.class)

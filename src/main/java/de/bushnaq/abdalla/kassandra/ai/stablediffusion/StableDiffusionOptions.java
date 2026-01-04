@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +58,7 @@ public class StableDiffusionOptions {
     @Override
     public String toString() {
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            JsonMapper mapper = new JsonMapper();
             mapper.writerWithDefaultPrettyPrinter();
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(this);
         } catch (Exception e) {

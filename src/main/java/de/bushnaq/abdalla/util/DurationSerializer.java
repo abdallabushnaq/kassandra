@@ -17,16 +17,15 @@
 
 package de.bushnaq.abdalla.util;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
 
-import java.io.IOException;
 import java.time.Duration;
 
-public class DurationSerializer extends JsonSerializer<Duration> {
+public class DurationSerializer extends ValueSerializer<Duration> {
     @Override
-    public void serialize(Duration duration, JsonGenerator gen, SerializerProvider provider) throws IOException {
+    public void serialize(Duration duration, JsonGenerator gen, SerializationContext provider) {
         if (duration == null) {
             gen.writeNull();
             return;
@@ -48,4 +47,5 @@ public class DurationSerializer extends JsonSerializer<Duration> {
 
         gen.writeString(sb.toString().trim());
     }
+
 }

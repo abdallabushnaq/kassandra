@@ -31,6 +31,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
@@ -78,12 +79,17 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
                     .withLogConsumer(outputFrame -> System.out.println("Keycloak: " + outputFrame.getUtf8String()))
                     .withEnv("KC_HOSTNAME_STRICT", "false")
                     .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false")
+                    //.withEnv("KC_HTTP_ENABLED", "true")
                     .withReuse(true); // Enable container reuse
+                    //.waitingFor(Wait.forHttp("/realms/project-hub-realm")
+                    //        .forPort(8080) // Make sure wait strategy uses the correct port
+                    //        .forStatusCode(200));
 
             System.out.println("=== CREATING NEW KEYCLOAK CONTAINER ===");
         } else {
             System.out.println("=== REUSING EXISTING KEYCLOAK CONTAINER === ON PORT " + keycloakInstance.getHttpPort());
         }
+
         return keycloakInstance;
     }
 

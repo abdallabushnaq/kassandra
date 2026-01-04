@@ -30,9 +30,9 @@ public class Relation implements Comparable<Relation> {
     Long    predecessorId;
     boolean visible;
 
-    public Relation(Task dependency, boolean visible) {
+    public Relation(Long taskId, boolean visible) {
         this.visible  = visible;
-        predecessorId = dependency.getId();
+        predecessorId = taskId;
     }
 
     @Override

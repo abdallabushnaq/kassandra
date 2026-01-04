@@ -17,9 +17,9 @@
 
 package de.bushnaq.abdalla.kassandra.ai.indextts;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.ai.AbstractTtsEngine;
 import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -52,8 +52,8 @@ import java.util.Map;
  * </ul>
  */
 public class IndexTTS extends AbstractTtsEngine {
-    private static final ObjectMapper objectMapper    = new ObjectMapper();
-    private static       String       TTS_SERVICE_URL = "http://localhost:5124";
+    private static final JsonMapper jsonMapper      = new JsonMapper();
+    private static       String     TTS_SERVICE_URL = "http://localhost:5124";
 
     /**
      * Delete a voice reference file from the server
@@ -122,7 +122,7 @@ public class IndexTTS extends AbstractTtsEngine {
             jsonMap.put("emotions", emotions);
         }
 
-        String jsonPayload = objectMapper.writeValueAsString(jsonMap);
+        String jsonPayload = jsonMapper.writeValueAsString(jsonMap);
         try (OutputStream os = conn.getOutputStream()) {
             byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
             os.write(input, 0, input.length);
@@ -160,7 +160,7 @@ public class IndexTTS extends AbstractTtsEngine {
         }
 
         String    response    = readProcessOutput(conn.getInputStream());
-        Map<?, ?> map         = objectMapper.readValue(response, Map.class);
+        Map<?, ?> map         = jsonMapper.readValue(response, Map.class);
         Object    emotionsObj = map.get("emotions");
 
         if (emotionsObj instanceof List<?> emotionsList) {
@@ -187,7 +187,7 @@ public class IndexTTS extends AbstractTtsEngine {
         }
 
         String    response  = readProcessOutput(conn.getInputStream());
-        Map<?, ?> map       = objectMapper.readValue(response, Map.class);
+        Map<?, ?> map       = jsonMapper.readValue(response, Map.class);
         Object    modelsObj = map.get("models");
 
         if (modelsObj instanceof List<?> modelsList) {
@@ -221,7 +221,7 @@ public class IndexTTS extends AbstractTtsEngine {
         }
 
         String    response = readProcessOutput(conn.getInputStream());
-        Map<?, ?> jsonMap  = objectMapper.readValue(response, Map.class);
+        Map<?, ?> jsonMap  = jsonMapper.readValue(response, Map.class);
         List<?>   refsData = (List<?>) jsonMap.get("voice_references");
 
         VoiceReference[] refs = new VoiceReference[refsData.size()];
@@ -318,7 +318,7 @@ public class IndexTTS extends AbstractTtsEngine {
         }
 
         String    response = readProcessOutput(conn.getInputStream());
-        Map<?, ?> jsonMap  = objectMapper.readValue(response, Map.class);
+        Map<?, ?> jsonMap  = jsonMapper.readValue(response, Map.class);
         return new VoiceReference(
                 (String) jsonMap.get("filename"),
                 (String) jsonMap.get("path"),

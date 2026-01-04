@@ -18,16 +18,15 @@
 package de.bushnaq.abdalla.kassandra.rest;
 
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
 
 import java.awt.*;
-import java.io.IOException;
 
-public class ColorSerializer extends JsonSerializer<Color> {
+public class ColorSerializer extends ValueSerializer<Color> {
     @Override
-    public void serialize(Color color, JsonGenerator gen, SerializerProvider provider) throws IOException {
+    public void serialize(Color color, JsonGenerator gen, SerializationContext provider) {
         if (color == null) {
             gen.writeNull();
             return;
@@ -37,4 +36,5 @@ public class ColorSerializer extends JsonSerializer<Color> {
         String colorHex = String.format("#%08X", color.getRGB());
         gen.writeString(colorHex);
     }
+
 }

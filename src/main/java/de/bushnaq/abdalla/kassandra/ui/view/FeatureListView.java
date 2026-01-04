@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
@@ -40,6 +39,7 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.FeatureDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -67,7 +67,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     private final       VersionApi             versionApi;
     private             Long                   versionId;
 
-    public FeatureListView(FeatureApi featureApi, ProductApi productApi, VersionApi versionApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper, StableDiffusionService stableDiffusionService) {
+    public FeatureListView(FeatureApi featureApi, ProductApi productApi, VersionApi versionApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService) {
         super(clock);
         this.featureApi             = featureApi;
         this.productApi             = productApi;

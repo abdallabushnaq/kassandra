@@ -17,10 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
@@ -38,6 +34,8 @@ import de.bushnaq.abdalla.kassandra.ai.AiFilterGenerator;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDate;
 import java.util.regex.Pattern;
@@ -52,7 +50,7 @@ public class GlobalAiFilter<T> extends HorizontalLayout {
     private static final Logger          logger = LoggerFactory.getLogger(GlobalAiFilter.class);
     private final        AiFilterService aiFilterService;
     private final        String          entityType;
-    private final        ObjectMapper    filterMapper;
+    private final        JsonMapper      filterMapper;
     private final        Grid<T>         grid;
     private final        TextField       searchField;
     private final        Span            statusSpan;
@@ -60,17 +58,14 @@ public class GlobalAiFilter<T> extends HorizontalLayout {
     public GlobalAiFilter(String fieldId,
                           Grid<T> grid,
                           AiFilterService aiFilterService,
-                          ObjectMapper mapper,
+                          JsonMapper mapper,
                           String entityType) {
 
         this.grid            = grid;
         this.aiFilterService = aiFilterService;
         this.entityType      = entityType;
 
-        // Create a separate ObjectMapper for filtering that includes @JsonIgnore fields
-        this.filterMapper = mapper.copy();
-        // Use custom annotation introspector that ignores @JsonIgnore but preserves other annotations
-//        this.filterMapper.setAnnotationIntrospector(new FilterAnnotationIntrospector());
+        this.filterMapper = mapper;
 
         setAlignItems(FlexComponent.Alignment.CENTER);
         setSpacing(true);
@@ -102,7 +97,7 @@ public class GlobalAiFilter<T> extends HorizontalLayout {
 
         // Add search listener - use a more reliable approach for Enter key
         searchField.getElement().addEventListener("keydown", event -> {
-            if ("Enter".equals(event.getEventData().getString("event.key"))) {
+            if ("Enter".equals(event.getEventData().get("event.key").asText())) {
                 performSearch();
             }
         }).addEventData("event.key");
@@ -132,8 +127,8 @@ public class GlobalAiFilter<T> extends HorizontalLayout {
                         String json = filterMapper.writerWithDefaultPrettyPrinter().writeValueAsString(item);
                         // Apply the LLM-generated regex pattern
                         return regexPattern.matcher(json).find();
-                    } catch (JsonProcessingException e) {
-                        logger.error("Error serializing item to JSON for filtering", e);
+                    } catch (JacksonException e) {
+                        logger.error("Error serializing item to JSON for filtering: {}", e.getMessage());
                         return false;
                     }
                 }
@@ -285,21 +280,5 @@ public class GlobalAiFilter<T> extends HorizontalLayout {
         notification.add(content);
 
         notification.open();
-    }
-
-    /**
-     * Custom annotation introspector that ignores @JsonIgnore annotations
-     * but preserves all other Jackson annotations.
-     */
-    private static class FilterAnnotationIntrospector extends JacksonAnnotationIntrospector {
-        @Override
-        public boolean hasIgnoreMarker(com.fasterxml.jackson.databind.introspect.AnnotatedMember m) {
-            // Don't ignore fields marked with @JsonIgnore for filtering purposes
-            // but still process other ignore markers from the parent class
-            if (m.hasAnnotation(JsonIgnore.class)) {
-                return false;
-            }
-            return super.hasIgnoreMarker(m);
-        }
     }
 }

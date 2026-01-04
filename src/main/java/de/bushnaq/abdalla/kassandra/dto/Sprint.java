@@ -19,8 +19,6 @@ package de.bushnaq.abdalla.kassandra.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.report.dao.WorklogRemaining;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
@@ -30,6 +28,8 @@ import de.bushnaq.abdalla.util.date.DateUtil;
 import de.bushnaq.abdalla.util.date.ReportUtil;
 import lombok.*;
 import net.sf.mpxj.*;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.time.DayOfWeek;
 import java.time.Duration;

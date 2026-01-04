@@ -1,6 +1,7 @@
 package de.bushnaq.abdalla.kassandra.ai.coqui;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -13,8 +14,8 @@ import java.nio.file.Paths;
 public class CoquiTTS {
     private static final int             MAX_STARTUP_WAIT_SECONDS = 300; // Increased to 5 minutes for build time
     private static final String          TTS_SERVICE_URL          = "http://localhost:5000";
+    private static final JsonMapper      jsonMapper               = new JsonMapper();
     private static final TtsLanguageInfo languageInfo;
-    private static final ObjectMapper    objectMapper             = new ObjectMapper();
     private static final TtsSpeakerInfo  speakerInfo;
 
     static {
@@ -88,7 +89,7 @@ public class CoquiTTS {
             jsonMap.put("formant_shift", formantShift);
         }
 
-        String jsonPayload = objectMapper.writeValueAsString(jsonMap);
+        String jsonPayload = jsonMapper.writeValueAsString(jsonMap);
 //        System.out.println("JSON payload: " + jsonPayload);
 
         try (OutputStream os = conn.getOutputStream()) {
@@ -170,7 +171,7 @@ public class CoquiTTS {
         }
 
 
-        String jsonPayload = objectMapper.writeValueAsString(jsonMap);
+        String jsonPayload = jsonMapper.writeValueAsString(jsonMap);
 //        System.out.println("JSON payload: " + jsonPayload);
 
         try (OutputStream os = conn.getOutputStream()) {
@@ -220,7 +221,7 @@ public class CoquiTTS {
 
         // Read and parse JSON response
         String        response   = readProcessOutput(conn.getInputStream());
-        TtsHealthInfo healthInfo = objectMapper.readValue(response, TtsHealthInfo.class);
+        TtsHealthInfo healthInfo = jsonMapper.readValue(response, TtsHealthInfo.class);
         System.out.println("TTS service health: " + healthInfo);
         return healthInfo;
     }
@@ -243,7 +244,7 @@ public class CoquiTTS {
 
         // Read and parse JSON response
         String          response     = readProcessOutput(conn.getInputStream());
-        TtsLanguageInfo languageInfo = objectMapper.readValue(response, TtsLanguageInfo.class);
+        TtsLanguageInfo languageInfo = jsonMapper.readValue(response, TtsLanguageInfo.class);
         System.out.println("Available languages: " + languageInfo);
         return languageInfo;
     }
@@ -266,7 +267,7 @@ public class CoquiTTS {
 
         // Read and parse JSON response
         String       response  = readProcessOutput(conn.getInputStream());
-        TtsModelList modelList = objectMapper.readValue(response, TtsModelList.class);
+        TtsModelList modelList = jsonMapper.readValue(response, TtsModelList.class);
         System.out.println("Available models: " + modelList.getModels().size() + " models found");
         return modelList;
     }
@@ -289,7 +290,7 @@ public class CoquiTTS {
 
         // Read and parse JSON response
         String         response    = readProcessOutput(conn.getInputStream());
-        TtsSpeakerInfo speakerInfo = objectMapper.readValue(response, TtsSpeakerInfo.class);
+        TtsSpeakerInfo speakerInfo = jsonMapper.readValue(response, TtsSpeakerInfo.class);
         System.out.println("Available speakers: " + speakerInfo);
         return speakerInfo;
     }
@@ -312,7 +313,7 @@ public class CoquiTTS {
 
         // Read and parse JSON response
         String         response    = readProcessOutput(conn.getInputStream());
-        TtsVocoderList vocoderList = objectMapper.readValue(response, TtsVocoderList.class);
+        TtsVocoderList vocoderList = jsonMapper.readValue(response, TtsVocoderList.class);
         System.out.println("Available vocoders: " + vocoderList.getVocoderCount() + " vocoders found");
         return vocoderList;
     }
@@ -339,7 +340,7 @@ public class CoquiTTS {
             jsonMap.put("gpu", useGpu);
         }
 
-        String jsonPayload = objectMapper.writeValueAsString(jsonMap);
+        String jsonPayload = jsonMapper.writeValueAsString(jsonMap);
         System.out.println("Load model JSON payload: " + jsonPayload);
 
         try (OutputStream os = conn.getOutputStream()) {

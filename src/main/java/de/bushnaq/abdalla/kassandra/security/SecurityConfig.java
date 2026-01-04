@@ -17,8 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.security;
 
-import com.vaadin.flow.spring.security.VaadinWebSecurity;
-import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,12 +36,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 @Configuration
-public class SecurityConfig extends VaadinWebSecurity {
+public class SecurityConfig {
     public static final String OIDC_PASSWORD = "password";
     public static final String TEST_PASSWORD = "test-password";
     Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -51,9 +48,8 @@ public class SecurityConfig extends VaadinWebSecurity {
     @Bean
     public AuthenticationManager authenticationManager() {
         // Create authentication provider for the test users only
-        DaoAuthenticationProvider testProvider = new DaoAuthenticationProvider();
+        DaoAuthenticationProvider testProvider = new DaoAuthenticationProvider(testUsers());
         testProvider.setPasswordEncoder(passwordEncoder());
-        testProvider.setUserDetailsService(testUsers());
 
         // Return a provider manager with test provider only
         return new ProviderManager(testProvider);
@@ -89,35 +85,6 @@ public class SecurityConfig extends VaadinWebSecurity {
                 )
                 .authenticationManager(authenticationManager()) // Use our combined authentication manager
                 .build();
-    }
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        logger.info(">>> Configuring security chain (4/4) basic authentication for vaadin");
-        // Configure for all non-API endpoints (Vaadin UI)
-
-
-        // Set the login view
-        setLoginView(http, LoginView.class);
-
-        http.authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(new AntPathRequestMatcher("/")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/" + LoginView.ROUTE)).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/VAADIN/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/ui/icons/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/ui/images/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/frontend/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/frontend-es5/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/frontend-es6/**")).permitAll()
-//                .requestMatchers(new AntPathRequestMatcher("/oauth2/**")).permitAll()
-//                .requestMatchers(new AntPathRequestMatcher("/login/oauth2/**")).permitAll()
-        );
-
-        // Call the parent configuration to handle Vaadin-specific security
-        super.configure(http);
-
-        // Note: No form login configured - OIDC authentication only
-        // Test users are available for API testing via Basic Auth
     }
 
     /**
@@ -193,4 +160,34 @@ public class SecurityConfig extends VaadinWebSecurity {
 
         return new InMemoryUserDetailsManager(adminUser, user, admin1, user1, user2, user3);
     }
+
+//    @Bean
+//    public SecurityFilterChain vaadinSecurityFilterChain(HttpSecurity http) throws Exception {
+//        logger.info(">>> Configuring security chain (4/4) basic authentication for vaadin");
+//        // Configure for all non-API endpoints (Vaadin UI)
+//
+//
+//        // Set the login view
+//        http.with(vaadin(), vaadin -> vaadin.loginView("/login", "/"));
+////        setLoginView(http, LoginView.class);
+//
+//        http.authorizeHttpRequests(authorize -> authorize
+//                        .requestMatchers("/").permitAll()
+//                        .requestMatchers("/" + LoginView.ROUTE).permitAll()
+//                        .requestMatchers("/VAADIN/**").permitAll()
+//                        .requestMatchers("/ui/icons/**").permitAll()
+//                        .requestMatchers("/ui/images/**").permitAll()
+//                        .requestMatchers("/frontend/**").permitAll()
+//                        .requestMatchers("/frontend-es5/**").permitAll()
+//                        .requestMatchers("/frontend-es6/**").permitAll()
+////                .requestMatchers("/oauth2/**").permitAll()
+////                .requestMatchers("/login/oauth2/**").permitAll()
+//        );
+//
+//        // Call the parent configuration to handle Vaadin-specific security
+//        return http.build();
+//
+//        // Note: No form login configured - OIDC authentication only
+//        // Test users are available for API testing via Basic Auth
+//    }
 }

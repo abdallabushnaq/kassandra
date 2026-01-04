@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Proxy;
+import org.hibernate.annotations.BatchSize;
 
 import java.awt.*;
 import java.time.LocalDate;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
+@BatchSize(size = 10)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserDAO extends AbstractTimeAwareDAO {
 

@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Proxy;
 
 @Entity
 @Table(name = "off_days")
@@ -30,7 +29,6 @@ import org.hibernate.annotations.Proxy;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
 public class OffDayDAO extends AbstractDateRangeDAO {
 
     @Id

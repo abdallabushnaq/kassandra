@@ -17,10 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
@@ -48,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -64,7 +61,6 @@ public class InsightsView extends Main implements AfterNavigationObserver {
 
     @Autowired
     protected Context context;
-    //    private final        FeatureApi featureApi;
     private   Button  generateInsightsButton;
     private   Button  generateQuickSummaryButton;
     private   Div     insightsContent;
@@ -73,10 +69,7 @@ public class InsightsView extends Main implements AfterNavigationObserver {
     final         Logger                  logger = LoggerFactory.getLogger(this.getClass());
     private       VerticalLayout          mainLayout;
     private final LocalDateTime           now;
-    //    @Autowired
-//    ObjectMapper objectMapper;
     private final H2                      pageTitle;
-    //    private final ProductApi              productApi;
     private       TextField               questionField;
     private final SprintApi               sprintApi;
     // AI Insights Components
@@ -269,8 +262,11 @@ public class InsightsView extends Main implements AfterNavigationObserver {
                     result = sprintInsightsGenerator.generateFocusedInsights(jsonString, question.trim());
                     logger.info("Focused insights generation completed successfully. Result length: {}", result != null ? result.length() : 0);
                 } else {
-                    result = sprintInsightsGenerator.generateInsights(jsonString);
-                    logger.info("Comprehensive insights generation completed successfully. Result length: {}", result != null ? result.length() : 0);
+//todo re-introduce
+
+//                    result = sprintInsightsGenerator.generateInsights(jsonString);
+//                    logger.info("Comprehensive insights generation completed successfully. Result length: {}", result != null ? result.length() : 0);
+                    result = null;
                 }
                 return result;
             } catch (Exception e) {
@@ -297,16 +293,12 @@ public class InsightsView extends Main implements AfterNavigationObserver {
     }
 
     private void generateJson() {
-        try {
-            // Create a separate ObjectMapper that respects @JsonIgnore annotations for AI insights
-            ObjectMapper aiObjectMapper = new ObjectMapper();
-            aiObjectMapper.registerModule(new JavaTimeModule());
-            aiObjectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            jsonString = aiObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(sprintStatistics);
-        } catch (JsonProcessingException e) {
-            logger.error("Error generating JSON for sprints", e);
-            throw new RuntimeException(e);
-        }
+        // Create a separate ObjectMapper that respects @JsonIgnore annotations for AI insights
+        JsonMapper jsonMapper = new JsonMapper();
+        //todo do we need this?
+//        jsonMapper.registerModule(new JavaTimeModule());
+//        jsonMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        jsonString = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(sprintStatistics);
         logger.info("Generated JSON for {} sprints", sprintStatistics.size());
     }
 

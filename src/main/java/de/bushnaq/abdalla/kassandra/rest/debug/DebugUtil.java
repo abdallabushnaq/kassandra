@@ -17,19 +17,19 @@
 
 package de.bushnaq.abdalla.kassandra.rest.debug;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 @Component
 public class DebugUtil {
     public static boolean DEBUG = false;
     @Autowired
-    ObjectMapper objectMapper;
+    JsonMapper jsonMapper;
 
     public void logJson(Object body) {
         try {
-            String jsonString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(body);
+            String jsonString = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(body);
             System.out.format("JSON: %s\n", jsonString);
         } catch (Exception e) {
             throw new RuntimeException(e);

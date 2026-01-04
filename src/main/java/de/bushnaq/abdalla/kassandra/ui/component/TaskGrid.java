@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -43,6 +42,7 @@ import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -82,10 +82,10 @@ public class TaskGrid extends TreeGrid<Task> {
     @Getter
     @Setter
     private             boolean              isEditMode                  = false;// Edit mode state management
+    private final       JsonMapper           jsonMapper;
     private final       Locale               locale;
     @Getter
     private final       Set<Task>            modifiedTasks               = new HashSet<>();
-    private final       ObjectMapper         objectMapper;
     @Setter
     private             Consumer<Task>       onPersistTask;
     @Setter
@@ -95,13 +95,13 @@ public class TaskGrid extends TreeGrid<Task> {
     private             List<Task>           taskOrder                   = new ArrayList<>(); // Track current order in memory
 
 
-    public TaskGrid(Clock clock, Locale locale, ObjectMapper objectMapper) {
+    public TaskGrid(Clock clock, Locale locale, JsonMapper jsonMapper) {
         this.clock            = clock;
         this.locale           = locale;
-        this.objectMapper     = objectMapper;
+        this.jsonMapper       = jsonMapper;
         this.clipboardHandler = new TaskClipboardHandler(
                 this,
-                objectMapper
+                jsonMapper
         );
 
         setSelectionMode(SelectionMode.SINGLE);
@@ -239,7 +239,7 @@ public class TaskGrid extends TreeGrid<Task> {
 
         //Key
         {
-//            addColumn(Task::getKey).setHeader("Key").setAutoWidth(true);
+//            addColumn(Task::getKey).setHeader("Key").setAutoWidth(true;
             Column<Task> key = addColumn(new ComponentRenderer<>((Task task) -> {
                 Div div = new Div();
                 div.setText(task.getKey());
@@ -1175,7 +1175,7 @@ public class TaskGrid extends TreeGrid<Task> {
 
         // Register server-side event listeners for indent/outdent
         getElement().addEventListener("indent-task", event -> {
-            String taskIdStr = event.getEventData().getString("event.detail.taskId");
+            String taskIdStr = event.getEventData().get("event.detail.taskId").asText();
             if (taskIdStr != null && !taskIdStr.isEmpty()) {
                 try {
                     Long taskId = Long.parseLong(taskIdStr);
@@ -1193,7 +1193,7 @@ public class TaskGrid extends TreeGrid<Task> {
         }).addEventData("event.detail.taskId");
 
         getElement().addEventListener("outdent-task", event -> {
-            String taskIdStr = event.getEventData().getString("event.detail.taskId");
+            String taskIdStr = event.getEventData().get("event.detail.taskId").asText();
             if (taskIdStr != null && !taskIdStr.isEmpty()) {
                 try {
                     Long taskId = Long.parseLong(taskIdStr);
@@ -1233,7 +1233,7 @@ public class TaskGrid extends TreeGrid<Task> {
 
         // Register server-side event listener for paste (Ctrl+V)
         getElement().addEventListener("paste-task", event -> {
-            String clipboardData = event.getEventData().getString("event.detail.clipboardData");
+            String clipboardData = event.getEventData().get("event.detail.clipboardData").asText();
             if (clipboardData != null && !clipboardData.isEmpty() && !isEditMode) {
                 clipboardHandler.handlePaste(clipboardData);
             }

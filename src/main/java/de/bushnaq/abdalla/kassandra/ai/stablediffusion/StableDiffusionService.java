@@ -313,7 +313,7 @@ public class StableDiffusionService {
                     .timeout(Duration.ofSeconds(2))
                     .block();
             if (options != null) {
-                log.info("Stable Diffusion options: {}", options);
+//                log.info("Stable Diffusion options: {}", options);
             }
             return options;
         } catch (Exception e) {

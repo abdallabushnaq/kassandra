@@ -27,15 +27,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.HashSet;
 import java.util.List;
@@ -51,8 +54,9 @@ import java.util.Set;
 @ConditionalOnProperty(name = "spring.security.oauth2.client.registration.keycloak.client-id")
 public class OidcApiSecurityConfig {
 
+    @Autowired(required = false)
+    private JwtDecoder jwtDecoder;
     private final Logger logger = LoggerFactory.getLogger(OidcApiSecurityConfig.class);
-
     @Autowired
     private UserRoleService userRoleService;
 
@@ -75,15 +79,13 @@ public class OidcApiSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Configure authorization for API endpoints
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated())
+                        .requestMatchers("/api/**").authenticated())
                 // Configure both JWT token authentication AND HTTP Basic auth for API endpoints
-                .httpBasic() // Add HTTP Basic Authentication support
-                .and()
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt
-                                .jwtAuthenticationConverter(jwtAuthenticationConverter())
-                        )
-                );
+                .httpBasic(httpBasic -> {
+                }) // Add HTTP Basic Authentication support
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> {
+                }))
+                .authenticationManager(jwtAuthenticationManager());
 
         return http.build();
     }
@@ -128,5 +130,20 @@ public class OidcApiSecurityConfig {
             return authorities;
         });
         return jwtConverter;
+    }
+
+    /**
+     * Create an authentication manager that uses JWT authentication with our custom converter
+     */
+    @Bean(name = "jwtAuthenticationManager")
+    public AuthenticationManager jwtAuthenticationManager() {
+        if (jwtDecoder == null) {
+            logger.warn("JwtDecoder is null - JWT authentication will not work");
+            return new ProviderManager(java.util.Collections.emptyList());
+        }
+
+        JwtAuthenticationProvider jwtProvider = new JwtAuthenticationProvider(jwtDecoder);
+        jwtProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter());
+        return new ProviderManager(jwtProvider);
     }
 }

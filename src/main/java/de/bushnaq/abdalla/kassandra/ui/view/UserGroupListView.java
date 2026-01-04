@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -37,6 +36,7 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserGroupDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.RolesAllowed;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
@@ -58,7 +58,7 @@ public class UserGroupListView extends AbstractMainGrid<UserGroup> implements Af
     private final       UserApi      userApi;
     private final       UserGroupApi userGroupApi;
 
-    public UserGroupListView(UserGroupApi userGroupApi, UserApi userApi, Clock clock, AiFilterService aiFilterService, ObjectMapper mapper) {
+    public UserGroupListView(UserGroupApi userGroupApi, UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper) {
         super(clock);
         this.userGroupApi = userGroupApi;
         this.userApi      = userApi;

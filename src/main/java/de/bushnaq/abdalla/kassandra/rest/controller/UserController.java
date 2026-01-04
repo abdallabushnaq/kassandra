@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import de.bushnaq.abdalla.kassandra.dao.UserAvatarDAO;
 import de.bushnaq.abdalla.kassandra.dao.UserAvatarGenerationDataDAO;
 import de.bushnaq.abdalla.kassandra.dao.UserDAO;
@@ -34,6 +33,7 @@ import de.bushnaq.abdalla.kassandra.service.UserRoleService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.openqa.selenium.json.JsonException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -96,7 +96,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<UserDAO> get(@PathVariable Long id) throws JsonProcessingException {
+    public ResponseEntity<UserDAO> get(@PathVariable Long id) throws JsonException {
         return userRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -104,7 +104,7 @@ public class UserController {
 
     @GetMapping("/sprint/{sprintId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public List<UserDAO> getAll(@PathVariable Long sprintId) throws JsonProcessingException {
+    public List<UserDAO> getAll(@PathVariable Long sprintId) throws JsonException {
         return userRepository.findBySprintId(sprintId);
     }
 

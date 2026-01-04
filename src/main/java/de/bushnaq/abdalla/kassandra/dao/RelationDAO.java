@@ -22,7 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Proxy;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "relations")
@@ -31,7 +31,7 @@ import org.hibernate.annotations.Proxy;
 @NoArgsConstructor
 //@ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-@Proxy(lazy = false)
+@BatchSize(size = 10)
 public class RelationDAO {
 
     @Id

@@ -23,7 +23,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
-import org.springframework.ai.ollama.api.OllamaOptions;
+import org.springframework.ai.ollama.api.OllamaChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -116,7 +116,7 @@ public class SprintInsightsGenerator {
     public SprintInsightsGenerator(OllamaChatModel defaultChatModel) {
         // Create a dedicated chat model for deep thinking analysis with extended timeout
         OllamaApi ollamaApi = OllamaApi.builder().build();
-        this.chatModel = OllamaChatModel.builder().ollamaApi(ollamaApi).defaultOptions(OllamaOptions.builder().model(SPRINT_INSIGHTS_MODEL).temperature(0.9).build()).build();
+        this.chatModel = OllamaChatModel.builder().ollamaApi(ollamaApi).defaultOptions(OllamaChatOptions.builder().model(SPRINT_INSIGHTS_MODEL).temperature(0.9).build()).build();
     }
 
     /**
