@@ -21,16 +21,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 
 @Configuration
 public class RestClientConfig {
     @Bean
-    public RestTemplate restTemplate() {
+    public RestTemplate restTemplate(JsonMapper jsonMapper) {
         RestTemplate template = new RestTemplate();
+        // Replace default Jackson converter with one backed by our tools.jackson JsonMapper
+        template.getMessageConverters().removeIf(c -> c instanceof MappingJackson2HttpMessageConverter);
+        template.getMessageConverters().add(0, new ToolsJacksonHttpMessageConverter(jsonMapper));
         // Ensure support for byte[] responses (e.g., images)
         template.getMessageConverters().add(new ByteArrayHttpMessageConverter());
         template.setErrorHandler(new DefaultResponseErrorHandler() {

@@ -21,7 +21,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dao.RelationDAO;
 import de.bushnaq.abdalla.kassandra.dao.TaskDAO;
+import de.bushnaq.abdalla.kassandra.dao.UserDAO;
 import de.bushnaq.abdalla.kassandra.dto.Task;
+import de.bushnaq.abdalla.kassandra.dto.User;
 import org.junit.jupiter.api.*;
 import tools.jackson.databind.ext.javatime.deser.LocalDateTimeDeserializer;
 import tools.jackson.databind.ext.javatime.ser.LocalDateTimeSerializer;
@@ -35,13 +37,10 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
-//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-//@AutoConfigureMockMvc
-//@Transactional
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @TestMethodOrder(MethodOrderer.MethodName.class)
 public class SerializationTest {
-//    @Autowired
-//    JsonMapper jsonMapper;
 
 
     JsonMapper jsonMapper;
@@ -50,28 +49,28 @@ public class SerializationTest {
     public void deserializeColorBlack(TestInfo testInfo) throws Exception {
         String json  = "\"#FF000000\"";
         Color  color = jsonMapper.readValue(json, Color.class);
-        Assertions.assertEquals(new Color(0, 0, 0), color);
+        assertEquals(new Color(0, 0, 0), color);
     }
 
     @Test
     public void deserializeColorWhite(TestInfo testInfo) throws Exception {
         String json  = "\"#FFFFFFFF\"";
         Color  color = jsonMapper.readValue(json, Color.class);
-        Assertions.assertEquals(new Color(255, 255, 255), color);
+        assertEquals(new Color(255, 255, 255), color);
     }
 
     @Test
     public void deserializeLocalDateTime(TestInfo testInfo) throws Exception {
         String        json          = "\"2021-09-30T15:30:00\"";
         LocalDateTime localDateTime = jsonMapper.readValue(json, LocalDateTime.class);
-        Assertions.assertEquals(LocalDateTime.parse("2021-09-30T15:30:00"), localDateTime);
+        assertEquals(LocalDateTime.parse("2021-09-30T15:30:00"), localDateTime);
     }
 
     @Test
     public void deserializeOffsetDateTime(TestInfo testInfo) throws Exception {
         String         json           = "\"2021-09-30T15:30:00+01:00\"";
         OffsetDateTime offsetDateTime = jsonMapper.readValue(json, OffsetDateTime.class);
-        Assertions.assertEquals(OffsetDateTime.parse("2021-09-30T15:30:00+01:00"), offsetDateTime);
+        assertEquals(OffsetDateTime.parse("2021-09-30T15:30:00+01:00"), offsetDateTime);
     }
 
     @Test
@@ -118,13 +117,13 @@ public class SerializationTest {
         {
             LocalDateTime localDateTime = LocalDateTime.parse("2021-09-30T15:30:00");
             String        json          = jsonMapper.writeValueAsString(localDateTime);
-            Assertions.assertEquals("\"2021-09-30T15:30:00\"", json);
+            assertEquals("\"2021-09-30T15:30:00\"", json);
         }
         {
             LocalDateTime localDateTime = LocalDateTime.now();
             String        json1         = jsonMapper.writeValueAsString(localDateTime);
             String        json2         = jsonMapper.writeValueAsString(localDateTime.truncatedTo(ChronoUnit.SECONDS));
-            Assertions.assertEquals(json2, json1);
+            assertEquals(json2, json1);
         }
     }
 
@@ -133,7 +132,7 @@ public class SerializationTest {
         {
             OffsetDateTime offsetDateTime = OffsetDateTime.parse("2021-09-30T15:30:00+01:00");
             String         json           = jsonMapper.writeValueAsString(offsetDateTime);
-            Assertions.assertEquals("\"2021-09-30T15:30:00+01:00\"", json);
+            assertEquals("\"2021-09-30T15:30:00+01:00\"", json);
         }
         {
             OffsetDateTime offsetDateTime = OffsetDateTime.now();
@@ -141,6 +140,31 @@ public class SerializationTest {
             String         json2          = jsonMapper.writeValueAsString(offsetDateTime.truncatedTo(ChronoUnit.SECONDS));
             Assertions.assertNotEquals(json2, json1);
         }
+    }
+
+    @Test
+    public void userTest(TestInfo testInfo) throws Exception {
+        UserDAO u1 = new UserDAO();
+        u1.setId(1L);
+        u1.setName("test");
+        u1.setEmail("test");
+        u1.setColor(Color.RED);
+        u1.setFirstWorkingDay(LocalDateTime.now().toLocalDate());
+        u1.setRoles("USER,ADMIN");
+        String json = jsonMapper.writeValueAsString(u1);
+        User   user = jsonMapper.readValue(json, User.class);
+
+        assertEquals(u1.getId(), user.getId());
+        assertEquals(u1.getName(), user.getName());
+        assertEquals(u1.getEmail(), user.getEmail());
+        assertEquals(u1.getColor(), user.getColor());
+        assertEquals(u1.getFirstWorkingDay(), user.getFirstWorkingDay());
+        assertEquals(2, user.getRoleList().size());
+        {
+            String json2 = "{\"availabilities\":[{\"availability\":0.5,\"id\":1,\"start\":\"2023-05-05\"}],\"avatarHash\":\"bfedee7b59c89684\",\"color\":\"#FFFF0000\",\"email\":\"christopher.paul@kassandra.org\",\"firstWorkingDay\":\"2023-05-05\",\"id\":1,\"locations\":[{\"country\":\"de\",\"id\":1,\"start\":\"2023-05-05\",\"state\":\"nw\"}],\"name\":\"Christopher Paul\",\"roles\":\"ADMIN,USER\"}";
+            User   user2 = jsonMapper.readValue(json2, User.class);
+        }
+
     }
 
 }
