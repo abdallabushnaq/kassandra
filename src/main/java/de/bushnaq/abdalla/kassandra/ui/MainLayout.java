@@ -36,7 +36,6 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import com.vaadin.flow.theme.lumo.Lumo;
@@ -55,8 +54,7 @@ import java.util.Map;
 
 import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 
-@Layout
-@PermitAll // When security is enabled, allow all authenticated users
+@PermitAll // Only authenticated users can access views using this layout
 @CssImport("./styles/main-layout.css")
 //@JsModule("/tooltips.js")
 public final class MainLayout extends AppLayout implements BeforeEnterObserver {
@@ -108,12 +106,10 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         // Remove these lines that are causing the overflow
         this.getStyle().set("padding-left", "var(--lumo-space-m)");
         this.getStyle().set("padding-right", "var(--lumo-space-m)");
-
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-
         final String pathToMatch = event.getLocation().getPath();
         tabToPathMap.forEach((tab, path) -> {
             if (("/" + pathToMatch).equals(path)) {

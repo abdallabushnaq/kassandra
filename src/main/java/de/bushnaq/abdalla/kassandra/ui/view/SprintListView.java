@@ -55,7 +55,7 @@ import java.time.format.FormatStyle;
 import java.util.HashMap;
 import java.util.Map;
 
-@Route("sprint-list")
+@Route(value = "sprint-list", layout = MainLayout.class)
 @PageTitle("Sprint List Page")
 //@Menu(order = 1, icon = "vaadin:factory", title = "project List")
 @PermitAll // When security is enabled, allow all authenticated users

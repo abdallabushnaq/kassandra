@@ -48,7 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-@Route("backlog")
+@Route(value = "backlog", layout = MainLayout.class)
 @PageTitle("Backlog")
 @Menu(order = 3, icon = "vaadin:grid-v", title = "Backlog")
 @PermitAll

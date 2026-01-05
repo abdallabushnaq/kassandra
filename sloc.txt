@@ -254,7 +254,7 @@
 | kassandra.rest                 | ColorSerializer.java                                     | src      |        7 |        0 |       17 |       16 |       40 |
 | kassandra.rest                 | ErrorResponse.java                                       | src      |       28 |       30 |       38 |      137 |      233 |
 | kassandra.rest                 | GlobalExceptionHandler.java                              | src      |       12 |        0 |       16 |       68 |       96 |
-| kassandra.rest                 | JacksonConfig.java                                       | src      |        5 |        0 |       17 |       32 |       54 |
+| kassandra.rest                 | JacksonConfig.java                                       | src      |        5 |        0 |       17 |       33 |       55 |
 | kassandra.rest                 | OffsetDateTimeDeserializer.java                          | src      |        5 |        0 |       17 |       20 |       42 |
 | kassandra.rest                 | OffsetDateTimeSerializer.java                            | src      |        6 |        0 |       17 |       19 |       42 |
 | kassandra.rest                 | RestClientConfig.java                                    | src      |        4 |        0 |       17 |       24 |       45 |
@@ -264,8 +264,8 @@
 | kassandra.security             | OAuth2ClientConfig.java                                  | src      |       13 |       18 |       18 |       39 |       88 |
 | kassandra.security             | OidcApiSecurityConfig.java                               | src      |       17 |       17 |       33 |      107 |      174 |
 | kassandra.security             | OidcSecurityConfig.java                                  | src      |       15 |       13 |       24 |       74 |      126 |
-| kassandra.security             | SecurityConfig.java                                      | src      |       17 |       20 |       48 |      121 |      206 |
-| kassandra.security             | SecurityUtils.java                                       | src      |       17 |       31 |       18 |       67 |      133 |
+| kassandra.security             | SecurityConfig.java                                      | src      |       24 |       25 |       24 |      151 |      224 |
+| kassandra.security             | SecurityUtils.java                                       | src      |       19 |       36 |       19 |       73 |      147 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.service              | AclSecurityService.java                                  | src      |       18 |       74 |       18 |       98 |      208 |
 | kassandra.service              | ProductAclService.java                                   | src      |       25 |       73 |       16 |      116 |      230 |
@@ -348,44 +348,44 @@
 | kassandra.ui.view.util         | VersionListViewTester.java                               | src      |       19 |       94 |       18 |       84 |      215 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.view              | ActiveSprints.java                                       | src      |       65 |       15 |       71 |      429 |      580 |
-| kassandra.ui.view              | ActiveSprintsTest.java                                   | src      |       24 |       10 |       30 |      109 |      173 |
+| kassandra.ui.view              | ActiveSprintsTest.java                                   | src      |       24 |       10 |       29 |      111 |      174 |
 | kassandra.ui.view              | AvailabilityListView.java                                | src      |       28 |       11 |       48 |      207 |      294 |
-| kassandra.ui.view              | AvailabilityListViewTest.java                            | src      |       15 |       80 |       26 |      100 |      221 |
+| kassandra.ui.view              | AvailabilityListViewTest.java                            | src      |       15 |       80 |       26 |      102 |      223 |
 | kassandra.ui.view              | Backlog.java                                             | src      |       65 |       15 |       69 |      426 |      575 |
 | kassandra.ui.view              | FeatureListView.java                                     | src      |       24 |        0 |       33 |      196 |      253 |
-| kassandra.ui.view              | FeatureListViewTest.java                                 | src      |       14 |       81 |       24 |      104 |      223 |
+| kassandra.ui.view              | FeatureListViewTest.java                                 | src      |       14 |       81 |       23 |      106 |      224 |
 | kassandra.ui.view              | GridRowReordering.java                                   | src      |       18 |        0 |        3 |       62 |       83 |
 | kassandra.ui.view              | GroupingMode.java                                        | src      |        6 |       12 |       16 |       12 |       46 |
 | kassandra.ui.view              | InsightsView.java                                        | src      |       58 |        0 |       46 |      342 |      446 |
 | kassandra.ui.view              | LocationListView.java                                    | src      |       35 |       19 |       68 |      234 |      356 |
-| kassandra.ui.view              | LocationListViewTest.java                                | src      |       13 |       74 |       26 |       98 |      211 |
-| kassandra.ui.view              | LoginView.java                                           | src      |       25 |       10 |       25 |      111 |      171 |
-| kassandra.ui.view              | MainView.java                                            | src      |        7 |        7 |       18 |       25 |       57 |
+| kassandra.ui.view              | LocationListViewTest.java                                | src      |       13 |       74 |       25 |      100 |      212 |
+| kassandra.ui.view              | LoginView.java                                           | src      |       22 |       11 |       26 |      105 |      164 |
+| kassandra.ui.view              | MainView.java                                            | src      |        7 |        7 |       18 |       26 |       58 |
 | kassandra.ui.view              | OffDayListView.java                                      | src      |       35 |       11 |       60 |      223 |      329 |
-| kassandra.ui.view              | OffDayListViewTest.java                                  | src      |       23 |       77 |       36 |      139 |      275 |
+| kassandra.ui.view              | OffDayListViewTest.java                                  | src      |       23 |       77 |       35 |      141 |      276 |
 | kassandra.ui.view              | ProductListView.java                                     | src      |       36 |        3 |       48 |      250 |      337 |
 | kassandra.ui.view              | ProductListViewTest.java                                 | src      |       35 |      119 |       24 |      218 |      396 |
 | kassandra.ui.view              | SprintListView.java                                      | src      |       35 |        0 |       37 |      266 |      338 |
-| kassandra.ui.view              | SprintListViewTest.java                                  | src      |       15 |       82 |       25 |      110 |      232 |
+| kassandra.ui.view              | SprintListViewTest.java                                  | src      |       15 |       82 |       24 |      112 |      233 |
 | kassandra.ui.view              | SprintQualityBoard.java                                  | src      |       50 |        0 |       47 |      370 |      467 |
-| kassandra.ui.view              | SprintQualityBoardTest.java                              | src      |       12 |        0 |       19 |      112 |      143 |
+| kassandra.ui.view              | SprintQualityBoardTest.java                              | src      |       12 |        0 |       18 |      114 |      144 |
 | kassandra.ui.view              | SprintStatistics.java                                    | src      |       20 |        4 |       26 |       97 |      147 |
 | kassandra.ui.view              | TaskListView.java                                        | src      |       91 |       39 |       79 |      508 |      717 |
-| kassandra.ui.view              | TaskListViewTest.java                                    | src      |        8 |       16 |       18 |       83 |      125 |
+| kassandra.ui.view              | TaskListViewTest.java                                    | src      |        8 |       16 |       17 |       85 |      126 |
 | kassandra.ui.view              | UserGroupListView.java                                   | src      |       29 |        0 |       27 |      157 |      213 |
-| kassandra.ui.view              | UserGroupListViewTest.java                               | src      |       17 |      104 |       16 |      112 |      249 |
+| kassandra.ui.view              | UserGroupListViewTest.java                               | src      |       17 |      104 |       16 |      114 |      251 |
 | kassandra.ui.view              | UserListView.java                                        | src      |       31 |        0 |       42 |      191 |      264 |
-| kassandra.ui.view              | UserListViewTest.java                                    | src      |       11 |       63 |       16 |       84 |      174 |
+| kassandra.ui.view              | UserListViewTest.java                                    | src      |       11 |       63 |       16 |       86 |      176 |
 | kassandra.ui.view              | UserProfileView.java                                     | src      |       42 |        6 |       70 |      310 |      428 |
-| kassandra.ui.view              | UserProfileViewTest.java                                 | src      |       11 |       30 |       21 |       64 |      126 |
+| kassandra.ui.view              | UserProfileViewTest.java                                 | src      |       11 |       30 |       20 |       66 |      127 |
 | kassandra.ui.view              | VersionListView.java                                     | src      |       31 |        3 |       73 |      203 |      310 |
-| kassandra.ui.view              | VersionListViewTest.java                                 | src      |       13 |       80 |       21 |       98 |      212 |
+| kassandra.ui.view              | VersionListViewTest.java                                 | src      |       13 |       80 |       20 |      100 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui                   | Demo.java                                                | src      |       16 |        3 |       79 |       91 |      189 |
 | kassandra.ui                   | GenerateScreenshots.java                                 | src      |       49 |       24 |       65 |      318 |      456 |
 | kassandra.ui                   | HtmlColor.java                                           | src      |        6 |        0 |       36 |       22 |       64 |
 | kassandra.ui                   | MainErrorHandler.java                                    | src      |        5 |        0 |       16 |       28 |       49 |
-| kassandra.ui                   | MainLayout.java                                          | src      |       62 |       17 |       39 |      257 |      375 |
+| kassandra.ui                   | MainLayout.java                                          | src      |       60 |       17 |       39 |      255 |      371 |
 | kassandra.ui                   | SprintStatus.java                                        | src      |        2 |        0 |       16 |        4 |       22 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.util                 | AbstractEntityGenerator.java                             | src      |      114 |       48 |       52 |      770 |      984 |
@@ -398,7 +398,7 @@
 | kassandra.util                 | RandomCase.java                                          | src      |        7 |        0 |       16 |       65 |       88 |
 | kassandra.util                 | TestInfoUtil.java                                        | src      |       15 |       86 |       16 |       51 |      168 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra                      | Application.java                                         | src      |        5 |        0 |       16 |       25 |       46 |
+| kassandra                      | Application.java                                         | src      |        5 |        0 |       17 |       25 |       47 |
 | kassandra                      | Context.java                                             | src      |        4 |        0 |       71 |       10 |       85 |
 | kassandra                      | ParameterOptions.java                                    | src      |        9 |        0 |       16 |       61 |       86 |
 | kassandra                      | ProjectHubParameterOptions.java                          | src      |        9 |        0 |       29 |      105 |      143 |
@@ -460,5 +460,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 42 package(s)                  | 417 file(s)                                              | java     |     9497 |     7084 |    12222 |    48335 |    77138 |
+| 42 package(s)                  | 417 file(s)                                              | java     |     9501 |     7095 |    12192 |    48389 |    77177 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

@@ -130,4 +130,18 @@ public class SecurityUtils {
         return authentication.getAuthorities().stream()
                 .anyMatch(grantedAuthority -> "ROLE_USER".equals(grantedAuthority.getAuthority()));
     }
+
+    /**
+     * Checks if the current user is logged in (authenticated).
+     *
+     * @return true if the user is authenticated, false otherwise
+     */
+    public static boolean isUserLoggedIn() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Check if authentication is null, anonymous, or not authenticated
+        return authentication != null &&
+                !(authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) &&
+                authentication.isAuthenticated();
+    }
 }

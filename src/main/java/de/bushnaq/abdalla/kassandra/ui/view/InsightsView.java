@@ -53,7 +53,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-@Route("insights")
+@Route(value = "insights", layout = MainLayout.class)
 @PageTitle("Insights Page")
 @Menu(order = 0, icon = "vaadin:lightbulb", title = "Insights")
 @PermitAll // When security is enabled, allow all authenticated users

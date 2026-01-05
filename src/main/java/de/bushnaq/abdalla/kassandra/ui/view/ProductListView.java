@@ -50,7 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Route("product-list")
+@Route(value = "product-list", layout = MainLayout.class)
 @PageTitle("Product List Page")
 @Menu(order = 1, icon = "vaadin:factory", title = "Products")
 @PermitAll

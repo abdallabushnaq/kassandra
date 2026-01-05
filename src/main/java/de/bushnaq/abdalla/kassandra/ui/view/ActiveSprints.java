@@ -42,7 +42,7 @@ import lombok.extern.log4j.Log4j2;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Route("active-sprints")
+@Route(value = "active-sprints", layout = MainLayout.class)
 @PageTitle("Active Sprints")
 @Menu(order = 4, icon = "vaadin:tasks", title = "Active Sprints")
 @PermitAll

@@ -42,7 +42,7 @@ import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 
-@Route("user-group-list")
+@Route(value = "user-group-list", layout = MainLayout.class)
 @PageTitle("User Group List Page")
 @RolesAllowed("ADMIN") // Only admins can access this view
 public class UserGroupListView extends AbstractMainGrid<UserGroup> implements AfterNavigationObserver {

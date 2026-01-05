@@ -17,9 +17,11 @@
 
 package de.bushnaq.abdalla.kassandra.security;
 
+import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -36,6 +38,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+
+import static com.vaadin.flow.spring.security.VaadinSecurityConfigurer.vaadin;
 
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
@@ -173,33 +177,48 @@ public class SecurityConfig {
         return new InMemoryUserDetailsManager(adminUser, user, admin1, user1, user2, user3);
     }
 
-//    @Bean
-//    public SecurityFilterChain vaadinSecurityFilterChain(HttpSecurity http) throws Exception {
-//        logger.info(">>> Configuring security chain (4/4) basic authentication for vaadin");
-//        // Configure for all non-API endpoints (Vaadin UI)
-//
-//
-//        // Set the login view
-//        http.with(vaadin(), vaadin -> vaadin.loginView("/login", "/"));
-////        setLoginView(http, LoginView.class);
-//
-//        http.authorizeHttpRequests(authorize -> authorize
-//                        .requestMatchers("/").permitAll()
-//                        .requestMatchers("/" + LoginView.ROUTE).permitAll()
-//                        .requestMatchers("/VAADIN/**").permitAll()
-//                        .requestMatchers("/ui/icons/**").permitAll()
-//                        .requestMatchers("/ui/images/**").permitAll()
-//                        .requestMatchers("/frontend/**").permitAll()
-//                        .requestMatchers("/frontend-es5/**").permitAll()
-//                        .requestMatchers("/frontend-es6/**").permitAll()
-////                .requestMatchers("/oauth2/**").permitAll()
-////                .requestMatchers("/login/oauth2/**").permitAll()
-//        );
-//
-//        // Call the parent configuration to handle Vaadin-specific security
-//        return http.build();
-//
-//        // Note: No form login configured - OIDC authentication only
-//        // Test users are available for API testing via Basic Auth
-//    }
+    /**
+     * Vaadin security filter chain for basic authentication.
+     * This is only active when OIDC is NOT configured (i.e., when OidcSecurityConfig is not loaded).
+     * When OIDC is configured, OidcSecurityConfig will provide the Vaadin security instead.
+     */
+    @Bean
+    @Order(4) // Lowest precedence - catch-all for Vaadin UI
+    @ConditionalOnMissingBean(name = "oidcSecurityFilterChain")
+    public SecurityFilterChain vaadinSecurityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
+        logger.info(">>> Configuring security chain (4/4) basic authentication for Vaadin");
+
+        // Set up Vaadin specific security configuration
+        http.with(vaadin(), vaadin -> vaadin.loginView("/login", "/"));
+
+        // Allow access to the login page and static resources without authentication
+        http.authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/").permitAll()
+                .requestMatchers("/" + LoginView.ROUTE).permitAll()
+                .requestMatchers("/VAADIN/**").permitAll()
+                .requestMatchers("/ui/icons/**").permitAll()
+                .requestMatchers("/ui/images/**").permitAll()
+                .requestMatchers("/frontend/**").permitAll()
+                .requestMatchers("/frontend-es5/**").permitAll()
+                .requestMatchers("/frontend-es6/**").permitAll()
+        );
+
+        // Configure form login for test users
+        http.formLogin(form -> form
+                .loginPage("/" + LoginView.ROUTE)
+                .defaultSuccessUrl("/ui/product-list", true)
+                .permitAll()
+        );
+
+        // Configure logout
+        http.logout(logout -> logout
+                .logoutSuccessUrl("/" + LoginView.ROUTE)
+                .permitAll()
+        );
+
+        // Use the authentication manager with test users
+        http.authenticationManager(authenticationManager);
+
+        return http.build();
+    }
 }

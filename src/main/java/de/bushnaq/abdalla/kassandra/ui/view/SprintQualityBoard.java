@@ -58,7 +58,7 @@ import java.util.function.Function;
 // Create a utility method for generating two-part cells
 
 
-@Route("sprint-quality-board")
+@Route(value = "sprint-quality-board", layout = MainLayout.class)
 @PageTitle("Sprint Quality Board")
 @PermitAll // When security is enabled, allow all authenticated users
 public class SprintQualityBoard extends Main implements AfterNavigationObserver {

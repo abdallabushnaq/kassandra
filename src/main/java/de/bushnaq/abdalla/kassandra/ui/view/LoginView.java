@@ -18,7 +18,11 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -32,13 +36,15 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
 
 
 /**
- * Login view that supports OIDC authentication only.
- * Form login has been removed - all authentication goes through OIDC provider.
+ * Login view that supports both OIDC and form-based authentication.
+ * When OIDC is configured, it shows the OIDC login button.
+ * When OIDC is not configured, it shows a standard login form.
  */
 @Route("login")
 @PageTitle("Login | Kassandra")
 @AnonymousAllowed
 public class LoginView extends VerticalLayout implements BeforeEnterObserver {
+    public static final String  FORM_LOGIN        = "form-login";
     public static final String  LOGIN_VIEW        = "login-view";
     // ID for OIDC login button used in tests
     public static final String  OIDC_LOGIN_BUTTON = "oidc-login-button";
@@ -69,7 +75,7 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         if (oidcEnabled) {
             centeringLayout.add(createOidcLoginButton());
         } else {
-            centeringLayout.add(createOidcNotConfiguredMessage());
+            centeringLayout.add(createFormLogin());
         }
 
         add(centeringLayout);
@@ -77,8 +83,28 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
-        // OIDC handles authentication errors through its own mechanisms
-        // No special handling needed here
+        // Handle authentication errors for both OIDC and form login
+        // Errors are handled by Spring Security and the LoginForm component
+    }
+
+    /**
+     * Creates a standard login form for username/password authentication
+     */
+    private Component createFormLogin() {
+        LoginForm loginForm = new LoginForm();
+        loginForm.setId(FORM_LOGIN);
+        loginForm.setAction("login");
+        loginForm.setForgotPasswordButtonVisible(false);
+
+        // Wrap in a card-like container
+        Div wrapper = new Div(loginForm);
+        wrapper.getStyle()
+                .set("background-color", "var(--lumo-base-color)")
+                .set("border-radius", "var(--lumo-border-radius-l)")
+                .set("box-shadow", "0 2px 10px var(--lumo-shade-20pct)")
+                .set("padding", "var(--lumo-space-l)");
+
+        return wrapper;
     }
 
     /**
@@ -126,39 +152,6 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         container.add(loginButton);
 
         // Wrap in a card-like container
-        Div wrapper = new Div(container);
-        wrapper.getStyle()
-                .set("background-color", "var(--lumo-base-color)")
-                .set("border-radius", "var(--lumo-border-radius-l)")
-                .set("box-shadow", "0 2px 10px var(--lumo-shade-20pct)")
-                .set("padding", "var(--lumo-space-l)");
-
-        return wrapper;
-    }
-
-    /**
-     * Creates a message when OIDC is not configured
-     */
-    private Component createOidcNotConfiguredMessage() {
-        VerticalLayout container = new VerticalLayout();
-        container.setMaxWidth("400px");
-        container.setAlignItems(Alignment.CENTER);
-        container.setPadding(true);
-        container.setSpacing(true);
-
-        H3 heading = new H3("⚠️ Authentication Not Configured");
-        heading.getStyle().set("color", "var(--lumo-error-color)");
-
-        Paragraph message = new Paragraph(
-                "OIDC authentication is not configured. " +
-                        "Please configure Keycloak settings in application.properties."
-        );
-        message.getStyle()
-                .set("text-align", "center")
-                .set("color", "var(--lumo-secondary-text-color)");
-
-        container.add(heading, message);
-
         Div wrapper = new Div(container);
         wrapper.getStyle()
                 .set("background-color", "var(--lumo-base-color)")

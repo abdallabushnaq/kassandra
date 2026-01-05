@@ -47,7 +47,7 @@ import java.time.format.FormatStyle;
 import java.util.HashMap;
 import java.util.Map;
 
-@Route("feature-list")
+@Route(value = "feature-list", layout = MainLayout.class)
 @PageTitle("Feature List Page")
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Restrict access to users with specific roles

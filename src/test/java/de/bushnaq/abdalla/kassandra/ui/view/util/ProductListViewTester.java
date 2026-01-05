@@ -312,7 +312,6 @@ public class ProductListViewTester extends AbstractViewTester {
 //            System.out.println("OIDC Login: Current URL after navigation: " + seleniumHandler.getCurrentUrl());
             // Check if the OIDC login button is present
 //            System.out.println("OIDC Login: Checking for OIDC login button with ID: " + LoginView.OIDC_LOGIN_BUTTON);
-            seleniumHandler.waitUntilBrowserClosed(0);
             if (seleniumHandler.isElementPresent(By.id(LoginView.OIDC_LOGIN_BUTTON))) {
 //                System.out.println("OIDC Login: OIDC login button found, clicking it now");
                 if (screenshotFileName != null) {

@@ -45,7 +45,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-@Route("version-list")
+@Route(value = "version-list", layout = MainLayout.class)
 @PageTitle("Version List Page")
 @PermitAll // When security is enabled, allow all authenticated users
 public class VersionListView extends AbstractMainGrid<Version> implements AfterNavigationObserver {

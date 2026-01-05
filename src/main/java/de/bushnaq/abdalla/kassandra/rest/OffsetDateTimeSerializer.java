@@ -26,7 +26,6 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Slf4j
-@Deprecated
 public class OffsetDateTimeSerializer extends ValueSerializer<OffsetDateTime> {
     //    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss XXX");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;

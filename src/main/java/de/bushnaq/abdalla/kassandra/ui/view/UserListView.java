@@ -43,7 +43,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.List;
 
-@Route("user-list")
+@Route(value = "user-list", layout = MainLayout.class)
 @PageTitle("User List Page")
 @RolesAllowed("ADMIN") // Only admins can access this view
 public class UserListView extends AbstractMainGrid<User> implements AfterNavigationObserver {
