@@ -35,14 +35,17 @@
     <description>kassandra</description>
 
     <properties>
-        <source.level>25</source.level>
-        <target.level>25</target.level>
+        <!--        <source.level>25</source.level>-->
+        <!--        <target.level>25</target.level>-->
+        <java.version>25</java.version>
         <file.encoding>utf-8</file.encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.libraray.path>${env.JAVA_HOME}\bin</java.libraray.path>
         <vaadin.version>25.0.2</vaadin.version>
         <flow.server.version>3.1.6</flow.server.version>
         <selenium.version>4.39.0</selenium.version>
+        <lombok.version>1.18.42</lombok.version>
+
     </properties>
 
     <dependencies>
@@ -158,31 +161,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
-        <!--        <dependency>-->
-        <!--            <groupId>com.fasterxml.jackson.datatype</groupId>-->
-        <!--            <artifactId>jackson-datatype-jsr310</artifactId>-->
-        <!--            <exclusions>-->
-        <!--                <exclusion>-->
-        <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-        <!--                    <artifactId>jackson-core</artifactId>-->
-        <!--                </exclusion>-->
-        <!--                <exclusion>-->
-        <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-        <!--                    <artifactId>jackson-databind</artifactId>-->
-        <!--                </exclusion>-->
-        <!--                <exclusion>-->
-        <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-        <!--                    <artifactId>jackson-annotations</artifactId>-->
-        <!--                </exclusion>-->
-        <!--            </exclusions>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.fasterxml.jackson.datatype</groupId>-->
-        <!--            <artifactId>jackson-datatype-hibernate6</artifactId>-->
-        <!--        </dependency>-->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -194,39 +176,11 @@
             <groupId>de.focus-shift</groupId>
             <artifactId>jollyday-core</artifactId>
             <version>1.8.0</version>
-            <!--            <exclusions>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-core</artifactId>-->
-            <!--                </exclusion>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-databind</artifactId>-->
-            <!--                </exclusion>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-annotations</artifactId>-->
-            <!--                </exclusion>-->
-            <!--            </exclusions>-->
         </dependency>
         <dependency>
             <groupId>de.focus-shift</groupId>
             <artifactId>jollyday-jackson</artifactId>
             <version>1.8.0</version>
-            <!--            <exclusions>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-core</artifactId>-->
-            <!--                </exclusion>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-databind</artifactId>-->
-            <!--                </exclusion>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-annotations</artifactId>-->
-            <!--                </exclusion>-->
-            <!--            </exclusions>-->
         </dependency>
         <dependency>
             <groupId>org.vaadin.addons.tatu</groupId>
@@ -301,24 +255,6 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>3.0.1</version>
-            <!--            <exclusions>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-core</artifactId>-->
-            <!--                </exclusion>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-databind</artifactId>-->
-            <!--                </exclusion>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-annotations</artifactId>-->
-            <!--                </exclusion>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.datatype</groupId>-->
-            <!--                    <artifactId>jackson-datatype-jsr310</artifactId>-->
-            <!--                </exclusion>-->
-            <!--            </exclusions>-->
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -378,24 +314,6 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-ollama</artifactId>
             <version>2.0.0-M1</version>
-            <!--            <exclusions>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-core</artifactId>-->
-            <!--                </exclusion>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-databind</artifactId>-->
-            <!--                </exclusion>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.core</groupId>-->
-            <!--                    <artifactId>jackson-annotations</artifactId>-->
-            <!--                </exclusion>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>com.fasterxml.jackson.datatype</groupId>-->
-            <!--                    <artifactId>jackson-datatype-jsr310</artifactId>-->
-            <!--                </exclusion>-->
-            <!--            </exclusions>-->
         </dependency>
 
     </dependencies>
@@ -446,19 +364,18 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.14.1</version>
                 <configuration>
-                    <source>${source.level}</source>
-                    <target>${target.level}</target>
+                    <release>${java.version}</release>
                     <encoding>${file.encoding}</encoding>
                     <compilerArgs>
                         <arg>-parameters</arg>
                     </compilerArgs>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>1.18.30</version>
-                        </path>
-                    </annotationProcessorPaths>
+                    <!--                    <annotationProcessorPaths>-->
+                    <!--                        <path>-->
+                    <!--                            <groupId>org.projectlombok</groupId>-->
+                    <!--                            <artifactId>lombok</artifactId>-->
+                    <!--                            <version>${lombok.version}</version>-->
+                    <!--                        </path>-->
+                    <!--                    </annotationProcessorPaths>-->
                 </configuration>
             </plugin>
             <plugin>
