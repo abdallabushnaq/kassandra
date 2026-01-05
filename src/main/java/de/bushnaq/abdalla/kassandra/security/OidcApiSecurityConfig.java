@@ -55,10 +55,12 @@ import java.util.Set;
 public class OidcApiSecurityConfig {
 
     @Autowired(required = false)
-    private JwtDecoder jwtDecoder;
-    private final Logger logger = LoggerFactory.getLogger(OidcApiSecurityConfig.class);
+    private       AuthenticationManager basicAuthManager; // Inject the basic auth manager from SecurityConfig
+    @Autowired(required = false)
+    private       JwtDecoder            jwtDecoder;
+    private final Logger                logger = LoggerFactory.getLogger(OidcApiSecurityConfig.class);
     @Autowired
-    private UserRoleService userRoleService;
+    private       UserRoleService       userRoleService;
 
     /**
      * Configures Spring Security for REST API endpoints.
@@ -68,6 +70,29 @@ public class OidcApiSecurityConfig {
     @Order(1) // Higher precedence than the Vaadin security filter chain
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         logger.info(">>> Configuring security chain (1/4) JWT security for REST API endpoints");
+
+        // Create a composite authentication manager that supports both JWT and Basic Auth
+        AuthenticationManager compositeAuthManager;
+        if (basicAuthManager != null && jwtDecoder != null) {
+            // Combine JWT and Basic Auth authentication providers
+            JwtAuthenticationProvider jwtProvider = new JwtAuthenticationProvider(jwtDecoder);
+            jwtProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter());
+
+            // Create a provider manager with both providers
+            compositeAuthManager = new ProviderManager(
+                    java.util.Arrays.asList(
+                            jwtProvider,
+                            ((ProviderManager) basicAuthManager).getProviders().get(0)
+                    )
+            );
+        } else if (jwtDecoder != null) {
+            compositeAuthManager = jwtAuthenticationManager();
+        } else if (basicAuthManager != null) {
+            compositeAuthManager = basicAuthManager;
+        } else {
+            logger.warn("No authentication providers available!");
+            compositeAuthManager = new ProviderManager(java.util.Collections.emptyList());
+        }
 
         // Configure security for REST API endpoints
         http
@@ -85,7 +110,7 @@ public class OidcApiSecurityConfig {
                 }) // Add HTTP Basic Authentication support
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> {
                 }))
-                .authenticationManager(jwtAuthenticationManager());
+                .authenticationManager(compositeAuthManager);
 
         return http.build();
     }

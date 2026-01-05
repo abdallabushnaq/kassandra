@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -52,8 +53,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
                 "spring.security.basic.enabled=false"// Disable basic authentication for these tests
         }
 )
+@AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
-//@Transactional
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired

@@ -1,3 +1,5 @@
+@import url('vaadin-dialog-overlay.css');
+@import url('vaadin-grid-sorter.css');
 /* Add your styles here for elements not in the shadow dom*/
 
 /*******************/
@@ -39,8 +41,6 @@
 /*******************/
 
 /* Default theme (light) */
-@import url('./components/vaadin-dialog-overlay.css');
-@import url('./components/vaadin-grid-sorter.css');
 
 /* Calendar component colors - light theme */
 body {

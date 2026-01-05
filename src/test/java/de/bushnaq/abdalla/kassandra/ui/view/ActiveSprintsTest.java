@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -54,8 +55,8 @@ import java.time.LocalDateTime;
                 "spring.security.basic.enabled=false"// Disable basic authentication for these tests
         }
 )
+@AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
-//@Transactional
 @Slf4j
 public class ActiveSprintsTest extends AbstractKeycloakUiTestUtil {
 

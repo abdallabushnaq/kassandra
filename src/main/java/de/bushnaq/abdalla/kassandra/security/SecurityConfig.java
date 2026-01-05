@@ -45,14 +45,15 @@ public class SecurityConfig {
     public static final String TEST_PASSWORD = "test-password";
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    /**
+     * Creates the global authentication manager.
+     * This is critical for @WithMockUser in tests to work properly in Spring Security 7.
+     * The authentication manager must be exposed as a bean to be available for test security context.
+     */
     @Bean
-    public AuthenticationManager authenticationManager() {
-        // Create authentication provider for the test users only
-        DaoAuthenticationProvider testProvider = new DaoAuthenticationProvider(testUsers());
-        testProvider.setPasswordEncoder(passwordEncoder());
-
-        // Return a provider manager with test provider only
-        return new ProviderManager(testProvider);
+    public AuthenticationManager authenticationManager(DaoAuthenticationProvider daoAuthenticationProvider) {
+        // Return a provider manager with the DAO authentication provider
+        return new ProviderManager(daoAuthenticationProvider);
     }
 
     /**
@@ -61,7 +62,7 @@ public class SecurityConfig {
      */
     @Bean
     @Order(2) // Lower precedence than H2 console but higher than Vaadin
-    public SecurityFilterChain basicAuthApiSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain basicAuthApiSecurityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
         logger.info(">>> Configuring security chain (3/4) basic authentication for REST API endpoints");
         return http
                 .securityMatcher("/api/**") // Apply this configuration only to API endpoints
@@ -83,8 +84,19 @@ public class SecurityConfig {
                             response.getWriter().write("Access denied");
                         })
                 )
-                .authenticationManager(authenticationManager()) // Use our combined authentication manager
+                .authenticationManager(authenticationManager) // Use the injected authentication manager
                 .build();
+    }
+
+    /**
+     * Creates an authentication provider for test users.
+     * This is a separate bean so it can be used by multiple authentication managers.
+     */
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(testUsers());
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
 
     /**
