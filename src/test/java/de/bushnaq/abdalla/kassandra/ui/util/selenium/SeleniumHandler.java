@@ -237,9 +237,23 @@ class SeleniumHandler {
     }
 
     public WebElement findDialogOverlayElement(String dialogId) {
-        WebElement    rootHost   = getDriver().findElement(By.id(dialogId));
-        SearchContext shadowRoot = rootHost.getShadowRoot();
-        return shadowRoot.findElement(By.id("overlay"));
+        // Step 1: Find the dialog element
+        WebElement dialog = getDriver().findElement(By.id(dialogId));
+
+        // Step 2: Access the dialog's shadow root
+        SearchContext dialogShadowRoot = dialog.getShadowRoot();
+
+        // Step 3: Find the vaadin-dialog-overlay element inside the dialog's shadow root
+        WebElement vaadinDialogOverlay = dialogShadowRoot.findElement(By.cssSelector("vaadin-dialog-overlay"));
+
+        // Step 4: Access the vaadin-dialog-overlay's shadow root
+        SearchContext overlayShadowRoot = vaadinDialogOverlay.getShadowRoot();
+
+        // Step 5: Find the div with part="overlay" inside the overlay's shadow root
+        WebElement overlayDiv = overlayShadowRoot.findElement(By.cssSelector("div[part='overlay']"));
+
+        log.trace("Found dialog overlay div for dialog: {}", dialogId);
+        return overlayDiv;
     }
 
     public WebElement findElement(By by) {
