@@ -172,8 +172,12 @@ class SeleniumHandler {
     }
 
     public void ensureIsInList(String id, String userName) {
-        waitUntil(ExpectedConditions.elementToBeClickable(By.id(id + userName)));
+        log.trace("===================================================================");
+        log.trace("Trying to find Element with ID: " + id + userName + " is in grid");
+//        waitUntil(ExpectedConditions.elementToBeClickable(By.id(id + userName)));
+        waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(id + userName)));
         log.trace("Element with ID: " + id + userName + " is in grid");
+        log.trace("===================================================================");
     }
 
     public void ensureIsNotInList(String id, String name) {
@@ -498,43 +502,11 @@ class SeleniumHandler {
      * @return the error message text, or null if no error message is present after waiting
      */
     public String getFieldErrorMessage(String fieldId) {
-        pushWaitDuration(Duration.ofSeconds(3));
+        WebElement fieldElement = findElement(By.id(fieldId));
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(fieldId)));
-
-        // Wait for the field to become invalid (with a timeout)
-        try {
-            // Use waitUntil with a custom condition to wait for field to become invalid and have an error message
-            waitUntil(driver -> {
-                Boolean isInvalid = (Boolean) executeJavaScript(
-                        "var field = document.getElementById('" + fieldId + "');" +//
-                                "return field && field.invalid;");
-
-                if (Boolean.TRUE.equals(isInvalid)) {
-                    // Now check if the error message element exists
-                    String errorMsg = (String) executeJavaScript(//
-                            "var field = document.getElementById('" + fieldId + "');" +//
-                                    "var errorElement = field.querySelector('[slot=\"error-message\"]');" +//
-                                    "return errorElement ? errorElement.textContent : null;");
-
-                    return errorMsg != null && !errorMsg.isEmpty();
-                }
-                return false;
-            });
-        } catch (org.openqa.selenium.TimeoutException e) {
-            log.warn("Timed out waiting for error message on field: {}", fieldId);
-            // We'll continue and try to get whatever message might be there
-        }
-        popWaitDuration();
-        // Now that we've waited, get the actual error message
-        String script =
-                "var field = document.getElementById('" + fieldId + "');" +//
-                        "if (field && field.invalid) {" +//
-                        "  var errorElement = field.querySelector('[slot=\"error-message\"]');" +//
-                        "  return errorElement ? errorElement.textContent : null;" +//
-                        "}" +//
-                        "return null;";
-
-        return (String) executeJavaScript(script);
+        waitUntil(ExpectedConditions.attributeToBe(fieldElement, "invalid", "true"));
+        WebElement errorText = fieldElement.findElement(By.cssSelector("[slot=\"error-message\"]"));
+        return errorText.getText();
     }
 
     public String getIntegerField(String id) {

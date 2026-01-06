@@ -1109,7 +1109,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         // Wait for the dropdown overlay to become visible
         // The overlay element exists in the DOM even when closed
         // When opened, the 'opened' attribute is set to "true" (not an empty string)
-        waitUntil(ExpectedConditions.attributeToBe(By.cssSelector("vaadin-multi-select-combo-box-overlay"), "opened", "true"));
+        waitUntil(ExpectedConditions.attributeToBe(comboBoxElement, "opened", "true"));
 
         // Find dropdown items
         // Items are in the light DOM as children of vaadin-combo-box-scroller

@@ -31,7 +31,6 @@ import java.time.Clock;
 
 @SpringBootApplication
 @ComponentScan
-//@JsModule("@vaadin/vaadin-lumo-styles/presets/compact.js")
 @StyleSheet(Lumo.STYLESHEET)
 @StyleSheet("styles.css")
 @Push(value = PushMode.MANUAL) // Enable manual push for async UI updates (e.g., Gantt chart generation)

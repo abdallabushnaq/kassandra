@@ -56,10 +56,10 @@ public class ProductListViewTester extends AbstractViewTester {
         super(seleniumHandler, port);
     }
 
-    public void closeDialog(String cancelButton) {
+    public void closeDialog(String buttonId) {
         seleniumHandler.wait(200);
-        seleniumHandler.click(cancelButton);
-        seleniumHandler.waitForElementInvisibility(ProductDialog.PRODUCT_DIALOG);
+        seleniumHandler.click(buttonId);
+        seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
     }
 
     /**
@@ -132,7 +132,8 @@ public class ProductListViewTester extends AbstractViewTester {
     public void createProductWithDuplicateName(String name) {
         seleniumHandler.click(ProductListView.CREATE_PRODUCT_BUTTON);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, name);
-        closeDialog(ProductDialog.CONFIRM_BUTTON);
+        seleniumHandler.wait(200);
+        seleniumHandler.click(ProductDialog.CONFIRM_BUTTON);//do not use closeDialog to avoid waiting for invisibility
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(ProductDialog.PRODUCT_NAME_FIELD);
@@ -272,7 +273,8 @@ public class ProductListViewTester extends AbstractViewTester {
     public void editProductWithDuplicateNameFails(String name, String newName) {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX + name);
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, newName);
-        closeDialog(ProductDialog.CONFIRM_BUTTON);
+        seleniumHandler.wait(200);
+        seleniumHandler.click(ProductDialog.CONFIRM_BUTTON);//do not use closeDialog to avoid waiting for invisibility
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(ProductDialog.PRODUCT_NAME_FIELD);
@@ -382,40 +384,6 @@ public class ProductListViewTester extends AbstractViewTester {
     }
 
     /**
-     * Navigates to the ProductListView using Basic Authentication.
-     * <p>
-     * Opens the product list URL directly and waits for the page to load
-     * by checking for the presence of the page title element.
-     */
-//    public void switchToProductListView(String recordingFolderName, String testName) {
-//        switchToProductListView(null, recordingFolderName, testName);
-//    }
-//    public void switchToProductListView(String screenshotFileName, String recordingFolderName, String testName, String userName, String Password) {
-//
-//    }
-
-    /**
-     * Navigates to the ProductListView using Basic Authentication.
-     * <p>
-     * Opens the product list URL directly and waits for the page to load
-     * by checking for the presence of the page title element.
-     *
-     * @param screenshotFileName optional filename to save a screenshot of the login view
-     */
-//    public void switchToProductListView(String screenshotFileName, String recordingFolderName, String testName) {
-//        seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
-////        seleniumHandler.wait(120000);
-//        seleniumHandler.startRecording(recordingFolderName, testName);
-//        seleniumHandler.setLoginUser("admin-user");
-//        seleniumHandler.setLoginPassword("test-password");
-//        if (screenshotFileName != null) {
-//            seleniumHandler.takeElementScreenShot(seleniumHandler.findElement(By.id(LoginView.LOGIN_VIEW)), LoginView.LOGIN_VIEW, screenshotFileName);
-//        }
-//        seleniumHandler.loginSubmit();
-//        seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
-//    }
-
-    /**
      * Verifies that the ACL column displays the expected access information.
      * <p>
      * Checks the Access column in the grid for the specified product to verify
@@ -431,17 +399,8 @@ public class ProductListViewTester extends AbstractViewTester {
         seleniumHandler.waitForElementToBeLocated(productRowId);
 
         // Get the grid and find the row
-        WebElement aclCell = seleniumHandler.findElement(By.id(ProductListView.PRODUCT_GRID_ACCESS_PREFIX + name));
-//        WebElement productNameCell = seleniumHandler.findElement(By.id(productRowId));
-
-        // Find the parent row (tr element)
-//        WebElement row = productNameCell.findElement(By.xpath("./ancestor::tr"));
-
-        // Find the Access column cell (it's typically the 4th cell after Key, Avatar, Name)
-        // Adjust index based on your grid structure
-//        WebElement aclCell = row.findElements(By.tagName("td")).get(3); // 0=Key, 1=Avatar, 2=Name, 3=Access
-
-        String cellText = aclCell.getText();
+        WebElement aclCell  = seleniumHandler.findElement(By.id(ProductListView.PRODUCT_GRID_ACCESS_PREFIX + name));
+        String     cellText = aclCell.getText();
 
         if (expectedUserCount >= 0) {
             String userText = expectedUserCount == 1 ? "1 user" : expectedUserCount + " users";
