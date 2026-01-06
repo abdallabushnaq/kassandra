@@ -55,7 +55,7 @@ public class UserGroupListViewTester extends AbstractViewTester {
     public void closeDialog(String cancelButton) {
         seleniumHandler.wait(200);
         seleniumHandler.click(cancelButton);
-        seleniumHandler.waitForElementInvisibility(UserGroupDialog.GROUP_DIALOG);
+        seleniumHandler.waitForElementToBeClickable(UserGroupListView.GROUP_LIST_PAGE_TITLE);
     }
 
     /**

@@ -22,7 +22,6 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
-import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
@@ -55,7 +54,6 @@ import java.util.Map;
 import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 
 @PermitAll // Only authenticated users can access views using this layout
-@CssImport("./styles/main-layout.css")
 //@JsModule("/tooltips.js")
 public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 

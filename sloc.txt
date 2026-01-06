@@ -254,11 +254,12 @@
 | kassandra.rest                 | ColorSerializer.java                                     | src      |        7 |        0 |       17 |       16 |       40 |
 | kassandra.rest                 | ErrorResponse.java                                       | src      |       28 |       30 |       38 |      137 |      233 |
 | kassandra.rest                 | GlobalExceptionHandler.java                              | src      |       12 |        0 |       16 |       68 |       96 |
-| kassandra.rest                 | JacksonConfig.java                                       | src      |        5 |        0 |       17 |       33 |       55 |
-| kassandra.rest                 | OffsetDateTimeDeserializer.java                          | src      |        5 |        0 |       17 |       20 |       42 |
-| kassandra.rest                 | OffsetDateTimeSerializer.java                            | src      |        6 |        0 |       17 |       19 |       42 |
-| kassandra.rest                 | RestClientConfig.java                                    | src      |        4 |        0 |       17 |       24 |       45 |
-| kassandra.rest                 | SerializationTest.java                                   | src      |       18 |        0 |       24 |      104 |      146 |
+| kassandra.rest                 | JacksonConfig.java                                       | src      |        5 |        0 |       17 |       32 |       54 |
+| kassandra.rest                 | OffsetDateTimeDeserializer.java                          | src      |        5 |        0 |       17 |       19 |       41 |
+| kassandra.rest                 | OffsetDateTimeSerializer.java                            | src      |        6 |        0 |       17 |       18 |       41 |
+| kassandra.rest                 | RestClientConfig.java                                    | src      |        4 |        0 |       18 |       28 |       50 |
+| kassandra.rest                 | SerializationTest.java                                   | src      |       22 |        0 |       19 |      129 |      170 |
+| kassandra.rest                 | ToolsJacksonHttpMessageConverter.java                    | src      |        9 |        4 |       16 |       33 |       62 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.security             | CustomOidcUserService.java                               | src      |       13 |        7 |       24 |       43 |       87 |
 | kassandra.security             | OAuth2ClientConfig.java                                  | src      |       13 |       18 |       18 |       39 |       88 |
@@ -460,5 +461,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 42 package(s)                  | 417 file(s)                                              | java     |     9501 |     7095 |    12192 |    48389 |    77177 |
+| 42 package(s)                  | 418 file(s)                                              | java     |     9514 |     7099 |    12204 |    48448 |    77265 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

@@ -31,8 +31,8 @@ import java.time.Clock;
 
 @SpringBootApplication
 @ComponentScan
-@StyleSheet(Lumo.STYLESHEET)
-@StyleSheet("styles.css")
+@StyleSheet("context://" + Lumo.STYLESHEET)
+@StyleSheet("context://styles.css")
 @Push(value = PushMode.MANUAL) // Enable manual push for async UI updates (e.g., Gantt chart generation)
 public class Application implements AppShellConfigurator {
     @Bean

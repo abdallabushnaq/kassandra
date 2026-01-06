@@ -65,7 +65,7 @@ public class AvailabilityListViewTester extends AbstractViewTester {
     public void closeDialog(String button) {
         seleniumHandler.wait(200);
         seleniumHandler.click(button);
-        seleniumHandler.waitForElementInvisibility(AvailabilityDialog.AVAILABILITY_DIALOG);
+        seleniumHandler.waitForElementToBeClickable(AvailabilityListView.AVAILABILITY_LIST_PAGE_TITLE);
     }
 
     /**

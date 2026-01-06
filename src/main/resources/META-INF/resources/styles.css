@@ -1,5 +1,6 @@
-@import url('vaadin-dialog-overlay.css');
-@import url('vaadin-grid-sorter.css');
+@import url('css/vaadin-dialog-overlay.css');
+@import url('css/vaadin-grid-sorter.css');
+@import url('css/vaadin-grid.css');
 /* Add your styles here for elements not in the shadow dom*/
 
 /*******************/

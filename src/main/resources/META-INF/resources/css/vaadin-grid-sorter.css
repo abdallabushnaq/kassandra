@@ -1,0 +1,6 @@
+/* Grid sorter component customization */
+:host [part='indicators'] {
+  vertical-align: top;
+  align-self: flex-start !important;
+  margin-top: 3px; /* Fine-tune alignment with the column header text */
+}
