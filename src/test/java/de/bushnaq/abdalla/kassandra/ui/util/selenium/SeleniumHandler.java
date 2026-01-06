@@ -237,23 +237,13 @@ class SeleniumHandler {
     }
 
     public WebElement findDialogOverlayElement(String dialogId) {
-        WebElement    rootHost   = getDriver().findElement(By.tagName("vaadin-dialog-overlay"));
+        WebElement    rootHost   = getDriver().findElement(By.id(dialogId));
         SearchContext shadowRoot = rootHost.getShadowRoot();
-        return shadowRoot.findElement(By.cssSelector("div[part=\"overlay\"]"));
+        return shadowRoot.findElement(By.id("overlay"));
     }
 
     public WebElement findElement(By by) {
         return getDriver().findElement(by);
-    }
-
-    public List<WebElement> findElements(By by) {
-        return getDriver().findElements(by);
-    }
-
-    public WebElement findLoginOverlayElement(String dialogId) {
-        WebElement    rootHost   = getDriver().findElement(By.tagName("vaadin-login-form-wrapper"));
-        SearchContext shadowRoot = rootHost.getShadowRoot();
-        return shadowRoot.findElement(By.cssSelector("section[part=\"form\"]"));
     }
 
     public void get(String url) {
@@ -586,12 +576,6 @@ class SeleniumHandler {
     public static boolean isSeleniumHeadless() {
         return Boolean.parseBoolean(System.getProperty("selenium.headless", System.getenv("SELENIUM_HEADLESS")));
     }
-
-//    public void loginSubmit() {
-//        click(LoginView.LOGIN_VIEW_SUBMIT_BUTTON);
-//        log.trace("Clicked login submit button");
-//        waitForPageLoaded();
-//    }
 
     protected void moveMouseToElement(WebElement element) {
         //dummy implementation
@@ -935,23 +919,6 @@ class SeleniumHandler {
         typeText(i, userName);
     }
 
-//    public void setLoginPassword(String loginPassword) {
-//        WebElement passwordElement = findElement(By.id(LoginView.LOGIN_VIEW_PASSWORD));
-//        moveMouseToElement(passwordElement);  // Move mouse to password field before typing
-//        log.trace("sent loginPassword='{}' to element with name '{}}'%n", loginPassword, LoginView.LOGIN_VIEW_PASSWORD);
-//        // Humanized typing
-//        typeText(passwordElement, loginPassword);
-//    }
-
-//    public void setLoginUser(String loginUser) {
-//        waitForElementToBeLocated(LoginView.LOGIN_VIEW_USERNAME);
-//        WebElement usernameElement = findElement(By.id(LoginView.LOGIN_VIEW_USERNAME));
-//        moveMouseToElement(usernameElement);  // Move mouse to username field before typing
-//        log.trace("sent loginUser='{}' to element with id '{}'%n", loginUser, LoginView.LOGIN_VIEW_USERNAME);
-//        // Humanized typing
-//        typeText(usernameElement, loginUser);
-//    }
-
     public void setTextArea(String id, String userName) {
         WebElement e = findElement(By.id(id));
         WebElement i = e.findElement(By.tagName("textarea"));
@@ -1150,14 +1117,18 @@ class SeleniumHandler {
         }
     }
 
-    public void waitForElementInvisibility(String id) {
-        log.trace("Waiting for {} to become invisible.", id);
-        waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(id)));
-    }
-
     public void waitForElementToBeClickable(String id) {
         log.trace("Waiting for {} to become Clickable.", id);
-        waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
+        int iterations = 10;
+        do {
+            try {
+                waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
+                return;
+            } catch (StaleElementReferenceException e) {
+                log.warn(e.getMessage());
+            }
+        }
+        while (iterations-- > 0);
     }
 
     public void waitForElementToBeDisabled(String id) {
@@ -1259,17 +1230,6 @@ class SeleniumHandler {
         waitUntil(ExpectedConditions.urlContains(url));
         testForAnyError();
     }
-
-//    public void waitForUrl(String url, String errortitle) {
-//        waitUntil(ExpectedConditions.urlContains(url));
-//        testForError(errortitle);
-//    }
-
-//    public void waitForUrlNot(String url) {
-//        waitUntil(ExpectedConditions.not(ExpectedConditions.urlToBe(url)));
-//        //        waitUntil(ExpectedConditions.urlToBe(url));
-//        testForAnyError();
-//    }
 
     public void waitUntil(ExpectedCondition<?> condition) {
         wait.until(condition);

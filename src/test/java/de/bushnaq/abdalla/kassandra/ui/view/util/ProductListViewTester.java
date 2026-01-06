@@ -56,10 +56,15 @@ public class ProductListViewTester extends AbstractViewTester {
         super(seleniumHandler, port);
     }
 
+    public void closeConfirmDialog(String button) {
+        closeConfirmDialog(button, ProductListView.PRODUCT_LIST_PAGE_TITLE);
+    }
+
     public void closeDialog(String buttonId) {
         seleniumHandler.wait(200);
         seleniumHandler.click(buttonId);
         seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+        seleniumHandler.waitForPageLoaded();
     }
 
     /**

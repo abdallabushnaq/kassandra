@@ -46,6 +46,16 @@ public class ActiveSprintsTester extends AbstractViewTester {
         super(seleniumHandler, port);
     }
 
+    public void closeConfirmDialog(String button) {
+        closeConfirmDialog(button, ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
+    }
+
+    public void closeDialog(String button) {
+        seleniumHandler.wait(200);
+        seleniumHandler.click(button);
+        seleniumHandler.waitForElementToBeClickable(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
+    }
+
     /**
      * Navigates to the UserListView.
      * <p>

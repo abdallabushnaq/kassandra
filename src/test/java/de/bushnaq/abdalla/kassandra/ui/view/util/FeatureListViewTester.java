@@ -51,6 +51,10 @@ public class FeatureListViewTester extends AbstractViewTester {
         super(seleniumHandler, port);
     }
 
+    public void closeConfirmDialog(String button) {
+        closeConfirmDialog(button, FeatureListView.FEATURE_LIST_PAGE_TITLE);
+    }
+
     public void closeDialog(String cancelButton) {
         seleniumHandler.wait(200);
         seleniumHandler.click(cancelButton);

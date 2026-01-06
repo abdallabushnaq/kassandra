@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view.util;
 
-import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import lombok.Getter;
 
@@ -35,10 +34,10 @@ public abstract class AbstractViewTester {
         this.port            = port;
     }
 
-    public void closeConfirmDialog(String button) {
+    protected void closeConfirmDialog(String button, String waitForElementId) {
         seleniumHandler.wait(300);
         seleniumHandler.click(button);
-        seleniumHandler.waitForElementInvisibility(ConfirmDialog.CONFIRM_DIALOG);
+        seleniumHandler.waitForElementToBeClickable(waitForElementId);
     }
 
 

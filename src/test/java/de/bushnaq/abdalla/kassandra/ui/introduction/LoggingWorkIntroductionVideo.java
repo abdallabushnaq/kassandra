@@ -26,6 +26,7 @@ import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.ActiveSprints;
+import de.bushnaq.abdalla.kassandra.ui.view.util.ActiveSprintsTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -64,6 +65,8 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute        EXCITED     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
     public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.6f).withCfgWeight(.2f).withTemperature(1f);
     public static final String                   VIDEO_TITLE = "Logging Work";
+    @Autowired
+    private             ActiveSprintsTester      activeSprintsTester;
     private             String                   featureName;
     @Autowired
     private             ProductListViewTester    productListViewTester;
@@ -247,12 +250,12 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
 
             grace.narrate(NORMAL, "Now I'll click Save to record this worklog entry.");
 
-            seleniumHandler.click(WorklogDialog.SAVE_BUTTON);
+            activeSprintsTester.closeDialog(WorklogDialog.SAVE_BUTTON);
             grace.pauseIfSilent(500);
 
             // Wait for dialog to close
-            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
-            grace.pause(1500);
+//            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
+//            grace.pause(1500);
 
             grace.narrate(NORMAL, "The dialog closes and we're back at the scrum board.");
             grace.pause(1000);
@@ -311,10 +314,11 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             grace.pause(2000);
 
             grace.narrate(NORMAL, "And I'll save this worklog entry.");
-            seleniumHandler.click(WorklogDialog.SAVE_BUTTON);
-            grace.pauseIfSilent(500);
-            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
-            grace.pause(1500);
+            activeSprintsTester.closeDialog(WorklogDialog.SAVE_BUTTON);
+//            seleniumHandler.click(WorklogDialog.SAVE_BUTTON);
+//            grace.pauseIfSilent(500);
+//            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
+//            grace.pause(1500);
 
             grace.narrate(NORMAL, "Perfect! The task card still shows 2 hours remaining, accurately reflecting the reality. This is exactly how you track your daily progress in Kassandra - honestly and transparently.");
             grace.pause(2500);
@@ -362,10 +366,11 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
             grace.pauseIfSilent(1000);
             grace.pause(1500);
 
-            seleniumHandler.click(WorklogDialog.SAVE_BUTTON);
-            grace.pauseIfSilent(500);
-            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
-            grace.pause(1500);
+            activeSprintsTester.closeDialog(WorklogDialog.SAVE_BUTTON);
+//            seleniumHandler.click(WorklogDialog.SAVE_BUTTON);
+//            grace.pauseIfSilent(500);
+//            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
+//            grace.pause(1500);
 
             grace.narrate(NORMAL, "Now I'll move this completed task to the done lane by dragging it.");
             grace.pause(2000);

@@ -50,6 +50,10 @@ public class VersionListViewTester extends AbstractViewTester {
         super(seleniumHandler, port);
     }
 
+    public void closeConfirmDialog(String button) {
+        closeConfirmDialog(button, VersionListView.VERSION_LIST_PAGE_TITLE);
+    }
+
     public void closeDialog(String cancelButton) {
         seleniumHandler.wait(200);
         seleniumHandler.click(cancelButton);
@@ -120,7 +124,7 @@ public class VersionListViewTester extends AbstractViewTester {
     public void deleteVersionCancel(String name) {
         seleniumHandler.click(VersionListView.VERSION_GRID_DELETE_BUTTON_PREFIX + name);
         closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
-        seleniumHandler.waitForElementInvisibility(VersionDialog.VERSION_DIALOG);
+//        seleniumHandler.waitForElementInvisibility(VersionDialog.VERSION_DIALOG);
         seleniumHandler.ensureIsInList(VersionListView.VERSION_GRID_NAME_PREFIX, name);
     }
 
@@ -136,7 +140,7 @@ public class VersionListViewTester extends AbstractViewTester {
     public void deleteVersionConfirm(String name) {
         seleniumHandler.click(VersionListView.VERSION_GRID_DELETE_BUTTON_PREFIX + name);
         closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
-        seleniumHandler.waitForElementInvisibility(VersionDialog.VERSION_DIALOG);
+//        seleniumHandler.waitForElementInvisibility(VersionDialog.VERSION_DIALOG);
         seleniumHandler.ensureIsNotInList(VersionListView.VERSION_GRID_NAME_PREFIX, name);
     }
 

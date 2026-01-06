@@ -33,4 +33,6 @@
 # Failing Tests
 
 - BurndownTest
+- GenerateScreenshots (Address already in use: bind)
+- UserGroupListViewTest.testCreateWithMembers ("matchingItem" is null)
 

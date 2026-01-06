@@ -62,6 +62,10 @@ public class AvailabilityListViewTester extends AbstractViewTester {
         org.junit.jupiter.api.Assertions.assertTrue(condition, message);
     }
 
+    public void closeConfirmDialog(String button) {
+        closeConfirmDialog(button, AvailabilityListView.AVAILABILITY_LIST_PAGE_TITLE);
+    }
+
     public void closeDialog(String button) {
         seleniumHandler.wait(200);
         seleniumHandler.click(button);

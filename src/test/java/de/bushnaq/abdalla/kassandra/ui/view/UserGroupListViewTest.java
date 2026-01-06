@@ -17,21 +17,33 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.UserGroupListViewTester;
+import de.bushnaq.abdalla.kassandra.util.RandomCase;
+import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Integration test for the UserGroupListView UI component.
@@ -62,14 +74,39 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class UserGroupListViewTest extends AbstractKeycloakUiTestUtil {
+    private       User                     admin1;
     private final String                   description    = "Test group description";
     private final String                   name           = "UserGroup-Test";
     private final String                   newDescription = "Updated group description";
     private final String                   newName        = "NewUserGroup-Test";
     @Autowired
     private       HumanizedSeleniumHandler seleniumHandler;
+    private       User                     user1;
+    private       User                     user2;
+    private       User                     user3;
     @Autowired
     private       UserGroupListViewTester  userGroupListViewTester;
+
+    private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
+        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+        generateProductsIfNeeded(testInfo, randomCase);
+        admin1 = userApi.getByEmail("christopher.paul@kassandra.org");
+        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org");
+        user2  = userApi.getByEmail("claudine.fick@kassandra.org");
+        user3  = userApi.getByEmail("randy.asmus@kassandra.org");
+
+        setUser(roleAdmin);
+    }
+
+    private static List<RandomCase> listRandomCases() {
+        RandomCase[] randomCases = new RandomCase[]{//
+                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 13)//
+        };
+        return Arrays.stream(randomCases).toList();
+    }
 
     @BeforeEach
     public void setupTest(TestInfo testInfo) throws Exception {
@@ -114,11 +151,13 @@ public class UserGroupListViewTest extends AbstractKeycloakUiTestUtil {
      *
      * @throws Exception if any error occurs during the test
      */
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void testCreateWithMembers() throws Exception {
-        userGroupListViewTester.createUserGroupWithMembers(name, description, "Christopher Paul", "David Johnson");
-        userGroupListViewTester.verifyUserGroupHasMembers(name, 2);
+    public void testCreateWithMembers(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        userGroupListViewTester.createUserGroupWithMembers(name, description, user1.getName(), user2.getName());
+        userGroupListViewTester.verifyUserGroupHasMembers(name, 3);
     }
 
     /**
@@ -207,13 +246,15 @@ public class UserGroupListViewTest extends AbstractKeycloakUiTestUtil {
      *
      * @throws Exception if any error occurs during the test
      */
-    @Test
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void testEditMembers() throws Exception {
-        userGroupListViewTester.createUserGroupWithMembers(name, description, "Christopher Paul");
+    public void testEditMembers(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        userGroupListViewTester.createUserGroupWithMembers(name, description, user1.getName());
         userGroupListViewTester.verifyUserGroupHasMembers(name, 1);
 
-        userGroupListViewTester.editUserGroupAddMembers(name, "David Johnson", "Emily Wilson");
+        userGroupListViewTester.editUserGroupAddMembers(name, user2.getName(), user3.getName());
         userGroupListViewTester.verifyUserGroupHasMembers(name, 3);
     }
 

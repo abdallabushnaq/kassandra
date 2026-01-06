@@ -54,6 +54,10 @@ public class UserListViewTester extends AbstractViewTester {
         super(seleniumHandler, port);
     }
 
+    public void closeConfirmDialog(String button) {
+        closeConfirmDialog(button, UserListView.USER_LIST_PAGE_TITLE);
+    }
+
     public void closeDialog(String cancelButton) {
         seleniumHandler.wait(200);
         seleniumHandler.click(cancelButton);

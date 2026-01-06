@@ -1068,43 +1068,13 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     }
 
     public void setMultiSelectComboBoxValue(WebElement comboBoxElement, String[] text) {
-//        if (!isHumanize()) {
-//            super.setComboBoxValue(id, text);
-//            return;
-//        }
-//        waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
-//        WebElement comboBoxElement = findElement(By.id(id));
         WebElement inputElement = comboBoxElement.findElement(By.tagName("input"));
         waitForElementToBeInteractable(inputElement.getAttribute("id"));
         WebElement toggleButton = null;
-//        try {
-        // Find and click the toggle button to open the dropdown
-        // A human would just click the toggle button directly (no need to click input first)
-        // Vaadin combobox uses shadow DOM, so we use expandRootElementAndFindElement to access it
-//        try {
-        // Try to find toggle button by ID first
         toggleButton = expandRootElementAndFindElement(comboBoxElement, "#toggleButton");
-
-//            if (toggleButton == null) {
-//                // Fallback: try to find by part attribute
-//                toggleButton = expandRootElementAndFindElement(comboBoxElement, "[part='toggle-button']");
-//            }
-
-//            if (toggleButton != null)
-//            {
         moveMouseToElement(toggleButton);
         clickElement(toggleButton);
         log.trace("Clicked combobox toggle button via shadow DOM");
-//            } else {
-//                 Fallback: click on the input field if toggle button not found
-//                log.warn("Toggle button not found in shadow DOM, clicking input field to open dropdown");
-//                inputElement.click();
-//            }
-//        } catch (Exception ex) {
-//            // Fallback: click on the input field if shadow DOM access fails
-//            log.warn("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
-//            inputElement.click();
-//        }
 
         // Wait for the dropdown overlay to become visible
         // The overlay element exists in the DOM even when closed
@@ -1129,17 +1099,11 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 }
             }
 
-//            if (matchingItem != null) {
             // Move mouse to the item and click it
             moveMouseToElement(matchingItem);
             wait(100);
             matchingItem.click();
             log.trace("Clicked on dropdown item: {}", s);
-//            } else {
-//                log.warn("Could not find dropdown item with text: {}. Falling back to keyboard method.", s);
-//                 Fallback to typing method if item not found
-//                setComboBoxValueByTyping(inputElement, s);
-//            }
             // Wait for selection to be visible
             wait(200);
         }
@@ -1148,12 +1112,6 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             moveMouseToElement(toggleButton);
             clickElement(toggleButton);
         }
-//        }
-//        catch (Exception ex) {
-//            log.warn("Error during humanized combobox selection: {}. Falling back to keyboard method.", ex.getMessage());
-//            // Fallback to typing method on any error
-//            setComboBoxValueByTyping(inputElement, text);
-//        }
     }
 
     public void setTimePickerValue(WebElement comboBoxElement, String text) {
