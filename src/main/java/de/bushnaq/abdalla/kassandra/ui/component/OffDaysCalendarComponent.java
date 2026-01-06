@@ -95,7 +95,7 @@ public class OffDaysCalendarComponent extends VerticalLayout {
         this.dayClickHandler = dayClickHandler;
 
         // Set fixed width that won't resize
-        setWidth("1130px");
+        setWidth("1230px");
         setHeight("auto");
         setPadding(false);
         setSpacing(false);
