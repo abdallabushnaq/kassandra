@@ -391,6 +391,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
                 <configuration>
                     <argLine>
                         @{argLine}
@@ -607,7 +608,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
                 <configuration>
                     <linkXRef>true</linkXRef>
                     <showSuccess>true</showSuccess>
