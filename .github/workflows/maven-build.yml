@@ -105,20 +105,22 @@ jobs:
           PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
         continue-on-error: true  # Continue workflow even if tests fail to collect reports
 
-      # Upload coverage reports to Codecov
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+      # Generate JaCoCo XML report
+      - name: Generate coverage report
+        run: mvn jacoco:report site -DskipTests
+        if: always()
 
       # Upload coverage reports to Codecov
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
+        if: always()
         with:
-          file: ./target/site/jacoco-xml/jacoco.xml
+          files: ./target/site/jacoco/jacoco.xml
           flags: unittests
           fail_ci_if_error: false
           verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
 
       # Generate Maven site with test reports
       - name: Generate Site Reports
