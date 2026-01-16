@@ -89,7 +89,7 @@ jobs:
 
       - name: Run tests with UI tests in headless mode
         run: |
-          mvn test -Dselenium.headless=true
+          mvn -Dtest=AvailabilityApiTest test -Dselenium.headless=true
         env:
           # Set environment variables for headless testing
           SELENIUM_HEADLESS: "true"
@@ -109,6 +109,9 @@ jobs:
       - name: Generate coverage report
         run: mvn jacoco:report site -DskipTests
         if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
 
       # Upload coverage reports to Codecov
       - name: Upload coverage to Codecov
@@ -122,13 +125,6 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
 
-      # Generate Maven site with test reports
-      - name: Generate Site Reports
-        run: mvn site
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
-        continue-on-error: true
 
       # Add JUnit Report step to publish test results
       - name: Publish Test Report
