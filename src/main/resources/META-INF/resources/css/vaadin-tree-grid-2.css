@@ -1,0 +1,79 @@
+/* Styles for vaadin-tree-grid component */
+
+.tree-grid-wrapper {
+    padding-left: 24px;
+    padding-right: 24px;
+    box-sizing: border-box;
+    overflow-x: auto;
+}
+
+.tree-grid-panel-wrapper {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.tree-grid-panel {
+    background-color: var(--lumo-contrast-5pct);
+    border-radius: var(--lumo-border-radius-l) var(--lumo-border-radius-l) var(--lumo-border-radius-l) var(--lumo-border-radius-l);
+    padding: 8px;
+}
+
+vaadin-grid {
+  background: transparent;
+  border: 0;
+}
+
+vaadin-grid::part(row) {
+  padding-inline: 2px;
+  background: transparent;
+}
+
+vaadin-grid::part(body-row) {
+  padding-block: 2px;
+  filter: drop-shadow(0px 2px 2px hsla(0deg, 0%, 0%, 0.2));
+}
+
+vaadin-grid::part(last-header-row) {
+  padding-bottom: 2px;
+}
+
+vaadin-grid::part(header-row) {
+  filter: drop-shadow(0px 2px 2px hsla(0deg, 0%, 0%, 0.2));
+}
+
+vaadin-grid::part(body-cell first-column-cell) {
+  border-start-start-radius: 4px;
+  border-end-start-radius: 4px;
+}
+
+vaadin-grid::part(body-cell last-column-cell) {
+  border-start-end-radius: 4px;
+  border-end-end-radius: 4px;
+}
+
+vaadin-grid::part(first-header-row-cell first-column-cell) {
+  border-start-start-radius: 4px;
+}
+
+vaadin-grid::part(last-header-row-cell first-column-cell) {
+  border-end-start-radius: 4px;
+}
+
+vaadin-grid::part(first-header-row-cell last-column-cell) {
+  border-start-end-radius: 4px;
+}
+
+vaadin-grid::part(last-header-row-cell last-column-cell) {
+  border-end-end-radius: 4px;
+}
+
+/* Focus outlines */
+vaadin-grid::part(row)::before {
+  border-radius: 15px;
+}
+
+vaadin-grid::part(cell)::before {
+  border-radius: inherit;
+}

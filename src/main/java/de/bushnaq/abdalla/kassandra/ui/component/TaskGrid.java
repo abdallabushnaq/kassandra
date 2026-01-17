@@ -106,23 +106,18 @@ public class TaskGrid extends TreeGrid<Task> {
         );
 
         setSelectionMode(SelectionMode.SINGLE);
+        addClassName("task-grid"); // Add CSS class for styling
         addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
+
         createGridColumns();
         setupDragAndDrop();
         setupKeyboardNavigation();
         setupExpansionListeners();
 
-        // Add borders between columns
-        addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
-
         // Set height to auto instead of 100% to allow grid to take only needed space
         setHeight("auto");
         setAllRowsVisible(true);
 
-
-        // Add borders between columns
-        addThemeVariants(com.vaadin.flow.component.grid.GridVariant.LUMO_NO_BORDER, com.vaadin.flow.component.grid.GridVariant.LUMO_NO_ROW_BORDERS);
-        addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
 
     }
 
@@ -215,28 +210,28 @@ public class TaskGrid extends TreeGrid<Task> {
         }
 
         // Order Column with Up/Down arrows - visible only in edit mode
-        {
-            addComponentColumn((Task task) -> {
-                if (isEditMode) {
-                    // Create drag handle icon (burger menu)
-                    com.vaadin.flow.component.icon.Icon dragIcon = VaadinIcon.MENU.create();
-                    dragIcon.getStyle()
-                            .set("cursor", "grab")
-                            .set("color", "var(--lumo-secondary-text-color)");
-
-                    Div dragHandle = new Div(dragIcon);
-                    dragHandle.getStyle()
-                            .set("display", "flex")
-                            .set("align-items", "center")
-                            .set("justify-content", "center");
-                    dragHandle.setTitle("Drag to reorder");
-
-                    return dragHandle;
-                } else {
-                    return new Div(); // Empty div when not in edit mode
-                }
-            }).setHeader("").setAutoWidth(true).setWidth("50px");
-        }
+//        {
+//            addComponentColumn((Task task) -> {
+//                if (isEditMode) {
+//                    // Create drag handle icon (burger menu)
+//                    com.vaadin.flow.component.icon.Icon dragIcon = VaadinIcon.MENU.create();
+//                    dragIcon.getStyle()
+//                            .set("cursor", "grab")
+//                            .set("color", "var(--lumo-secondary-text-color)");
+//
+//                    Div dragHandle = new Div(dragIcon);
+//                    dragHandle.getStyle()
+//                            .set("display", "flex")
+//                            .set("align-items", "center")
+//                            .set("justify-content", "center");
+//                    dragHandle.setTitle("Drag to reorder");
+//
+//                    return dragHandle;
+//                } else {
+//                    return new Div(); // Empty div when not in edit mode
+//                }
+//            }).setHeader("").setAutoWidth(true).setWidth("50px");
+//        }
 
         //name - Editable for all task types, with icon on the left and key integrated
         {
@@ -246,8 +241,18 @@ public class TaskGrid extends TreeGrid<Task> {
                 container.setSpacing(false);
                 container.setPadding(false);
                 container.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+                container.setWidthFull(); // Ensure full width for proper border display
                 // Store task ID as element property for JavaScript access
                 container.getElement().setProperty("taskId", task.getId().toString());
+
+                // Apply colored left border (matches TaskCard styling)
+                // This creates a visual accent inside the cell
+                String userColor = getUserColor(task);
+                container.getStyle()
+                        .set("border-left", "4px solid " + userColor)
+                        .set("padding-left", "var(--lumo-space-xs)")
+                        .set("margin-left", "-var(--lumo-space-s)") // Compensate for cell padding to align border to edge
+                        .set("padding-right", "var(--lumo-space-xs)");
 
                 // Add icon based on task type
                 if (task.isMilestone()) {
@@ -673,6 +678,39 @@ public class TaskGrid extends TreeGrid<Task> {
     }
 
     /**
+     * Generate a consistent color based on user ID
+     * Matches the color generation logic in TaskCard
+     */
+    private String generateColorFromUserId(Long userId) {
+        if (userId == null) {
+            return "var(--lumo-contrast-30pct)";
+        }
+
+        // Use predefined colors for better visibility and distinction
+        // Same colors as in TaskCard for consistency
+        String[] colors = {
+                "#FF6B6B", // Red
+                "#4ECDC4", // Teal
+                "#45B7D1", // Blue
+                "#FFA07A", // Light Salmon
+                "#98D8C8", // Mint
+                "#FFD93D", // Yellow
+                "#6BCF7F", // Green
+                "#C77DFF", // Purple
+                "#FF8C42", // Orange
+                "#2EC4B6", // Turquoise
+                "#E63946", // Dark Red
+                "#A8DADC", // Light Blue
+                "#457B9D", // Steel Blue
+                "#F4A261", // Sandy Brown
+                "#E76F51", // Burnt Sienna
+        };
+
+        int index = (int) (userId % colors.length);
+        return colors[index];
+    }
+
+    /**
      * Get the dependency text for display (comma-separated orderIds of visible predecessors)
      */
     private String getDependencyText(Task task) {
@@ -689,6 +727,26 @@ public class TaskGrid extends TreeGrid<Task> {
                 })
                 .filter(orderId -> !orderId.isEmpty())
                 .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Get the color for the assigned user of a task
+     * Returns a color for the left border styling
+     */
+    private String getUserColor(Task task) {
+        if (task.getResourceId() != null && sprint != null) {
+            try {
+                User user = sprint.getuser(task.getResourceId());
+                if (user != null) {
+                    // Generate a consistent color based on user ID
+                    return generateColorFromUserId(user.getId());
+                }
+            } catch (Exception e) {
+                // User not found, fall through to default
+            }
+        }
+        // Default gray color for unassigned tasks or milestones/stories
+        return "var(--lumo-contrast-20pct)";
     }
 
     /**
@@ -1293,4 +1351,5 @@ public class TaskGrid extends TreeGrid<Task> {
 
 
 }
+
 
