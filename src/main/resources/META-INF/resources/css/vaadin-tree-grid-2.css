@@ -43,7 +43,6 @@ vaadin-grid::part(last-header-row) {
 .task-grid::part(body-cell) {
   background: var(--lumo-base-color);
   padding: 0; /* Remove default padding to control height precisely */
-  /*border-block: 1px solid var(--lumo-contrast-10pct);*/
   --_cell-padding: 4px; /* Set internal cell content padding to 4px */
   min-height: 32px; /* Ensure minimum height of 32px */
   max-height: 32px; /* Limit maximum height to 32px */
@@ -59,14 +58,12 @@ vaadin-grid::part(last-header-row) {
 
 /* Last column gets right border and right radius */
 .task-grid::part(body-cell last-column-cell) {
-  /*border-inline-end: 1px solid var(--lumo-contrast-10pct);*/
   border-start-end-radius: var(--lumo-border-radius-m);
   border-end-end-radius: var(--lumo-border-radius-m);
 }
 
 /* Header cells styling */
 .task-grid::part(header-cell) {
-    /*background: var(--lumo-contrast-5pct);*/
   font-weight: 600;
   min-height: 0px;
 }
