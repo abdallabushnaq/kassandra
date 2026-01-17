@@ -1,0 +1,106 @@
+/*******************/
+/* Calendar styles */
+/*******************/
+
+/* Default theme (light) */
+
+/* Calendar component colors - light theme */
+body {
+    --calendar-vacation-color: #D4EDDA;
+    --calendar-vacation-text-color: #155724;
+    --calendar-sick-color: #F8D7DA;
+    --calendar-sick-text-color: #721C24;
+    --calendar-holiday-color: #D1ECF1;
+    --calendar-holiday-text-color: #0C5460;
+    --calendar-trip-color: #6C757D;
+    --calendar-trip-text-color: #FFFFFF;
+    --calendar-weekend-color: #F0F0F0;
+    --calendar-month-name-color: #DC3545;
+    --calendar-normal-day-color: #FFFFFF;
+    --calendar-normal-day-text-color: #000000;
+    --calendar-filling-day-color: #FFFFFF;
+    --calendar-filling-day-text-color: #AAAAAA;
+}
+
+/* Calendar component styles */
+.calendar-normal-day {
+  color: var(--calendar-normal-day-text-color);
+}
+
+.calendar-filling-day {
+  color: var(--calendar-filling-day-text-color);
+}
+
+.calendar-weekend-day {
+  color: #777777;
+}
+
+.calendar-vacation-day {
+  background-color: var(--calendar-vacation-color);
+  color: var(--calendar-vacation-text-color);
+}
+
+.calendar-sick-day {
+  background-color: var(--calendar-sick-color);
+  color: var(--calendar-sick-text-color);
+}
+
+.calendar-holiday-day {
+  background-color: var(--calendar-holiday-color);
+  color: var(--calendar-holiday-text-color);
+}
+
+.calendar-trip-day {
+  background-color: var(--calendar-trip-color);
+  color: var(--calendar-trip-text-color);
+}
+
+.calendar-today {
+  position: relative;
+  font-weight: bold;
+}
+
+.calendar-today::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid rgba(255, 0, 0, 0.8);
+  border-radius: 50%;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+.calendar-month-name {
+  color: var(--calendar-month-name-color);
+}
+
+
+[theme~="dark"] {
+  --lumo-base-color: hsl(0, 0%, 13%);
+  --lumo-primary-color: hsl(0, 0%, 70%);
+  --lumo-primary-color-50pct: hsla(0, 0%, 70%, 0.5);
+  --lumo-primary-color-10pct: hsla(0, 0%, 70%, 0.1);
+  --lumo-shade-5pct: hsla(0, 0%, 0%, 0.05);
+  --lumo-shade-20pct: hsla(0, 0%, 0%, 0.2);
+  --lumo-shade-40pct: hsla(0, 0%, 0%, 0.4);
+  --lumo-box-shadow-xl: 0 4px 24px -3px hsla(0, 0%, 0%, 0.2), 0 18px 64px -8px hsla(0, 0%, 0%, 0.4);
+
+  --calendar-vacation-color: #82ed9c;
+  --calendar-vacation-text-color: #FFFFFF;
+  --calendar-sick-color: #f998a1;
+  --calendar-sick-text-color: #FFFFFF;
+  --calendar-holiday-color: #6fc3ed;
+  --calendar-holiday-text-color: #FFFFFF;
+  --calendar-trip-color: #5e666d;
+  --calendar-trip-text-color: #FFFFFF;
+
+  --calendar-weekend-color: #333333;
+  --calendar-month-name-color: #FF6B70;
+  --calendar-normal-day-color: #1E1E1E;
+  --calendar-normal-day-text-color: #FFFFFF;
+  --calendar-filling-day-color: #1E1E1E;
+  --calendar-filling-day-text-color: #666666;
+}

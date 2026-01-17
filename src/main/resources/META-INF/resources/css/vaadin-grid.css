@@ -1,5 +1,24 @@
 /* Styles for vaadin-grid component */
-/* These styles are automatically injected into vaadin-grid shadow DOM */
+
+.grid-wrapper {
+    padding-left: 24px;
+    padding-right: 24px;
+    box-sizing: border-box;
+    overflow-x: auto;
+}
+
+.grid-panel-wrapper {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.grid-panel {
+    background-color: var(--lumo-contrast-5pct);
+    border-radius: var(--lumo-border-radius-l) var(--lumo-border-radius-l) var(--lumo-border-radius-l) var(--lumo-border-radius-l);
+    padding: 8px;
+}
 
 /* Apply hover to all grids by default */
 [part~="row"]:hover [part~="body-cell"] {
@@ -11,15 +30,4 @@
   vertical-align: top;
   align-self: flex-start !important;
   margin-top: 3px; /* Fine-tune alignment with the column header text */
-}
-
-/* Custom styling for dialog overlay */
-[part='backdrop']
-{
-  /* Adjust the alpha channel (0.3) to control darkness (lower = less dark) */
-  background: rgba(25, 25, 25, 0.3);
-
-  /* Apply a blur effect to the background */
-  backdrop-filter: blur(1px);
-  -webkit-backdrop-filter: blur(1px); /* For Safari compatibility */
 }

@@ -1,0 +1,21 @@
+/* Styles for vaadin-tree-grid component */
+
+.tree-grid-wrapper {
+    padding-left: 24px;
+    padding-right: 24px;
+    box-sizing: border-box;
+    overflow-x: auto;
+}
+
+.tree-grid-panel-wrapper {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.tree-grid-panel {
+    background-color: var(--lumo-contrast-5pct);
+    border-radius: var(--lumo-border-radius-l) var(--lumo-border-radius-l) var(--lumo-border-radius-l) var(--lumo-border-radius-l);
+    padding: 8px;
+}

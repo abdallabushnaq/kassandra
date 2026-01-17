@@ -52,7 +52,7 @@ public abstract class AbstractMainGrid<T> extends Main {
     private final VerticalLayout      gridPanelWrapper;
 
     public AbstractMainGrid(Clock clock) {
-        setClassName("list-view");
+        setClassName("grid-wrapper");
         setSizeFull();
         addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
         this.getStyle().set("padding-left", "var(--lumo-space-m)");

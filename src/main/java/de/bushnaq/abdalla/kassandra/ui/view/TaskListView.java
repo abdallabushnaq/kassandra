@@ -27,6 +27,7 @@ import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
@@ -119,12 +120,37 @@ public class TaskListView extends Main implements AfterNavigationObserver {
             // Make view background transparent, so AppLayout's gray background is visible
             getStyle().set("background-color", "transparent");
 
+            // Apply tree-grid-wrapper styling to the main view
+            setClassName("tree-grid-wrapper");
             addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
-            headerLayout = createHeaderWithButtons();
-            grid         = createGrid(clock);
-            add(headerLayout, grid);
             this.getStyle().set("padding-left", "var(--lumo-space-m)");
             this.getStyle().set("padding-right", "var(--lumo-space-m)");
+
+            headerLayout = createHeaderWithButtons();
+            grid         = createGrid(clock);
+
+            // Create panel wrapper structure similar to AbstractMainGrid
+            VerticalLayout gridPanelWrapper = new VerticalLayout();
+            gridPanelWrapper.setPadding(false);
+            gridPanelWrapper.setSpacing(false);
+            gridPanelWrapper.setWidthFull();
+            gridPanelWrapper.addClassName("tree-grid-panel-wrapper");
+
+            VerticalLayout innerWrapper = new VerticalLayout();
+            innerWrapper.setPadding(false);
+            innerWrapper.setSpacing(false);
+            gridPanelWrapper.add(innerWrapper);
+
+            VerticalLayout gridPanel = new VerticalLayout(grid);
+            gridPanel.setPadding(false);
+            gridPanel.setSpacing(false);
+            gridPanel.setWidthFull();
+            gridPanel.addClassName("tree-grid-panel");
+
+            innerWrapper.add(gridPanel);
+
+            add(headerLayout, gridPanelWrapper);
+
             String userEmail = getUserEmail();
             try {
                 loggedInUser = userApi.getByEmail(userEmail);
@@ -221,7 +247,6 @@ public class TaskListView extends Main implements AfterNavigationObserver {
         grid.setOnSaveAllChangesAndRefresh(this::saveAllChangesAndRefresh);
 
         grid.setWidthFull();
-        addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
 
         return grid;
     }
