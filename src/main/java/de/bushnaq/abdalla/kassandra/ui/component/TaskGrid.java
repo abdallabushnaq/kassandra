@@ -27,6 +27,7 @@ import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.dnd.GridDropLocation;
 import com.vaadin.flow.component.grid.dnd.GridDropMode;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -237,18 +238,94 @@ public class TaskGrid extends TreeGrid<Task> {
             }).setHeader("").setAutoWidth(true).setWidth("50px");
         }
 
-        //Key
+        //name - Editable for all task types, with icon on the left and key integrated
         {
-//            addColumn(Task::getKey).setHeader("Key").setAutoWidth(true;
-            Column<Task> key = addColumn(new ComponentRenderer<>((Task task) -> {
-                Div div = new Div();
-                div.setText(task.getKey());
-                div.setId(TASK_GRID_KEY_PREFIX + task.getName());
+            Grid.Column<Task> nameColumn = addComponentHierarchyColumn((Task task) -> {
+                // Create container for icon + key + name (TreeGrid handles indentation automatically)
+                HorizontalLayout container = new HorizontalLayout();
+                container.setSpacing(false);
+                container.setPadding(false);
+                container.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
                 // Store task ID as element property for JavaScript access
-                div.getElement().setProperty("taskId", task.getId().toString());
-                return div;
-            })).setHeader("Key").setAutoWidth(true);
-            key.setKey("task-key-column");
+                container.getElement().setProperty("taskId", task.getId().toString());
+
+                // Add icon based on task type
+                if (task.isMilestone()) {
+                    // Diamond shape for milestone
+                    Div diamond = new Div();
+                    diamond.getElement().getStyle()
+                            .set("width", "12px")
+                            .set("height", "12px")
+                            .set("background-color", "#1976d2")
+                            .set("transform", "rotate(45deg)")
+                            .set("margin-right", "8px")
+                            .set("flex-shrink", "0");
+                    container.add(diamond);
+                } else if (task.isStory()) {
+                    // Downward triangle for story
+                    Div triangle = new Div();
+                    triangle.getElement().getStyle()
+                            .set("width", "0")
+                            .set("height", "0")
+                            .set("border-left", "6px solid transparent")
+                            .set("border-right", "6px solid transparent")
+                            .set("border-top", "10px solid #43a047")
+                            .set("margin-right", "8px")
+                            .set("flex-shrink", "0");
+                    container.add(triangle);
+                } else if (task.isTask()) {
+                    // Task gets no visible icon, but add spacing to match icon width
+                    // Triangle width is 12px (6px + 6px) + 8px margin = 20px total
+                    Div spacer = new Div();
+                    spacer.getElement().getStyle()
+                            .set("width", "20px")
+                            .set("height", "1px")
+                            .set("flex-shrink", "0");
+                    container.add(spacer);
+                }
+
+                // Add task key (bold, small, gray) - similar to Backlog style
+                Span keySpan = new Span(task.getKey());
+                keySpan.setId(TASK_GRID_KEY_PREFIX + task.getName());
+                keySpan.getStyle()
+                        .set("font-weight", "bold")
+                        .set("font-size", "var(--lumo-font-size-xs)")
+                        .set("color", "var(--lumo-secondary-text-color)")
+                        .set("white-space", "nowrap")
+                        .set("margin-right", "var(--lumo-space-s)")
+                        .set("flex-shrink", "0");
+                container.add(keySpan);
+
+                // Add name field or text
+                if (isEditMode) {
+                    TextField nameField = new TextField();
+                    nameField.setId(TASK_GRID_NAME_PREFIX + task.getName());
+                    nameField.setValue(task.getName() != null ? task.getName() : "");
+                    nameField.setWidthFull();
+
+                    nameField.addValueChangeListener(e -> {
+                        if (e.isFromClient()) {
+                            task.setName(e.getValue());
+                            markTaskAsModified(task);
+                        }
+                    });
+                    container.add(nameField);
+                    container.setFlexGrow(1, nameField);
+                } else {
+                    Div div = new Div();
+                    div.setText(task.getName() != null ? task.getName() : "");
+                    div.setId(TASK_GRID_NAME_PREFIX + task.getName());
+                    div.getStyle()
+                            .set("overflow", "hidden")
+                            .set("text-overflow", "ellipsis")
+                            .set("white-space", "nowrap");
+                    container.add(div);
+                    container.setFlexGrow(1, div);
+                }
+
+                return container;
+            }).setHeader("Name").setAutoWidth(true).setFlexGrow(1);
+            nameColumn.setId("task-grid-name-column");
         }
 
         //ID
@@ -343,79 +420,6 @@ public class TaskGrid extends TreeGrid<Task> {
                 return div;
             })).setHeader("Parent").setAutoWidth(true);
         }
-        //name - Editable for all task types, with icon on the left
-        {
-            Grid.Column<Task> nameColumn = addComponentHierarchyColumn((Task task) -> {
-                // Create container for icon + name (TreeGrid handles indentation automatically)
-                HorizontalLayout container = new HorizontalLayout();
-                container.setSpacing(false);
-                container.setPadding(false);
-                container.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-
-                // Add icon based on task type
-                if (task.isMilestone()) {
-                    // Diamond shape for milestone
-                    Div diamond = new Div();
-                    diamond.getElement().getStyle()
-                            .set("width", "12px")
-                            .set("height", "12px")
-                            .set("background-color", "#1976d2")
-                            .set("transform", "rotate(45deg)")
-                            .set("margin-right", "8px")
-                            .set("flex-shrink", "0");
-//                    diamond.getElement().setAttribute("title", "Milestone");
-                    container.add(diamond);
-                } else if (task.isStory()) {
-                    // Downward triangle for story
-                    Div triangle = new Div();
-                    triangle.getElement().getStyle()
-                            .set("width", "0")
-                            .set("height", "0")
-                            .set("border-left", "6px solid transparent")
-                            .set("border-right", "6px solid transparent")
-                            .set("border-top", "10px solid #43a047")
-                            .set("margin-right", "8px")
-                            .set("flex-shrink", "0");
-//                    triangle.getElement().setAttribute("title", "Story");
-                    container.add(triangle);
-                } else if (task.isTask()) {
-                    // Task gets no visible icon, but add spacing to match icon width
-                    // Triangle width is 12px (6px + 6px) + 8px margin = 20px total
-                    Div spacer = new Div();
-                    spacer.getElement().getStyle()
-                            .set("width", "20px")
-                            .set("height", "1px")
-                            .set("flex-shrink", "0");
-                    container.add(spacer);
-                }
-
-                // Add name field or text
-                if (isEditMode) {
-                    TextField nameField = new TextField();
-                    nameField.setId(TASK_GRID_NAME_PREFIX + task.getName());
-                    nameField.setValue(task.getName() != null ? task.getName() : "");
-                    nameField.setWidthFull();
-
-                    nameField.addValueChangeListener(e -> {
-                        if (e.isFromClient()) {
-                            task.setName(e.getValue());
-                            markTaskAsModified(task);
-                        }
-                    });
-                    container.add(nameField);
-                    container.setFlexGrow(1, nameField);
-                } else {
-                    Div div = new Div();
-                    div.setText(task.getName() != null ? task.getName() : "");
-                    div.setId(TASK_GRID_NAME_PREFIX + task.getName());
-                    container.add(div);
-                    container.setFlexGrow(1, div);
-                }
-
-                return container;
-            }).setHeader("Name").setAutoWidth(true).setFlexGrow(1);
-            nameColumn.setId("task-grid-name-column");
-        }
         //Start - Editable only for Milestone tasks
         {
             Grid.Column<Task> startColumn = addColumn(new ComponentRenderer<>((Task task) -> {
@@ -458,55 +462,6 @@ public class TaskGrid extends TreeGrid<Task> {
                     return div;
                 }
             })).setHeader("Start").setAutoWidth(true);
-        }
-        //Assigned - Editable only for Task tasks
-        {
-            addColumn(new ComponentRenderer<>((Task task) -> {
-                if (isEditMode && task.isTask()) {
-                    // Editable for Task tasks
-                    ComboBox<User> userComboBox = new ComboBox<>();
-                    userComboBox.setId(TASK_GRID_ASSIGNED_PREFIX + task.getName());
-                    userComboBox.setAllowCustomValue(false);
-                    userComboBox.setClearButtonVisible(true);
-                    userComboBox.setWidthFull();
-                    userComboBox.setItemLabelGenerator(User::getName);
-
-                    // Load ALL users from the system (not just sprint users) so we can assign new users
-//                    List<User> allUsers = userApi.getAll();
-                    userComboBox.setItems(allUsers);
-
-                    // Set current value only if task has an assigned user
-                    if (task.getResourceId() != null) {
-                        try {
-                            User currentUser = sprint.getuser(task.getResourceId());
-                            if (currentUser != null && allUsers.contains(currentUser)) {
-                                userComboBox.setValue(currentUser);
-                            }
-                        } catch (Exception ex) {
-                            log.warn("Could not set user for task {}: {}", task.getKey(), ex.getMessage());
-                        }
-                    }
-
-                    userComboBox.addValueChangeListener(e -> {
-                        if (e.isFromClient()) {
-                            User selectedUser = e.getValue();
-                            task.setResourceId(selectedUser != null ? selectedUser.getId() : null);
-                            markTaskAsModified(task);
-                        }
-                    });
-
-                    return userComboBox;
-                } else {
-                    // Read-only for Milestone and Story tasks
-                    Div div = new Div();
-                    div.setId(TASK_GRID_ASSIGNED_PREFIX + task.getName());
-                    if (task.isTask())
-                        div.setText(task.getResourceId() != null ? sprint.getuser(task.getResourceId()).getName() : "");
-                    else
-                        div.setText("");
-                    return div;
-                }
-            })).setHeader("Assigned").setAutoWidth(true);
         }
 
         //Min Estimate - Editable only for Task tasks
@@ -586,6 +541,88 @@ public class TaskGrid extends TreeGrid<Task> {
                     return div;
                 }
             })).setHeader("Max Estimate").setAutoWidth(true);
+        }
+
+        //Assigned - Editable only for Task tasks - with avatar image on the left
+        {
+            addColumn(new ComponentRenderer<>((Task task) -> {
+                if (isEditMode && task.isTask()) {
+                    // Editable for Task tasks
+                    ComboBox<User> userComboBox = new ComboBox<>();
+                    userComboBox.setId(TASK_GRID_ASSIGNED_PREFIX + task.getName());
+                    userComboBox.setAllowCustomValue(false);
+                    userComboBox.setClearButtonVisible(true);
+                    userComboBox.setWidthFull();
+                    userComboBox.setItemLabelGenerator(User::getName);
+
+                    // Load ALL users from the system (not just sprint users) so we can assign new users
+//                    List<User> allUsers = userApi.getAll();
+                    userComboBox.setItems(allUsers);
+
+                    // Set current value only if task has an assigned user
+                    if (task.getResourceId() != null) {
+                        try {
+                            User currentUser = sprint.getuser(task.getResourceId());
+                            if (currentUser != null && allUsers.contains(currentUser)) {
+                                userComboBox.setValue(currentUser);
+                            }
+                        } catch (Exception ex) {
+                            log.warn("Could not set user for task {}: {}", task.getKey(), ex.getMessage());
+                        }
+                    }
+
+                    userComboBox.addValueChangeListener(e -> {
+                        if (e.isFromClient()) {
+                            User selectedUser = e.getValue();
+                            task.setResourceId(selectedUser != null ? selectedUser.getId() : null);
+                            markTaskAsModified(task);
+                        }
+                    });
+
+                    return userComboBox;
+                } else {
+                    // Read-only for all tasks - show avatar + name
+                    HorizontalLayout container = new HorizontalLayout();
+                    container.setId(TASK_GRID_ASSIGNED_PREFIX + task.getName());
+                    container.setSpacing(true);
+                    container.setPadding(false);
+                    container.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+
+                    if (task.isTask() && task.getResourceId() != null) {
+                        try {
+                            User user = sprint.getuser(task.getResourceId());
+                            if (user != null) {
+                                // Add avatar image
+                                com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
+                                avatar.setWidth("24px");
+                                avatar.setHeight("24px");
+                                avatar.getStyle()
+                                        .set("border-radius", "4px")
+                                        .set("object-fit", "cover")
+                                        .set("display", "inline-block")
+                                        .set("vertical-align", "middle")
+                                        .set("flex-shrink", "0");
+                                avatar.setSrc(user.getAvatarUrl());
+                                avatar.setAlt(user.getName());
+                                avatar.getElement().setProperty("title", user.getName());
+
+                                // Add user name
+                                Span userName = new Span(user.getName());
+                                userName.getStyle()
+                                        .set("overflow", "hidden")
+                                        .set("text-overflow", "ellipsis")
+                                        .set("white-space", "nowrap");
+
+                                container.add(avatar, userName);
+                            }
+                        } catch (Exception ex) {
+                            log.warn("Could not get user for task {}: {}", task.getKey(), ex.getMessage());
+                        }
+                    }
+
+                    return container;
+                }
+            })).setHeader("Assigned").setAutoWidth(true);
         }
 
     }
