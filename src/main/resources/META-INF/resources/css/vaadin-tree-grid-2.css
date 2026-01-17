@@ -8,6 +8,7 @@
 }
 
 .tree-grid-panel-wrapper {
+    background-color: var(--lumo-contrast-5pct);
     margin-top: 12px;
     margin-bottom: 12px;
     margin-left: 0px;
