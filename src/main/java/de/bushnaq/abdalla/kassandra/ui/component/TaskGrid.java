@@ -233,6 +233,38 @@ public class TaskGrid extends TreeGrid<Task> {
 //            }).setHeader("").setAutoWidth(true).setWidth("50px");
 //        }
 
+        // User Color Indicator Column - shows colored bar for assigned user
+        {
+            Grid.Column<Task> colorColumn = addComponentColumn((Task task) -> {
+                // Create a colored vertical bar
+                Div    colorBar  = new Div();
+                String userColor = getUserColor(task);
+
+                colorBar.getStyle()
+                        .set("width", "4px")
+                        .set("height", "100%")
+                        .set("min-height", "32px")
+                        .set("background-color", userColor)
+                        .set("border-radius", "2px");
+
+                // Add tooltip with user name if assigned
+                if (task.getResourceId() != null && sprint != null) {
+                    try {
+                        User user = sprint.getuser(task.getResourceId());
+                        if (user != null) {
+                            colorBar.getElement().setProperty("title", "Assigned to: " + user.getName());
+                        }
+                    } catch (Exception e) {
+                        // User not found
+                    }
+                }
+
+                return colorBar;
+            }).setHeader("").setWidth("8px").setFlexGrow(0);
+            colorColumn.setKey("user-color");
+            colorColumn.setId("task-grid-user-color-column");
+        }
+
         //name - Editable for all task types, with icon on the left and key integrated
         {
             Grid.Column<Task> nameColumn = addComponentHierarchyColumn((Task task) -> {
@@ -245,14 +277,6 @@ public class TaskGrid extends TreeGrid<Task> {
                 // Store task ID as element property for JavaScript access
                 container.getElement().setProperty("taskId", task.getId().toString());
 
-                // Apply colored left border (matches TaskCard styling)
-                // This creates a visual accent inside the cell
-                String userColor = getUserColor(task);
-                container.getStyle()
-                        .set("border-left", "4px solid " + userColor)
-                        .set("padding-left", "var(--lumo-space-xs)")
-                        .set("margin-left", "-var(--lumo-space-s)") // Compensate for cell padding to align border to edge
-                        .set("padding-right", "var(--lumo-space-xs)");
 
                 // Add icon based on task type
                 if (task.isMilestone()) {

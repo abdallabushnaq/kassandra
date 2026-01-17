@@ -37,9 +37,17 @@
     border-block: 1px solid var(--lumo-contrast-10pct);
 }
 
-/* First column gets left border and left radius */
+/* User color indicator column - first visible column, minimal padding */
+.task-grid vaadin-grid-cell-content[slot="vaadin-grid-cell-content-0"] {
+    padding: 0;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+}
+
+/* First column (after color indicator) gets left border and left radius */
 .task-grid::part(body-cell first-column-cell) {
-    border-inline-start: 4px solid var(--lumo-contrast-20pct); /* Will be overridden by Java for user color */
+    border-inline-start: 1px solid var(--lumo-contrast-10pct);
     border-start-start-radius: var(--lumo-border-radius-m);
     border-end-start-radius: var(--lumo-border-radius-m);
 }
@@ -52,7 +60,6 @@
 }
 
 /* Add subtle shadow to cells */
-
 .task-grid::part(body-cell) {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -79,4 +86,8 @@
     font-weight: 600;
 }
 
+/* Hide header for user color indicator column */
+.task-grid vaadin-grid-cell-content[slot="vaadin-grid-cell-content-0"][part~="header-cell"] {
+    display: none;
+}
 
