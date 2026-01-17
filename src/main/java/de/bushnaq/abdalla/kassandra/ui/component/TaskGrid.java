@@ -241,11 +241,14 @@ public class TaskGrid extends TreeGrid<Task> {
                 String userColor = getUserColor(task);
 
                 colorBar.getStyle()
-                        .set("width", "4px")
-                        .set("height", "100%")
+                        .set("background", "var(--lumo-base-color)")
+                        .set("border-left", "4px solid " + userColor) // 4px colored left border
+                        .set("border-radius", "var(--lumo-border-radius-m)")
+                        .set("cursor", "grab")
+                        .set("box-shadow", "var(--lumo-box-shadow-xs)")
+                        .set("transition", "all 0.2s ease")
                         .set("min-height", "32px")
-                        .set("background-color", userColor)
-                        .set("border-radius", "2px");
+                        .set("box-sizing", "border-box");
 
                 // Add tooltip with user name if assigned
                 if (task.getResourceId() != null && sprint != null) {
@@ -260,9 +263,10 @@ public class TaskGrid extends TreeGrid<Task> {
                 }
 
                 return colorBar;
-            }).setHeader("").setWidth("8px").setFlexGrow(0);
+            }).setHeader("").setWidth("12px").setFlexGrow(0);
             colorColumn.setKey("user-color");
             colorColumn.setId("task-grid-user-color-column");
+            colorColumn.setFrozen(true); // Keep this column fixed on the left
         }
 
         //name - Editable for all task types, with icon on the left and key integrated
@@ -319,7 +323,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 keySpan.getStyle()
                         .set("font-weight", "bold")
                         .set("font-size", "var(--lumo-font-size-xs)")
-                        .set("color", "var(--lumo-secondary-text-color)")
+                        .set("color", "#9E9E9E") // Match Backlog gray color
                         .set("white-space", "nowrap")
                         .set("margin-right", "var(--lumo-space-s)")
                         .set("flex-shrink", "0");
