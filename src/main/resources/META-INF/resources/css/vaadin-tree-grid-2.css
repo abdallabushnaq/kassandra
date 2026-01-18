@@ -49,6 +49,10 @@ vaadin-grid::part(last-header-row) {
   box-sizing: border-box;
 }
 
+.cell ::slotted(vaadin-grid-cell-content first-column-cell) {
+  min-width: 14px !important;
+
+}
 /* First column gets left border and left radius */
 .task-grid::part(body-cell first-column-cell) {
   background: transparent;
@@ -83,5 +87,7 @@ vaadin-grid::part(cell)::before {
   overflow: visible;
   min-height: 32px; /* Match row height */
   max-height: 32px;
+  min-width: 14px !important;
+  --_lumo-grid-border-width: 0px;
 }
 

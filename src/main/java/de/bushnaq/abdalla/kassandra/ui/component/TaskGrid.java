@@ -247,11 +247,12 @@ public class TaskGrid extends TreeGrid<Task> {
                 HorizontalLayout wrapper = new HorizontalLayout();
                 if (task.isTask()) {
                     wrapper.getElement().getStyle()
+                            .set("background-color", "transparent")
                             .set("width", "14px")
                             .set("height", "32px")
                             .set("flex-shrink", "0")
                             .set("row-gap", "0px")
-                            .set("background-color", "transparent")
+                            .set("--_lumo-grid-border-width", "0px")
                             .set("gap", "0px");
                     Div spacer = new Div();
                     spacer.getElement().getStyle()
@@ -265,9 +266,10 @@ public class TaskGrid extends TreeGrid<Task> {
                             .set("background-color", "var(--lumo-base-color)")
                             .set("width", "14px")
                             .set("height", "32px")
-                            .set("flex-shrink", "0");
-//                            .set("row-gap", "0px")
-//                            .set("gap", "0px");
+                            .set("flex-shrink", "0")
+                            .set("row-gap", "0px")
+                            .set("--_lumo-grid-border-width", "0px")
+                            .set("gap", "0px");
                 }
 
                 // Create a colored vertical bar
@@ -281,6 +283,7 @@ public class TaskGrid extends TreeGrid<Task> {
                         .set("cursor", "grab")
                         .set("transition", "all 0.2s ease")
                         .set("min-height", "32px")
+                        .set("flex-shrink", "0")
                         .set("box-sizing", "border-box");
 
                 // Add tooltip with user name if assigned
