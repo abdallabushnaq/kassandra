@@ -290,7 +290,7 @@
 | kassandra.ui.component         | StoryTaskCard.java                                       | src      |       38 |       19 |       30 |      181 |      268 |
 | kassandra.ui.component         | TaskCard.java                                            | src      |       36 |       17 |       41 |      190 |      284 |
 | kassandra.ui.component         | TaskClipboardHandler.java                                | src      |       28 |       61 |       34 |      157 |      280 |
-| kassandra.ui.component         | TaskGrid.java                                            | src      |      136 |       68 |      162 |      893 |     1259 |
+| kassandra.ui.component         | TaskGrid.java                                            | src      |      149 |       76 |      189 |      965 |     1379 |
 | kassandra.ui.component         | ThemeToggle.java                                         | src      |        9 |        0 |       20 |       50 |       79 |
 | kassandra.ui.component         | ViewToolbar.java                                         | src      |        9 |        0 |       16 |       33 |       58 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -371,7 +371,7 @@
 | kassandra.ui.view              | SprintQualityBoard.java                                  | src      |       50 |        0 |       47 |      370 |      467 |
 | kassandra.ui.view              | SprintQualityBoardTest.java                              | src      |       12 |        0 |       18 |      114 |      144 |
 | kassandra.ui.view              | SprintStatistics.java                                    | src      |       20 |        4 |       26 |       97 |      147 |
-| kassandra.ui.view              | TaskListView.java                                        | src      |       91 |       39 |       79 |      508 |      717 |
+| kassandra.ui.view              | TaskListView.java                                        | src      |       98 |       39 |       81 |      524 |      742 |
 | kassandra.ui.view              | TaskListViewTest.java                                    | src      |        8 |       16 |       17 |       85 |      126 |
 | kassandra.ui.view              | UserGroupListView.java                                   | src      |       29 |        0 |       27 |      157 |      213 |
 | kassandra.ui.view              | UserGroupListViewTest.java                               | src      |       21 |      104 |       16 |      151 |      292 |
@@ -461,5 +461,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 42 package(s)                  | 418 file(s)                                              | java     |     9515 |     7085 |    12121 |    48503 |    77224 |
+| 42 package(s)                  | 418 file(s)                                              | java     |     9535 |     7093 |    12150 |    48591 |    77369 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

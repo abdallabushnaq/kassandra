@@ -51,9 +51,7 @@ vaadin-grid::part(last-header-row) {
 
 /* First column gets left border and left radius */
 .task-grid::part(body-cell first-column-cell) {
-  /*border-inline-start: 1px solid var(--lumo-contrast-10pct);*/
-  border-start-start-radius: var(--lumo-border-radius-m);
-  border-end-start-radius: var(--lumo-border-radius-m);
+  background: transparent;
 }
 
 /* Last column gets right border and right radius */
@@ -82,9 +80,6 @@ vaadin-grid::part(cell)::before {
 .task-grid::part(first-column-cell) {
   --_cell-padding: 0px !important; /* No padding for color bar column */
   padding: 0px !important; /* Override body-cell padding */
-  width: 12px;
-  min-width: 12px;
-  max-width: 12px;
   overflow: visible;
   min-height: 32px; /* Match row height */
   max-height: 32px;

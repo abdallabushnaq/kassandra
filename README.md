@@ -23,44 +23,46 @@ tbd
 
 ## Phase 1
 
-1. ✅Basic functionality
-2. ✅Product, Version, project
-3. ✅project list.
-4. ✅every project has list of sprints.
-5. ✅every sprint contains stories and tasks.
-6. ✅every task has start, end, effort estimation, effort worked, dependency to other tasks or stories.
-1. ✅Authentication via oidc
-3. ✅User availability time-frames
-4. ✅User location time-frames
-5. ✅User work week time-frames
-6. ✅User Work hours time-frames
-1. ✅Authorization, access control using user groups on project level.
-7. ❌gantt chart generation with resource conflict visualization.
-    1. ✅Gantt task only on working days.
-    2. ✅X-axis calendar make none working day gray.
-8. ✅burn down chart for every sprint.
-9. ❌keep number of clicks to minimum for daily work of developer.
-10. ❌Close project Release Date.
-11. ✅National Holidays
-12. ❌data scenario simulation generator
-    1. ✅Simulator Write the use case as a Story in the project or product
-    2. ❌include closed and delayed sprints.
+1. ✅ Basic functionality
+2. ✅ Product, Version, project
+3. ✅ project list.
+4. ✅ every project has list of sprints.
+5. ✅ every sprint contains stories and tasks.
+6. ✅ every task has start, end, effort estimation, effort worked, dependency to other tasks or stories.
+7. ✅ Authentication via oidc
+8. ✅ User availability time-frames
+9. ✅ User location time-frames
+10. ✅ User work week time-frames
+11. ✅ User Work hours time-frames
+12. ✅ Authorization, access control using user groups on project level.
+13. ❌ gantt chart generation with resource conflict visualization.
+    1. ✅ Gantt task only on working days.
+    2. ✅ X-axis calendar make none working day gray.
+14. ✅ burn down chart for every sprint.
+15. ❌ keep number of clicks to minimum for daily work of developer.
+16. ❌ Close project Release Date.
+17. ✅ National Holidays
+18. ❌ data scenario simulation generator
+    1. ✅ Simulator Write the use case as a Story in the project or product
+    2. ❌ include closed and delayed sprints.
 
 ## Phase 2
 
-2. ❌Audit logs
+1. ❌ Audit logs
+2. ❌ lock project.
+3. ❌ give project managers ways to control schedule.
 
 ## Phase 3
 
-2. ❌Admin hub
+1. ❌ Admin hub
 
 ## Phase 4
 
-1. ❌Performance
-2. ❌Live updates to your inputs
-3. ❌Live response to your Input.
-4. product page.
-5. ❌GDPR
+1. ❌ Performance
+2. ❌ Live updates to your inputs
+3. ❌ Live response to your Input.
+4. ✅ product page.
+5. ❌ GDPR
 
 # Kassandra Introduction Videos
 

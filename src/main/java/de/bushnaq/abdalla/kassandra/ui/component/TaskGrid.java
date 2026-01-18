@@ -77,6 +77,14 @@ public class TaskGrid extends TreeGrid<Task> {
     private             String               dragMode;
     private             Task                 draggedTask;          // Track the currently dragged task
     private final       DateTimeFormatter    dtfymdhm                    = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
+    /**
+     * -- SETTER --
+     * Set whether items should be expanded initially when data is loaded.
+     * Must be called before updateData() to take effect.
+     *
+     * @param expandInitially true to expand all items initially, false to keep them collapsed
+     */
+    @Setter
     private             boolean              expandInitially             = true; // Control whether to expand all items on first load
     private final       Set<Task>            expandedTasks               = new HashSet<>(); // Track expanded tasks for state preservation
     private             boolean              isCtrlKeyPressed            = false; // Track if Ctrl key is pressed during drop
@@ -236,6 +244,32 @@ public class TaskGrid extends TreeGrid<Task> {
         // User Color Indicator Column - shows colored bar for assigned user
         {
             Grid.Column<Task> colorColumn = addComponentColumn((Task task) -> {
+                HorizontalLayout wrapper = new HorizontalLayout();
+                if (task.isTask()) {
+                    wrapper.getElement().getStyle()
+                            .set("width", "14px")
+                            .set("height", "32px")
+                            .set("flex-shrink", "0")
+                            .set("row-gap", "0px")
+                            .set("background-color", "transparent")
+                            .set("gap", "0px");
+                    Div spacer = new Div();
+                    spacer.getElement().getStyle()
+                            .set("width", "10px")
+                            .set("height", "32px")
+                            .set("background-color", "transparent")
+                            .set("flex-shrink", "0");
+                    wrapper.add(spacer);
+                } else {
+                    wrapper.getElement().getStyle()
+                            .set("background-color", "var(--lumo-base-color)")
+                            .set("width", "14px")
+                            .set("height", "32px")
+                            .set("flex-shrink", "0");
+//                            .set("row-gap", "0px")
+//                            .set("gap", "0px");
+                }
+
                 // Create a colored vertical bar
                 Div    colorBar  = new Div();
                 String userColor = getUserColor(task);
@@ -245,7 +279,6 @@ public class TaskGrid extends TreeGrid<Task> {
                         .set("border-left", "4px solid " + userColor) // 4px colored left border
                         .set("border-radius", "var(--lumo-border-radius-m)")
                         .set("cursor", "grab")
-                        .set("box-shadow", "var(--lumo-box-shadow-xs)")
                         .set("transition", "all 0.2s ease")
                         .set("min-height", "32px")
                         .set("box-sizing", "border-box");
@@ -261,9 +294,9 @@ public class TaskGrid extends TreeGrid<Task> {
                         // User not found
                     }
                 }
-
-                return colorBar;
-            }).setHeader("").setWidth("12px").setFlexGrow(0);
+                wrapper.add(colorBar);
+                return wrapper;
+            }).setHeader("").setWidth("14px").setFlexGrow(0);
             colorColumn.setKey("user-color");
             colorColumn.setId("task-grid-user-color-column");
             colorColumn.setFrozen(true); // Keep this column fixed on the left
@@ -1034,16 +1067,6 @@ public class TaskGrid extends TreeGrid<Task> {
     public void setCtrlKeyPressed(boolean ctrlKeyPressed) {
         this.isCtrlKeyPressed = ctrlKeyPressed;
         log.debug("Ctrl/Meta key state set to: {}", ctrlKeyPressed);
-    }
-
-    /**
-     * Set whether items should be expanded initially when data is loaded.
-     * Must be called before updateData() to take effect.
-     *
-     * @param expandInitially true to expand all items initially, false to keep them collapsed
-     */
-    public void setExpandInitially(boolean expandInitially) {
-        this.expandInitially = expandInitially;
     }
 
     private void setupDragAndDrop() {
