@@ -8,6 +8,7 @@
 }
 
 .tree-grid-panel-wrapper {
+    background-color: var(--lumo-contrast-5pct);
     margin-top: 12px;
     margin-bottom: 12px;
     margin-left: 0px;
@@ -20,74 +21,73 @@
     padding: 8px;
 }
 
-/* Card-like styling for task-grid rows - using Vaadin 25 shadow parts */
-
-/* Add spacing between rows using border-spacing (works in table layout) */
-.task-grid::part(table) {
-    border-spacing: 0 2px;
-    border-collapse: separate;
+vaadin-grid {
+  background: transparent;
+  border: 0;
 }
 
-/* Apply card-like styling to all body cells */
+vaadin-grid::part(row) {
+  padding-inline: 2px;
+  background: transparent;
+}
+
+vaadin-grid::part(body-row) {
+  padding-block: 2px;
+}
+
+vaadin-grid::part(last-header-row) {
+  padding-bottom: 2px;
+}
+
+/* Body cells styling - match Backlog card appearance */
 .task-grid::part(body-cell) {
-    background: var(--lumo-base-color);
-    padding: var(--lumo-space-s);
-    transition: all 0.2s ease;
-    /* Top and bottom borders for card appearance */
-    border-block: 1px solid var(--lumo-contrast-10pct);
+  background: var(--lumo-base-color);
+  padding: 0; /* Remove default padding to control height precisely */
+  --_cell-padding: 4px; /* Set internal cell content padding to 4px */
+  min-height: 32px; /* Ensure minimum height of 32px */
+  max-height: 32px; /* Limit maximum height to 32px */
+  box-sizing: border-box;
 }
 
-/* User color indicator column - first visible column, minimal padding */
-.task-grid vaadin-grid-cell-content[slot="vaadin-grid-cell-content-0"] {
-    padding: 0;
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
-}
+.cell ::slotted(vaadin-grid-cell-content first-column-cell) {
+  min-width: 14px !important;
 
-/* First column (after color indicator) gets left border and left radius */
+}
+/* First column gets left border and left radius */
 .task-grid::part(body-cell first-column-cell) {
-    border-inline-start: 1px solid var(--lumo-contrast-10pct);
-    border-start-start-radius: var(--lumo-border-radius-m);
-    border-end-start-radius: var(--lumo-border-radius-m);
+  background: transparent;
 }
 
 /* Last column gets right border and right radius */
 .task-grid::part(body-cell last-column-cell) {
-    border-inline-end: 1px solid var(--lumo-contrast-10pct);
-    border-start-end-radius: var(--lumo-border-radius-m);
-    border-end-end-radius: var(--lumo-border-radius-m);
-}
-
-/* Add subtle shadow to cells */
-.task-grid::part(body-cell) {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-/* Hover effect - elevate entire row */
-.task-grid::part(body-cell):hover {
-    box-shadow: var(--lumo-box-shadow-s);
-    transform: translateY(-1px);
-    background: var(--lumo-base-color);
-}
-
-/* Remove default row striping */
-.task-grid::part(odd-row body-cell) {
-    background: var(--lumo-base-color);
-}
-
-.task-grid::part(even-row body-cell) {
-    background: var(--lumo-base-color);
+  border-start-end-radius: var(--lumo-border-radius-m);
+  border-end-end-radius: var(--lumo-border-radius-m);
 }
 
 /* Header cells styling */
 .task-grid::part(header-cell) {
-    background: var(--lumo-contrast-5pct);
-    font-weight: 600;
+  font-weight: 600;
+  min-height: 0px;
 }
 
-/* Hide header for user color indicator column */
-.task-grid vaadin-grid-cell-content[slot="vaadin-grid-cell-content-0"][part~="header-cell"] {
-    display: none;
+/* Focus outlines */
+vaadin-grid::part(row)::before {
+  border-radius: 15px;
+}
+
+vaadin-grid::part(cell)::before {
+  border-radius: inherit;
+}
+
+/* User color indicator column styling - first visible column */
+/* Override the cell padding for the user color column using CSS custom property */
+.task-grid::part(first-column-cell) {
+  --_cell-padding: 0px !important; /* No padding for color bar column */
+  padding: 0px !important; /* Override body-cell padding */
+  overflow: visible;
+  min-height: 32px; /* Match row height */
+  max-height: 32px;
+  min-width: 14px !important;
+  --_lumo-grid-border-width: 0px;
 }
 

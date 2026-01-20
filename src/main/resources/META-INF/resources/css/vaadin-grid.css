@@ -20,6 +20,29 @@
     padding: 8px;
 }
 
+vaadin-grid::part(body-cell) {
+  background: var(--lumo-base-color);
+  padding: 0; /* Remove default padding to control height precisely */
+  --_cell-padding: 4px; /* Set internal cell content padding to 4px */
+  min-height: 32px; /* Ensure minimum height of 32px */
+  max-height: 32px; /* Limit maximum height to 32px */
+  box-sizing: border-box;
+}
+
+
+/* First column gets left border and left radius */
+vaadin-grid::part(body-cell first-column-cell) {
+  border-start-start-radius: var(--lumo-border-radius-m);
+  border-end-start-radius: var(--lumo-border-radius-m);
+}
+
+/* Last column gets right border and right radius */
+vaadin-grid::part(body-cell last-column-cell) {
+  border-start-end-radius: var(--lumo-border-radius-m);
+  border-end-end-radius: var(--lumo-border-radius-m);
+}
+
+
 /* Apply hover to all grids by default */
 [part~="row"]:hover [part~="body-cell"] {
   background-color: var(--lumo-contrast-10pct) !important;
