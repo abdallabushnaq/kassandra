@@ -556,6 +556,7 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
 
     /**
      * Create a new Task in the Backlog sprint.
+     * The task is automatically assigned to the last story in the sprint (by orderId).
      */
     private void createTask() {
         Sprint sprint = getBacklogSprint();
@@ -578,12 +579,35 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
         // Assign user based on last task or logged-in user
         assignUserToNewTask(task);
 
+        // Find the last story in the sprint (by orderId) and assign the task to it
+        Task lastStory = findLastStoryInSprint(sprint);
+        if (lastStory != null) {
+            task.setParentTaskId(lastStory.getId());
+            log.info("New task {} assigned to story {}", task.getName(), lastStory.getName());
+        }
+
         // Add task to sprint's task list so getNextOrderId() works correctly for next task
         sprint.addTask(task);
 
         taskApi.persist(task);
         backlogSprint = null; // Clear cache to reload
         loadData();
+    }
+
+    /**
+     * Find the last story in the sprint based on orderId.
+     * Used to automatically assign new tasks to the most recent story.
+     *
+     * @param sprint The sprint to search in
+     * @return The last story in the sprint, or null if no stories exist
+     */
+    private Task findLastStoryInSprint(Sprint sprint) {
+        return sprint.getTasks().stream()
+                .filter(Task::isStory)
+                .max((t1, t2) -> Integer.compare(
+                        t1.getOrderId() != null ? t1.getOrderId() : 0,
+                        t2.getOrderId() != null ? t2.getOrderId() : 0))
+                .orElse(null);
     }
 
     /**
