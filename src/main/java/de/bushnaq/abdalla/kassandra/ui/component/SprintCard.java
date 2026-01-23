@@ -207,15 +207,34 @@ public class SprintCard extends Div {
     private void populateStories() {
         storiesContainer.removeAll();
 
-        if (stories.isEmpty()) {
-            Div emptyMessage = new Div();
-            emptyMessage.setText("No stories in this sprint");
-            emptyMessage.getStyle()
-                    .set("padding", "var(--lumo-space-m)")
-                    .set("color", "var(--lumo-secondary-text-color)")
-                    .set("font-style", "italic");
-            storiesContainer.add(emptyMessage);
-            return;
+        boolean isBacklogSprint = DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(sprint.getName());
+
+        // First, find and display orphan tasks (tasks without a parent story that belong to this sprint)
+        // Exclude stories since they are handled separately via the 'stories' parameter
+        List<Task> orphanTasks = allTasks.stream()
+                .filter(t -> t.getParentTaskId() == null)
+                .filter(t -> !t.isStory()) // Exclude stories - they're handled separately
+                .filter(t -> t.getSprintId() != null && t.getSprintId().equals(sprint.getId()))
+                .collect(Collectors.toList());
+
+        // Apply filters to orphan tasks
+        if (!searchText.isEmpty()) {
+            orphanTasks = orphanTasks.stream()
+                    .filter(t -> (t.getName() != null && t.getName().toLowerCase().contains(searchText)) ||
+                            (t.getId() != null && ("T-" + t.getId()).toLowerCase().contains(searchText)))
+                    .collect(Collectors.toList());
+        }
+        if (!selectedUsers.isEmpty()) {
+            orphanTasks = orphanTasks.stream()
+                    .filter(t -> t.getResourceId() != null && selectedUsers.stream()
+                            .anyMatch(user -> user.getId().equals(t.getResourceId())))
+                    .collect(Collectors.toList());
+        }
+
+        // Display orphan tasks directly (not inside a story)
+        for (Task task : orphanTasks) {
+            BacklogTaskCard taskCard = new BacklogTaskCard(task, userMap, sprint, dragDropHandler);
+            storiesContainer.add(taskCard);
         }
 
         // For each story, get its child tasks and apply filters
@@ -240,17 +259,22 @@ public class SprintCard extends Div {
                         .collect(Collectors.toList());
             }
 
-            // Only add story if it has tasks after filtering
-            if (!childTasks.isEmpty()) {
+            // For Backlog sprint, always show stories (even if empty)
+            // For other sprints, only show stories if they have tasks after filtering
+            if (isBacklogSprint || !childTasks.isEmpty()) {
                 BacklogStoryCard storyCard = new BacklogStoryCard(story, childTasks, userMap, sprint, dragDropHandler);
                 storiesContainer.add(storyCard);
             }
         }
 
-        // If no stories have visible tasks after filtering, show message
+        // If no content after filtering, show message
         if (storiesContainer.getComponentCount() == 0) {
             Div emptyMessage = new Div();
-            emptyMessage.setText("No tasks match the current filters");
+            if (stories.isEmpty() && orphanTasks.isEmpty()) {
+                emptyMessage.setText("No items in this sprint");
+            } else {
+                emptyMessage.setText("No items match the current filters");
+            }
             emptyMessage.getStyle()
                     .set("padding", "var(--lumo-space-m)")
                     .set("color", "var(--lumo-secondary-text-color)")
