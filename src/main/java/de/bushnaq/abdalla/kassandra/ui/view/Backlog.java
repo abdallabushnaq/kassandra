@@ -21,16 +21,20 @@ import com.vaadin.flow.component.Svg;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
-import com.vaadin.flow.router.Location;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
@@ -67,43 +71,58 @@ import java.util.concurrent.ExecutionException;
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
 @Log4j2
-public class Backlog extends Main implements AfterNavigationObserver {
-    public static final String                  BACKLOG_PAGE_TITLE_ID      = "backlog-page-title";
-    public static final String                  CANCEL_BUTTON_ID           = "cancel-tasks-button";
-    public static final String                  CREATE_MILESTONE_BUTTON_ID = "create-milestone-button";
-    public static final String                  CREATE_STORY_BUTTON_ID     = "create-story-button";
-    public static final String                  CREATE_TASK_BUTTON_ID      = "create-task-button";
-    public static final String                  EDIT_BUTTON_ID             = "edit-tasks-button";
-    public static final String                  ROUTE                      = "backlog";
-    public static final String                  SAVE_BUTTON_ID             = "save-tasks-button";
-    private             Button                  cancelButton;
-    private final       Clock                   clock;
+public class Backlog extends Main implements AfterNavigationObserver, BeforeEnterObserver {
+    public static final String                    BACKLOG_PAGE_TITLE_ID      = "backlog-page-title";
+    public static final String                    CANCEL_BUTTON_ID           = "cancel-tasks-button";
+    public static final String                    CLEAR_FILTER_BUTTON_ID     = "clear-filter-button";
+    public static final String                    CREATE_MILESTONE_BUTTON_ID = "create-milestone-button";
+    public static final String                    CREATE_STORY_BUTTON_ID     = "create-story-button";
+    public static final String                    CREATE_TASK_BUTTON_ID      = "create-task-button";
+    public static final String                    EDIT_BUTTON_ID             = "edit-tasks-button";
+    public static final String                    ROUTE                      = "backlog";
+    public static final String                    SAVE_BUTTON_ID             = "save-tasks-button";
+    public static final String                    SEARCH_FIELD_ID            = "search-field";
+    public static final String                    SPRINT_SELECTOR_ID         = "sprint-selector";
+    public static final String                    USER_SELECTOR_ID           = "user-selector";
+    private             List<Sprint>              allSprints                 = new ArrayList<>();
+    private final       TaskGrid                  backlogGrid;                        // Grid for Backlog sprint (always at bottom)
+    private final       VerticalLayout            backlogGridPanel;                   // Panel containing backlog grid
+    private             Sprint                    backlogSprint              = null;  // Cached Backlog sprint (always shown at bottom)
+    private             Button                    cancelButton;
+    private final       Clock                     clock;
     @Autowired
-    protected           Context                 context;
-    private             Button                  editButton;
-    private final       GanttErrorHandler       eh                         = new GanttErrorHandler();
-    private final       FeatureApi              featureApi;
-    private             Long                    featureId;
-    private final       Svg                     ganttChart                 = new Svg();
-    private             Div                     ganttChartContainer;
-    private             CompletableFuture<Void> ganttGenerationFuture;
-    private             GanttUtil               ganttUtil;
-    private final       TaskGrid                grid;
-    private final       HorizontalLayout        headerLayout;
-    private final       JsonMapper              jsonMapper;
-    private             User                    loggedInUser               = null;
-    private final       ProductApi              productApi;
-    private             Long                    productId;
-    private             Button                  saveButton;
-    private             Sprint                  sprint;
-    private final       SprintApi               sprintApi;
-    private             Long                    sprintId;
-    private final       TaskApi                 taskApi;
-    private final       UserApi                 userApi;
-    private             List<User>              users                      = new ArrayList<>();
-    private final       VersionApi              versionApi;
-    private             Long                    versionId;
-    private final       WorklogApi              worklogApi;
+    protected           Context                   context;
+    private             Button                    editButton;
+    private final       GanttErrorHandler         eh                         = new GanttErrorHandler();
+    private final       FeatureApi                featureApi;
+    private             Long                      featureId;
+    private final       Svg                       ganttChart                 = new Svg();
+    private final       Div                       ganttChartContainer;
+    private             CompletableFuture<Void>   ganttGenerationFuture;
+    private             GanttUtil                 ganttUtil;
+    private final       TaskGrid                  grid;
+    private final       HorizontalLayout          headerLayout;
+    private final       JsonMapper                jsonMapper;
+    private static      Long                      lastShownSprintId          = null;  // Static to persist across navigation
+    private             User                      loggedInUser               = null;
+    private final       ProductApi                productApi;
+    private             Long                      productId;
+    private             Button                    saveButton;
+    private             TextField                 searchField;
+    private             String                    searchText                 = "";
+    private             Sprint                    selectedSprint             = null;  // The sprint selected in dropdown (not Backlog)
+    private             java.util.Set<User>       selectedUsers              = new java.util.HashSet<>();
+    private             Sprint                    sprint;                             // Current sprint being displayed in grid
+    private final       SprintApi                 sprintApi;
+    private             Long                      sprintId;
+    private             ComboBox<Sprint>          sprintSelector;
+    private final       TaskApi                   taskApi;
+    private final       UserApi                   userApi;
+    private             MultiSelectComboBox<User> userSelector;
+    private             List<User>                users                      = new ArrayList<>();
+    private final       VersionApi                versionApi;
+    private             Long                      versionId;
+    private final       WorklogApi                worklogApi;
 
     public Backlog(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock, JsonMapper jsonMapper) {
         this.worklogApi = worklogApi;
@@ -129,9 +148,11 @@ public class Backlog extends Main implements AfterNavigationObserver {
             this.getStyle().set("padding-right", "var(--lumo-space-m)");
 
             headerLayout = createHeaderWithButtons();
-            grid         = createGrid(clock);
 
-            // Create panel wrapper structure similar to AbstractMainGrid
+            // Create main sprint grid
+            grid = createGrid(clock);
+
+            // Create panel wrapper for sprint grid
             VerticalLayout gridPanelWrapper = new VerticalLayout();
             gridPanelWrapper.setPadding(false);
             gridPanelWrapper.setSpacing(false);
@@ -151,7 +172,49 @@ public class Backlog extends Main implements AfterNavigationObserver {
 
             innerWrapper.add(gridPanel);
 
-            add(headerLayout, gridPanelWrapper);
+            // Create Gantt chart container (placed between sprint grid and backlog)
+            ganttChartContainer = new Div();
+            ganttChartContainer.getStyle()
+                    .set("overflow-x", "auto")
+                    .set("width", "100%")
+                    .set("margin-top", "var(--lumo-space-m)");
+
+            // Create backlog grid (always shown at bottom)
+            backlogGrid = createGrid(clock);
+
+            // Create panel wrapper for backlog grid with a header
+            backlogGridPanel = new VerticalLayout();
+            backlogGridPanel.setPadding(false);
+            backlogGridPanel.setSpacing(false);
+            backlogGridPanel.setWidthFull();
+            backlogGridPanel.addClassName("tree-grid-panel-wrapper");
+            backlogGridPanel.getStyle().set("margin-top", "var(--lumo-space-l)");
+
+            // Add a header/separator for the backlog section
+            Div backlogHeader = new Div();
+            backlogHeader.setText("Backlog");
+            backlogHeader.getStyle()
+                    .set("font-size", "var(--lumo-font-size-l)")
+                    .set("font-weight", "600")
+                    .set("padding", "var(--lumo-space-m)")
+                    .set("background-color", "var(--lumo-contrast-5pct)")
+                    .set("border-radius", "var(--lumo-border-radius-m) var(--lumo-border-radius-m) 0 0");
+
+            VerticalLayout backlogInnerWrapper = new VerticalLayout();
+            backlogInnerWrapper.setPadding(false);
+            backlogInnerWrapper.setSpacing(false);
+
+            VerticalLayout backlogGridPanelInner = new VerticalLayout(backlogGrid);
+            backlogGridPanelInner.setPadding(false);
+            backlogGridPanelInner.setSpacing(false);
+            backlogGridPanelInner.setWidthFull();
+            backlogGridPanelInner.addClassName("tree-grid-panel");
+
+            backlogInnerWrapper.add(backlogGridPanelInner);
+            backlogGridPanel.add(backlogHeader, backlogInnerWrapper);
+
+            // Add components in order: header, sprint grid, gantt chart, backlog grid
+            add(headerLayout, gridPanelWrapper, ganttChartContainer, backlogGridPanel);
 
             String userEmail = getUserEmail();
             try {
@@ -161,7 +224,7 @@ public class Backlog extends Main implements AfterNavigationObserver {
             }
 
         } catch (Exception e) {
-            log.error("Error initializing TaskListView", e);
+            log.error("Error initializing Backlog view", e);
             throw e;
         }
     }
@@ -169,8 +232,8 @@ public class Backlog extends Main implements AfterNavigationObserver {
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
         //- Get query parameters
-        Location        location        = event.getLocation();
-        QueryParameters queryParameters = location.getQueryParameters();
+        com.vaadin.flow.router.Location location        = event.getLocation();
+        QueryParameters                 queryParameters = location.getQueryParameters();
         if (queryParameters.getParameters().containsKey("product")) {
             this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
         }
@@ -182,8 +245,42 @@ public class Backlog extends Main implements AfterNavigationObserver {
         }
         if (queryParameters.getParameters().containsKey("sprint")) {
             this.sprintId = Long.parseLong(queryParameters.getParameters().get("sprint").getFirst());
-//            pageTitle.setText("Task of Sprint ID: " + sprintId);
         }
+
+        // If no sprint ID provided, use last shown sprint or find first non-Backlog sprint
+        if (this.sprintId == null) {
+            if (lastShownSprintId != null) {
+                // Use last shown sprint
+                this.sprintId = lastShownSprintId;
+                log.info("No sprint ID provided, using last shown sprint (ID: {})", this.sprintId);
+            } else {
+                // Find first non-Backlog sprint
+                try {
+                    List<Sprint> sprints = sprintApi.getAll();
+                    Sprint firstNonBacklog = sprints.stream()
+                            .filter(s -> !"Backlog".equals(s.getName()))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (firstNonBacklog != null) {
+                        this.sprintId = firstNonBacklog.getId();
+                        log.info("No sprint ID provided, using first non-Backlog sprint: {} (ID: {})",
+                                firstNonBacklog.getName(), this.sprintId);
+                    } else {
+                        // No sprints available at all
+                        log.warn("No sprints found");
+                        return;
+                    }
+                } catch (Exception e) {
+                    log.error("Error fetching sprints", e);
+                    return;
+                }
+            }
+        }
+
+        // Remember this sprint for next time
+        lastShownSprintId = this.sprintId;
+
         ganttUtil = new GanttUtil(context);
         loadData();
 
@@ -192,42 +289,81 @@ public class Backlog extends Main implements AfterNavigationObserver {
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();
-                        Product product = productApi.getById(productId);
-                        mainLayout.getBreadcrumbs().addItem("Products (" + product.getName() + ")", ProductListView.class);
-                        {
-                            Map<String, String> params = new HashMap<>();
-                            params.put("product", String.valueOf(productId));
-                            Version version = versionApi.getById(versionId);
-                            mainLayout.getBreadcrumbs().addItem("Versions (" + version.getName() + ")", VersionListView.class, params);
-                        }
-                        {
-                            Map<String, String> params = new HashMap<>();
-                            params.put("product", String.valueOf(productId));
-                            params.put("version", String.valueOf(versionId));
-                            Feature feature = featureApi.getById(featureId);
-                            mainLayout.getBreadcrumbs().addItem("Features (" + feature.getName() + ")", FeatureListView.class, params);
-                        }
-                        {
-                            Map<String, String> params = new HashMap<>();
-                            params.put("product", String.valueOf(productId));
-                            params.put("version", String.valueOf(versionId));
-                            params.put("feature", String.valueOf(featureId));
-                            mainLayout.getBreadcrumbs().addItem("Sprints (" + sprint.getName() + ")", SprintListView.class, params);
-                        }
-                        {
-                            Map<String, String> params = new HashMap<>();
-                            params.put("product", String.valueOf(productId));
-                            params.put("version", String.valueOf(versionId));
-                            params.put("feature", String.valueOf(featureId));
-                            params.put("sprint", String.valueOf(sprintId));
-                            mainLayout.getBreadcrumbs().addItem("Backlog", Backlog.class, params);
+
+                        // Only show full breadcrumb trail if we have product/version/feature context
+                        if (productId != null && versionId != null && featureId != null) {
+                            Product product = productApi.getById(productId);
+                            mainLayout.getBreadcrumbs().addItem("Products (" + product.getName() + ")", ProductListView.class);
+                            {
+                                Map<String, String> params = new HashMap<>();
+                                params.put("product", String.valueOf(productId));
+                                Version version = versionApi.getById(versionId);
+                                mainLayout.getBreadcrumbs().addItem("Versions (" + version.getName() + ")", VersionListView.class, params);
+                            }
+                            {
+                                Map<String, String> params = new HashMap<>();
+                                params.put("product", String.valueOf(productId));
+                                params.put("version", String.valueOf(versionId));
+                                Feature feature = featureApi.getById(featureId);
+                                mainLayout.getBreadcrumbs().addItem("Features (" + feature.getName() + ")", FeatureListView.class, params);
+                            }
+                            {
+                                Map<String, String> params = new HashMap<>();
+                                params.put("product", String.valueOf(productId));
+                                params.put("version", String.valueOf(versionId));
+                                params.put("feature", String.valueOf(featureId));
+                                mainLayout.getBreadcrumbs().addItem("Sprints (" + sprint.getName() + ")", SprintListView.class, params);
+                            }
+                            {
+                                Map<String, String> params = new HashMap<>();
+                                params.put("product", String.valueOf(productId));
+                                params.put("version", String.valueOf(versionId));
+                                params.put("feature", String.valueOf(featureId));
+                                params.put("sprint", String.valueOf(sprintId));
+                                mainLayout.getBreadcrumbs().addItem("Backlog", Backlog.class, params);
+                            }
+                        } else {
+                            // Simple breadcrumb when accessed from main menu
+                            mainLayout.getBreadcrumbs().addItem("Backlog", Backlog.class);
                         }
                     }
                 });
 
-        //- populate grid
-//        pageTitle.setText("Task of Sprint ID: " + sprintId);
+        //- populate grid with selected sprint + Backlog sprint
         refreshGrid();
+    }
+
+    /**
+     * Apply search and user filters to both grids.
+     * Filters the displayed tasks based on search text and selected users.
+     */
+    private void applyFilters() {
+        // Apply filters to sprint grid
+        if (sprint != null) {
+            List<Task> sprintTasks = filterTasks(sprint.getTasks());
+            grid.updateData(sprint, sprintTasks, users);
+        }
+
+        // Apply filters to backlog grid
+        if (backlogSprint != null) {
+            List<Task> backlogTasks = filterTasks(backlogSprint.getTasks());
+            backlogGrid.updateData(backlogSprint, backlogTasks, users);
+        }
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        // Read query parameters
+        com.vaadin.flow.router.Location location        = event.getLocation();
+        QueryParameters                 queryParameters = location.getQueryParameters();
+
+        // Extract sprint ID from URL if present
+        if (queryParameters.getParameters().containsKey("sprint")) {
+            this.sprintId = Long.parseLong(queryParameters.getParameters().get("sprint").getFirst());
+        }
+
+        // Populate the sprint selector after we have the sprint ID
+        populateSprintSelector();
     }
 
     /**
@@ -254,29 +390,72 @@ public class Backlog extends Main implements AfterNavigationObserver {
     }
 
     /**
-     * Creates the header layout with Create, Edit, Save, and Cancel buttons
+     * Creates the header layout with search, filters, create buttons, Edit, Save, and Cancel buttons
      */
     private HorizontalLayout createHeaderWithButtons() {
-        // Create header without the create button (we'll add three buttons manually)
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
-        header.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
+        header.setAlignItems(FlexComponent.Alignment.END);
         header.getStyle().set("padding", "var(--lumo-space-m)");
+        header.setSpacing(true);
 
-        // Create title with icon
-        com.vaadin.flow.component.icon.Icon icon = VaadinIcon.TASKS.create();
-        icon.getStyle().set("margin-right", "var(--lumo-space-s)");
+        // 1. Search input box with magnifying glass icon
+        searchField = new TextField();
+        searchField.setId(SEARCH_FIELD_ID);
+        searchField.setLabel("Search");
+        searchField.setPlaceholder("search tasks");
+        searchField.setPrefixComponent(VaadinIcon.SEARCH.create());
+        searchField.setValueChangeMode(ValueChangeMode.EAGER);
+        searchField.addValueChangeListener(e -> {
+            if (e.isFromClient()) {
+                searchText = e.getValue() != null ? e.getValue().toLowerCase().trim() : "";
+                applyFilters();
+            }
+        });
+        searchField.setWidth("200px");
 
-        com.vaadin.flow.component.html.H2 title = new com.vaadin.flow.component.html.H2("Tasks");
-        title.setId(BACKLOG_PAGE_TITLE_ID);
-        title.getStyle()
-                .set("margin", "0")
-                .set("font-size", "var(--lumo-font-size-xl)")
-                .set("font-weight", "600");
+        // 2. User multi-select dropdown
+        userSelector = new MultiSelectComboBox<>();
+        userSelector.setId(USER_SELECTOR_ID);
+        userSelector.setLabel("User");
+        userSelector.setItemLabelGenerator(User::getName);
+        userSelector.setPlaceholder("Select users");
+        userSelector.setWidth("200px");
+        userSelector.addValueChangeListener(e -> {
+            if (e.isFromClient()) {
+                selectedUsers = new java.util.HashSet<>(e.getValue());
+                applyFilters();
+            }
+        });
 
-        HorizontalLayout titleLayout = new HorizontalLayout(icon, title);
-        titleLayout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-        titleLayout.setSpacing(false);
+        // 3. Sprint single-select dropdown (changed from multi-select)
+        sprintSelector = new ComboBox<>();
+        sprintSelector.setId(SPRINT_SELECTOR_ID);
+        sprintSelector.setLabel("Sprint");
+        sprintSelector.setItemLabelGenerator(Sprint::getName);
+        sprintSelector.setPlaceholder("Select sprint");
+        sprintSelector.setWidth("200px");
+        sprintSelector.addValueChangeListener(e -> {
+            if (e.isFromClient()) {
+                selectedSprint = e.getValue();
+                loadDataForSelectedSprint();
+            }
+        });
+
+        // 4. Clear filter button
+        Button clearButton = new Button("Clear filter", VaadinIcon.CLOSE_SMALL.create());
+        clearButton.setId(CLEAR_FILTER_BUTTON_ID);
+        clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        clearButton.addClickListener(e -> {
+            searchField.clear();
+            userSelector.clear();
+            selectedUsers.clear();
+            searchText = "";
+            applyFilters();
+        });
+
+        // Spacer to push create buttons to the right
+        Div spacer = new Div();
 
         // Create Milestone button
         Button createMilestoneButton = new Button("Create Milestone", VaadinIcon.FLAG.create());
@@ -317,8 +496,9 @@ public class Backlog extends Main implements AfterNavigationObserver {
         cancelButton.addClickListener(e -> cancelEditMode());
 
         // Add all components to header
-        header.add(titleLayout, createMilestoneButton, createStoryButton, createTaskButton, editButton, saveButton, cancelButton);
-        header.expand(titleLayout); // Make title take remaining space
+        header.add(searchField, userSelector, sprintSelector, clearButton, spacer,
+                createMilestoneButton, createStoryButton, createTaskButton, editButton, saveButton, cancelButton);
+        header.setFlexGrow(1, spacer);
 
         return header;
     }
@@ -500,6 +680,59 @@ public class Backlog extends Main implements AfterNavigationObserver {
         grid.getDataProvider().refreshAll();
     }
 
+    /**
+     * Filter a list of tasks based on current search text and selected users.
+     */
+    private List<Task> filterTasks(List<Task> tasks) {
+        if (searchText.isEmpty() && selectedUsers.isEmpty()) {
+            return new ArrayList<>(tasks);
+        }
+
+        List<Task> filteredTasks = new ArrayList<>();
+
+        for (Task task : tasks) {
+            boolean matchesSearch = searchText.isEmpty() ||
+                    (task.getName() != null && task.getName().toLowerCase().contains(searchText)) ||
+                    (task.getId() != null && ("T-" + task.getId()).toLowerCase().contains(searchText));
+
+            boolean matchesUser = selectedUsers.isEmpty() ||
+                    (task.getResourceId() != null && selectedUsers.stream()
+                            .anyMatch(user -> user.getId().equals(task.getResourceId())));
+
+            // For stories (parent tasks), also check if any child task matches
+            if (task.isStory()) {
+                boolean hasMatchingChild = false;
+                for (Task childTask : tasks) {
+                    if (childTask.getParentTaskId() != null && childTask.getParentTaskId().equals(task.getId())) {
+                        boolean childMatchesSearch = searchText.isEmpty() ||
+                                (childTask.getName() != null && childTask.getName().toLowerCase().contains(searchText)) ||
+                                (childTask.getId() != null && ("T-" + childTask.getId()).toLowerCase().contains(searchText));
+
+                        boolean childMatchesUser = selectedUsers.isEmpty() ||
+                                (childTask.getResourceId() != null && selectedUsers.stream()
+                                        .anyMatch(user -> user.getId().equals(childTask.getResourceId())));
+
+                        if (childMatchesSearch && childMatchesUser) {
+                            hasMatchingChild = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (matchesSearch || hasMatchingChild) {
+                    filteredTasks.add(task);
+                }
+            } else {
+                // For regular tasks, just check the task itself
+                if (matchesSearch && matchesUser) {
+                    filteredTasks.add(task);
+                }
+            }
+        }
+
+        return filteredTasks;
+    }
+
     private void generateGanttChart() {
         // Cancel any previous generation in progress
         if (ganttGenerationFuture != null && !ganttGenerationFuture.isDone()) {
@@ -507,15 +740,6 @@ public class Backlog extends Main implements AfterNavigationObserver {
             log.debug("Cancelled previous Gantt chart generation");
         }
 
-        // Initialize container if needed
-        if (ganttChartContainer == null) {
-            ganttChartContainer = new Div();
-            ganttChartContainer.getStyle()
-                    .set("overflow-x", "auto")
-                    .set("width", "100%")
-                    .set("margin-top", "var(--lumo-space-m)");
-            add(ganttChartContainer);
-        }
 
         // Clear container and show loading indicator
         ganttChartContainer.removeAll();
@@ -686,6 +910,29 @@ public class Backlog extends Main implements AfterNavigationObserver {
             }
         });
 
+        // Also load Backlog sprint (always shown at bottom)
+        CompletableFuture<Sprint> backlogSprintFuture = CompletableFuture.supplyAsync(() -> {
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                Sprint backlog = sprintApi.getBacklogSprint();
+                if (backlog != null) {
+                    backlog.initialize();
+                    // Load tasks and worklogs for backlog
+                    List<Task>    backlogTasks    = taskApi.getAll(backlog.getId());
+                    List<Worklog> backlogWorklogs = worklogApi.getAll(backlog.getId());
+                    List<User>    backlogUsers    = userApi.getAll(backlog.getId());
+                    backlog.initUserMap(backlogUsers);
+                    backlog.initTaskMap(backlogTasks, backlogWorklogs);
+                    backlog.recalculate(ParameterOptions.getLocalNow());
+                }
+                return backlog;
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        });
+
         // Wait for all futures and combine results
         try {
             sprint = sprintFuture.get();
@@ -695,6 +942,18 @@ public class Backlog extends Main implements AfterNavigationObserver {
             users = userFuture.get();
             log.trace("sprint, user, task and worklog maps initialized in {} ms", System.currentTimeMillis() - time);
             sprint.recalculate(ParameterOptions.getLocalNow());
+
+            // Get backlog sprint (may be null if it doesn't exist yet)
+            backlogSprint = backlogSprintFuture.get();
+            if (backlogSprint != null && backlogSprint.getId().equals(sprint.getId())) {
+                // If selected sprint IS the backlog, don't duplicate it
+                backlogSprint = null;
+            }
+
+            // Populate user selector with users from this sprint
+            if (userSelector != null) {
+                userSelector.setItems(users);
+            }
         } catch (InterruptedException | ExecutionException e) {
             log.error("Error loading sprint data", e);
             // Handle exception appropriately
@@ -702,17 +961,98 @@ public class Backlog extends Main implements AfterNavigationObserver {
         ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
     }
 
+    /**
+     * Load data for the selected sprint from the sprint selector dropdown.
+     * This is called when the user selects a different sprint.
+     */
+    private void loadDataForSelectedSprint() {
+        if (selectedSprint == null) {
+            return;
+        }
+
+        // Update sprintId to the selected sprint
+        this.sprintId = selectedSprint.getId();
+
+        // Reload data for the new sprint
+        loadData();
+        applyFilters();
+        refreshGrid();
+    }
+
     private void onPersistTask(Task task) {
         Task saved = taskApi.persist(task);
     }
 
     /**
-     * Refresh the grid data and Gantt chart
+     * Populate the sprint selector with all available sprints.
+     * The Backlog sprint is excluded since it's always shown at the bottom.
+     */
+    private void populateSprintSelector() {
+        if (sprintSelector == null) {
+            return;
+        }
+
+        try {
+            // Load all sprints and filter out Backlog (it's always visible at bottom)
+            allSprints = sprintApi.getAll().stream()
+                    .filter(s -> !"Backlog".equals(s.getName()))
+                    .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+
+            // Sort sprints by start date (newest first)
+            allSprints.sort((s1, s2) -> {
+                if (s1.getStart() == null && s2.getStart() == null) return 0;
+                if (s1.getStart() == null) return 1;
+                if (s2.getStart() == null) return -1;
+                return s2.getStart().compareTo(s1.getStart());
+            });
+
+            sprintSelector.setItems(allSprints);
+
+            // Select the current sprint if available
+            if (sprintId != null) {
+                allSprints.stream()
+                        .filter(s -> s.getId().equals(sprintId))
+                        .findFirst()
+                        .ifPresent(s -> {
+                            selectedSprint = s;
+                            sprintSelector.setValue(s);
+                        });
+            }
+        } catch (Exception e) {
+            log.error("Error loading sprints for selector", e);
+        }
+    }
+
+    /**
+     * Refresh both grids and the Gantt chart.
+     * Sprint grid shows the selected sprint's tasks.
+     * Backlog grid shows the Backlog sprint's tasks (always at bottom).
      */
     private void refreshGrid() {
-        // Update taskOrder list with current sprint tasks
-        grid.updateData(sprint, new ArrayList<>(sprint.getTasks()), users);
-        generateGanttChart();
+        // Update sprint grid
+        if (sprint != null) {
+            grid.updateData(sprint, new ArrayList<>(sprint.getTasks()), users);
+        } else {
+            log.warn("Cannot refresh sprint grid - sprint is null");
+        }
+
+        // Update backlog grid
+        if (backlogSprint != null) {
+            backlogGrid.updateData(backlogSprint, new ArrayList<>(backlogSprint.getTasks()), users);
+            backlogGridPanel.setVisible(true);
+        } else {
+            // Hide backlog panel if no backlog sprint exists
+            backlogGridPanel.setVisible(false);
+        }
+
+        // Generate Gantt chart only for the selected sprint (not for Backlog)
+        // Backlog sprint doesn't have scheduling, so Gantt chart doesn't make sense for it
+        if (sprint != null && !"Backlog".equals(sprint.getName())) {
+            generateGanttChart();
+        } else if (ganttChartContainer != null) {
+            // Clear the Gantt chart container if we're showing Backlog or no sprint
+            ganttChartContainer.removeAll();
+        }
     }
 
     /**

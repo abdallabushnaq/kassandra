@@ -64,6 +64,7 @@ import java.util.Set;
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
 @Log4j2
+@Deprecated
 public class LegacyBacklog extends Main implements BeforeEnterObserver, AfterNavigationObserver {
 
     public static final String                      ROUTE              = "legacy-backlog";
