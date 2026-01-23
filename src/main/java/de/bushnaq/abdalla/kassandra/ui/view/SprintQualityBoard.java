@@ -171,7 +171,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
                             params.put("version", String.valueOf(versionId));
                             params.put("feature", String.valueOf(featureId));
                             params.put("sprint", String.valueOf(sprintId));
-                            mainLayout.getBreadcrumbs().addItem("Tasks", TaskListView.class, params);
+                            mainLayout.getBreadcrumbs().addItem("Backlog", Backlog.class, params);
                         }
                     }
                 });

@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.view.util;
 
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.TaskListView;
+import de.bushnaq.abdalla.kassandra.ui.view.Backlog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -47,7 +47,7 @@ public class TaskListViewTester extends AbstractViewTester {
     }
 
     public void createTask(String newTaskName) {
-        seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
+        seleniumHandler.click(Backlog.CREATE_TASK_BUTTON_ID);
     }
 
 }

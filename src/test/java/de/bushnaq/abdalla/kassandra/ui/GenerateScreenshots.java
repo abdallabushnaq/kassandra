@@ -333,7 +333,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         seleniumHandler.click("Sprints (" + sprintName + ")"); // Go back to SprintListView using breadcrumb
         // Find and click the column configuration button
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
-        seleniumHandler.waitForElementToBeClickable(TaskListView.TASK_LIST_PAGE_TITLE_ID);
+        seleniumHandler.waitForElementToBeClickable(Backlog.BACKLOG_PAGE_TITLE_ID);
         seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/task-list-view.png");
 
         //Backlog
@@ -390,11 +390,11 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
     }
 
     private void takeTaskDialogScreenshots() {
-        seleniumHandler.click(TaskListView.CREATE_MILESTONE_BUTTON_ID);
+        seleniumHandler.click(Backlog.CREATE_MILESTONE_BUTTON_ID);
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Milestone-34");
-        seleniumHandler.click(TaskListView.CREATE_STORY_BUTTON_ID);
+        seleniumHandler.click(Backlog.CREATE_STORY_BUTTON_ID);
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Story-2");
-        seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
+        seleniumHandler.click(Backlog.CREATE_TASK_BUTTON_ID);
         seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-3");
         // select the milestone
         seleniumHandler.click(TaskGrid.TASK_GRID_NAME_PREFIX + "New Milestone-34");

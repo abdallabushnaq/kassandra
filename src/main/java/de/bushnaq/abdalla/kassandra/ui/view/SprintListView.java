@@ -291,7 +291,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 params.put("feature", String.valueOf(featureId));
                 params.put("sprint", String.valueOf(sprint.getId()));
                 UI.getCurrent().navigate(
-                        TaskListView.class,
+                        Backlog.class,
                         QueryParameters.simple(params)
                 );
             });

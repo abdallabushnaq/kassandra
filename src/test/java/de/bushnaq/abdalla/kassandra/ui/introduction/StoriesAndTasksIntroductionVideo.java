@@ -27,8 +27,8 @@ import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.Backlog;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
-import de.bushnaq.abdalla.kassandra.ui.view.TaskListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -129,7 +129,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
         versionListViewTester.selectVersion(versionName);
         featureListViewTester.selectFeature(featureName);
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
-        seleniumHandler.waitForElementToBeClickable(TaskListView.TASK_LIST_PAGE_TITLE_ID);
+        seleniumHandler.waitForElementToBeClickable(Backlog.BACKLOG_PAGE_TITLE_ID);
 
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
@@ -155,26 +155,26 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
         paul.narrate(NORMAL, "Lets start by adding a milestone that will fix the starting point of our sprint.").pause();
 
         paul.narrate(NORMAL, "Select the Create Milestone button...");
-        seleniumHandler.click(TaskListView.CREATE_MILESTONE_BUTTON_ID);
+        seleniumHandler.click(Backlog.CREATE_MILESTONE_BUTTON_ID);
         seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, milestone1Name);
 
         String graceMartin = "Grace Martin";
         {
             //first story
             paul.narrate(NORMAL, "Lets also create a story. We use stories as containers for the actual work items called tasks.");
-            seleniumHandler.click(TaskListView.CREATE_STORY_BUTTON_ID);
+            seleniumHandler.click(Backlog.CREATE_STORY_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, story1Name);
 
             paul.narrate(NORMAL, "You can see that all the new created items are always added to the end of our table.").pause();
 
             paul.narrateAsync(NORMAL, "Lets create 3 additional tasks as work units for our first sprint.");
-            seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
+            seleniumHandler.click(Backlog.CREATE_TASK_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, task11Name);
 
-            seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
+            seleniumHandler.click(Backlog.CREATE_TASK_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, task12Name);
 
-            seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
+            seleniumHandler.click(Backlog.CREATE_TASK_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, task13Name);
 
             paul.narrate(NORMAL, "If you look carefully, you will notice that all three tasks have been assigned to the story.").pause();
@@ -184,7 +184,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
             //edit
             paul.narrate(EXCITED, "Good!").longPause();
             paul.narrate(NORMAL, "Select the edit button to change to whole table into edit mode...").pause();
-            seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
+            seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
 
             paul.narrate(NORMAL, "We can now edit all valid milestone, story or task cells.").pause();
             paul.narrate(NORMAL, "Lets give the milestone a name and fixed start date and time. We want our developers to start working first thing Monday morning.");
@@ -213,7 +213,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_NAME_PREFIX + task13Name, "api error handling");
             seleniumHandler.setComboBoxValue(TaskGrid.TASK_GRID_ASSIGNED_PREFIX + task13Name, graceMartin);
 
-            seleniumHandler.click(TaskListView.SAVE_BUTTON_ID);
+            seleniumHandler.click(Backlog.SAVE_BUTTON_ID);
             story1Name = "Config api implementation";
             task11Name = "create controller";
             task12Name = "api documentation";
@@ -225,7 +225,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
             grace.narrate(NORMAL, "Sure, Christopher! Let me take over.").pause();
             grace.narrate(NORMAL, "Lets got to edit mode.");
 
-            seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
+            seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
             seleniumHandler.waitForPageLoaded();
             grace.pause(500);// for debugging purposes only, has an effect if narrator is set to silent
 
@@ -242,29 +242,29 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_MIN_EST_PREFIX + task13Name, "5h");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_MAX_EST_PREFIX + task13Name, "7h");
 
-            seleniumHandler.click(TaskListView.SAVE_BUTTON_ID);
+            seleniumHandler.click(Backlog.SAVE_BUTTON_ID);
         }
 
 
         {
             // second story
             paul.narrate(NORMAL, "Lets create another story.");
-            seleniumHandler.click(TaskListView.CREATE_STORY_BUTTON_ID);
+            seleniumHandler.click(Backlog.CREATE_STORY_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, story2Name);
 
-            seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
+            seleniumHandler.click(Backlog.CREATE_TASK_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, task21Name);
 
-            seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
+            seleniumHandler.click(Backlog.CREATE_TASK_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, task22Name);
 
-            seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
+            seleniumHandler.click(Backlog.CREATE_TASK_BUTTON_ID);
             seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, task23Name);
             paul.narrate(NORMAL, "Have you noticed that the new tasks have been assigned to Grace automatically?").pause();
             paul.narrate(NORMAL, "Kassandra uses the assigned user of a previous task. In case there is no previous task, it will use the logged in user.").pause();
 
             //edit
-            seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
+            seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
             seleniumHandler.waitForPageLoaded();
             paul.pause(500);// for debugging purposes only, has an effect if narrator is set to silent
 
@@ -276,7 +276,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
 
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_NAME_PREFIX + task23Name, "persistence error handling");
 
-            seleniumHandler.click(TaskListView.SAVE_BUTTON_ID);
+            seleniumHandler.click(Backlog.SAVE_BUTTON_ID);
             story2Name = "Config persistence implementation";
             task21Name = "create repository";
             task22Name = "schema documentation";
@@ -287,7 +287,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
             grace.narrate(NORMAL, "Let me take over.").pause();
             grace.narrate(NORMAL, "Edit mode...");
 
-            seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
+            seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
             seleniumHandler.waitForPageLoaded();
             grace.pause(500);// for debugging purposes only, has an effect if narrator is set to silent
 
@@ -310,7 +310,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_MIN_EST_PREFIX + task23Name, "5h");
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_MAX_EST_PREFIX + task23Name, "7h");
 
-            seleniumHandler.click(TaskListView.SAVE_BUTTON_ID);
+            seleniumHandler.click(Backlog.SAVE_BUTTON_ID);
         }
 
 

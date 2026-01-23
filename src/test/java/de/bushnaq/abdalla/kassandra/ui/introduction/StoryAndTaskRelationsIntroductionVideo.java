@@ -24,8 +24,8 @@ import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.Backlog;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
-import de.bushnaq.abdalla.kassandra.ui.view.TaskListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.SprintListViewTester;
@@ -122,7 +122,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractKeycloakUiTe
         versionListViewTester.selectVersion(versionName);
         featureListViewTester.selectFeature(featureName);
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
-        seleniumHandler.waitForElementToBeClickable(TaskListView.TASK_LIST_PAGE_TITLE_ID);
+        seleniumHandler.waitForElementToBeClickable(Backlog.BACKLOG_PAGE_TITLE_ID);
 
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);

@@ -24,8 +24,8 @@ import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.Backlog;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
-import de.bushnaq.abdalla.kassandra.ui.view.TaskListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.SprintListViewTester;
@@ -118,7 +118,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         versionListViewTester.selectVersion(versionName);
         featureListViewTester.selectFeature(featureName);
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
-        seleniumHandler.waitForElementToBeClickable(TaskListView.TASK_LIST_PAGE_TITLE_ID);
+        seleniumHandler.waitForElementToBeClickable(Backlog.BACKLOG_PAGE_TITLE_ID);
 
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
@@ -174,7 +174,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         paul.narrate(NORMAL, "First, I'll select the first story, Config API implementation, by clicking on it.");
         paul.pauseIfSilent(500);
 //        seleniumHandler.waitUntilBrowserClosed(0);
-        seleniumHandler.selectGridRow(TaskGrid.TASK_GRID_ID_PREFIX, TaskListView.class, story1.getName());
+        seleniumHandler.selectGridRow(TaskGrid.TASK_GRID_ID_PREFIX, Backlog.class, story1.getName());
 
         paul.pause(500);
 
@@ -206,7 +206,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         String copiedTask13Name = "api error handling (copy)";
 
         paul.narrate(NORMAL, "First, we'll enter edit mode to modify the copied items.");
-        seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
+        seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
         paul.pauseIfSilent(500);
         seleniumHandler.waitForPageLoaded();
 
@@ -220,7 +220,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
 
         seleniumHandler.setTextField(TaskGrid.TASK_GRID_NAME_PREFIX + copiedTask13Name, "security audit");
 
-        seleniumHandler.click(TaskListView.SAVE_BUTTON_ID);
+        seleniumHandler.click(Backlog.SAVE_BUTTON_ID);
 
         // Update the names to the new values
         copiedStory1Name = "Config security implementation";
@@ -234,7 +234,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         grace.narrate(NORMAL, "Sure, Christopher! Let me update the estimates.").pause();
         grace.narrate(NORMAL, "Let's go to edit mode.");
 
-        seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
+        seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
         seleniumHandler.waitForPageLoaded();
         grace.pause(500);
 
@@ -250,7 +250,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         seleniumHandler.setTextField(TaskGrid.TASK_GRID_MIN_EST_PREFIX + copiedTask13Name, "8h");
         seleniumHandler.setTextField(TaskGrid.TASK_GRID_MAX_EST_PREFIX + copiedTask13Name, "10h");
 
-        seleniumHandler.click(TaskListView.SAVE_BUTTON_ID);
+        seleniumHandler.click(Backlog.SAVE_BUTTON_ID);
 
         //---------------------------------------------------------------------------------------
         // Closing
