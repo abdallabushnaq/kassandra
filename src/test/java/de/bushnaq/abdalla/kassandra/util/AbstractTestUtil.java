@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.util;
 
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,8 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import java.util.List;
 
 public class AbstractTestUtil extends DTOAsserts {
+    @Autowired
+    private   DefaultEntitiesInitializer defaultEntitiesInitializer;
     @Autowired
     protected EntityManager              entityManager;
     @Autowired
@@ -67,6 +70,8 @@ public class AbstractTestUtil extends DTOAsserts {
             transactionManager.rollback(status);
             throw e;
         }
+        //-- generate all missing entities.
+        defaultEntitiesInitializer.run(null);
     }
 
     protected List<String> getAllTableNames() {

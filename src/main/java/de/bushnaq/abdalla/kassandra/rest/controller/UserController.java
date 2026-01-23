@@ -17,15 +17,13 @@
 
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dao.UserAvatarDAO;
 import de.bushnaq.abdalla.kassandra.dao.UserAvatarGenerationDataDAO;
 import de.bushnaq.abdalla.kassandra.dao.UserDAO;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
-import de.bushnaq.abdalla.kassandra.repository.LocationRepository;
-import de.bushnaq.abdalla.kassandra.repository.UserAvatarGenerationDataRepository;
-import de.bushnaq.abdalla.kassandra.repository.UserAvatarRepository;
-import de.bushnaq.abdalla.kassandra.repository.UserRepository;
+import de.bushnaq.abdalla.kassandra.repository.*;
 import de.bushnaq.abdalla.kassandra.rest.debug.DebugUtil;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
@@ -60,6 +58,8 @@ public class UserController {
     private UserAvatarGenerationDataRepository userAvatarGenerationDataRepository;
     @Autowired
     private UserAvatarRepository               userAvatarRepository;
+    @Autowired
+    private UserGroupRepository                userGroupRepository;
     @Autowired
     private UserRepository                     userRepository;
     @Autowired
@@ -176,6 +176,7 @@ public class UserController {
 
     @PostMapping(consumes = "application/json", produces = "application/json")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public UserDAO save(@RequestBody UserDAO user) {
         // Check name uniqueness
         if (userRepository.findByName(user.getName()).isPresent()) {
@@ -187,7 +188,17 @@ public class UserController {
             throw new UniqueConstraintViolationException("User", "email", user.getEmail());
         }
 
-        return userRepository.save(user);
+        UserDAO savedUser = userRepository.save(user);
+
+        // Automatically add user to "All" group
+        userGroupRepository.findByName(DefaultEntitiesInitializer.ALL_USERS_GROUP_NAME)
+                .ifPresent(allGroup -> {
+                    allGroup.addMember(savedUser.getId());
+                    userGroupRepository.save(allGroup);
+                    log.info("Added user {} to 'All' group", savedUser.getName());
+                });
+
+        return savedUser;
     }
 
     /**

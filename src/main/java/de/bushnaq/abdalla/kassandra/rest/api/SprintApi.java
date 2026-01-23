@@ -123,6 +123,21 @@ public class SprintApi extends AbstractApi {
         }
     }
 
+    /**
+     * Get the global Backlog sprint.
+     *
+     * @return The Backlog sprint
+     */
+    public Sprint getBacklogSprint() {
+        ResponseEntity<Sprint> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/sprint/backlog",
+                HttpMethod.GET,
+                createHttpEntity(),
+                Sprint.class
+        ));
+        return response.getBody();
+    }
+
     public Sprint getById(Long id) {
         ResponseEntity<Sprint> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/sprint/{id}",

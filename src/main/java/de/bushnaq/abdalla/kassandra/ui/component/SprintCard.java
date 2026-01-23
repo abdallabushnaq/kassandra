@@ -17,12 +17,15 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
+import com.vaadin.flow.component.dnd.DropEffect;
+import com.vaadin.flow.component.dnd.DropTarget;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -47,25 +50,27 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SprintCard extends Div {
 
-    private final List<Task>          allTasks;
-    private final DateTimeFormatter   dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
-    private       Icon                expandIcon;
-    private       boolean             expanded      = true; // Default to expanded
-    private final String              searchText;
-    private final java.util.Set<User> selectedUsers;
-    private final Sprint              sprint;
-    private final List<Task>          stories;
-    private       VerticalLayout      storiesContainer;
-    private final Map<Long, User>     userMap;
+    private final List<Task>             allTasks;
+    private final DateTimeFormatter      dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+    private final BacklogDragDropHandler dragDropHandler;
+    private       Icon                   expandIcon;
+    private       boolean                expanded      = true; // Default to expanded
+    private final String                 searchText;
+    private final java.util.Set<User>    selectedUsers;
+    private final Sprint                 sprint;
+    private final List<Task>             stories;
+    private       VerticalLayout         storiesContainer;
+    private final Map<Long, User>        userMap;
 
     public SprintCard(Sprint sprint, List<Task> stories, List<Task> allTasks, Map<Long, User> userMap,
-                      String searchText, java.util.Set<User> selectedUsers) {
-        this.sprint        = sprint;
-        this.stories       = stories;
-        this.allTasks      = allTasks;
-        this.userMap       = userMap;
-        this.searchText    = searchText != null ? searchText : "";
-        this.selectedUsers = selectedUsers != null ? selectedUsers : new java.util.HashSet<>();
+                      String searchText, java.util.Set<User> selectedUsers, BacklogDragDropHandler dragDropHandler) {
+        this.sprint          = sprint;
+        this.stories         = stories;
+        this.allTasks        = allTasks;
+        this.userMap         = userMap;
+        this.searchText      = searchText != null ? searchText : "";
+        this.selectedUsers   = selectedUsers != null ? selectedUsers : new java.util.HashSet<>();
+        this.dragDropHandler = dragDropHandler;
 
         addClassName("sprint-card");
         setWidthFull();
@@ -78,6 +83,12 @@ public class SprintCard extends Div {
                 .set("border-radius", "8px") // Rounded corners
                 .set("padding", "var(--lumo-space-s) var(--lumo-space-m)") // Padding all around
                 .set("box-sizing", "border-box");
+
+        // Visual distinction for Backlog sprint
+        if (DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(sprint.getName())) {
+            grayContainer.getStyle()
+                    .set("border-left", "4px solid var(--lumo-primary-color)");
+        }
 
         VerticalLayout contentLayout = new VerticalLayout();
         contentLayout.setPadding(false);
@@ -93,6 +104,7 @@ public class SprintCard extends Div {
         add(grayContainer);
 
         applyStyling();
+        setupDropTarget();
     }
 
     private void applyStyling() {
@@ -230,7 +242,7 @@ public class SprintCard extends Div {
 
             // Only add story if it has tasks after filtering
             if (!childTasks.isEmpty()) {
-                BacklogStoryCard storyCard = new BacklogStoryCard(story, childTasks, userMap);
+                BacklogStoryCard storyCard = new BacklogStoryCard(story, childTasks, userMap, sprint, dragDropHandler);
                 storiesContainer.add(storyCard);
             }
         }
@@ -256,6 +268,33 @@ public class SprintCard extends Div {
             expandIcon.getElement().setAttribute("icon",
                     expanded ? "vaadin:chevron-down" : "vaadin:chevron-right");
         }
+    }
+
+    /**
+     * Setup this card as a drop target for tasks/stories.
+     */
+    private void setupDropTarget() {
+        DropTarget<SprintCard> dropTarget = DropTarget.create(this);
+        dropTarget.setDropEffect(DropEffect.MOVE);
+
+        dropTarget.addDropListener(event -> {
+            Task draggedTask = dragDropHandler.getDraggedTask();
+            if (draggedTask != null) {
+                // Dropped on sprint card - add to end of sprint
+                dragDropHandler.handleDropOnSprint(sprint);
+            }
+        });
+
+        // Visual feedback for drag over using element event listeners
+        getElement().addEventListener("dragenter", e ->
+                getStyle().set("outline", "2px dashed var(--lumo-primary-color)")
+        );
+        getElement().addEventListener("dragleave", e ->
+                getStyle().remove("outline")
+        );
+        getElement().addEventListener("drop", e ->
+                getStyle().remove("outline")
+        );
     }
 
     private void toggleExpand() {

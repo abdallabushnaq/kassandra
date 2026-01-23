@@ -17,12 +17,16 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
+import com.vaadin.flow.component.dnd.DragSource;
+import com.vaadin.flow.component.dnd.DropEffect;
+import com.vaadin.flow.component.dnd.DropTarget;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import lombok.extern.slf4j.Slf4j;
@@ -45,23 +49,30 @@ import java.util.Map;
 @Slf4j
 public class BacklogStoryCard extends Div {
 
-    private final List<Task>      childTasks;
-    private       Icon            expandIcon;
-    private       boolean         expanded = true; // Default to expanded
-    private final Task            story;
-    private       VerticalLayout  tasksContainer;
-    private final Map<Long, User> userMap;
+    private final List<Task>             childTasks;
+    private final BacklogDragDropHandler dragDropHandler;
+    private       Icon                   expandIcon;
+    private       boolean                expanded = true; // Default to expanded
+    private final Sprint                 sprint;
+    private final Task                   story;
+    private       VerticalLayout         tasksContainer;
+    private final Map<Long, User>        userMap;
 
-    public BacklogStoryCard(Task story, List<Task> childTasks, Map<Long, User> userMap) {
-        this.story      = story;
-        this.childTasks = childTasks;
-        this.userMap    = userMap;
+    public BacklogStoryCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+                            Sprint sprint, BacklogDragDropHandler dragDropHandler) {
+        this.story           = story;
+        this.childTasks      = childTasks;
+        this.userMap         = userMap;
+        this.sprint          = sprint;
+        this.dragDropHandler = dragDropHandler;
 
         addClassName("backlog-story-card");
         setWidthFull();
 
         createContent();
         applyStyling();
+        setupDragSource();
+        setupDropTarget();
     }
 
     private void applyStyling() {
@@ -190,7 +201,7 @@ public class BacklogStoryCard extends Div {
 
         // Add each child task
         for (Task task : childTasks) {
-            BacklogTaskCard taskCard = new BacklogTaskCard(task, userMap);
+            BacklogTaskCard taskCard = new BacklogTaskCard(task, userMap, sprint, dragDropHandler);
             container.add(taskCard);
         }
 
@@ -236,6 +247,51 @@ public class BacklogStoryCard extends Div {
             expandIcon.getElement().setAttribute("icon",
                     expanded ? "vaadin:chevron-down" : "vaadin:chevron-right");
         }
+    }
+
+    /**
+     * Setup this card as a drag source.
+     */
+    private void setupDragSource() {
+        DragSource<BacklogStoryCard> dragSource = DragSource.create(this);
+        dragSource.setDraggable(true);
+        dragSource.setDragData(story);
+
+        dragSource.addDragStartListener(e -> {
+            dragDropHandler.onDragStart(story, sprint);
+            getStyle().set("opacity", "0.5");
+        });
+
+        dragSource.addDragEndListener(e -> {
+            getStyle().remove("opacity");
+        });
+    }
+
+    /**
+     * Setup this card as a drop target for reordering.
+     */
+    private void setupDropTarget() {
+        DropTarget<BacklogStoryCard> dropTarget = DropTarget.create(this);
+        dropTarget.setDropEffect(DropEffect.MOVE);
+
+        dropTarget.addDropListener(event -> {
+            Task draggedTask = dragDropHandler.getDraggedTask();
+            if (draggedTask != null && !draggedTask.equals(story)) {
+                // Drop before this story
+                dragDropHandler.handleDropOnTask(story, sprint, false);
+            }
+        });
+
+        // Visual feedback for drag over using element event listeners
+        getElement().addEventListener("dragenter", e ->
+                getStyle().set("outline", "2px dashed var(--lumo-primary-color)")
+        );
+        getElement().addEventListener("dragleave", e ->
+                getStyle().remove("outline")
+        );
+        getElement().addEventListener("drop", e ->
+                getStyle().remove("outline")
+        );
     }
 
     private void toggleExpand() {

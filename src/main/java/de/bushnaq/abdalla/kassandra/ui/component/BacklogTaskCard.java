@@ -17,9 +17,13 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
+import com.vaadin.flow.component.dnd.DragSource;
+import com.vaadin.flow.component.dnd.DropEffect;
+import com.vaadin.flow.component.dnd.DropTarget;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import lombok.extern.slf4j.Slf4j;
@@ -42,18 +46,24 @@ import java.util.Map;
 @Slf4j
 public class BacklogTaskCard extends Div {
 
-    private final Task            task;
-    private final Map<Long, User> userMap;
+    private final BacklogDragDropHandler dragDropHandler;
+    private final Sprint                 sprint;
+    private final Task                   task;
+    private final Map<Long, User>        userMap;
 
-    public BacklogTaskCard(Task task, Map<Long, User> userMap) {
-        this.task    = task;
-        this.userMap = userMap;
+    public BacklogTaskCard(Task task, Map<Long, User> userMap, Sprint sprint, BacklogDragDropHandler dragDropHandler) {
+        this.task            = task;
+        this.userMap         = userMap;
+        this.sprint          = sprint;
+        this.dragDropHandler = dragDropHandler;
 
         addClassName("backlog-task-card");
         setWidthFull();
 
         createTaskLine();
         applyStyling();
+        setupDragSource();
+        setupDropTarget();
     }
 
     private void applyStyling() {
@@ -211,6 +221,51 @@ public class BacklogTaskCard extends Div {
         }
 
         return colorToHex(user.getColor());
+    }
+
+    /**
+     * Setup this card as a drag source.
+     */
+    private void setupDragSource() {
+        DragSource<BacklogTaskCard> dragSource = DragSource.create(this);
+        dragSource.setDraggable(true);
+        dragSource.setDragData(task);
+
+        dragSource.addDragStartListener(e -> {
+            dragDropHandler.onDragStart(task, sprint);
+            getStyle().set("opacity", "0.5");
+        });
+
+        dragSource.addDragEndListener(e -> {
+            getStyle().remove("opacity");
+        });
+    }
+
+    /**
+     * Setup this card as a drop target for reordering.
+     */
+    private void setupDropTarget() {
+        DropTarget<BacklogTaskCard> dropTarget = DropTarget.create(this);
+        dropTarget.setDropEffect(DropEffect.MOVE);
+
+        dropTarget.addDropListener(event -> {
+            Task draggedTask = dragDropHandler.getDraggedTask();
+            if (draggedTask != null && !draggedTask.equals(task)) {
+                // Drop before this task
+                dragDropHandler.handleDropOnTask(task, sprint, false);
+            }
+        });
+
+        // Visual feedback for drag over using element event listeners
+        getElement().addEventListener("dragenter", e ->
+                getStyle().set("outline", "2px dashed var(--lumo-primary-color)")
+        );
+        getElement().addEventListener("dragleave", e ->
+                getStyle().remove("outline")
+        );
+        getElement().addEventListener("drop", e ->
+                getStyle().remove("outline")
+        );
     }
 }
 

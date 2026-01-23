@@ -23,6 +23,8 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -30,6 +32,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -38,13 +41,20 @@ import de.bushnaq.abdalla.kassandra.rest.api.SprintApi;
 import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.WorklogApi;
+import de.bushnaq.abdalla.kassandra.service.DatabaseDebugService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.BacklogDragDropHandler;
 import de.bushnaq.abdalla.kassandra.ui.component.SprintCard;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -58,9 +68,13 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
 
     public static final String                      ROUTE              = "backlog";
     private             List<Sprint>                allSprints         = new ArrayList<>();
+    private             Sprint                      backlogSprint;      // Cached backlog sprint
     private final       VerticalLayout              contentLayout;
+    private final       DatabaseDebugService        databaseDebugService; // For debug print DB
+    private final       BacklogDragDropHandler      dragDropHandler;
     private             boolean                     hasUrlParameters   = false;
     private             boolean                     isRestoringFromUrl = false;
+    private             User                        loggedInUser;       // Current logged-in user
     private             String                      savedSprintIds     = null;
     private             String                      savedUserIds       = null;
     private             String                      searchText         = "";
@@ -75,11 +89,26 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
     private             List<User>                  users              = new ArrayList<>();
     private final       WorklogApi                  worklogApi;
 
-    public Backlog(SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi) {
-        this.sprintApi  = sprintApi;
-        this.taskApi    = taskApi;
-        this.userApi    = userApi;
-        this.worklogApi = worklogApi;
+    public Backlog(SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi, DatabaseDebugService databaseDebugService) {
+        this.sprintApi            = sprintApi;
+        this.taskApi              = taskApi;
+        this.userApi              = userApi;
+        this.worklogApi           = worklogApi;
+        this.databaseDebugService = databaseDebugService;
+
+        // Create drag-drop handler
+        this.dragDropHandler = new BacklogDragDropHandler(taskApi, () -> {
+            backlogSprint = null; // Clear cache
+            loadData();           // Reload all data
+        });
+
+        // Load current user
+        String userEmail = getUserEmail();
+        try {
+            loggedInUser = userApi.getByEmail(userEmail);
+        } catch (ResponseStatusException e) {
+            log.warn("Could not find user with email: {}", userEmail);
+        }
 
         try {
             // Set width full but not height - let content determine height for scrolling
@@ -141,6 +170,9 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
             // Clear previous content
             contentLayout.removeAll();
 
+            // Clear previous drag-drop registrations
+            dragDropHandler.clearRegistrations();
+
             if (allSprints.isEmpty()) {
                 Div emptyMessage = new Div();
                 emptyMessage.setText("No sprints found.");
@@ -153,7 +185,18 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
             }
 
             // Get selected sprints from filter (or all if none selected)
-            List<Sprint> sprintsToShow = selectedSprints.isEmpty() ? allSprints : new ArrayList<>(selectedSprints);
+            List<Sprint> sprintsToShow = selectedSprints.isEmpty()
+                    ? new ArrayList<>(allSprints)
+                    : new ArrayList<>(selectedSprints);
+
+            // Always ensure Backlog sprint is included (even if filtered out or not in selection)
+            Sprint backlog = allSprints.stream()
+                    .filter(s -> DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s.getName()))
+                    .findFirst()
+                    .orElse(null);
+            if (backlog != null && !sprintsToShow.contains(backlog)) {
+                sprintsToShow.add(backlog);
+            }
 
             if (sprintsToShow.isEmpty()) {
                 Div emptyMessage = new Div();
@@ -166,8 +209,16 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
                 return;
             }
 
-            // Sort sprints by start date (newest first)
+            // Sort sprints by start date (newest first), but Backlog always last
             sprintsToShow.sort((s1, s2) -> {
+                // Backlog sprint always goes last
+                boolean s1IsBacklog = DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s1.getName());
+                boolean s2IsBacklog = DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s2.getName());
+
+                if (s1IsBacklog && !s2IsBacklog) return 1;
+                if (!s1IsBacklog && s2IsBacklog) return -1;
+
+                // Normal sorting by start date
                 if (s1.getStart() == null && s2.getStart() == null) return 0;
                 if (s1.getStart() == null) return 1;
                 if (s2.getStart() == null) return -1;
@@ -187,6 +238,40 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
                     .set("padding", "var(--lumo-space-l)")
                     .set("color", "var(--lumo-error-text-color)");
             contentLayout.add(errorMessage);
+        }
+    }
+
+    /**
+     * Assign a user to a newly created task.
+     * Looks at the last task in the backlog with an assigned user.
+     * Falls back to the currently logged-in user.
+     */
+    private void assignUserToNewTask(Task newTask) {
+        Long assignedUserId = null;
+
+        Sprint sprint = getBacklogSprint();
+        if (sprint != null && !sprint.getTasks().isEmpty()) {
+            // Get tasks sorted by orderId (descending to get most recent first)
+            List<Task> sortedTasks = sprint.getTasks().stream()
+                    .sorted(Comparator.comparingInt(Task::getOrderId).reversed())
+                    .toList();
+
+            // Find the first task with an assigned user
+            for (Task task : sortedTasks) {
+                if (task.getResourceId() != null) {
+                    assignedUserId = task.getResourceId();
+                    break;
+                }
+            }
+        }
+
+        // Fall back to logged-in user
+        if (assignedUserId == null && loggedInUser != null) {
+            assignedUserId = loggedInUser.getId();
+        }
+
+        if (assignedUserId != null) {
+            newTask.setResourceId(assignedUserId);
         }
     }
 
@@ -236,7 +321,7 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
     private HorizontalLayout createHeader() {
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
-        header.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.END);
+        header.setAlignItems(FlexComponent.Alignment.END);
         header.getStyle().set("padding", "var(--lumo-space-m)");
         header.setSpacing(true);
 
@@ -311,9 +396,63 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
             applyFilters();
         });
 
-        header.add(searchField, userSelector, sprintSelector, clearButton);
+        // Spacer to push create buttons to the right
+        Div spacer = new Div();
+
+        // Create Milestone button
+        Button createMilestoneButton = new Button("Create Milestone", VaadinIcon.FLAG.create());
+        createMilestoneButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        createMilestoneButton.addClickListener(e -> createMilestone());
+
+        // Create Story button
+        Button createStoryButton = new Button("Create Story", VaadinIcon.BOOK.create());
+        createStoryButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        createStoryButton.addClickListener(e -> createStory());
+
+        // Create Task button
+        Button createTaskButton = new Button("Create Task", VaadinIcon.TASKS.create());
+        createTaskButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        createTaskButton.addClickListener(e -> createTask());
+
+        // Debug: Print DB button
+        Button printDbButton = new Button("Print DB", VaadinIcon.DATABASE.create());
+        printDbButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        printDbButton.addClickListener(e -> printDatabaseTables());
+
+        header.add(searchField, userSelector, sprintSelector, clearButton, spacer,
+                createMilestoneButton, createStoryButton, createTaskButton, printDbButton);
+        header.setFlexGrow(1, spacer);
 
         return header;
+    }
+
+    /**
+     * Create a new Milestone task in the Backlog sprint.
+     */
+    private void createMilestone() {
+        Sprint sprint = getBacklogSprint();
+        if (sprint == null) {
+            Notification.show("Backlog sprint not found", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+
+        // Get the next orderId before creating the task
+        int nextOrderId = sprint.getNextOrderId();
+
+        Task task = new Task();
+        task.setName("New Milestone-" + nextOrderId);
+        task.setSprintId(sprint.getId());
+        task.setOrderId(nextOrderId);
+        task.setMilestone(true);
+        task.setStart(ParameterOptions.getLocalNow().withHour(8).withMinute(0).withSecond(0).withNano(0));
+        // Milestones typically don't have a user assigned
+
+        // Add task to sprint's task list so getNextOrderId() works correctly for next task
+        sprint.addTask(task);
+
+        taskApi.persist(task);
+        backlogSprint = null; // Clear cache to reload
+        loadData();
     }
 
     /**
@@ -329,6 +468,9 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
         sprint.initUserMap(users);
         sprint.initTaskMap(tasks, worklogs);
         sprint.recalculate(ParameterOptions.getLocalNow());
+
+        // Register sprint's tasks with drag-drop handler
+        dragDropHandler.registerSprint(sprint, tasks);
 
         // Filter only story tasks (tasks without parent)
         List<Task> stories = new ArrayList<>();
@@ -374,13 +516,114 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
         }
 
         // Only create sprint card if there are stories to show
-        if (!stories.isEmpty()) {
-            // Create SprintCard for this sprint
-            SprintCard sprintCard = new SprintCard(sprint, stories, tasks, userMap, searchText, selectedUsers);
+        // Exception: Backlog sprint should always be visible even when empty
+        boolean isBacklogSprint = DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(sprint.getName());
+        if (!stories.isEmpty() || isBacklogSprint) {
+            // Create SprintCard for this sprint with drag-drop handler
+            SprintCard sprintCard = new SprintCard(sprint, stories, tasks, userMap, searchText, selectedUsers, dragDropHandler);
 
             // Add sprint card to main content
             contentLayout.add(sprintCard);
         }
+    }
+
+    /**
+     * Create a new Story task in the Backlog sprint.
+     */
+    private void createStory() {
+        Sprint sprint = getBacklogSprint();
+        if (sprint == null) {
+            Notification.show("Backlog sprint not found", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+
+        // Get the next orderId before creating the task
+        int nextOrderId = sprint.getNextOrderId();
+
+        Task task = new Task();
+        task.setName("New Story-" + nextOrderId);
+        task.setSprintId(sprint.getId());
+        task.setOrderId(nextOrderId);
+        // Stories are parent tasks, typically don't have a user directly assigned
+
+        // Add task to sprint's task list so getNextOrderId() works correctly for next task
+        sprint.addTask(task);
+
+        taskApi.persist(task);
+        backlogSprint = null; // Clear cache to reload
+        loadData();
+    }
+
+    /**
+     * Create a new Task in the Backlog sprint.
+     */
+    private void createTask() {
+        Sprint sprint = getBacklogSprint();
+        if (sprint == null) {
+            Notification.show("Backlog sprint not found", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+
+        // Get the next orderId before creating the task
+        int nextOrderId = sprint.getNextOrderId();
+
+        Task task = new Task();
+        task.setName("New Task-" + nextOrderId);
+        task.setSprintId(sprint.getId());
+        task.setOrderId(nextOrderId);
+        Duration work = Duration.ofHours(7).plus(Duration.ofMinutes(30));
+        task.setMinEstimate(work);
+        task.setRemainingEstimate(work);
+
+        // Assign user based on last task or logged-in user
+        assignUserToNewTask(task);
+
+        // Add task to sprint's task list so getNextOrderId() works correctly for next task
+        sprint.addTask(task);
+
+        taskApi.persist(task);
+        backlogSprint = null; // Clear cache to reload
+        loadData();
+    }
+
+    /**
+     * Get the cached backlog sprint, loading it if necessary.
+     */
+    private Sprint getBacklogSprint() {
+        if (backlogSprint == null) {
+            try {
+                backlogSprint = sprintApi.getBacklogSprint();
+                // Initialize sprint if needed for task creation
+                if (backlogSprint != null) {
+                    backlogSprint.initialize();
+                    List<Task>    tasks    = taskApi.getAll(backlogSprint.getId());
+                    List<Worklog> worklogs = worklogApi.getAll(backlogSprint.getId());
+                    backlogSprint.initUserMap(users);
+                    backlogSprint.initTaskMap(tasks, worklogs);
+                }
+            } catch (Exception e) {
+                log.error("Failed to load backlog sprint", e);
+            }
+        }
+        return backlogSprint;
+    }
+
+    /**
+     * Get the currently logged-in user's email.
+     */
+    private String getUserEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String         userEmail      = authentication != null ? authentication.getName() : "Guest";
+
+        // If using OIDC, try to get the email address from authentication details
+        if (authentication != null &&
+                authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
+            String email = oidcUser.getEmail();
+            if (email != null && !email.isEmpty()) {
+                userEmail = email;
+            }
+        }
+        return userEmail;
     }
 
     /**
@@ -397,9 +640,26 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
                 userMap.put(user.getId(), user);
             }
             log.info("Loaded {} users", users.size());
+
             // Load all sprints
-            allSprints = sprintApi.getAll();
-//            log.info("Loaded {} sprints", allSprints.size());
+            allSprints = new ArrayList<>(sprintApi.getAll());
+
+            // Ensure Backlog sprint is always included (even if not returned by ACL-filtered API)
+            boolean hasBacklog = allSprints.stream()
+                    .anyMatch(s -> DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s.getName()));
+            if (!hasBacklog) {
+                try {
+                    Sprint backlogSprint = sprintApi.getBacklogSprint();
+                    if (backlogSprint != null) {
+                        allSprints.add(backlogSprint);
+                        log.info("Added Backlog sprint to allSprints (was not in ACL-filtered list)");
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not fetch Backlog sprint: {}", e.getMessage());
+                }
+            }
+
+            log.info("Loaded {} sprints (including Backlog)", allSprints.size());
 
             populateFilters();
 
@@ -454,9 +714,12 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
             }
         }
 
-        // Populate sprint selector
+        // Populate sprint selector (excluding Backlog since it's always visible)
         if (sprintSelector != null) {
-            sprintSelector.setItems(allSprints);
+            List<Sprint> selectableSprints = allSprints.stream()
+                    .filter(s -> !DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s.getName()))
+                    .toList();
+            sprintSelector.setItems(selectableSprints);
 
             // Restore selected sprints from URL parameters or select first by default
             if (savedSprintIds != null && !savedSprintIds.isEmpty()) {
@@ -464,7 +727,7 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
                 for (String idStr : savedSprintIds.split(",")) {
                     try {
                         Long id = Long.parseLong(idStr.trim());
-                        allSprints.stream()
+                        selectableSprints.stream()
                                 .filter(s -> s.getId().equals(id))
                                 .findFirst()
                                 .ifPresent(sprintsToSelect::add);
@@ -476,10 +739,10 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
                     selectedSprints = sprintsToSelect;
                     sprintSelector.setValue(sprintsToSelect);
                 }
-            } else if (!hasUrlParameters && !allSprints.isEmpty()) {
+            } else if (!hasUrlParameters && !selectableSprints.isEmpty()) {
                 // Only select first sprint by default if NO URL parameters at all (first visit)
                 // If hasUrlParameters is true but no sprints, user explicitly cleared all sprints
-                selectedSprints = Set.of(allSprints.get(0));
+                selectedSprints = Set.of(selectableSprints.get(0));
                 sprintSelector.setValue(selectedSprints);
                 // Explicitly update URL with default selection
                 isRestoringFromUrl = false;
@@ -505,6 +768,20 @@ public class Backlog extends Main implements BeforeEnterObserver, AfterNavigatio
                             });
                 }
             }));
+        }
+    }
+
+    /**
+     * Debug method to print all database tables to db.txt file.
+     */
+    private void printDatabaseTables() {
+        log.info("Print DB button clicked - writing database tables to db.txt");
+        try {
+            java.nio.file.Path outputPath = databaseDebugService.printDatabaseTables();
+            Notification.show("Database tables written to " + outputPath, 3000, Notification.Position.BOTTOM_END);
+        } catch (Exception e) {
+            log.error("Error printing database tables", e);
+            Notification.show("Error printing database: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
         }
     }
 

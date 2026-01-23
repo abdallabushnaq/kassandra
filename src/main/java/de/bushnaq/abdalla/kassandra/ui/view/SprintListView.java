@@ -31,6 +31,7 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
@@ -300,6 +301,8 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             deleteButton.setId(SPRINT_GRID_DELETE_BUTTON_PREFIX + sprint.getName());
             deleteButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
             deleteButton.addClickListener(e -> confirmDelete(sprint));
+            // Hide delete button for Backlog sprint
+            deleteButton.setVisible(!DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(sprint.getName()));
 //            deleteButton.getElement().setAttribute("title", "Delete");
 
             layout.add(editButton, configButton, deleteButton);

@@ -28,6 +28,7 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductAclApi;
@@ -322,8 +323,10 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         // Clear existing items
         getDataProvider().getItems().clear();
 
-        // Fetch fresh data from API (with updated hashes)
-        getDataProvider().getItems().addAll(productApi.getAll());
+        // Fetch fresh data from API (with updated hashes) and filter out Default product
+        productApi.getAll().stream()
+                .filter(p -> !DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
+                .forEach(p -> getDataProvider().getItems().add(p));
 
         // Force complete refresh of the grid
         getDataProvider().refreshAll();

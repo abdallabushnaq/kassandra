@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dao.SprintAvatarDAO;
 import de.bushnaq.abdalla.kassandra.dao.SprintAvatarGenerationDataDAO;
 import de.bushnaq.abdalla.kassandra.dao.SprintDAO;
@@ -33,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,6 +62,12 @@ public class SprintController {
     @PreAuthorize("@aclSecurityService.hasSprintAccess(#id) or hasRole('ADMIN')")
     @Transactional
     public void delete(@PathVariable Long id) {
+        // Prevent deletion of the Backlog sprint
+        SprintDAO sprint = sprintRepository.findById(id).orElseThrow();
+        if (DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(sprint.getName())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete the Backlog sprint");
+        }
+
         // Delete avatars first (cascade delete)
         sprintAvatarRepository.deleteBySprintId(id);
         sprintAvatarGenerationDataRepository.deleteBySprintId(id);
@@ -132,10 +140,28 @@ public class SprintController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/backlog")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public SprintDAO getBacklogSprint() {
+        SprintDAO backlog = sprintRepository.findByName(DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME);
+        if (backlog == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Backlog sprint not found");
+        }
+        return backlog;
+    }
+
     @PostMapping()
     @PreAuthorize("@aclSecurityService.hasFeatureAccess(#sprintDAO.featureId) or hasRole('ADMIN')")
     @Transactional
     public SprintDAO save(@RequestBody SprintDAO sprintDAO) {
+        // Prevent creating another Backlog sprint (globally unique name)
+        if (DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(sprintDAO.getName())) {
+            SprintDAO existingBacklog = sprintRepository.findByName(DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME);
+            if (existingBacklog != null) {
+                throw new UniqueConstraintViolationException("Sprint", "name", sprintDAO.getName());
+            }
+        }
+
         // Check if a sprint with the same name already exists for this feature
         if (sprintRepository.existsByNameAndFeatureId(sprintDAO.getName(), sprintDAO.getFeatureId())) {
             throw new UniqueConstraintViolationException("Sprint", "name", sprintDAO.getName());
