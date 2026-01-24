@@ -51,7 +51,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -100,8 +99,6 @@ public class TaskGrid extends TreeGrid<Task> {
     private final       Locale                       locale;
     @Getter
     private final       Set<Task>                    modifiedTasks               = new HashSet<>();
-    @Setter
-    private             Consumer<Task>               onPersistTask;
     @Setter
     private             Runnable                     onSaveAllChangesAndRefresh;
     @Getter

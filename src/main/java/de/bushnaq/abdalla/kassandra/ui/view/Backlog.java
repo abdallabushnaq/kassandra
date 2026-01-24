@@ -393,8 +393,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
     private TaskGrid createGrid(Clock clock) {
         TaskGrid grid = new TaskGrid(clock, getLocale(), jsonMapper);
-        // Set up callbacks for grid actions
-        grid.setOnPersistTask(this::onPersistTask);
         grid.setOnSaveAllChangesAndRefresh(this::saveAllChangesAndRefresh);
 
         grid.setWidthFull();
@@ -900,10 +898,14 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         log.info("Cross-grid transfer: {} from sprint '{}' to sprint '{}'",
                 task.getKey(), sourceSprint.getName(), targetSprint.getName());
 
+        // Collect all modified tasks for batch saving
+        java.util.Set<Task> modifiedTasks = new java.util.HashSet<>();
+
         // 1. Handle parent-child relationships - remove from current parent
         Task oldParent = task.getParentTask();
         if (oldParent != null) {
             oldParent.removeChildTask(task);
+            modifiedTasks.add(oldParent);
             log.debug("Removed task {} from parent {}", task.getKey(), oldParent.getKey());
         }
 
@@ -927,7 +929,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         if (task.isStory() && !childTasks.isEmpty()) {
             allMovedTasks.addAll(childTasks);
         }
-        removeBrokenRelations(allMovedTasks, sourceSprint, targetSprint);
+        removeBrokenRelations(allMovedTasks, sourceSprint, targetSprint, modifiedTasks);
 
         // 5. Update task's sprint reference
         task.setSprintId(targetSprint.getId());
@@ -971,6 +973,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             Task newParent = findParentStoryForPosition(targetTaskOrder, targetTaskOrder.indexOf(task));
             if (newParent != null) {
                 newParent.addChildTask(task);
+                modifiedTasks.add(newParent);
                 log.debug("Added task {} to new parent {}", task.getKey(), newParent.getKey());
             }
         }
@@ -991,25 +994,34 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                 }
                 insertIndex++;
 
-                // Persist child
+                // Mark child as modified
                 child.setStart(null); // Reset start date to force recalculation
-                taskApi.persist(child);
+                modifiedTasks.add(child);
                 log.debug("Moved child task {} to target sprint", child.getKey());
             }
         }
 
-        // 11. Recalculate order IDs for both grids
-        recalculateOrderIds(targetTaskOrder);
-        recalculateOrderIds(sourceGrid.getTaskOrder());
+        // 11. Recalculate order IDs for both grids and mark affected tasks as modified
+        recalculateOrderIdsAndMarkModified(targetTaskOrder, modifiedTasks);
+        recalculateOrderIdsAndMarkModified(sourceGrid.getTaskOrder(), modifiedTasks);
 
-        // 12. Persist all changes
+        // 12. Mark the main task as modified
         task.setStart(null); // Reset start date to force recalculation
-        taskApi.persist(task);
-        log.info("Persisted task {} to sprint '{}'", task.getKey(), targetSprint.getName());
+        modifiedTasks.add(task);
 
-        // 13. Reload and refresh both grids
-        loadData();
-        refreshGrid();
+        // 13. Add all modified tasks to the appropriate grid's modifiedTasks collection
+        log.info("Marking {} tasks as modified from cross-grid transfer", modifiedTasks.size());
+        for (Task modifiedTask : modifiedTasks) {
+            // Add to the grid that owns this task (based on sprint)
+            if (modifiedTask.getSprintId() != null && modifiedTask.getSprintId().equals(targetSprint.getId())) {
+                targetGrid.getModifiedTasks().add(modifiedTask);
+            } else {
+                sourceGrid.getModifiedTasks().add(modifiedTask);
+            }
+        }
+
+        // 14. Save all changes and refresh both grids
+        saveAllChangesAndRefresh();
     }
 
     private void loadData() {
@@ -1151,10 +1163,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         refreshGrid();
     }
 
-    private void onPersistTask(Task task) {
-        Task saved = taskApi.persist(task);
-    }
-
     /**
      * Populate the sprint selector with all available sprints.
      * The Backlog sprint is excluded since it's always shown at the bottom.
@@ -1207,6 +1215,22 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     }
 
     /**
+     * Recalculate order IDs for all tasks and mark them as modified for batch saving.
+     *
+     * @param taskOrder     The list of tasks to update
+     * @param modifiedTasks Set to collect tasks that were modified
+     */
+    private void recalculateOrderIdsAndMarkModified(List<Task> taskOrder, java.util.Set<Task> modifiedTasks) {
+        for (int i = 0; i < taskOrder.size(); i++) {
+            Task task = taskOrder.get(i);
+            if (task.getOrderId() == null || task.getOrderId() != i) {
+                task.setOrderId(i);
+                modifiedTasks.add(task);
+            }
+        }
+    }
+
+    /**
      * Refresh both grids and the Gantt chart.
      * Sprint grid shows the selected sprint's tasks.
      * Backlog grid shows the Backlog sprint's tasks (always at bottom).
@@ -1250,11 +1274,12 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
      *     <li>Tasks in the source sprint that have moved tasks as predecessors</li>
      * </ol>
      *
-     * @param movedTasks   List of tasks being moved (includes the main task and any child tasks)
-     * @param sourceSprint The sprint the tasks are being moved from
-     * @param targetSprint The sprint the tasks are being moved to
+     * @param movedTasks    List of tasks being moved (includes the main task and any child tasks)
+     * @param sourceSprint  The sprint the tasks are being moved from
+     * @param targetSprint  The sprint the tasks are being moved to
+     * @param modifiedTasks Set to collect tasks that were modified (for batch saving)
      */
-    private void removeBrokenRelations(List<Task> movedTasks, Sprint sourceSprint, Sprint targetSprint) {
+    private void removeBrokenRelations(List<Task> movedTasks, Sprint sourceSprint, Sprint targetSprint, java.util.Set<Task> modifiedTasks) {
         // Create a set of moved task IDs for quick lookup
         java.util.Set<Long> movedTaskIds = movedTasks.stream()
                 .map(Task::getId)
@@ -1278,7 +1303,10 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                         }
                     }
                 }
-                predecessors.removeAll(relationsToRemove);
+                if (!relationsToRemove.isEmpty()) {
+                    predecessors.removeAll(relationsToRemove);
+                    modifiedTasks.add(movedTask);
+                }
             }
         }
 
@@ -1309,33 +1337,39 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                 }
                 if (!relationsToRemove.isEmpty()) {
                     predecessors.removeAll(relationsToRemove);
-                    // Persist the source task with removed relations
-                    taskApi.persist(sourceTask);
+                    // Mark task as modified for batch saving
+                    modifiedTasks.add(sourceTask);
                 }
             }
         }
     }
 
     /**
-     * Save all modified tasks to backend
+     * Save all modified tasks to backend from both sprint grid and backlog grid
      */
     private void saveAllChangesAndRefresh() {
-        if (grid.getModifiedTasks().isEmpty()) {
+        // Collect modified tasks from both grids
+        java.util.Set<Task> allModifiedTasks = new java.util.HashSet<>();
+        allModifiedTasks.addAll(grid.getModifiedTasks());
+        allModifiedTasks.addAll(backlogGrid.getModifiedTasks());
+
+        if (allModifiedTasks.isEmpty()) {
             exitEditMode();
             return;
         }
 
-        log.info("Saving {} modified tasks", grid.getModifiedTasks().size());
+        log.info("Saving {} modified tasks ({} from sprint grid, {} from backlog grid)", allModifiedTasks.size(), grid.getModifiedTasks().size(), backlogGrid.getModifiedTasks().size());
 
         // Persist all modified tasks
-        for (Task task : grid.getModifiedTasks()) {
+        for (Task task : allModifiedTasks) {
             if (!task.isMilestone())
                 task.setStart(null); // Reset start date to force recalculation
             taskApi.persist(task);
         }
 
-        // Clear modified tasks and reload data
+        // Clear modified tasks from both grids and reload data
         grid.getModifiedTasks().clear();
+        backlogGrid.getModifiedTasks().clear();
         loadData();
         refreshGrid();
         exitEditMode();
