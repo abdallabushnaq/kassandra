@@ -87,7 +87,7 @@ public class TaskGrid extends TreeGrid<Task> {
      */
     @Setter
     private             boolean                      expandInitially             = true; // Control whether to expand all items on first load
-    private final       Set<Task>                    expandedTasks               = new HashSet<>(); // Track expanded tasks for state preservation
+    private final       Set<Long>                    expandedTaskIds             = new HashSet<>(); // Track expanded task IDs for state preservation
     private             String                       externalDragMode;     // Drag mode from external grid
     private             TaskGrid                     externalDragSource;   // Source grid for cross-grid drags
     private             Task                         externalDraggedTask;  // Task being dragged from another grid
@@ -95,6 +95,7 @@ public class TaskGrid extends TreeGrid<Task> {
     @Getter
     @Setter
     private             boolean                      isEditMode                  = false;// Edit mode state management
+    private             boolean                      isFirstLoad                 = true; // Track if this is the first data load for current sprint
     private final       JsonMapper                   jsonMapper;
     private final       Locale                       locale;
     @Getter
@@ -130,6 +131,15 @@ public class TaskGrid extends TreeGrid<Task> {
         setAllRowsVisible(true);
 
 
+    }
+
+    /**
+     * Add expansion state for a task being received from another grid.
+     *
+     * @param taskId The ID of the task being received
+     */
+    public void addExpansionState(Long taskId) {
+        expandedTaskIds.add(taskId);
     }
 
     public void addTask(Task task) {
@@ -1147,19 +1157,33 @@ public class TaskGrid extends TreeGrid<Task> {
         setTreeData(treeData);
 
         // Restore expansion state - expand all by default or restore previous state
-        if (expandedTasks.isEmpty()) {
-            // First time or all collapsed - expand all only if expandInitially is true
-            if (expandInitially) {
-                expandRecursively(rootTasks, Integer.MAX_VALUE);
-            }
-        } else {
-            // Restore previous expansion state
-            expandedTasks.forEach(task -> {
-                if (taskOrder.contains(task)) {
-                    expand(task);
-                }
-            });
+        if (isFirstLoad && expandInitially) {
+            // First time for this sprint - expand all if configured
+            expandRecursively(rootTasks, Integer.MAX_VALUE);
+            // Record the expanded state (all stories)
+            taskOrder.stream()
+                    .filter(Task::isStory)
+                    .map(Task::getId)
+                    .forEach(expandedTaskIds::add);
+            isFirstLoad = false;
+        } else if (!expandedTaskIds.isEmpty()) {
+            // Restore previous expansion state by ID
+            taskOrder.stream()
+                    .filter(task -> expandedTaskIds.contains(task.getId()))
+                    .forEach(this::expand);
         }
+        // If not first load and expandedTaskIds is empty, keep all collapsed
+    }
+
+    /**
+     * Transfer expansion state for a task being moved to another grid.
+     * Call this when moving a Story between grids to preserve its expansion state.
+     *
+     * @param taskId The ID of the task being moved
+     * @return true if the task was expanded in this grid (should be expanded in target)
+     */
+    public boolean removeAndReturnExpansionState(Long taskId) {
+        return expandedTaskIds.remove(taskId);
     }
 
     /**
@@ -1404,17 +1428,21 @@ public class TaskGrid extends TreeGrid<Task> {
      */
     private void setupExpansionListeners() {
         addExpandListener(event -> {
-            expandedTasks.addAll(event.getItems());
+            event.getItems().stream()
+                    .map(Task::getId)
+                    .forEach(expandedTaskIds::add);
             log.debug("Task expanded: {}, total expanded: {}",
                     event.getItems().stream().map(Task::getKey).collect(Collectors.joining(", ")),
-                    expandedTasks.size());
+                    expandedTaskIds.size());
         });
 
         addCollapseListener(event -> {
-            expandedTasks.removeAll(event.getItems());
+            event.getItems().stream()
+                    .map(Task::getId)
+                    .forEach(expandedTaskIds::remove);
             log.debug("Task collapsed: {}, total expanded: {}",
                     event.getItems().stream().map(Task::getKey).collect(Collectors.joining(", ")),
-                    expandedTasks.size());
+                    expandedTaskIds.size());
         });
     }
 
@@ -1529,15 +1557,22 @@ public class TaskGrid extends TreeGrid<Task> {
     }
 
     public void updateData(Sprint sprint, List<Task> taskOrder, List<User> allUsers) {
+        // Only clear expansion state when loading a DIFFERENT sprint
+        boolean sprintChanged = this.sprint == null ||
+                !Objects.equals(this.sprint.getId(), sprint.getId());
+
         this.sprint    = sprint;
         this.taskOrder = taskOrder;
         this.allUsers.clear();
         this.allUsers.addAll(allUsers);
 
-        // Clear previous expansion state when loading new data
-        expandedTasks.clear();
+        if (sprintChanged) {
+            // Clear expansion state and reset first load flag for new sprint
+            expandedTaskIds.clear();
+            isFirstLoad = true;
+        }
 
-        // Build and display hierarchical tree structure (with all nodes expanded by default)
+        // Build and display hierarchical tree structure
         refreshTreeData();
     }
 

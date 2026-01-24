@@ -1005,11 +1005,19 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         recalculateOrderIdsAndMarkModified(targetTaskOrder, modifiedTasks);
         recalculateOrderIdsAndMarkModified(sourceGrid.getTaskOrder(), modifiedTasks);
 
-        // 12. Mark the main task as modified
+        // 12. Transfer expansion state for Stories from source to target grid
+        if (task.isStory()) {
+            boolean wasExpanded = sourceGrid.removeAndReturnExpansionState(task.getId());
+            if (wasExpanded) {
+                targetGrid.addExpansionState(task.getId());
+            }
+        }
+
+        // 13. Mark the main task as modified
         task.setStart(null); // Reset start date to force recalculation
         modifiedTasks.add(task);
 
-        // 13. Add all modified tasks to the appropriate grid's modifiedTasks collection
+        // 14. Add all modified tasks to the appropriate grid's modifiedTasks collection
         log.info("Marking {} tasks as modified from cross-grid transfer", modifiedTasks.size());
         for (Task modifiedTask : modifiedTasks) {
             // Add to the grid that owns this task (based on sprint)
@@ -1020,7 +1028,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             }
         }
 
-        // 14. Save all changes and refresh both grids
+        // 15. Save all changes and refresh both grids
         saveAllChangesAndRefresh();
     }
 
