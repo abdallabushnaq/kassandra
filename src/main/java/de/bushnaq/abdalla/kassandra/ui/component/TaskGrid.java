@@ -39,6 +39,7 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.dialog.DependencyDialog;
+import de.bushnaq.abdalla.util.ColorUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -210,6 +211,7 @@ public class TaskGrid extends TreeGrid<Task> {
         }
         return flatList;
     }
+
 
     private void createGridColumns() {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
@@ -749,39 +751,6 @@ public class TaskGrid extends TreeGrid<Task> {
     }
 
     /**
-     * Generate a consistent color based on user ID
-     * Matches the color generation logic in TaskCard
-     */
-    private String generateColorFromUserId(Long userId) {
-        if (userId == null) {
-            return "var(--lumo-contrast-30pct)";
-        }
-
-        // Use predefined colors for better visibility and distinction
-        // Same colors as in TaskCard for consistency
-        String[] colors = {
-                "#FF6B6B", // Red
-                "#4ECDC4", // Teal
-                "#45B7D1", // Blue
-                "#FFA07A", // Light Salmon
-                "#98D8C8", // Mint
-                "#FFD93D", // Yellow
-                "#6BCF7F", // Green
-                "#C77DFF", // Purple
-                "#FF8C42", // Orange
-                "#2EC4B6", // Turquoise
-                "#E63946", // Dark Red
-                "#A8DADC", // Light Blue
-                "#457B9D", // Steel Blue
-                "#F4A261", // Sandy Brown
-                "#E76F51", // Burnt Sienna
-        };
-
-        int index = (int) (userId % colors.length);
-        return colors[index];
-    }
-
-    /**
      * Get the dependency text for display (comma-separated orderIds of visible predecessors)
      */
     private String getDependencyText(Task task) {
@@ -809,8 +778,8 @@ public class TaskGrid extends TreeGrid<Task> {
             try {
                 User user = sprint.getuser(task.getResourceId());
                 if (user != null) {
-                    // Generate a consistent color based on user ID
-                    return generateColorFromUserId(user.getId());
+                    // Use the user's configured color
+                    return ColorUtil.colorToHexString(user.getColor());
                 }
             } catch (Exception e) {
                 // User not found, fall through to default

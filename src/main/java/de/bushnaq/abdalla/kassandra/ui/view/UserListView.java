@@ -35,6 +35,7 @@ import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
+import de.bushnaq.abdalla.util.ColorUtil;
 import jakarta.annotation.security.RolesAllowed;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -169,13 +170,7 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
                 square.setMaxWidth("16px");
                 square.getStyle().set("float", "left");
                 square.getStyle().set("margin", "1px");
-                String colorHex;
-                if (user.getColor() != null) {
-                    colorHex = "#" + Integer.toHexString(user.getColor().getRGB()).substring(2);
-                } else {
-                    colorHex = "#D3D3D3"; // Light Gray default
-                }
-                square.getStyle().set("background-color", colorHex);
+                square.getStyle().set("background-color", ColorUtil.colorToHexString(user.getColor()));
                 div.add(square);
                 div.add(user.getName());
                 div.setId(USER_GRID_NAME_PREFIX + user.getName());

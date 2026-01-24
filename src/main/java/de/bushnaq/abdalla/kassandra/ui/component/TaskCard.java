@@ -24,6 +24,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.util.ColorUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -113,6 +114,7 @@ public class TaskCard extends Div {
         );
     }
 
+
     private void createCardContent() {
         VerticalLayout content = new VerticalLayout();
         content.setPadding(false);
@@ -191,37 +193,6 @@ public class TaskCard extends Div {
         return "TASK-???";
     }
 
-    /**
-     * Generate a consistent color based on user ID
-     */
-    private String generateColorFromUserId(Long userId) {
-        if (userId == null) {
-            return "var(--lumo-contrast-30pct)";
-        }
-
-        // Use predefined colors for better visibility and distinction
-        String[] colors = {
-                "#FF6B6B", // Red
-                "#4ECDC4", // Teal
-                "#45B7D1", // Blue
-                "#FFA07A", // Light Salmon
-                "#98D8C8", // Mint
-                "#FFD93D", // Yellow
-                "#6BCF7F", // Green
-                "#C77DFF", // Purple
-                "#FF8C42", // Orange
-                "#2EC4B6", // Turquoise
-                "#E63946", // Dark Red
-                "#A8DADC", // Light Blue
-                "#457B9D", // Steel Blue
-                "#F4A261", // Sandy Brown
-                "#E76F51", // Burnt Sienna
-        };
-
-        int index = (int) (userId % colors.length);
-        return colors[index];
-    }
-
     private com.vaadin.flow.component.Component getAssignedUserComponent() {
         if (task.getResourceId() != null && userMap.containsKey(task.getResourceId())) {
             User user = userMap.get(task.getResourceId());
@@ -274,8 +245,8 @@ public class TaskCard extends Div {
     private String getUserColor() {
         if (task.getResourceId() != null && userMap.containsKey(task.getResourceId())) {
             User user = userMap.get(task.getResourceId());
-            // Generate a consistent color based on user ID
-            return generateColorFromUserId(user.getId());
+            // Use the user's configured color
+            return ColorUtil.colorToHexString(user.getColor());
         }
         // Default gray color for unassigned tasks
         return "var(--lumo-contrast-30pct)";

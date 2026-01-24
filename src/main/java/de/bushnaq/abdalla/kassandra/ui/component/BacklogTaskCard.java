@@ -26,6 +26,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.util.ColorUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -81,15 +82,6 @@ public class BacklogTaskCard extends Div {
                 .set("margin-bottom", "2px"); // 2px vertical spacing
     }
 
-    /**
-     * Convert java.awt.Color to hex string
-     */
-    private String colorToHex(java.awt.Color color) {
-        if (color == null) {
-            return "#E0E0E0";
-        }
-        return "#" + Integer.toHexString(color.getRGB()).substring(2).toUpperCase();
-    }
 
     private void createTaskLine() {
         HorizontalLayout line = new HorizontalLayout();
@@ -216,11 +208,11 @@ public class BacklogTaskCard extends Div {
         }
 
         User user = userMap.get(task.getResourceId());
-        if (user == null || user.getColor() == null) {
+        if (user == null) {
             return "var(--lumo-contrast-20pct)";
         }
 
-        return colorToHex(user.getColor());
+        return ColorUtil.colorToHexString(user.getColor());
     }
 
     /**

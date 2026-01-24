@@ -78,6 +78,20 @@ public class ColorUtil {
         return new Color(_color1[0], _color1[1], _color1[2]);
     }
 
+    /**
+     * Convert java.awt.Color to hex string with # prefix.
+     * Returns a default light gray (#D3D3D3) if color is null.
+     *
+     * @param color the color to convert
+     * @return hex color string with # prefix (e.g., "#FF0000")
+     */
+    public static String colorToHexString(final Color color) {
+        if (color == null) {
+            return "#D3D3D3"; // Light Gray default
+        }
+        return "#" + colorToHtmlColor(color).toUpperCase();
+    }
+
     public static String colorToHtmlColor(final Color aColor) {
         int       _rgb   = aColor.getRGB();
         final int _red   = aColor.getRed();
