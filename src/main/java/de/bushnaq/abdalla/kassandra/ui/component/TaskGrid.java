@@ -55,9 +55,6 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class TaskGrid extends TreeGrid<Task> {
-    public static final String                       ASSIGNED_FIELD              = "-assigned-field";
-    //    public static final String               MAX_ESTIMATE_FIELD          = "-max-estimate-field";
-//    public static final String               MIN_ESTIMATE_FIELD          = "-min-estimate-field";
     public static final String                       TASK_GRID_ASSIGNED_PREFIX   = "task-grid-assigned-";
     public static final String                       TASK_GRID_DEPENDENCY_PREFIX = "task-grid-dependency-";
     public static final String                       TASK_GRID_ID_PREFIX         = "task-grid-id-";
@@ -66,9 +63,6 @@ public class TaskGrid extends TreeGrid<Task> {
     public static final String                       TASK_GRID_MIN_EST_PREFIX    = "task-grid-min-est-";
     public static final String                       TASK_GRID_NAME_PREFIX       = "task-grid-name-";
     public static final String                       TASK_GRID_PARENT_PREFIX     = "task-grid-parent-";
-    //    public static final String               NAME_FIELD         = "-name-field";
-//    public static final String               START_FIELD        = "-start-field";
-//    public static final String               TASK_GRID_PREFIX            = "task-grid-";
     public static final String                       TASK_GRID_START_PREFIX      = "task-grid-start-";
     private final       List<User>                   allUsers                    = new ArrayList<>();
     private final       TaskClipboardHandler         clipboardHandler;
@@ -1020,25 +1014,25 @@ public class TaskGrid extends TreeGrid<Task> {
         log.info("Task order updated. {} tasks marked as modified.", modifiedTasks.size());
     }
 
-    private void moveToNewParent(Task task, Task newStory) {
-        // Remove from current parent if any
-        if (task.getParentTask() != null) {
-            task.getParentTask().removeChildTask(task);
-        }
-
-        //what is the orderId of the last child of the new parent?
-        Task lastChild = newStory.getChildTasks().getLast();
-        if (lastChild == null)
-            lastChild = newStory;
-        // Add to new parent
-        newStory.addChildTask(task);
-        markTaskAsModified(task);
-        markTaskAsModified(newStory);
-        moveTaskAfter(task, lastChild);//zero based index
-
-        // Refresh tree to show updated hierarchy
-        refreshTreeData();
-    }
+//    private void moveToNewParent(Task task, Task newStory) {
+//        // Remove from current parent if any
+//        if (task.getParentTask() != null) {
+//            task.getParentTask().removeChildTask(task);
+//        }
+//
+//        //what is the orderId of the last child of the new parent?
+//        Task lastChild = newStory.getChildTasks().getLast();
+//        if (lastChild == null)
+//            lastChild = newStory;
+//        // Add to new parent
+//        newStory.addChildTask(task);
+//        markTaskAsModified(task);
+//        markTaskAsModified(newStory);
+//        moveTaskAfter(task, lastChild);//zero based index
+//
+//        // Refresh tree to show updated hierarchy
+//        refreshTreeData();
+//    }
 
     /**
      * Called by the CrossGridDragDropCoordinator when a drag ends in another grid.

@@ -99,7 +99,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private final       GanttErrorHandler            eh                         = new GanttErrorHandler();
     private final       FeatureApi                   featureApi;
     private             Long                         featureId;
-    private final       Svg                          ganttChart                 = new Svg();
+    //    private final       Svg                          ganttChart                 = new Svg();
     private final       Div                          ganttChartContainer;
     private             CompletableFuture<Void>      ganttGenerationFuture;
     private             GanttUtil                    ganttUtil;
