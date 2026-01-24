@@ -272,6 +272,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
             addWorklogRemaining(task);
         });
         this.tasks = tasks;
+        setStart(getEarliestStartDate());
     }
 
     public void initUserMap(List<User> users) {

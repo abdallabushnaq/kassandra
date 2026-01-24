@@ -56,27 +56,29 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class TaskGrid extends TreeGrid<Task> {
-    public static final String               ASSIGNED_FIELD              = "-assigned-field";
+    public static final String                       ASSIGNED_FIELD              = "-assigned-field";
     //    public static final String               MAX_ESTIMATE_FIELD          = "-max-estimate-field";
 //    public static final String               MIN_ESTIMATE_FIELD          = "-min-estimate-field";
-    public static final String               TASK_GRID_ASSIGNED_PREFIX   = "task-grid-assigned-";
-    public static final String               TASK_GRID_DEPENDENCY_PREFIX = "task-grid-dependency-";
-    public static final String               TASK_GRID_ID_PREFIX         = "task-grid-id-";
-    public static final String               TASK_GRID_KEY_PREFIX        = "task-grid-key-";
-    public static final String               TASK_GRID_MAX_EST_PREFIX    = "task-grid-max-est-";
-    public static final String               TASK_GRID_MIN_EST_PREFIX    = "task-grid-min-est-";
-    public static final String               TASK_GRID_NAME_PREFIX       = "task-grid-name-";
-    public static final String               TASK_GRID_PARENT_PREFIX     = "task-grid-parent-";
+    public static final String                       TASK_GRID_ASSIGNED_PREFIX   = "task-grid-assigned-";
+    public static final String                       TASK_GRID_DEPENDENCY_PREFIX = "task-grid-dependency-";
+    public static final String                       TASK_GRID_ID_PREFIX         = "task-grid-id-";
+    public static final String                       TASK_GRID_KEY_PREFIX        = "task-grid-key-";
+    public static final String                       TASK_GRID_MAX_EST_PREFIX    = "task-grid-max-est-";
+    public static final String                       TASK_GRID_MIN_EST_PREFIX    = "task-grid-min-est-";
+    public static final String                       TASK_GRID_NAME_PREFIX       = "task-grid-name-";
+    public static final String                       TASK_GRID_PARENT_PREFIX     = "task-grid-parent-";
     //    public static final String               NAME_FIELD         = "-name-field";
 //    public static final String               START_FIELD        = "-start-field";
 //    public static final String               TASK_GRID_PREFIX            = "task-grid-";
-    public static final String               TASK_GRID_START_PREFIX      = "task-grid-start-";
-    private final       List<User>           allUsers                    = new ArrayList<>();
-    private final       TaskClipboardHandler clipboardHandler;
-    private final       Clock                clock;
-    private             String               dragMode;
-    private             Task                 draggedTask;          // Track the currently dragged task
-    private final       DateTimeFormatter    dtfymdhm                    = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
+    public static final String                       TASK_GRID_START_PREFIX      = "task-grid-start-";
+    private final       List<User>                   allUsers                    = new ArrayList<>();
+    private final       TaskClipboardHandler         clipboardHandler;
+    private final       Clock                        clock;
+    @Setter
+    private             CrossGridDragDropCoordinator dragDropCoordinator; // Coordinator for cross-grid drag & drop
+    private             String                       dragMode;
+    private             Task                         draggedTask;          // Track the currently dragged task
+    private final       DateTimeFormatter            dtfymdhm                    = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
     /**
      * -- SETTER --
      * Set whether items should be expanded initially when data is loaded.
@@ -85,23 +87,27 @@ public class TaskGrid extends TreeGrid<Task> {
      * @param expandInitially true to expand all items initially, false to keep them collapsed
      */
     @Setter
-    private             boolean              expandInitially             = true; // Control whether to expand all items on first load
-    private final       Set<Task>            expandedTasks               = new HashSet<>(); // Track expanded tasks for state preservation
-    private             boolean              isCtrlKeyPressed            = false; // Track if Ctrl key is pressed during drop
+    private             boolean                      expandInitially             = true; // Control whether to expand all items on first load
+    private final       Set<Task>                    expandedTasks               = new HashSet<>(); // Track expanded tasks for state preservation
+    private             String                       externalDragMode;     // Drag mode from external grid
+    private             TaskGrid                     externalDragSource;   // Source grid for cross-grid drags
+    private             Task                         externalDraggedTask;  // Task being dragged from another grid
+    private             boolean                      isCtrlKeyPressed            = false; // Track if Ctrl key is pressed during drop
     @Getter
     @Setter
-    private             boolean              isEditMode                  = false;// Edit mode state management
-    private final       JsonMapper           jsonMapper;
-    private final       Locale               locale;
+    private             boolean                      isEditMode                  = false;// Edit mode state management
+    private final       JsonMapper                   jsonMapper;
+    private final       Locale                       locale;
     @Getter
-    private final       Set<Task>            modifiedTasks               = new HashSet<>();
+    private final       Set<Task>                    modifiedTasks               = new HashSet<>();
     @Setter
-    private             Consumer<Task>       onPersistTask;
+    private             Consumer<Task>               onPersistTask;
     @Setter
-    private             Runnable             onSaveAllChangesAndRefresh;
-    private             Sprint               sprint;
+    private             Runnable                     onSaveAllChangesAndRefresh;
     @Getter
-    private             List<Task>           taskOrder                   = new ArrayList<>(); // Track current order in memory
+    private             Sprint                       sprint;
+    @Getter
+    private             List<Task>                   taskOrder                   = new ArrayList<>(); // Track current order in memory
 
 
     public TaskGrid(Clock clock, Locale locale, JsonMapper jsonMapper) {
@@ -872,14 +878,46 @@ public class TaskGrid extends TreeGrid<Task> {
         refreshTreeData();
     }
 
+    /**
+     * Check if a task is eligible as a drop target for cross-grid move operations.
+     * Used when dragging a task from another grid.
+     *
+     * @param dropTarget  The potential drop target task in this grid (can be null for empty grid)
+     * @param draggedTask The task being dragged from another grid
+     * @return true if the drop target is valid for cross-grid transfer
+     */
+    private boolean isEligibleCrossGridMoveTarget(Task dropTarget, Task draggedTask) {
+        if (draggedTask == null) {
+            return false;
+        }
+        // Allow drop on empty grid (dropTarget is null)
+        if (dropTarget == null) {
+            return true;
+        }
+        // Tasks can be dropped before/after any task or story
+        if (draggedTask.isTask()) {
+            return true;
+        }
+        // Stories can be dropped before/after other stories
+        if (draggedTask.isStory()) {
+            return dropTarget.isStory();
+        }
+        // Milestones can be dropped before/after stories or milestones
+        if (draggedTask.isMilestone()) {
+            return dropTarget.isStory() || dropTarget.isMilestone();
+        }
+        return false;
+    }
+
     private boolean isEligibleMoveTarget(Task dropTargetTask, Task draggedTask) {
         if (draggedTask.isTask()) {
-            return dropTargetTask.isTask();
+            return dropTargetTask.isTask();//task on task
         } else if (draggedTask.isMilestone()) {
-            return dropTargetTask.isStory();
+            return dropTargetTask.isStory();//milestone on story
         } else if (draggedTask.isStory()) {
-            return dropTargetTask.isStory();
+            return dropTargetTask.isStory();//story on story
         }
+        log.info(dropTargetTask);
         return false;
     }
 
@@ -993,6 +1031,51 @@ public class TaskGrid extends TreeGrid<Task> {
 
         // Refresh tree to show updated hierarchy
         refreshTreeData();
+    }
+
+    /**
+     * Called by the CrossGridDragDropCoordinator when a drag ends in another grid.
+     * Clears the external drag state and resets drop mode if not in own drag.
+     */
+    public void onExternalDragEnd() {
+        this.externalDragSource  = null;
+        this.externalDraggedTask = null;
+        this.externalDragMode    = null;
+
+        // Only clear drop mode if we didn't start our own drag
+        if (draggedTask == null) {
+            setDropMode(null);
+        }
+        log.debug("External drag ended");
+    }
+
+    /**
+     * Called by the CrossGridDragDropCoordinator when a drag starts in another grid.
+     * Enables this grid to accept drops from the external source.
+     *
+     * @param task       The task being dragged from another grid
+     * @param sourceGrid The grid where the drag originated
+     * @param mode       The drag mode ("reorder" or "dependency")
+     */
+    public void onExternalDragStart(Task task, TaskGrid sourceGrid, String mode) {
+        if (isEditMode) {
+            return; // Don't accept external drags in edit mode
+        }
+        this.externalDragSource  = sourceGrid;
+        this.externalDraggedTask = task;
+        this.externalDragMode    = mode;
+
+        // Enable drop mode for reorder operations (not dependency)
+        if (!"dependency".equals(mode)) {
+            // Use BETWEEN for precise positioning, but ON_GRID if the grid is empty
+            if (taskOrder.isEmpty()) {
+                setDropMode(GridDropMode.ON_GRID);
+            } else {
+                setDropMode(GridDropMode.BETWEEN);
+            }
+            log.debug("External drag started from another grid: task={}, mode={}, dropMode={}",
+                    task != null ? task.getKey() : "null", mode, taskOrder.isEmpty() ? "ON_GRID" : "BETWEEN");
+        }
     }
 
     /**
@@ -1174,9 +1257,29 @@ public class TaskGrid extends TreeGrid<Task> {
                 dragMode = "reorder";
                 setDropMode(GridDropMode.BETWEEN); // reorder mode
             }
+
+            // Notify coordinator about drag start for cross-grid support
+            if (dragDropCoordinator != null) {
+                dragDropCoordinator.notifyDragStart(this, draggedTask, dragMode);
+            }
         });
 
         setDropFilter(dropTargetTask -> {
+            // Check for external (cross-grid) drag first
+            if (externalDraggedTask != null && externalDragSource != null) {
+                // Cross-grid drops: only allow reorder mode, not dependency
+                if ("dependency".equals(externalDragMode)) {
+                    log.trace("Cross-grid dependency drop not allowed");
+                    return false;
+                }
+                boolean eligible = isEligibleCrossGridMoveTarget(dropTargetTask, externalDraggedTask);
+                log.trace("Cross-grid DropFilter: dropTarget={}, draggedTask={}, eligible={}",
+                        dropTargetTask != null ? dropTargetTask.getKey() : "null",
+                        externalDraggedTask.getKey(), eligible);
+                return eligible;
+            }
+
+            // Same-grid drag logic
             if (isEditMode || draggedTask == null || dragMode == null) return false;
 //            log.trace("DropFilter {} {} {}", draggedTask.getKey(), dropTargetTask.getKey(), dragMode);
             switch (dragMode) {
@@ -1199,11 +1302,25 @@ public class TaskGrid extends TreeGrid<Task> {
 
         // Add drop listener for reordering and dependency management
         addDropListener(event -> {
-            if (isEditMode || draggedTask == null || dragMode == null) return;
-            log.trace("DropListener {} {}", draggedTask.getKey(), dragMode);
-
             Task             dropTargetTask = event.getDropTargetItem().orElse(null);
             GridDropLocation dropLocation   = event.getDropLocation();
+
+            // Check for cross-grid drop first
+            if (dragDropCoordinator != null && dragDropCoordinator.isCrossGridDrag(this)) {
+                log.info("Cross-grid drop detected: dropTarget={}, location={}",
+                        dropTargetTask != null ? dropTargetTask.getKey() : "null (empty grid)", dropLocation);
+                // Allow drop even if dropTargetTask is null (empty grid case)
+                dragDropCoordinator.handleCrossGridDrop(this, dropTargetTask, dropLocation);
+                // Clear external drag state
+                externalDragSource  = null;
+                externalDraggedTask = null;
+                externalDragMode    = null;
+                return;
+            }
+
+            // Same-grid drop logic
+            if (isEditMode || draggedTask == null || dragMode == null) return;
+            log.trace("DropListener {} {}", draggedTask.getKey(), dragMode);
 
             if (dropTargetTask == null)
                 log.warn("Drop target task is null for dragged task {}", draggedTask.getKey());
@@ -1272,6 +1389,11 @@ public class TaskGrid extends TreeGrid<Task> {
         });
 
         addDragEndListener(event -> {
+            // Notify coordinator about drag end for cross-grid support
+            if (dragDropCoordinator != null) {
+                dragDropCoordinator.notifyDragEnd(this);
+            }
+
             draggedTask      = null; // Clear reference when drag ends without drop
             isCtrlKeyPressed = false; // Reset modifier key state
             setDropMode(null);

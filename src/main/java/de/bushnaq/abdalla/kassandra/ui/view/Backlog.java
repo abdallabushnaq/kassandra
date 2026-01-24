@@ -23,6 +23,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.grid.dnd.GridDropLocation;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.Paragraph;
@@ -42,6 +43,7 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.CrossGridDragDropCoordinator;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -72,57 +74,58 @@ import java.util.concurrent.ExecutionException;
 @RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
 @Log4j2
 public class Backlog extends Main implements AfterNavigationObserver, BeforeEnterObserver {
-    public static final String                    BACKLOG_PAGE_TITLE_ID      = "backlog-page-title";
-    public static final String                    CANCEL_BUTTON_ID           = "cancel-tasks-button";
-    public static final String                    CLEAR_FILTER_BUTTON_ID     = "clear-filter-button";
-    public static final String                    CREATE_MILESTONE_BUTTON_ID = "create-milestone-button";
-    public static final String                    CREATE_STORY_BUTTON_ID     = "create-story-button";
-    public static final String                    CREATE_TASK_BUTTON_ID      = "create-task-button";
-    public static final String                    EDIT_BUTTON_ID             = "edit-tasks-button";
-    public static final String                    ROUTE                      = "backlog";
-    public static final String                    SAVE_BUTTON_ID             = "save-tasks-button";
-    public static final String                    SEARCH_FIELD_ID            = "search-field";
-    public static final String                    SPRINT_SELECTOR_ID         = "sprint-selector";
-    public static final String                    USER_SELECTOR_ID           = "user-selector";
-    private             List<Sprint>              allSprints                 = new ArrayList<>();
-    private final       TaskGrid                  backlogGrid;                        // Grid for Backlog sprint (always at bottom)
-    private final       VerticalLayout            backlogGridPanel;                   // Panel containing backlog grid
-    private             Sprint                    backlogSprint              = null;  // Cached Backlog sprint (always shown at bottom)
-    private             Button                    cancelButton;
-    private final       Clock                     clock;
+    public static final String                       BACKLOG_PAGE_TITLE_ID      = "backlog-page-title";
+    public static final String                       CANCEL_BUTTON_ID           = "cancel-tasks-button";
+    public static final String                       CLEAR_FILTER_BUTTON_ID     = "clear-filter-button";
+    public static final String                       CREATE_MILESTONE_BUTTON_ID = "create-milestone-button";
+    public static final String                       CREATE_STORY_BUTTON_ID     = "create-story-button";
+    public static final String                       CREATE_TASK_BUTTON_ID      = "create-task-button";
+    public static final String                       EDIT_BUTTON_ID             = "edit-tasks-button";
+    public static final String                       ROUTE                      = "backlog";
+    public static final String                       SAVE_BUTTON_ID             = "save-tasks-button";
+    public static final String                       SEARCH_FIELD_ID            = "search-field";
+    public static final String                       SPRINT_SELECTOR_ID         = "sprint-selector";
+    public static final String                       USER_SELECTOR_ID           = "user-selector";
+    private             List<Sprint>                 allSprints                 = new ArrayList<>();
+    private final       TaskGrid                     backlogGrid;                        // Grid for Backlog sprint (always at bottom)
+    private final       VerticalLayout               backlogGridPanel;                   // Panel containing backlog grid
+    private             Sprint                       backlogSprint              = null;  // Cached Backlog sprint (always shown at bottom)
+    private             Button                       cancelButton;
+    private final       Clock                        clock;
     @Autowired
-    protected           Context                   context;
-    private             Button                    editButton;
-    private final       GanttErrorHandler         eh                         = new GanttErrorHandler();
-    private final       FeatureApi                featureApi;
-    private             Long                      featureId;
-    private final       Svg                       ganttChart                 = new Svg();
-    private final       Div                       ganttChartContainer;
-    private             CompletableFuture<Void>   ganttGenerationFuture;
-    private             GanttUtil                 ganttUtil;
-    private final       TaskGrid                  grid;
-    private final       HorizontalLayout          headerLayout;
-    private final       JsonMapper                jsonMapper;
-    private static      Long                      lastShownSprintId          = null;  // Static to persist across navigation
-    private             User                      loggedInUser               = null;
-    private final       ProductApi                productApi;
-    private             Long                      productId;
-    private             Button                    saveButton;
-    private             TextField                 searchField;
-    private             String                    searchText                 = "";
-    private             Sprint                    selectedSprint             = null;  // The sprint selected in dropdown (not Backlog)
-    private             java.util.Set<User>       selectedUsers              = new java.util.HashSet<>();
-    private             Sprint                    sprint;                             // Current sprint being displayed in grid
-    private final       SprintApi                 sprintApi;
-    private             Long                      sprintId;
-    private             ComboBox<Sprint>          sprintSelector;
-    private final       TaskApi                   taskApi;
-    private final       UserApi                   userApi;
-    private             MultiSelectComboBox<User> userSelector;
-    private             List<User>                users                      = new ArrayList<>();
-    private final       VersionApi                versionApi;
-    private             Long                      versionId;
-    private final       WorklogApi                worklogApi;
+    protected           Context                      context;
+    private final       CrossGridDragDropCoordinator dragDropCoordinator;              // Coordinator for cross-grid drag & drop
+    private             Button                       editButton;
+    private final       GanttErrorHandler            eh                         = new GanttErrorHandler();
+    private final       FeatureApi                   featureApi;
+    private             Long                         featureId;
+    private final       Svg                          ganttChart                 = new Svg();
+    private final       Div                          ganttChartContainer;
+    private             CompletableFuture<Void>      ganttGenerationFuture;
+    private             GanttUtil                    ganttUtil;
+    private final       TaskGrid                     grid;
+    private final       HorizontalLayout             headerLayout;
+    private final       JsonMapper                   jsonMapper;
+    private static      Long                         lastShownSprintId          = null;  // Static to persist across navigation
+    private             User                         loggedInUser               = null;
+    private final       ProductApi                   productApi;
+    private             Long                         productId;
+    private             Button                       saveButton;
+    private             TextField                    searchField;
+    private             String                       searchText                 = "";
+    private             Sprint                       selectedSprint             = null;  // The sprint selected in dropdown (not Backlog)
+    private             java.util.Set<User>          selectedUsers              = new java.util.HashSet<>();
+    private             Sprint                       sprint;                             // Current sprint being displayed in grid
+    private final       SprintApi                    sprintApi;
+    private             Long                         sprintId;
+    private             ComboBox<Sprint>             sprintSelector;
+    private final       TaskApi                      taskApi;
+    private final       UserApi                      userApi;
+    private             MultiSelectComboBox<User>    userSelector;
+    private             List<User>                   users                      = new ArrayList<>();
+    private final       VersionApi                   versionApi;
+    private             Long                         versionId;
+    private final       WorklogApi                   worklogApi;
 
     public Backlog(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock, JsonMapper jsonMapper) {
         this.worklogApi = worklogApi;
@@ -212,6 +215,13 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
             backlogInnerWrapper.add(backlogGridPanelInner);
             backlogGridPanel.add(backlogHeader, backlogInnerWrapper);
+
+            // Setup cross-grid drag & drop coordinator
+            dragDropCoordinator = new CrossGridDragDropCoordinator(this::handleCrossGridTransfer);
+            dragDropCoordinator.register(grid);
+            dragDropCoordinator.register(backlogGrid);
+            grid.setDragDropCoordinator(dragDropCoordinator);
+            backlogGrid.setDragDropCoordinator(dragDropCoordinator);
 
             // Add components in order: header, sprint grid, gantt chart, backlog grid
             add(headerLayout, ganttChartContainer, gridPanelWrapper, backlogGridPanel);
@@ -739,6 +749,25 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         return filteredTasks;
     }
 
+    /**
+     * Find the story that should be the parent for a task at the given position.
+     * Looks backwards from the position to find the enclosing story.
+     *
+     * @param taskOrder The ordered list of tasks
+     * @param position  The position to check
+     * @return The parent story, or null if no parent found
+     */
+    private Task findParentStoryForPosition(List<Task> taskOrder, int position) {
+        // Look backwards from position to find the enclosing story
+        for (int i = position - 1; i >= 0; i--) {
+            Task candidate = taskOrder.get(i);
+            if (candidate.isStory()) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
     private void generateGanttChart() {
         // Cancel any previous generation in progress
         if (ganttGenerationFuture != null && !ganttGenerationFuture.isDone()) {
@@ -844,6 +873,135 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             }
         }
         return userEmail;
+    }
+
+    /**
+     * Handle task transfer between Sprint grid and Backlog grid.
+     * This is called when a task is dragged from one grid and dropped into another.
+     *
+     * @param event The cross-grid transfer event containing all necessary information
+     */
+    private void handleCrossGridTransfer(CrossGridDragDropCoordinator.CrossGridTransferEvent event) {
+        Task             task         = event.task();
+        List<Task>       childTasks   = event.childTasks();
+        TaskGrid         sourceGrid   = event.sourceGrid();
+        TaskGrid         targetGrid   = event.targetGrid();
+        Task             dropTarget   = event.dropTargetTask();
+        GridDropLocation dropLocation = event.dropLocation();
+
+        Sprint sourceSprint = sourceGrid.getSprint();
+        Sprint targetSprint = targetGrid.getSprint();
+
+        if (sourceSprint == null || targetSprint == null) {
+            log.warn("Cannot transfer task - source or target sprint is null");
+            return;
+        }
+
+        log.info("Cross-grid transfer: {} from sprint '{}' to sprint '{}'",
+                task.getKey(), sourceSprint.getName(), targetSprint.getName());
+
+        // 1. Handle parent-child relationships - remove from current parent
+        Task oldParent = task.getParentTask();
+        if (oldParent != null) {
+            oldParent.removeChildTask(task);
+            log.debug("Removed task {} from parent {}", task.getKey(), oldParent.getKey());
+        }
+
+        // 2. Remove from source sprint's task list
+        sourceSprint.getTasks().remove(task);
+        sourceGrid.getTaskOrder().remove(task);
+        log.debug("Removed task {} from source sprint", task.getKey());
+
+        // 3. If moving a story, also remove all children from source
+        if (task.isStory() && !childTasks.isEmpty()) {
+            for (Task child : childTasks) {
+                sourceSprint.getTasks().remove(child);
+                sourceGrid.getTaskOrder().remove(child);
+                log.debug("Removed child task {} from source sprint", child.getKey());
+            }
+        }
+
+        // 4. Update task's sprint reference
+        task.setSprintId(targetSprint.getId());
+        task.setSprint(targetSprint);
+
+        // 5. Add to target sprint
+        targetSprint.addTask(task);
+
+        // 6. Determine insertion position in target grid
+        List<Task> targetTaskOrder = targetGrid.getTaskOrder();
+        int        insertIndex;
+
+        if (dropTarget != null) {
+            int dropTargetIndex = targetTaskOrder.indexOf(dropTarget);
+            if (dropLocation == GridDropLocation.BELOW) {
+                // If dropping below a story, insert after its last child
+                if (dropTarget.isStory() && !dropTarget.getChildTasks().isEmpty()) {
+                    Task lastChild = dropTarget.getChildTasks().getLast();
+                    insertIndex = targetTaskOrder.indexOf(lastChild) + 1;
+                } else {
+                    insertIndex = dropTargetIndex + 1;
+                }
+            } else {
+                insertIndex = dropTargetIndex;
+            }
+        } else {
+            // Drop at end
+            insertIndex = targetTaskOrder.size();
+        }
+
+        // 7. Insert into target task order
+        if (insertIndex >= targetTaskOrder.size()) {
+            targetTaskOrder.add(task);
+        } else {
+            targetTaskOrder.add(insertIndex, task);
+        }
+        insertIndex++; // Move past the task we just inserted for children
+
+        // 8. Determine new parent for tasks (if the task needs parenting)
+        if (task.isTask()) {
+            Task newParent = findParentStoryForPosition(targetTaskOrder, targetTaskOrder.indexOf(task));
+            if (newParent != null) {
+                newParent.addChildTask(task);
+                log.debug("Added task {} to new parent {}", task.getKey(), newParent.getKey());
+            }
+        }
+
+        // 9. If moving a story, also move all children
+        if (task.isStory() && !childTasks.isEmpty()) {
+            for (Task child : childTasks) {
+                // Update sprint reference
+                child.setSprintId(targetSprint.getId());
+                child.setSprint(targetSprint);
+                targetSprint.addTask(child);
+
+                // Insert child after the story (maintaining order)
+                if (insertIndex >= targetTaskOrder.size()) {
+                    targetTaskOrder.add(child);
+                } else {
+                    targetTaskOrder.add(insertIndex, child);
+                }
+                insertIndex++;
+
+                // Persist child
+                child.setStart(null); // Reset start date to force recalculation
+                taskApi.persist(child);
+                log.debug("Moved child task {} to target sprint", child.getKey());
+            }
+        }
+
+        // 10. Recalculate order IDs for both grids
+        recalculateOrderIds(targetTaskOrder);
+        recalculateOrderIds(sourceGrid.getTaskOrder());
+
+        // 11. Persist all changes
+        task.setStart(null); // Reset start date to force recalculation
+        taskApi.persist(task);
+        log.info("Persisted task {} to sprint '{}'", task.getKey(), targetSprint.getName());
+
+        // 12. Reload and refresh both grids
+        loadData();
+        refreshGrid();
     }
 
     private void loadData() {
@@ -1026,6 +1184,17 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             }
         } catch (Exception e) {
             log.error("Error loading sprints for selector", e);
+        }
+    }
+
+    /**
+     * Recalculate order IDs for all tasks in the list based on their current positions.
+     *
+     * @param taskOrder The list of tasks to update
+     */
+    private void recalculateOrderIds(List<Task> taskOrder) {
+        for (int i = 0; i < taskOrder.size(); i++) {
+            taskOrder.get(i).setOrderId(i);
         }
     }
 
