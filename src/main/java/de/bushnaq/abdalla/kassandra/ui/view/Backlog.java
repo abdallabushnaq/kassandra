@@ -921,14 +921,22 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             }
         }
 
-        // 4. Update task's sprint reference
+        // 4. Remove broken relations (predecessors that now point across sprints)
+        List<Task> allMovedTasks = new ArrayList<>();
+        allMovedTasks.add(task);
+        if (task.isStory() && !childTasks.isEmpty()) {
+            allMovedTasks.addAll(childTasks);
+        }
+        removeBrokenRelations(allMovedTasks, sourceSprint, targetSprint);
+
+        // 5. Update task's sprint reference
         task.setSprintId(targetSprint.getId());
         task.setSprint(targetSprint);
 
-        // 5. Add to target sprint
+        // 6. Add to target sprint
         targetSprint.addTask(task);
 
-        // 6. Determine insertion position in target grid
+        // 7. Determine insertion position in target grid
         List<Task> targetTaskOrder = targetGrid.getTaskOrder();
         int        insertIndex;
 
@@ -950,7 +958,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             insertIndex = targetTaskOrder.size();
         }
 
-        // 7. Insert into target task order
+        // 8. Insert into target task order
         if (insertIndex >= targetTaskOrder.size()) {
             targetTaskOrder.add(task);
         } else {
@@ -958,7 +966,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         }
         insertIndex++; // Move past the task we just inserted for children
 
-        // 8. Determine new parent for tasks (if the task needs parenting)
+        // 9. Determine new parent for tasks (if the task needs parenting)
         if (task.isTask()) {
             Task newParent = findParentStoryForPosition(targetTaskOrder, targetTaskOrder.indexOf(task));
             if (newParent != null) {
@@ -967,7 +975,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             }
         }
 
-        // 9. If moving a story, also move all children
+        // 10. If moving a story, also move all children
         if (task.isStory() && !childTasks.isEmpty()) {
             for (Task child : childTasks) {
                 // Update sprint reference
@@ -990,16 +998,16 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             }
         }
 
-        // 10. Recalculate order IDs for both grids
+        // 11. Recalculate order IDs for both grids
         recalculateOrderIds(targetTaskOrder);
         recalculateOrderIds(sourceGrid.getTaskOrder());
 
-        // 11. Persist all changes
+        // 12. Persist all changes
         task.setStart(null); // Reset start date to force recalculation
         taskApi.persist(task);
         log.info("Persisted task {} to sprint '{}'", task.getKey(), targetSprint.getName());
 
-        // 12. Reload and refresh both grids
+        // 13. Reload and refresh both grids
         loadData();
         refreshGrid();
     }
@@ -1227,6 +1235,84 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         } else if (ganttChartContainer != null) {
             // Clear the Gantt chart container if we're showing Backlog or no sprint
             ganttChartContainer.removeAll();
+        }
+    }
+
+    /**
+     * Removes broken relations when tasks are moved between sprints.
+     * <p>
+     * When a task is moved from one sprint to another, any predecessor/successor relationships
+     * that now span across sprints need to be removed to maintain data integrity.
+     * <p>
+     * This method handles two cases:
+     * <ol>
+     *     <li>Predecessors of moved tasks that reference tasks remaining in the source sprint</li>
+     *     <li>Tasks in the source sprint that have moved tasks as predecessors</li>
+     * </ol>
+     *
+     * @param movedTasks   List of tasks being moved (includes the main task and any child tasks)
+     * @param sourceSprint The sprint the tasks are being moved from
+     * @param targetSprint The sprint the tasks are being moved to
+     */
+    private void removeBrokenRelations(List<Task> movedTasks, Sprint sourceSprint, Sprint targetSprint) {
+        // Create a set of moved task IDs for quick lookup
+        java.util.Set<Long> movedTaskIds = movedTasks.stream()
+                .map(Task::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        // 1. Remove predecessors of moved tasks that reference tasks in the source sprint
+        for (Task movedTask : movedTasks) {
+            List<Relation> predecessors = movedTask.getPredecessors();
+            if (predecessors != null && !predecessors.isEmpty()) {
+                List<Relation> relationsToRemove = new ArrayList<>();
+                for (Relation relation : predecessors) {
+                    Long predecessorTaskId = relation.getPredecessorId();
+                    // If the predecessor is NOT in the moved tasks list, it's staying in source sprint
+                    // So this relation becomes broken
+                    if (!movedTaskIds.contains(predecessorTaskId)) {
+                        Task predecessorTask = sourceSprint.getTaskById(predecessorTaskId);
+                        if (predecessorTask != null) {
+                            relationsToRemove.add(relation);
+                            log.info("Removing broken relation: {} had predecessor {} which stays in sprint '{}'",
+                                    movedTask.getKey(), predecessorTask.getKey(), sourceSprint.getName());
+                        }
+                    }
+                }
+                predecessors.removeAll(relationsToRemove);
+            }
+        }
+
+        // 2. Remove relations from tasks in source sprint that have moved tasks as predecessors
+        for (Task sourceTask : sourceSprint.getTasks()) {
+            // Skip tasks that are being moved
+            if (movedTaskIds.contains(sourceTask.getId())) {
+                continue;
+            }
+
+            List<Relation> predecessors = sourceTask.getPredecessors();
+            if (predecessors != null && !predecessors.isEmpty()) {
+                List<Relation> relationsToRemove = new ArrayList<>();
+                for (Relation relation : predecessors) {
+                    Long predecessorTaskId = relation.getPredecessorId();
+                    // If the predecessor is in the moved tasks, this relation becomes broken
+                    if (movedTaskIds.contains(predecessorTaskId)) {
+                        relationsToRemove.add(relation);
+                        Task movedPredecessor = movedTasks.stream()
+                                .filter(t -> t.getId().equals(predecessorTaskId))
+                                .findFirst()
+                                .orElse(null);
+                        log.info("Removing broken relation: {} in sprint '{}' had predecessor {} which moved to sprint '{}'",
+                                sourceTask.getKey(), sourceSprint.getName(),
+                                movedPredecessor != null ? movedPredecessor.getKey() : predecessorTaskId,
+                                targetSprint.getName());
+                    }
+                }
+                if (!relationsToRemove.isEmpty()) {
+                    predecessors.removeAll(relationsToRemove);
+                    // Persist the source task with removed relations
+                    taskApi.persist(sourceTask);
+                }
+            }
         }
     }
 
