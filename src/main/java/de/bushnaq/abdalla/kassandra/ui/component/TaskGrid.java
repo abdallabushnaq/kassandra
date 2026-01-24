@@ -1036,13 +1036,32 @@ public class TaskGrid extends TreeGrid<Task> {
      * Preserves expansion state for all expanded tasks.
      */
     private void refreshTreeData() {
-        // Build hierarchical tree structure
+        // Build hierarchical tree structure using only tasks in taskOrder (respecting filters)
         TreeData<Task> treeData = new TreeData<>();
+
+        // Create a set of task IDs that are in the filtered taskOrder for fast lookup
+        Set<Long> filteredTaskIds = taskOrder.stream()
+                .map(Task::getId)
+                .collect(Collectors.toSet());
+
+        // Get root tasks (stories/milestones) from the filtered list
         List<Task> rootTasks = taskOrder.stream()
                 .filter(t -> t.getParentTask() == null)
                 .sorted(Comparator.comparingInt(Task::getOrderId))
                 .collect(Collectors.toList());
-        treeData.addItems(rootTasks, Task::getChildTasks);
+
+        // Add root tasks and their filtered children
+        // We use a custom child provider that only returns children present in taskOrder
+        treeData.addItems(rootTasks, task -> {
+            if (task.getChildTasks() == null) {
+                return Collections.emptyList();
+            }
+            // Only return child tasks that are in the filtered taskOrder
+            return task.getChildTasks().stream()
+                    .filter(child -> filteredTaskIds.contains(child.getId()))
+                    .sorted(Comparator.comparingInt(Task::getOrderId))
+                    .collect(Collectors.toList());
+        });
 
         // Set the tree data
         setTreeData(treeData);

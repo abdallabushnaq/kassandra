@@ -214,7 +214,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             backlogGridPanel.add(backlogHeader, backlogInnerWrapper);
 
             // Add components in order: header, sprint grid, gantt chart, backlog grid
-            add(headerLayout, gridPanelWrapper, ganttChartContainer, backlogGridPanel);
+            add(headerLayout, ganttChartContainer, gridPanelWrapper, backlogGridPanel);
 
             String userEmail = getUserEmail();
             try {
@@ -283,6 +283,9 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
         ganttUtil = new GanttUtil(context);
         loadData();
+
+        // Update sprint selector to show the current sprint (in case it was determined automatically)
+        updateSprintSelectorValue();
 
         //- Update breadcrumbs
         getElement().getParent().getComponent()
@@ -719,7 +722,10 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                     }
                 }
 
-                if (matchesSearch || hasMatchingChild) {
+                // Story is included if:
+                // 1. It has a matching child (child matches both search AND user filter), OR
+                // 2. The story itself matches both search AND user filter
+                if (hasMatchingChild || (matchesSearch && matchesUser)) {
                     filteredTasks.add(task);
                 }
             } else {
@@ -1078,6 +1084,25 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         loadData();
         refreshGrid();
         exitEditMode();
+    }
+
+    /**
+     * Update the sprint selector value to match the current sprintId.
+     * Called after afterNavigation determines the sprint (e.g., when navigating from main menu).
+     */
+    private void updateSprintSelectorValue() {
+        if (sprintSelector == null || sprintId == null) {
+            return;
+        }
+
+        // Find and select the sprint matching the current sprintId
+        allSprints.stream()
+                .filter(s -> s.getId().equals(sprintId))
+                .findFirst()
+                .ifPresent(s -> {
+                    selectedSprint = s;
+                    sprintSelector.setValue(s);
+                });
     }
 
 
