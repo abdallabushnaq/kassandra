@@ -106,7 +106,7 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         List<ProductAclEntry> acl = productAclApi.getAcl(product.getId());
         assertNotNull(acl);
         List<Product> all = productApi.getAll();
-        assertEquals(1, all.size(), "Admin should see all");
+        assertEquals(1 + 1, all.size(), "Admin should see all");// the "Default" Product is always there
     }
 
     /**
@@ -298,16 +298,16 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         // User1 should only see their own product
         setUser(user1.getEmail(), "ROLE_USER");
         List<Product> user1Products = productApi.getAll();
-        assertEquals(1, user1Products.size(), "User1 should only see their own product");
-        assertEquals(product1.getId(), user1Products.get(0).getId());
-        assertEquals("User1 Product", user1Products.get(0).getName());
+        assertEquals(1 + 1, user1Products.size(), "User1 should only see their own product");// the "Default" Product is always there
+        assertEquals(product1.getId(), user1Products.get(1).getId());
+        assertEquals("User1 Product", user1Products.get(1).getName());
 
         // User2 should only see their own product
         setUser(user2.getEmail(), "ROLE_USER");
         List<Product> user2Products = productApi.getAll();
-        assertEquals(1, user2Products.size(), "User2 should only see their own product");
-        assertEquals(product2.getId(), user2Products.get(0).getId());
-        assertEquals("User2 Product", user2Products.get(0).getName());
+        assertEquals(1 + 1, user2Products.size(), "User2 should only see their own product");// the "Default" Product is always there
+        assertEquals(product2.getId(), user2Products.get(1).getId());
+        assertEquals("User2 Product", user2Products.get(1).getName());
 
         // Now grant user1 access to product2
         productAclApi.grantUserAccess(product2.getId(), user1.getId());
@@ -315,7 +315,7 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         // User1 should now see both products
         setUser(user1.getEmail(), "ROLE_USER");
         List<Product> user1ProductsAfterGrant = productApi.getAll();
-        assertEquals(2, user1ProductsAfterGrant.size(), "User1 should see both products after being granted access");
+        assertEquals(1 + 2, user1ProductsAfterGrant.size(), "User1 should see both products after being granted access");// the "Default" Product is always there
 
         // Verify both products are in the list
         List<Long> productIds = user1ProductsAfterGrant.stream()

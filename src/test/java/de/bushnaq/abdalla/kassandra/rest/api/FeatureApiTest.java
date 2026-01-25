@@ -137,7 +137,7 @@ public class FeatureApiTest extends AbstractEntityGenerator {
             setUser("admin-user", "ROLE_ADMIN");
             addRandomProducts(3);
             List<Feature> allFeatures = featureApi.getAll();
-            assertEquals(3, allFeatures.size());
+            assertEquals(1 + 3, allFeatures.size());// the "Default" Feature is always there
         }
         {
             setUser("user", "ROLE_USER");

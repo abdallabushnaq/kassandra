@@ -145,7 +145,7 @@ public class ProductApiTest extends AbstractUiTestUtil {
         addProduct("Product B");
         addProduct("Product C");
         List<Product> allProducts = productApi.getAll();
-        assertEquals(3, allProducts.size());
+        assertEquals(1 + 3, allProducts.size());// the "Default" Product is always there
     }
 
     @Test
@@ -157,7 +157,7 @@ public class ProductApiTest extends AbstractUiTestUtil {
     @Test
     public void getByFakeId() throws Exception {
         setUser("admin-user", "ROLE_ADMIN");
-        addRandomProducts(1);
+        addRandomProducts(1 + 1);// the "Default" Product is always there
         // Try to get non-existent product (admin)
         try {
             productApi.getById(FAKE_ID);
@@ -272,17 +272,16 @@ public class ProductApiTest extends AbstractUiTestUtil {
 
         // Admin sees all products
         List<Product> adminProducts = productApi.getAll();
-        assertEquals(3, adminProducts.size());
+        assertEquals(1 + 3, adminProducts.size());// the "Default" Product is always there
 
         // Regular user without any ACL entries sees no products
         setUser(user1.getEmail(), "ROLE_USER");
         List<Product> userProducts = productApi.getAll();
-        assertEquals(0, userProducts.size());
+        assertEquals(1, userProducts.size());// the "Default" Product is always there
     }
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
-    // todo  no suitable HttpMessageConverter found
     public void testMultipleUsersCreateProducts(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // User 1 creates product
@@ -299,23 +298,22 @@ public class ProductApiTest extends AbstractUiTestUtil {
 
         // Each user can only see their own product
         List<Product> user3Products = productApi.getAll();
-        assertEquals(1, user3Products.size());
-        assertEquals("Product 3", user3Products.get(0).getName());
+        assertEquals(1 + 1, user3Products.size());// the "Default" Product is always there
+        assertEquals("Product 3", user3Products.get(1).getName());
 
         setUser(user1.getEmail(), "ROLE_USER");
         List<Product> user1Products = productApi.getAll();
-        assertEquals(1, user1Products.size());
-        assertEquals("Product 1", user1Products.get(0).getName());
+        assertEquals(1 + 1, user1Products.size());// the "Default" Product is always there
+        assertEquals("Product 1", user1Products.get(1).getName());
 
         // Admin can see all products
         setUser("admin-user", "ROLE_ADMIN");
         List<Product> adminProducts = productApi.getAll();
-        assertEquals(3, adminProducts.size());
+        assertEquals(1 + 3, adminProducts.size());// the "Default" Product is always there
     }
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
-    // todo  no suitable HttpMessageConverter found
     public void testProductCreatorGetsAutomaticAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // User 1 creates a product
@@ -340,31 +338,6 @@ public class ProductApiTest extends AbstractUiTestUtil {
             productApi.getById(product1.getId());
         });
     }
-
-//    @Test
-//    public void testUserWithoutAclCannotAccessProduct() {
-//        // Admin creates a product
-//        setUser("admin-user", "ROLE_ADMIN");
-//        addRandomProducts(1);
-//        Product product = expectedProducts.getFirst();
-//
-//        // Different user tries to access - should fail
-//        setUser("user-without-access", "ROLE_USER");
-//        assertThrows(AccessDeniedException.class, () -> {
-//            productApi.getById(product.getId());
-//        });
-//
-//        // User cannot update
-//        assertThrows(AccessDeniedException.class, () -> {
-//            product.setName("Hacked Name");
-//            updateProduct(product);
-//        });
-//
-//        // User cannot delete
-//        assertThrows(AccessDeniedException.class, () -> {
-//            removeProduct(product.getId());
-//        });
-//    }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")

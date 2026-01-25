@@ -116,7 +116,7 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
         // Admin can access all sprints
         setUser(admin1.getEmail(), "ROLE_ADMIN");
         List<Sprint> allSprints = sprintApi.getAll();
-        assertEquals(2, allSprints.size(), "Admin should see all sprints");
+        assertEquals(1 + 2, allSprints.size(), "Admin should see all sprints");// the "Backlog" Sprint is always there
 
         // Admin can get specific sprints
         Sprint retrieved1 = sprintApi.getById(sprint1.getId());
@@ -343,8 +343,8 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
 
         // User1 can only see their own sprints in getAll()
         List<Sprint> user1Sprints = sprintApi.getAll();
-        assertEquals(1, user1Sprints.size(), "User1 should only see their own sprints");
-        assertEquals(sprint1.getId(), user1Sprints.getFirst().getId());
+        assertEquals(1 + 1, user1Sprints.size(), "User1 should only see their own sprints");// the "Backlog" Sprint is always there
+        assertEquals(sprint1.getId(), user1Sprints.get(1).getId());
 
         // User2 can access their own sprint
         setUser(user2.getEmail(), "ROLE_USER");

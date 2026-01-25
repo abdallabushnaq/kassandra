@@ -135,12 +135,12 @@ public class VersionApiTest extends AbstractEntityGenerator {
             setUser("admin-user", "ROLE_ADMIN");
             addRandomProducts(3);
             List<Version> allVersions = versionApi.getAll();
-            assertEquals(3, allVersions.size());
+            assertEquals(1 + 3, allVersions.size());// including the "Default" Version
         }
         {
             setUser("user", "ROLE_USER");
             List<Version> allVersions = versionApi.getAll();
-            assertEquals(0, allVersions.size());
+            assertEquals(0, allVersions.size());// no acl
         }
     }
 

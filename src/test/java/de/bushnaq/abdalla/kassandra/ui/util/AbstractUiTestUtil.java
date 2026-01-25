@@ -19,9 +19,11 @@ package de.bushnaq.abdalla.kassandra.ui.util;
 
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.util.AbstractGanttTestUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Slf4j
 public class AbstractUiTestUtil extends AbstractGanttTestUtil {
     @Autowired
     private HumanizedSeleniumHandler seleniumHandler;
@@ -34,6 +36,13 @@ public class AbstractUiTestUtil extends AbstractGanttTestUtil {
         }
 
     }
+
+    protected void logHeader(String header) {
+        log.info("---------------------------------------------------------------------------------------");
+        log.info(header);
+        log.info("---------------------------------------------------------------------------------------");
+    }
+
 
     @AfterEach
     public void tearDownTest() throws InterruptedException {

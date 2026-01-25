@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.config;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dao.*;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.repository.*;
@@ -69,6 +70,8 @@ public class DefaultEntitiesInitializer implements ApplicationRunner {
         ProductDAO product = productRepository.findByName(DEFAULT_NAME);
         if (product == null) {
             product = new ProductDAO();
+            product.setCreated(ParameterOptions.getNow());
+            product.setUpdated(ParameterOptions.getNow());
             product.setName(DEFAULT_NAME);
             product = productRepository.save(product);
             log.info("Created default product with ID: {}", product.getId());
@@ -78,6 +81,8 @@ public class DefaultEntitiesInitializer implements ApplicationRunner {
         VersionDAO version = versionRepository.findByNameAndProductId(DEFAULT_NAME, product.getId());
         if (version == null) {
             version = new VersionDAO();
+            version.setCreated(ParameterOptions.getNow());
+            version.setUpdated(ParameterOptions.getNow());
             version.setName(DEFAULT_NAME);
             version.setProductId(product.getId());
             version = versionRepository.save(version);
@@ -88,6 +93,8 @@ public class DefaultEntitiesInitializer implements ApplicationRunner {
         FeatureDAO feature = featureRepository.findByNameAndVersionId(DEFAULT_NAME, version.getId());
         if (feature == null) {
             feature = new FeatureDAO();
+            feature.setCreated(ParameterOptions.getNow());
+            feature.setUpdated(ParameterOptions.getNow());
             feature.setName(DEFAULT_NAME);
             feature.setVersionId(version.getId());
             feature = featureRepository.save(feature);
@@ -98,6 +105,8 @@ public class DefaultEntitiesInitializer implements ApplicationRunner {
         SprintDAO backlogSprint = sprintRepository.findByName(BACKLOG_SPRINT_NAME);
         if (backlogSprint == null) {
             backlogSprint = new SprintDAO();
+            backlogSprint.setCreated(ParameterOptions.getNow());
+            backlogSprint.setUpdated(ParameterOptions.getNow());
             backlogSprint.setName(BACKLOG_SPRINT_NAME);
             backlogSprint.setFeatureId(feature.getId());
             backlogSprint.setStatus(Status.CREATED);

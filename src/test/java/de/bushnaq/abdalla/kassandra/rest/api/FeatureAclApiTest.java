@@ -117,7 +117,7 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
         // Admin can access all features
         setUser(admin1.getEmail(), "ROLE_ADMIN");
         List<Feature> allFeatures = featureApi.getAll();
-        assertEquals(2, allFeatures.size(), "Admin should see all features");
+        assertEquals(1 + 2, allFeatures.size(), "Admin should see all features");// the "Default" Product is always there
 
         // Admin can get specific features
         Feature retrieved1 = featureApi.getById(feature1.getId());
@@ -337,8 +337,8 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
 
         // User1 can only see their own features in getAll()
         List<Feature> user1Features = featureApi.getAll();
-        assertEquals(1, user1Features.size(), "User1 should only see their own features");
-        assertEquals(feature1.getId(), user1Features.getFirst().getId());
+        assertEquals(1 + 1, user1Features.size(), "User1 should only see their own features");// the "Default" Feature is always there
+        assertEquals(feature1.getId(), user1Features.get(1).getId());
 
         // User2 can access their own feature
         setUser(user2.getEmail(), "ROLE_USER");

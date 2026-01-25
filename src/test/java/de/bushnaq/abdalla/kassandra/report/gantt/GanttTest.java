@@ -30,7 +30,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -39,7 +38,7 @@ import java.time.LocalDateTime;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class GanttTest extends AbstractGanttTestUtil {
@@ -50,19 +49,24 @@ public class GanttTest extends AbstractGanttTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void gantt_01(TestInfo testInfo) throws Exception {
+//        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+//        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
+//        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+//        generateProductsIfNeeded(testInfo, randomCase);
+
         int testCaseIndex = 1;
         TestInfoUtil.setTestCaseIndex(testInfo, testCaseIndex);
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
-        addRandomUser(0, 0.3f);
+        userIndex++;
+        addRandomUser(2, 0.3f);
         addRandomUser(1, 0.7f);
         initializeInstances();
 
         //create tasks
-        Sprint savedSprint    = expectedSprints.getFirst();
-        Sprint sprint         = sprintApi.getById(savedSprint.getId());
+        Sprint sprint         = sprintApi.getAll().getFirst();
         User   resource1      = expectedUsers.stream().toList().getFirst();
         User   resource2      = expectedUsers.stream().toList().get(1);
         Task   startMilestone = addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), null, Duration.ZERO, null, null, TaskMode.MANUALLY_SCHEDULED, true);
@@ -85,12 +89,18 @@ public class GanttTest extends AbstractGanttTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void gantt_02(TestInfo testInfo) throws Exception {
+//        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+//        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
+//        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+//        generateProductsIfNeeded(testInfo, randomCase);
+
         int testCaseIndex = 2;
         TestInfoUtil.setTestCaseIndex(testInfo, testCaseIndex);
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
+        userIndex++;
         addRandomUser(2, 0.5f);
         addRandomUser(3, 0.7f);
         initializeInstances();
@@ -124,14 +134,20 @@ public class GanttTest extends AbstractGanttTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void gantt_03(TestInfo testInfo) throws Exception {
+//        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+//        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
+//        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+//        generateProductsIfNeeded(testInfo, randomCase);
+
         int testCaseIndex = 3;
         TestInfoUtil.setTestCaseIndex(testInfo, testCaseIndex);
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
+        userIndex++;
 
-        addRandomUser(0, 0.5f);
+        addRandomUser(2, 0.5f);
         addRandomUser(4, 0.7f);
         initializeInstances();
 

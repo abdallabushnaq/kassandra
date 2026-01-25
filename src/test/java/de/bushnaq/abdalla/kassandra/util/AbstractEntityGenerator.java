@@ -563,6 +563,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         user.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
 
         saved = userApi.persist(user);
+        log.info("Created user: " + saved.getName() + " with email: " + saved.getEmail());
         addLocation(saved, country, state, start);
         addAvailability(saved, availability, start);
         userApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
@@ -910,9 +911,13 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         expectedVersions.sort(Comparator.naturalOrder());
         expectedWorklogs.sort(Comparator.naturalOrder());
 
-        assertEquals(expectedProducts.size(), gc.allProducts.size());
+
+        List<Product> all = productApi.getAll();
+        printTables();
+
+        assertEquals(1 + expectedProducts.size(), gc.allProducts.size());// the "Default" Product is always there
         for (int i = 0; i < expectedProducts.size(); i++) {
-            assertProductEquals(expectedProducts.get(i), gc.allProducts.get(i));
+            assertProductEquals(expectedProducts.get(i), gc.allProducts.get(i + 1));
         }
     }
 

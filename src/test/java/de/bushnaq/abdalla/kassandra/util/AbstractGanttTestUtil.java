@@ -76,7 +76,10 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
     protected            String                 testResultFolder          = "test-results";
 
     protected void addOneProduct(String sprintName) {
-        int count = 1;
+        int       count         = 1;
+        String    testUserEmail = "christopher.paul@kassandra.org";
+        LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
+        addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
 
         for (int i = 0; i < count; i++) {
             Product product = addProduct(nameGenerator.generateProductName(i));

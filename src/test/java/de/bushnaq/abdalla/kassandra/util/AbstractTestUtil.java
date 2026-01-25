@@ -65,6 +65,7 @@ public class AbstractTestUtil extends DTOAsserts {
 
             // Commit the transaction
             transactionManager.commit(status);
+            logger.info("truncated all tables.");
         } catch (Exception e) {
             // Rollback on error
             transactionManager.rollback(status);

@@ -114,7 +114,7 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         // Admin can access all versions
         setUser(admin1.getEmail(), "ROLE_ADMIN");
         List<Version> allVersions = versionApi.getAll();
-        assertEquals(2, allVersions.size(), "Admin should see all versions");
+        assertEquals(1 + 2, allVersions.size(), "Admin should see all versions");// the "Default" Version is always there
 
         // Admin can get specific versions
         Version retrieved1 = versionApi.getById(version1.getId());
@@ -327,8 +327,8 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
 
         // User1 can only see their own versions in getAll()
         List<Version> user1Versions = versionApi.getAll();
-        assertEquals(1, user1Versions.size(), "User1 should only see their own versions");
-        assertEquals(version1.getId(), user1Versions.get(0).getId());
+        assertEquals(1 + 1, user1Versions.size(), "User1 should only see their own versions");// the "Default" Version is always there
+        assertEquals(version1.getId(), user1Versions.get(1).getId());
 
         // User2 can access their own version
         setUser(user2.getEmail(), "ROLE_USER");

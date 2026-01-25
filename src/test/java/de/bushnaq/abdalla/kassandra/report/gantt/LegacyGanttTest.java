@@ -38,7 +38,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -55,7 +54,7 @@ import static de.bushnaq.abdalla.kassandra.util.NameGenerator.PROJECT_HUB_ORG;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
@@ -72,7 +71,7 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
      */
     @MethodSource("listFilesByExtension")
     @ParameterizedTest
-    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
     public void legacyTest(Path mppFileName, TestInfo testInfo) throws Exception {
         TestInfoUtil.setTestCaseIndex(testInfo, testCaseIndex);
         TestInfoUtil.setTestMethod(testInfo, mppFileName.getFileName().toString());
@@ -238,4 +237,5 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                     .collect(Collectors.toList());
         }
     }
+
 }

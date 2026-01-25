@@ -131,7 +131,7 @@ public class SprintApiTest extends AbstractEntityGenerator {
             setUser("admin-user", "ROLE_ADMIN");
             addRandomProducts(3);
             List<Sprint> allSprints = sprintApi.getAll();
-            assertEquals(3, allSprints.size());
+            assertEquals(1 + 3, allSprints.size());// including the "Default" Sprint
         }
         {
             setUser("user", "ROLE_USER");

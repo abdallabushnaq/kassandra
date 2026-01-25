@@ -66,7 +66,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
-        generateProductsIfNeeded(testInfo, randomCase);
+        generateProductsIfNeeded(testInfo, randomCase);// creates "Team" group in addition to the "All" default group
         admin1 = userApi.getByEmail("christopher.paul@kassandra.org");
         user1  = userApi.getByEmail("kristen.hubbell@kassandra.org");
         user2  = userApi.getByEmail("claudine.fick@kassandra.org");
@@ -121,12 +121,12 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         UserGroup group = userGroupApi.create("To Delete", "Will be deleted", Set.of(user1.getId()));
         assertNotNull(group.getId());
 
-        assertEquals(2, userGroupApi.getAll().size());
+        assertEquals(1 + 2, userGroupApi.getAll().size());
         // Delete the group
         userGroupApi.deleteById(group.getId());
 
         // Verify it's gone
-        assertEquals(1, userGroupApi.getAll().size());
+        assertEquals(1 + 1, userGroupApi.getAll().size());//  default "All" group
     }
 
     @ParameterizedTest
@@ -141,7 +141,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         userGroupApi.create("Group 3", "Third group", Set.of(user1.getId()));
         printTables();
         List<UserGroup> groups = userGroupApi.getAll();
-        assertEquals(4, groups.size());//default Team group + 3 created
+        assertEquals(1 + 4, groups.size());//default Team group + 3 created
     }
 
     @ParameterizedTest

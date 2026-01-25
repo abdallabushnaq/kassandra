@@ -31,7 +31,6 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -42,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@Transactional
+//@Transactional
 @TestMethodOrder(MethodOrderer.MethodName.class)
 public class AbstractLegacyGanttTestUtil extends AbstractGanttTestUtil {
     protected Map<String, net.sf.mpxj.Task>     mpxjTaskMap = new HashMap<>();
