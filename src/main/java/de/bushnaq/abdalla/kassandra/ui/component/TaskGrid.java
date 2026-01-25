@@ -212,7 +212,6 @@ public class TaskGrid extends TreeGrid<Task> {
         return flatList;
     }
 
-
     private void createGridColumns() {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
 
@@ -748,6 +747,34 @@ public class TaskGrid extends TreeGrid<Task> {
             }
         }
         return null;
+    }
+
+    /**
+     * Force expand or collapse all stories.
+     * This overrides the normal expansion state management.
+     *
+     * @param expand true to expand all stories, false to collapse all
+     */
+    public void forceExpandCollapseAll(boolean expand) {
+        List<Task> stories = taskOrder.stream()
+                .filter(Task::isStory)
+                .collect(Collectors.toList());
+
+        if (expand) {
+            // Expand all stories
+            expandRecursively(stories, Integer.MAX_VALUE);
+            // Update tracking set
+            stories.stream()
+                    .map(Task::getId)
+                    .forEach(expandedTaskIds::add);
+        } else {
+            // Collapse all stories
+            collapseRecursively(stories, Integer.MAX_VALUE);
+            // Update tracking set
+            stories.stream()
+                    .map(Task::getId)
+                    .forEach(expandedTaskIds::remove);
+        }
     }
 
     /**

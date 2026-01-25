@@ -81,6 +81,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     public static final String                       CREATE_STORY_BUTTON_ID     = "create-story-button";
     public static final String                       CREATE_TASK_BUTTON_ID      = "create-task-button";
     public static final String                       EDIT_BUTTON_ID             = "edit-tasks-button";
+    public static final String                       EXPAND_TOGGLE_BUTTON_ID    = "expand-toggle-button";
     public static final String                       ROUTE                      = "backlog";
     public static final String                       SAVE_BUTTON_ID             = "save-tasks-button";
     public static final String                       SEARCH_FIELD_ID            = "search-field";
@@ -97,6 +98,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private final       CrossGridDragDropCoordinator dragDropCoordinator;              // Coordinator for cross-grid drag & drop
     private             Button                       editButton;
     private final       GanttErrorHandler            eh                         = new GanttErrorHandler();
+    private             boolean                      expandAllStories           = true;  // Default to expanded
     private final       FeatureApi                   featureApi;
     private             Long                         featureId;
     //    private final       Svg                          ganttChart                 = new Svg();
@@ -465,6 +467,32 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             applyFilters();
         });
 
+        // 5. Expand/Collapse toggle with checkbox styled as iOS toggle
+        HorizontalLayout expandToggleLayout = new HorizontalLayout();
+        expandToggleLayout.setSpacing(true);
+        expandToggleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        expandToggleLayout.getStyle().set("margin-left", "var(--lumo-space-m)");
+
+        Span expandLabel = new Span("Expand All Stories");
+        expandLabel.getStyle()
+                .set("font-size", "var(--lumo-font-size-s)")
+                .set("color", "var(--lumo-body-text-color)");
+
+        com.vaadin.flow.component.checkbox.Checkbox expandToggleCheckbox = new com.vaadin.flow.component.checkbox.Checkbox();
+        expandToggleCheckbox.setId(EXPAND_TOGGLE_BUTTON_ID);
+        expandToggleCheckbox.setValue(expandAllStories); // Default to checked (expanded)
+        expandToggleCheckbox.addValueChangeListener(e -> {
+            if (e.isFromClient()) {
+                expandAllStories = e.getValue();
+                toggleStoryExpansion();
+            }
+        });
+
+        // Style the checkbox to look like an iOS toggle switch
+        expandToggleCheckbox.getElement().getThemeList().add("switch");
+
+        expandToggleLayout.add(expandLabel, expandToggleCheckbox);
+
         // Spacer to push create buttons to the right
         Div spacer = new Div();
 
@@ -507,7 +535,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         cancelButton.addClickListener(e -> cancelEditMode());
 
         // Add all components to header
-        header.add(searchField, userSelector, sprintSelector, clearButton, spacer,
+        header.add(searchField, userSelector, sprintSelector, clearButton, expandToggleLayout, spacer,
                 createMilestoneButton, createStoryButton, createTaskButton, editButton, saveButton, cancelButton);
         header.setFlexGrow(1, spacer);
 
@@ -1244,6 +1272,10 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
      * Backlog grid shows the Backlog sprint's tasks (always at bottom).
      */
     private void refreshGrid() {
+        // Set expansion preference for both grids
+        grid.setExpandInitially(expandAllStories);
+        backlogGrid.setExpandInitially(expandAllStories);
+
         // Update sprint grid
         if (sprint != null) {
             grid.updateData(sprint, new ArrayList<>(sprint.getTasks()), users);
@@ -1381,6 +1413,20 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         loadData();
         refreshGrid();
         exitEditMode();
+    }
+
+    /**
+     * Toggle expansion/collapse of all stories in both grids.
+     * Updates the expandInitially setting and forces immediate expansion/collapse.
+     */
+    private void toggleStoryExpansion() {
+        // Update the expand initially setting for both grids (for future loads)
+        grid.setExpandInitially(expandAllStories);
+        backlogGrid.setExpandInitially(expandAllStories);
+
+        // Force immediate expand/collapse of all stories
+        grid.forceExpandCollapseAll(expandAllStories);
+        backlogGrid.forceExpandCollapseAll(expandAllStories);
     }
 
     /**
