@@ -34,8 +34,3 @@
 
 # Failing Tests
 
-1. takeScreenshots
-
-1- BurndownTest
-2- ProjectsVersionsFeaturesAndSprintsIntroductionVideo 404 NOT_FOUND "Backlog sprint not found"
-

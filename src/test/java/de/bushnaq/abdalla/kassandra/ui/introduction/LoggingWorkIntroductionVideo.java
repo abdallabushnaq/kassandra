@@ -120,6 +120,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         grace.narrateAsync(NORMAL, "Hi everyone, Grace Martin here from kassandra.org. Today I'm going to show you how to log work on your tasks using the Active Sprints view and the Worklog dialog. This is essential for tracking your progress and keeping the team informed about task status.");
         seleniumHandler.hideOverlay();
 
+
         //---------------------------------------------------------------------------------------
         // Explain and Demonstrate Filter Controls
         //---------------------------------------------------------------------------------------
@@ -147,7 +148,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         grace.pause(2500);
 
         seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_USER_SELECTOR, new String[]{"Grace Martin"});
-        seleniumHandler.closeMultiSelectComboBoxValue(ActiveSprints.ID_USER_SELECTOR);
+//        seleniumHandler.closeMultiSelectComboBoxValue(ActiveSprints.ID_USER_SELECTOR);
         grace.pauseIfSilent(1000);
         grace.pause(2000);
 

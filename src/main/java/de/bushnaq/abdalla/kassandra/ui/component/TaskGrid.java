@@ -1156,13 +1156,32 @@ public class TaskGrid extends TreeGrid<Task> {
                     .map(Task::getId)
                     .forEach(expandedTaskIds::add);
             isFirstLoad = false;
-        } else if (!expandedTaskIds.isEmpty()) {
-            // Restore previous expansion state by ID
-            taskOrder.stream()
-                    .filter(task -> expandedTaskIds.contains(task.getId()))
-                    .forEach(this::expand);
+        } else {
+            // Not first load - restore previous expansion state
+            if (!expandedTaskIds.isEmpty()) {
+                // Restore expansion state for existing stories
+                taskOrder.stream()
+                        .filter(task -> expandedTaskIds.contains(task.getId()))
+                        .forEach(this::expand);
+            }
+
+            // If expandInitially is true, expand NEW stories that aren't tracked yet
+            if (expandInitially) {
+                List<Task> newStories = taskOrder.stream()
+                        .filter(Task::isStory)
+                        .filter(task -> !expandedTaskIds.contains(task.getId()))
+                        .collect(Collectors.toList());
+
+                if (!newStories.isEmpty()) {
+                    // Expand the new stories
+                    expandRecursively(newStories, Integer.MAX_VALUE);
+                    // Add them to the tracking set
+                    newStories.stream()
+                            .map(Task::getId)
+                            .forEach(expandedTaskIds::add);
+                }
+            }
         }
-        // If not first load and expandedTaskIds is empty, keep all collapsed
     }
 
     /**

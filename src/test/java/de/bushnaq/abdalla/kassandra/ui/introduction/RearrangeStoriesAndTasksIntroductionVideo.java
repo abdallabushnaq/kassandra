@@ -238,6 +238,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
         seleniumHandler.waitForPageLoaded();
         grace.pause(500);
+        grace.pauseIfSilent(500);
 
         grace.narrateAsync(NORMAL, "Authentication will need more time. Let's set minimum to 6 hours and maximum to 8 hours.");
         seleniumHandler.setTextField(TaskGrid.TASK_GRID_MIN_EST_PREFIX + copiedTask11Name, "6h");

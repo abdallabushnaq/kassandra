@@ -120,7 +120,7 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
         seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setSilent(true);
+        paul.setSilent(false);
         productName = "Jupiter";
         versionName = "1.0.0";
         featureName = "Config server";

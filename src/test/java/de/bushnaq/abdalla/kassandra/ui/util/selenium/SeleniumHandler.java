@@ -99,7 +99,7 @@ class SeleniumHandler {
 
         // Vaadin text fields have a clear button in their shadow DOM
         // Access it via shadow root and click it
-        WebElement clearButton = expandRootElementAndFindElement(field, "[part='clear-button']");
+        WebElement clearButton = expandRootElementAndFindElement(field, "#clearButton");
 
         if (clearButton != null && clearButton.isDisplayed()) {
             moveMouseToElement(clearButton);

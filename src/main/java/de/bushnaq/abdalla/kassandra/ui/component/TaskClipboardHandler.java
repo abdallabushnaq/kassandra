@@ -67,8 +67,6 @@ public class TaskClipboardHandler {
         task.setParentTask(null);
         task.setParentTaskId(null);
         task.setOrderId(null);
-        task.setMinEstimate(null);
-        task.setMaxEstimate(null);
         task.setPredecessors(null);
         task.setProgress(null);
         task.setRemainingEstimate(null);
@@ -88,28 +86,26 @@ public class TaskClipboardHandler {
      * @throws Exception if deserialization fails
      */
     private Task deserializeTask(String json) throws Exception {
-        try {
-            // Try to deserialize as a single task
+        // First, parse as a generic map to check the structure
+        Map<String, Object> jsonMap = jsonMapper.readValue(json, new TypeReference<Map<String, Object>>() {
+        });
+
+        // Check if this is a story+children wrapper structure
+        if (jsonMap.containsKey("story") && jsonMap.containsKey("children")) {
+            // Deserialize as story with children wrapper
+            String storyJson    = jsonMapper.writeValueAsString(jsonMap.get("story"));
+            String childrenJson = jsonMapper.writeValueAsString(jsonMap.get("children"));
+
+            Task story = jsonMapper.readValue(storyJson, Task.class);
+            List<Task> children = jsonMapper.readValue(childrenJson,
+                    jsonMapper.getTypeFactory().constructCollectionType(List.class, Task.class));
+
+            story.getChildTasks().clear();
+            story.getChildTasks().addAll(children);
+            return story;
+        } else {
+            // Deserialize as a single task
             return jsonMapper.readValue(json, Task.class);
-        } catch (Exception e) {
-            // Try to deserialize as a story with children wrapper
-            try {
-                Map<String, Object> wrapper = jsonMapper.readValue(json, new TypeReference<Map<String, Object>>() {
-                });
-                if (wrapper.containsKey("story") && wrapper.containsKey("children")) {
-                    Task story = jsonMapper.convertValue(wrapper.get("story"), Task.class);
-                    List<Task> children = jsonMapper.convertValue(
-                            wrapper.get("children"),
-                            jsonMapper.getTypeFactory().constructCollectionType(List.class, Task.class)
-                    );
-                    story.getChildTasks().clear();
-                    story.getChildTasks().addAll(children);
-                    return story;
-                }
-            } catch (Exception ex) {
-                log.warn("Failed to deserialize as story with children", ex);
-            }
-            throw e;
         }
     }
 

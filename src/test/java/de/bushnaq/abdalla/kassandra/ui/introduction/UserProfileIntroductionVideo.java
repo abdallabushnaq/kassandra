@@ -79,7 +79,7 @@ public class UserProfileIntroductionVideo extends AbstractKeycloakUiTestUtil {
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-//        paul.setSilent(true);
+        paul.setSilent(false);
         HumanizedSeleniumHandler.setHumanize(true);
         //seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);

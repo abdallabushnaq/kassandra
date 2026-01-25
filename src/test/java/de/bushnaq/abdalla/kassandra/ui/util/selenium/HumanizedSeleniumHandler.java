@@ -824,35 +824,36 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // Find and click the toggle button to open the dropdown
             // A human would just click the toggle button directly (no need to click input first)
             // Vaadin combobox uses shadow DOM, so we use expandRootElementAndFindElement to access it
-            try {
-                // Try to find toggle button by ID first
-                WebElement toggleButton = expandRootElementAndFindElement(comboBoxElement, "#toggleButton");
+//            try {
+            // Try to find toggle button by ID first
+            WebElement toggleButton = expandRootElementAndFindElement(comboBoxElement, "#toggleButton");
 
-                if (toggleButton == null) {
-                    // Fallback: try to find by part attribute
-                    toggleButton = expandRootElementAndFindElement(comboBoxElement, "[part='toggle-button']");
-                }
+//                if (toggleButton == null) {
+//                    // Fallback: try to find by part attribute
+//                    toggleButton = expandRootElementAndFindElement(comboBoxElement, "[part='toggle-button']");
+//                }
 
-                if (toggleButton != null) {
-                    moveMouseToElement(toggleButton);
-                    clickElement(toggleButton);
+//                toggleButton != null {
+            moveMouseToElement(toggleButton);
+            clickElement(toggleButton);
 //                    toggleButton.click();
-                    log.trace("Clicked combobox toggle button via shadow DOM");
-                } else {
-                    // Fallback: click on the input field if toggle button not found
-                    log.trace("Toggle button not found in shadow DOM, clicking input field to open dropdown");
-                    inputElement.click();
-                }
-            } catch (Exception ex) {
-                // Fallback: click on the input field if shadow DOM access fails
-                log.warn("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
-                inputElement.click();
-            }
+            log.trace("Clicked combobox toggle button via shadow DOM");
+//                }
+//                else {
+//                    // Fallback: click on the input field if toggle button not found
+//                    log.trace("Toggle button not found in shadow DOM, clicking input field to open dropdown");
+//                    inputElement.click();
+//                }
+//            } catch (Exception ex) {
+//                 Fallback: click on the input field if shadow DOM access fails
+//                log.warn("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
+//                inputElement.click();
+//            }
 
             // Wait for the dropdown overlay to become visible
             // The overlay element exists in the DOM even when closed
             // When opened, the 'opened' attribute is set to "true" (not an empty string)
-            waitUntil(ExpectedConditions.attributeToBe(By.cssSelector("vaadin-combo-box-overlay"), "opened", "true"));
+            waitUntil(ExpectedConditions.attributeToBe(comboBoxElement, "opened", "true"));
 
             // Find dropdown items
             // Items are in the light DOM as children of vaadin-combo-box-scroller
