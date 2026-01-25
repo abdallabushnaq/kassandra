@@ -41,7 +41,7 @@ vaadin-grid::part(last-header-row) {
 
 /* Body cells styling - match Backlog card appearance */
 .task-grid::part(body-cell) {
-  background: var(--lumo-base-color);
+  /*background: var(--lumo-base-color);*/
   padding: 0; /* Remove default padding to control height precisely */
   --_cell-padding: 4px; /* Set internal cell content padding to 4px */
   min-height: 32px; /* Ensure minimum height of 32px */
@@ -68,6 +68,11 @@ vaadin-grid::part(last-header-row) {
 .task-grid::part(header-cell) {
   font-weight: 600;
   min-height: 0px;
+}
+
+/* Selected row styling - highlight selected rows */
+.task-grid::part(selected-row-cell) {
+  background-color: var(--lumo-primary-color-10pct) !important;
 }
 
 /* Focus outlines */
