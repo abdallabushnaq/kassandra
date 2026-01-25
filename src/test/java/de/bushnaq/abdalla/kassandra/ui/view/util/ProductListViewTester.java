@@ -65,6 +65,7 @@ public class ProductListViewTester extends AbstractViewTester {
         seleniumHandler.click(buttonId);
         seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
         seleniumHandler.waitForPageLoaded();
+        seleniumHandler.wait(200);
     }
 
     /**

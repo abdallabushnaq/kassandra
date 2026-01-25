@@ -130,7 +130,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil
         versionListViewTester.selectVersion(versionName);
         featureListViewTester.selectFeature(featureName);
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
-        seleniumHandler.waitForElementToBeClickable(Backlog.BACKLOG_PAGE_TITLE_ID);
+        seleniumHandler.waitForElementToBeClickable(Backlog.CLEAR_FILTER_BUTTON_ID);
 
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);

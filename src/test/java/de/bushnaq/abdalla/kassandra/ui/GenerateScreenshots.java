@@ -333,7 +333,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         seleniumHandler.click("Sprints (" + sprintName + ")"); // Go back to SprintListView using breadcrumb
         // Find and click the column configuration button
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
-        seleniumHandler.waitForElementToBeClickable(Backlog.BACKLOG_PAGE_TITLE_ID);
+        seleniumHandler.waitForElementToBeClickable(Backlog.CLEAR_FILTER_BUTTON_ID);
         seleniumHandler.takeScreenShot("../kassandra.wiki/screenshots/task-list-view.png");
 
         //Backlog
