@@ -114,8 +114,7 @@ public class TaskGrid extends TreeGrid<Task> {
 
         setSelectionMode(SelectionMode.SINGLE);
         addClassName("task-grid"); // Add CSS class for styling
-        addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
-
+        addThemeVariants(GridVariant.LUMO_COMPACT, GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
         createGridColumns();
         setupDragAndDrop();
         setupKeyboardNavigation();
@@ -406,14 +405,14 @@ public class TaskGrid extends TreeGrid<Task> {
         }
 
         //ID
-        {
-            addColumn(new ComponentRenderer<>((Task task) -> {
-                Div div = new Div();
-                div.setText(String.valueOf(task.getOrderId()));
-                div.setId(TASK_GRID_ID_PREFIX + task.getName());
-                return div;
-            })).setHeader("#").setAutoWidth(true).setId("task-grid-#-column");
-        }
+//        {
+//            addColumn(new ComponentRenderer<>((Task task) -> {
+//                Div div = new Div();
+//                div.setText(String.valueOf(task.getOrderId()));
+//                div.setId(TASK_GRID_ID_PREFIX + task.getName());
+//                return div;
+//            })).setHeader("#").setAutoWidth(true).setId("task-grid-#-column");
+//        }
         //Dependency
         {
             addColumn(new ComponentRenderer<>((Task task) -> {
@@ -482,6 +481,13 @@ public class TaskGrid extends TreeGrid<Task> {
                 } else {
                     // Read-only - show dependencies as text
                     Div div = new Div();
+                    div.getStyle()
+                            .set("font-weight", "bold")
+                            .set("font-size", "var(--lumo-font-size-xs)")
+                            .set("color", "#9E9E9E") // Match Backlog gray color
+                            .set("white-space", "nowrap")
+                            .set("margin-right", "var(--lumo-space-s)")
+                            .set("flex-shrink", "0");
                     div.setId(TASK_GRID_DEPENDENCY_PREFIX + task.getName());
                     div.setText(getDependencyText(task));
                     return div;
@@ -492,7 +498,14 @@ public class TaskGrid extends TreeGrid<Task> {
         {
             addColumn(new ComponentRenderer<>((Task task) -> {
                 Div div = new Div();
-                div.setText(task.getParentTask() != null ? String.valueOf(task.getParentTask().getOrderId()) : "");
+                div.getStyle()
+                        .set("font-weight", "bold")
+                        .set("font-size", "var(--lumo-font-size-xs)")
+                        .set("color", "#9E9E9E") // Match Backlog gray color
+                        .set("white-space", "nowrap")
+                        .set("margin-right", "var(--lumo-space-s)")
+                        .set("flex-shrink", "0");
+                div.setText(task.getParentTask() != null ? "T-" + task.getParentTask().getOrderId() : "");
                 div.setId(TASK_GRID_PARENT_PREFIX + task.getName());
                 return div;
             })).setHeader("Parent").setAutoWidth(true);
@@ -790,7 +803,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 .filter(Relation::isVisible) // Only show visible dependencies
                 .map(relation -> {
                     Task predecessor = sprint.getTaskById(relation.getPredecessorId());
-                    return predecessor != null ? String.valueOf(predecessor.getOrderId()) : "";
+                    return predecessor != null ? "T-" + predecessor.getOrderId() : "";
                 })
                 .filter(orderId -> !orderId.isEmpty())
                 .collect(Collectors.joining(", "));

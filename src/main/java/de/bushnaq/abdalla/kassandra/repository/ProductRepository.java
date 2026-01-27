@@ -18,7 +18,11 @@
 package de.bushnaq.abdalla.kassandra.repository;
 
 import de.bushnaq.abdalla.kassandra.dao.ProductDAO;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.ListCrudRepository;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
 
 public interface ProductRepository extends ListCrudRepository<ProductDAO, Long> {
     boolean existsByName(String name);
@@ -34,4 +38,13 @@ public interface ProductRepository extends ListCrudRepository<ProductDAO, Long> 
     boolean existsByNameAndIdNot(String name, Long id);
 
     ProductDAO findByName(String name);
+
+    /**
+     * Find products whose names contain the given string, ignoring case sensitivity.
+     *
+     * @param partialName The partial name to search for in product names
+     * @return A list of products whose names contain the specified string (case-insensitive)
+     */
+    @Query("SELECT p FROM ProductDAO p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :partialName, '%'))")
+    List<ProductDAO> findByNameContainingIgnoreCase(@Param("partialName") String partialName);
 }
