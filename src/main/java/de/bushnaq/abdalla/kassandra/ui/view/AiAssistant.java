@@ -37,6 +37,9 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.SessionToolActivityContext;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
+import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
@@ -62,14 +65,17 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
     private final       Div                    conversationHistory;
     // Unique conversation ID for this view instance - used by Spring AI ChatMemory
     private             String                 conversationId    = java.util.UUID.randomUUID().toString();
+    private             User                   currentUser;
     private final       AuthenticationProvider mcpAuthProvider;
     private final       TextArea               queryInput;
     private final       Div                    responseArea;
     private final       Button                 submitButton;
+    private final       UserApi                userApi;
 
-    public AiAssistant(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider) {
+    public AiAssistant(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi) {
         this.aiAssistantService = aiAssistantService;
         this.mcpAuthProvider    = mcpAuthProvider;
+        this.userApi            = userApi;
 
         // Configure main layout - full size horizontal split
         setSizeFull();
@@ -262,6 +268,20 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
                         mainLayout.getBreadcrumbs().addItem("AI Assistant", AiAssistant.class);
                     }
                 });
+        // Cache the current user for use in message rendering
+        final String userEmail = SecurityUtils.getUserEmail();
+
+        User userFromDb = null;
+        // Try to get user from database to check for avatar
+        if (!userEmail.equals(SecurityUtils.GUEST)) {
+            try {
+                userFromDb = userApi.getByEmail(userEmail);
+            } catch (Exception e) {
+                // User not found or error, will use default avatar
+                userFromDb = null;
+            }
+        }
+        currentUser = userFromDb;
     }
 
     private void clearConversation() {
@@ -290,7 +310,20 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
         switch (type) {
             case "user":
                 messageDiv.addClassNames(LumoUtility.Background.PRIMARY_10);
-                icon.setText("👤 You: ");
+                if (currentUser != null && currentUser.getAvatarHash() != null && !currentUser.getAvatarHash().isEmpty()) {
+                    com.vaadin.flow.component.html.Image avatarImage = new com.vaadin.flow.component.html.Image();
+                    avatarImage.setWidth("16px");
+                    avatarImage.setHeight("16px");
+                    avatarImage.getStyle()
+                            .set("border-radius", "4px")
+                            .set("object-fit", "cover")
+                            .set("margin-right", "4px");
+                    avatarImage.setSrc(currentUser.getAvatarUrl());
+                    messageDiv.add(avatarImage);
+                }
+                // Always show user name in front of the message
+                String userLabel = (currentUser != null && currentUser.getName() != null && !currentUser.getName().isEmpty()) ? currentUser.getName() : "You";
+                icon.setText(userLabel + ": ");
                 icon.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
                 break;
             case "ai":
