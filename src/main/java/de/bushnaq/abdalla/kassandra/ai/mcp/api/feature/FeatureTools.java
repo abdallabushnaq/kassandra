@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.feature;
 
+import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +67,7 @@ public class FeatureTools {
             @ToolParam(description = "The feature name (must be unique)") String name,
             @ToolParam(description = "The version ID this feature belongs to") Long versionId) {
         try {
-            log.info("Creating feature with name: {} for version {}", name, versionId);
+            ToolActivityContextHolder.reportActivity("Creating feature with name: " + name + " for version " + versionId);
             Feature feature = new Feature();
             feature.setName(name);
             feature.setVersionId(versionId);
@@ -74,7 +75,7 @@ public class FeatureTools {
             FeatureDto featureDto   = FeatureDto.from(savedFeature);
             return jsonMapper.writeValueAsString(featureDto);
         } catch (Exception e) {
-            log.error("Error creating feature: {}", e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error creating feature: " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -84,11 +85,11 @@ public class FeatureTools {
     public String deleteFeature(
             @ToolParam(description = "The feature ID") Long id) {
         try {
-            log.info("Deleting feature with ID: {}", id);
+            ToolActivityContextHolder.reportActivity("Deleting feature with ID: " + id);
             featureApi.deleteById(id);
             return "Feature deleted successfully with ID: " + id;
         } catch (Exception e) {
-            log.error("Error deleting feature {}: {}", id, e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error deleting feature " + id + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -96,14 +97,14 @@ public class FeatureTools {
     @Tool(description = "Get a list of all features accessible to the current user (Admin sees all). Good if you need to retrieve features for many versions. " + RETURNS_FEATURE_ARRAY_JSON)
     public String getAllFeatures() {
         try {
-            log.info("Getting all features");
+            ToolActivityContextHolder.reportActivity("Getting all features");
             List<Feature> features = featureApi.getAll();
             List<FeatureDto> featureDtos = features.stream()
                     .map(FeatureDto::from)
                     .collect(Collectors.toList());
             return jsonMapper.writeValueAsString(featureDtos);
         } catch (Exception e) {
-            log.error("Error getting all features: {}", e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error getting all features: " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -112,14 +113,14 @@ public class FeatureTools {
     public String getAllFeaturesByVersionId(
             @ToolParam(description = "The version ID (use VersionTools to get version IDs for a product)") Long versionId) {
         try {
-            log.info("Getting all features for version {}", versionId);
+            ToolActivityContextHolder.reportActivity("Getting all features for version ID: " + versionId);
             List<Feature> features = featureApi.getAll(versionId);
             List<FeatureDto> featureDtos = features.stream()
                     .map(FeatureDto::from)
                     .collect(Collectors.toList());
             return jsonMapper.writeValueAsString(featureDtos);
         } catch (Exception e) {
-            log.error("Error getting all features for version {}: {}", versionId, e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error getting all features for version " + versionId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -128,7 +129,7 @@ public class FeatureTools {
     public String getFeatureById(
             @ToolParam(description = "The feature ID") Long id) {
         try {
-            log.info("Getting feature with ID: {}", id);
+            ToolActivityContextHolder.reportActivity("Getting feature with ID: " + id);
             Feature feature = featureApi.getById(id);
             if (feature != null) {
                 FeatureDto featureDto = FeatureDto.from(feature);
@@ -136,7 +137,7 @@ public class FeatureTools {
             }
             return "Feature not found with ID: " + id;
         } catch (Exception e) {
-            log.error("Error getting feature {}: {}", id, e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error getting feature " + id + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -146,7 +147,7 @@ public class FeatureTools {
             @ToolParam(description = "The feature ID") Long id,
             @ToolParam(description = "The new feature name") String name) {
         try {
-            log.info("Updating feature {} with name: {}", id, name);
+            ToolActivityContextHolder.reportActivity("Updating feature " + id + " with name: " + name);
             Feature feature = featureApi.getById(id);
             if (feature == null) {
                 return "Feature not found with ID: " + id;
@@ -156,7 +157,7 @@ public class FeatureTools {
             FeatureDto featureDto = FeatureDto.from(feature);
             return jsonMapper.writeValueAsString(featureDto);
         } catch (Exception e) {
-            log.error("Error updating feature {}: {}", id, e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error updating feature " + id + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }

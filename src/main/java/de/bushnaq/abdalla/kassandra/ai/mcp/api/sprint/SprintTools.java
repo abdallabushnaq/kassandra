@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint;
 
+import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.rest.api.SprintApi;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +66,7 @@ public class SprintTools {
             @ToolParam(description = "The sprint name (must be unique)") String name,
             @ToolParam(description = "The feature ID this sprint belongs to") Long featureId) {
         try {
-            log.info("Creating sprint with name: {} for feature {}", name, featureId);
+            ToolActivityContextHolder.reportActivity("Creating sprint with name: " + name + " for feature " + featureId);
             Sprint sprint = new Sprint();
             sprint.setName(name);
             sprint.setFeatureId(featureId);
@@ -73,7 +74,7 @@ public class SprintTools {
             SprintDto sprintDto   = SprintDto.from(savedSprint);
             return jsonMapper.writeValueAsString(sprintDto);
         } catch (Exception e) {
-            log.error("Error creating sprint: {}", e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error creating sprint: " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -82,11 +83,11 @@ public class SprintTools {
     public String deleteSprint(
             @ToolParam(description = "The sprint ID") Long id) {
         try {
-            log.info("Deleting sprint with ID: {}", id);
+            ToolActivityContextHolder.reportActivity("Deleting sprint with ID: " + id);
             sprintApi.deleteById(id);
             return "Sprint deleted successfully with ID: " + id;
         } catch (Exception e) {
-            log.error("Error deleting sprint {}: {}", id, e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error deleting sprint " + id + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -94,14 +95,14 @@ public class SprintTools {
     @Tool(description = "Get a list of all sprints accessible to the current user (Admin sees all). " + RETURNS_SPRINT_ARRAY_JSON)
     public String getAllSprints() {
         try {
-            log.info("Getting all sprints");
+            ToolActivityContextHolder.reportActivity("Getting all sprints");
             List<Sprint> sprints = sprintApi.getAll();
             List<SprintDto> sprintDtos = sprints.stream()
                     .map(SprintDto::from)
                     .collect(Collectors.toList());
             return jsonMapper.writeValueAsString(sprintDtos);
         } catch (Exception e) {
-            log.error("Error getting all sprints: {}", e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error getting all sprints: " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -110,14 +111,14 @@ public class SprintTools {
     public String getAllSprintsByFeatureId(
             @ToolParam(description = "The feature ID") Long featureId) {
         try {
-            log.info("Getting all sprints for feature {}", featureId);
+            ToolActivityContextHolder.reportActivity("Getting all sprints for feature " + featureId);
             List<Sprint> sprints = sprintApi.getAll(featureId);
             List<SprintDto> sprintDtos = sprints.stream()
                     .map(SprintDto::from)
                     .collect(Collectors.toList());
             return jsonMapper.writeValueAsString(sprintDtos);
         } catch (Exception e) {
-            log.error("Error getting all sprints for feature {}: {}", featureId, e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error getting all sprints for feature " + featureId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -126,7 +127,7 @@ public class SprintTools {
     public String getSprintById(
             @ToolParam(description = "The sprint ID") Long id) {
         try {
-            log.info("Getting sprint with ID: {}", id);
+            ToolActivityContextHolder.reportActivity("Getting sprint with ID: " + id);
             Sprint sprint = sprintApi.getById(id);
             if (sprint != null) {
                 SprintDto sprintDto = SprintDto.from(sprint);
@@ -134,7 +135,7 @@ public class SprintTools {
             }
             return "Sprint not found with ID: " + id;
         } catch (Exception e) {
-            log.error("Error getting sprint {}: {}", id, e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error getting sprint " + id + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -144,7 +145,7 @@ public class SprintTools {
             @ToolParam(description = "The sprint ID") Long id,
             @ToolParam(description = "The new sprint name") String name) {
         try {
-            log.info("Updating sprint {} with name: {}", id, name);
+            ToolActivityContextHolder.reportActivity("Updating sprint " + id + " with name: " + name);
             Sprint sprint = sprintApi.getById(id);
             if (sprint == null) {
                 return "Sprint not found with ID: " + id;
@@ -154,7 +155,7 @@ public class SprintTools {
             SprintDto sprintDto = SprintDto.from(sprint);
             return jsonMapper.writeValueAsString(sprintDto);
         } catch (Exception e) {
-            log.error("Error updating sprint {}: {}", id, e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error updating sprint " + id + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }

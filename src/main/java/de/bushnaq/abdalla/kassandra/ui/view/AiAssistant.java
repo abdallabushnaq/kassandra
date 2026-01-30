@@ -65,6 +65,7 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
     private final       AuthenticationProvider mcpAuthProvider;
     private final       TextArea               queryInput;
     private final       Div                    responseArea;
+    private final       Button                 submitButton;
 
     public AiAssistant(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider) {
         this.aiAssistantService = aiAssistantService;
@@ -168,7 +169,7 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
                 .set("flex", "0 0 auto")
                 .set("margin-top", "4px");
 
-        Button submitButton = new Button("Send", VaadinIcon.ARROW_CIRCLE_RIGHT.create());
+        submitButton = new Button("Send", VaadinIcon.ARROW_CIRCLE_RIGHT.create());
         submitButton.setId(AI_SUBMIT_BUTTON);
         submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         submitButton.addClickListener(e -> handleQuery());
@@ -327,6 +328,9 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
         // Clear input
         queryInput.clear();
 
+        // Disable submit button while AI is busy
+        getUI().ifPresent(ui -> ui.access(() -> submitButton.setEnabled(false)));
+
         // Show loading state
         addSystemMessage("🤔 Thinking...");
 
@@ -341,11 +345,11 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
                     if (capturedToken != null) {
                         mcpAuthProvider.setToken(capturedToken);
                     }
-                    // Get the activity context for this conversation
+                    // Get or create the activity context for this conversation
                     activityContextRef[0] = aiAssistantService.getActivityContext(conversationId);
+                    activityStreaming     = true;
                     if (activityContextRef[0] != null) {
-                        activityStreaming = true;
-                        // Register a listener to stream activity messages to the UI
+                        // Register a listener to stream activity messages to the UI BEFORE processQuery
                         activityContextRef[0].setActivityListener(msg -> {
                             if (!activityStreaming) return;
                             ui.access(() -> {
@@ -354,6 +358,7 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
                             });
                         });
                     }
+                    // Now call processQuery (listener is already set)
                     String response = aiAssistantService.processQuery(query, conversationId);
                     log.info("AI response received: {} characters", response != null ? response.length() : 0);
 
@@ -364,16 +369,16 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
                             removeLastMessage();
                             // Add AI response
                             addAiMessage(response);
-                            // Push the update to the browser
-                            ui.push();
                         } catch (Exception e) {
                             log.error("Error updating UI with response", e);
                             addErrorMessage("Error displaying response: " + e.getMessage());
-                            ui.push();
                         } finally {
                             // Remove activity listener after response
                             activityStreaming = false;
                             if (activityContextRef[0] != null) activityContextRef[0].setActivityListener(null);
+                            // Enable submit button after AI finishes
+                            submitButton.setEnabled(true);
+                            ui.push();
                         }
                     });
                 } catch (Exception e) {
@@ -382,13 +387,15 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
                         try {
                             removeLastMessage();
                             addErrorMessage("Error: " + e.getMessage());
-                            ui.push();
                         } catch (Exception ex) {
                             log.error("Error updating UI with error message", ex);
                         } finally {
                             // Remove activity listener on error
                             activityStreaming = false;
                             if (activityContextRef[0] != null) activityContextRef[0].setActivityListener(null);
+                            // Enable submit button after error
+                            submitButton.setEnabled(true);
+                            ui.push();
                         }
                     });
                 }
