@@ -17,9 +17,12 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Thread-local holder for ToolActivityContext, so tools can access the current context.
  */
+@Slf4j
 public class ToolActivityContextHolder {
     private static final ThreadLocal<ToolActivityContext> contextHolder = new ThreadLocal<>();
 
@@ -29,6 +32,12 @@ public class ToolActivityContextHolder {
 
     public static ToolActivityContext getContext() {
         return contextHolder.get();
+    }
+
+    public static void reportActivity(String message) {
+        ToolActivityContext context = getContext();
+        if (context != null) context.reportActivity(message);
+        log.info(message);
     }
 
     public static void setContext(ToolActivityContext context) {

@@ -80,9 +80,12 @@ public class AiAssistantService {
 
     /**
      * Get the activity context for a conversation (for UI streaming).
+     * Always returns a context, creating and storing a new one if needed.
      */
     public SessionToolActivityContext getActivityContext(String conversationId) {
-        return activityContexts.get(conversationId);
+        SessionToolActivityContext activityContext = activityContexts.computeIfAbsent(conversationId, id -> new SessionToolActivityContext());
+        ToolActivityContextHolder.setContext(activityContext);
+        return activityContext;
     }
 
     /**
@@ -159,9 +162,9 @@ public class AiAssistantService {
                 .build();
 
         // Create or get the activity context for this conversation
-        SessionToolActivityContext activityContext = activityContexts.computeIfAbsent(conversationId, id -> new SessionToolActivityContext());
+//        SessionToolActivityContext activityContext = activityContexts.computeIfAbsent(conversationId, id -> new SessionToolActivityContext());
         // Store context in ThreadLocal for tool access
-        ToolActivityContextHolder.setContext(activityContext);
+//        ToolActivityContextHolder.setContext(activityContext);
         try {
             log.info("Calling LLM via ChatClient with native Spring AI tool support...");
             String response = chatClient.prompt()
