@@ -17,14 +17,20 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -60,83 +66,155 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
         this.aiAssistantService = aiAssistantService;
         this.mcpAuthProvider    = mcpAuthProvider;
 
-        // Configure layout
+        // Configure main layout - full size horizontal split
         setSizeFull();
-        setPadding(true);
-        setSpacing(true);
+        setPadding(false);
+        setSpacing(false);
         addClassNames(LumoUtility.Background.BASE);
 
-        // Header
-        H2 title = new H2("AI Assistant");
-        title.setId(AI_VIEW_TITLE);
-        title.addClassNames(LumoUtility.Margin.Bottom.SMALL);
+        // Main horizontal layout for left (future audit log) and right (chat) panels
+        HorizontalLayout mainContent = new HorizontalLayout();
+        mainContent.setSizeFull();
+        mainContent.setSpacing(false);
+        mainContent.setPadding(false);
 
-        Paragraph subtitle = new Paragraph(
-                "Ask the AI assistant to help you manage users and other system tasks. " +
-                        "The AI has access to various API endpoints and can retrieve information for you."
+        // Left panel placeholder for future audit log
+        VerticalLayout leftPanel = new VerticalLayout();
+        leftPanel.setWidth("50%");
+        leftPanel.setHeightFull();
+        leftPanel.setPadding(false);
+        leftPanel.setSpacing(false);
+        leftPanel.getStyle().set("padding", "4px");
+        leftPanel.addClassNames(LumoUtility.Background.CONTRAST_5);
+
+        H3 placeholderTitle = new H3("Audit Log");
+        placeholderTitle.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.FontSize.SMALL);
+        placeholderTitle.getStyle().set("margin", "0");
+        Paragraph placeholder = new Paragraph("Audit log will be displayed here.");
+        placeholder.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.FontSize.XSMALL);
+        placeholder.getStyle().set("margin", "0");
+        leftPanel.add(placeholderTitle, placeholder);
+
+        // Right panel - Chat interface
+        VerticalLayout rightPanel = new VerticalLayout();
+        rightPanel.setWidth("50%");
+        rightPanel.setHeightFull();
+        rightPanel.setPadding(false);
+        rightPanel.setSpacing(false);
+        rightPanel.getStyle().set("padding", "4px");
+
+        // Conversation history container (scrollable)
+        conversationHistory = new Div();
+        conversationHistory.addClassNames(
+                LumoUtility.Background.CONTRAST_5,
+                LumoUtility.BorderRadius.SMALL
         );
-        subtitle.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Bottom.MEDIUM);
+        conversationHistory.setWidthFull();
+        conversationHistory.getStyle()
+                .set("overflow-y", "auto")
+                .set("display", "flex")
+                .set("flex-direction", "column")
+                .set("padding", "4px");
 
-        // Available Tools Section
-        Div toolsSection = createToolsSection();
+        // Response area - takes all available space
+        responseArea = new Div();
+        responseArea.setId(AI_RESPONSE_AREA);
+        responseArea.addClassNames(LumoUtility.BorderRadius.SMALL);
+        responseArea.setWidthFull();
+        responseArea.setSizeFull();
+        responseArea.getStyle()
+                .set("overflow", "hidden")
+                .set("display", "flex")
+                .set("flex-direction", "column");
+        responseArea.add(conversationHistory);
 
-        // Query Input
-        queryInput = new TextArea("Your Question");
+        // Make conversation history fill the response area
+        conversationHistory.getStyle().set("flex", "1 1 auto");
+
+        // Query Input - no label, smaller font
+        queryInput = new TextArea();
         queryInput.setId(AI_QUERY_INPUT);
-        queryInput.setPlaceholder("Ask me anything about users, projects, or system data...");
+        queryInput.setPlaceholder("Ask me anything... (Enter to send, Ctrl+Enter for new line)");
         queryInput.setWidthFull();
-        queryInput.setHeight("120px");
-        queryInput.addClassNames(LumoUtility.Margin.Bottom.SMALL);
+        queryInput.setSizeFull();
+        queryInput.setMinHeight("40px");
+        queryInput.getStyle()
+                .set("font-size", "var(--lumo-font-size-s)")
+                .set("--vaadin-input-field-font-size", "var(--lumo-font-size-s)");
 
-        // Example queries
-        Div examplesSection = createExamplesSection();
+        // Handle Enter key to submit, Ctrl+Enter or Shift+Enter for new line
+        // We need to force the value sync before submitting since Vaadin only syncs on blur
+        queryInput.setValueChangeMode(com.vaadin.flow.data.value.ValueChangeMode.EAGER);
+        queryInput.getElement().executeJs(
+                "this.inputElement.addEventListener('keydown', (e) => {" +
+                        "  if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {" +
+                        "    e.preventDefault();" +
+                        "    $0.$server.submitQuery();" +
+                        "  }" +
+                        "});", getElement());
 
-        // Buttons
-        Button submitButton = new Button("Ask AI", VaadinIcon.ARROW_CIRCLE_RIGHT.create());
+        // Buttons below queryInput - fixed size, always visible at bottom
+        HorizontalLayout buttonLayout = new HorizontalLayout();
+        buttonLayout.setWidthFull();
+        buttonLayout.setSpacing(true);
+        buttonLayout.setPadding(false);
+        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        buttonLayout.getStyle()
+                .set("gap", "4px")
+                .set("flex", "0 0 auto")
+                .set("margin-top", "4px");
+
+        Button submitButton = new Button("Send", VaadinIcon.ARROW_CIRCLE_RIGHT.create());
         submitButton.setId(AI_SUBMIT_BUTTON);
-        submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         submitButton.addClickListener(e -> handleQuery());
 
         Button clearButton = new Button("Clear", VaadinIcon.ERASER.create());
         clearButton.setId(AI_CLEAR_BUTTON);
+        clearButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         clearButton.addClickListener(e -> clearConversation());
 
-        HorizontalLayout buttonLayout = new HorizontalLayout(submitButton, clearButton);
-        buttonLayout.addClassNames(LumoUtility.Margin.Bottom.MEDIUM);
+        buttonLayout.add(submitButton, clearButton);
 
-        // Response Area
-        conversationHistory = new Div();
-        conversationHistory.addClassNames(
-                LumoUtility.Background.CONTRAST_5,
-                LumoUtility.BorderRadius.MEDIUM,
-                LumoUtility.Padding.MEDIUM
-        );
-        conversationHistory.setWidthFull();
+        // Wrapper for queryInput to be used in SplitLayout
+        Div queryInputWrapper = new Div(queryInput);
+        queryInputWrapper.setSizeFull();
+        queryInputWrapper.getStyle()
+                .set("display", "flex")
+                .set("flex-direction", "column")
+                .set("min-height", "40px");
 
-        responseArea = new Div();
-        responseArea.setId(AI_RESPONSE_AREA);
-        responseArea.addClassNames(
-                LumoUtility.Background.BASE,
-                LumoUtility.BorderRadius.MEDIUM,
-                LumoUtility.Padding.LARGE
-        );
-        responseArea.setWidthFull();
-        responseArea.setMinHeight("300px");
-        responseArea.add(conversationHistory);
+        // Use SplitLayout for draggable divider between response area and queryInput only
+        SplitLayout splitLayout = new SplitLayout(responseArea, queryInputWrapper);
+        splitLayout.setOrientation(SplitLayout.Orientation.VERTICAL);
+        splitLayout.setSizeFull();
+        splitLayout.setSplitterPosition(80); // 80% for response area, 20% for input
 
-        // Add initial welcome message
-        addSystemMessage("👋 Hello! I'm your AI assistant. Ask me anything about your system data.");
+        // Wrapper to contain the SplitLayout and prevent it from overflowing
+        Div splitLayoutWrapper = new Div(splitLayout);
+        splitLayoutWrapper.setWidthFull();
+        splitLayoutWrapper.getStyle()
+                .set("flex", "1 1 0")
+                .set("min-height", "0")
+                .set("overflow", "hidden")
+                .set("height", "calc(100% - 40px)"); // Reserve space for buttons
 
-        // Add all components to layout
-        add(
-                title,
-                subtitle,
-                toolsSection,
-                examplesSection,
-                queryInput,
-                buttonLayout,
-                responseArea
-        );
+        // Configure right panel to use flexbox for proper layout
+        // SplitLayout wrapper takes available space, buttons stay fixed at bottom
+        rightPanel.getStyle()
+                .set("display", "flex")
+                .set("flex-direction", "column")
+                .set("overflow", "hidden");
+        rightPanel.add(splitLayoutWrapper, buttonLayout);
+
+        // Add panels to main content
+        mainContent.add(leftPanel, rightPanel);
+
+        // Add main content to this view
+        add(mainContent);
+
+        // Add initial welcome message with available tools
+        addWelcomeMessageWithTools();
     }
 
     private void addAiMessage(String message) {
@@ -163,6 +241,13 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
         scrollToBottom();
     }
 
+    private void addWelcomeMessageWithTools() {
+        String toolsList = aiAssistantService.getAvailableTools();
+        String welcomeMessage = "👋 Hello! I'm your AI assistant. Ask me anything about your system data.\n\n" +
+                "📋 Available API Tools:\n" + toolsList;
+        addSystemMessage(welcomeMessage);
+    }
+
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
         getElement().getParent().getComponent()
@@ -176,46 +261,18 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
 
     private void clearConversation() {
         conversationHistory.removeAll();
-        addSystemMessage("👋 Conversation cleared. How can I help you?");
-    }
-
-    private Button createExampleButton(String text) {
-        Button button = new Button(text);
-        button.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
-        button.addClickListener(e -> {
-            queryInput.setValue(text);
-            queryInput.focus();
-        });
-        return button;
-    }
-
-    private Div createExamplesSection() {
-        Div section = new Div();
-        section.addClassNames(LumoUtility.Margin.Bottom.SMALL);
-
-        Span examplesLabel = new Span("Example queries: ");
-        examplesLabel.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY);
-
-        Button example1 = createExampleButton("List all users");
-        Button example2 = createExampleButton("Find user with email admin@kassandra.org");
-        Button example3 = createExampleButton("Search for users named 'john'");
-
-        HorizontalLayout examples = new HorizontalLayout(examplesLabel, example1, example2, example3);
-        examples.setAlignItems(Alignment.CENTER);
-        examples.setSpacing(true);
-        examples.addClassNames(LumoUtility.FlexWrap.WRAP);
-
-        section.add(examples);
-        return section;
+        addWelcomeMessageWithTools();
     }
 
     private Div createMessageDiv(String message, String type) {
         Div messageDiv = new Div();
         messageDiv.addClassNames(
-                LumoUtility.Padding.SMALL,
                 LumoUtility.BorderRadius.SMALL,
-                LumoUtility.Margin.Bottom.SMALL
+                LumoUtility.FontSize.XSMALL
         );
+        messageDiv.getStyle()
+                .set("padding", "4px 6px")
+                .set("margin-bottom", "2px");
 
         Span icon    = new Span();
         Span content = new Span(message);
@@ -244,28 +301,6 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
 
         messageDiv.add(icon, content);
         return messageDiv;
-    }
-
-    private Div createToolsSection() {
-        Div section = new Div();
-        section.setId(AI_TOOLS_LIST);
-        section.addClassNames(
-                LumoUtility.Background.PRIMARY_10,
-                LumoUtility.BorderRadius.MEDIUM,
-                LumoUtility.Padding.MEDIUM,
-                LumoUtility.Margin.Bottom.MEDIUM
-        );
-
-        H3 toolsTitle = new H3("Available API Tools");
-        toolsTitle.addClassNames(LumoUtility.Margin.Top.NONE, LumoUtility.Margin.Bottom.SMALL);
-
-        String    toolsList = aiAssistantService.getAvailableTools();
-        Paragraph toolsText = new Paragraph(toolsList);
-        toolsText.addClassNames(LumoUtility.FontSize.SMALL);
-        toolsText.getStyle().set("white-space", "pre-line");
-
-        section.add(toolsTitle, toolsText);
-        return section;
     }
 
     private void handleQuery() {
@@ -345,5 +380,14 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
 
     private void scrollToBottom() {
         responseArea.getElement().executeJs("this.scrollTop = this.scrollHeight;");
+    }
+
+    /**
+     * Called from JavaScript when Enter key is pressed in queryInput.
+     * Must be public and annotated with @ClientCallable to be accessible from client-side.
+     */
+    @ClientCallable
+    public void submitQuery() {
+        handleQuery();
     }
 }
