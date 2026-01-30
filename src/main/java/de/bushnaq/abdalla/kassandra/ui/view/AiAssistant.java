@@ -34,7 +34,7 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import de.bushnaq.abdalla.kassandra.ai.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
@@ -216,7 +216,7 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
         add(mainContent);
 
         // Add initial welcome message with available tools
-        addWelcomeMessageWithTools();
+//        addWelcomeMessageWithTools();
     }
 
     private void addAiMessage(String message) {
@@ -266,7 +266,7 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
         // Clear the conversation memory in the service and generate a new conversation ID
         aiAssistantService.clearConversation(conversationId);
         conversationId = java.util.UUID.randomUUID().toString();
-        addWelcomeMessageWithTools();
+//        addWelcomeMessageWithTools();
     }
 
     private Div createMessageDiv(String message, String type) {

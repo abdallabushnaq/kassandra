@@ -15,10 +15,11 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai;
+package de.bushnaq.abdalla.kassandra.ai.mcp;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.product.ProductTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.user.UserTools;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.version.VersionTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -26,9 +27,11 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.ollama.OllamaChatModel;
+import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -57,6 +60,8 @@ public class AiAssistantService {
     private       ProductTools            productTools;
     @Autowired
     private       UserTools               userTools;
+    @Autowired
+    private       VersionTools            versionTools;
 
     /**
      * Clear the conversation history for a specific conversation ID
@@ -67,21 +72,24 @@ public class AiAssistantService {
     }
 
     /**
-     * Get a list of available tools as a formatted string for display
+     * Dynamically build a list of available tools from all registered tool beans using reflection.
      */
     public String getAvailableTools() {
-        return """
-                • getAllProducts: Get a list of all products
-                • getProductById: Get a specific product by ID
-                • createProduct: Create a new product
-                • updateProduct: Update an existing product
-                • deleteProduct: Delete a product
-                • getAllUsers: Get a list of all users
-                • getUserById: Get a specific user by ID
-                • getUserByName: Get a user by name
-                • getUserByEmail: Get a user by email
-                • searchUsers: Search users by partial name
-                """;
+        Object[]      toolBeans = {productTools, userTools, versionTools};
+        StringBuilder sb        = new StringBuilder();
+        for (Object bean : toolBeans) {
+            for (Method method : bean.getClass().getMethods()) {
+                Tool toolAnnotation = method.getAnnotation(Tool.class);
+                if (toolAnnotation != null) {
+                    sb.append("• ")
+                            .append(method.getName())
+                            .append(": ")
+                            .append(toolAnnotation.description())
+                            .append("\n");
+                }
+            }
+        }
+        return sb.toString();
     }
 
     /**
@@ -133,7 +141,7 @@ public class AiAssistantService {
         ChatClient chatClient = ChatClient.builder(chatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(memoryAdvisor)
-                .defaultTools(productTools, userTools)  // Pass tool beans directly
+                .defaultTools(productTools, userTools, versionTools)  // Now includes VersionTools
                 .build();
 
         log.info("Calling LLM via ChatClient with native Spring AI tool support...");
