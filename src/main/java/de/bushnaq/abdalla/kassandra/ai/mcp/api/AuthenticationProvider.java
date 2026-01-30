@@ -15,7 +15,7 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.mcp.api;
+package de.bushnaq.abdalla.kassandra.ai.mcp.api;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,102 +29,57 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Component;
 
 /**
- * Provides authentication for MCP API calls.
+ * Provides authentication for AI API calls.
  * Uses the current user's OIDC token from the SecurityContext.
  * The token is captured when captureCurrentUserToken() is called (typically at the start of an AI query)
- * and then used for all subsequent MCP tool calls within that request.
+ * and then used for all subsequent tool calls within that request.
  */
 @Component
 @Slf4j
-public class McpAuthenticationProvider {
+public class AuthenticationProvider {
 
-    /**
-     * Thread-local storage for the current user's access token.
-     * This allows the token to be captured in the request thread and used in MCP tool execution.
-     */
     private static final ThreadLocal<String> currentUserToken = new ThreadLocal<>();
 
     @Autowired(required = false)
     private OAuth2AuthorizedClientService authorizedClientService;
 
-    /**
-     * Captures the current user's token for use in MCP tool calls.
-     * Call this at the start of an AI query processing while still in the request thread.
-     *
-     * @return the captured token value, or null if no token available
-     */
     public String captureCurrentUserToken() {
         String token = getTokenFromSecurityContext();
         if (token != null) {
             currentUserToken.set(token);
-            log.debug("Captured user token for MCP tools");
+            log.debug("Captured user token for AI tools");
             return token;
         } else {
-            log.warn("No token available to capture for MCP tools");
+            log.warn("No token available to capture for AI tools");
             return null;
         }
     }
 
-    /**
-     * Clears the captured token.
-     * Call this after AI query processing is complete.
-     */
     public void clearCapturedToken() {
         currentUserToken.remove();
-        log.debug("Cleared captured MCP token");
+        log.debug("Cleared captured AI token");
     }
 
-    /**
-     * Creates HTTP headers with authentication for MCP API calls.
-     * Uses the captured user token if available.
-     */
     public HttpHeaders createAuthHeaders() {
+        String      token   = currentUserToken.get();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Accept", "application/json");
-
-        // First try to use the captured token
-        String token = currentUserToken.get();
-        if (token != null && !token.isEmpty()) {
+        if (token != null) {
             headers.setBearerAuth(token);
-            log.debug("Using captured user token for MCP authentication");
-            return headers;
         }
-
-        // Try to get token from current SecurityContext (if we're still in the same thread)
-        token = getTokenFromSecurityContext();
-        if (token != null && !token.isEmpty()) {
-            headers.setBearerAuth(token);
-            log.debug("Using SecurityContext token for MCP authentication");
-            return headers;
-        }
-
-        log.warn("No authentication token available for MCP - API calls may fail");
         return headers;
     }
 
-    /**
-     * Extracts the access token from the current SecurityContext.
-     */
     private String getTokenFromSecurityContext() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication instanceof OAuth2AuthenticationToken oauth2Token) {
-            if (authorizedClientService != null) {
-                try {
-                    OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
-                            oauth2Token.getAuthorizedClientRegistrationId(),
-                            oauth2Token.getName());
-
-                    if (client != null && client.getAccessToken() != null) {
-                        return client.getAccessToken().getTokenValue();
-                    }
-                } catch (Exception e) {
-                    log.warn("Failed to load authorized client: {}", e.getMessage());
-                }
+        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+            String clientRegistrationId = oauthToken.getAuthorizedClientRegistrationId();
+            OAuth2AuthorizedClient client = authorizedClientService != null ?
+                    authorizedClientService.loadAuthorizedClient(clientRegistrationId, oauthToken.getName()) : null;
+            if (client != null && client.getAccessToken() != null) {
+                return client.getAccessToken().getTokenValue();
             }
         }
-
         return null;
     }
 

@@ -15,10 +15,8 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai;
+package de.bushnaq.abdalla.kassandra.ai.mcp;
 
-import de.bushnaq.abdalla.kassandra.ai.mcp.ProductTools;
-import de.bushnaq.abdalla.kassandra.ai.mcp.UserTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -27,7 +25,6 @@ import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,8 +34,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * Uses Spring AI's ChatMemory and MessageChatMemoryAdvisor for conversation history.
  * Tools are defined using @Tool annotation in dedicated tool classes.
  */
-@Service
+//@Service
 @Slf4j
+@Deprecated
 public class AiAssistantService {
 
     private static final String SYSTEM_PROMPT = """

@@ -40,7 +40,6 @@ public class AvailabilityApi extends AbstractApi {
         super(restTemplate, jsonMapper);
     }
 
-    //TODO use ids instead of objects
     public void deleteById(Long userId, Long availabilityId) throws org.springframework.web.client.RestClientException {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/availability/{userId}/{id}",

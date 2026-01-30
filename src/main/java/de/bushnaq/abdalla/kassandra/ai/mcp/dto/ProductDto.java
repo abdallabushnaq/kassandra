@@ -15,7 +15,7 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.mcp.dto;
+package de.bushnaq.abdalla.kassandra.ai.mcp.dto;
 
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import lombok.AllArgsConstructor;
@@ -25,29 +25,23 @@ import lombok.NoArgsConstructor;
 import java.time.OffsetDateTime;
 
 /**
- * Simplified Product DTO for MCP (Model Context Protocol) server.
+ * Simplified Product DTO for AI tools.
  * Contains only fields relevant for AI interactions, excluding internal fields like avatarHash.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class McpProduct {
+public class ProductDto {
     private OffsetDateTime created;
     private Long           id;
     private String         name;
     private OffsetDateTime updated;
 
-    /**
-     * Convert from full Product DTO to MCP Product DTO
-     *
-     * @param product the full Product object
-     * @return McpProduct with only AI-relevant fields
-     */
-    public static McpProduct from(Product product) {
+    public static ProductDto from(Product product) {
         if (product == null) {
             return null;
         }
-        return new McpProduct(
+        return new ProductDto(
                 product.getCreated(),
                 product.getId(),
                 product.getName(),
@@ -55,11 +49,6 @@ public class McpProduct {
         );
     }
 
-    /**
-     * Convert to full Product DTO (for API calls)
-     *
-     * @return Product object that can be used with ProductApi
-     */
     public Product toProduct() {
         Product product = new Product();
         product.setId(this.id);

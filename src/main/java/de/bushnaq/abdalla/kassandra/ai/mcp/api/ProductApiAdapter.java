@@ -15,7 +15,7 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.mcp.api;
+package de.bushnaq.abdalla.kassandra.ai.mcp.api;
 
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import org.springframework.http.HttpHeaders;
@@ -23,14 +23,14 @@ import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * MCP-specific ProductApi that uses the current user's OIDC token for authentication.
- * The token is captured by McpAuthenticationProvider at the start of AI query processing.
+ * ProductApi adapter that uses the current user's OIDC token for authentication.
+ * The token is captured by AuthenticationProvider at the start of AI query processing.
  */
-public class McpProductApi extends ProductApi {
+public class ProductApiAdapter extends ProductApi {
 
-    private final McpAuthenticationProvider authProvider;
+    private final AuthenticationProvider authProvider;
 
-    public McpProductApi(RestTemplate restTemplate, JsonMapper jsonMapper, McpAuthenticationProvider authProvider) {
+    public ProductApiAdapter(RestTemplate restTemplate, JsonMapper jsonMapper, AuthenticationProvider authProvider) {
         super(restTemplate, jsonMapper);
         this.authProvider = authProvider;
     }

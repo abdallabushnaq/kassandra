@@ -15,10 +15,10 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.mcp.config;
+package de.bushnaq.abdalla.kassandra.ai.mcp;
 
-import de.bushnaq.abdalla.kassandra.mcp.api.McpAuthenticationProvider;
-import de.bushnaq.abdalla.kassandra.mcp.api.McpProductApi;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.ProductApiAdapter;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -27,20 +27,16 @@ import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Configuration for MCP-specific API beans.
+ * Configuration for AI-specific API beans.
  * Creates API instances that use the current user's OIDC token for authentication.
  */
 @Configuration
-public class McpApiConfiguration {
+public class ApiConfiguration {
 
-    /**
-     * Creates an MCP-specific ProductApi that uses the current user's OIDC token.
-     * This bean is qualified with "mcpProductApi" to distinguish it from the regular ProductApi.
-     */
     @Bean
-    @Qualifier("mcpProductApi")
-    public ProductApi mcpProductApi(RestTemplate restTemplate, JsonMapper jsonMapper,
-                                    McpAuthenticationProvider authProvider) {
-        return new McpProductApi(restTemplate, jsonMapper, authProvider);
+    @Qualifier("aiProductApi")
+    public ProductApi aiProductApi(RestTemplate restTemplate, JsonMapper jsonMapper,
+                                   AuthenticationProvider authProvider) {
+        return new ProductApiAdapter(restTemplate, jsonMapper, authProvider);
     }
 }

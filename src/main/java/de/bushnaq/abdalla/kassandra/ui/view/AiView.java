@@ -35,7 +35,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.AiAssistantService;
-import de.bushnaq.abdalla.kassandra.mcp.api.McpAuthenticationProvider;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
@@ -50,19 +50,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AiView extends VerticalLayout implements AfterNavigationObserver {
 
-    public static final String                    AI_CLEAR_BUTTON  = "ai-clear-button";
-    public static final String                    AI_QUERY_INPUT   = "ai-query-input";
-    public static final String                    AI_RESPONSE_AREA = "ai-response-area";
-    public static final String                    AI_SUBMIT_BUTTON = "ai-submit-button";
-    public static final String                    AI_TOOLS_LIST    = "ai-tools-list";
-    public static final String                    AI_VIEW_TITLE    = "ai-view-title";
-    private final       AiAssistantService        aiAssistantService;
-    private final       Div                       conversationHistory;
-    private final       McpAuthenticationProvider mcpAuthProvider;
-    private final       TextArea                  queryInput;
-    private final       Div                       responseArea;
+    public static final String                 AI_CLEAR_BUTTON  = "ai-clear-button";
+    public static final String                 AI_QUERY_INPUT   = "ai-query-input";
+    public static final String                 AI_RESPONSE_AREA = "ai-response-area";
+    public static final String                 AI_SUBMIT_BUTTON = "ai-submit-button";
+    public static final String                 AI_TOOLS_LIST    = "ai-tools-list";
+    public static final String                 AI_VIEW_TITLE    = "ai-view-title";
+    private final       AiAssistantService     aiAssistantService;
+    private final       Div                    conversationHistory;
+    // Unique conversation ID for this view instance - used by Spring AI ChatMemory
+    private             String                 conversationId   = java.util.UUID.randomUUID().toString();
+    private final       AuthenticationProvider mcpAuthProvider;
+    private final       TextArea               queryInput;
+    private final       Div                    responseArea;
 
-    public AiView(AiAssistantService aiAssistantService, McpAuthenticationProvider mcpAuthProvider) {
+    public AiView(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider) {
         this.aiAssistantService = aiAssistantService;
         this.mcpAuthProvider    = mcpAuthProvider;
 
@@ -261,6 +263,9 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
 
     private void clearConversation() {
         conversationHistory.removeAll();
+        // Clear the conversation memory in the service and generate a new conversation ID
+        aiAssistantService.clearConversation(conversationId);
+        conversationId = java.util.UUID.randomUUID().toString();
         addWelcomeMessageWithTools();
     }
 
@@ -324,7 +329,6 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
 
         // Capture the user's token NOW, while we're still in the request thread with SecurityContext
         String capturedToken = mcpAuthProvider.captureCurrentUserToken();
-
         // Process query asynchronously
         getUI().ifPresent(ui -> {
             new Thread(() -> {
@@ -333,8 +337,8 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
                     mcpAuthProvider.setToken(capturedToken);
                 }
                 try {
-                    log.info("Calling AI assistant service...");
-                    String response = aiAssistantService.processQuery(query);
+                    log.info("Calling AI assistant service with conversation ID: {}", conversationId);
+                    String response = aiAssistantService.processQuery(query, conversationId);
                     log.info("AI response received: {} characters", response != null ? response.length() : 0);
 
                     ui.access(() -> {
@@ -364,9 +368,6 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
                             log.error("Error updating UI with error message", ex);
                         }
                     });
-                } finally {
-                    // Always clear the captured token when done
-                    mcpAuthProvider.clearCapturedToken();
                 }
             }).start();
         });
