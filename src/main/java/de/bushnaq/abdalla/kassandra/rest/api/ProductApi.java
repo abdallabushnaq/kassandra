@@ -119,6 +119,21 @@ public class ProductApi extends AbstractApi {
         return response.getBody();
     }
 
+    /**
+     * Get a product by its name (case-insensitive, exact match).
+     * Returns null if not found.
+     */
+    public Product getByName(String name) {
+        ResponseEntity<Product> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/product/by-name/{name}",
+                HttpMethod.GET,
+                createHttpEntity(),
+                Product.class,
+                name
+        ));
+        return response.getBody();
+    }
+
     public Product persist(Product product) {
         ResponseEntity<Product> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/product",

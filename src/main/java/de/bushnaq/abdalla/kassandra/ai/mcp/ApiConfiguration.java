@@ -20,9 +20,11 @@ package de.bushnaq.abdalla.kassandra.ai.mcp;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.feature.FeatureApiAdapter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.product.ProductApiAdapter;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint.SprintApiAdapter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.version.VersionApiAdapter;
 import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
+import de.bushnaq.abdalla.kassandra.rest.api.SprintApi;
 import de.bushnaq.abdalla.kassandra.rest.api.VersionApi;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -49,6 +51,13 @@ public class ApiConfiguration {
     public ProductApi aiProductApi(RestTemplate restTemplate, JsonMapper jsonMapper,
                                    AuthenticationProvider authProvider) {
         return new ProductApiAdapter(restTemplate, jsonMapper, authProvider);
+    }
+
+    @Bean
+    @Qualifier("aiSprintApi")
+    public SprintApi aiSprintApi(RestTemplate restTemplate, JsonMapper jsonMapper,
+                                 AuthenticationProvider authProvider) {
+        return new SprintApiAdapter(restTemplate, jsonMapper, authProvider);
     }
 
     @Bean

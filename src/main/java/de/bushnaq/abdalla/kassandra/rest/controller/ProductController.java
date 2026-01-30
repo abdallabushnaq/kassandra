@@ -132,6 +132,35 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Get a product by its name (case-insensitive, exact match).
+     * Returns 404 if not found or access denied.
+     */
+    @GetMapping("/by-name/{name}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<ProductDAO> getByName(@PathVariable String name) {
+        // Admin can access any product by name
+        if (SecurityUtils.isAdmin()) {
+            ProductDAO product = productRepository.findByName(name);
+            if (product == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+            return ResponseEntity.ok(product);
+        }
+        // Regular users: only if they have access
+        String userEmail = SecurityUtils.getUserEmail();
+        if (!SecurityUtils.GUEST.equals(userEmail)) {
+            ProductDAO product = productRepository.findByName(name);
+            if (product != null) {
+                Long productId = product.getId();
+                if (productAclService.hasAccess(productId, userEmail)) {
+                    return ResponseEntity.ok(product);
+                }
+            }
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    }
+
     @PostMapping(consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
@@ -178,7 +207,6 @@ public class ProductController {
         productRepository.save(product);
     }
 
-
     @PutMapping("/{id}/avatar/full")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     @Transactional
@@ -220,3 +248,4 @@ public class ProductController {
         return ResponseEntity.ok().build();
     }
 }
+

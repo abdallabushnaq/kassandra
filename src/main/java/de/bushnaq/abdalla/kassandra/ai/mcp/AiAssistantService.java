@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ai.mcp;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.feature.FeatureTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.product.ProductTools;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint.SprintTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.user.UserTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.version.VersionTools;
 import lombok.extern.slf4j.Slf4j;
@@ -45,26 +46,29 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class AiAssistantService {
 
-    private static final String SYSTEM_PROMPT = """
+    private static final String                                  SYSTEM_PROMPT        = """
             You are an AI assistant that helps manage a project management system.
             You have access to various tools to interact with the system.
             Use the available tools when needed to fulfill user requests.
             After using tools, provide helpful and concise responses based on the results.
             If you don't need to use any tools, just provide a direct answer.
             """;
-
+    // Store ToolActivityContext per conversation/session for UI streaming
+    private final        Map<String, SessionToolActivityContext> activityContexts     = new ConcurrentHashMap<>();
     @Autowired
-    private       OllamaChatModel         chatModel;
+    private              OllamaChatModel                         chatModel;
     // Store ChatMemory per conversation/session
-    private final Map<String, ChatMemory> conversationMemories = new ConcurrentHashMap<>();
+    private final        Map<String, ChatMemory>                 conversationMemories = new ConcurrentHashMap<>();
     @Autowired
-    private       FeatureTools            featureTools;
+    private              FeatureTools                            featureTools;
     @Autowired
-    private       ProductTools            productTools;
+    private              ProductTools                            productTools;
     @Autowired
-    private       UserTools               userTools;
+    private              SprintTools                             sprintTools;
     @Autowired
-    private       VersionTools            versionTools;
+    private              UserTools                               userTools;
+    @Autowired
+    private              VersionTools                            versionTools;
 
     /**
      * Clear the conversation history for a specific conversation ID
@@ -75,10 +79,17 @@ public class AiAssistantService {
     }
 
     /**
+     * Get the activity context for a conversation (for UI streaming).
+     */
+    public SessionToolActivityContext getActivityContext(String conversationId) {
+        return activityContexts.get(conversationId);
+    }
+
+    /**
      * Dynamically build a list of available tools from all registered tool beans using reflection.
      */
     public String getAvailableTools() {
-        Object[]      toolBeans = {productTools, userTools, versionTools, featureTools};
+        Object[]      toolBeans = {productTools, userTools, versionTools, featureTools, sprintTools};
         StringBuilder sb        = new StringBuilder();
         for (Object bean : toolBeans) {
             for (Method method : bean.getClass().getMethods()) {
@@ -144,24 +155,24 @@ public class AiAssistantService {
         ChatClient chatClient = ChatClient.builder(chatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(memoryAdvisor)
-                .defaultTools(productTools, userTools, versionTools, featureTools)
+                .defaultTools(productTools, userTools, versionTools, featureTools, sprintTools)
                 .build();
 
-        log.info("Calling LLM via ChatClient with native Spring AI tool support...");
-
-        // Spring AI handles the entire tool calling loop automatically:
-        // 1. Sends the prompt with tool definitions to the LLM
-        // 2. If LLM requests a tool call, Spring AI executes the @Tool method
-        // 3. Sends the tool result back to the LLM
-        // 4. Repeats until LLM provides a final response
-        String response = chatClient.prompt()
-                .user(userQuery)
-                .call()
-                .content();
-
-        log.info("=== AI query processing complete ===");
-        log.info("Final response length: {} characters", response != null ? response.length() : 0);
-
-        return response;
+        // Create or get the activity context for this conversation
+        SessionToolActivityContext activityContext = activityContexts.computeIfAbsent(conversationId, id -> new SessionToolActivityContext());
+        // Store context in ThreadLocal for tool access
+        ToolActivityContextHolder.setContext(activityContext);
+        try {
+            log.info("Calling LLM via ChatClient with native Spring AI tool support...");
+            String response = chatClient.prompt()
+                    .user(userQuery)
+                    .call()
+                    .content();
+            log.info("=== AI query processing complete ===");
+            log.info("Final response length: {} characters", response != null ? response.length() : 0);
+            return response;
+        } finally {
+            ToolActivityContextHolder.clear();
+        }
     }
 }

@@ -35,6 +35,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.SessionToolActivityContext;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
@@ -50,16 +51,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AiAssistant extends VerticalLayout implements AfterNavigationObserver {
 
-    public static final String                 AI_CLEAR_BUTTON  = "ai-clear-button";
-    public static final String                 AI_QUERY_INPUT   = "ai-query-input";
-    public static final String                 AI_RESPONSE_AREA = "ai-response-area";
-    public static final String                 AI_SUBMIT_BUTTON = "ai-submit-button";
-    public static final String                 AI_TOOLS_LIST    = "ai-tools-list";
-    public static final String                 AI_VIEW_TITLE    = "ai-view-title";
+    public static final String                 AI_CLEAR_BUTTON   = "ai-clear-button";
+    public static final String                 AI_QUERY_INPUT    = "ai-query-input";
+    public static final String                 AI_RESPONSE_AREA  = "ai-response-area";
+    public static final String                 AI_SUBMIT_BUTTON  = "ai-submit-button";
+    public static final String                 AI_TOOLS_LIST     = "ai-tools-list";
+    public static final String                 AI_VIEW_TITLE     = "ai-view-title";
+    private volatile    boolean                activityStreaming = false;
     private final       AiAssistantService     aiAssistantService;
     private final       Div                    conversationHistory;
     // Unique conversation ID for this view instance - used by Spring AI ChatMemory
-    private             String                 conversationId   = java.util.UUID.randomUUID().toString();
+    private             String                 conversationId    = java.util.UUID.randomUUID().toString();
     private final       AuthenticationProvider mcpAuthProvider;
     private final       TextArea               queryInput;
     private final       Div                    responseArea;
@@ -333,12 +335,25 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
         // Process query asynchronously
         getUI().ifPresent(ui -> {
             new Thread(() -> {
-                // Set the captured token in this thread's ThreadLocal
-                if (capturedToken != null) {
-                    mcpAuthProvider.setToken(capturedToken);
-                }
+                final SessionToolActivityContext[] activityContextRef = new SessionToolActivityContext[1];
                 try {
-                    log.info("Calling AI assistant service with conversation ID: {}", conversationId);
+                    // Set the captured token in this thread's ThreadLocal
+                    if (capturedToken != null) {
+                        mcpAuthProvider.setToken(capturedToken);
+                    }
+                    // Get the activity context for this conversation
+                    activityContextRef[0] = aiAssistantService.getActivityContext(conversationId);
+                    if (activityContextRef[0] != null) {
+                        activityStreaming = true;
+                        // Register a listener to stream activity messages to the UI
+                        activityContextRef[0].setActivityListener(msg -> {
+                            if (!activityStreaming) return;
+                            ui.access(() -> {
+                                addSystemMessage("[AI activity] " + msg);
+                                ui.push();
+                            });
+                        });
+                    }
                     String response = aiAssistantService.processQuery(query, conversationId);
                     log.info("AI response received: {} characters", response != null ? response.length() : 0);
 
@@ -351,11 +366,14 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
                             addAiMessage(response);
                             // Push the update to the browser
                             ui.push();
-                            log.info("UI updated successfully");
                         } catch (Exception e) {
                             log.error("Error updating UI with response", e);
                             addErrorMessage("Error displaying response: " + e.getMessage());
                             ui.push();
+                        } finally {
+                            // Remove activity listener after response
+                            activityStreaming = false;
+                            if (activityContextRef[0] != null) activityContextRef[0].setActivityListener(null);
                         }
                     });
                 } catch (Exception e) {
@@ -367,6 +385,10 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
                             ui.push();
                         } catch (Exception ex) {
                             log.error("Error updating UI with error message", ex);
+                        } finally {
+                            // Remove activity listener on error
+                            activityStreaming = false;
+                            if (activityContextRef[0] != null) activityContextRef[0].setActivityListener(null);
                         }
                     });
                 }

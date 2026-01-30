@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
+import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContext;
+import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import lombok.extern.slf4j.Slf4j;
@@ -70,14 +72,18 @@ public class ProductTools {
     @Tool(description = "Create a new product (requires USER or ADMIN role). " + RETURNS_PRODUCT_JSON)
     public String createProduct(
             @ToolParam(description = "The product name (must be unique)") String name) {
+        ToolActivityContext context = ToolActivityContextHolder.getContext();
+        if (context != null) context.reportActivity("Creating product with name: " + name);
+        else log.info("Creating product with name: {}", name);
         try {
-            log.info("Creating product with name: {}", name);
             Product product = new Product();
             product.setName(name);
             Product    savedProduct = productApi.persist(product);
             ProductDto productDto   = ProductDto.from(savedProduct);
+            if (context != null) context.reportActivity("Product created: " + productDto.getName());
             return jsonMapper.writeValueAsString(productDto);
         } catch (Exception e) {
+            if (context != null) context.reportActivity("Error creating product: " + e.getMessage());
             log.error("Error creating product: {}", e.getMessage());
             return "Error: " + e.getMessage();
         }
@@ -87,11 +93,15 @@ public class ProductTools {
             "Returns: Success message (string) confirming deletion")
     public String deleteProduct(
             @ToolParam(description = "The product ID") Long id) {
+        ToolActivityContext context = ToolActivityContextHolder.getContext();
+        if (context != null) context.reportActivity("Deleting product with ID: " + id);
+        else log.info("Deleting product with ID: {}", id);
         try {
-            log.info("Deleting product with ID: {}", id);
             productApi.deleteById(id);
+            if (context != null) context.reportActivity("Product deleted: " + id);
             return "Product with ID " + id + " deleted successfully";
         } catch (Exception e) {
+            if (context != null) context.reportActivity("Error deleting product: " + e.getMessage());
             log.error("Error deleting product {}: {}", id, e.getMessage());
             return "Error: " + e.getMessage();
         }
@@ -99,14 +109,18 @@ public class ProductTools {
 
     @Tool(description = "Get a list of all products accessible to the current user (Admin sees all). " + RETURNS_PRODUCT_ARRAY_JSON)
     public String getAllProducts() {
+        ToolActivityContext context = ToolActivityContextHolder.getContext();
+        if (context != null) context.reportActivity("Getting all products...");
+        else log.info("Getting all products");
         try {
-            log.info("Getting all products");
             List<Product> products = productApi.getAll();
+            if (context != null) context.reportActivity("Found " + products.size() + " products.");
             List<ProductDto> productDtos = products.stream()
                     .map(ProductDto::from)
                     .collect(Collectors.toList());
             return jsonMapper.writeValueAsString(productDtos);
         } catch (Exception e) {
+            if (context != null) context.reportActivity("Error getting all products: " + e.getMessage());
             log.error("Error getting all products: {}", e.getMessage());
             return "Error: " + e.getMessage();
         }
@@ -115,16 +129,41 @@ public class ProductTools {
     @Tool(description = "Get a specific product by its ID (requires access or admin role). " + RETURNS_PRODUCT_JSON)
     public String getProductById(
             @ToolParam(description = "The product ID") Long id) {
+        ToolActivityContext context = ToolActivityContextHolder.getContext();
+        if (context != null) context.reportActivity("Getting product with ID: " + id);
+        else log.info("Getting product with ID: {}", id);
         try {
-            log.info("Getting product with ID: {}", id);
             Product product = productApi.getById(id);
             if (product != null) {
+                if (context != null) context.reportActivity("Product found: " + product.getName());
                 ProductDto productDto = ProductDto.from(product);
                 return jsonMapper.writeValueAsString(productDto);
             }
+            if (context != null) context.reportActivity("Product not found with ID: " + id);
             return "Product not found with ID: " + id;
         } catch (Exception e) {
+            if (context != null) context.reportActivity("Error getting product by ID: " + e.getMessage());
             log.error("Error getting product {}: {}", id, e.getMessage());
+            return "Error: " + e.getMessage();
+        }
+    }
+
+    public String getProductByName(String name) {
+        ToolActivityContext context = ToolActivityContextHolder.getContext();
+        if (context != null) context.reportActivity("Getting product with name: " + name);
+        else log.info("Getting product with name: {}", name);
+        try {
+            Product product = productApi.getByName(name);
+            if (product != null) {
+                if (context != null) context.reportActivity("Product found: " + product.getName());
+                ProductDto productDto = ProductDto.from(product);
+                return jsonMapper.writeValueAsString(productDto);
+            }
+            if (context != null) context.reportActivity("Product not found with name: " + name);
+            return "Product not found with name: " + name;
+        } catch (Exception e) {
+            if (context != null) context.reportActivity("Error getting product by name: " + e.getMessage());
+            log.error("Error getting product by name {}: {}", name, e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -133,17 +172,22 @@ public class ProductTools {
     public String updateProduct(
             @ToolParam(description = "The product ID") Long id,
             @ToolParam(description = "The new product name") String name) {
+        ToolActivityContext context = ToolActivityContextHolder.getContext();
+        if (context != null) context.reportActivity("Updating product " + id + " with name: " + name);
+        else log.info("Updating product {} with name: {}", id, name);
         try {
-            log.info("Updating product {} with name: {}", id, name);
             Product product = productApi.getById(id);
             if (product == null) {
+                if (context != null) context.reportActivity("Product not found with ID: " + id);
                 return "Product not found with ID: " + id;
             }
             product.setName(name);
             productApi.update(product);
             ProductDto productDto = ProductDto.from(product);
+            if (context != null) context.reportActivity("Product updated: " + productDto.getName());
             return jsonMapper.writeValueAsString(productDto);
         } catch (Exception e) {
+            if (context != null) context.reportActivity("Error updating product: " + e.getMessage());
             log.error("Error updating product {}: {}", id, e.getMessage());
             return "Error: " + e.getMessage();
         }
