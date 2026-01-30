@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 @Menu(order = 10, icon = "vaadin:brain", title = "AI Assistant")
 @RolesAllowed("ADMIN")
 @Slf4j
-public class AiView extends VerticalLayout implements AfterNavigationObserver {
+public class AiAssistant extends VerticalLayout implements AfterNavigationObserver {
 
     public static final String                 AI_CLEAR_BUTTON  = "ai-clear-button";
     public static final String                 AI_QUERY_INPUT   = "ai-query-input";
@@ -64,7 +64,7 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
     private final       TextArea               queryInput;
     private final       Div                    responseArea;
 
-    public AiView(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider) {
+    public AiAssistant(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider) {
         this.aiAssistantService = aiAssistantService;
         this.mcpAuthProvider    = mcpAuthProvider;
 
@@ -256,7 +256,7 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();
-                        mainLayout.getBreadcrumbs().addItem("AI Assistant", AiView.class);
+                        mainLayout.getBreadcrumbs().addItem("AI Assistant", AiAssistant.class);
                     }
                 });
     }
@@ -380,7 +380,7 @@ public class AiView extends VerticalLayout implements AfterNavigationObserver {
     }
 
     private void scrollToBottom() {
-        responseArea.getElement().executeJs("this.scrollTop = this.scrollHeight;");
+        conversationHistory.getElement().executeJs("this.scrollTop = this.scrollHeight;");
     }
 
     /**

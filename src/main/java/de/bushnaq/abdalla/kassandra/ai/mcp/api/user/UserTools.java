@@ -15,7 +15,7 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.mcp;
+package de.bushnaq.abdalla.kassandra.ai.mcp.api.user;
 
 import de.bushnaq.abdalla.kassandra.dao.UserDAO;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;

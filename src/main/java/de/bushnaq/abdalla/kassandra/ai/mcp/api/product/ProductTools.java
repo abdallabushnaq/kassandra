@@ -15,9 +15,8 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.mcp;
+package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
-import de.bushnaq.abdalla.kassandra.ai.mcp.dto.ProductDto;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import lombok.extern.slf4j.Slf4j;

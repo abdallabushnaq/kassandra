@@ -17,8 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ai;
 
-import de.bushnaq.abdalla.kassandra.ai.mcp.ProductTools;
-import de.bushnaq.abdalla.kassandra.ai.mcp.UserTools;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.product.ProductTools;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.user.UserTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;

@@ -15,8 +15,9 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.mcp.api;
+package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.RestTemplate;

@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.ProductApiAdapter;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.product.ProductApiAdapter;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;

@@ -15,7 +15,7 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.mcp.dto;
+package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import lombok.AllArgsConstructor;
