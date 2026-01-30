@@ -282,6 +282,7 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
         Span icon    = new Span();
         Span content = new Span(message);
         content.getStyle().set("white-space", "pre-wrap");
+        content.getStyle().set("font-family", "monospace");
 
         switch (type) {
             case "user":

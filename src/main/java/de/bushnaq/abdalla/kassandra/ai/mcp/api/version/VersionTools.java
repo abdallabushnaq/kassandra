@@ -32,13 +32,23 @@ import java.util.stream.Collectors;
 
 /**
  * Spring AI native tool implementations for Version operations.
+ * <p>
+ * Versions belong to Products, and each Version can have multiple Features.
+ * To list all features for a product, first use getAllVersionsByProductId to get all versions for the product,
+ * then use FeatureTools to get features for each version.
+ * <p>
+ * Example traversal:
+ * 1. Use ProductTools.getAllProducts() to list products.
+ * 2. Use VersionTools.getAllVersionsByProductId(productId) to list versions for a product.
+ * 3. Use FeatureTools.getAllFeaturesByVersionId(versionId) to list features for a version.
+ * <p>
  * Uses @Tool annotation for automatic tool registration with ChatClient.
  */
 @Component
 @Slf4j
 public class VersionTools {
     private static final String VERSION_FIELDS             =
-            "id (number): Unique identifier of the version, " +
+            "id (number): Unique identifier of the version, used to map features to a version, " +
                     "name (string): The version name, " +
                     "created (ISO 8601 datetime string): Timestamp when the version was created, " +
                     "updated (ISO 8601 datetime string): Timestamp when the version was last updated, " +
@@ -53,7 +63,7 @@ public class VersionTools {
     @Qualifier("aiVersionApi")
     private VersionApi versionApi;
 
-    @Tool(description = "Create a new version (requires USER or ADMIN role). " + RETURNS_VERSION_JSON)
+    @Tool(description = "Create a new version for a product (requires USER or ADMIN role). " + RETURNS_VERSION_JSON)
     public String createVersion(
             @ToolParam(description = "The version name (must be unique)") String name,
             @ToolParam(description = "The product ID this version belongs to") Long productId) {
@@ -85,7 +95,7 @@ public class VersionTools {
         }
     }
 
-    @Tool(description = "Get a list of all versions accessible to the current user (Admin sees all). " + RETURNS_VERSION_ARRAY_JSON)
+    @Tool(description = "Get a list of all versions accessible to the current user (Admin sees all). Good if you need to retrieve versions for many products. " + RETURNS_VERSION_ARRAY_JSON)
     public String getAllVersions() {
         try {
             log.info("Getting all versions");

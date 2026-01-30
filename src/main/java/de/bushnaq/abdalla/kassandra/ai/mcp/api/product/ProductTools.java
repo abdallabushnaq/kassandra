@@ -32,6 +32,16 @@ import java.util.stream.Collectors;
 
 /**
  * Spring AI native tool implementations for Product operations.
+ * <p>
+ * Products contain Versions, and each Version can have multiple Features.
+ * To list all features for a product, first use VersionTools to get all versions for the product,
+ * then use FeatureTools to get features for each version.
+ * <p>
+ * Example traversal:
+ * 1. Use ProductTools.getAllProducts() to list products.
+ * 2. Use VersionTools.getAllVersionsByProductId(productId) to list versions for a product.
+ * 3. Use FeatureTools.getAllFeaturesByVersionId(versionId) to list features for a version.
+ * <p>
  * Uses @Tool annotation for automatic tool registration with ChatClient.
  */
 @Component
@@ -44,7 +54,7 @@ public class ProductTools {
      * Used in @Tool annotations - must be a compile-time constant.
      */
     private static final String     PRODUCT_FIELDS             =
-            "id (number): Unique identifier of the product, " +
+            "id (number): Unique identifier of the product, used to map versions to a product, " +
                     "name (string): The product name, " +
                     "created (ISO 8601 datetime string): Timestamp when the product was created, " +
                     "updated (ISO 8601 datetime string): Timestamp when the product was last updated";

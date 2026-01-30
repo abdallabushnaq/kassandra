@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp;
 
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.feature.FeatureTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.product.ProductTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.user.UserTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.version.VersionTools;
@@ -57,6 +58,8 @@ public class AiAssistantService {
     // Store ChatMemory per conversation/session
     private final Map<String, ChatMemory> conversationMemories = new ConcurrentHashMap<>();
     @Autowired
+    private       FeatureTools            featureTools;
+    @Autowired
     private       ProductTools            productTools;
     @Autowired
     private       UserTools               userTools;
@@ -75,7 +78,7 @@ public class AiAssistantService {
      * Dynamically build a list of available tools from all registered tool beans using reflection.
      */
     public String getAvailableTools() {
-        Object[]      toolBeans = {productTools, userTools, versionTools};
+        Object[]      toolBeans = {productTools, userTools, versionTools, featureTools};
         StringBuilder sb        = new StringBuilder();
         for (Object bean : toolBeans) {
             for (Method method : bean.getClass().getMethods()) {
@@ -141,7 +144,7 @@ public class AiAssistantService {
         ChatClient chatClient = ChatClient.builder(chatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(memoryAdvisor)
-                .defaultTools(productTools, userTools, versionTools)  // Now includes VersionTools
+                .defaultTools(productTools, userTools, versionTools, featureTools)
                 .build();
 
         log.info("Calling LLM via ChatClient with native Spring AI tool support...");
