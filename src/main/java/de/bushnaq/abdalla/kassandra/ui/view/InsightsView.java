@@ -31,6 +31,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.SprintInsightsGenerator;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -359,7 +360,9 @@ public class InsightsView extends Main implements AfterNavigationObserver {
         List<Sprint> sprintIds = sprintApi.getAll();
 
         for (Sprint sprint : sprintIds) {
-            sprintStatistics.add(new SprintStatistics(loadSprintData(authentication, sprint.getId()), now));
+            if (!sprint.getName().equals(DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME)) {
+                sprintStatistics.add(new SprintStatistics(loadSprintData(authentication, sprint.getId()), now));
+            }
         }
     }
 
