@@ -117,16 +117,16 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     }
 
     public void closeMultiSelectComboBoxValue(String id) {
-//        if (!isHumanize()) {
-//            super.setComboBoxValue(id);
-//            return;
-//        }
+        if (!isEnabled())
+            return;
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
         WebElement comboBoxElement = findElement(By.id(id));
         closeMultiSelectComboBoxValue(comboBoxElement);
     }
 
     public void closeMultiSelectComboBoxValue(WebElement comboBoxElement) {
+        if (!isEnabled())
+            return;
         WebElement inputElement = comboBoxElement.findElement(By.tagName("input"));
         waitForElementToBeInteractable(inputElement.getAttribute("id"));
         try {
@@ -173,6 +173,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param targetId
      */
     public void dragAndDrop(String sourceId, String targetId) {
+        if (!isEnabled())
+            return;
         dragAndDropShift(sourceId, targetId, 0, 0);
     }
 
@@ -183,6 +185,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param targetId
      */
     public void dragAndDropAbove(String sourceId, String targetId) {
+        if (!isEnabled())
+            return;
         dragAndDropShift(sourceId, targetId, 0, -SHIFTY);
     }
 
@@ -193,6 +197,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param targetId
      */
     public void dragAndDropBelow(String sourceId, String targetId) {
+        if (!isEnabled())
+            return;
         dragAndDropShift(sourceId, targetId, 0, SHIFTY);
     }
 
@@ -211,6 +217,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param shiftY
      */
     public void dragAndDropShift(String sourceId, String targetId, int shiftX, int shiftY) {
+        if (!isEnabled())
+            return;
         // Ensure both elements are ready
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(sourceId)));
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(targetId)));
@@ -315,6 +323,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param targetId The task that will be the predecessor
      */
     public void dragAndDropWithControl(String sourceId, String targetId) {
+        if (!isEnabled())
+            return;
         Actions a = new Actions(getDriver());
         a.keyDown(Keys.CONTROL);
         showTransientTitle("Ctrl");
@@ -331,6 +341,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param targetId The task that will be the predecessor
      */
     public void dragAndDropWithControlAbove(String sourceId, String targetId) {
+        if (!isEnabled())
+            return;
         Actions a = new Actions(getDriver());
         a.keyDown(Keys.CONTROL);
         showTransientTitle("Ctrl");
@@ -347,6 +359,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param targetId The task that will be the predecessor
      */
     public void dragAndDropWithControlBelow(String sourceId, String targetId) {
+        if (!isEnabled())
+            return;
         Actions a = new Actions(getDriver());
         a.keyDown(Keys.CONTROL);
         showTransientTitle("Ctrl");
@@ -407,9 +421,10 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * The overlay will fade out over 1 second and then be removed from the DOM.
      */
     public void hideOverlay() {
-        if (!isHumanize()) {
+        if (!isEnabled())
             return;
-        }
+        if (!isHumanize())
+            return;
         // Skip if we're in headless mode
         if (isSeleniumHeadless()) {
             return;
@@ -443,9 +458,10 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * Explicitly hide the transient title badge if currently shown.
      */
     public void hideTransientTitle() {
-        if (!isHumanize()) {
+        if (!isEnabled())
             return;
-        }
+        if (!isHumanize())
+            return;
         try {
             String script =
                     "var el=document.getElementById('video-key-title'); if(el){ el.remove(); }";
@@ -466,6 +482,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param ids One or more element IDs to highlight
      */
     public void highlight(String... ids) {
+        if (!isEnabled())
+            return;
         highlight(2000, ids);
     }
 
@@ -480,9 +498,10 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param ids            One or more element IDs to highlight
      */
     public void highlight(int durationMillis, String... ids) {
-        if (!isHumanize()) {
+        if (!isEnabled())
             return;
-        }
+        if (!isHumanize())
+            return;
         if (ids == null || ids.length == 0) {
             log.warn("No element IDs provided to highlight");
             return;
@@ -511,6 +530,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param elements One or more WebElements to highlight
      */
     public void highlight(WebElement... elements) {
+        if (!isEnabled())
+            return;
         highlight(2000, elements);
     }
 
@@ -527,9 +548,10 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param elements       One or more WebElements to highlight
      */
     public void highlight(int durationMillis, WebElement... elements) {
-        if (!isHumanize()) {
+        if (!isEnabled())
             return;
-        }
+        if (!isHumanize())
+            return;
         if (!highlightEnabled || elements == null || elements.length == 0) {
             log.warn("No elements provided to highlight");
             return;
@@ -795,6 +817,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     }
 
     public void setComboBoxValue(String id, String text) {
+        if (!isEnabled())
+            return;
         if (!isHumanize()) {
             super.setComboBoxValue(id, text);
             return;
@@ -812,12 +836,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param text the text of the item to select
      */
     public void setComboBoxValue(WebElement comboBoxElement, String text) {
-//        if (!isHumanize()) {
-//            super.setComboBoxValue(id, text);
-//            return;
-//        }
-//        waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
-//        WebElement comboBoxElement = findElement(By.id(id));
+        if (!isEnabled())
+            return;
         WebElement inputElement = comboBoxElement.findElement(By.tagName("input"));
         waitForElementToBeInteractable(inputElement.getAttribute("id"));
         try {
@@ -929,6 +949,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param date         the LocalDate value to set
      */
     public void setDatePickerValue(String datePickerId, LocalDate date) {
+        if (!isEnabled())
+            return;
         if (!isHumanize()) {
             super.setDatePickerValue(datePickerId, date);
             return;
@@ -980,6 +1002,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     }
 
     public void setDateTimePickerValue(String datePickerId, LocalDateTime date) {
+        if (!isEnabled())
+            return;
         if (!isHumanize()) {
             super.setDateTimePickerValue(datePickerId, date);
             return;
@@ -1058,6 +1082,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     }
 
     public void setMultiSelectComboBoxValue(String id, String[] text) {
+        if (!isEnabled())
+            return;
         //todo fix this method to use humanized selection
 //        if (!isHumanize()) {
 //            super.setMultiSelectComboBoxValue(id, text);
@@ -1069,6 +1095,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     }
 
     public void setMultiSelectComboBoxValue(WebElement comboBoxElement, String[] text) {
+        if (!isEnabled())
+            return;
         WebElement inputElement = comboBoxElement.findElement(By.tagName("input"));
         waitForElementToBeInteractable(inputElement.getAttribute("id"));
         WebElement toggleButton = null;
@@ -1116,10 +1144,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     }
 
     public void setTimePickerValue(WebElement comboBoxElement, String text) {
-//        if (!isHumanize()) {
-//            super.setComboBoxValue(id, text);
-//            return;
-//        }
+        if (!isEnabled())
+            return;
 //        waitUntil(ExpectedConditions.elementToBeInteractable(By.id(id)));
 //        WebElement comboBoxElement = findElement(By.id(id));
         WebElement inputElement = comboBoxElement.findElement(By.tagName("input"));
@@ -1206,9 +1232,10 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param subtitle Subtitle text (can be null or empty)
      */
     public void showOverlay(String title, String subtitle) {
-        if (!isHumanize()) {
+        if (!isEnabled())
             return;
-        }
+        if (!isHumanize())
+            return;
         try {
             log.trace("Preparing to show overlay with title: '{}' and subtitle: '{}'", title, subtitle);
             // Wait for page to be fully loaded
@@ -1281,9 +1308,10 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param displaySeconds How long to display the overlay between fade-in and fade-out
      */
     public void showOverlayAndWait(String title, String subtitle, int displaySeconds) {
-        if (!isHumanize()) {
+        if (!isEnabled())
             return;
-        }
+        if (!isHumanize())
+            return;
         showOverlay(title, subtitle);
 
         // Wait for the specified display duration
@@ -1307,9 +1335,10 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
      * @param displayMillis how long to keep it visible before removing (milliseconds)
      */
     public void showTransientTitle(String title, int displayMillis) {
-        if (!isHumanize()) {
+        if (!isEnabled())
             return;
-        }
+        if (!isHumanize())
+            return;
         try {
             // Ensure page is ready
             waitForPageLoaded();

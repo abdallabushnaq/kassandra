@@ -33,10 +33,6 @@ public class SessionToolActivityContext implements ToolActivityContext {
     private       Consumer<String> activityListener;
     private final List<String>     activityLog = Collections.synchronizedList(new ArrayList<>());
 
-//    public List<String> getActivityLog() {
-//        return new ArrayList<>(activityLog);
-//    }
-
     @Override
     public void reportActivity(String message) {
         activityLog.add(message);

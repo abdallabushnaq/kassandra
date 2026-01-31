@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.util.selenium;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.openqa.selenium.Dimension;
@@ -57,6 +58,8 @@ class SeleniumHandler {
     private static final int             DEFAULT_BROWSER_CHROME_HEIGHT = 130; // Typical Chrome window chrome height in pixels
     private              Integer         browserChromeHeight           = null; // Cached browser chrome height
     private              WebDriver       driver;
+    @Setter
+    private              boolean         enabled                       = true;
     private final        Duration        implicitWaitDuration;
     private final        Stack<Duration> implicitWaitStack             = new Stack<>();
     private final        VideoRecorder   videoRecorder;
@@ -80,6 +83,8 @@ class SeleniumHandler {
     }
 
     public void click(String id) {
+        if (!isEnabled())
+            return;
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
         WebElement element = findElement(By.id(id));
         moveMouseToElement(element);
@@ -94,6 +99,8 @@ class SeleniumHandler {
      * @param fieldId the ID of the text field or combo box
      */
     public void clickClearButton(String fieldId) {
+        if (!isEnabled())
+            return;
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(fieldId)));
         WebElement field = findElement(By.id(fieldId));
 
@@ -119,12 +126,16 @@ class SeleniumHandler {
      * @param element the WebElement to click
      */
     public void clickElement(WebElement element) {
+        if (!isEnabled())
+            return;
         moveMouseToElement(element);
         element.click();
         log.trace("Clicked element with mouse movement");
     }
 
     public void copy() {
+        if (!isEnabled())
+            return;
         showTransientTitle("Ctrl+C");
         Actions a = new Actions(getDriver());
         a.keyDown(Keys.CONTROL);
@@ -160,6 +171,8 @@ class SeleniumHandler {
      * @param expectedCount  the expected number of occurrences of the element in the grid
      */
     public void ensureElementCountInGrid(String gridId, String gridNamePrefix, String name, int expectedCount) {
+        if (!isEnabled())
+            return;
         {
             waitForElementToBeLocated(gridId);
             WebElement grid = getDriver().findElement(By.id(gridId));
@@ -172,6 +185,8 @@ class SeleniumHandler {
     }
 
     public void ensureIsInList(String id, String userName) {
+        if (!isEnabled())
+            return;
         log.trace("===================================================================");
         log.trace("Trying to find Element with ID: " + id + userName + " is in grid");
 //        waitUntil(ExpectedConditions.elementToBeClickable(By.id(id + userName)));
@@ -181,6 +196,8 @@ class SeleniumHandler {
     }
 
     public void ensureIsNotInList(String id, String name) {
+        if (!isEnabled())
+            return;
         Duration implicitTime = getImplicitWaitDuration();
         setImplicitWaitDuration(Duration.ofSeconds(1));
         waitUntil(ExpectedConditions.not(ExpectedConditions.elementToBeClickable(By.id(id + name))));
@@ -189,6 +206,8 @@ class SeleniumHandler {
     }
 
     public void ensureIsSelected(String id, String userName) {
+        if (!isEnabled())
+            return;
         WebElement label = findElement(By.id(id));
         waitUntil(ExpectedConditions.textToBePresentInElement(label, userName));
     }
@@ -224,11 +243,15 @@ class SeleniumHandler {
      * @return the value returned by the script, which may be null
      */
     public Object executeJavaScript(String script, Object... args) {
+        if (!isEnabled())
+            return null;
         JavascriptExecutor jsExecutor = (JavascriptExecutor) getDriver();
         return jsExecutor.executeScript(script, args);
     }
 
     public WebElement expandRootElementAndFindElement(WebElement element, String elementName) {
+        if (!isEnabled())
+            return null;
         // Escape single quotes in the selector to prevent JavaScript syntax errors
         String     escapedElementName = elementName.replace("'", "\\'");
         String     script             = String.format("return arguments[0].shadowRoot.querySelector('%s')", escapedElementName);
@@ -237,6 +260,8 @@ class SeleniumHandler {
     }
 
     public WebElement findDialogOverlayElement(String dialogId) {
+        if (!isEnabled())
+            return null;
         // Step 1: Find the dialog element
         WebElement dialog = getDriver().findElement(By.id(dialogId));
 
@@ -257,15 +282,21 @@ class SeleniumHandler {
     }
 
     public WebElement findElement(By by) {
+        if (!isEnabled())
+            return null;
         return getDriver().findElement(by);
     }
 
     public void get(String url) {
+        if (!isEnabled())
+            return;
         getDriver().get(url);
         log.trace("Navigated to URL: " + url);
     }
 
     public void getAndCheck(String url) {
+        if (!isEnabled())
+            return;
         get(url);
         waitUntil(ExpectedConditions.urlContains(url));
         testForAnyError();
@@ -312,6 +343,8 @@ class SeleniumHandler {
     }
 
     public boolean getCheckbox(String id) {
+        if (!isEnabled())
+            return false;
         WebElement element = findElement(By.id(id));
         return element.getAttribute("checked") != null;
     }
@@ -327,6 +360,8 @@ class SeleniumHandler {
      * @return the current color value as a hex string (e.g. "#FF5733"), or null if not available
      */
     public String getColorPickerValue(String colorPickerId) {
+        if (!isEnabled())
+            return null;
         // Wait for the color picker element to be present
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(colorPickerId)));
 
@@ -357,6 +392,8 @@ class SeleniumHandler {
      * @return the selected text as a String, or null if no item is selected or the element is not found.
      */
     public String getComboBoxValue(String id) {
+        if (!isEnabled())
+            return null;
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(id)));
         WebElement e = findElement(By.id(id));
         WebElement i = e.findElement(By.tagName("input"));
@@ -364,6 +401,8 @@ class SeleniumHandler {
     }
 
     public String getCurrentUrl() {
+        if (!isEnabled())
+            return null;
         return getDriver().getCurrentUrl();
     }
 
@@ -373,6 +412,8 @@ class SeleniumHandler {
      * @return the current window size as a Dimension object, or null if the browser is not yet initialized
      */
     public Dimension getCurrentWindowSize() {
+        if (!isEnabled())
+            return null;
         if (driver != null) {
             return driver.manage().window().getSize();
         }
@@ -389,6 +430,8 @@ class SeleniumHandler {
      * @return the current date value as LocalDate, or null if no date is set or component not found
      */
     public LocalDate getDatePickerValue(String datePickerId) {
+        if (!isEnabled())
+            return null;
         // Wait for the date picker element to be present
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(datePickerId)));
 
@@ -506,6 +549,8 @@ class SeleniumHandler {
      * @return the error message text, or null if no error message is present after waiting
      */
     public String getFieldErrorMessage(String fieldId) {
+        if (!isEnabled())
+            return null;
         WebElement fieldElement = findElement(By.id(fieldId));
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(fieldId)));
         waitUntil(ExpectedConditions.attributeToBe(fieldElement, "invalid", "true"));
@@ -514,6 +559,8 @@ class SeleniumHandler {
     }
 
     public String getIntegerField(String id) {
+        if (!isEnabled())
+            return null;
         WebElement e     = findElement(By.id(id));
         String     value = e.getAttribute("value");
         return value;
@@ -529,6 +576,8 @@ class SeleniumHandler {
     }
 
     public String getTextArea(String id) {
+        if (!isEnabled())
+            return null;
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
         WebElement e     = findElement(By.id(id));
         WebElement i     = e.findElement(By.tagName("textarea"));
@@ -537,6 +586,8 @@ class SeleniumHandler {
     }
 
     public String getTextField(String id) {
+        if (!isEnabled())
+            return null;
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
         WebElement e     = findElement(By.id(id));
         WebElement i     = e.findElement(By.tagName("input"));
@@ -545,6 +596,8 @@ class SeleniumHandler {
     }
 
     public String getTitle() {
+        if (!isEnabled())
+            return null;
         return getDriver().getTitle();
     }
 
@@ -565,6 +618,8 @@ class SeleniumHandler {
      * @return true if the element is present, false otherwise
      */
     public boolean isElementPresent(By locator) {
+        if (!isEnabled())
+            return true;
         try {
             driver.findElement(locator);
             return true;
@@ -580,6 +635,8 @@ class SeleniumHandler {
      * @return true if the element is present, false otherwise
      */
     public boolean isElementPresent(String id) {
+        if (!isEnabled())
+            return false;
         return isElementPresent(By.id(id));
     }
 
@@ -596,6 +653,8 @@ class SeleniumHandler {
     }
 
     public void past() throws Exception {
+        if (!isEnabled())
+            return;
         showTransientTitle("Ctrl+V");
         {
             Actions a = new Actions(getDriver());
@@ -611,6 +670,8 @@ class SeleniumHandler {
      * If the stack is empty, nothing happens.
      */
     public void popImplicitWait() {
+        if (!isEnabled())
+            return;
         if (!implicitWaitStack.isEmpty()) {
             setImplicitWaitDuration(implicitWaitStack.pop());
         }
@@ -621,6 +682,8 @@ class SeleniumHandler {
      * If the stack is empty, nothing happens.
      */
     public void popWaitDuration() {
+        if (!isEnabled())
+            return;
         if (!waitDurationStack.isEmpty()) {
             setWaitDuration(waitDurationStack.pop());
         }
@@ -632,6 +695,8 @@ class SeleniumHandler {
      * @param newDuration the new implicit wait duration to set
      */
     public void pushImplicitWait(Duration newDuration) {
+        if (!isEnabled())
+            return;
         implicitWaitStack.push(getImplicitWaitDuration());
         setImplicitWaitDuration(newDuration);
     }
@@ -642,6 +707,8 @@ class SeleniumHandler {
      * @param newDuration the new wait duration to set
      */
     public void pushWaitDuration(Duration newDuration) {
+        if (!isEnabled())
+            return;
         waitDurationStack.push(getWaitDuration());
         setWaitDuration(newDuration);
     }
@@ -651,6 +718,8 @@ class SeleniumHandler {
      * If the browser is already running, it will maximize the current window.
      */
     public void resetWindowSize() {
+        if (!isEnabled())
+            return;
         windowSize = null;
 
         // If driver is already initialized, maximize the current window
@@ -660,6 +729,8 @@ class SeleniumHandler {
     }
 
     public void selectGridRow(String gridRowBaseId, Class<?> viewClass, String rowName) {
+        if (!isEnabled())
+            return;
         String  url             = getRouteValue(viewClass);
         boolean outerTesting    = true;
         int     outerIterations = 12;//5 seconds
@@ -709,6 +780,8 @@ class SeleniumHandler {
     }
 
     public void selectGridRow(String gridRowBaseId, String labelId, String rowName) {
+        if (!isEnabled())
+            return;
         boolean    outerTesting    = true;
         int        outerIterations = 12;//5 seconds
         WebElement label           = findElement(By.id(labelId));
@@ -754,6 +827,8 @@ class SeleniumHandler {
     }
 
     public void sendKeys(String id, CharSequence... keysToSend) {
+        if (!isEnabled())
+            return;
         WebElement e = findElement(By.id(id));
         WebElement i = e.findElement(By.tagName("input"));
         moveMouseToElement(i);  // Move mouse to input field before sending keys
@@ -761,6 +836,8 @@ class SeleniumHandler {
     }
 
     public void setCheckCheckbox(String id, boolean value) {
+        if (!isEnabled())
+            return;
         boolean old = getCheckbox(id);
         if (old != value) {
             WebElement e = findElement(By.id(id));
@@ -790,6 +867,8 @@ class SeleniumHandler {
      * @return true if the color was successfully set, false otherwise
      */
     public boolean setColorPickerValue(String colorPickerId, String colorValue) {
+        if (!isEnabled())
+            return false;
         // Wait for the color picker element to be present
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(colorPickerId)));
 
@@ -833,6 +912,8 @@ class SeleniumHandler {
     }
 
     public void setComboBoxValue(String id, String text) {
+        if (!isEnabled())
+            return;
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
         WebElement e = findElement(By.id(id));
         WebElement i = e.findElement(By.tagName("input"));
@@ -854,7 +935,6 @@ class SeleniumHandler {
         log.trace("set ComboBox value=" + text);
     }
 
-
     /**
      * Sets a date picker value by directly setting it via JavaScript.
      * This is the fast method used when humanize mode is disabled.
@@ -863,6 +943,8 @@ class SeleniumHandler {
      * @param date         the LocalDate value to set, can be null to clear
      */
     public void setDatePickerValue(String datePickerId, LocalDate date) {
+        if (!isEnabled())
+            return;
         // Find the date picker element
         WebElement datePickerElement = findElement(By.id(datePickerId));
         // Find the input field - it's NOT in shadow DOM, it's a direct child with slot='input'
@@ -887,6 +969,8 @@ class SeleniumHandler {
     }
 
     public void setDateTimePickerValue(String datePickerId, LocalDateTime date) {
+        if (!isEnabled())
+            return;
         // Wait for the date picker element to be present
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(datePickerId)));
         if (date == null) {
@@ -914,12 +998,15 @@ class SeleniumHandler {
         }
     }
 
-
     public void setImplicitWaitDuration(Duration duration) {
+        if (!isEnabled())
+            return;
         getDriver().manage().timeouts().implicitlyWait(duration);
     }
 
     public void setIntegerField(String id, String userName) {
+        if (!isEnabled())
+            return;
         WebElement e = findElement(By.id(id));
         WebElement i = e.findElement(By.tagName("input"));
         moveMouseToElement(i);  // Move mouse to integer field before typing
@@ -934,6 +1021,8 @@ class SeleniumHandler {
     }
 
     public void setTextArea(String id, String userName) {
+        if (!isEnabled())
+            return;
         WebElement e = findElement(By.id(id));
         WebElement i = e.findElement(By.tagName("textarea"));
         moveMouseToElement(i);  // Move mouse to text area before typing
@@ -948,6 +1037,8 @@ class SeleniumHandler {
     }
 
     public void setTextField(String id, String text) {
+        if (!isEnabled())
+            return;
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
         WebElement e = findElement(By.id(id));
         WebElement i = e.findElement(By.tagName("input"));
@@ -977,6 +1068,8 @@ class SeleniumHandler {
      * @param height the height of the browser window in pixels
      */
     public void setWindowSize(int width, int height) {
+        if (!isEnabled())
+            return;
         windowSize = new Dimension(width, height);
 
         // If driver is already initialized, resize the current window
@@ -994,6 +1087,8 @@ class SeleniumHandler {
      * @param displayMillis how long to keep it visible before removing (milliseconds)
      */
     public void showTransientTitle(String title, int displayMillis) {
+        if (!isEnabled())
+            return;
         if (!HumanizedSeleniumHandler.isHumanize()) {
         }
     }
@@ -1002,6 +1097,8 @@ class SeleniumHandler {
      * Convenience overload that shows the transient title for a default of 1000 ms.
      */
     public void showTransientTitle(String title) {
+        if (!isEnabled())
+            return;
         showTransientTitle(title, 1000);
     }
 
@@ -1012,6 +1109,8 @@ class SeleniumHandler {
      * @param testName   Name of the test for the video file name
      */
     public void startRecording(String folderName, String testName) {
+        if (!isEnabled())
+            return;
         if (!videoRecorder.isRecording() && folderName != null && testName != null) {
             try {
                 getDriver(); // Ensure the driver is initialized and browser is open
@@ -1045,6 +1144,8 @@ class SeleniumHandler {
      * @return File object pointing to the recorded video, or null if recording failed
      */
     public File stopRecording() {
+        if (!isEnabled())
+            return null;
         if (videoRecorder.isRecording()) {
             try {
                 File videoFile = videoRecorder.stopRecording();
@@ -1060,10 +1161,14 @@ class SeleniumHandler {
     }
 
     public void takeElementScreenShot(WebElement overlayElement, String dialogId, String fileName) {
+        if (!isEnabled())
+            return;
         ScreenShotCreator.takeElementScreenshot(getDriver(), overlayElement, dialogId, fileName);
     }
 
     public void takeScreenShot(String fileName) {
+        if (!isEnabled())
+            return;
         ScreenShotCreator.takeScreenShot(getDriver(), fileName);
     }
 
@@ -1077,6 +1182,8 @@ class SeleniumHandler {
     }
 
     public void testUrl(String expectedUrl) {
+        if (!isEnabled())
+            return;
         String currentUrl = getCurrentUrl();
         waitUntil(ExpectedConditions.urlContains(expectedUrl));
         log.trace(String.format("expectedUrl=%s, actualUrl=%s", expectedUrl, currentUrl));
@@ -1084,6 +1191,8 @@ class SeleniumHandler {
     }
 
     public void toggleCheckbox(String id) {
+        if (!isEnabled())
+            return;
         WebElement e = findElement(By.id(id));
         WebElement i = e.findElement(By.tagName("input"));
         moveMouseToElement(i);
@@ -1099,6 +1208,8 @@ class SeleniumHandler {
      * @param text    the text to type
      */
     public void typeIntoElement(WebElement element, String text) {
+        if (!isEnabled())
+            return;
         moveMouseToElement(element);
         // Clear any existing text first
         String value = element.getAttribute("value");
@@ -1132,6 +1243,8 @@ class SeleniumHandler {
     }
 
     public void waitForElementToBeClickable(String id) {
+        if (!isEnabled())
+            return;
         log.trace("Waiting for {} to become Clickable.", id);
         int iterations = 10;
         do {
@@ -1146,6 +1259,8 @@ class SeleniumHandler {
     }
 
     public void waitForElementToBeDisabled(String id) {
+        if (!isEnabled())
+            return;
         log.trace("Waiting for {} to become disabled.", id);
         waitUntil(driver -> {
             try {
@@ -1159,6 +1274,8 @@ class SeleniumHandler {
     }
 
     public void waitForElementToBeEnabled(String id) {
+        if (!isEnabled())
+            return;
         log.trace("Waiting for {} to become enabled.", id);
         waitUntil(driver -> {
             try {
@@ -1178,6 +1295,8 @@ class SeleniumHandler {
      * @param id The ID of the element to wait for
      */
     public void waitForElementToBeInteractable(String id) {
+        if (!isEnabled())
+            return;
         log.trace("Waiting for {} to become Interactable.", id);
         try {
             // Wait for the element to be visible first
@@ -1206,11 +1325,15 @@ class SeleniumHandler {
     }
 
     public void waitForElementToBeLocated(String id) {
+        if (!isEnabled())
+            return;
         log.trace("Waiting for {} to become Located.", id);
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.id(id)));
     }
 
     public void waitForElementToBeVisible(By locator) {
+        if (!isEnabled())
+            return;
         log.trace("Waiting for element located by {} to become visible.", locator);
         waitUntil(ExpectedConditions.visibilityOfElementLocated(locator));
     }
@@ -1224,6 +1347,8 @@ class SeleniumHandler {
      * @param notificationType the type of notification to wait for (e.g., "error")
      */
     public void waitForNotification(String notificationType) {
+        if (!isEnabled())
+            return;
         log.trace("Waiting for {} notification.", notificationType);
         // Wait for notification overlay to appear
         waitUntil(ExpectedConditions.presenceOfElementLocated(By.cssSelector("vaadin-notification-container vaadin-notification-card")));
@@ -1232,10 +1357,14 @@ class SeleniumHandler {
     }
 
     public void waitForPageLoaded() {
+        if (!isEnabled())
+            return;
         waitForPageLoaded(30);
     }
 
     public void waitForPageLoaded(long seconds) {
+        if (!isEnabled())
+            return;
         log.trace("Waiting for page loaded with {} seconds.", seconds);
         ExpectedCondition<Boolean> expectation = new ExpectedCondition<>() {
             @Override
@@ -1252,12 +1381,16 @@ class SeleniumHandler {
     }
 
     public void waitForUrl(String url) {
+        if (!isEnabled())
+            return;
         log.trace("Waiting for {} url.", url);
         waitUntil(ExpectedConditions.urlContains(url));
         testForAnyError();
     }
 
     public void waitUntil(ExpectedCondition<?> condition) {
+        if (!isEnabled())
+            return;
         wait.until(condition);
     }
 
@@ -1269,7 +1402,6 @@ class SeleniumHandler {
      * @return true if browser was closed, false if timeout occurred
      */
     public boolean waitUntilBrowserClosed(long timeoutMillis) {
-
         if (isSeleniumHeadless()) {
             log.warn("Browser is running in headless mode; waitUntilBrowserClosed will return immediately.");
             return false;

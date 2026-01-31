@@ -99,6 +99,7 @@ public class FeatureTools {
         try {
             ToolActivityContextHolder.reportActivity("Getting all features");
             List<Feature> features = featureApi.getAll();
+            ToolActivityContextHolder.reportActivity("Found " + features.size() + " features.");
             List<FeatureDto> featureDtos = features.stream()
                     .map(FeatureDto::from)
                     .collect(Collectors.toList());
@@ -115,6 +116,7 @@ public class FeatureTools {
         try {
             ToolActivityContextHolder.reportActivity("Getting all features for version ID: " + versionId);
             List<Feature> features = featureApi.getAll(versionId);
+            ToolActivityContextHolder.reportActivity("Found " + features.size() + " features.");
             List<FeatureDto> featureDtos = features.stream()
                     .map(FeatureDto::from)
                     .collect(Collectors.toList());

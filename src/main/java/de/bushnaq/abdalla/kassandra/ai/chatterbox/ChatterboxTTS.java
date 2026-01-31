@@ -19,9 +19,13 @@ package de.bushnaq.abdalla.kassandra.ai.chatterbox;
 
 import de.bushnaq.abdalla.kassandra.ai.AbstractTtsEngine;
 import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.*;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -30,9 +34,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+@Slf4j
 public class ChatterboxTTS extends AbstractTtsEngine {
     private static final JsonMapper jsonMapper      = new JsonMapper();
     private static       String     TTS_SERVICE_URL = "http://localhost:4123";
+    @Setter
+    @Getter
+    private static       boolean    enabled         = true;
 
     /**
      * Delete a voice reference file from the server
@@ -40,6 +48,8 @@ public class ChatterboxTTS extends AbstractTtsEngine {
      * @param filename The filename to delete (e.g., "my_voice.wav")
      */
     public static void deleteVoiceReference(String filename) throws Exception {
+        if (!isEnabled())
+            return;
         URL               url  = new URL(TTS_SERVICE_URL + "/v1/voice-references/" + filename);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("DELETE");
@@ -64,6 +74,8 @@ public class ChatterboxTTS extends AbstractTtsEngine {
      */
     public static byte[] generateSpeech(String text, String audioPromptPath, String language,
                                         float temperature, float exaggeration, float cfgWeight) throws Exception {
+        if (!isEnabled())
+            return new byte[0];
         URL               url  = new URL(TTS_SERVICE_URL + "/v1/audio/speech");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
@@ -103,6 +115,8 @@ public class ChatterboxTTS extends AbstractTtsEngine {
     }
 
     public static String[] getLanguages() throws Exception {
+        if (!isEnabled())
+            return new String[0];
         URL               url  = new URL(TTS_SERVICE_URL + "/languages");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
@@ -135,32 +149,41 @@ public class ChatterboxTTS extends AbstractTtsEngine {
      * Returns information about WAV files that can be used for voice cloning.
      */
     public static VoiceReference[] listVoiceReferences() throws Exception {
-        URL               url  = new URL(TTS_SERVICE_URL + "/v1/voice-references");
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
+        if (!isEnabled())
+            return new VoiceReference[0];
+        try {
+            URL               url  = new URL(TTS_SERVICE_URL + "/v1/voice-references");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            int responseCode = conn.getResponseCode();
+            if (responseCode != 200) {
+                setEnabled(false);
+                String error = readProcessOutput(conn.getErrorStream());
+                log.error("Failed to list voice references " + responseCode + ": " + error);
+                log.error("Disabling chatterbox TTS engine due to connection failure.");
+            }
 
-        int responseCode = conn.getResponseCode();
-        if (responseCode != 200) {
-            String error = readProcessOutput(conn.getErrorStream());
-            throw new RuntimeException("Failed to list voice references " + responseCode + ": " + error);
+            String              response = readProcessOutput(conn.getInputStream());
+            java.util.Map<?, ?> jsonMap  = jsonMapper.readValue(response, java.util.Map.class);
+            List<?>             refsData = (List<?>) jsonMap.get("voice_references");
+
+            VoiceReference[] refs = new VoiceReference[refsData.size()];
+            for (int i = 0; i < refsData.size(); i++) {
+                java.util.Map<?, ?> data = (java.util.Map<?, ?>) refsData.get(i);
+                refs[i] = new VoiceReference(
+                        (String) data.get("filename"),
+                        (String) data.get("path"),
+                        ((Number) data.get("size_bytes")).longValue(),
+                        ((Number) data.get("modified_timestamp")).doubleValue()
+                );
+            }
+            return refs;
+        } catch (ConnectException e) {
+            setEnabled(false);
+            log.error(e.getMessage(), e);
+            log.error("Disabling chatterbox TTS engine due to connection failure.");
+            return new VoiceReference[0];
         }
-
-        String              response = readProcessOutput(conn.getInputStream());
-        java.util.Map<?, ?> jsonMap  = jsonMapper.readValue(response, java.util.Map.class);
-        List<?>             refsData = (List<?>) jsonMap.get("voice_references");
-
-        VoiceReference[] refs = new VoiceReference[refsData.size()];
-        for (int i = 0; i < refsData.size(); i++) {
-            java.util.Map<?, ?> data = (java.util.Map<?, ?>) refsData.get(i);
-            refs[i] = new VoiceReference(
-                    (String) data.get("filename"),
-                    (String) data.get("path"),
-                    ((Number) data.get("size_bytes")).longValue(),
-                    ((Number) data.get("modified_timestamp")).doubleValue()
-            );
-        }
-
-        return refs;
     }
 
     private static String readProcessOutput(InputStream inputStream) throws IOException {
@@ -191,6 +214,8 @@ public class ChatterboxTTS extends AbstractTtsEngine {
      * @return Information about the uploaded file
      */
     public static VoiceReference uploadVoiceReference(String localFilePath) throws Exception {
+        if (!isEnabled())
+            return null;
         java.io.File file = new java.io.File(localFilePath);
         if (!file.exists()) {
             throw new Exception("File not found: " + localFilePath);

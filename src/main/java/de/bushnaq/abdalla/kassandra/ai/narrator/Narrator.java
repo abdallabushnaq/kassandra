@@ -64,14 +64,14 @@ public class Narrator {
      * Creates a Narrator storing audio under {@code relativeFolder} and using the default TTS engine.
      */
     public Narrator(String relativeFolder) throws Exception {
-        this(relativeFolder, chatterboxTtsEngine(), null);
+        this(relativeFolder, chatterboxTtsEngine(relativeFolder), null);
     }
 
     /**
      * Creates a Narrator storing audio under {@code relativeFolder} and using the default TTS engine and a provided voice.
      */
     public Narrator(String relativeFolder, String voiceReference) throws Exception {
-        this(relativeFolder, chatterboxTtsEngine(), voiceReference);
+        this(relativeFolder, chatterboxTtsEngine(relativeFolder), voiceReference);
     }
 
     /**
@@ -101,7 +101,7 @@ public class Narrator {
         this.voiceReference    = voiceReference; // may be null
     }
 
-    private static TtsEngine chatterboxTtsEngine() throws Exception {
+    private static TtsEngine chatterboxTtsEngine(String audioFolder) throws Exception {
 //        return (text, attrs) -> ChatterboxTTS.generateSpeech(
 //                text,
 //                attrs.getTemperature() != null ? attrs.getTemperature() : 0.5f,
@@ -110,7 +110,7 @@ public class Narrator {
 //        );
         ChatterboxTTS chatterboxTTS = new ChatterboxTTS();
         SyncResult    syncResult    = chatterboxTTS.syncVoiceReferences("docker\\chatterbox\\voices");
-        chatterboxTTS.logSyncResult(syncResult);
+        chatterboxTTS.logSyncResult(audioFolder, syncResult);
         return chatterboxTTS;
     }
 
@@ -308,11 +308,11 @@ public class Narrator {
     }
 
     public static Narrator withChatterboxTTS(String relativeFolder) throws Exception {
-        return new Narrator(relativeFolder, chatterboxTtsEngine(), "christopher");
+        return new Narrator(relativeFolder, chatterboxTtsEngine(relativeFolder), "christopher");
     }
 
     public static Narrator withChatterboxTTS(String relativeFolder, String voiceReference) throws Exception {
-        return new Narrator(relativeFolder, chatterboxTtsEngine(), voiceReference);
+        return new Narrator(relativeFolder, chatterboxTtsEngine(relativeFolder), voiceReference);
     }
 
     /**

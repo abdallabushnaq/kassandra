@@ -101,6 +101,7 @@ public class VersionTools {
         try {
             ToolActivityContextHolder.reportActivity("Getting all versions");
             List<Version> versions = versionApi.getAll();
+            ToolActivityContextHolder.reportActivity("Found " + versions.size() + " versions.");
             List<VersionDto> versionDtos = versions.stream()
                     .map(VersionDto::from)
                     .collect(Collectors.toList());
@@ -117,6 +118,7 @@ public class VersionTools {
         try {
             ToolActivityContextHolder.reportActivity("Getting all versions for product ID: " + productId);
             List<Version> versions = versionApi.getAll(productId);
+            ToolActivityContextHolder.reportActivity("Found " + versions.size() + " versions.");
             List<VersionDto> versionDtos = versions.stream()
                     .map(VersionDto::from)
                     .collect(Collectors.toList());

@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -138,10 +139,10 @@ public class ProductTools {
     public String getProductByName(String name) {
         ToolActivityContextHolder.reportActivity("Getting product with name: " + name);
         try {
-            Product product = productApi.getByName(name);
-            if (product != null) {
-                ToolActivityContextHolder.reportActivity("Product found: " + product.getName());
-                ProductDto productDto = ProductDto.from(product);
+            Optional<Product> product = productApi.getByName(name);
+            if (product.isPresent()) {
+                ToolActivityContextHolder.reportActivity("Product found: " + product.get().getName());
+                ProductDto productDto = ProductDto.from(product.get());
                 return jsonMapper.writeValueAsString(productDto);
             }
             ToolActivityContextHolder.reportActivity("Product not found with name: " + name);

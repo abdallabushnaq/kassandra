@@ -17,45 +17,74 @@
 
 package de.bushnaq.abdalla.kassandra.ai;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.bushnaq.abdalla.kassandra.ai.chatterbox.ChatterboxTTS;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public abstract class AbstractTtsEngine implements TtsEngine {
+    public static final  String       VOICE_REFERENCES_JSON = "voice_references.json";
+    private static final ObjectMapper objectMapper          = new ObjectMapper();
     ChatterboxTTS.VoiceReference[] finalRefs;
 
-    public void logSyncResult(SyncResult result) throws Exception {
-        // Display detailed results
-        System.out.println("\n📊 Sync Summary:");
-        System.out.println("  Local files: " + result.localFileCount());
-        System.out.println("  Server files (before): " + result.serverFileCountBefore());
-        System.out.println("  Server files (after): " + result.getServerFileCountAfter());
-        System.out.println("  Uploaded: " + result.uploadedCount());
-        System.out.println("  Deleted: " + result.deletedCount());
+    public void logSyncResult(String audioDirectory, SyncResult result) throws Exception {
+        if (ChatterboxTTS.isEnabled()) {
+            // Display detailed results
+            System.out.println("\n📊 Sync Summary:");
+            System.out.println("  Local files: " + result.localFileCount());
+            System.out.println("  Server files (before): " + result.serverFileCountBefore());
+            System.out.println("  Server files (after): " + result.getServerFileCountAfter());
+            System.out.println("  Uploaded: " + result.uploadedCount());
+            System.out.println("  Deleted: " + result.deletedCount());
 
-        if (result.hasErrors()) {
-            System.out.println("\n⚠️  Errors encountered:");
-            for (String error : result.errors()) {
-                System.out.println("  - " + error);
+            if (result.hasErrors()) {
+                System.out.println("\n⚠️  Errors encountered:");
+                for (String error : result.errors()) {
+                    System.out.println("  - " + error);
+                }
             }
-        }
 
-        if (result.uploadedCount() == 0 && result.deletedCount() == 0) {
-            System.out.println("\n✅ Already in sync - no changes needed!");
+            if (result.uploadedCount() == 0 && result.deletedCount() == 0) {
+                System.out.println("\n✅ Already in sync - no changes needed!");
+            } else {
+                System.out.println("\n✅ Sync complete!");
+            }
+
+            // Show final voice references on server
+            finalRefs = ChatterboxTTS.listVoiceReferences();
+            writeVoiceRefsCache(audioDirectory, finalRefs);
+            if (finalRefs.length > 0) {
+                System.out.println("\n📋 Voice references on server:");
+                for (ChatterboxTTS.VoiceReference ref : finalRefs) {
+                    System.out.println("  - " + ref.filename() + " (" + ref.sizeBytes() + " bytes)");
+                }
+            }
         } else {
-            System.out.println("\n✅ Sync complete!");
-        }
-
-        // Show final voice references on server
-        finalRefs = ChatterboxTTS.listVoiceReferences();
-        if (finalRefs.length > 0) {
-            System.out.println("\n📋 Voice references on server:");
-            for (ChatterboxTTS.VoiceReference ref : finalRefs) {
-                System.out.println("  - " + ref.filename() + " (" + ref.sizeBytes() + " bytes)");
+            // Use cached voice references if available
+            finalRefs = readVoiceRefsCache(audioDirectory);
+            if (finalRefs.length > 0) {
+                System.out.println("\n📋 Voice references (cached):");
+                for (ChatterboxTTS.VoiceReference ref : finalRefs) {
+                    System.out.println("  - " + ref.filename() + " (" + ref.sizeBytes() + " bytes)");
+                }
+            } else {
+                System.out.println("\n(No cached voice references available)");
             }
         }
+    }
 
+    private ChatterboxTTS.VoiceReference[] readVoiceRefsCache(String audioDirectory) {
+        try {
+            File cacheFile = Path.of(audioDirectory).resolve(VOICE_REFERENCES_JSON).toFile();
+            if (cacheFile.exists()) {
+                return objectMapper.readValue(cacheFile, ChatterboxTTS.VoiceReference[].class);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to read voice reference cache: " + e.getMessage());
+        }
+        return new ChatterboxTTS.VoiceReference[0];
     }
 
     /**
@@ -143,5 +172,13 @@ public abstract class AbstractTtsEngine implements TtsEngine {
                 return finalRef.path();
         }
         return null;
+    }
+
+    private void writeVoiceRefsCache(String audioDirectory, ChatterboxTTS.VoiceReference[] refs) {
+        try {
+            objectMapper.writeValue(Path.of(audioDirectory).resolve(VOICE_REFERENCES_JSON).toFile(), refs);
+        } catch (Exception e) {
+            System.err.println("Failed to write voice reference cache: " + e.getMessage());
+        }
     }
 }

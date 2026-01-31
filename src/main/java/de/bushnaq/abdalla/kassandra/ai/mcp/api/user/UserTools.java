@@ -17,12 +17,13 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.user;
 
-import de.bushnaq.abdalla.kassandra.dao.UserDAO;
-import de.bushnaq.abdalla.kassandra.repository.UserRepository;
+import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -40,14 +41,16 @@ public class UserTools {
     private JsonMapper jsonMapper;
 
     @Autowired
-    private UserRepository userRepository;
+    @Qualifier("aiUserApi")
+    private UserApi userApi;
 
     @Tool(description = "Get a list of all users in the system. Returns JSON array of user objects.")
     public String getAllUsers() {
         try {
             log.info("Getting all users");
-            List<UserDAO> users = userRepository.findAll();
-            return jsonMapper.writeValueAsString(users);
+            List<User>    users    = userApi.getAll();
+            List<UserDto> userDtos = users.stream().map(UserDto::from).toList();
+            return jsonMapper.writeValueAsString(userDtos);
         } catch (Exception e) {
             log.error("Error getting all users: {}", e.getMessage());
             return "Error: " + e.getMessage();
@@ -59,15 +62,11 @@ public class UserTools {
             @ToolParam(description = "The user email address") String email) {
         try {
             log.info("Getting user by email: {}", email);
-            return userRepository.findByEmail(email)
-                    .map(user -> {
-                        try {
-                            return jsonMapper.writeValueAsString(user);
-                        } catch (Exception e) {
-                            return "Error serializing user: " + e.getMessage();
-                        }
-                    })
-                    .orElse("User not found with email: " + email);
+            User user = userApi.getByEmail(email);
+            if (user != null) {
+                return jsonMapper.writeValueAsString(UserDto.from(user));
+            }
+            return "User not found with email: " + email;
         } catch (Exception e) {
             log.error("Error getting user by email {}: {}", email, e.getMessage());
             return "Error: " + e.getMessage();
@@ -79,15 +78,11 @@ public class UserTools {
             @ToolParam(description = "The user ID") Long id) {
         try {
             log.info("Getting user by ID: {}", id);
-            return userRepository.findById(id)
-                    .map(user -> {
-                        try {
-                            return jsonMapper.writeValueAsString(user);
-                        } catch (Exception e) {
-                            return "Error serializing user: " + e.getMessage();
-                        }
-                    })
-                    .orElse("User not found with ID: " + id);
+            User user = userApi.getById(id);
+            if (user != null) {
+                return jsonMapper.writeValueAsString(UserDto.from(user));
+            }
+            return "User not found with ID: " + id;
         } catch (Exception e) {
             log.error("Error getting user by ID {}: {}", id, e.getMessage());
             return "Error: " + e.getMessage();
@@ -99,15 +94,11 @@ public class UserTools {
             @ToolParam(description = "The user name") String name) {
         try {
             log.info("Getting user by name: {}", name);
-            return userRepository.findByName(name)
-                    .map(user -> {
-                        try {
-                            return jsonMapper.writeValueAsString(user);
-                        } catch (Exception e) {
-                            return "Error serializing user: " + e.getMessage();
-                        }
-                    })
-                    .orElse("User not found with name: " + name);
+            User user = userApi.getByName(name);
+            if (user != null) {
+                return jsonMapper.writeValueAsString(UserDto.from(user));
+            }
+            return "User not found with name: " + name;
         } catch (Exception e) {
             log.error("Error getting user by name {}: {}", name, e.getMessage());
             return "Error: " + e.getMessage();
@@ -119,8 +110,9 @@ public class UserTools {
             @ToolParam(description = "Partial name to search for") String partialName) {
         try {
             log.info("Searching users by partial name: {}", partialName);
-            List<UserDAO> users = userRepository.findByNameContainingIgnoreCase(partialName);
-            return jsonMapper.writeValueAsString(users);
+            List<User>    users    = userApi.searchByName(partialName);
+            List<UserDto> userDtos = users.stream().map(UserDto::from).toList();
+            return jsonMapper.writeValueAsString(userDtos);
         } catch (Exception e) {
             log.error("Error searching users: {}", e.getMessage());
             return "Error: " + e.getMessage();

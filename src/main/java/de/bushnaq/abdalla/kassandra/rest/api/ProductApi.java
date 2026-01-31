@@ -24,11 +24,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.ErrorResponseException;
 import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProductApi extends AbstractApi {
@@ -123,15 +125,22 @@ public class ProductApi extends AbstractApi {
      * Get a product by its name (case-insensitive, exact match).
      * Returns null if not found.
      */
-    public Product getByName(String name) {
-        ResponseEntity<Product> response = executeWithErrorHandling(() -> restTemplate.exchange(
-                getBaseUrl() + "/product/by-name/{name}",
-                HttpMethod.GET,
-                createHttpEntity(),
-                Product.class,
-                name
-        ));
-        return response.getBody();
+    public Optional<Product> getByName(String name) {
+        try {
+            ResponseEntity<Product> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/product/by-name/{name}",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    Product.class,
+                    name
+            ));
+            return Optional.of(response.getBody());
+        } catch (ErrorResponseException e) {
+            if (e.getStatusCode().value() == 404) {
+                return Optional.empty();
+            }
+            throw e;
+        }
     }
 
     public Product persist(Product product) {

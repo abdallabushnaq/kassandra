@@ -24,7 +24,7 @@ import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
  * Implementations must return a WAV byte array for the provided input.
  */
 public interface TtsEngine {
-    void logSyncResult(SyncResult result) throws Exception;
+    void logSyncResult(String audioDirectory, SyncResult result) throws Exception;
 
     SyncResult syncVoiceReferences(String localVoicesDir) throws Exception;
 

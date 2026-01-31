@@ -97,6 +97,7 @@ public class SprintTools {
         try {
             ToolActivityContextHolder.reportActivity("Getting all sprints");
             List<Sprint> sprints = sprintApi.getAll();
+            ToolActivityContextHolder.reportActivity("Found " + sprints.size() + " sprints.");
             List<SprintDto> sprintDtos = sprints.stream()
                     .map(SprintDto::from)
                     .collect(Collectors.toList());
@@ -113,6 +114,7 @@ public class SprintTools {
         try {
             ToolActivityContextHolder.reportActivity("Getting all sprints for feature " + featureId);
             List<Sprint> sprints = sprintApi.getAll(featureId);
+            ToolActivityContextHolder.reportActivity("Found " + sprints.size() + " sprints.");
             List<SprintDto> sprintDtos = sprints.stream()
                     .map(SprintDto::from)
                     .collect(Collectors.toList());

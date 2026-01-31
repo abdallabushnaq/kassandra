@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.introduction;
 import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
+import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -94,6 +95,13 @@ public class KassandraIntroductionVideo extends AbstractKeycloakUiTestUtil {
     private             VersionListViewTester      versionListViewTester;
     private             String                     versionName;
 
+    private void approveAiPlan() {
+        //assuming the ai has a question
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "yes");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        waitForAi();
+    }
+
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
@@ -122,24 +130,80 @@ public class KassandraIntroductionVideo extends AbstractKeycloakUiTestUtil {
         //---------------------------------------------------------------------------------------
         logHeader("Kassandra Page");
         //---------------------------------------------------------------------------------------
+
+//        paul.narrate(NORMAL, "We can manage users using kassandra ai.").pause();
+//        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "List all products with their versions and features in a table so that every row has only one feature.");
+//        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+//        paul.narrate(NORMAL, "As you can see, kassandra has access to all information within the server.").pause();
+//        waitForAi();
+//        seleniumHandler.waitUntilBrowserClosed(5000);
+
+
+//        seleniumHandler.setEnabled(false);
+
         paul.narrate(NORMAL, "Kassandra has a built in ai that can help you with your daily activities.").pause();
         paul.narrate(NORMAL, "Lets take a look what we can do.").pause();
         seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Hi");
         seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-
         waitForAi();
 
-
+        paul.narrate(NORMAL, "Lets ask fro something a little bit more complex involving reformatting.").pause();
         seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "List all products with their versions and features in a table so that every row has only one feature.");
         seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
         paul.narrate(NORMAL, "As you can see, kassandra has access to all information within the server.").pause();
-
         waitForAi();
+
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Add a new product with the name Andromsda.");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        paul.narrate(NORMAL, "As you can see, kassandra does nto have only read access. I however mistyped the name of the product. Lets ask Kassandra to fix that.").pause();
+        waitForAi();
+        if (productApi.getByName("Andromeda").isPresent()) {
+            paul.narrate(NORMAL, "Kassandra fixed the type for me, I was going to ak it to fix it, but i no longer need to do so.").pause();
+        }
+        if (productApi.getByName("Andromsda").isEmpty()) {
+            approveAiPlan();//assuming the ai has a question
+        }
+
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please fix the typo in the product.");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        waitForAi();
+        if (productApi.getByName("Andromeda").isEmpty()) {
+            approveAiPlan();//assuming the ai has a question
+        }
+
+        paul.narrate(NORMAL, "Lets undo that.").pause();
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please delete the product you created.");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        waitForAi();
+        if (productApi.getByName("Andromeda").isPresent()) {
+            approveAiPlan();//assuming the ai has a question
+        }
+
+        paul.narrate(NORMAL, "Lets try something a little bit more complex.").pause();
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please rename all versions by removing the last digit.");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        waitForAi();
+        for (Version version : versionApi.getAll()) {
+            if (version.getName().split("\\.").length == 3) {
+                approveAiPlan();//assuming the ai has a question
+                break;
+            }
+        }
+
+        paul.narrate(NORMAL, "Lets see if Kassandra can remember what it did.").pause();
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Can you rename the versions back how they where?");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        waitForAi();
+        for (Version version : versionApi.getAll()) {
+            if (version.getName().split("\\.").length == 2) {
+                approveAiPlan();//assuming the ai has a question
+                break;
+            }
+        }
 
         seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "List all sprints in a table.");
         seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
         paul.narrate(NORMAL, "Kassandra knows about your sprints and can help you identify problematic sprints that need management attention.").pause();
-
         waitForAi();
 
         paul.pauseIfSilent(5000);
