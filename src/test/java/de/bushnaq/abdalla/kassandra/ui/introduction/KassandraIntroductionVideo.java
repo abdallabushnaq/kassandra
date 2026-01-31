@@ -159,16 +159,18 @@ public class KassandraIntroductionVideo extends AbstractKeycloakUiTestUtil {
         waitForAi();
         if (productApi.getByName("Andromeda").isPresent()) {
             paul.narrate(NORMAL, "Kassandra fixed the type for me, I was going to ak it to fix it, but i no longer need to do so.").pause();
-        }
-        if (productApi.getByName("Andromsda").isEmpty()) {
-            approveAiPlan();//assuming the ai has a question
-        }
+        } else {
+            if (productApi.getByName("Andromsda").isEmpty()) {
+                approveAiPlan();//assuming the ai has a question
+            }
+            paul.narrate(NORMAL, "Kassandra fixed the typo for me, I was going to ak it to fix it, but i no longer need to do so.").pause();
+            seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please fix the typo in the product.");
+            seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+            waitForAi();
+            if (productApi.getByName("Andromeda").isEmpty()) {
+                approveAiPlan();//assuming the ai has a question
+            }
 
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please fix the typo in the product.");
-        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-        waitForAi();
-        if (productApi.getByName("Andromeda").isEmpty()) {
-            approveAiPlan();//assuming the ai has a question
         }
 
         paul.narrate(NORMAL, "Lets undo that.").pause();
@@ -191,7 +193,7 @@ public class KassandraIntroductionVideo extends AbstractKeycloakUiTestUtil {
         }
 
         paul.narrate(NORMAL, "Lets see if Kassandra can remember what it did.").pause();
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Can you rename the versions back how they where?");
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Can you rename all versions back how they where before?");
         seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
         waitForAi();
         for (Version version : versionApi.getAll()) {
