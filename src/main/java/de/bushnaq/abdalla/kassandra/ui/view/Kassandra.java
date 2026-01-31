@@ -47,12 +47,12 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * AI Assistant View - Admin interface for interacting with the AI assistant
  */
-@Route(value = "ai", layout = MainLayout.class)
-@PageTitle("AI Assistant")
-@Menu(order = 10, icon = "vaadin:brain", title = "AI Assistant")
+@Route(value = "kassandra", layout = MainLayout.class)
+@PageTitle("Kassandra")
+@Menu(order = 10, icon = "vaadin:brain", title = "Kassandra")
 @RolesAllowed("ADMIN")
 @Slf4j
-public class AiAssistant extends VerticalLayout implements AfterNavigationObserver {
+public class Kassandra extends VerticalLayout implements AfterNavigationObserver {
 
     public static final String                 AI_CLEAR_BUTTON   = "ai-clear-button";
     public static final String                 AI_QUERY_INPUT    = "ai-query-input";
@@ -72,7 +72,7 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
     private final       Button                 submitButton;
     private final       UserApi                userApi;
 
-    public AiAssistant(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi) {
+    public Kassandra(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi) {
         this.aiAssistantService = aiAssistantService;
         this.mcpAuthProvider    = mcpAuthProvider;
         this.userApi            = userApi;
@@ -254,7 +254,7 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
 
     private void addWelcomeMessageWithTools() {
         String toolsList = aiAssistantService.getAvailableTools();
-        String welcomeMessage = "👋 Hello! I'm your AI assistant. Ask me anything about your system data.\n\n" +
+        String welcomeMessage = "👋 Hello! I'm Kassandra. Ask me anything about your system data.\n\n" +
                 "📋 Available API Tools:\n" + toolsList;
         addSystemMessage(welcomeMessage);
     }
@@ -265,7 +265,7 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();
-                        mainLayout.getBreadcrumbs().addItem("AI Assistant", AiAssistant.class);
+                        mainLayout.getBreadcrumbs().addItem("Kassandra", Kassandra.class);
                     }
                 });
         // Cache the current user for use in message rendering
@@ -328,7 +328,7 @@ public class AiAssistant extends VerticalLayout implements AfterNavigationObserv
                 break;
             case "ai":
                 messageDiv.addClassNames(LumoUtility.Background.SUCCESS_10);
-                icon.setText("🤖 AI: ");
+                icon.setText("🤖 Kassandra: ");
                 icon.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
                 break;
             case "system":

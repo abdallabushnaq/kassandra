@@ -1158,6 +1158,18 @@ class SeleniumHandler {
         });
     }
 
+    public void waitForElementToBeEnabled(String id) {
+        log.trace("Waiting for {} to become enabled.", id);
+        waitUntil(driver -> {
+            try {
+                WebElement element = driver.findElement(By.id(id));
+                return element.getAttribute("disabled") == null;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+    }
+
     /**
      * Wait for an element to become interactable (enabled and visible)
      * This is useful for elements like ComboBoxes that may be disabled initially
