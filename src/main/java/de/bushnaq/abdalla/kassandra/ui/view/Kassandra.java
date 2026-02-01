@@ -225,7 +225,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
         add(mainContent);
 
         // Add initial welcome message with available tools
-//        addWelcomeMessageWithTools();
+        addWelcomeMessageWithTools();
     }
 
     private void addAiMessage(String message) {
@@ -253,9 +253,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
     }
 
     private void addWelcomeMessageWithTools() {
-        String toolsList = aiAssistantService.getAvailableTools();
-        String welcomeMessage = "👋 Hello! I'm Kassandra. Ask me anything about your system data.\n\n" +
-                "📋 Available API Tools:\n" + toolsList;
+        String welcomeMessage = "👋 Hello! I'm Kassandra powered by " + aiAssistantService.getModelName() + ". Ask me anything about your system data.";
         addSystemMessage(welcomeMessage);
     }
 

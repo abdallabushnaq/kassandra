@@ -28,6 +28,7 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,6 +80,38 @@ public class AiAssistantService {
     }
 
     /**
+     * Extract thinking/reasoning process from ChatResponse.
+     * For reasoning models like DeepSeek-R1, this extracts the thinking tokens.
+     */
+    private String extractThinkingProcess(ChatResponse chatResponse) {
+        try {
+            // Try to get thinking from metadata
+            Object thinking = chatResponse.getMetadata().get("thinking");
+            if (thinking != null) {
+                return thinking.toString();
+            }
+
+            // Some models include thinking in the raw content between special tags
+            String rawContent = chatResponse.getResult().getOutput().getText();
+            if (rawContent != null) {
+                // Check for <think> tags (DeepSeek-R1 format)
+                if (rawContent.contains("<think>") && rawContent.contains("</think>")) {
+                    int startIdx = rawContent.indexOf("<think>");
+                    int endIdx   = rawContent.indexOf("</think>") + 8;
+                    if (startIdx >= 0 && endIdx > startIdx) {
+                        return rawContent.substring(startIdx + 7, endIdx - 8);
+                    }
+                }
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.debug("Could not extract thinking process: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Get the activity context for a conversation (for UI streaming).
      * Always returns a context, creating and storing a new one if needed.
      */
@@ -107,6 +140,11 @@ public class AiAssistantService {
             }
         }
         return sb.toString();
+    }
+
+    public String getModelName() {
+        String modelName = chatModel.getDefaultOptions().getModel();
+        return modelName != null ? modelName : "default";
     }
 
     /**
@@ -177,5 +215,77 @@ public class AiAssistantService {
         } finally {
             ToolActivityContextHolder.clear();
         }
+    }
+
+    /**
+     * Process a user query using the AI assistant with Spring AI native tool calling.
+     * Returns the full ChatResponse which includes metadata and thinking process for reasoning models.
+     *
+     * @param userQuery      The user's query
+     * @param conversationId Unique identifier for this conversation session
+     * @return QueryResult containing both the thinking process and final content
+     */
+    public QueryResult processQueryWithThinking(String userQuery, String conversationId) {
+        log.info("=== Starting AI query processing (with thinking) ===");
+
+        // Log model information
+        try {
+            String modelName = chatModel.getDefaultOptions().getModel();
+            log.info("Using LLM Model: {}", modelName != null ? modelName : "default");
+        } catch (Exception e) {
+            log.debug("Could not determine model name: {}", e.getMessage());
+        }
+
+        log.info("User query: {}", userQuery);
+        log.info("Conversation ID: {}", conversationId);
+
+        // Get or create the ChatMemory for this conversation
+        ChatMemory chatMemory = getOrCreateMemory(conversationId);
+
+        // Create MessageChatMemoryAdvisor with conversation ID
+        MessageChatMemoryAdvisor memoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory)
+                .conversationId(conversationId)
+                .build();
+
+        // Create ChatClient with:
+        // - System prompt defining the assistant's role
+        // - Memory advisor for conversation history
+        // - Tool beans with @Tool annotated methods
+        ChatClient chatClient = ChatClient.builder(chatModel)
+                .defaultSystem(SYSTEM_PROMPT)
+                .defaultAdvisors(memoryAdvisor)
+                .defaultTools(productTools, userTools, versionTools, featureTools, sprintTools)
+                .build();
+
+        try {
+            log.info("Calling LLM via ChatClient with native Spring AI tool support...");
+            ChatResponse chatResponse = chatClient.prompt()
+                    .user(userQuery)
+                    .call()
+                    .chatResponse();  // Get full ChatResponse instead of just content
+
+            String content  = chatResponse.getResult().getOutput().getText();
+            String thinking = extractThinkingProcess(chatResponse);
+
+            log.info("=== AI query processing complete ===");
+            log.info("Final response length: {} characters", content != null ? content.length() : 0);
+            if (thinking != null && !thinking.isEmpty()) {
+                log.info("Thinking process length: {} characters", thinking.length());
+            }
+
+            return new QueryResult(content, thinking);
+        } finally {
+            ToolActivityContextHolder.clear();
+        }
+    }
+
+    /**
+     * Set the chat model. Useful for testing with different models.
+     *
+     * @param chatModel The OllamaChatModel to use
+     */
+    public void setChatModel(OllamaChatModel chatModel) {
+        this.chatModel = chatModel;
+        log.debug("Chat model updated");
     }
 }
