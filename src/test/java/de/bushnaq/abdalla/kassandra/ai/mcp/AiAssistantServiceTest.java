@@ -32,6 +32,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaChatOptions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -56,8 +57,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests are based on scenarios from KassandraIntroductionVideo.
  * <table>
  * <tr><td>atlas/intersync-gemma-7b-instruct-function-calling:latest</td><td>...</td></tr>
- * <tr><td>openthinker:7b</td><td>...</td></tr>
- * <tr><td>ministral-3:8b</td><td>fails many tests</td></tr>
+ * <tr><td>openthinker:7b</td><td>does not support tools</td></tr>
+ * <tr><td>ministral-3:8b</td><td>fails one test</td></tr>
  * <tr><td>deepseek-r1:8b</td><td>does not support tools</td></tr>
  * <tr><td>deepseek-coder:latest</td><td>does not support tools</td></tr>
  * <tr><td>mistral-nemo</td><td>does not support tools</td></tr>
@@ -85,7 +86,8 @@ public class AiAssistantServiceTest extends AbstractUiTestUtil {
     private static final String             ANSI_RESET           = "\u001B[0m";    // Declaring ANSI_RESET so that we can reset the color
     private static final String             ANSI_YELLOW          = "\u001B[33m";
     private static final String             TEST_CONVERSATION_ID = "test-conversation-id";
-    private static final String             TEST_MODEL_NAME      = "openthinker:7b";
+    private static final String             TEST_MODEL_NAME      = "atlas/intersync-gemma-7b-instruct-function-calling:latest";
+    @Autowired
     private              AiAssistantService aiAssistantService;
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
@@ -122,7 +124,7 @@ public class AiAssistantServiceTest extends AbstractUiTestUtil {
      * This runs before each test method.
      */
     @BeforeEach
-    public void setupTestModel() {
+    protected void setupTestModel() {
         log.info("{}=== Configuring test model: {} ==={}", ANSI_BLUE, TEST_MODEL_NAME, ANSI_RESET);
 
         // Create a custom OllamaChatModel with the test model
@@ -144,190 +146,6 @@ public class AiAssistantServiceTest extends AbstractUiTestUtil {
 
         log.info("{}✓ Test model configured successfully{}", ANSI_GREEN, ANSI_RESET);
     }
-
-    @ParameterizedTest
-    @MethodSource("listRandomCases")
-    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
-    public void testAddProduct(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        init(randomCase, testInfo);
-        {
-            processQuery("Add a new product with the name Andromsda.");
-            assertTrue(productApi.getByName("Andromsda").isPresent(), "Product should be created");
-        }
-    }
-
-    @ParameterizedTest
-    @MethodSource("listRandomCases")
-    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
-    public void testAddProductWithTypo(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        init(randomCase, testInfo);
-
-        {
-            processQuery("Add a new product with the name Andromsda.");
-            assertTrue(productApi.getByName("Andromsda").isPresent(), "Product should be created");
-        }
-
-        {
-            processQuery("Please fix the typo in the product you created to Andromeda.");
-            assertTrue(productApi.getByName("Andromeda").isPresent(), "Product should be renamed");
-            assertTrue(productApi.getByName("Andromsda").isEmpty(), "Mistyped product should not exist");
-        }
-    }
-
-    @Test
-    @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void testClearConversation() {
-        // Setup: Add products
-        addRandomProducts(1);
-
-        // First conversation
-        String response1 = processQuery("List all products.");
-
-        // Clear conversation
-        aiAssistantService.clearConversation(TEST_CONVERSATION_ID);
-
-        // Try to reference previous context - should not remember
-        String response2 = processQuery("What did I ask you before?");
-        log.info("AI Response after clearing conversation: {}", response2);
-    }
-
-    @Test
-    @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void testConversationMemory() {
-        // Test that the AI remembers previous context
-
-        // First query: Create a product
-        String response1 = processQuery("Add a new product called TestMemory.");
-
-        // Second query: Reference the product without naming it
-        String response2 = processQuery("What is the name of the product you just created?");
-
-        // The response should reference "TestMemory" or similar
-        log.info("AI Response about created product: {}", response2);
-
-        // Clean up
-        productApi.getByName("TestMemory").ifPresent(p -> productApi.deleteById(p.getId()));
-    }
-
-    @ParameterizedTest
-    @MethodSource("listRandomCases")
-    @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void testDeleteCreatedProduct(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        init(randomCase, testInfo);
-        processQuery("Add a new product with the name Andromeda.");
-
-        // Wait for product to be created
-        Optional<Product> product = productApi.getByName("Andromeda");
-        assertTrue(product.isPresent(), "Product should be created before deletion test");
-
-        processQuery("Please delete the product you created.");
-
-        // Verify the product was deleted
-        Optional<Product> deletedProduct = productApi.getByName("Andromeda");
-        assertFalse(deletedProduct.isPresent(), "Product 'Andromeda' should be deleted");
-
-    }
-
-    @ParameterizedTest
-    @MethodSource("listRandomCases")
-    @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void testListAllSprints(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        init(randomCase, testInfo);
-
-        // Test query: "List all sprints in a table."
-        String response = processQuery("List all sprints in a table.");
-
-        // Verify that the response contains sprint information
-        List<Sprint> allSprints = sprintApi.getAll();
-        assertFalse(allSprints.isEmpty(), "Should have sprints in the system");
-
-//        log.info("AI Response to list sprints: {}", response);
-//        log.info("Total sprints in system: {}", allSprints.size());
-    }
-
-    @ParameterizedTest
-    @MethodSource("listRandomCases")
-    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
-    public void testListProductsWithVersionsAndFeatures(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        init(randomCase, testInfo);
-
-        String response = processQuery("List all products with their versions and features in a table so that every row has only one feature.");
-
-        List<Product> allProducts = productApi.getAll();
-        log.info("Total products in system: {}", allProducts.size());
-        List<Version> allVersions = versionApi.getAll();
-        log.info("Total versions in system: {}", allVersions.size());
-        List<Feature> allFeatures = featureApi.getAll();
-        log.info("Total features in system: {}", allFeatures.size());
-        allProducts.forEach(product -> assertTrue(response.toLowerCase(Locale.ROOT).contains(product.getName().toLowerCase()), "Product name missing: " + product.getName()));
-        allVersions.forEach(version -> assertTrue(response.toLowerCase(Locale.ROOT).contains(version.getName().toLowerCase()), "Version name missing: " + version.getName()));
-        allFeatures.forEach(feature -> assertTrue(response.toLowerCase(Locale.ROOT).contains(feature.getName().toLowerCase()), "Feature name missing: " + feature.getName()));
-    }
-
-    @ParameterizedTest
-    @MethodSource("listRandomCases")
-    @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void testRenameAllVersionsAndBack(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        init(randomCase, testInfo);
-        List<Version> originalVersions = versionApi.getAll();
-        {
-            processQuery("Please rename all versions by removing the last digit.");
-
-            // Verify versions were renamed (e.g., "1.0.0" -> "1.0")
-            List<Version> renamedVersions = versionApi.getAll();
-            assertEquals(originalVersions.size(), renamedVersions.size(), "Version count should remain the same");
-
-            for (int i = 0; i < originalVersions.size(); i++) {
-                Version originalVersion = originalVersions.get(i);
-                String  originalName    = originalVersion.getName();
-                String  expectedRenamed = originalName.substring(0, originalName.lastIndexOf('.'));
-                Version renamedVersion = renamedVersions.stream()
-                        .filter(v -> v.getId().equals(originalVersion.getId()))
-                        .findFirst()
-                        .orElseThrow(() -> new AssertionError("Version with ID " + originalVersion.getId() + " not found"));
-                assertEquals(expectedRenamed, renamedVersion.getName(), "Version name should be renamed correctly for version ID: " + originalVersion.getId());
-            }
-        }
-        {
-            List<Version> renamedVersions = versionApi.getAll();
-            processQuery("Can you rename all versions back how they where before?");
-            assertEquals(originalVersions.size(), renamedVersions.size(), "Version count should remain the same");
-            for (int i = 0; i < originalVersions.size(); i++) {
-                Version originalVersion = originalVersions.get(i);
-                String  originalName    = originalVersion.getName();
-                String  expectedRenamed = originalName;
-                Version renamedVersion = renamedVersions.stream()
-                        .filter(v -> v.getId().equals(originalVersion.getId()))
-                        .findFirst()
-                        .orElseThrow(() -> new AssertionError("Version with ID " + originalVersion.getId() + " not found"));
-                assertEquals(expectedRenamed, renamedVersion.getName(), "Version name should be renamed correctly for version ID: " + originalVersion.getId());
-            }
-        }
-    }
-
-//    @Test
-//    @WithMockUser(username = "admin-user", roles = "ADMIN")
-//    public void testRestoreVersionNames() {
-//        // Setup: Create products with versions and rename them
-//        addRandomProducts(2);
-//
-//        processQuery("Please rename all versions by removing the last digit.");
-//
-//        // Test query: "Can you rename all versions back how they where before?"
-//        String response = processQuery("Can you rename all versions back how they where before?");
-//
-//        assertNotNull(response, "Response should not be null");
-//
-//        // Verify versions were restored (should have 3 parts again)
-//        List<Version> restoredVersions = versionApi.getAll();
-//
-//        // Check if at least some versions have 3 parts
-//        boolean hasRestoredVersions = restoredVersions.stream()
-//                .anyMatch(v -> v.getName() != null && v.getName().split("\\.").length == 3);
-//
-//        log.info("AI Response to restore versions: {}", response);
-//        log.info("Has restored versions (3 parts): {}", hasRestoredVersions);
-//    }
 
     @Test
     @Order(1)
@@ -363,6 +181,176 @@ public class AiAssistantServiceTest extends AbstractUiTestUtil {
                 "Should contain Sprint tools");
 
         log.info("Available AI Tools:\n{}", availableTools);
+    }
+
+    @Test
+    @Order(3)
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void test_03_ClearConversation() {
+        // Setup: Add products
+        addRandomProducts(1);
+
+        // First conversation
+        String response1 = processQuery("List all products.");
+
+        // Clear conversation
+        aiAssistantService.clearConversation(TEST_CONVERSATION_ID);
+
+        // Try to reference previous context - should not remember
+        String response2 = processQuery("What did I ask you before?");
+        log.info("AI Response after clearing conversation: {}", response2);
+    }
+
+    @Test
+    @Order(4)
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void test_04_ConversationMemory() {
+        // Test that the AI remembers previous context
+
+        // First query: Create a product
+        String response1 = processQuery("Add a new product called TestMemory.");
+
+        // Second query: Reference the product without naming it
+        String response2 = processQuery("What is the name of the product you just created?");
+
+        // The response should reference "TestMemory" or similar
+        log.info("AI Response about created product: {}", response2);
+
+        // Clean up
+        productApi.getByName("TestMemory").ifPresent(p -> productApi.deleteById(p.getId()));
+    }
+
+    @Order(10)
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
+    public void test_10_AddProduct(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        {
+            processQuery("Add a new product with the name Andromsda.");
+            assertTrue(productApi.getByName("Andromsda").isPresent(), "Product should be created");
+        }
+    }
+
+    @Order(11)
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
+    public void test_11_AddProductWithTypoAndRename(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+
+        {
+            processQuery("Add a new product with the name Andromsda.");
+            assertTrue(productApi.getByName("Andromsda").isPresent(), "Product should be created");
+        }
+
+        {
+            processQuery("Please fix the typo in the product you created to Andromeda.");
+            assertTrue(productApi.getByName("Andromeda").isPresent(), "Product should be renamed");
+            assertTrue(productApi.getByName("Andromsda").isEmpty(), "Mistyped product should not exist");
+        }
+    }
+
+    @Order(12)
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void test_12_DeleteCreatedProduct(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        processQuery("Add a new product with the name Andromeda.");
+
+        // Wait for product to be created
+        Optional<Product> product = productApi.getByName("Andromeda");
+        assertTrue(product.isPresent(), "Product should be created before deletion test");
+
+        processQuery("Please delete the product you created.");
+
+        // Verify the product was deleted
+        Optional<Product> deletedProduct = productApi.getByName("Andromeda");
+        assertFalse(deletedProduct.isPresent(), "Product 'Andromeda' should be deleted");
+
+    }
+
+    @Order(13)
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void test_13_RenameAllVersionsAndBack(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        List<Version> originalVersions = versionApi.getAll();
+        {
+            processQuery("Please rename all versions by removing the last digit.");
+
+            // Verify versions were renamed (e.g., "1.0.0" -> "1.0")
+            List<Version> renamedVersions = versionApi.getAll();
+            assertEquals(originalVersions.size(), renamedVersions.size(), "Version count should remain the same");
+
+            for (int i = 0; i < originalVersions.size(); i++) {
+                Version originalVersion = originalVersions.get(i);
+                String  originalName    = originalVersion.getName();
+                String  expectedRenamed;
+                if (originalName.lastIndexOf('.') == -1) {
+                    expectedRenamed = originalName;
+                } else {
+                    expectedRenamed = originalName.substring(0, originalName.lastIndexOf('.'));
+                }
+                Version renamedVersion = renamedVersions.stream()
+                        .filter(v -> v.getId().equals(originalVersion.getId()))
+                        .findFirst()
+                        .orElseThrow(() -> new AssertionError("Version with ID " + originalVersion.getId() + " not found"));
+                assertEquals(expectedRenamed, renamedVersion.getName(), "Version name should be renamed correctly for version ID: " + originalVersion.getId());
+            }
+        }
+        {
+            processQuery("Can you rename all versions back how they where before you changed them?");
+            List<Version> renamedVersions = versionApi.getAll();
+            assertEquals(originalVersions.size(), renamedVersions.size(), "Version count should remain the same");
+            for (int i = 0; i < originalVersions.size(); i++) {
+                Version originalVersion = originalVersions.get(i);
+                String  originalName    = originalVersion.getName();
+                String  expectedRenamed = originalName;
+                Version renamedVersion = renamedVersions.stream()
+                        .filter(v -> v.getId().equals(originalVersion.getId()))
+                        .findFirst()
+                        .orElseThrow(() -> new AssertionError("Version with ID " + originalVersion.getId() + " not found"));
+                assertEquals(expectedRenamed, renamedVersion.getName(), "Version name should be renamed correctly for version ID: " + originalVersion.getId());
+            }
+        }
+    }
+
+    @Order(14)
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
+    public void test_14_ListProductsWithVersionsAndFeatures(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+
+        String response = processQuery("List all products with their versions and features in a table so that every row has only one feature.");
+
+        List<Product> allProducts = productApi.getAll();
+        log.info("Total products in system: {}", allProducts.size());
+        List<Version> allVersions = versionApi.getAll();
+        log.info("Total versions in system: {}", allVersions.size());
+        List<Feature> allFeatures = featureApi.getAll();
+        log.info("Total features in system: {}", allFeatures.size());
+        allProducts.forEach(product -> assertTrue(response.toLowerCase(Locale.ROOT).contains(product.getName().toLowerCase()), "Product name missing: " + product.getName()));
+        allVersions.forEach(version -> assertTrue(response.toLowerCase(Locale.ROOT).contains(version.getName().toLowerCase()), "Version name missing: " + version.getName()));
+        allFeatures.forEach(feature -> assertTrue(response.toLowerCase(Locale.ROOT).contains(feature.getName().toLowerCase()), "Feature name missing: " + feature.getName()));
+    }
+
+    @Order(15)
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void test_15_ListAllSprints(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+
+        // Test query: "List all sprints in a table."
+        String response = processQuery("List all sprints in a table.");
+
+        // Verify that the response contains sprint information
+        List<Sprint> allSprints = sprintApi.getAll();
+        allSprints.forEach(sprint -> assertTrue(response.toLowerCase(Locale.ROOT).contains(sprint.getName().toLowerCase()), "Sprint name missing: " + sprint.getName()));
     }
 
 }
