@@ -98,9 +98,9 @@ public class ManagingUserGroupsIntroductionVideo extends AbstractKeycloakUiTestU
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         HumanizedSeleniumHandler.setHumanize(true);
 
-        User user1 = userApi.getByEmail("kristen.hubbell@kassandra.org");
-        User user2 = userApi.getByEmail("claudine.fick@kassandra.org");
-        User user3 = userApi.getByEmail("randy.asmus@kassandra.org");
+        User user1 = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        User user2 = userApi.getByEmail("claudine.fick@kassandra.org").get();
+        User user3 = userApi.getByEmail("randy.asmus@kassandra.org").get();
 
 
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);

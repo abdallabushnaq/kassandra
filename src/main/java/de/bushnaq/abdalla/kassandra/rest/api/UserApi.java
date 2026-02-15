@@ -24,11 +24,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.ErrorResponseException;
 import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserApi extends AbstractApi {
@@ -123,15 +125,22 @@ public class UserApi extends AbstractApi {
         return response.getBody();
     }
 
-    public User getByEmail(String email) {
-        ResponseEntity<User> response = executeWithErrorHandling(() -> restTemplate.exchange(
-                getBaseUrl() + "/user/email/{email}",
-                HttpMethod.GET,
-                createHttpEntity(),
-                User.class,
-                email
-        ));
-        return response.getBody();
+    public Optional<User> getByEmail(String email) {
+        try {
+            ResponseEntity<User> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/user/email/{email}",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    User.class,
+                    email
+            ));
+            return Optional.of(response.getBody());
+        } catch (ErrorResponseException e) {
+            if (e.getStatusCode().value() == 404) {
+                return Optional.empty();
+            }
+            throw e;
+        }
     }
 
     public User getById(Long id) {

@@ -96,7 +96,7 @@ public class VersionTools {
         }
     }
 
-    @Tool(description = "Get a list of all versions accessible to the current user (Admin sees all). Good if you need to retrieve versions for many products. " + RETURNS_VERSION_ARRAY_JSON)
+    @Tool(description = "Get a list of all versions accessible to the current user (Admin sees all). Good if you need to retrieve versions for all products. " + RETURNS_VERSION_ARRAY_JSON)
     public String getAllVersions() {
         try {
             ToolActivityContextHolder.reportActivity("Getting all versions");

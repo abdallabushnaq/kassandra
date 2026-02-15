@@ -114,7 +114,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
         if (userEmail != null) {
             try {
                 // Find user by username using the direct getByName method
-                currentUser = userApi.getByEmail(userEmail);
+                currentUser = userApi.getByEmail(userEmail).get();
             } catch (ResponseStatusException ex) {
                 if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                     // Create a new user since one wasn't found

@@ -71,10 +71,10 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org");
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org");
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org");
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org");
+        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
 
         setUser(roleAdmin);
     }

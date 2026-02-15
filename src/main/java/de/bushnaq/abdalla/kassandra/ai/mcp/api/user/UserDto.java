@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.awt.*;
 import java.time.LocalDate;
 
 /**
@@ -32,6 +33,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDto {
+    private Color     color;
     private String    email;
     private LocalDate firstWorkingDay;
     private Long      id;
@@ -42,10 +44,11 @@ public class UserDto {
     /**
      * Custom constructor for UserDto with explicit parameter order.
      */
-    public UserDto(Long id, String name, String email, String roles, LocalDate firstWorkingDay, LocalDate lastWorkingDay) {
+    public UserDto(Long id, String name, String email, Color color, String roles, LocalDate firstWorkingDay, LocalDate lastWorkingDay) {
         this.id              = id;
         this.name            = name;
         this.email           = email;
+        this.color           = color;
         this.roles           = roles;
         this.firstWorkingDay = firstWorkingDay;
         this.lastWorkingDay  = lastWorkingDay;
@@ -59,6 +62,7 @@ public class UserDto {
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
+                user.getColor(),
                 user.getRoles(),
                 user.getFirstWorkingDay(),
                 user.getLastWorkingDay()
@@ -70,6 +74,7 @@ public class UserDto {
         user.setId(this.id);
         user.setName(this.name);
         user.setEmail(this.email);
+        user.setColor(this.color);
         user.setRoles(this.roles);
         user.setFirstWorkingDay(this.firstWorkingDay);
         user.setLastWorkingDay(this.lastWorkingDay);

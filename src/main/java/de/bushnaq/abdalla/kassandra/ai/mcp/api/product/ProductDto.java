@@ -32,20 +32,31 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductDto {
+    private String         avatarPrompt;
     private OffsetDateTime created;
     private Long           id;
     private String         name;
     private OffsetDateTime updated;
+
+
+    public ProductDto(Long id, String name, OffsetDateTime updated, OffsetDateTime created, String avatarPrompt) {
+        this.id           = id;
+        this.name         = name;
+        this.updated      = updated;
+        this.created      = created;
+        this.avatarPrompt = avatarPrompt;
+    }
 
     public static ProductDto from(Product product) {
         if (product == null) {
             return null;
         }
         return new ProductDto(
-                product.getCreated(),
                 product.getId(),
                 product.getName(),
-                product.getUpdated()
+                product.getCreated(),
+                product.getUpdated(),
+                product.getDefaultAvatarPrompt()
         );
     }
 

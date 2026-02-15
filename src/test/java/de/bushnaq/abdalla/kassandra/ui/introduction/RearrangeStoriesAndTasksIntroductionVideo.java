@@ -274,8 +274,8 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         Feature feature = addFeature(version, featureName);
         Sprint  sprint  = addSprint(feature, sprintName);
 
-        User christopherPaul = userApi.getByEmail("christopher.paul@kassandra.org");
-        User graceMartin     = userApi.getByEmail("grace.martin@kassandra.org");
+        User christopherPaul = userApi.getByEmail("christopher.paul@kassandra.org").get();
+        User graceMartin     = userApi.getByEmail("grace.martin@kassandra.org").get();
         {
             LocalDateTime startDateTime  = LocalDateTime.parse("2025-05-05T08:00");
             Task          startMilestone = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);

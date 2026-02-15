@@ -18,9 +18,14 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,30 +60,53 @@ public class ProductTools {
      * Describes the JSON structure and field meanings.
      * Used in @Tool annotations - must be a compile-time constant.
      */
-    private static final String     PRODUCT_FIELDS             =
+    private static final String                 PRODUCT_FIELDS             =
             "id (number): Unique identifier of the product, used to map versions to a product, " +
                     "name (string): The product name, " +
                     "created (ISO 8601 datetime string): Timestamp when the product was created, " +
-                    "updated (ISO 8601 datetime string): Timestamp when the product was last updated";
-    private static final String     RETURNS_PRODUCT_ARRAY_JSON = "Returns: JSON array of Product objects. Each Product contains: " + PRODUCT_FIELDS;
-    private static final String     RETURNS_PRODUCT_JSON       = "Returns: JSON Product object with fields: " + PRODUCT_FIELDS;
+                    "updated (ISO 8601 datetime string): Timestamp when the product was last updated," +
+                    "avatarPrompt (string): Default avatar prompt for stable-diffusion to generate.";
+    private static final String                 RETURNS_PRODUCT_ARRAY_JSON = "Returns: JSON array of Product objects. Each Product contains: " + PRODUCT_FIELDS;
+    private static final String                 RETURNS_PRODUCT_JSON       = "Returns: JSON Product object with fields: " + PRODUCT_FIELDS;
     @Autowired
-    private              JsonMapper jsonMapper;
-
+    private              JsonMapper             jsonMapper;
     @Autowired
     @Qualifier("aiProductApi")
-    private ProductApi productApi;
+    private              ProductApi             productApi;
+    @Autowired
+    protected            StableDiffusionService stableDiffusionService;
 
     @Tool(description = "Create a new product (requires USER or ADMIN role). " + RETURNS_PRODUCT_JSON)
     public String createProduct(
-            @ToolParam(description = "The product name (must be unique)") String name) {
+            @ToolParam(description = "The product name (must be unique)") String name,
+            @ToolParam(description = "(Optional) The product avatar stable-diffusion prompt. If null or empty, a default prompt will be generated.") String avatarPrompt) {
         ToolActivityContextHolder.reportActivity("Creating product with name: " + name);
         try {
             Product product = new Product();
             product.setName(name);
+
+            if (avatarPrompt == null || avatarPrompt.isEmpty()) {
+                avatarPrompt = product.getDefaultAvatarPrompt();
+            }
+            {
+                GeneratedImageResult image     = null;
+                long                 startTime = System.currentTimeMillis();
+                if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+                    try {
+                        image = generateProductAvatar(name);
+                    } catch (StableDiffusionException e) {
+                        System.err.println("Failed to generate image for product " + name + ": " + e.getMessage());
+                        image = stableDiffusionService.generateDefaultAvatar("cube");
+                    }
+                } else {
+                    log.warn("Stable Diffusion not available, using default avatar for product: " + name);
+                    image = stableDiffusionService.generateDefaultAvatar("cube");
+                }
+                product.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+            }
             Product    savedProduct = productApi.persist(product);
             ProductDto productDto   = ProductDto.from(savedProduct);
-            ToolActivityContextHolder.reportActivity("Product created: " + productDto.getName());
+            ToolActivityContextHolder.reportActivity("created product: " + productDto.getName() + ".");
             return jsonMapper.writeValueAsString(productDto);
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error creating product: " + e.getMessage());
@@ -90,10 +118,10 @@ public class ProductTools {
             "Returns: Success message (string) confirming deletion")
     public String deleteProduct(
             @ToolParam(description = "The product ID") Long id) {
-        ToolActivityContextHolder.reportActivity("Deleting product with ID: " + id);
+//        ToolActivityContextHolder.reportActivity("Deleting product with ID: " + id);
         try {
             productApi.deleteById(id);
-            ToolActivityContextHolder.reportActivity("Product deleted: " + id);
+            ToolActivityContextHolder.reportActivity("deleted product: " + id + ".");
             return "Product with ID " + id + " deleted successfully";
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting product: " + e.getMessage());
@@ -101,15 +129,22 @@ public class ProductTools {
         }
     }
 
+    private @NonNull GeneratedImageResult generateProductAvatar(String name) throws StableDiffusionException {
+        String prompt = Product.getDefaultAvatarPrompt(name);
+        log.trace("Generating image for product: " + name + " with prompt: " + prompt);
+        GeneratedImageResult image = stableDiffusionService.generateImageWithOriginal(prompt);
+        return image;
+    }
+
     @Tool(description = "Get a list of all products accessible to the current user (Admin sees all). " + RETURNS_PRODUCT_ARRAY_JSON)
     public String getAllProducts() {
-        ToolActivityContextHolder.reportActivity("Getting all products...");
         try {
             List<Product> products = productApi.getAll();
             ToolActivityContextHolder.reportActivity("Found " + products.size() + " products.");
             List<ProductDto> productDtos = products.stream()
                     .map(ProductDto::from)
                     .collect(Collectors.toList());
+            ToolActivityContextHolder.reportActivity("read all products.");
             return jsonMapper.writeValueAsString(productDtos);
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting all products: " + e.getMessage());
@@ -117,18 +152,18 @@ public class ProductTools {
         }
     }
 
-    @Tool(description = "Get a specific product by its ID (requires access or admin role). " + RETURNS_PRODUCT_JSON)
+    @Tool(description = "Get a specific product by its ID. " + RETURNS_PRODUCT_JSON)
     public String getProductById(
             @ToolParam(description = "The product ID") Long id) {
-        ToolActivityContextHolder.reportActivity("Getting product with ID: " + id);
+//        ToolActivityContextHolder.reportActivity("Getting product with ID: " + id);
         try {
             Product product = productApi.getById(id);
             if (product != null) {
-                ToolActivityContextHolder.reportActivity("Product found: " + product.getName());
+                ToolActivityContextHolder.reportActivity("read product : " + product.getName() + ".");
                 ProductDto productDto = ProductDto.from(product);
                 return jsonMapper.writeValueAsString(productDto);
             }
-            ToolActivityContextHolder.reportActivity("Product not found with ID: " + id);
+            ToolActivityContextHolder.reportActivity("failed to find product by ID: " + id + ".");
             return "Product not found with ID: " + id;
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting product by ID: " + e.getMessage());
@@ -136,16 +171,17 @@ public class ProductTools {
         }
     }
 
+    @Tool(description = "Get a specific product by its name. " + RETURNS_PRODUCT_JSON)
     public String getProductByName(String name) {
         ToolActivityContextHolder.reportActivity("Getting product with name: " + name);
         try {
             Optional<Product> product = productApi.getByName(name);
             if (product.isPresent()) {
-                ToolActivityContextHolder.reportActivity("Product found: " + product.get().getName());
+                ToolActivityContextHolder.reportActivity("found product: " + product.get().getName() + ".");
                 ProductDto productDto = ProductDto.from(product.get());
                 return jsonMapper.writeValueAsString(productDto);
             }
-            ToolActivityContextHolder.reportActivity("Product not found with name: " + name);
+            ToolActivityContextHolder.reportActivity("failed to find product by name: " + name + ".");
             return "Product not found with name: " + name;
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting product by name: " + e.getMessage());
@@ -157,17 +193,17 @@ public class ProductTools {
     public String updateProduct(
             @ToolParam(description = "The product ID") Long id,
             @ToolParam(description = "The new product name") String name) {
-        ToolActivityContextHolder.reportActivity("Updating product " + id + " with name: " + name);
+//        ToolActivityContextHolder.reportActivity("Updating product " + id + " with name: " + name);
         try {
             Product product = productApi.getById(id);
             if (product == null) {
-                ToolActivityContextHolder.reportActivity("Product not found with ID: " + id);
+                ToolActivityContextHolder.reportActivity("failed to update product by ID: " + id + ".");
                 return "Product not found with ID: " + id;
             }
             product.setName(name);
             productApi.update(product);
             ProductDto productDto = ProductDto.from(product);
-            ToolActivityContextHolder.reportActivity("Product updated: " + productDto.getName());
+            ToolActivityContextHolder.reportActivity("updated product: " + productDto.getName() + ".");
             return jsonMapper.writeValueAsString(productDto);
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error updating product: " + e.getMessage());

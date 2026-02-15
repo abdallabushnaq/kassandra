@@ -93,8 +93,8 @@ public class ActiveSprintsTest extends AbstractKeycloakUiTestUtil {
         sprint.setStatus(Status.STARTED);
         sprintApi.update(sprint);
 
-        User christopherPaul = userApi.getByEmail("christopher.paul@kassandra.org");
-        User graceMartin     = userApi.getByEmail("grace.martin@kassandra.org");
+        User christopherPaul = userApi.getByEmail("christopher.paul@kassandra.org").get();
+        User graceMartin     = userApi.getByEmail("grace.martin@kassandra.org").get();
 
         // Create a start milestone
         {

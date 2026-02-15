@@ -106,7 +106,7 @@ public class LegacyBacklog extends Main implements BeforeEnterObserver, AfterNav
         // Load current user
         String userEmail = getUserEmail();
         try {
-            loggedInUser = userApi.getByEmail(userEmail);
+            loggedInUser = userApi.getByEmail(userEmail).get();
         } catch (ResponseStatusException e) {
             log.warn("Could not find user with email: {}", userEmail);
         }

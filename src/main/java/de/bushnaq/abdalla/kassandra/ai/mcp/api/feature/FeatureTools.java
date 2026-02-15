@@ -18,9 +18,14 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.feature;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,32 +53,58 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class FeatureTools {
-    private static final String     FEATURE_FIELDS             =
+    private static final String                 FEATURE_FIELDS             =
             "id (number): Unique identifier of the feature, " +
                     "name (string): The feature name, " +
                     "created (ISO 8601 datetime string): Timestamp when the feature was created, " +
                     "updated (ISO 8601 datetime string): Timestamp when the feature was last updated, " +
-                    "versionId (number): The version this feature belongs to";
-    private static final String     RETURNS_FEATURE_ARRAY_JSON = "Returns: JSON array of Feature objects. Each Feature contains: " + FEATURE_FIELDS;
-    private static final String     RETURNS_FEATURE_JSON       = "Returns: JSON Feature object with fields: " + FEATURE_FIELDS;
+                    "versionId (number): The version this feature belongs to, " +
+                    "avatarPrompt (string): Default avatar prompt for stable-diffusion to generate.";
+    private static final String                 RETURNS_FEATURE_ARRAY_JSON = "Returns: JSON array of Feature objects. Each Feature contains: " + FEATURE_FIELDS;
+    private static final String                 RETURNS_FEATURE_JSON       = "Returns: JSON Feature object with fields: " + FEATURE_FIELDS;
     @Autowired
     @Qualifier("aiFeatureApi")
-    private              FeatureApi featureApi;
+    private              FeatureApi             featureApi;
     @Autowired
-    private              JsonMapper jsonMapper;
+    private              JsonMapper             jsonMapper;
+    @Autowired
+    protected            StableDiffusionService stableDiffusionService;
 
     @Tool(description = "Create a new feature for a version(requires USER or ADMIN role). " + RETURNS_FEATURE_JSON)
     public String createFeature(
             @ToolParam(description = "The feature name (must be unique)") String name,
-            @ToolParam(description = "The version ID this feature belongs to") Long versionId) {
+            @ToolParam(description = "The version ID this feature belongs to") Long versionId,
+            @ToolParam(description = "The feature avatar stable-diffusion prompt") String avatarPrompt) {
         try {
             ToolActivityContextHolder.reportActivity("Creating feature with name: " + name + " for version " + versionId);
             Feature feature = new Feature();
             feature.setName(name);
             feature.setVersionId(versionId);
-            Feature    savedFeature = featureApi.persist(feature);
-            FeatureDto featureDto   = FeatureDto.from(savedFeature);
-            return jsonMapper.writeValueAsString(featureDto);
+
+            if (avatarPrompt == null || avatarPrompt.isEmpty()) {
+                avatarPrompt = feature.getDefaultAvatarPrompt();
+            }
+            {
+                GeneratedImageResult image     = null;
+                long                 startTime = System.currentTimeMillis();
+                if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+                    try {
+                        image = generateFeatureAvatar(name);
+                    } catch (StableDiffusionException e) {
+                        System.err.println("Failed to generate image for feature " + name + ": " + e.getMessage());
+                        image = stableDiffusionService.generateDefaultAvatar("lightbulb");
+                    }
+                } else {
+                    log.warn("Stable Diffusion not available, using default avatar for feature: " + name);
+                    image = stableDiffusionService.generateDefaultAvatar("lightbulb");
+                }
+                feature.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+                Feature savedFeature = featureApi.persist(feature);
+                featureApi.updateAvatarFull(savedFeature.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
+                ToolActivityContextHolder.reportActivity("Feature created: " + savedFeature.getName());
+                FeatureDto featureDto = FeatureDto.from(savedFeature);
+                return jsonMapper.writeValueAsString(featureDto);
+            }
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error creating feature: " + e.getMessage());
             return "Error: " + e.getMessage();
@@ -85,8 +116,8 @@ public class FeatureTools {
     public String deleteFeature(
             @ToolParam(description = "The feature ID") Long id) {
         try {
-            ToolActivityContextHolder.reportActivity("Deleting feature with ID: " + id);
             featureApi.deleteById(id);
+            ToolActivityContextHolder.reportActivity("deleted feature with ID: " + id);
             return "Feature deleted successfully with ID: " + id;
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting feature " + id + ": " + e.getMessage());
@@ -94,7 +125,15 @@ public class FeatureTools {
         }
     }
 
-    @Tool(description = "Get a list of all features accessible to the current user (Admin sees all). Good if you need to retrieve features for many versions. " + RETURNS_FEATURE_ARRAY_JSON)
+    private @NonNull GeneratedImageResult generateFeatureAvatar(String name) throws StableDiffusionException {
+        String prompt = Feature.getDefaultAvatarPrompt(name);
+        log.trace("Generating image for feature: " + name + " with prompt: " + prompt);
+        GeneratedImageResult image = stableDiffusionService.generateImageWithOriginal(prompt);
+        return image;
+    }
+
+
+    @Tool(description = "Get a list of all features accessible to the current user (Admin sees all). Good if you need to retrieve features for all versions or all possibel products. " + RETURNS_FEATURE_ARRAY_JSON)
     public String getAllFeatures() {
         try {
             ToolActivityContextHolder.reportActivity("Getting all features");

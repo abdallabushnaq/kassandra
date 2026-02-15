@@ -241,7 +241,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         // Try to get user from database to check for avatar
         if (!userEmail.equals(SecurityUtils.GUEST)) {
             try {
-                userFromDb = userApi.getByEmail(userEmail);
+                userFromDb = userApi.getByEmail(userEmail).get();
             } catch (Exception e) {
                 // User not found or error, will use default avatar
                 userFromDb = null;

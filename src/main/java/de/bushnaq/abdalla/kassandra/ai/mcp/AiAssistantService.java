@@ -28,13 +28,16 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -53,11 +56,13 @@ public class AiAssistantService {
             Use the available tools when needed to fulfill user requests.
             After using tools, provide helpful and concise responses based on the results.
             If you don't need to use any tools, just provide a direct answer.
+            The system is made of a hierarchical structure of a list of Product(s), each product has a list of Version(s), each Version has a list of Feature(s) and each Feature has a list of Sprint(s).
+            This hierarchy is linked together using foreign keys. For example, a Version has a productId to its parent Product, a Feature has a versionId to its parent Version and a Sprint has a featureId to its parent Feature.
             """;
     // Store ToolActivityContext per conversation/session for UI streaming
     private final        Map<String, SessionToolActivityContext> activityContexts     = new ConcurrentHashMap<>();
     @Autowired
-    private              OllamaChatModel                         chatModel;
+    private              ChatModel                               chatModel;
     // Store ChatMemory per conversation/session
     private final        Map<String, ChatMemory>                 conversationMemories = new ConcurrentHashMap<>();
     @Autowired
@@ -85,21 +90,31 @@ public class AiAssistantService {
      */
     private String extractThinkingProcess(ChatResponse chatResponse) {
         try {
+            // Null-safe checks for LMStudio compatibility
+            if (chatResponse == null) {
+                return null;
+            }
+
             // Try to get thinking from metadata
-            Object thinking = chatResponse.getMetadata().get("thinking");
-            if (thinking != null) {
-                return thinking.toString();
+            if (chatResponse.getMetadata() != null) {
+                Object thinking = chatResponse.getMetadata().get("thinking");
+                if (thinking != null) {
+                    return thinking.toString();
+                }
             }
 
             // Some models include thinking in the raw content between special tags
-            String rawContent = chatResponse.getResult().getOutput().getText();
-            if (rawContent != null) {
-                // Check for <think> tags (DeepSeek-R1 format)
-                if (rawContent.contains("<think>") && rawContent.contains("</think>")) {
-                    int startIdx = rawContent.indexOf("<think>");
-                    int endIdx   = rawContent.indexOf("</think>") + 8;
-                    if (startIdx >= 0 && endIdx > startIdx) {
-                        return rawContent.substring(startIdx + 7, endIdx - 8);
+            if (chatResponse.getResult() != null &&
+                    chatResponse.getResult().getOutput() != null) {
+                String rawContent = chatResponse.getResult().getOutput().getText();
+                if (rawContent != null) {
+                    // Check for <think> tags (DeepSeek-R1 format)
+                    if (rawContent.contains("<think>") && rawContent.contains("</think>")) {
+                        int startIdx = rawContent.indexOf("<think>");
+                        int endIdx   = rawContent.indexOf("</think>") + 8;
+                        if (startIdx >= 0 && endIdx > startIdx) {
+                            return rawContent.substring(startIdx + 7, endIdx - 8);
+                        }
                     }
                 }
             }
@@ -264,8 +279,30 @@ public class AiAssistantService {
                     .call()
                     .chatResponse();  // Get full ChatResponse instead of just content
 
-            String content  = chatResponse.getResult().getOutput().getText();
-            String thinking = extractThinkingProcess(chatResponse);
+            // Add defensive null checks for LMStudio compatibility
+            if (chatResponse == null) {
+                log.error("ChatResponse is null - LMStudio returned no response");
+                throw new RuntimeException("LLM returned null response");
+            }
+
+            log.debug("ChatResponse metadata: {}", chatResponse.getMetadata());
+            log.debug("ChatResponse results count: {}", chatResponse.getResults() != null ? chatResponse.getResults().size() : "null");
+
+            if (chatResponse.getResult() == null) {
+                log.error("ChatResponse.getResult() is null - LMStudio response may be malformed");
+                log.error("Full ChatResponse: {}", chatResponse);
+                throw new RuntimeException("LLM response has no result. Check if LMStudio model is loaded and responding correctly.");
+            }
+
+            if (chatResponse.getResult().getOutput() == null) {
+                log.error("ChatResponse.getResult().getOutput() is null");
+                throw new RuntimeException("LLM response result has no output");
+            }
+            List<AssistantMessage.ToolCall> toolCalls    = chatResponse.getResult().getOutput().getToolCalls();
+            ChatGenerationMetadata          metadata     = chatResponse.getResult().getMetadata();
+            String                          finishReason = metadata.getFinishReason();
+            String                          content      = chatResponse.getResult().getOutput().getText();
+            String                          thinking     = extractThinkingProcess(chatResponse);
 
             log.info("=== AI query processing complete ===");
             log.info("Final response length: {} characters", content != null ? content.length() : 0);
@@ -282,9 +319,9 @@ public class AiAssistantService {
     /**
      * Set the chat model. Useful for testing with different models.
      *
-     * @param chatModel The OllamaChatModel to use
+     * @param chatModel The ChatModel to use
      */
-    public void setChatModel(OllamaChatModel chatModel) {
+    public void setChatModel(ChatModel chatModel) {
         this.chatModel = chatModel;
         log.debug("Chat model updated");
     }

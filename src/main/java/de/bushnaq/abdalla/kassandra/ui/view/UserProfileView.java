@@ -104,7 +104,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         if (userEmail != null) {
             try {
                 // Find user by username using the direct getByEmail method
-                currentUser = userApi.getByEmail(userEmail);
+                currentUser = userApi.getByEmail(userEmail).get();
                 initializeView();
             } catch (ResponseStatusException ex) {
                 if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {

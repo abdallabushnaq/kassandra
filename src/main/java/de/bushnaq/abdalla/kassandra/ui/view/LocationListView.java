@@ -114,7 +114,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
         if (userEmail != null) {
             try {
                 // Find user by username
-                currentUser = userApi.getByEmail(userEmail);
+                currentUser = userApi.getByEmail(userEmail).get();
                 currentUser.initialize();
             } catch (ResponseStatusException ex) {
                 if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {

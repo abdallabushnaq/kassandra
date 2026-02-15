@@ -29,6 +29,7 @@ import java.time.OffsetDateTime;
 @Data
 @NoArgsConstructor
 public class FeatureDto {
+    private String         avatarPrompt;
     private OffsetDateTime created;
     private Long           id;
     private String         name;
@@ -38,12 +39,13 @@ public class FeatureDto {
     /**
      * Custom constructor for FeatureDto with explicit parameter order.
      */
-    public FeatureDto(Long id, String name, Long versionId, OffsetDateTime created, OffsetDateTime updated) {
-        this.id        = id;
-        this.name      = name;
-        this.versionId = versionId;
-        this.created   = created;
-        this.updated   = updated;
+    public FeatureDto(Long id, String name, Long versionId, OffsetDateTime created, OffsetDateTime updated, String avatarPrompt) {
+        this.id           = id;
+        this.name         = name;
+        this.versionId    = versionId;
+        this.created      = created;
+        this.updated      = updated;
+        this.avatarPrompt = avatarPrompt;
     }
 
     public static FeatureDto from(Feature feature) {
@@ -55,7 +57,8 @@ public class FeatureDto {
                 feature.getName(),
                 feature.getVersionId(),
                 feature.getCreated(),
-                feature.getUpdated()
+                feature.getUpdated(),
+                feature.getDefaultAvatarPrompt()
         );
     }
 

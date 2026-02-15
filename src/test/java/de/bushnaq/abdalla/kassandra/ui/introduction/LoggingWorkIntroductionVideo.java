@@ -420,7 +420,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         sprint.setFeature(feature);
         sprintApi.update(sprint);
 
-        User graceMartin = userApi.getByEmail("grace.martin@kassandra.org");
+        User graceMartin = userApi.getByEmail("grace.martin@kassandra.org").get();
 
         // Create a start milestone
         {

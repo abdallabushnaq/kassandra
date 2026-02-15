@@ -113,7 +113,7 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
             try {
                 // Find user by userEmail using the direct getByName method
                 List<User> all = userApi.getAll();
-                currentUser = userApi.getByEmail(userEmail);
+                currentUser = userApi.getByEmail(userEmail).get();
                 currentUser.initialize();
             } catch (ResponseStatusException ex) {
                 if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {

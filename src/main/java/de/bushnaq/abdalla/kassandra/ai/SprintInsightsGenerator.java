@@ -19,11 +19,9 @@ package de.bushnaq.abdalla.kassandra.ai;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.ollama.OllamaChatModel;
-import org.springframework.ai.ollama.api.OllamaApi;
-import org.springframework.ai.ollama.api.OllamaChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -37,9 +35,6 @@ public class SprintInsightsGenerator {
     private static final String ANSI_GREEN  = "\u001B[32m";
     private static final String ANSI_RESET  = "\u001B[0m";
     private static final String ANSI_YELLOW = "\u001B[33m";
-
-    // Model specifically chosen for deep thinking analysis
-    private static final String SPRINT_INSIGHTS_MODEL = "deepseek-r1:8b";
 
     private static final String SPRINT_INSIGHTS_PROMPT_TEMPLATE = """
             CRITICAL INSTRUCTION: You MUST analyze the specific JSON data provided below. DO NOT return template responses with placeholders like [Sprint Name] or [Actual Progress Percentage]. Any response containing square brackets [ ] will be considered a failure.
@@ -109,14 +104,13 @@ public class SprintInsightsGenerator {
             %s
             """;
 
-    private static final Logger          logger = LoggerFactory.getLogger(SprintInsightsGenerator.class);
-    private final        OllamaChatModel chatModel;
+    private static final Logger    logger = LoggerFactory.getLogger(SprintInsightsGenerator.class);
+    private final        ChatModel chatModel;
 
     @Autowired
-    public SprintInsightsGenerator(OllamaChatModel defaultChatModel) {
-        // Create a dedicated chat model for deep thinking analysis with extended timeout
-        OllamaApi ollamaApi = OllamaApi.builder().build();
-        this.chatModel = OllamaChatModel.builder().ollamaApi(ollamaApi).defaultOptions(OllamaChatOptions.builder().model(SPRINT_INSIGHTS_MODEL).temperature(0.9).build()).build();
+    public SprintInsightsGenerator(ChatModel chatModel) {
+        // Use the injected chat model (will be Anthropic Claude Haiku 3)
+        this.chatModel = chatModel;
     }
 
     /**
@@ -183,7 +177,7 @@ public class SprintInsightsGenerator {
             return "No sprint data provided for analysis.";
         }
 
-        logger.info("Generating AI insights for sprint data using model: {}", SPRINT_INSIGHTS_MODEL);
+        logger.info("Generating AI insights for sprint data");
 
         try {
             // Create prompt with the sprint data

@@ -230,7 +230,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
             String userEmail = getUserEmail();
             try {
-                loggedInUser = userApi.getByEmail(userEmail);
+                loggedInUser = userApi.getByEmail(userEmail).get();
             } catch (ResponseStatusException e) {
                 log.warn("Could not find user with email: " + userEmail, e);
             }

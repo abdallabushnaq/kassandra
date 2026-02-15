@@ -524,7 +524,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         // Check if user already exists by email
         User existingUser = null;
         try {
-            existingUser = userApi.getByEmail(email);
+            existingUser = userApi.getByEmail(email).get();
         } catch (Exception e) {
             // User doesn't exist, which is fine - we'll create a new one
         }
