@@ -48,12 +48,13 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class VersionTools {
-    private static final String VERSION_FIELDS             =
-            "id (number): Unique identifier of the version, used to map features to a version, " +
-                    "name (string): The version name, " +
-                    "created (ISO 8601 datetime string): Timestamp when the version was created, " +
-                    "updated (ISO 8601 datetime string): Timestamp when the version was last updated, " +
-                    "productId (number): The product this version belongs to";
+    private static final String VERSION_FIELDS             = """
+            id (number): Unique identifier of the version, used to map features to a version,
+            name (string): The version name,
+            productId (number): The product this version belongs to,
+            created (ISO 8601 datetime string): Timestamp when the version was created,
+            updated (ISO 8601 datetime string): Timestamp when the version was last updated
+            """;
     private static final String RETURNS_VERSION_ARRAY_JSON = "Returns: JSON array of Version objects. Each Version contains: " + VERSION_FIELDS;
     private static final String RETURNS_VERSION_JSON       = "Returns: JSON Version object with fields: " + VERSION_FIELDS;
 
@@ -64,7 +65,9 @@ public class VersionTools {
     @Qualifier("aiVersionApi")
     private VersionApi versionApi;
 
-    @Tool(description = "Create a new version for a product (requires USER or ADMIN role). " + RETURNS_VERSION_JSON)
+    @Tool(description = "Create a new version for a product (requires USER or ADMIN role). " +
+            "IMPORTANT: The returned JSON includes an 'id' field - you MUST extract and use this ID for subsequent operations (like deleting this version). " +
+            RETURNS_VERSION_JSON)
     public String createVersion(
             @ToolParam(description = "The version name (must be unique)") String name,
             @ToolParam(description = "The product ID this version belongs to") Long productId) {
@@ -73,8 +76,9 @@ public class VersionTools {
             Version version = new Version();
             version.setName(name);
             version.setProductId(productId);
-            Version    savedVersion = versionApi.persist(version);
-            VersionDto versionDto   = VersionDto.from(savedVersion);
+            Version savedVersion = versionApi.persist(version);
+            ToolActivityContextHolder.reportActivity("created version '" + savedVersion.getName() + "' with ID: " + savedVersion.getId());
+            VersionDto versionDto = VersionDto.from(savedVersion);
             return jsonMapper.writeValueAsString(versionDto);
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error creating version: " + e.getMessage());
@@ -83,12 +87,22 @@ public class VersionTools {
     }
 
     @Tool(description = "Delete a version by ID (requires access or admin role). " +
+            "IMPORTANT: You must provide the exact version ID. If you just created a version, use the 'id' field from the createVersion response. " +
+            "Do NOT guess or use a different version's ID. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteVersion(
             @ToolParam(description = "The version ID") Long id) {
         try {
-            ToolActivityContextHolder.reportActivity("Deleting version with ID: " + id);
+            // First, get the version details to log what we're about to delete
+            Version versionToDelete = versionApi.getById(id);
+            if (versionToDelete != null) {
+                ToolActivityContextHolder.reportActivity("Deleting version '" + versionToDelete.getName() + "' (ID: " + id + ")");
+            } else {
+                ToolActivityContextHolder.reportActivity("Attempting to delete version with ID: " + id + " (version not found)");
+            }
+
             versionApi.deleteById(id);
+            ToolActivityContextHolder.reportActivity("Successfully deleted version with ID: " + id);
             return "Version deleted successfully with ID: " + id;
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting version " + id + ": " + e.getMessage());
@@ -116,15 +130,15 @@ public class VersionTools {
     public String getAllVersionsByProductId(
             @ToolParam(description = "The product ID") Long productId) {
         try {
-            ToolActivityContextHolder.reportActivity("Getting all versions for product ID: " + productId);
+//            ToolActivityContextHolder.reportActivity("Getting all versions for product ID: " + productId);
             List<Version> versions = versionApi.getAll(productId);
-            ToolActivityContextHolder.reportActivity("Found " + versions.size() + " versions.");
+            ToolActivityContextHolder.reportActivity("Found " + versions.size() + " versions for product " + productId + ".");
             List<VersionDto> versionDtos = versions.stream()
                     .map(VersionDto::from)
                     .collect(Collectors.toList());
             return jsonMapper.writeValueAsString(versionDtos);
         } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting all versions for product " + productId + ": " + e.getMessage());
+            ToolActivityContextHolder.reportActivity("Failed getting all versions for product " + productId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }

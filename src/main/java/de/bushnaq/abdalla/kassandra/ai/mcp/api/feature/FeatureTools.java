@@ -53,13 +53,20 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class FeatureTools {
-    private static final String                 FEATURE_FIELDS             =
-            "id (number): Unique identifier of the feature, " +
-                    "name (string): The feature name, " +
-                    "created (ISO 8601 datetime string): Timestamp when the feature was created, " +
-                    "updated (ISO 8601 datetime string): Timestamp when the feature was last updated, " +
-                    "versionId (number): The version this feature belongs to, " +
-                    "avatarPrompt (string): Default avatar prompt for stable-diffusion to generate.";
+
+    /**
+     * Schema description for Feature objects returned by tools.
+     * Describes the JSON structure and field meanings.
+     * Used in @Tool annotations - must be a compile-time constant.
+     */
+    private static final String                 FEATURE_FIELDS             = """
+            featureId (number): Unique identifier of the feature, used to map sprints to a feature,
+            name (string): The feature name,
+            versionId (number): The version this feature belongs to,
+            created (ISO 8601 datetime string): Timestamp when the feature was created,
+            updated (ISO 8601 datetime string): Timestamp when the feature was last updated,
+            avatarPrompt (string): Default avatar prompt for stable-diffusion to generate.
+            """;
     private static final String                 RETURNS_FEATURE_ARRAY_JSON = "Returns: JSON array of Feature objects. Each Feature contains: " + FEATURE_FIELDS;
     private static final String                 RETURNS_FEATURE_JSON       = "Returns: JSON Feature object with fields: " + FEATURE_FIELDS;
     @Autowired
@@ -70,13 +77,14 @@ public class FeatureTools {
     @Autowired
     protected            StableDiffusionService stableDiffusionService;
 
-    @Tool(description = "Create a new feature for a version(requires USER or ADMIN role). " + RETURNS_FEATURE_JSON)
+    @Tool(description = "Create a new feature for a specific version. " +
+            "IMPORTANT: The returned JSON includes an 'featureId' field - you MUST extract and use this ID for subsequent operations (like deleting or updating this feature). " +
+            RETURNS_FEATURE_JSON)
     public String createFeature(
             @ToolParam(description = "The feature name (must be unique)") String name,
-            @ToolParam(description = "The version ID this feature belongs to") Long versionId,
-            @ToolParam(description = "The feature avatar stable-diffusion prompt") String avatarPrompt) {
+            @ToolParam(description = "The versionId this feature belongs to") Long versionId,
+            @ToolParam(description = "(Optional) The feature avatar stable-diffusion prompt. If null or empty, a default prompt will be generated.") String avatarPrompt) {
         try {
-            ToolActivityContextHolder.reportActivity("Creating feature with name: " + name + " for version " + versionId);
             Feature feature = new Feature();
             feature.setName(name);
             feature.setVersionId(versionId);
@@ -101,26 +109,36 @@ public class FeatureTools {
                 feature.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
                 Feature savedFeature = featureApi.persist(feature);
                 featureApi.updateAvatarFull(savedFeature.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
-                ToolActivityContextHolder.reportActivity("Feature created: " + savedFeature.getName());
+                ToolActivityContextHolder.reportActivity("created feature '" + savedFeature.getName() + "' with ID: " + savedFeature.getId());
                 FeatureDto featureDto = FeatureDto.from(savedFeature);
                 return jsonMapper.writeValueAsString(featureDto);
             }
         } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error creating feature: " + e.getMessage());
+            ToolActivityContextHolder.reportActivity("Failed creating feature: " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
 
-    @Tool(description = "Delete a feature by ID (requires access or admin role). " +
+    @Tool(description = "Delete a feature by its ID. " +
+            "IMPORTANT: You must provide the exact featureId. If you just created a feature, use the 'featureId' field from the createFeature response. " +
+            "Do NOT guess or use a different featureId. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteFeature(
-            @ToolParam(description = "The feature ID") Long id) {
+            @ToolParam(description = "The featureId") Long featureId) {
         try {
-            featureApi.deleteById(id);
-            ToolActivityContextHolder.reportActivity("deleted feature with ID: " + id);
-            return "Feature deleted successfully with ID: " + id;
+            // First, get the feature details to log what we're about to delete
+            Feature featureToDelete = featureApi.getById(featureId);
+            if (featureToDelete != null) {
+                ToolActivityContextHolder.reportActivity("Deleting feature '" + featureToDelete.getName() + "' (ID: " + featureId + ")");
+            } else {
+                ToolActivityContextHolder.reportActivity("Attempting to delete feature with ID: " + featureId + " (feature not found)");
+            }
+
+            featureApi.deleteById(featureId);
+            ToolActivityContextHolder.reportActivity("Successfully deleted feature with ID: " + featureId);
+            return "Feature deleted successfully with ID: " + featureId;
         } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error deleting feature " + id + ": " + e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error deleting feature " + featureId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -133,7 +151,7 @@ public class FeatureTools {
     }
 
 
-    @Tool(description = "Get a list of all features accessible to the current user (Admin sees all). Good if you need to retrieve features for all versions or all possibel products. " + RETURNS_FEATURE_ARRAY_JSON)
+    @Tool(description = "Get a list of all features accessible to the current user (Admin sees all). Good if you need to retrieve features for all versions or all possible products. " + RETURNS_FEATURE_ARRAY_JSON)
     public String getAllFeatures() {
         try {
             ToolActivityContextHolder.reportActivity("Getting all features");
@@ -168,22 +186,22 @@ public class FeatureTools {
 
     @Tool(description = "Get a specific feature by its ID (requires access or admin role). " + RETURNS_FEATURE_JSON)
     public String getFeatureById(
-            @ToolParam(description = "The feature ID") Long id) {
+            @ToolParam(description = "The featureId") Long featureId) {
         try {
-            ToolActivityContextHolder.reportActivity("Getting feature with ID: " + id);
-            Feature feature = featureApi.getById(id);
+            ToolActivityContextHolder.reportActivity("Getting feature with ID: " + featureId);
+            Feature feature = featureApi.getById(featureId);
             if (feature != null) {
                 FeatureDto featureDto = FeatureDto.from(feature);
                 return jsonMapper.writeValueAsString(featureDto);
             }
-            return "Feature not found with ID: " + id;
+            return "Feature not found with ID: " + featureId;
         } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting feature " + id + ": " + e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error getting feature " + featureId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
 
-    @Tool(description = "Update an existing feature (requires access or admin role). " + RETURNS_FEATURE_JSON)
+    @Tool(description = "Update an existing feature by its ID. " + RETURNS_FEATURE_JSON)
     public String updateFeature(
             @ToolParam(description = "The feature ID") Long id,
             @ToolParam(description = "The new feature name") String name) {

@@ -33,6 +33,7 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.augment.AugmentedToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +63,12 @@ public class AiAssistantService {
             Use the available tools when needed to fulfill user requests.
             After using tools, provide helpful and concise responses based on the results.
             If you don't need to use any tools, just provide a direct answer.
-            
+            Careful when you are using an ID in a tool, make sure it is the correct one, you will not be able to guess an ID.
+            The ID is the unique identifier of an entity in the system, for example a product, version, feature or sprint. You can only get an ID by using a tool that returns it, you cannot make up an ID or guess it.
+            Your answer should be complete. Do not show templates or create answers using fake values.
+            Do not invent any parameters, optional parameters can be ignored, if you do not know the value.
+            Think step-by-step and reevaluate your answer before submitting.
+            Explain your thinking process.
             The system is made of a hierarchical structure of a list of Product(s), each product has a list of Version(s), each Version has a list of Feature(s) and each Feature has a list of Sprint(s).
             This hierarchy is linked together using foreign keys. For example, a Version has a productId to its parent Product, a Feature has a versionId to its parent Version and a Sprint has a featureId to its parent Feature.
             """;
@@ -157,7 +163,7 @@ public class AiAssistantService {
      */
     private ChatMemory getOrCreateMemory(String conversationId) {
         return conversationMemories.computeIfAbsent(conversationId, id -> {
-            log.info("Creating new ChatMemory for conversation: {}", id);
+//            log.info("Creating new ChatMemory for conversation: {}", id);
             return MessageWindowChatMemory.builder()
                     .chatMemoryRepository(new InMemoryChatMemoryRepository())
                     .maxMessages(20) // Keep last 20 messages in context
@@ -175,18 +181,18 @@ public class AiAssistantService {
      */
     public QueryResult processQueryWithThinking(String userQuery, String conversationId) {
         thinkingSteps.clear();
-        log.info("=== Starting AI query processing (with thinking) ===");
+//        log.info("=== Starting AI query processing (with thinking) ===");
 
         // Log model information
         try {
             String modelName = chatModel.getDefaultOptions().getModel();
-            log.info("Using LLM Model: {}", modelName != null ? modelName : "default");
+//            log.info("Using LLM Model: {}", modelName != null ? modelName : "default");
         } catch (Exception e) {
             log.debug("Could not determine model name: {}", e.getMessage());
         }
 
-        log.info("User query: {}", userQuery);
-        log.info("Conversation ID: {}", conversationId);
+//        log.info("User query: {}", userQuery);
+//        log.info("Conversation ID: {}", conversationId);
 
         // Get or create the ChatMemory for this conversation
         ChatMemory chatMemory = getOrCreateMemory(conversationId);
@@ -207,14 +213,17 @@ public class AiAssistantService {
                 .defaultSystem(augmentSystemPrompt(SYSTEM_PROMPT))
                 .defaultAdvisors(memoryAdvisor)
                 .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4))
-//                .defaultTools(productTools, userTools, versionTools, featureTools, sprintTools)
                 .build();
 
+//        OpenAiChatOptions openAiOptions = OpenAiChatOptions.builder()
+//                .seed(42)                   // OpenAI-specific deterministic generation
+//                .build();
         try {
-            log.info("Calling LLM via ChatClient with native Spring AI tool support...");
+//            log.info("Calling LLM via ChatClient with native Spring AI tool support...");
             ChatResponse chatResponse = chatClient.prompt(userQuery)
+//                    .options(openAiOptions)
                     .call()
-                    .chatResponse();  // Get full ChatResponse instead of just content
+                    .chatResponse();  // Get full ChatResponse instead of just text
 
             // Add defensive null checks for LMStudio compatibility
             if (chatResponse == null) {
@@ -222,9 +231,9 @@ public class AiAssistantService {
                 throw new RuntimeException("LLM returned null response");
             }
 
-            log.debug("ChatResponse metadata: {}", chatResponse.getMetadata());
+//            log.debug("ChatResponse metadata: {}", chatResponse.getMetadata());
 
-            log.debug("ChatResponse results count: {}", chatResponse.getResults() != null ? chatResponse.getResults().size() : "null");
+//            log.debug("ChatResponse results count: {}", chatResponse.getResults() != null ? chatResponse.getResults().size() : "null");
 
             if (chatResponse.getResult() == null) {
                 log.error("ChatResponse.getResult() is null - LMStudio response may be malformed");
@@ -236,18 +245,20 @@ public class AiAssistantService {
                 log.error("ChatResponse.getResult().getOutput() is null");
                 throw new RuntimeException("LLM response result has no output");
             }
+            Generation                      result    = chatResponse.getResult();
+            AssistantMessage                output    = chatResponse.getResult().getOutput();
             List<AssistantMessage.ToolCall> toolCalls = chatResponse.getResult().getOutput().getToolCalls();
-            String                          content   = chatResponse.getResult().getOutput().getText();
+            String                          text      = chatResponse.getResult().getOutput().getText();
 //            String                          thinking  = extractThinkingProcess(chatResponse);
             String thinking = null;
 
-            log.info("=== AI query processing complete ===");
-            log.info("Final response length: {} characters", content != null ? content.length() : 0);
+//            log.info("=== AI query processing complete ===");
+//            log.info("Final response length: {} characters", text != null ? text.length() : 0);
 //            if (thinking != null && !thinking.isEmpty()) {
 //                log.info("Thinking process length: {} characters", thinking.length());
 //            }
 
-            return new QueryResult(content, thinkingSteps);
+            return new QueryResult(text, thinkingSteps);
         } finally {
             ToolActivityContextHolder.clear();
         }

@@ -60,12 +60,13 @@ public class ProductTools {
      * Describes the JSON structure and field meanings.
      * Used in @Tool annotations - must be a compile-time constant.
      */
-    private static final String                 PRODUCT_FIELDS             =
-            "id (number): Unique identifier of the product, used to map versions to a product, " +
-                    "name (string): The product name, " +
-                    "created (ISO 8601 datetime string): Timestamp when the product was created, " +
-                    "updated (ISO 8601 datetime string): Timestamp when the product was last updated," +
-                    "avatarPrompt (string): Default avatar prompt for stable-diffusion to generate.";
+    private static final String                 PRODUCT_FIELDS             = """
+            id (number): Unique identifier of the product, used to map versions to a product,
+            name (string): The product name,
+            created (ISO 8601 datetime string): Timestamp when the product was created,
+            updated (ISO 8601 datetime string): Timestamp when the product was last updated,
+            avatarPrompt (string): Default avatar prompt for stable-diffusion to generate.
+            """;
     private static final String                 RETURNS_PRODUCT_ARRAY_JSON = "Returns: JSON array of Product objects. Each Product contains: " + PRODUCT_FIELDS;
     private static final String                 RETURNS_PRODUCT_JSON       = "Returns: JSON Product object with fields: " + PRODUCT_FIELDS;
     @Autowired
@@ -76,7 +77,9 @@ public class ProductTools {
     @Autowired
     protected            StableDiffusionService stableDiffusionService;
 
-    @Tool(description = "Create a new product (requires USER or ADMIN role). " + RETURNS_PRODUCT_JSON)
+    @Tool(description = "Create a new product. " +
+            "IMPORTANT: The returned JSON includes an 'id' field - you MUST extract and use this ID for subsequent operations (like deleting this product). " +
+            RETURNS_PRODUCT_JSON)
     public String createProduct(
             @ToolParam(description = "The product name (must be unique)") String name,
             @ToolParam(description = "(Optional) The product avatar stable-diffusion prompt. If null or empty, a default prompt will be generated.") String avatarPrompt) {
@@ -106,7 +109,7 @@ public class ProductTools {
             }
             Product    savedProduct = productApi.persist(product);
             ProductDto productDto   = ProductDto.from(savedProduct);
-            ToolActivityContextHolder.reportActivity("created product: " + productDto.getName() + ".");
+            ToolActivityContextHolder.reportActivity("created product '" + productDto.getName() + "' with ID: " + savedProduct.getId());
             return jsonMapper.writeValueAsString(productDto);
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error creating product: " + e.getMessage());
@@ -115,13 +118,22 @@ public class ProductTools {
     }
 
     @Tool(description = "Delete a product by ID (requires access or admin role). " +
+            "IMPORTANT: You must provide the exact product ID. If you just created a product, use the 'id' field from the createProduct response. " +
+            "Do NOT guess or use a different product's ID. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteProduct(
             @ToolParam(description = "The product ID") Long id) {
-//        ToolActivityContextHolder.reportActivity("Deleting product with ID: " + id);
         try {
+            // First, get the product details to log what we're about to delete
+            Product productToDelete = productApi.getById(id);
+            if (productToDelete != null) {
+                ToolActivityContextHolder.reportActivity("Deleting product '" + productToDelete.getName() + "' (ID: " + id + ")");
+            } else {
+                ToolActivityContextHolder.reportActivity("Attempting to delete product with ID: " + id + " (product not found)");
+            }
+
             productApi.deleteById(id);
-            ToolActivityContextHolder.reportActivity("deleted product: " + id + ".");
+            ToolActivityContextHolder.reportActivity("Successfully deleted product with ID: " + id);
             return "Product with ID " + id + " deleted successfully";
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting product: " + e.getMessage());
@@ -140,11 +152,10 @@ public class ProductTools {
     public String getAllProducts() {
         try {
             List<Product> products = productApi.getAll();
-            ToolActivityContextHolder.reportActivity("Found " + products.size() + " products.");
+            ToolActivityContextHolder.reportActivity("read " + products.size() + " products.");
             List<ProductDto> productDtos = products.stream()
                     .map(ProductDto::from)
                     .collect(Collectors.toList());
-            ToolActivityContextHolder.reportActivity("read all products.");
             return jsonMapper.writeValueAsString(productDtos);
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting all products: " + e.getMessage());
@@ -173,7 +184,7 @@ public class ProductTools {
 
     @Tool(description = "Get a specific product by its name. " + RETURNS_PRODUCT_JSON)
     public String getProductByName(String name) {
-        ToolActivityContextHolder.reportActivity("Getting product with name: " + name);
+//        ToolActivityContextHolder.reportActivity("Getting product with name: " + name);
         try {
             Optional<Product> product = productApi.getByName(name);
             if (product.isPresent()) {

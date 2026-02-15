@@ -85,12 +85,24 @@ public class AbstractTestUtil extends DTOAsserts {
     }
 
     protected void printTables() {
+        printTables(null);
+    }
+
+    protected void printTables(String[] filterTableNames) {
         System.out.println("\n\n\n");
         try {
             String        separator = "+";
             StringBuilder output    = new StringBuilder("\n=== Database Content ===\n");
 
             List<String> tableNames = getAllTableNames();
+
+            // Apply filter if provided
+            if (filterTableNames != null && filterTableNames.length > 0) {
+                List<String> filterList = List.of(filterTableNames);
+                tableNames = tableNames.stream()
+                        .filter(filterList::contains)
+                        .toList();
+            }
 
             for (String tableName : tableNames) {
                 // Get column names and types

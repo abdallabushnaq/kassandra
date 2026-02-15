@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.feature;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,10 +29,12 @@ import java.time.OffsetDateTime;
  */
 @Data
 @NoArgsConstructor
+@JsonPropertyOrder({"id", "name", "versionId", "created", "updated", "avatarPrompt"})
 public class FeatureDto {
     private String         avatarPrompt;
+    //    private String         avatarPrompt;
     private OffsetDateTime created;
-    private Long           id;
+    private Long           featureId;
     private String         name;
     private OffsetDateTime updated;
     private Long           versionId;
@@ -39,8 +42,8 @@ public class FeatureDto {
     /**
      * Custom constructor for FeatureDto with explicit parameter order.
      */
-    public FeatureDto(Long id, String name, Long versionId, OffsetDateTime created, OffsetDateTime updated, String avatarPrompt) {
-        this.id           = id;
+    public FeatureDto(Long featureId, String name, Long versionId, OffsetDateTime created, OffsetDateTime updated, String avatarPrompt) {
+        this.featureId    = featureId;
         this.name         = name;
         this.versionId    = versionId;
         this.created      = created;
@@ -64,7 +67,7 @@ public class FeatureDto {
 
     public Feature toFeature() {
         Feature feature = new Feature();
-        feature.setId(this.id);
+        feature.setId(this.featureId);
         feature.setName(this.name);
         feature.setVersionId(this.versionId);
         feature.setCreated(this.created);

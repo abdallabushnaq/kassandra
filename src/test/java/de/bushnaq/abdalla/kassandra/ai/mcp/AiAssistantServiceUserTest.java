@@ -110,8 +110,9 @@ public class AiAssistantServiceUserTest extends AbstractMcpTest {
         log.info("User ID: {}.", user.getId());
         processQuery("update user " + user.getName() + " last name to 'Salam'.");
         {
-            User updatedUser = userApi.getById(user.getId()); // get any user
-            assertEquals("Salam", updatedUser.getName().substring(0, updatedUser.getName().indexOf(' ')), "User last name should be updated to 'Salam'");
+            User   updatedUser = userApi.getById(user.getId()); // get any user
+            String lastName    = updatedUser.getName().substring(updatedUser.getName().indexOf(' ') + 1);
+            assertEquals("Salam", lastName, "User last name should be updated to 'Salam'");
         }
     }
 

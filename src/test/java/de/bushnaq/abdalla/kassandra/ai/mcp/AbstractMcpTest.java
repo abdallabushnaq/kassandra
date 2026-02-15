@@ -79,6 +79,7 @@ public class AbstractMcpTest extends AbstractUiTestUtil {
     @BeforeEach
     protected void setupTest() {
         String modelName = aiAssistantService.getModelName();
+        aiAssistantService.clearConversation(TEST_CONVERSATION_ID);
         log.info("{}=== Running test with model: {} ==={}", ANSI_BLUE, modelName, ANSI_RESET);
     }
 

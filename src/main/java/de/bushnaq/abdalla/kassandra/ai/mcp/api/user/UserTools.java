@@ -39,6 +39,17 @@ import java.util.List;
 @Component
 @Slf4j
 public class UserTools {
+    private static final String USER_FIELDS             = """
+            id (number): Unique identifier of the user,
+            name (string): The user name,
+            email (string): The user email,
+            color (string): The user color in hex format,
+            roles (string): The user roles (comma-separated, 'ROLE_USER' or 'ROLE_ADMIN'),
+            firstWorkingDay (ISO 8601 date string): The first working day,
+            lastWorkingDay (ISO 8601 date string): The last working day
+            """;
+    private static final String RETURNS_USER_ARRAY_JSON = "Returns: JSON array of User objects. Each User contains: " + USER_FIELDS;
+    private static final String RETURNS_USER_JSON       = "Returns: JSON User object with fields: " + USER_FIELDS;
 
     @Autowired
     private JsonMapper jsonMapper;
@@ -47,7 +58,9 @@ public class UserTools {
     private UserApi    userApi;
 
 
-    @Tool(description = "Create a new user. Returns JSON object of the created user or error message.")
+    @Tool(description = "Create a new user. " +
+            "IMPORTANT: The returned JSON includes an 'id' field - you MUST extract and use this ID for subsequent operations (like deleting this user). " +
+            RETURNS_USER_JSON)
     public String createUser(
             @ToolParam(description = "The user name") String name,
             @ToolParam(description = "The user email address") String email,
@@ -77,6 +90,7 @@ public class UserTools {
                 user.setLastWorkingDay(LocalDate.parse(lastWorkingDay));
             }
             User createdUser = userApi.persist(user);
+            ToolActivityContextHolder.reportActivity("created user '" + createdUser.getName() + "' with ID: " + createdUser.getId());
             return jsonMapper.writeValueAsString(UserDto.from(createdUser));
         } catch (Exception e) {
             log.error("Error creating user: {}", e.getMessage());
@@ -85,12 +99,22 @@ public class UserTools {
     }
 
     @Tool(description = "Delete a user by ID (requires access or admin role). " +
+            "IMPORTANT: You must provide the exact user ID. If you just created a user, use the 'id' field from the createUser response. " +
+            "Do NOT guess or use a different user's ID. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteUser(
             @ToolParam(description = "The user ID") Long id) {
         try {
+            // First, get the user details to log what we're about to delete
+            User userToDelete = userApi.getById(id);
+            if (userToDelete != null) {
+                ToolActivityContextHolder.reportActivity("Deleting user '" + userToDelete.getName() + "' (ID: " + id + ")");
+            } else {
+                ToolActivityContextHolder.reportActivity("Attempting to delete user with ID: " + id + " (user not found)");
+            }
+
             userApi.deleteById(id);
-            ToolActivityContextHolder.reportActivity("deleted user: " + id + ".");
+            ToolActivityContextHolder.reportActivity("Successfully deleted user with ID: " + id);
             return "User with ID " + id + " deleted successfully";
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting user: " + e.getMessage());
@@ -98,11 +122,11 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Get a list of all users in the system. Returns JSON array of user objects.")
+    @Tool(description = "Get a list of all users in the system. " + RETURNS_USER_ARRAY_JSON)
     public String getAllUsers() {
         try {
-            log.info("Getting all users");
-            List<User>    users    = userApi.getAll();
+            List<User> users = userApi.getAll();
+            log.info("read " + users.size() + " users.");
             List<UserDto> userDtos = users.stream().map(UserDto::from).toList();
             return jsonMapper.writeValueAsString(userDtos);
         } catch (Exception e) {
@@ -111,7 +135,7 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Get a specific user by their email address. Returns JSON user object or not found message.")
+    @Tool(description = "Get a specific user by their email address. " + RETURNS_USER_JSON)
     public String getUserByEmail(
             @ToolParam(description = "The user email address") String email) {
         try {
@@ -127,7 +151,7 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Get a specific user by their ID. Returns JSON user object or not found message.")
+    @Tool(description = "Get a specific user by their ID. " + RETURNS_USER_JSON)
     public String getUserById(
             @ToolParam(description = "The user ID") Long id) {
         try {
@@ -143,7 +167,7 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Get a specific user by their name. Returns JSON user object or not found message.")
+    @Tool(description = "Get a specific user by their name. " + RETURNS_USER_JSON)
     public String getUserByName(
             @ToolParam(description = "The user name") String name) {
         try {
@@ -186,7 +210,7 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Search for users by partial name match (case-insensitive). Returns JSON array of matching users.")
+    @Tool(description = "Search for users by partial name match (case-insensitive). " + RETURNS_USER_ARRAY_JSON)
     public String searchUsers(
             @ToolParam(description = "Partial name to search for") String partialName) {
         try {
@@ -200,7 +224,7 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Update an existing user. Returns success message or error. All fields are optional except id.")
+    @Tool(description = "Update an existing user. " + RETURNS_USER_JSON)
     public String updateUser(
             @ToolParam(description = "The user ID") Long id,
             @ToolParam(description = "The new user name, optional") String name,
@@ -234,7 +258,8 @@ public class UserTools {
             }
             userApi.update(user);
             log.info("updated user: id={}", id);
-            return "User updated successfully";
+            UserDto userDto = UserDto.from(user);
+            return jsonMapper.writeValueAsString(userDto);
         } catch (Exception e) {
             log.error("Error updating user {}: {}", id, e.getMessage());
             return "Error: " + e.getMessage();

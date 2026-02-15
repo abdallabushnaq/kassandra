@@ -95,7 +95,7 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
         Optional<Feature> feature  = features.stream().filter(f -> f.getName().equalsIgnoreCase("Galaxy")).findFirst();
         assertTrue(feature.isPresent(), "Feature should be created before deletion test");
         log.info("Features ID: {}.", feature.get().getId());
-//        printTables();
+//        printTables(new String[]{"FEATURES"});
 
         //---delete
         processQuery("Please delete the feature you just created.");
@@ -135,7 +135,7 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
             List<Feature>     features = featureApi.getAll(firstVersion.getId());
             Optional<Feature> feature  = features.stream().filter(f -> f.getName().equals("Galaxxy")).findFirst();
             assertTrue(feature.isPresent(), "Feature should be created");
-            log.info("Features ID: {}.", feature.get().getId());
+            log.info("Feature Galaxxy ID is: {}.", feature.get().getId());
         }
 
         {

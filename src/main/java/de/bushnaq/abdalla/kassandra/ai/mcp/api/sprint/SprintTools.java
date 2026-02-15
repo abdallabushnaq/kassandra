@@ -38,19 +38,20 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class SprintTools {
-    private static final String SPRINT_FIELDS             =
-            "id (number): Unique identifier of the sprint, " +
-                    "name (string): The sprint name, " +
-                    "featureId (number): The feature this sprint belongs to, " +
-                    "start (ISO 8601 datetime string): Sprint start, " +
-                    "end (ISO 8601 datetime string): Sprint end, " +
-                    "releaseDate (ISO 8601 datetime string): Calculated release date, " +
-                    "originalEstimation (ISO 8601 duration string): Original estimation, " +
-                    "remaining (ISO 8601 duration string): Remaining work, " +
-                    "worked (ISO 8601 duration string): Worked time, " +
-                    "avatarHash (string): Avatar hash, " +
-                    "status (string): Sprint status, " +
-                    "userId (number): The user this sprint is assigned to";
+    private static final String SPRINT_FIELDS             = """
+            id (number): Unique identifier of the sprint,
+            name (string): The sprint name,
+            featureId (number): The feature this sprint belongs to,
+            userId (number): The user this sprint is assigned to,
+            start (ISO 8601 datetime string): Sprint start,
+            end (ISO 8601 datetime string): Sprint end,
+            releaseDate (ISO 8601 datetime string): Calculated release date,
+            originalEstimation (ISO 8601 duration string): Original estimation,
+            remaining (ISO 8601 duration string): Remaining work,
+            worked (ISO 8601 duration string): Worked time,
+            status (string): Sprint status,
+            avatarHash (string): Avatar hash
+            """;
     private static final String RETURNS_SPRINT_ARRAY_JSON = "Returns: JSON array of Sprint objects. Each Sprint contains: " + SPRINT_FIELDS;
     private static final String RETURNS_SPRINT_JSON       = "Returns: JSON Sprint object with fields: " + SPRINT_FIELDS;
 
@@ -61,7 +62,9 @@ public class SprintTools {
     @Qualifier("aiSprintApi")
     private SprintApi sprintApi;
 
-    @Tool(description = "Create a new sprint (requires USER or ADMIN role). " + RETURNS_SPRINT_JSON)
+    @Tool(description = "Create a new sprint (requires USER or ADMIN role). " +
+            "IMPORTANT: The returned JSON includes an 'id' field - you MUST extract and use this ID for subsequent operations (like deleting this sprint). " +
+            RETURNS_SPRINT_JSON)
     public String createSprint(
             @ToolParam(description = "The sprint name (must be unique)") String name,
             @ToolParam(description = "The feature ID this sprint belongs to") Long featureId) {
@@ -70,8 +73,9 @@ public class SprintTools {
             Sprint sprint = new Sprint();
             sprint.setName(name);
             sprint.setFeatureId(featureId);
-            Sprint    savedSprint = sprintApi.persist(sprint);
-            SprintDto sprintDto   = SprintDto.from(savedSprint);
+            Sprint savedSprint = sprintApi.persist(sprint);
+            ToolActivityContextHolder.reportActivity("created sprint '" + savedSprint.getName() + "' with ID: " + savedSprint.getId());
+            SprintDto sprintDto = SprintDto.from(savedSprint);
             return jsonMapper.writeValueAsString(sprintDto);
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error creating sprint: " + e.getMessage());
@@ -79,12 +83,23 @@ public class SprintTools {
         }
     }
 
-    @Tool(description = "Delete a sprint by ID (requires access or admin role). Returns: Success message (string) confirming deletion")
+    @Tool(description = "Delete a sprint by ID (requires access or admin role). " +
+            "IMPORTANT: You must provide the exact sprint ID. If you just created a sprint, use the 'id' field from the createSprint response. " +
+            "Do NOT guess or use a different sprint's ID. " +
+            "Returns: Success message (string) confirming deletion")
     public String deleteSprint(
             @ToolParam(description = "The sprint ID") Long id) {
         try {
-            ToolActivityContextHolder.reportActivity("Deleting sprint with ID: " + id);
+            // First, get the sprint details to log what we're about to delete
+            Sprint sprintToDelete = sprintApi.getById(id);
+            if (sprintToDelete != null) {
+                ToolActivityContextHolder.reportActivity("Deleting sprint '" + sprintToDelete.getName() + "' (ID: " + id + ")");
+            } else {
+                ToolActivityContextHolder.reportActivity("Attempting to delete sprint with ID: " + id + " (sprint not found)");
+            }
+
             sprintApi.deleteById(id);
+            ToolActivityContextHolder.reportActivity("Successfully deleted sprint with ID: " + id);
             return "Sprint deleted successfully with ID: " + id;
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting sprint " + id + ": " + e.getMessage());
@@ -95,9 +110,8 @@ public class SprintTools {
     @Tool(description = "Get a list of all sprints accessible to the current user. " + RETURNS_SPRINT_ARRAY_JSON)
     public String getAllSprints() {
         try {
-            ToolActivityContextHolder.reportActivity("Getting all sprints");
             List<Sprint> sprints = sprintApi.getAll();
-            ToolActivityContextHolder.reportActivity("Found " + sprints.size() + " sprints.");
+            ToolActivityContextHolder.reportActivity("read " + sprints.size() + " sprints.");
             List<SprintDto> sprintDtos = sprints.stream()
                     .map(SprintDto::from)
                     .collect(Collectors.toList());
