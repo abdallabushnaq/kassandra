@@ -35,6 +35,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.QueryResult;
 import de.bushnaq.abdalla.kassandra.ai.mcp.SessionToolActivityContext;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -390,8 +391,8 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
                         });
                     }
                     // Now call processQuery (listener is already set)
-                    String response = aiAssistantService.processQuery(query, conversationId);
-                    log.info("AI response received: {} characters", response != null ? response.length() : 0);
+                    QueryResult response = aiAssistantService.processQueryWithThinking(query, conversationId);
+                    log.info("AI response received: {} characters", response != null ? response.content().length() : 0);
 
                     ui.access(() -> {
                         try {
@@ -399,7 +400,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
                             // Remove loading message
                             removeLastMessage();
                             // Add AI response
-                            addAiMessage(response);
+                            addAiMessage(response.content());
                         } catch (Exception e) {
                             log.error("Error updating UI with response", e);
                             addErrorMessage("Error displaying response: " + e.getMessage());

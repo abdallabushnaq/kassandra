@@ -17,18 +17,9 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp;
 
-import java.util.List;
+public record ThinkingStep(String toolName, AgentThinking agentThinking) {
 
-/**
- * Result of an AI query containing both the final content and the thinking process.
- * Useful for reasoning models like DeepSeek-R1 that expose their reasoning steps.
- */
-public record QueryResult(String content, List<ThinkingStep> thinkingSteps) {
-
-    /**
-     * Check if thinking process is available
-     */
-    public boolean hasThinking() {
-        return thinkingSteps != null && !thinkingSteps.isEmpty();
+    public static ThinkingStep create(String toolName, AgentThinking thinking) {
+        return new ThinkingStep(toolName, thinking);
     }
 }

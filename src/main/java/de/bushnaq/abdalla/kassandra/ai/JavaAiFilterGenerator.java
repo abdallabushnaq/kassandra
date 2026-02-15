@@ -17,9 +17,9 @@
 
 package de.bushnaq.abdalla.kassandra.ai;
 
+import de.bushnaq.abdalla.kassandra.ai.config.AiFilterConfig;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
-import de.bushnaq.abdalla.kassandra.ai.config.AiFilterConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -29,18 +29,14 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.function.Predicate;
 
+import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
+
 /**
  * AI filter generator for Java predicates.
  * Converts natural language queries into Java code that gets compiled and executed on the fly.
  */
 @Component
 public class JavaAiFilterGenerator implements AiFilterGenerator {
-    private static final String             ANSI_BLUE              = "\u001B[36m";
-    private static final String             ANSI_GRAY              = "\u001B[37m";
-    private static final String             ANSI_GREEN             = "\u001B[32m";
-    private static final String             ANSI_RED               = "\u001B[31m";
-    private static final String             ANSI_RESET             = "\u001B[0m";    // Declaring ANSI_RESET so that we can reset the color
-    private static final String             ANSI_YELLOW            = "\u001B[33m";
     private static final String             JAVA_PROMPT_TEMPLATE   = """
             You are a Java method body generator for filtering Java objects. Convert natural language search queries into Java code that can be compiled and executed.
             

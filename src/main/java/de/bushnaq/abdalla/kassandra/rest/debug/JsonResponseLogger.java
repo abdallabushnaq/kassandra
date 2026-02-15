@@ -18,7 +18,6 @@
 package de.bushnaq.abdalla.kassandra.rest.debug;
 
 import de.bushnaq.abdalla.kassandra.rest.ErrorResponse;
-import org.openqa.selenium.json.JsonException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +57,7 @@ public class JsonResponseLogger implements ResponseBodyAdvice<Object> {
                     System.out.format("Response JSON: %s\n", jsonString);
                 }
             }
-        } catch (JsonException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 

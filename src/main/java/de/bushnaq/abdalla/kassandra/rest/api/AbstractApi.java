@@ -21,7 +21,6 @@ import de.bushnaq.abdalla.kassandra.rest.ErrorResponse;
 import de.bushnaq.abdalla.kassandra.security.SecurityConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.openqa.selenium.json.JsonException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -409,11 +408,11 @@ public class AbstractApi {
                                 error.getMessage(),
                                 error.reconstructException());
                     }
-                } catch (JsonException ex) {
+                } catch (UnknownContentTypeException ex) {
                     throw new IllegalArgumentException(String.format("Error processing server response '%s'.", e.getResponseBodyAsString()));
                 }
             }
-        } catch (JsonException ex) {
+        } catch (UnknownContentTypeException ex) {
             throw new IllegalArgumentException(String.format("Error processing server response '%s'.", e.getResponseBodyAsString()));
         }
     }

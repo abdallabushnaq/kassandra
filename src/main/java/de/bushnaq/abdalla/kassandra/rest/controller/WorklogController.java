@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.dao.WorklogDAO;
 import de.bushnaq.abdalla.kassandra.repository.WorklogRepository;
-import org.openqa.selenium.json.JsonException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +41,7 @@ public class WorklogController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public Optional<WorklogDAO> get(@PathVariable Long id) throws JsonException {
+    public Optional<WorklogDAO> get(@PathVariable Long id) {
         Optional<WorklogDAO> task = worklogRepository.findById(id);
         return task;
     }

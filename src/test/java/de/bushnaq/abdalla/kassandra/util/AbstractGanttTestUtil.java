@@ -55,25 +55,21 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.MethodName.class)
 public class AbstractGanttTestUtil extends AbstractEntityGenerator {
-    private static final String                 ANSI_BLUE                 = "\u001B[36m";
-    private static final String                 ANSI_GREEN                = "\u001B[32m";
-    private static final String                 ANSI_RED                  = "\u001B[31m";
-    private static final String                 ANSI_RESET                = "\u001B[0m";    // Declaring ANSI_RESET so that we can reset the color
-    private static final String                 ANSI_YELLOW               = "\u001B[33m";
     @Autowired
-    protected            Context                context;
+    protected       Context                context;
     @Autowired
-    private              H2DatabaseStateManager databaseStateManager;
-    public final         DateTimeFormatter      dtfymdhmss                = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm:ss.SSS");
-    protected final      List<Throwable>        exceptions                = new ArrayList<>();
-    protected            String                 testReferenceResultFolder = "test-reference-results";
-    protected            String                 testResultFolder          = "test-results";
+    private         H2DatabaseStateManager databaseStateManager;
+    public final    DateTimeFormatter      dtfymdhmss                = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm:ss.SSS");
+    protected final List<Throwable>        exceptions                = new ArrayList<>();
+    protected       String                 testReferenceResultFolder = "test-reference-results";
+    protected       String                 testResultFolder          = "test-results";
 
     protected void addOneProduct(String sprintName) {
         int       count         = 1;

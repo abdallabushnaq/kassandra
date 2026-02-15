@@ -26,7 +26,6 @@ import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ProductAclService;
 import jakarta.transaction.Transactional;
-import org.openqa.selenium.json.JsonException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -60,7 +59,7 @@ public class TaskController {
 
     @GetMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasTaskAccess(#id) or hasRole('ADMIN')")
-    public Optional<TaskDAO> get(@PathVariable Long id) throws JsonException {
+    public Optional<TaskDAO> get(@PathVariable Long id) {
         Optional<TaskDAO> task = taskRepository.findById(id);
         return task;
     }

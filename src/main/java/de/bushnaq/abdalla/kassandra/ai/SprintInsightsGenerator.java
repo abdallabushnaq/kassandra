@@ -25,6 +25,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
+
 /**
  * AI-powered insights generator for sprint data analysis.
  * Analyzes JSON lists of sprints and provides AI-generated insights about patterns, trends, and recommendations.
@@ -32,9 +34,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SprintInsightsGenerator {
-    private static final String ANSI_GREEN  = "\u001B[32m";
-    private static final String ANSI_RESET  = "\u001B[0m";
-    private static final String ANSI_YELLOW = "\u001B[33m";
 
     private static final String SPRINT_INSIGHTS_PROMPT_TEMPLATE = """
             CRITICAL INSTRUCTION: You MUST analyze the specific JSON data provided below. DO NOT return template responses with placeholders like [Sprint Name] or [Actual Progress Percentage]. Any response containing square brackets [ ] will be considered a failure.

@@ -17,18 +17,13 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp;
 
-import java.util.List;
+import org.springframework.ai.tool.annotation.ToolParam;
 
-/**
- * Result of an AI query containing both the final content and the thinking process.
- * Useful for reasoning models like DeepSeek-R1 that expose their reasoning steps.
- */
-public record QueryResult(String content, List<ThinkingStep> thinkingSteps) {
+public record AgentThinking(
+        @ToolParam(description = "Your reasoning for calling this tool", required = true)
+        String innerThought,
 
-    /**
-     * Check if thinking process is available
-     */
-    public boolean hasThinking() {
-        return thinkingSteps != null && !thinkingSteps.isEmpty();
-    }
+        @ToolParam(description = "Confidence level (low, medium, high)", required = false)
+        String confidence
+) {
 }

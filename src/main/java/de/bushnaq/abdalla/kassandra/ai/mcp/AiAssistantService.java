@@ -17,11 +17,13 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.feature.FeatureTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.product.ProductTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint.SprintTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.user.UserTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.version.VersionTools;
+import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -29,17 +31,21 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.augment.AugmentedToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Method;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 
 /**
  * AI Assistant Service that uses Spring AI's native tool calling.
@@ -56,6 +62,7 @@ public class AiAssistantService {
             Use the available tools when needed to fulfill user requests.
             After using tools, provide helpful and concise responses based on the results.
             If you don't need to use any tools, just provide a direct answer.
+            
             The system is made of a hierarchical structure of a list of Product(s), each product has a list of Version(s), each Version has a list of Feature(s) and each Feature has a list of Sprint(s).
             This hierarchy is linked together using foreign keys. For example, a Version has a productId to its parent Product, a Feature has a versionId to its parent Version and a Sprint has a featureId to its parent Feature.
             """;
@@ -71,10 +78,15 @@ public class AiAssistantService {
     private              ProductTools                            productTools;
     @Autowired
     private              SprintTools                             sprintTools;
+    private final        List<ThinkingStep>                      thinkingSteps        = new ArrayList<>();
     @Autowired
     private              UserTools                               userTools;
     @Autowired
     private              VersionTools                            versionTools;
+
+    private String augmentSystemPrompt(String systemPrompt) {
+        return "Today is " + DateUtil.createDateString(ParameterOptions.getNow().toLocalDate(), DateTimeFormatter.ISO_LOCAL_DATE) + ". " + systemPrompt;
+    }
 
     /**
      * Clear the conversation history for a specific conversation ID
@@ -84,46 +96,24 @@ public class AiAssistantService {
         log.info("Cleared conversation history for: {}", conversationId);
     }
 
-    /**
-     * Extract thinking/reasoning process from ChatResponse.
-     * For reasoning models like DeepSeek-R1, this extracts the thinking tokens.
-     */
-    private String extractThinkingProcess(ChatResponse chatResponse) {
-        try {
-            // Null-safe checks for LMStudio compatibility
-            if (chatResponse == null) {
-                return null;
-            }
-
-            // Try to get thinking from metadata
-            if (chatResponse.getMetadata() != null) {
-                Object thinking = chatResponse.getMetadata().get("thinking");
-                if (thinking != null) {
-                    return thinking.toString();
-                }
-            }
-
-            // Some models include thinking in the raw content between special tags
-            if (chatResponse.getResult() != null &&
-                    chatResponse.getResult().getOutput() != null) {
-                String rawContent = chatResponse.getResult().getOutput().getText();
-                if (rawContent != null) {
-                    // Check for <think> tags (DeepSeek-R1 format)
-                    if (rawContent.contains("<think>") && rawContent.contains("</think>")) {
-                        int startIdx = rawContent.indexOf("<think>");
-                        int endIdx   = rawContent.indexOf("</think>") + 8;
-                        if (startIdx >= 0 && endIdx > startIdx) {
-                            return rawContent.substring(startIdx + 7, endIdx - 8);
-                        }
-                    }
-                }
-            }
-
-            return null;
-        } catch (Exception e) {
-            log.debug("Could not extract thinking process: {}", e.getMessage());
-            return null;
+    private List<AugmentedToolCallbackProvider<AgentThinking>> createToolCallbackProviders(Object[] userTools) {
+        List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = new ArrayList<AugmentedToolCallbackProvider<AgentThinking>>();
+        for (Object userTool : userTools) {
+            AugmentedToolCallbackProvider<AgentThinking> toolProvider = AugmentedToolCallbackProvider
+                    .<AgentThinking>builder()
+                    .toolObject(userTool)
+                    .argumentType(AgentThinking.class)
+                    .argumentConsumer(event -> {
+                        AgentThinking thinking = event.arguments();
+//                        log.info("Tool: {} | Reasoning: {}", event.toolDefinition().name(), thinking.innerThought());
+                        log.info("{}Tool{}{}: {}{}{}", ANSI_GRAY, event.toolDefinition().name(), ANSI_RESET, ANSI_DARK_GRAY, thinking.innerThought(), ANSI_RESET);
+                        thinkingSteps.add(ThinkingStep.create(event.toolDefinition().name(), thinking));
+                    })
+                    .removeExtraArgumentsAfterProcessing(true)
+                    .build();
+            augmentedToolCallbackProvider.add(toolProvider);
         }
+        return augmentedToolCallbackProvider;
     }
 
     /**
@@ -177,63 +167,6 @@ public class AiAssistantService {
 
     /**
      * Process a user query using the AI assistant with Spring AI native tool calling.
-     * Tools are automatically discovered from classes with @Tool annotated methods.
-     *
-     * @param userQuery      The user's query
-     * @param conversationId Unique identifier for this conversation session
-     */
-    public String processQuery(String userQuery, String conversationId) {
-        log.info("=== Starting AI query processing ===");
-
-        // Log model information
-        try {
-            String modelName = chatModel.getDefaultOptions().getModel();
-            log.info("Using LLM Model: {}", modelName != null ? modelName : "default");
-        } catch (Exception e) {
-            log.debug("Could not determine model name: {}", e.getMessage());
-        }
-
-        log.info("User query: {}", userQuery);
-        log.info("Conversation ID: {}", conversationId);
-
-        // Get or create the ChatMemory for this conversation
-        ChatMemory chatMemory = getOrCreateMemory(conversationId);
-
-        // Create MessageChatMemoryAdvisor with conversation ID
-        MessageChatMemoryAdvisor memoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory)
-                .conversationId(conversationId)
-                .build();
-
-        // Create ChatClient with:
-        // - System prompt defining the assistant's role
-        // - Memory advisor for conversation history
-        // - Tool beans with @Tool annotated methods
-        ChatClient chatClient = ChatClient.builder(chatModel)
-                .defaultSystem(SYSTEM_PROMPT)
-                .defaultAdvisors(memoryAdvisor)
-                .defaultTools(productTools, userTools, versionTools, featureTools, sprintTools)
-                .build();
-
-        // Create or get the activity context for this conversation
-//        SessionToolActivityContext activityContext = activityContexts.computeIfAbsent(conversationId, id -> new SessionToolActivityContext());
-        // Store context in ThreadLocal for tool access
-//        ToolActivityContextHolder.setContext(activityContext);
-        try {
-            log.info("Calling LLM via ChatClient with native Spring AI tool support...");
-            String response = chatClient.prompt()
-                    .user(userQuery)
-                    .call()
-                    .content();
-            log.info("=== AI query processing complete ===");
-            log.info("Final response length: {} characters", response != null ? response.length() : 0);
-            return response;
-        } finally {
-            ToolActivityContextHolder.clear();
-        }
-    }
-
-    /**
-     * Process a user query using the AI assistant with Spring AI native tool calling.
      * Returns the full ChatResponse which includes metadata and thinking process for reasoning models.
      *
      * @param userQuery      The user's query
@@ -241,6 +174,7 @@ public class AiAssistantService {
      * @return QueryResult containing both the thinking process and final content
      */
     public QueryResult processQueryWithThinking(String userQuery, String conversationId) {
+        thinkingSteps.clear();
         log.info("=== Starting AI query processing (with thinking) ===");
 
         // Log model information
@@ -262,20 +196,23 @@ public class AiAssistantService {
                 .conversationId(conversationId)
                 .build();
 
+        Object[]                                           userTools                     = {this.userTools, productTools, versionTools, featureTools, sprintTools};
+        List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = createToolCallbackProviders(userTools);
+
         // Create ChatClient with:
         // - System prompt defining the assistant's role
         // - Memory advisor for conversation history
         // - Tool beans with @Tool annotated methods
         ChatClient chatClient = ChatClient.builder(chatModel)
-                .defaultSystem(SYSTEM_PROMPT)
+                .defaultSystem(augmentSystemPrompt(SYSTEM_PROMPT))
                 .defaultAdvisors(memoryAdvisor)
-                .defaultTools(productTools, userTools, versionTools, featureTools, sprintTools)
+                .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4))
+//                .defaultTools(productTools, userTools, versionTools, featureTools, sprintTools)
                 .build();
 
         try {
             log.info("Calling LLM via ChatClient with native Spring AI tool support...");
-            ChatResponse chatResponse = chatClient.prompt()
-                    .user(userQuery)
+            ChatResponse chatResponse = chatClient.prompt(userQuery)
                     .call()
                     .chatResponse();  // Get full ChatResponse instead of just content
 
@@ -286,6 +223,7 @@ public class AiAssistantService {
             }
 
             log.debug("ChatResponse metadata: {}", chatResponse.getMetadata());
+
             log.debug("ChatResponse results count: {}", chatResponse.getResults() != null ? chatResponse.getResults().size() : "null");
 
             if (chatResponse.getResult() == null) {
@@ -298,19 +236,18 @@ public class AiAssistantService {
                 log.error("ChatResponse.getResult().getOutput() is null");
                 throw new RuntimeException("LLM response result has no output");
             }
-            List<AssistantMessage.ToolCall> toolCalls    = chatResponse.getResult().getOutput().getToolCalls();
-            ChatGenerationMetadata          metadata     = chatResponse.getResult().getMetadata();
-            String                          finishReason = metadata.getFinishReason();
-            String                          content      = chatResponse.getResult().getOutput().getText();
-            String                          thinking     = extractThinkingProcess(chatResponse);
+            List<AssistantMessage.ToolCall> toolCalls = chatResponse.getResult().getOutput().getToolCalls();
+            String                          content   = chatResponse.getResult().getOutput().getText();
+//            String                          thinking  = extractThinkingProcess(chatResponse);
+            String thinking = null;
 
             log.info("=== AI query processing complete ===");
             log.info("Final response length: {} characters", content != null ? content.length() : 0);
-            if (thinking != null && !thinking.isEmpty()) {
-                log.info("Thinking process length: {} characters", thinking.length());
-            }
+//            if (thinking != null && !thinking.isEmpty()) {
+//                log.info("Thinking process length: {} characters", thinking.length());
+//            }
 
-            return new QueryResult(content, thinking);
+            return new QueryResult(content, thinkingSteps);
         } finally {
             ToolActivityContextHolder.clear();
         }

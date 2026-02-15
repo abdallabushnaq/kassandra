@@ -31,7 +31,6 @@ import de.bushnaq.abdalla.kassandra.service.UserRoleService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.openqa.selenium.json.JsonException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -96,7 +95,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<UserDAO> get(@PathVariable Long id) throws JsonException {
+    public ResponseEntity<UserDAO> get(@PathVariable Long id) {
         return userRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -104,7 +103,7 @@ public class UserController {
 
     @GetMapping("/sprint/{sprintId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public List<UserDAO> getAll(@PathVariable Long sprintId) throws JsonException {
+    public List<UserDAO> getAll(@PathVariable Long sprintId) {
         return userRepository.findBySprintId(sprintId);
     }
 

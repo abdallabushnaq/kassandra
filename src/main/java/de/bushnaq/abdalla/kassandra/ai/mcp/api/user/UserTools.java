@@ -42,10 +42,10 @@ public class UserTools {
 
     @Autowired
     private JsonMapper jsonMapper;
-
     @Autowired
     @Qualifier("aiUserApi")
-    private UserApi userApi;
+    private UserApi    userApi;
+
 
     @Tool(description = "Create a new user. Returns JSON object of the created user or error message.")
     public String createUser(
@@ -54,7 +54,7 @@ public class UserTools {
             @ToolParam(description = "The user color in hex format (e.g., '#FF0000' for red, '#336699' for blue). If not provided, defaults to blue.") String colorHex,
             @ToolParam(description = "(optional) The user roles (comma-separated, 'ROLE_USER' or 'ROLE_ADMIN')") String roles,
             @ToolParam(description = "(optional) The first working day in ISO format (YYYY-MM-DD), optional. If not provided, today's date will be used.") String firstWorkingDay,
-            @ToolParam(description = "(optional) The last working day in ISO format (YYYY-MM-DD), optional") String lastWorkingDay) {
+            @ToolParam(description = "(optional) The last working day in ISO format (YYYY-MM-DD), optional. If not provided, user is still employed.") String lastWorkingDay) {
         try {
             log.info("Creating user: name={}, email={}", name, email);
             User user = new User();

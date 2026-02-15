@@ -24,19 +24,14 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Component;
 
+import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
+
 /**
  * AI filter generator for JavaScript functions.
  * Converts natural language queries into JavaScript filter functions.
  */
 @Component
 public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
-    private static final String ANSI_BLUE   = "\u001B[36m";
-    private static final String ANSI_GRAY   = "\u001B[37m";
-    private static final String ANSI_GREEN  = "\u001B[32m";
-    private static final String ANSI_RED    = "\u001B[31m";
-    private static final String ANSI_RESET  = "\u001B[0m";    // Declaring ANSI_RESET so that we can reset the color
-    private static final String ANSI_YELLOW = "\u001B[33m";
-
     private static final String     JAVASCRIPT_PROMPT_TEMPLATE = """
             You are a JavaScript function generator for filtering Java objects via GraalJS. Convert natural language search queries into JavaScript filter functions.
             

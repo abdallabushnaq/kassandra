@@ -92,7 +92,7 @@ public class SprintTools {
         }
     }
 
-    @Tool(description = "Get a list of all sprints accessible to the current user (Admin sees all). " + RETURNS_SPRINT_ARRAY_JSON)
+    @Tool(description = "Get a list of all sprints accessible to the current user. " + RETURNS_SPRINT_ARRAY_JSON)
     public String getAllSprints() {
         try {
             ToolActivityContextHolder.reportActivity("Getting all sprints");
