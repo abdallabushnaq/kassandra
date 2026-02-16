@@ -64,6 +64,12 @@ public class JavaAiFilterGenerator implements AiFilterGenerator {
               now or getNow() is not a field of the entity, but of the filter class itself.
               Example: Use 'now' instead of 'LocalDate.now()' for getting the current date.
               Example: Use 'now.minusDays(7)' for getting a week ago from the current date.
+            - CRITICAL DATE INTERPRETATION: When filtering by "after [Month] [Year]" (e.g., "after July 2024"):
+              * This means after the ENTIRE month has ended
+              * Use the LAST day of that month at 23:59:59, not the first day
+              * Example: "after July 2024" means after 2024-07-31 23:59:59, NOT after 2024-07-01
+              * Example: "after March 2025" means after 2025-03-31 23:59:59, NOT after 2025-03-01
+              * Alternatively, use the first day of the NEXT month: "after July 2024" = on or after 2024-08-01 00:00:00
             
             %s
             

@@ -97,14 +97,16 @@
         </dependency>
         <!-- JavaScript engine for AI filter testing -->
         <dependency>
-            <groupId>org.graalvm.js</groupId>
+            <groupId>org.graalvm.polyglot</groupId>
             <artifactId>js</artifactId>
-            <version>23.0.2</version>
+            <version>25.0.2</version>
+            <type>pom</type>
         </dependency>
         <dependency>
             <groupId>org.graalvm.js</groupId>
             <artifactId>js-scriptengine</artifactId>
-            <version>23.0.2</version>
+            <version>25.0.2</version>
+            <type>pom</type>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
