@@ -40,7 +40,7 @@ import java.util.List;
 @Slf4j
 public class UserTools {
     private static final String USER_FIELDS             = """
-            id (number): Unique identifier of the user,
+            userId (number): Unique identifier of the user,
             name (string): The user name,
             email (string): The user email,
             color (string): The user color in hex format,
@@ -59,7 +59,7 @@ public class UserTools {
 
 
     @Tool(description = "Create a new user. " +
-            "IMPORTANT: The returned JSON includes an 'id' field - you MUST extract and use this ID for subsequent operations (like deleting this user). " +
+            "IMPORTANT: The returned JSON includes an 'userId' field - you MUST extract and use this ID for subsequent operations (like deleting this user). " +
             RETURNS_USER_JSON)
     public String createUser(
             @ToolParam(description = "The user name") String name,
@@ -99,23 +99,23 @@ public class UserTools {
     }
 
     @Tool(description = "Delete a user by ID (requires access or admin role). " +
-            "IMPORTANT: You must provide the exact user ID. If you just created a user, use the 'id' field from the createUser response. " +
+            "IMPORTANT: You must provide the exact userId. If you just created a user, use the 'id' field from the createUser response. " +
             "Do NOT guess or use a different user's ID. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteUser(
-            @ToolParam(description = "The user ID") Long id) {
+            @ToolParam(description = "The userId") Long userId) {
         try {
             // First, get the user details to log what we're about to delete
-            User userToDelete = userApi.getById(id);
+            User userToDelete = userApi.getById(userId);
             if (userToDelete != null) {
-                ToolActivityContextHolder.reportActivity("Deleting user '" + userToDelete.getName() + "' (ID: " + id + ")");
+                ToolActivityContextHolder.reportActivity("Deleting user '" + userToDelete.getName() + "' (ID: " + userId + ")");
             } else {
-                ToolActivityContextHolder.reportActivity("Attempting to delete user with ID: " + id + " (user not found)");
+                ToolActivityContextHolder.reportActivity("Attempting to delete user with ID: " + userId + " (user not found)");
             }
 
-            userApi.deleteById(id);
-            ToolActivityContextHolder.reportActivity("Successfully deleted user with ID: " + id);
-            return "User with ID " + id + " deleted successfully";
+            userApi.deleteById(userId);
+            ToolActivityContextHolder.reportActivity("Successfully deleted user with ID: " + userId);
+            return "User with ID " + userId + " deleted successfully";
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting user: " + e.getMessage());
             return "Error: " + e.getMessage();
@@ -151,18 +151,18 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Get a specific user by their ID. " + RETURNS_USER_JSON)
+    @Tool(description = "Get a specific user by their userId. " + RETURNS_USER_JSON)
     public String getUserById(
-            @ToolParam(description = "The user ID") Long id) {
+            @ToolParam(description = "The userId") Long userId) {
         try {
-            log.info("Getting user by ID: {}", id);
-            User user = userApi.getById(id);
+            log.info("Getting user by ID: {}", userId);
+            User user = userApi.getById(userId);
             if (user != null) {
                 return jsonMapper.writeValueAsString(UserDto.from(user));
             }
-            return "User not found with ID: " + id;
+            return "User not found with ID: " + userId;
         } catch (Exception e) {
-            log.error("Error getting user by ID {}: {}", id, e.getMessage());
+            log.error("Error getting user by ID {}: {}", userId, e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -226,7 +226,7 @@ public class UserTools {
 
     @Tool(description = "Update an existing user. " + RETURNS_USER_JSON)
     public String updateUser(
-            @ToolParam(description = "The user ID") Long id,
+            @ToolParam(description = "The userId") Long userId,
             @ToolParam(description = "The new user name, optional") String name,
             @ToolParam(description = "The new user email address, optional") String email,
             @ToolParam(description = "The new user color in hex format (e.g., '#FF0000' for red), optional") String colorHex,
@@ -234,9 +234,9 @@ public class UserTools {
             @ToolParam(description = "The new first working day in ISO format (YYYY-MM-DD), optional") String firstWorkingDay,
             @ToolParam(description = "The new last working day in ISO format (YYYY-MM-DD), optional") String lastWorkingDay) {
         try {
-            User user = userApi.getById(id);
+            User user = userApi.getById(userId);
             if (user == null) {
-                return "User not found with ID: " + id;
+                return "User not found with ID: " + userId;
             }
             if (name != null && !name.isEmpty()) {
                 user.setName(name);
@@ -257,11 +257,11 @@ public class UserTools {
                 user.setLastWorkingDay(LocalDate.parse(lastWorkingDay));
             }
             userApi.update(user);
-            log.info("updated user: id={}", id);
+            log.info("updated user: id={}", userId);
             UserDto userDto = UserDto.from(user);
             return jsonMapper.writeValueAsString(userDto);
         } catch (Exception e) {
-            log.error("Error updating user {}: {}", id, e.getMessage());
+            log.error("Error updating user {}: {}", userId, e.getMessage());
             return "Error: " + e.getMessage();
         }
     }

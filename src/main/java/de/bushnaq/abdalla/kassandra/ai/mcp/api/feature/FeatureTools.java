@@ -169,7 +169,7 @@ public class FeatureTools {
 
     @Tool(description = "Get a list of all features for a version (requires access or admin role). This can be used to retrieve all features belonging to a specific product version. " + RETURNS_FEATURE_ARRAY_JSON)
     public String getAllFeaturesByVersionId(
-            @ToolParam(description = "The version ID (use VersionTools to get version IDs for a product)") Long versionId) {
+            @ToolParam(description = "The versionId (use VersionTools to get version IDs for a product)") Long versionId) {
         try {
             ToolActivityContextHolder.reportActivity("Getting all features for version ID: " + versionId);
             List<Feature> features = featureApi.getAll(versionId);

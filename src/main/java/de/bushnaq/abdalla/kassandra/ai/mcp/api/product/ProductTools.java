@@ -61,7 +61,7 @@ public class ProductTools {
      * Used in @Tool annotations - must be a compile-time constant.
      */
     private static final String                 PRODUCT_FIELDS             = """
-            id (number): Unique identifier of the product, used to map versions to a product,
+            productId (number): Unique identifier of the product, used to map versions to a product,
             name (string): The product name,
             created (ISO 8601 datetime string): Timestamp when the product was created,
             updated (ISO 8601 datetime string): Timestamp when the product was last updated,
@@ -78,7 +78,7 @@ public class ProductTools {
     protected            StableDiffusionService stableDiffusionService;
 
     @Tool(description = "Create a new product. " +
-            "IMPORTANT: The returned JSON includes an 'id' field - you MUST extract and use this ID for subsequent operations (like deleting this product). " +
+            "IMPORTANT: The returned JSON includes an 'productId' field - you MUST extract and use this ID for subsequent operations (like deleting this product). " +
             RETURNS_PRODUCT_JSON)
     public String createProduct(
             @ToolParam(description = "The product name (must be unique)") String name,
@@ -117,12 +117,12 @@ public class ProductTools {
         }
     }
 
-    @Tool(description = "Delete a product by ID (requires access or admin role). " +
-            "IMPORTANT: You must provide the exact product ID. If you just created a product, use the 'id' field from the createProduct response. " +
-            "Do NOT guess or use a different product's ID. " +
+    @Tool(description = "Delete a product by productId. " +
+            "IMPORTANT: You must provide the exact productId. If you just created a product, use the 'productId' field from the createProduct response. " +
+            "Do NOT guess or use a different productId. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteProduct(
-            @ToolParam(description = "The product ID") Long id) {
+            @ToolParam(description = "The productId") Long id) {
         try {
             // First, get the product details to log what we're about to delete
             Product productToDelete = productApi.getById(id);
@@ -148,7 +148,7 @@ public class ProductTools {
         return image;
     }
 
-    @Tool(description = "Get a list of all products accessible to the current user (Admin sees all). " + RETURNS_PRODUCT_ARRAY_JSON)
+    @Tool(description = "Get a list of all products accessible to the current user. " + RETURNS_PRODUCT_ARRAY_JSON)
     public String getAllProducts() {
         try {
             List<Product> products = productApi.getAll();
@@ -163,19 +163,19 @@ public class ProductTools {
         }
     }
 
-    @Tool(description = "Get a specific product by its ID. " + RETURNS_PRODUCT_JSON)
+    @Tool(description = "Get a specific product by its productId. " + RETURNS_PRODUCT_JSON)
     public String getProductById(
-            @ToolParam(description = "The product ID") Long id) {
+            @ToolParam(description = "The productId") Long productId) {
 //        ToolActivityContextHolder.reportActivity("Getting product with ID: " + id);
         try {
-            Product product = productApi.getById(id);
+            Product product = productApi.getById(productId);
             if (product != null) {
                 ToolActivityContextHolder.reportActivity("read product : " + product.getName() + ".");
                 ProductDto productDto = ProductDto.from(product);
                 return jsonMapper.writeValueAsString(productDto);
             }
-            ToolActivityContextHolder.reportActivity("failed to find product by ID: " + id + ".");
-            return "Product not found with ID: " + id;
+            ToolActivityContextHolder.reportActivity("failed to find product by ID: " + productId + ".");
+            return "Product not found with ID: " + productId;
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting product by ID: " + e.getMessage());
             return "Error: " + e.getMessage();
@@ -200,16 +200,16 @@ public class ProductTools {
         }
     }
 
-    @Tool(description = "Update an existing product (requires access or admin role). " + RETURNS_PRODUCT_JSON)
+    @Tool(description = "Update an existing product by its productId. " + RETURNS_PRODUCT_JSON)
     public String updateProduct(
-            @ToolParam(description = "The product ID") Long id,
+            @ToolParam(description = "The productId") Long productId,
             @ToolParam(description = "The new product name") String name) {
 //        ToolActivityContextHolder.reportActivity("Updating product " + id + " with name: " + name);
         try {
-            Product product = productApi.getById(id);
+            Product product = productApi.getById(productId);
             if (product == null) {
-                ToolActivityContextHolder.reportActivity("failed to update product by ID: " + id + ".");
-                return "Product not found with ID: " + id;
+                ToolActivityContextHolder.reportActivity("failed to update product by ID: " + productId + ".");
+                return "Product not found with ID: " + productId;
             }
             product.setName(name);
             productApi.update(product);

@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SprintTools {
     private static final String SPRINT_FIELDS             = """
-            id (number): Unique identifier of the sprint,
+            sprintId (number): Unique identifier of the sprint,
             name (string): The sprint name,
             featureId (number): The feature this sprint belongs to,
             userId (number): The user this sprint is assigned to,
@@ -63,11 +63,11 @@ public class SprintTools {
     private SprintApi sprintApi;
 
     @Tool(description = "Create a new sprint (requires USER or ADMIN role). " +
-            "IMPORTANT: The returned JSON includes an 'id' field - you MUST extract and use this ID for subsequent operations (like deleting this sprint). " +
+            "IMPORTANT: The returned JSON includes an 'sprintId' field - you MUST extract and use this ID for subsequent operations (like deleting this sprint). " +
             RETURNS_SPRINT_JSON)
     public String createSprint(
             @ToolParam(description = "The sprint name (must be unique)") String name,
-            @ToolParam(description = "The feature ID this sprint belongs to") Long featureId) {
+            @ToolParam(description = "The featureId this sprint belongs to") Long featureId) {
         try {
             ToolActivityContextHolder.reportActivity("Creating sprint with name: " + name + " for feature " + featureId);
             Sprint sprint = new Sprint();
@@ -88,21 +88,21 @@ public class SprintTools {
             "Do NOT guess or use a different sprint's ID. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteSprint(
-            @ToolParam(description = "The sprint ID") Long id) {
+            @ToolParam(description = "The sprintId") Long sprintId) {
         try {
             // First, get the sprint details to log what we're about to delete
-            Sprint sprintToDelete = sprintApi.getById(id);
+            Sprint sprintToDelete = sprintApi.getById(sprintId);
             if (sprintToDelete != null) {
-                ToolActivityContextHolder.reportActivity("Deleting sprint '" + sprintToDelete.getName() + "' (ID: " + id + ")");
+                ToolActivityContextHolder.reportActivity("Deleting sprint '" + sprintToDelete.getName() + "' (ID: " + sprintId + ")");
             } else {
-                ToolActivityContextHolder.reportActivity("Attempting to delete sprint with ID: " + id + " (sprint not found)");
+                ToolActivityContextHolder.reportActivity("Attempting to delete sprint with ID: " + sprintId + " (sprint not found)");
             }
 
-            sprintApi.deleteById(id);
-            ToolActivityContextHolder.reportActivity("Successfully deleted sprint with ID: " + id);
-            return "Sprint deleted successfully with ID: " + id;
+            sprintApi.deleteById(sprintId);
+            ToolActivityContextHolder.reportActivity("Successfully deleted sprint with ID: " + sprintId);
+            return "Sprint deleted successfully with ID: " + sprintId;
         } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error deleting sprint " + id + ": " + e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error deleting sprint " + sprintId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
@@ -124,7 +124,7 @@ public class SprintTools {
 
     @Tool(description = "Get a list of all sprints for a feature (requires access or admin role). " + RETURNS_SPRINT_ARRAY_JSON)
     public String getAllSprintsByFeatureId(
-            @ToolParam(description = "The feature ID") Long featureId) {
+            @ToolParam(description = "The featureId") Long featureId) {
         try {
             ToolActivityContextHolder.reportActivity("Getting all sprints for feature " + featureId);
             List<Sprint> sprints = sprintApi.getAll(featureId);
@@ -141,37 +141,37 @@ public class SprintTools {
 
     @Tool(description = "Get a specific sprint by its ID (requires access or admin role). " + RETURNS_SPRINT_JSON)
     public String getSprintById(
-            @ToolParam(description = "The sprint ID") Long id) {
+            @ToolParam(description = "The sprintId") Long sprintId) {
         try {
-            ToolActivityContextHolder.reportActivity("Getting sprint with ID: " + id);
-            Sprint sprint = sprintApi.getById(id);
+            ToolActivityContextHolder.reportActivity("Getting sprint with ID: " + sprintId);
+            Sprint sprint = sprintApi.getById(sprintId);
             if (sprint != null) {
                 SprintDto sprintDto = SprintDto.from(sprint);
                 return jsonMapper.writeValueAsString(sprintDto);
             }
-            return "Sprint not found with ID: " + id;
+            return "Sprint not found with ID: " + sprintId;
         } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting sprint " + id + ": " + e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error getting sprint " + sprintId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
 
     @Tool(description = "Update an existing sprint (requires access or admin role). " + RETURNS_SPRINT_JSON)
     public String updateSprint(
-            @ToolParam(description = "The sprint ID") Long id,
+            @ToolParam(description = "The sprintId") Long sprintId,
             @ToolParam(description = "The new sprint name") String name) {
         try {
-            ToolActivityContextHolder.reportActivity("Updating sprint " + id + " with name: " + name);
-            Sprint sprint = sprintApi.getById(id);
+            ToolActivityContextHolder.reportActivity("Updating sprint " + sprintId + " with name: " + name);
+            Sprint sprint = sprintApi.getById(sprintId);
             if (sprint == null) {
-                return "Sprint not found with ID: " + id;
+                return "Sprint not found with ID: " + sprintId;
             }
             sprint.setName(name);
             sprintApi.update(sprint);
             SprintDto sprintDto = SprintDto.from(sprint);
             return jsonMapper.writeValueAsString(sprintDto);
         } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error updating sprint " + id + ": " + e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error updating sprint " + sprintId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }

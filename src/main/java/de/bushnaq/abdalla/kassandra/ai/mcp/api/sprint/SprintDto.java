@@ -36,18 +36,18 @@ public class SprintDto {
     private String        avatarHash;
     private LocalDateTime end;
     private Long          featureId;
-    private Long          id;
     private String        name;
     private Duration      originalEstimation;
     private LocalDateTime releaseDate;
     private Duration      remaining;
+    private Long          sprintId;
     private LocalDateTime start;
     private Status        status;
     private Long          userId;
     private Duration      worked;
 
-    public SprintDto(Long id, String name, Long featureId, LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate, Duration originalEstimation, Duration remaining, Duration worked, String avatarHash, Status status, Long userId) {
-        this.id                 = id;
+    public SprintDto(Long sprintId, String name, Long featureId, LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate, Duration originalEstimation, Duration remaining, Duration worked, String avatarHash, Status status, Long userId) {
+        this.sprintId           = sprintId;
         this.name               = name;
         this.featureId          = featureId;
         this.start              = start;

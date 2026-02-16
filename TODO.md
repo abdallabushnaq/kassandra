@@ -1,5 +1,6 @@
 # TODO
 
+1. rename all mcp tpo IDs
 1. GENERATOR. ensure some projects show delay, are not started or are finished closed.
 2. add better error handling in api.
 3. add ability to edit or delete a worklog.

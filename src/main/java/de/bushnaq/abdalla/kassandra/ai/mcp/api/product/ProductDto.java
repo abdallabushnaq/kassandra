@@ -36,13 +36,13 @@ import java.time.OffsetDateTime;
 public class ProductDto {
     private String         avatarPrompt;
     private OffsetDateTime created;
-    private Long           id;
     private String         name;
+    private Long           productId;
     private OffsetDateTime updated;
 
 
-    public ProductDto(Long id, String name, OffsetDateTime updated, OffsetDateTime created, String avatarPrompt) {
-        this.id           = id;
+    public ProductDto(Long productId, String name, OffsetDateTime updated, OffsetDateTime created, String avatarPrompt) {
+        this.productId    = productId;
         this.name         = name;
         this.updated      = updated;
         this.created      = created;
@@ -64,7 +64,7 @@ public class ProductDto {
 
     public Product toProduct() {
         Product product = new Product();
-        product.setId(this.id);
+        product.setId(this.productId);
         product.setName(this.name);
         product.setCreated(this.created);
         product.setUpdated(this.updated);

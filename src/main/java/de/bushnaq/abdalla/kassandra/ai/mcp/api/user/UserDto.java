@@ -38,16 +38,16 @@ public class UserDto {
     private Color     color;
     private String    email;
     private LocalDate firstWorkingDay;
-    private Long      id;
     private LocalDate lastWorkingDay;
     private String    name;
     private String    roles;
+    private Long      userId;
 
     /**
      * Custom constructor for UserDto with explicit parameter order.
      */
-    public UserDto(Long id, String name, String email, Color color, String roles, LocalDate firstWorkingDay, LocalDate lastWorkingDay) {
-        this.id              = id;
+    public UserDto(Long userId, String name, String email, Color color, String roles, LocalDate firstWorkingDay, LocalDate lastWorkingDay) {
+        this.userId          = userId;
         this.name            = name;
         this.email           = email;
         this.color           = color;
@@ -73,7 +73,7 @@ public class UserDto {
 
     public User toUser() {
         User user = new User();
-        user.setId(this.id);
+        user.setId(this.userId);
         user.setName(this.name);
         user.setEmail(this.email);
         user.setColor(this.color);

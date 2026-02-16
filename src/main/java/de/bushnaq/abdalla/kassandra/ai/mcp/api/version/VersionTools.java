@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class VersionTools {
     private static final String VERSION_FIELDS             = """
-            id (number): Unique identifier of the version, used to map features to a version,
+            versionId (number): Unique identifier of the version, used to map features to a version,
             name (string): The version name,
             productId (number): The product this version belongs to,
             created (ISO 8601 datetime string): Timestamp when the version was created,
@@ -66,11 +66,11 @@ public class VersionTools {
     private VersionApi versionApi;
 
     @Tool(description = "Create a new version for a product (requires USER or ADMIN role). " +
-            "IMPORTANT: The returned JSON includes an 'id' field - you MUST extract and use this ID for subsequent operations (like deleting this version). " +
+            "IMPORTANT: The returned JSON includes an 'versionId' field - you MUST extract and use this ID for subsequent operations (like deleting this version). " +
             RETURNS_VERSION_JSON)
     public String createVersion(
             @ToolParam(description = "The version name (must be unique)") String name,
-            @ToolParam(description = "The product ID this version belongs to") Long productId) {
+            @ToolParam(description = "The productId this version belongs to") Long productId) {
         try {
             ToolActivityContextHolder.reportActivity("Creating version with name: " + name + " for product " + productId);
             Version version = new Version();
@@ -86,31 +86,31 @@ public class VersionTools {
         }
     }
 
-    @Tool(description = "Delete a version by ID (requires access or admin role). " +
-            "IMPORTANT: You must provide the exact version ID. If you just created a version, use the 'id' field from the createVersion response. " +
+    @Tool(description = "Delete a version by its versionId. " +
+            "IMPORTANT: You must provide the exact versionId. If you just created a version, use the 'versionId' field from the createVersion response. " +
             "Do NOT guess or use a different version's ID. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteVersion(
-            @ToolParam(description = "The version ID") Long id) {
+            @ToolParam(description = "The versionId") Long versionId) {
         try {
             // First, get the version details to log what we're about to delete
-            Version versionToDelete = versionApi.getById(id);
+            Version versionToDelete = versionApi.getById(versionId);
             if (versionToDelete != null) {
-                ToolActivityContextHolder.reportActivity("Deleting version '" + versionToDelete.getName() + "' (ID: " + id + ")");
+                ToolActivityContextHolder.reportActivity("Deleting version '" + versionToDelete.getName() + "' (ID: " + versionId + ")");
             } else {
-                ToolActivityContextHolder.reportActivity("Attempting to delete version with ID: " + id + " (version not found)");
+                ToolActivityContextHolder.reportActivity("Attempting to delete version with ID: " + versionId + " (version not found)");
             }
 
-            versionApi.deleteById(id);
-            ToolActivityContextHolder.reportActivity("Successfully deleted version with ID: " + id);
-            return "Version deleted successfully with ID: " + id;
+            versionApi.deleteById(versionId);
+            ToolActivityContextHolder.reportActivity("Successfully deleted version with ID: " + versionId);
+            return "Version deleted successfully with ID: " + versionId;
         } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error deleting version " + id + ": " + e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error deleting version " + versionId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
 
-    @Tool(description = "Get a list of all versions accessible to the current user (Admin sees all). Good if you need to retrieve versions for all products. " + RETURNS_VERSION_ARRAY_JSON)
+    @Tool(description = "Get a list of all versions accessible to the current user. Good if you need to retrieve versions for all products. " + RETURNS_VERSION_ARRAY_JSON)
     public String getAllVersions() {
         try {
             ToolActivityContextHolder.reportActivity("Getting all versions");
@@ -126,9 +126,9 @@ public class VersionTools {
         }
     }
 
-    @Tool(description = "Get a list of all versions for a product (requires access or admin role). " + RETURNS_VERSION_ARRAY_JSON)
+    @Tool(description = "Get a list of all versions for a product. " + RETURNS_VERSION_ARRAY_JSON)
     public String getAllVersionsByProductId(
-            @ToolParam(description = "The product ID") Long productId) {
+            @ToolParam(description = "The productId") Long productId) {
         try {
 //            ToolActivityContextHolder.reportActivity("Getting all versions for product ID: " + productId);
             List<Version> versions = versionApi.getAll(productId);
@@ -143,39 +143,39 @@ public class VersionTools {
         }
     }
 
-    @Tool(description = "Get a specific version by its ID (requires access or admin role). " + RETURNS_VERSION_JSON)
+    @Tool(description = "Get a specific version by its versionId. " + RETURNS_VERSION_JSON)
     public String getVersionById(
-            @ToolParam(description = "The version ID") Long id) {
+            @ToolParam(description = "The versionId") Long versionId) {
         try {
-            ToolActivityContextHolder.reportActivity("Getting version with ID: " + id);
-            Version version = versionApi.getById(id);
+            ToolActivityContextHolder.reportActivity("Getting version with ID: " + versionId);
+            Version version = versionApi.getById(versionId);
             if (version != null) {
                 VersionDto versionDto = VersionDto.from(version);
                 return jsonMapper.writeValueAsString(versionDto);
             }
-            return "Version not found with ID: " + id;
+            return "Version not found with ID: " + versionId;
         } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting version " + id + ": " + e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error getting version " + versionId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }
 
-    @Tool(description = "Update an existing version (requires access or admin role). " + RETURNS_VERSION_JSON)
+    @Tool(description = "Update an existing version by its versionId. " + RETURNS_VERSION_JSON)
     public String updateVersion(
-            @ToolParam(description = "The version ID") Long id,
+            @ToolParam(description = "The versionId") Long versionId,
             @ToolParam(description = "The new version name") String name) {
         try {
-            ToolActivityContextHolder.reportActivity("Updating version " + id + " with name: " + name);
-            Version version = versionApi.getById(id);
+            ToolActivityContextHolder.reportActivity("Updating version " + versionId + " with name: " + name);
+            Version version = versionApi.getById(versionId);
             if (version == null) {
-                return "Version not found with ID: " + id;
+                return "Version not found with ID: " + versionId;
             }
             version.setName(name);
             versionApi.update(version);
             VersionDto versionDto = VersionDto.from(version);
             return jsonMapper.writeValueAsString(versionDto);
         } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error updating version " + id + ": " + e.getMessage());
+            ToolActivityContextHolder.reportActivity("Error updating version " + versionId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }

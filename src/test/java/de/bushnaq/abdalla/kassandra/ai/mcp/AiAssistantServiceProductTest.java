@@ -85,7 +85,7 @@ public class AiAssistantServiceProductTest extends AbstractMcpTest {
 
         //---delete
         String response = processQuery("Please delete the product you created.");
-        if (productApi.getByName("Andromeda").isEmpty() && response.toLowerCase().contains("are you sure")) {
+        if (productApi.getByName("Andromeda").isEmpty() && (response.toLowerCase().contains("are you sure") || response.toLowerCase().contains("would you like me to delete it now?"))) {
             processQuery("I am sure.");
         }
         assertTrue(productApi.getByName("Andromeda").isEmpty(), "Product 'Andromeda' should be deleted");

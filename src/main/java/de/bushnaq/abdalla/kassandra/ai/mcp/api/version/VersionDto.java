@@ -35,16 +35,16 @@ import java.time.OffsetDateTime;
 @JsonPropertyOrder({"id", "name", "productId", "created", "updated"})
 public class VersionDto {
     private OffsetDateTime created;
-    private Long           id;
     private String         name;
     private Long           productId;
     private OffsetDateTime updated;
+    private Long           versionId;
 
     /**
      * Custom constructor for VersionDto with explicit parameter order.
      */
-    public VersionDto(Long id, String name, Long productId, OffsetDateTime created, OffsetDateTime updated) {
-        this.id        = id;
+    public VersionDto(Long versionId, String name, Long productId, OffsetDateTime created, OffsetDateTime updated) {
+        this.versionId = versionId;
         this.name      = name;
         this.productId = productId;
         this.created   = created;
@@ -66,7 +66,7 @@ public class VersionDto {
 
     public Version toVersion() {
         Version version = new Version();
-        version.setId(this.id);
+        version.setId(this.versionId);
         version.setName(this.name);
         version.setCreated(this.created);
         version.setUpdated(this.updated);
