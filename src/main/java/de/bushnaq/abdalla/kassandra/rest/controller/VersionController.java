@@ -77,6 +77,16 @@ public class VersionController {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/product/{productId}/by-name/{name}")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
+    public ResponseEntity<VersionDAO> getByName(@PathVariable Long productId, @PathVariable String name) {
+        VersionDAO version = versionRepository.findByNameAndProductId(name, productId);
+        if (version == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(version);
+    }
+
     @PostMapping()
     @PreAuthorize("@aclSecurityService.hasProductAccess(#version.productId) or hasRole('ADMIN')")
     @Transactional

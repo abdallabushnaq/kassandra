@@ -22,11 +22,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.ErrorResponseException;
 import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class VersionApi extends AbstractApi {
@@ -84,6 +86,25 @@ public class VersionApi extends AbstractApi {
                 id
         ));
         return response.getBody();
+    }
+
+    public Optional<Version> getByName(Long productId, String name) {
+        try {
+            ResponseEntity<Version> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/version/product/{productId}/by-name/{name}",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    Version.class,
+                    productId,
+                    name
+            ));
+            return Optional.of(response.getBody());
+        } catch (ErrorResponseException e) {
+            if (e.getStatusCode().value() == 404) {
+                return Optional.empty();
+            }
+            throw e;
+        }
     }
 
     public Version persist(Version version) {
