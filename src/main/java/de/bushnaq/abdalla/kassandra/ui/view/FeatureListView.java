@@ -171,6 +171,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
             }
         }
         chatAgentPanel.setCurrentUser(userFromDb);
+        chatAgentPanel.setOnAiReply(this::refreshGrid);
 
         refreshGrid();
     }

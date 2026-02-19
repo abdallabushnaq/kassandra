@@ -172,6 +172,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
             }
         }
         chatAgentPanel.setCurrentUser(userFromDb);
+        chatAgentPanel.setOnAiReply(this::refreshGrid);
 
         refreshGrid();
     }

@@ -191,6 +191,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             }
         }
         chatAgentPanel.setCurrentUser(userFromDb);
+        chatAgentPanel.setOnAiReply(this::refreshGrid);
 
         refreshGrid();
     }

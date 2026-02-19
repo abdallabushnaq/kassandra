@@ -179,6 +179,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
             }
         }
         chatAgentPanel.setCurrentUser(userFromDb);
+        chatAgentPanel.setOnAiReply(this::refreshGrid);
 
         refreshGrid();
     }

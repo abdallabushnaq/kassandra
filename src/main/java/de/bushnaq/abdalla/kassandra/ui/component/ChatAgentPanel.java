@@ -60,6 +60,10 @@ public class ChatAgentPanel extends VerticalLayout {
     private             String                                        conversationId;
     private             User                                          currentUser;
     private final       AuthenticationProvider                        mcpAuthProvider;
+    /**
+     * Called on the UI thread after every successful AI reply — use to refresh the host view's grid.
+     */
+    private             Runnable                                      onAiReply;
     private final       TextArea                                      queryInput;
     private final       Div                                           responseArea;
     // Plain list reference captured from the session bean — safe to use on any thread.
@@ -201,6 +205,10 @@ public class ChatAgentPanel extends VerticalLayout {
         conversationHistory.add(messageDiv);
         scrollToBottom();
         snapshotMessage("ai", message);
+        // Notify the host view so it can refresh its grid
+        if (onAiReply != null) {
+            onAiReply.run();
+        }
     }
 
     private void addErrorMessage(String message) {
@@ -397,6 +405,15 @@ public class ChatAgentPanel extends VerticalLayout {
      */
     public void setCurrentUser(User user) {
         this.currentUser = user;
+    }
+
+    /**
+     * Registers a callback that is invoked on the UI thread immediately after
+     * every AI reply is rendered. Use this to refresh the host view's data grid
+     * so changes made by the AI are reflected without a manual page reload.
+     */
+    public void setOnAiReply(Runnable onAiReply) {
+        this.onAiReply = onAiReply;
     }
 
     /**

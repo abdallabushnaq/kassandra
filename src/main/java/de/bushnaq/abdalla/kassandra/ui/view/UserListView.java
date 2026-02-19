@@ -138,6 +138,7 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
             }
         }
         chatAgentPanel.setCurrentUser(userFromDb);
+        chatAgentPanel.setOnAiReply(this::refreshGrid);
 
         refreshGrid();
     }
