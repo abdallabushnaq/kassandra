@@ -45,6 +45,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -65,27 +66,34 @@ import java.util.Map;
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
 public class ProductListView extends AbstractMainGrid<Product> implements AfterNavigationObserver {
-    public static final String                 CREATE_PRODUCT_BUTTON             = "create-product-button";
-    public static final String                 PRODUCT_AI_PANEL_BUTTON           = "product-ai-panel-button";
-    public static final String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
-    public static final String                 PRODUCT_GRID                      = "product-grid";
-    public static final String                 PRODUCT_GRID_ACCESS_PREFIX        = "product-grid-access-";
-    public static final String                 PRODUCT_GRID_DELETE_BUTTON_PREFIX = "product-grid-delete-button-prefix-";
-    public static final String                 PRODUCT_GRID_EDIT_BUTTON_PREFIX   = "product-grid-edit-button-prefix-";
-    public static final String                 PRODUCT_GRID_NAME_PREFIX          = "product-grid-name-";
-    public static final String                 PRODUCT_LIST_PAGE_TITLE           = "product-list-page-title";
-    public static final String                 PRODUCT_ROW_COUNTER               = "product-row-counter";
-    public static final String                 ROUTE                             = "product-list";
-    private final       ChatAgentPanel         chatAgentPanel;
-    private final       ProductAclApi          productAclApi;
-    private final       ProductApi             productApi;
-    private final       StableDiffusionService stableDiffusionService;
-    private final       UserApi                userApi;
-    private final       UserGroupApi           userGroupApi;
+    public static final  String                 CREATE_PRODUCT_BUTTON             = "create-product-button";
+    private static final String                 PARAM_AI_PANEL                    = "aiPanel";
+    public static final  String                 PRODUCT_AI_PANEL_BUTTON           = "product-ai-panel-button";
+    public static final  String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
+    public static final  String                 PRODUCT_GRID                      = "product-grid";
+    public static final  String                 PRODUCT_GRID_ACCESS_PREFIX        = "product-grid-access-";
+    public static final  String                 PRODUCT_GRID_DELETE_BUTTON_PREFIX = "product-grid-delete-button-prefix-";
+    public static final  String                 PRODUCT_GRID_EDIT_BUTTON_PREFIX   = "product-grid-edit-button-prefix-";
+    public static final  String                 PRODUCT_GRID_NAME_PREFIX          = "product-grid-name-";
+    public static final  String                 PRODUCT_LIST_PAGE_TITLE           = "product-list-page-title";
+    public static final  String                 PRODUCT_ROW_COUNTER               = "product-row-counter";
+    public static final  String                 ROUTE                             = "product-list";
+    private final        Button                 aiToggleButton;
+    private final        SplitLayout            bodySplit;
+    private final        ChatAgentPanel         chatAgentPanel;
+    private              boolean                chatOpen                          = false;
+    private final        Div                    chatPane;
+    private final        ProductAclApi          productAclApi;
+    private final        ProductApi             productApi;
+    private              boolean                restoringFromUrl                  = false;
+    private final        StableDiffusionService stableDiffusionService;
+    private final        UserApi                userApi;
+    private final        UserGroupApi           userGroupApi;
 
     public ProductListView(ProductApi productApi, ProductAclApi productAclApi, UserApi userApi, UserGroupApi userGroupApi,
                            Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService,
-                           AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider) {
+                           AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider,
+                           ChatPanelSessionState chatPanelSessionState) {
         super(clock);
         this.productApi             = productApi;
         this.productAclApi          = productAclApi;
@@ -108,17 +116,17 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         );
 
         // AI toggle button - appended to the header's right side
-        Button aiToggleButton = new Button("AI", VaadinIcon.BRAIN.create());
+        aiToggleButton = new Button("AI");
         aiToggleButton.setId(PRODUCT_AI_PANEL_BUTTON);
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
 
-        // Chat panel - lives in the right pane (hidden by default)
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi);
+        // Chat panel (session-aware: reuses conversationId + replays history on F5)
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi, chatPanelSessionState);
         chatAgentPanel.setSizeFull();
 
-        Div chatPane = new Div(chatAgentPanel);
+        chatPane = new Div(chatAgentPanel);
         chatPane.getStyle()
                 .set("height", "100%")
                 .set("overflow", "hidden")
@@ -127,36 +135,18 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                 .set("opacity", "0")
                 .set("min-width", "0");
 
-        // SplitLayout: grid (left primary) | chat panel (right secondary)
-        SplitLayout bodySplit = new SplitLayout(getGridPanelWrapper(), chatPane);
+        // SplitLayout: grid (left) | chat panel (right)
+        bodySplit = new SplitLayout(getGridPanelWrapper(), chatPane);
         bodySplit.setOrientation(SplitLayout.Orientation.HORIZONTAL);
         bodySplit.setSizeFull();
-        // Start with chat pane collapsed - splitter at 100%
         bodySplit.setSplitterPosition(100);
 
         add(bodySplit);
 
-        // Toggle: show/hide the chat pane with CSS animation
-        final boolean[] chatOpen = {false};
         aiToggleButton.addClickListener(e -> {
-            chatOpen[0] = !chatOpen[0];
-            if (chatOpen[0]) {
-                // Open: animate width in, move splitter to 65/35
-                chatPane.getStyle()
-                        .set("width", "35%")
-                        .set("opacity", "1")
-                        .set("min-width", "280px");
-                bodySplit.setSplitterPosition(65);
-                aiToggleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            } else {
-                // Close: animate back to zero width
-                chatPane.getStyle()
-                        .set("width", "0")
-                        .set("opacity", "0")
-                        .set("min-width", "0");
-                bodySplit.setSplitterPosition(100);
-                aiToggleButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            }
+            chatOpen = !chatOpen;
+            applyChatPaneState(chatOpen);
+            updateUrlParameters();
         });
     }
 
@@ -169,6 +159,16 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                         mainLayout.getBreadcrumbs().addItem("Products", ProductListView.class);
                     }
                 });
+
+        // Restore panel open/closed state from URL parameter
+        restoringFromUrl = true;
+        QueryParameters qp         = event.getLocation().getQueryParameters();
+        boolean         shouldOpen = qp.getParameters().containsKey(PARAM_AI_PANEL);
+        if (shouldOpen != chatOpen) {
+            chatOpen = shouldOpen;
+            applyChatPaneState(chatOpen);
+        }
+        restoringFromUrl = false;
 
         // Wire current user into the chat panel for avatar/name display
         final String userEmail  = SecurityUtils.getUserEmail();
@@ -183,6 +183,27 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         chatAgentPanel.setCurrentUser(userFromDb);
 
         refreshGrid();
+    }
+
+    /**
+     * Opens or closes the chat pane and keeps the toggle button styling in sync.
+     */
+    private void applyChatPaneState(boolean open) {
+        if (open) {
+            chatPane.getStyle()
+                    .set("width", "35%")
+                    .set("opacity", "1")
+                    .set("min-width", "280px");
+            bodySplit.setSplitterPosition(65);
+            aiToggleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        } else {
+            chatPane.getStyle()
+                    .set("width", "0")
+                    .set("opacity", "0")
+                    .set("min-width", "0");
+            bodySplit.setSplitterPosition(100);
+            aiToggleButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        }
     }
 
     private void confirmDelete(Product product) {
@@ -370,5 +391,18 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         getDataProvider().refreshAll();
         getGrid().getDataProvider().refreshAll();
         getUI().ifPresent(ui -> ui.push());
+    }
+
+    /**
+     * Pushes the current panel-open state into the URL so F5 restores it.
+     */
+    private void updateUrlParameters() {
+        if (restoringFromUrl) return;
+        Map<String, String> params = new HashMap<>();
+        if (chatOpen) {
+            params.put(PARAM_AI_PANEL, "open");
+        }
+        QueryParameters qp = QueryParameters.simple(params);
+        getUI().ifPresent(ui -> ui.navigate(ProductListView.class, qp));
     }
 }

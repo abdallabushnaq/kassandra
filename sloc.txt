@@ -322,7 +322,8 @@
 | kassandra.ui.component         | BacklogStoryCard.java                                    | src      |       42 |       17 |       30 |      212 |      301 |
 | kassandra.ui.component         | BacklogTaskCard.java                                     | src      |       37 |       18 |       25 |      183 |      263 |
 | kassandra.ui.component         | Breadcrumbs.java                                         | src      |       17 |        0 |       21 |       83 |      121 |
-| kassandra.ui.component         | ChatAgentPanel.java                                      | src      |       42 |       13 |       27 |      286 |      368 |
+| kassandra.ui.component         | ChatAgentPanel.java                                      | src      |       46 |       17 |       28 |      307 |      398 |
+| kassandra.ui.component         | ChatPanelSessionState.java                               | src      |        9 |       27 |       16 |       32 |       84 |
 | kassandra.ui.component         | CrossGridDragDropCoordinator.java                        | src      |       24 |       90 |       23 |      105 |      242 |
 | kassandra.ui.component         | FeatureCard.java                                         | src      |       64 |       15 |       49 |      307 |      435 |
 | kassandra.ui.component         | GlobalAiFilter.java                                      | src      |       41 |        4 |       53 |      186 |      284 |
@@ -411,7 +412,7 @@
 | kassandra.ui.view              | MainView.java                                            | src      |        7 |        7 |       18 |       26 |       58 |
 | kassandra.ui.view              | OffDayListView.java                                      | src      |       35 |       11 |       60 |      223 |      329 |
 | kassandra.ui.view              | OffDayListViewTest.java                                  | src      |       23 |       77 |       35 |      141 |      276 |
-| kassandra.ui.view              | ProductListView.java                                     | src      |       36 |        3 |       26 |      309 |      374 |
+| kassandra.ui.view              | ProductListView.java                                     | src      |       39 |        9 |       23 |      337 |      408 |
 | kassandra.ui.view              | ProductListViewTest.java                                 | src      |       35 |      119 |       24 |      218 |      396 |
 | kassandra.ui.view              | SprintListView.java                                      | src      |       35 |        0 |       38 |      268 |      341 |
 | kassandra.ui.view              | SprintListViewTest.java                                  | src      |       15 |       82 |       24 |      112 |      233 |
@@ -508,5 +509,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 49 package(s)                  | 458 file(s)                                              | java     |    10299 |     7692 |    13116 |    53367 |    84474 |
+| 49 package(s)                  | 459 file(s)                                              | java     |    10315 |     7729 |    13130 |    53448 |    84622 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

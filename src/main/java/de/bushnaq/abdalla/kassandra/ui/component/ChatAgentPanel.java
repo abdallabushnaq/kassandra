@@ -39,6 +39,8 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 /**
  * Reusable chat agent panel component.
  * Encapsulates the full AI assistant chat UI: conversation history,
@@ -48,25 +50,41 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ChatAgentPanel extends VerticalLayout {
 
-    public static final String                 AI_CLEAR_BUTTON   = "ai-clear-button";
-    public static final String                 AI_QUERY_INPUT    = "ai-query-input";
-    public static final String                 AI_RESPONSE_AREA  = "ai-response-area";
-    public static final String                 AI_SUBMIT_BUTTON  = "ai-submit-button";
-    private volatile    boolean                activityStreaming = false;
-    private final       AiAssistantService     aiAssistantService;
-    private final       Div                    conversationHistory;
-    private             String                 conversationId    = java.util.UUID.randomUUID().toString();
-    private             User                   currentUser;
-    private final       AuthenticationProvider mcpAuthProvider;
-    private final       TextArea               queryInput;
-    private final       Div                    responseArea;
-    private final       Button                 submitButton;
-    private final       UserApi                userApi;
+    public static final String                                        AI_CLEAR_BUTTON   = "ai-clear-button";
+    public static final String                                        AI_QUERY_INPUT    = "ai-query-input";
+    public static final String                                        AI_RESPONSE_AREA  = "ai-response-area";
+    public static final String                                        AI_SUBMIT_BUTTON  = "ai-submit-button";
+    private volatile    boolean                                       activityStreaming = false;
+    private final       AiAssistantService                            aiAssistantService;
+    private final       Div                                           conversationHistory;
+    private             String                                        conversationId;
+    private             User                                          currentUser;
+    private final       AuthenticationProvider                        mcpAuthProvider;
+    private final       TextArea                                      queryInput;
+    private final       Div                                           responseArea;
+    // Plain list reference captured from the session bean — safe to use on any thread.
+    private final       List<ChatPanelSessionState.ChatMessageRecord> sessionMessages;
+    // Direct reference to the session state bean — resolved once on the request thread.
+    // Never accessed from background threads; only the plain List inside it is passed into lambdas.
+    private final       ChatPanelSessionState                         sessionState;
+    private final       Button                                        submitButton;
+    private final       UserApi                                       userApi;
 
     public ChatAgentPanel(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi) {
+        this(aiAssistantService, mcpAuthProvider, userApi, null);
+    }
+
+    public ChatAgentPanel(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi, ChatPanelSessionState sessionState) {
         this.aiAssistantService = aiAssistantService;
         this.mcpAuthProvider    = mcpAuthProvider;
         this.userApi            = userApi;
+        this.sessionState       = sessionState;
+        // Capture the plain List reference NOW while we are on the HTTP request thread.
+        // Background threads will append to this list directly — never via the scoped proxy.
+        this.sessionMessages = (sessionState != null) ? sessionState.getMessages() : null;
+
+        // Reuse the stored conversationId so server-side ChatMemory is not abandoned on F5
+        this.conversationId = (sessionState != null) ? sessionState.getConversationId() : java.util.UUID.randomUUID().toString();
 
         setSizeFull();
         setPadding(false);
@@ -170,14 +188,19 @@ public class ChatAgentPanel extends VerticalLayout {
 
         add(splitLayoutWrapper, buttonLayout);
 
-        // Welcome message
-        addWelcomeMessage();
+        // On reload: replay stored messages; on fresh start: show welcome message
+        if (sessionState != null && !sessionState.getMessages().isEmpty()) {
+            replayHistory(sessionState.getMessages());
+        } else {
+            addWelcomeMessage();
+        }
     }
 
     private void addAiMessage(String message) {
         Div messageDiv = createMessageDiv(message, "ai");
         conversationHistory.add(messageDiv);
         scrollToBottom();
+        snapshotMessage("ai", message);
     }
 
     private void addErrorMessage(String message) {
@@ -200,6 +223,7 @@ public class ChatAgentPanel extends VerticalLayout {
         Div messageDiv = createMessageDiv(message, "user");
         conversationHistory.add(messageDiv);
         scrollToBottom();
+        snapshotMessage("user", message);
     }
 
     private void addWelcomeMessage() {
@@ -211,6 +235,12 @@ public class ChatAgentPanel extends VerticalLayout {
         conversationHistory.removeAll();
         aiAssistantService.clearConversation(conversationId);
         conversationId = java.util.UUID.randomUUID().toString();
+        if (sessionState != null) {
+            // Still on the request/UI thread here — safe to call the proxy
+            sessionState.reset(conversationId);
+        } else if (sessionMessages != null) {
+            sessionMessages.clear();
+        }
     }
 
     private Div createMessageDiv(String message, String type) {
@@ -345,6 +375,18 @@ public class ChatAgentPanel extends VerticalLayout {
                 .ifPresent(conversationHistory::remove);
     }
 
+    /**
+     * Replays stored message records into the conversation history UI on reload.
+     * Only user and AI messages are replayed (system/error are transient).
+     */
+    private void replayHistory(List<ChatPanelSessionState.ChatMessageRecord> records) {
+        for (ChatPanelSessionState.ChatMessageRecord record : records) {
+            Div messageDiv = createMessageDiv(record.text(), record.role());
+            conversationHistory.add(messageDiv);
+        }
+        scrollToBottom();
+    }
+
     private void scrollToBottom() {
         conversationHistory.getElement().executeJs("this.scrollTop = this.scrollHeight;");
     }
@@ -355,6 +397,22 @@ public class ChatAgentPanel extends VerticalLayout {
      */
     public void setCurrentUser(User user) {
         this.currentUser = user;
+    }
+
+    /**
+     * Appends a user or AI message to the plain session list.
+     * Safe to call from any thread — operates on the captured List reference,
+     * never on the session-scoped proxy.
+     */
+    private void snapshotMessage(String role, String text) {
+        if (sessionMessages == null) return;
+        if (!"user".equals(role) && !"ai".equals(role)) return;
+        synchronized (sessionMessages) {
+            if (sessionMessages.size() >= ChatPanelSessionState.MAX_MESSAGES) {
+                sessionMessages.remove(0);
+            }
+            sessionMessages.add(new ChatPanelSessionState.ChatMessageRecord(role, text));
+        }
     }
 
     /**
