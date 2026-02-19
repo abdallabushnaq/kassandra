@@ -18,25 +18,33 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
+import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductAclApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserGroupApi;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -58,6 +66,7 @@ import java.util.Map;
 @RolesAllowed({"USER", "ADMIN"})
 public class ProductListView extends AbstractMainGrid<Product> implements AfterNavigationObserver {
     public static final String                 CREATE_PRODUCT_BUTTON             = "create-product-button";
+    public static final String                 PRODUCT_AI_PANEL_BUTTON           = "product-ai-panel-button";
     public static final String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
     public static final String                 PRODUCT_GRID                      = "product-grid";
     public static final String                 PRODUCT_GRID_ACCESS_PREFIX        = "product-grid-access-";
@@ -67,6 +76,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     public static final String                 PRODUCT_LIST_PAGE_TITLE           = "product-list-page-title";
     public static final String                 PRODUCT_ROW_COUNTER               = "product-row-counter";
     public static final String                 ROUTE                             = "product-list";
+    private final       ChatAgentPanel         chatAgentPanel;
     private final       ProductAclApi          productAclApi;
     private final       ProductApi             productApi;
     private final       StableDiffusionService stableDiffusionService;
@@ -74,7 +84,8 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     private final       UserGroupApi           userGroupApi;
 
     public ProductListView(ProductApi productApi, ProductAclApi productAclApi, UserApi userApi, UserGroupApi userGroupApi,
-                           Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService) {
+                           Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService,
+                           AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider) {
         super(clock);
         this.productApi             = productApi;
         this.productAclApi          = productAclApi;
@@ -82,6 +93,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         this.userGroupApi           = userGroupApi;
         this.stableDiffusionService = stableDiffusionService;
 
+        // Build the smart header
         add(
                 createSmartHeader(
                         "Products",
@@ -92,9 +104,60 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                         PRODUCT_ROW_COUNTER,
                         PRODUCT_GLOBAL_FILTER,
                         aiFilterService, mapper, "Product"
-                ),
-                getGridPanelWrapper()
+                )
         );
+
+        // AI toggle button - appended to the header's right side
+        Button aiToggleButton = new Button("AI", VaadinIcon.BRAIN.create());
+        aiToggleButton.setId(PRODUCT_AI_PANEL_BUTTON);
+        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        aiToggleButton.getElement().setAttribute("title", "AI Assistant");
+        addHeaderButton(aiToggleButton);
+
+        // Chat panel - lives in the right pane (hidden by default)
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi);
+        chatAgentPanel.setSizeFull();
+
+        Div chatPane = new Div(chatAgentPanel);
+        chatPane.getStyle()
+                .set("height", "100%")
+                .set("overflow", "hidden")
+                .set("transition", "width 0.3s ease, opacity 0.3s ease")
+                .set("width", "0")
+                .set("opacity", "0")
+                .set("min-width", "0");
+
+        // SplitLayout: grid (left primary) | chat panel (right secondary)
+        SplitLayout bodySplit = new SplitLayout(getGridPanelWrapper(), chatPane);
+        bodySplit.setOrientation(SplitLayout.Orientation.HORIZONTAL);
+        bodySplit.setSizeFull();
+        // Start with chat pane collapsed - splitter at 100%
+        bodySplit.setSplitterPosition(100);
+
+        add(bodySplit);
+
+        // Toggle: show/hide the chat pane with CSS animation
+        final boolean[] chatOpen = {false};
+        aiToggleButton.addClickListener(e -> {
+            chatOpen[0] = !chatOpen[0];
+            if (chatOpen[0]) {
+                // Open: animate width in, move splitter to 65/35
+                chatPane.getStyle()
+                        .set("width", "35%")
+                        .set("opacity", "1")
+                        .set("min-width", "280px");
+                bodySplit.setSplitterPosition(65);
+                aiToggleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            } else {
+                // Close: animate back to zero width
+                chatPane.getStyle()
+                        .set("width", "0")
+                        .set("opacity", "0")
+                        .set("min-width", "0");
+                bodySplit.setSplitterPosition(100);
+                aiToggleButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            }
+        });
     }
 
     @Override
@@ -106,6 +169,19 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                         mainLayout.getBreadcrumbs().addItem("Products", ProductListView.class);
                     }
                 });
+
+        // Wire current user into the chat panel for avatar/name display
+        final String userEmail  = SecurityUtils.getUserEmail();
+        User         userFromDb = null;
+        if (!userEmail.equals(SecurityUtils.GUEST)) {
+            try {
+                userFromDb = userApi.getByEmail(userEmail).get();
+            } catch (Exception e) {
+                // User not found - default avatar will be used
+            }
+        }
+        chatAgentPanel.setCurrentUser(userFromDb);
+
         refreshGrid();
     }
 
@@ -132,17 +208,14 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
 
         StringBuilder searchText = new StringBuilder();
 
-        // Add key
         if (product.getKey() != null) {
             searchText.append(product.getKey()).append(" ");
         }
 
-        // Add name
         if (product.getName() != null) {
             searchText.append(product.getName()).append(" ");
         }
 
-        // Add formatted dates
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG)
                 .withZone(Clock.systemDefaultZone().getZone())
                 .withLocale(getLocale());
@@ -163,13 +236,10 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
 
         getGrid().setId(PRODUCT_GRID);
 
-        // Add click listener to navigate to VersionView with the selected product ID
         getGrid().addItemClickListener(event -> {
-            Product selectedProduct = event.getItem();
-            // Create parameters map
-            Map<String, String> params = new HashMap<>();
+            Product             selectedProduct = event.getItem();
+            Map<String, String> params          = new HashMap<>();
             params.put("product", String.valueOf(selectedProduct.getId()));
-            // Navigate with query parameters
             UI.getCurrent().navigate(VersionListView.class, QueryParameters.simple(params));
         });
 
@@ -178,37 +248,19 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
             VaadinUtil.addSimpleHeader(keyColumn, "Key", VaadinIcon.KEY);
         }
         {
-            // Add avatar image column
             Grid.Column<Product> avatarColumn = getGrid().addColumn(new ComponentRenderer<>(product -> {
-//                if (product.getAvatarPrompt() != null && !product.getAvatarPrompt().isEmpty())
-                {
-                    // Product has a custom image - use URL-based loading
-                    com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
-                    avatar.setWidth("24px");
-                    avatar.setHeight("24px");
-                    avatar.getStyle()
-                            .set("border-radius", "var(--lumo-border-radius)")
-                            .set("object-fit", "cover")
-                            .set("display", "block")
-                            .set("margin", "0")
-                            .set("padding", "0");
-
-                    // Use hash-based URL for proper caching
-                    avatar.setSrc(product.getAvatarUrl());
-                    avatar.setAlt(product.getName());
-                    return avatar;
-                }
-//                else {
-//                    // No custom image - show default VaadinIcon
-//                    Icon defaultIcon = new Icon(VaadinIcon.CUBE);
-//                    defaultIcon.setSize("20px");
-//                    defaultIcon.getStyle()
-//                            .set("color", "var(--lumo-contrast-50pct)")
-//                            .set("padding", "0")
-//                            .set("margin", "0")
-//                            .set("display", "block");
-//                    return defaultIcon;
-//                }
+                com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
+                avatar.setWidth("24px");
+                avatar.setHeight("24px");
+                avatar.getStyle()
+                        .set("border-radius", "var(--lumo-border-radius)")
+                        .set("object-fit", "cover")
+                        .set("display", "block")
+                        .set("margin", "0")
+                        .set("padding", "0");
+                avatar.setSrc(product.getAvatarUrl());
+                avatar.setAlt(product.getName());
+                return avatar;
             }));
             avatarColumn.setWidth("48px");
             avatarColumn.setFlexGrow(0);
@@ -221,15 +273,11 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                 div.setId(PRODUCT_GRID_NAME_PREFIX + product.getName());
                 return div;
             }));
-
-            // Configure a custom comparator to properly sort by the name property
             nameColumn.setComparator((product1, product2) ->
                     product1.getName().compareToIgnoreCase(product2.getName()));
-
             VaadinUtil.addSimpleHeader(nameColumn, "Name", VaadinIcon.CUBE);
         }
         {
-            // Add ACL column showing who has access
             Grid.Column<Product> aclColumn = getGrid().addColumn(new ComponentRenderer<>(product -> {
                 List<ProductAclEntry> aclEntries = productAclApi.getAcl(product.getId());
 
@@ -245,11 +293,9 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                     return badge;
                 }
 
-                // Count users and groups
                 long userCount  = aclEntries.stream().filter(ProductAclEntry::isUserEntry).count();
                 long groupCount = aclEntries.stream().filter(ProductAclEntry::isGroupEntry).count();
 
-                // Create horizontal layout for badges
                 HorizontalLayout layout = new HorizontalLayout();
                 layout.setId(PRODUCT_GRID_ACCESS_PREFIX + product.getName());
                 layout.setSpacing(true);
@@ -296,7 +342,6 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
             Grid.Column<Product> updatedColumn = getGrid().addColumn(product -> dateTimeFormatter.format(product.getUpdated()));
             VaadinUtil.addSimpleHeader(updatedColumn, "Updated", VaadinIcon.CALENDAR);
         }
-        // Add actions column using VaadinUtil
         VaadinUtil.addActionColumn(
                 getGrid(),
                 PRODUCT_GRID_EDIT_BUTTON_PREFIX,
@@ -305,14 +350,12 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                 this::openProductDialog,
                 this::confirmDelete
         );
-
     }
 
     private void openProductDialog(Product product) {
         ProductDialog dialog = new ProductDialog(product, stableDiffusionService, productApi, productAclApi, userApi, userGroupApi);
         dialog.addOpenedChangeListener(event -> {
             if (!event.isOpened()) {
-                // Dialog was closed, refresh the grid
                 refreshGrid();
             }
         });
@@ -320,21 +363,12 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     }
 
     private void refreshGrid() {
-        // Clear existing items
         getDataProvider().getItems().clear();
-
-        // Fetch fresh data from API (with updated hashes) and filter out Default product
         productApi.getAll().stream()
                 .filter(p -> !DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
                 .forEach(p -> getDataProvider().getItems().add(p));
-
-        // Force complete refresh of the grid
         getDataProvider().refreshAll();
-
-        // Force the grid to re-render
         getGrid().getDataProvider().refreshAll();
-
-        // Push UI updates if in push mode
         getUI().ifPresent(ui -> ui.push());
     }
 }

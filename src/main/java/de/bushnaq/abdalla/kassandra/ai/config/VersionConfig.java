@@ -46,15 +46,18 @@ public class VersionConfig {
                         - Never use reflection or field access, always use public getter methods
                         
                         VERSION NUMBER COMPARISONS:
-                        - Support version comparisons (greater than, less than, equal, between) by comparing semantic version numbers numerically
-                        - Version format: MAJOR.MINOR.PATCH (e.g., "3.1.4", "1.5.6", "2.0.0")
+                        - Support version comparisons (greater than, less than, equal, between) by comparing semantic version numbers numerically.
+                        - Version format: MAJOR.MINOR.PATCH (e.g., "3.1.4", "1.5.6", "2.0.0").
                         - To compare versions numerically, convert each version to a comparable number using positional weighting:
                           * Split version by dots: "3.1.4" †' [3, 1, 4]
                           * Calculate weighted value: major*10000 + minor*100 + patch*1
                           * Example: "3.1.4" †' 3*10000 + 1*100 + 4*1 = 30104
                           * Example: "1.5.6" †' 1*10000 + 5*100 + 6*1 = 10506
                           * Therefore: 30104 > 10506, so "3.1.4" > "1.5.6"
-                        - For versions with suffixes like "-beta", "-alpha", treat them as lower than their base version
+                        - For versions with suffixes like "-beta", "-alpha", treat them as lower than their base version.
+                        - pre-release versions have suffixes like "-alpha", "-beta", "-rc1", "rc2" and "-snapshot" and are considered lower than the corresponding release version (e.g., "1.0.0-beta" < "1.0.0").
+                        - a stable version is the opisite of a pre-release version and does not have a suffix (e.g., "1.0.0" is stable, "1.0.0-beta" is pre-release).
+                        - version 1 means 1.x.x, any major version 1 with any minor and patch version (e.g., "1.0.0", "1.5.6", "1.10.0") is considered version 1.
                         - Handle missing parts by treating them as 0: "2.1" = "2.1.0"
                         - Examples of comparisons:
                           * "2.0.0" > "1.9.9" (20000 > 10909)

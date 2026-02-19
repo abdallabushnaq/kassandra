@@ -50,6 +50,11 @@ public abstract class AbstractMainGrid<T> extends Main {
     private final ListDataProvider<T> dataProvider;
     private final Grid<T>             grid;
     private final VerticalLayout      gridPanelWrapper;
+    /**
+     * Holds a reference to the last-built smart-header's right layout so that
+     * callers can append extra buttons after construction.
+     */
+    private HorizontalLayout lastHeaderRightLayout;
 
     public AbstractMainGrid(Clock clock) {
         setClassName("grid-wrapper");
@@ -84,6 +89,18 @@ public abstract class AbstractMainGrid<T> extends Main {
         innerWrapper.add(gridPanel);
 
         initGrid(clock);
+    }
+
+    /**
+     * Appends an extra button to the right side of the most recently created
+     * smart header.  Call this immediately after {@code createSmartHeader(...)}.
+     *
+     * @param button the button to add
+     */
+    public void addHeaderButton(Button button) {
+        if (lastHeaderRightLayout != null) {
+            lastHeaderRightLayout.add(button);
+        }
     }
 
     /**
@@ -441,6 +458,8 @@ public abstract class AbstractMainGrid<T> extends Main {
         rightLayout.add(createButton);
         headerLayout.add(titleLayout, rightLayout);
         headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
+        // Store for addHeaderButton() callers
+        lastHeaderRightLayout = rightLayout;
         return headerLayout;
     }
 

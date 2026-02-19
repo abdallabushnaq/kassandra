@@ -13,7 +13,7 @@
 | kassandra.ai.config            | ProductConfig.java                                       | src      |       35 |        3 |       16 |       89 |      143 |
 | kassandra.ai.config            | SprintConfig.java                                        | src      |       34 |        3 |       16 |      109 |      162 |
 | kassandra.ai.config            | UserConfig.java                                          | src      |       46 |        3 |       16 |      130 |      195 |
-| kassandra.ai.config            | VersionConfig.java                                       | src      |       25 |        3 |       16 |       92 |      136 |
+| kassandra.ai.config            | VersionConfig.java                                       | src      |       25 |        3 |       16 |       95 |      139 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.coqui             | CoquiTTS.java                                            | src      |       71 |        0 |       41 |      274 |      386 |
 | kassandra.ai.coqui             | TtsHealthInfo.java                                       | src      |       12 |        0 |        3 |       47 |       62 |
@@ -58,7 +58,7 @@
 | kassandra.ai.mcp               | AiAssistantServiceMixedTest.java                         | src      |       14 |        5 |       64 |       63 |      146 |
 | kassandra.ai.mcp               | AiAssistantServiceProductTest.java                       | src      |       15 |        5 |       22 |       84 |      126 |
 | kassandra.ai.mcp               | AiAssistantServiceUserTest.java                          | src      |       17 |        5 |       18 |       80 |      120 |
-| kassandra.ai.mcp               | AiAssistantServiceVersionTest.java                       | src      |       62 |        5 |       40 |      224 |      331 |
+| kassandra.ai.mcp               | AiAssistantServiceVersionTest.java                       | src      |       62 |        5 |       40 |      237 |      344 |
 | kassandra.ai.mcp               | ApiConfiguration.java                                    | src      |        8 |        4 |       16 |       46 |       74 |
 | kassandra.ai.mcp               | QueryResult.java                                         | src      |        4 |        7 |       16 |        7 |       34 |
 | kassandra.ai.mcp               | SessionToolActivityContext.java                          | src      |        6 |        4 |       16 |       18 |       44 |
@@ -92,10 +92,10 @@
 | kassandra.ai                   | AiFilterService.java                                     | src      |       25 |       26 |       45 |      117 |      213 |
 | kassandra.ai                   | AvailabilityAiFilterTest.java                            | src      |       62 |        8 |       21 |      301 |      392 |
 | kassandra.ai                   | FeatureAiFilterTest.java                                 | src      |       37 |        7 |       21 |      184 |      249 |
-| kassandra.ai                   | JavaAiFilterGenerator.java                               | src      |       53 |       24 |       46 |      177 |      300 |
+| kassandra.ai                   | JavaAiFilterGenerator.java                               | src      |       53 |       24 |       46 |      183 |      306 |
 | kassandra.ai                   | JavaCompilationException.java                            | src      |       12 |       10 |       16 |       46 |       84 |
 | kassandra.ai                   | JavaFilterCompiler.java                                  | src      |       51 |       48 |       54 |      195 |      348 |
-| kassandra.ai                   | JavaScriptAiFilterGenerator.java                         | src      |       35 |        7 |       28 |      110 |      180 |
+| kassandra.ai                   | JavaScriptAiFilterGenerator.java                         | src      |       35 |        7 |       28 |      116 |      186 |
 | kassandra.ai                   | LocationAiFilterTest.java                                | src      |       56 |        7 |       20 |      251 |      334 |
 | kassandra.ai                   | OffDayAiFilterTest.java                                  | src      |       88 |        7 |       21 |      475 |      591 |
 | kassandra.ai                   | ProductAiFilterTest.java                                 | src      |       36 |       10 |       21 |      153 |      220 |
@@ -316,12 +316,13 @@
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.test.util            | OllamaTestHelper.java                                    | src      |       29 |       21 |       20 |      109 |      179 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.ui.component         | AbstractMainGrid.java                                    | src      |       68 |       73 |       38 |      350 |      529 |
+| kassandra.ui.component         | AbstractMainGrid.java                                    | src      |       69 |       83 |       39 |      357 |      548 |
 | kassandra.ui.component         | AvailabilityCalendarComponent.java                       | src      |       67 |       70 |       55 |      302 |      494 |
 | kassandra.ui.component         | BacklogDragDropHandler.java                              | src      |       34 |       30 |       40 |      158 |      262 |
 | kassandra.ui.component         | BacklogStoryCard.java                                    | src      |       42 |       17 |       30 |      212 |      301 |
 | kassandra.ui.component         | BacklogTaskCard.java                                     | src      |       37 |       18 |       25 |      183 |      263 |
 | kassandra.ui.component         | Breadcrumbs.java                                         | src      |       17 |        0 |       21 |       83 |      121 |
+| kassandra.ui.component         | ChatAgentPanel.java                                      | src      |       42 |       13 |       27 |      286 |      368 |
 | kassandra.ui.component         | CrossGridDragDropCoordinator.java                        | src      |       24 |       90 |       23 |      105 |      242 |
 | kassandra.ui.component         | FeatureCard.java                                         | src      |       64 |       15 |       49 |      307 |      435 |
 | kassandra.ui.component         | GlobalAiFilter.java                                      | src      |       41 |        4 |       53 |      186 |      284 |
@@ -402,7 +403,7 @@
 | kassandra.ui.view              | GridRowReordering.java                                   | src      |       18 |        0 |        3 |       62 |       83 |
 | kassandra.ui.view              | GroupingMode.java                                        | src      |        6 |       12 |       16 |       12 |       46 |
 | kassandra.ui.view              | InsightsView.java                                        | src      |       58 |        0 |       46 |      345 |      449 |
-| kassandra.ui.view              | Kassandra.java                                           | src      |       49 |        7 |       58 |      342 |      456 |
+| kassandra.ui.view              | Kassandra.java                                           | src      |       15 |        3 |       21 |       87 |      126 |
 | kassandra.ui.view              | LegacyBacklog.java                                       | src      |      107 |       46 |       97 |      627 |      877 |
 | kassandra.ui.view              | LocationListView.java                                    | src      |       35 |       19 |       68 |      234 |      356 |
 | kassandra.ui.view              | LocationListViewTest.java                                | src      |       13 |       74 |       25 |      100 |      212 |
@@ -410,7 +411,7 @@
 | kassandra.ui.view              | MainView.java                                            | src      |        7 |        7 |       18 |       26 |       58 |
 | kassandra.ui.view              | OffDayListView.java                                      | src      |       35 |       11 |       60 |      223 |      329 |
 | kassandra.ui.view              | OffDayListViewTest.java                                  | src      |       23 |       77 |       35 |      141 |      276 |
-| kassandra.ui.view              | ProductListView.java                                     | src      |       36 |        3 |       48 |      253 |      340 |
+| kassandra.ui.view              | ProductListView.java                                     | src      |       36 |        3 |       26 |      309 |      374 |
 | kassandra.ui.view              | ProductListViewTest.java                                 | src      |       35 |      119 |       24 |      218 |      396 |
 | kassandra.ui.view              | SprintListView.java                                      | src      |       35 |        0 |       38 |      268 |      341 |
 | kassandra.ui.view              | SprintListViewTest.java                                  | src      |       15 |       82 |       24 |      112 |      233 |
@@ -507,5 +508,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 49 package(s)                  | 457 file(s)                                              | java     |    10290 |     7673 |    13147 |    53245 |    84355 |
+| 49 package(s)                  | 458 file(s)                                              | java     |    10299 |     7692 |    13116 |    53367 |    84474 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

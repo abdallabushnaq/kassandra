@@ -17,31 +17,20 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.vaadin.flow.component.ClientCallable;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.splitlayout.SplitLayout;
-import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
-import de.bushnaq.abdalla.kassandra.ai.mcp.QueryResult;
-import de.bushnaq.abdalla.kassandra.ai.mcp.SessionToolActivityContext;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,42 +44,30 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Kassandra extends VerticalLayout implements AfterNavigationObserver {
 
-    public static final String                 AI_CLEAR_BUTTON   = "ai-clear-button";
-    public static final String                 AI_QUERY_INPUT    = "ai-query-input";
-    public static final String                 AI_RESPONSE_AREA  = "ai-response-area";
-    public static final String                 AI_SUBMIT_BUTTON  = "ai-submit-button";
-    public static final String                 AI_TOOLS_LIST     = "ai-tools-list";
-    public static final String                 AI_VIEW_TITLE     = "ai-view-title";
-    private volatile    boolean                activityStreaming = false;
-    private final       AiAssistantService     aiAssistantService;
-    private final       Div                    conversationHistory;
-    // Unique conversation ID for this view instance - used by Spring AI ChatMemory
-    private             String                 conversationId    = java.util.UUID.randomUUID().toString();
-    private             User                   currentUser;
-    private final       AuthenticationProvider mcpAuthProvider;
-    private final       TextArea               queryInput;
-    private final       Div                    responseArea;
-    private final       Button                 submitButton;
-    private final       UserApi                userApi;
+    // Re-exported for backwards compatibility with tests that reference Kassandra.AI_*
+    public static final String         AI_CLEAR_BUTTON  = ChatAgentPanel.AI_CLEAR_BUTTON;
+    public static final String         AI_QUERY_INPUT   = ChatAgentPanel.AI_QUERY_INPUT;
+    public static final String         AI_RESPONSE_AREA = ChatAgentPanel.AI_RESPONSE_AREA;
+    public static final String         AI_SUBMIT_BUTTON = ChatAgentPanel.AI_SUBMIT_BUTTON;
+    public static final String         AI_VIEW_TITLE    = "ai-view-title";
+    private final       ChatAgentPanel chatAgentPanel;
+    private final       UserApi        userApi;
 
     public Kassandra(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi) {
-        this.aiAssistantService = aiAssistantService;
-        this.mcpAuthProvider    = mcpAuthProvider;
-        this.userApi            = userApi;
+        this.userApi = userApi;
 
-        // Configure main layout - full size horizontal split
         setSizeFull();
         setPadding(false);
         setSpacing(false);
         addClassNames(LumoUtility.Background.BASE);
 
-        // Main horizontal layout for left (future audit log) and right (chat) panels
+        // Main horizontal layout: left (future audit log) | right (chat)
         HorizontalLayout mainContent = new HorizontalLayout();
         mainContent.setSizeFull();
         mainContent.setSpacing(false);
         mainContent.setPadding(false);
 
-        // Left panel placeholder for future audit log
+        // Left panel - placeholder for future audit log
         VerticalLayout leftPanel = new VerticalLayout();
         leftPanel.setWidth("50%");
         leftPanel.setHeightFull();
@@ -107,155 +84,21 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
         placeholder.getStyle().set("margin", "0");
         leftPanel.add(placeholderTitle, placeholder);
 
-        // Right panel - Chat interface
-        VerticalLayout rightPanel = new VerticalLayout();
+        // Right panel - Chat interface via reusable component
+        Div rightPanel = new Div();
         rightPanel.setWidth("50%");
-        rightPanel.setHeightFull();
-        rightPanel.setPadding(false);
-        rightPanel.setSpacing(false);
-        rightPanel.getStyle().set("padding", "4px");
-
-        // Conversation history container (scrollable)
-        conversationHistory = new Div();
-        conversationHistory.addClassNames(
-                LumoUtility.Background.CONTRAST_5,
-                LumoUtility.BorderRadius.SMALL
-        );
-        conversationHistory.setWidthFull();
-        conversationHistory.getStyle()
-                .set("overflow-y", "auto")
-                .set("display", "flex")
-                .set("flex-direction", "column")
-                .set("padding", "4px");
-
-        // Response area - takes all available space
-        responseArea = new Div();
-        responseArea.setId(AI_RESPONSE_AREA);
-        responseArea.addClassNames(LumoUtility.BorderRadius.SMALL);
-        responseArea.setWidthFull();
-        responseArea.setSizeFull();
-        responseArea.getStyle()
-                .set("overflow", "hidden")
-                .set("display", "flex")
-                .set("flex-direction", "column");
-        responseArea.add(conversationHistory);
-
-        // Make conversation history fill the response area
-        conversationHistory.getStyle().set("flex", "1 1 auto");
-
-        // Query Input - no label, smaller font
-        queryInput = new TextArea();
-        queryInput.setId(AI_QUERY_INPUT);
-        queryInput.setPlaceholder("Ask me anything... (Enter to send, Ctrl+Enter for new line)");
-        queryInput.setWidthFull();
-        queryInput.setSizeFull();
-        queryInput.setMinHeight("40px");
-        queryInput.getStyle()
-                .set("font-size", "var(--lumo-font-size-s)")
-                .set("--vaadin-input-field-font-size", "var(--lumo-font-size-s)");
-
-        // Handle Enter key to submit, Ctrl+Enter or Shift+Enter for new line
-        // We need to force the value sync before submitting since Vaadin only syncs on blur
-        queryInput.setValueChangeMode(com.vaadin.flow.data.value.ValueChangeMode.EAGER);
-        queryInput.getElement().executeJs(
-                "this.inputElement.addEventListener('keydown', (e) => {" +
-                        "  if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {" +
-                        "    e.preventDefault();" +
-                        "    $0.$server.submitQuery();" +
-                        "  }" +
-                        "});", getElement());
-
-        // Buttons below queryInput - fixed size, always visible at bottom
-        HorizontalLayout buttonLayout = new HorizontalLayout();
-        buttonLayout.setWidthFull();
-        buttonLayout.setSpacing(true);
-        buttonLayout.setPadding(false);
-        buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
-        buttonLayout.getStyle()
-                .set("gap", "4px")
-                .set("flex", "0 0 auto")
-                .set("margin-top", "4px");
-
-        submitButton = new Button("Send", VaadinIcon.ARROW_CIRCLE_RIGHT.create());
-        submitButton.setId(AI_SUBMIT_BUTTON);
-        submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
-        submitButton.addClickListener(e -> handleQuery());
-
-        Button clearButton = new Button("Clear", VaadinIcon.ERASER.create());
-        clearButton.setId(AI_CLEAR_BUTTON);
-        clearButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        clearButton.addClickListener(e -> clearConversation());
-
-        buttonLayout.add(submitButton, clearButton);
-
-        // Wrapper for queryInput to be used in SplitLayout
-        Div queryInputWrapper = new Div(queryInput);
-        queryInputWrapper.setSizeFull();
-        queryInputWrapper.getStyle()
-                .set("display", "flex")
-                .set("flex-direction", "column")
-                .set("min-height", "40px");
-
-        // Use SplitLayout for draggable divider between response area and queryInput only
-        SplitLayout splitLayout = new SplitLayout(responseArea, queryInputWrapper);
-        splitLayout.setOrientation(SplitLayout.Orientation.VERTICAL);
-        splitLayout.setSizeFull();
-        splitLayout.setSplitterPosition(80); // 80% for response area, 20% for input
-
-        // Wrapper to contain the SplitLayout and prevent it from overflowing
-        Div splitLayoutWrapper = new Div(splitLayout);
-        splitLayoutWrapper.setWidthFull();
-        splitLayoutWrapper.getStyle()
-                .set("flex", "1 1 0")
-                .set("min-height", "0")
-                .set("overflow", "hidden")
-                .set("height", "calc(100% - 40px)"); // Reserve space for buttons
-
-        // Configure right panel to use flexbox for proper layout
-        // SplitLayout wrapper takes available space, buttons stay fixed at bottom
         rightPanel.getStyle()
+                .set("height", "100%")
+                .set("padding", "4px")
                 .set("display", "flex")
                 .set("flex-direction", "column")
                 .set("overflow", "hidden");
-        rightPanel.add(splitLayoutWrapper, buttonLayout);
 
-        // Add panels to main content
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi);
+        rightPanel.add(chatAgentPanel);
+
         mainContent.add(leftPanel, rightPanel);
-
-        // Add main content to this view
         add(mainContent);
-
-        // Add initial welcome message with available tools
-        addWelcomeMessageWithTools();
-    }
-
-    private void addAiMessage(String message) {
-        Div messageDiv = createMessageDiv(message, "ai");
-        conversationHistory.add(messageDiv);
-        scrollToBottom();
-    }
-
-    private void addErrorMessage(String message) {
-        Div messageDiv = createMessageDiv(message, "error");
-        conversationHistory.add(messageDiv);
-        scrollToBottom();
-    }
-
-    private void addSystemMessage(String message) {
-        Div messageDiv = createMessageDiv(message, "system");
-        conversationHistory.add(messageDiv);
-        scrollToBottom();
-    }
-
-    private void addUserMessage(String message) {
-        Div messageDiv = createMessageDiv(message, "user");
-        conversationHistory.add(messageDiv);
-        scrollToBottom();
-    }
-
-    private void addWelcomeMessageWithTools() {
-        String welcomeMessage = "👋 Hello! I'm Kassandra powered by " + aiAssistantService.getModelName() + ". Ask me anything about your system data.";
-        addSystemMessage(welcomeMessage);
     }
 
     @Override
@@ -267,190 +110,17 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
                         mainLayout.getBreadcrumbs().addItem("Kassandra", Kassandra.class);
                     }
                 });
-        // Cache the current user for use in message rendering
-        final String userEmail = SecurityUtils.getUserEmail();
 
-        User userFromDb = null;
-        // Try to get user from database to check for avatar
+        final String userEmail  = SecurityUtils.getUserEmail();
+        User         userFromDb = null;
         if (!userEmail.equals(SecurityUtils.GUEST)) {
             try {
                 userFromDb = userApi.getByEmail(userEmail).get();
             } catch (Exception e) {
-                // User not found or error, will use default avatar
-                userFromDb = null;
+                // User not found or error - default avatar will be used
             }
         }
-        currentUser = userFromDb;
-    }
-
-    private void clearConversation() {
-        conversationHistory.removeAll();
-        // Clear the conversation memory in the service and generate a new conversation ID
-        aiAssistantService.clearConversation(conversationId);
-        conversationId = java.util.UUID.randomUUID().toString();
-//        addWelcomeMessageWithTools();
-    }
-
-    private Div createMessageDiv(String message, String type) {
-        Div messageDiv = new Div();
-        messageDiv.addClassNames(
-                LumoUtility.BorderRadius.SMALL,
-                LumoUtility.FontSize.XSMALL
-        );
-        messageDiv.getStyle()
-                .set("padding", "4px 6px")
-                .set("margin-bottom", "2px");
-
-        Span icon    = new Span();
-        Span content = new Span(message);
-        content.getStyle().set("white-space", "pre-wrap");
-        content.getStyle().set("font-family", "monospace");
-
-        switch (type) {
-            case "user":
-                messageDiv.addClassNames(LumoUtility.Background.PRIMARY_10);
-                if (currentUser != null && currentUser.getAvatarHash() != null && !currentUser.getAvatarHash().isEmpty()) {
-                    com.vaadin.flow.component.html.Image avatarImage = new com.vaadin.flow.component.html.Image();
-                    avatarImage.setWidth("16px");
-                    avatarImage.setHeight("16px");
-                    avatarImage.getStyle()
-                            .set("border-radius", "4px")
-                            .set("object-fit", "cover")
-                            .set("margin-right", "4px");
-                    avatarImage.setSrc(currentUser.getAvatarUrl());
-                    messageDiv.add(avatarImage);
-                }
-                // Always show user name in front of the message
-                String userLabel = (currentUser != null && currentUser.getName() != null && !currentUser.getName().isEmpty()) ? currentUser.getName() : "You";
-                icon.setText(userLabel + ": ");
-                icon.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
-                break;
-            case "ai":
-                messageDiv.addClassNames(LumoUtility.Background.SUCCESS_10);
-                icon.setText("🤖 Kassandra: ");
-                icon.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
-                break;
-            case "system":
-                messageDiv.addClassNames(LumoUtility.Background.CONTRAST_5);
-                icon.setText("ℹ️ ");
-                break;
-            case "error":
-                messageDiv.addClassNames(LumoUtility.Background.ERROR_10);
-                icon.setText("⚠️ ");
-                break;
-        }
-
-        messageDiv.add(icon, content);
-        return messageDiv;
-    }
-
-    private void handleQuery() {
-        String query = queryInput.getValue();
-        if (query == null || query.trim().isEmpty()) {
-            Notification.show("Please enter a question", 3000, Notification.Position.BOTTOM_START)
-                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
-
-        log.info("Processing AI query: {}", query);
-
-        // Add user message to conversation
-        addUserMessage(query);
-
-        // Clear input
-        queryInput.clear();
-
-        // Disable submit button while AI is busy
-        getUI().ifPresent(ui -> ui.access(() -> submitButton.setEnabled(false)));
-
-        // Show loading state
-        addSystemMessage("🤔 Thinking...");
-
-        // Capture the user's token NOW, while we're still in the request thread with SecurityContext
-        String capturedToken = mcpAuthProvider.captureCurrentUserToken();
-        // Process query asynchronously
-        getUI().ifPresent(ui -> {
-            new Thread(() -> {
-                final SessionToolActivityContext[] activityContextRef = new SessionToolActivityContext[1];
-                try {
-                    // Set the captured token in this thread's ThreadLocal
-                    if (capturedToken != null) {
-                        mcpAuthProvider.setToken(capturedToken);
-                    }
-                    // Get or create the activity context for this conversation
-                    activityContextRef[0] = aiAssistantService.getActivityContext(conversationId);
-                    activityStreaming     = true;
-                    if (activityContextRef[0] != null) {
-                        // Register a listener to stream activity messages to the UI BEFORE processQuery
-                        activityContextRef[0].setActivityListener(msg -> {
-                            if (!activityStreaming) return;
-                            ui.access(() -> {
-                                addSystemMessage("[AI activity] " + msg);
-                                ui.push();
-                            });
-                        });
-                    }
-                    // Now call processQuery (listener is already set)
-                    QueryResult response = aiAssistantService.processQueryWithThinking(query, conversationId);
-                    log.info("AI response received: {} characters", response != null ? response.content().length() : 0);
-
-                    ui.access(() -> {
-                        try {
-                            log.info("Updating UI with AI response");
-                            // Remove loading message
-                            removeLastMessage();
-                            // Add AI response
-                            addAiMessage(response.content());
-                        } catch (Exception e) {
-                            log.error("Error updating UI with response", e);
-                            addErrorMessage("Error displaying response: " + e.getMessage());
-                        } finally {
-                            // Remove activity listener after response
-                            activityStreaming = false;
-                            if (activityContextRef[0] != null) activityContextRef[0].setActivityListener(null);
-                            // Enable submit button after AI finishes
-                            submitButton.setEnabled(true);
-                            ui.push();
-                        }
-                    });
-                } catch (Exception e) {
-                    log.error("Error processing AI query", e);
-                    ui.access(() -> {
-                        try {
-                            removeLastMessage();
-                            addErrorMessage("Error: " + e.getMessage());
-                        } catch (Exception ex) {
-                            log.error("Error updating UI with error message", ex);
-                        } finally {
-                            // Remove activity listener on error
-                            activityStreaming = false;
-                            if (activityContextRef[0] != null) activityContextRef[0].setActivityListener(null);
-                            // Enable submit button after error
-                            submitButton.setEnabled(true);
-                            ui.push();
-                        }
-                    });
-                }
-            }).start();
-        });
-    }
-
-    private void removeLastMessage() {
-        conversationHistory.getChildren()
-                .reduce((_first, second) -> second)
-                .ifPresent(conversationHistory::remove);
-    }
-
-    private void scrollToBottom() {
-        conversationHistory.getElement().executeJs("this.scrollTop = this.scrollHeight;");
-    }
-
-    /**
-     * Called from JavaScript when Enter key is pressed in queryInput.
-     * Must be public and annotated with @ClientCallable to be accessible from client-side.
-     */
-    @ClientCallable
-    public void submitQuery() {
-        handleQuery();
+        chatAgentPanel.setCurrentUser(userFromDb);
     }
 }
+
