@@ -66,29 +66,27 @@ import java.util.Map;
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
 public class ProductListView extends AbstractMainGrid<Product> implements AfterNavigationObserver {
-    public static final  String                 CREATE_PRODUCT_BUTTON             = "create-product-button";
-    private static final String                 PARAM_AI_PANEL                    = "aiPanel";
-    public static final  String                 PRODUCT_AI_PANEL_BUTTON           = "product-ai-panel-button";
-    public static final  String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
-    public static final  String                 PRODUCT_GRID                      = "product-grid";
-    public static final  String                 PRODUCT_GRID_ACCESS_PREFIX        = "product-grid-access-";
-    public static final  String                 PRODUCT_GRID_DELETE_BUTTON_PREFIX = "product-grid-delete-button-prefix-";
-    public static final  String                 PRODUCT_GRID_EDIT_BUTTON_PREFIX   = "product-grid-edit-button-prefix-";
-    public static final  String                 PRODUCT_GRID_NAME_PREFIX          = "product-grid-name-";
-    public static final  String                 PRODUCT_LIST_PAGE_TITLE           = "product-list-page-title";
-    public static final  String                 PRODUCT_ROW_COUNTER               = "product-row-counter";
-    public static final  String                 ROUTE                             = "product-list";
-    private final        Button                 aiToggleButton;
-    private final        SplitLayout            bodySplit;
-    private final        ChatAgentPanel         chatAgentPanel;
-    private              boolean                chatOpen                          = false;
-    private final        Div                    chatPane;
-    private final        ProductAclApi          productAclApi;
-    private final        ProductApi             productApi;
-    private              boolean                restoringFromUrl                  = false;
-    private final        StableDiffusionService stableDiffusionService;
-    private final        UserApi                userApi;
-    private final        UserGroupApi           userGroupApi;
+    public static final String                 CREATE_PRODUCT_BUTTON             = "create-product-button";
+    public static final String                 PRODUCT_AI_PANEL_BUTTON           = "product-ai-panel-button";
+    public static final String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
+    public static final String                 PRODUCT_GRID                      = "product-grid";
+    public static final String                 PRODUCT_GRID_ACCESS_PREFIX        = "product-grid-access-";
+    public static final String                 PRODUCT_GRID_DELETE_BUTTON_PREFIX = "product-grid-delete-button-prefix-";
+    public static final String                 PRODUCT_GRID_EDIT_BUTTON_PREFIX   = "product-grid-edit-button-prefix-";
+    public static final String                 PRODUCT_GRID_NAME_PREFIX          = "product-grid-name-";
+    public static final String                 PRODUCT_LIST_PAGE_TITLE           = "product-list-page-title";
+    public static final String                 PRODUCT_ROW_COUNTER               = "product-row-counter";
+    public static final String                 ROUTE                             = "product-list";
+    private final       Button                 aiToggleButton;
+    private final       SplitLayout            bodySplit;
+    private final       ChatAgentPanel         chatAgentPanel;
+    private final       Div                    chatPane;
+    private final       ProductAclApi          productAclApi;
+    private final       ProductApi             productApi;
+    private final       ChatPanelSessionState  sessionState;
+    private final       StableDiffusionService stableDiffusionService;
+    private final       UserApi                userApi;
+    private final       UserGroupApi           userGroupApi;
 
     public ProductListView(ProductApi productApi, ProductAclApi productAclApi, UserApi userApi, UserGroupApi userGroupApi,
                            Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService,
@@ -100,6 +98,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         this.userApi                = userApi;
         this.userGroupApi           = userGroupApi;
         this.stableDiffusionService = stableDiffusionService;
+        this.sessionState           = chatPanelSessionState;
 
         // Build the smart header
         add(
@@ -144,9 +143,8 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         add(bodySplit);
 
         aiToggleButton.addClickListener(e -> {
-            chatOpen = !chatOpen;
-            applyChatPaneState(chatOpen);
-            updateUrlParameters();
+            sessionState.setPanelOpen(!sessionState.isPanelOpen());
+            applyChatPaneState(sessionState.isPanelOpen());
         });
     }
 
@@ -160,15 +158,8 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                     }
                 });
 
-        // Restore panel open/closed state from URL parameter
-        restoringFromUrl = true;
-        QueryParameters qp         = event.getLocation().getQueryParameters();
-        boolean         shouldOpen = qp.getParameters().containsKey(PARAM_AI_PANEL);
-        if (shouldOpen != chatOpen) {
-            chatOpen = shouldOpen;
-            applyChatPaneState(chatOpen);
-        }
-        restoringFromUrl = false;
+        // Apply shared panel state from session
+        applyChatPaneState(sessionState.isPanelOpen());
 
         // Wire current user into the chat panel for avatar/name display
         final String userEmail  = SecurityUtils.getUserEmail();
@@ -393,16 +384,4 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         getUI().ifPresent(ui -> ui.push());
     }
 
-    /**
-     * Pushes the current panel-open state into the URL so F5 restores it.
-     */
-    private void updateUrlParameters() {
-        if (restoringFromUrl) return;
-        Map<String, String> params = new HashMap<>();
-        if (chatOpen) {
-            params.put(PARAM_AI_PANEL, "open");
-        }
-        QueryParameters qp = QueryParameters.simple(params);
-        getUI().ifPresent(ui -> ui.navigate(ProductListView.class, qp));
-    }
 }

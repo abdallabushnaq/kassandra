@@ -62,29 +62,27 @@ import java.util.Map;
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Restrict access to users with specific roles
 public class FeatureListView extends AbstractMainGrid<Feature> implements AfterNavigationObserver {
-    public static final  String                 CREATE_FEATURE_BUTTON_ID          = "create-feature-button";
-    public static final  String                 FEATURE_AI_PANEL_BUTTON           = "feature-ai-panel-button";
-    public static final  String                 FEATURE_GLOBAL_FILTER             = "feature-global-filter";
-    public static final  String                 FEATURE_GRID                      = "feature-grid";
-    public static final  String                 FEATURE_GRID_DELETE_BUTTON_PREFIX = "feature-grid-delete-button-prefix-";
-    public static final  String                 FEATURE_GRID_EDIT_BUTTON_PREFIX   = "feature-grid-edit-button-prefix-";
-    public static final  String                 FEATURE_GRID_NAME_PREFIX          = "feature-grid-name-";
-    public static final  String                 FEATURE_LIST_PAGE_TITLE           = "feature-list-page-title";
-    public static final  String                 FEATURE_ROW_COUNTER               = "feature-row-counter";
-    private static final String                 PARAM_AI_PANEL                    = "aiPanel";
-    private final        Button                 aiToggleButton;
-    private final        SplitLayout            bodySplit;
-    private final        ChatAgentPanel         chatAgentPanel;
-    private              boolean                chatOpen                          = false;
-    private final        Div                    chatPane;
-    private final        FeatureApi             featureApi;
-    private final        ProductApi             productApi;
-    private              Long                   productId;
-    private              boolean                restoringFromUrl                  = false;
-    private final        StableDiffusionService stableDiffusionService;
-    private final        UserApi                userApi;
-    private final        VersionApi             versionApi;
-    private              Long                   versionId;
+    public static final String                 CREATE_FEATURE_BUTTON_ID          = "create-feature-button";
+    public static final String                 FEATURE_AI_PANEL_BUTTON           = "feature-ai-panel-button";
+    public static final String                 FEATURE_GLOBAL_FILTER             = "feature-global-filter";
+    public static final String                 FEATURE_GRID                      = "feature-grid";
+    public static final String                 FEATURE_GRID_DELETE_BUTTON_PREFIX = "feature-grid-delete-button-prefix-";
+    public static final String                 FEATURE_GRID_EDIT_BUTTON_PREFIX   = "feature-grid-edit-button-prefix-";
+    public static final String                 FEATURE_GRID_NAME_PREFIX          = "feature-grid-name-";
+    public static final String                 FEATURE_LIST_PAGE_TITLE           = "feature-list-page-title";
+    public static final String                 FEATURE_ROW_COUNTER               = "feature-row-counter";
+    private final       Button                 aiToggleButton;
+    private final       SplitLayout            bodySplit;
+    private final       ChatAgentPanel         chatAgentPanel;
+    private final       Div                    chatPane;
+    private final       FeatureApi             featureApi;
+    private final       ProductApi             productApi;
+    private             Long                   productId;
+    private final       ChatPanelSessionState  sessionState;
+    private final       StableDiffusionService stableDiffusionService;
+    private final       UserApi                userApi;
+    private final       VersionApi             versionApi;
+    private             Long                   versionId;
 
     public FeatureListView(FeatureApi featureApi, ProductApi productApi, VersionApi versionApi, UserApi userApi,
                            Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
@@ -97,6 +95,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         this.versionApi             = versionApi;
         this.userApi                = userApi;
         this.stableDiffusionService = stableDiffusionService;
+        this.sessionState           = chatPanelSessionState;
 
         add(createSmartHeader("Features", FEATURE_LIST_PAGE_TITLE, VaadinIcon.LIGHTBULB,
                 CREATE_FEATURE_BUTTON_ID, () -> openFeatureDialog(null),
@@ -124,9 +123,8 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         add(bodySplit);
 
         aiToggleButton.addClickListener(e -> {
-            chatOpen = !chatOpen;
-            applyChatPaneState(chatOpen);
-            updateUrlParameters();
+            sessionState.setPanelOpen(!sessionState.isPanelOpen());
+            applyChatPaneState(sessionState.isPanelOpen());
         });
     }
 
@@ -162,13 +160,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                     }
                 });
 
-        restoringFromUrl = true;
-        boolean shouldOpen = queryParameters.getParameters().containsKey(PARAM_AI_PANEL);
-        if (shouldOpen != chatOpen) {
-            chatOpen = shouldOpen;
-            applyChatPaneState(chatOpen);
-        }
-        restoringFromUrl = false;
+        applyChatPaneState(sessionState.isPanelOpen());
 
         final String userEmail  = SecurityUtils.getUserEmail();
         User         userFromDb = null;
@@ -319,14 +311,5 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
 
         // Push UI updates if in push mode
         getUI().ifPresent(ui -> ui.push());
-    }
-
-    private void updateUrlParameters() {
-        if (restoringFromUrl) return;
-        Map<String, String> params = new HashMap<>();
-        if (productId != null) params.put("product", String.valueOf(productId));
-        if (versionId != null) params.put("version", String.valueOf(versionId));
-        if (chatOpen) params.put(PARAM_AI_PANEL, "open");
-        getUI().ifPresent(ui -> ui.navigate(FeatureListView.class, QueryParameters.simple(params)));
     }
 }

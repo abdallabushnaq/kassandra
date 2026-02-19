@@ -49,6 +49,11 @@ public class ChatPanelSessionState {
      * Snapshot of rendered messages (user + AI only, capped at MAX_MESSAGES).
      */
     private final       List<ChatMessageRecord> messages       = new ArrayList<>();
+    /**
+     * Whether the AI chat panel is open. Shared across all views so navigating
+     * between pages preserves the open/closed state.
+     */
+    private             boolean                 panelOpen      = false;
 
     /**
      * Clears history and assigns a fresh conversation ID.

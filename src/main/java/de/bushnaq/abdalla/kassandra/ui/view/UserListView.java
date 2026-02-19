@@ -25,7 +25,10 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import com.vaadin.flow.router.*;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
@@ -47,9 +50,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Route(value = "user-list", layout = MainLayout.class)
 @PageTitle("User List Page")
@@ -69,10 +70,9 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
     private final        Button                 aiToggleButton;
     private final        SplitLayout            bodySplit;
     private final        ChatAgentPanel         chatAgentPanel;
-    private              boolean                chatOpen                       = false;
     private final        Div                    chatPane;
     private final        Clock                  clock;
-    private              boolean                restoringFromUrl               = false;
+    private final        ChatPanelSessionState  sessionState;
     private final        StableDiffusionService stableDiffusionService;
     private final        UserApi                userApi;
 
@@ -84,6 +84,7 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
         this.userApi                = userApi;
         this.clock                  = clock;
         this.stableDiffusionService = stableDiffusionService;
+        this.sessionState           = chatPanelSessionState;
 
         add(createSmartHeader("Users", USER_LIST_PAGE_TITLE, VaadinIcon.USERS,
                 CREATE_USER_BUTTON, () -> openUserDialog(null),
@@ -111,9 +112,8 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
         add(bodySplit);
 
         aiToggleButton.addClickListener(e -> {
-            chatOpen = !chatOpen;
-            applyChatPaneState(chatOpen);
-            updateUrlParameters();
+            sessionState.setPanelOpen(!sessionState.isPanelOpen());
+            applyChatPaneState(sessionState.isPanelOpen());
         });
     }
 
@@ -127,13 +127,7 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
                     }
                 });
 
-        restoringFromUrl = true;
-        boolean shouldOpen = event.getLocation().getQueryParameters().getParameters().containsKey(PARAM_AI_PANEL);
-        if (shouldOpen != chatOpen) {
-            chatOpen = shouldOpen;
-            applyChatPaneState(chatOpen);
-        }
-        restoringFromUrl = false;
+        applyChatPaneState(sessionState.isPanelOpen());
 
         final String userEmail  = SecurityUtils.getUserEmail();
         User         userFromDb = null;
@@ -320,12 +314,5 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
 
         // Push UI updates if in push mode
         getUI().ifPresent(ui -> ui.push());
-    }
-
-    private void updateUrlParameters() {
-        if (restoringFromUrl) return;
-        Map<String, String> params = new HashMap<>();
-        if (chatOpen) params.put(PARAM_AI_PANEL, "open");
-        getUI().ifPresent(ui -> ui.navigate(UserListView.class, QueryParameters.simple(params)));
     }
 }

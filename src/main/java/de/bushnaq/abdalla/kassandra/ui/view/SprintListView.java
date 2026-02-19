@@ -77,14 +77,13 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     private final        Button                 aiToggleButton;
     private final        SplitLayout            bodySplit;
     private final        ChatAgentPanel         chatAgentPanel;
-    private              boolean                chatOpen                         = false;
     private final        Div                    chatPane;
     private final        Clock                  clock;
     private final        FeatureApi             featureApi;
     private              Long                   featureId;
     private final        ProductApi             productApi;
     private              Long                   productId;
-    private              boolean                restoringFromUrl                 = false;
+    private final        ChatPanelSessionState  sessionState;
     private final        SprintApi              sprintApi;
     private final        StableDiffusionService stableDiffusionService;
     private final        UserApi                userApi;
@@ -104,6 +103,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         this.userApi                = userApi;
         this.clock                  = clock;
         this.stableDiffusionService = stableDiffusionService;
+        this.sessionState           = chatPanelSessionState;
 
         add(createSmartHeader("Sprints", SPRINT_LIST_PAGE_TITLE, VaadinIcon.EXIT,
                 CREATE_SPRINT_BUTTON, () -> openSprintDialog(null),
@@ -131,9 +131,8 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         add(bodySplit);
 
         aiToggleButton.addClickListener(e -> {
-            chatOpen = !chatOpen;
-            applyChatPaneState(chatOpen);
-            updateUrlParameters();
+            sessionState.setPanelOpen(!sessionState.isPanelOpen());
+            applyChatPaneState(sessionState.isPanelOpen());
         });
     }
 
@@ -181,13 +180,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                     }
                 });
 
-        restoringFromUrl = true;
-        boolean shouldOpen = queryParameters.getParameters().containsKey(PARAM_AI_PANEL);
-        if (shouldOpen != chatOpen) {
-            chatOpen = shouldOpen;
-            applyChatPaneState(chatOpen);
-        }
-        restoringFromUrl = false;
+        applyChatPaneState(sessionState.isPanelOpen());
 
         final String userEmail  = SecurityUtils.getUserEmail();
         User         userFromDb = null;
@@ -398,15 +391,5 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
 
         // Push UI updates if in push mode
         getUI().ifPresent(ui -> ui.push());
-    }
-
-    private void updateUrlParameters() {
-        if (restoringFromUrl) return;
-        Map<String, String> params = new HashMap<>();
-        if (productId != null) params.put("product", String.valueOf(productId));
-        if (versionId != null) params.put("version", String.valueOf(versionId));
-        if (featureId != null) params.put("feature", String.valueOf(featureId));
-        if (chatOpen) params.put(PARAM_AI_PANEL, "open");
-        getUI().ifPresent(ui -> ui.navigate(SprintListView.class, QueryParameters.simple(params)));
     }
 }

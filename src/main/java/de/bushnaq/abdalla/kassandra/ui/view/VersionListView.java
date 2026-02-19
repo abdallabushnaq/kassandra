@@ -59,32 +59,30 @@ import java.util.Map;
 @PageTitle("Version List Page")
 @PermitAll // When security is enabled, allow all authenticated users
 public class VersionListView extends AbstractMainGrid<Version> implements AfterNavigationObserver {
-    public static final  String                              CREATE_VERSION_BUTTON             = "create-version-button";
-    private static final String                              PARAM_AI_PANEL                    = "aiPanel";
-    public static final  String                              ROUTE                             = "version-list";
-    public static final  String                              VERSION_AI_PANEL_BUTTON           = "version-ai-panel-button";
-    public static final  String                              VERSION_GLOBAL_FILTER             = "version-global-filter";
-    public static final  String                              VERSION_GRID                      = "version-grid";
-    public static final  String                              VERSION_GRID_DELETE_BUTTON_PREFIX = "version-grid-delete-button-prefix-";
-    public static final  String                              VERSION_GRID_EDIT_BUTTON_PREFIX   = "version-grid-edit-button-prefix-";
-    public static final  String                              VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
-    public static final  String                              VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
-    public static final  String                              VERSION_ROW_COUNTER               = "version-row-counter";
-    private final        AiAssistantService                  aiAssistantService;
-    private final        AiFilterService                     aiFilterService;
-    private final        Button                              aiToggleButton;
-    private final        SplitLayout                         bodySplit;
-    private final        ChatAgentPanel                      chatAgentPanel;
-    private              boolean                             chatOpen                          = false;
-    private final        Div                                 chatPane;
-    private              com.vaadin.flow.component.Component headerComponent;
-    private final        JsonMapper                          mapper;
-    private final        AuthenticationProvider              mcpAuthProvider;
-    private final        ProductApi                          productApi;
-    private              Long                                productId;
-    private              boolean                             restoringFromUrl                  = false;
-    private final        UserApi                             userApi;
-    private final        VersionApi                          versionApi;
+    public static final String                              CREATE_VERSION_BUTTON             = "create-version-button";
+    public static final String                              ROUTE                             = "version-list";
+    public static final String                              VERSION_AI_PANEL_BUTTON           = "version-ai-panel-button";
+    public static final String                              VERSION_GLOBAL_FILTER             = "version-global-filter";
+    public static final String                              VERSION_GRID                      = "version-grid";
+    public static final String                              VERSION_GRID_DELETE_BUTTON_PREFIX = "version-grid-delete-button-prefix-";
+    public static final String                              VERSION_GRID_EDIT_BUTTON_PREFIX   = "version-grid-edit-button-prefix-";
+    public static final String                              VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
+    public static final String                              VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
+    public static final String                              VERSION_ROW_COUNTER               = "version-row-counter";
+    private final       AiAssistantService                  aiAssistantService;
+    private final       AiFilterService                     aiFilterService;
+    private final       Button                              aiToggleButton;
+    private final       SplitLayout                         bodySplit;
+    private final       ChatAgentPanel                      chatAgentPanel;
+    private final       Div                                 chatPane;
+    private             com.vaadin.flow.component.Component headerComponent;
+    private final       JsonMapper                          mapper;
+    private final       AuthenticationProvider              mcpAuthProvider;
+    private final       ProductApi                          productApi;
+    private             Long                                productId;
+    private final       ChatPanelSessionState               sessionState;
+    private final       UserApi                             userApi;
+    private final       VersionApi                          versionApi;
 
     public VersionListView(VersionApi versionApi, ProductApi productApi, UserApi userApi, Clock clock,
                            AiFilterService aiFilterService, JsonMapper mapper,
@@ -98,6 +96,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         this.mapper             = mapper;
         this.aiAssistantService = aiAssistantService;
         this.mcpAuthProvider    = mcpAuthProvider;
+        this.sessionState       = chatPanelSessionState;
 
         // AI toggle button — added to header later in addHeader() once we have the product
         aiToggleButton = new Button("AI");
@@ -120,9 +119,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         bodySplit.setSplitterPosition(100);
 
         aiToggleButton.addClickListener(e -> {
-            chatOpen = !chatOpen;
-            applyChatPaneState(chatOpen);
-            updateUrlParameters();
+            sessionState.setPanelOpen(!sessionState.isPanelOpen());
+            applyChatPaneState(sessionState.isPanelOpen());
         });
     }
 
@@ -170,13 +168,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                     }
                 });
 
-        restoringFromUrl = true;
-        boolean shouldOpen = queryParameters.getParameters().containsKey(PARAM_AI_PANEL);
-        if (shouldOpen != chatOpen) {
-            chatOpen = shouldOpen;
-            applyChatPaneState(chatOpen);
-        }
-        restoringFromUrl = false;
+        applyChatPaneState(sessionState.isPanelOpen());
 
         final String userEmail  = SecurityUtils.getUserEmail();
         User         userFromDb = null;
@@ -338,13 +330,5 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         getDataProvider().getItems().clear();
         getDataProvider().getItems().addAll((productId != null) ? versionApi.getAll(productId) : versionApi.getAll());
         getDataProvider().refreshAll();
-    }
-
-    private void updateUrlParameters() {
-        if (restoringFromUrl) return;
-        Map<String, String> params = new HashMap<>();
-        if (productId != null) params.put("product", String.valueOf(productId));
-        if (chatOpen) params.put(PARAM_AI_PANEL, "open");
-        getUI().ifPresent(ui -> ui.navigate(VersionListView.class, QueryParameters.simple(params)));
     }
 }
