@@ -27,21 +27,22 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.router.Location;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
-import de.bushnaq.abdalla.kassandra.dto.Feature;
-import de.bushnaq.abdalla.kassandra.dto.Product;
-import de.bushnaq.abdalla.kassandra.dto.Sprint;
-import de.bushnaq.abdalla.kassandra.dto.Version;
-import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
-import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
-import de.bushnaq.abdalla.kassandra.rest.api.SprintApi;
-import de.bushnaq.abdalla.kassandra.rest.api.VersionApi;
+import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.rest.api.*;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.SprintDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -62,53 +63,83 @@ import java.util.Map;
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
 public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
-    public static final String                 CREATE_SPRINT_BUTTON             = "create-sprint-button";
-    public static final String                 SPRINT_GLOBAL_FILTER             = "sprint-global-filter";
-    public static final String                 SPRINT_GRID                      = "sprint-grid";
-    public static final String                 SPRINT_GRID_CONFIG_BUTTON_PREFIX = "sprint-grid-config-button-prefix-";
-    public static final String                 SPRINT_GRID_DELETE_BUTTON_PREFIX = "sprint-grid-delete-button-prefix-";
-    public static final String                 SPRINT_GRID_EDIT_BUTTON_PREFIX   = "sprint-grid-edit-button-prefix-";
-    public static final String                 SPRINT_GRID_NAME_PREFIX          = "sprint-grid-name-";
-    public static final String                 SPRINT_LIST_PAGE_TITLE           = "sprint-list-page-title";
-    public static final String                 SPRINT_ROW_COUNTER               = "sprint-row-counter";
-    private final       Clock                  clock;
-    private final       FeatureApi             featureApi;
-    private             Long                   featureId;
-    private final       ProductApi             productApi;
-    private             Long                   productId;
-    private final       SprintApi              sprintApi;
-    private final       StableDiffusionService stableDiffusionService;
-    private final       VersionApi             versionApi;
-    private             Long                   versionId;
+    public static final  String                 CREATE_SPRINT_BUTTON             = "create-sprint-button";
+    private static final String                 PARAM_AI_PANEL                   = "aiPanel";
+    public static final  String                 SPRINT_AI_PANEL_BUTTON           = "sprint-ai-panel-button";
+    public static final  String                 SPRINT_GLOBAL_FILTER             = "sprint-global-filter";
+    public static final  String                 SPRINT_GRID                      = "sprint-grid";
+    public static final  String                 SPRINT_GRID_CONFIG_BUTTON_PREFIX = "sprint-grid-config-button-prefix-";
+    public static final  String                 SPRINT_GRID_DELETE_BUTTON_PREFIX = "sprint-grid-delete-button-prefix-";
+    public static final  String                 SPRINT_GRID_EDIT_BUTTON_PREFIX   = "sprint-grid-edit-button-prefix-";
+    public static final  String                 SPRINT_GRID_NAME_PREFIX          = "sprint-grid-name-";
+    public static final  String                 SPRINT_LIST_PAGE_TITLE           = "sprint-list-page-title";
+    public static final  String                 SPRINT_ROW_COUNTER               = "sprint-row-counter";
+    private final        Button                 aiToggleButton;
+    private final        SplitLayout            bodySplit;
+    private final        ChatAgentPanel         chatAgentPanel;
+    private              boolean                chatOpen                         = false;
+    private final        Div                    chatPane;
+    private final        Clock                  clock;
+    private final        FeatureApi             featureApi;
+    private              Long                   featureId;
+    private final        ProductApi             productApi;
+    private              Long                   productId;
+    private              boolean                restoringFromUrl                 = false;
+    private final        SprintApi              sprintApi;
+    private final        StableDiffusionService stableDiffusionService;
+    private final        UserApi                userApi;
+    private final        VersionApi             versionApi;
+    private              Long                   versionId;
 
-    public SprintListView(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService) {
+    public SprintListView(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi,
+                          UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
+                          StableDiffusionService stableDiffusionService,
+                          AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider,
+                          ChatPanelSessionState chatPanelSessionState) {
         super(clock);
         this.sprintApi              = sprintApi;
         this.productApi             = productApi;
         this.versionApi             = versionApi;
         this.featureApi             = featureApi;
+        this.userApi                = userApi;
         this.clock                  = clock;
         this.stableDiffusionService = stableDiffusionService;
 
-        add(
-                createSmartHeader(
-                        "Sprints",
-                        SPRINT_LIST_PAGE_TITLE,
-                        VaadinIcon.EXIT,
-                        CREATE_SPRINT_BUTTON,
-                        () -> openSprintDialog(null),
-                        SPRINT_ROW_COUNTER,
-                        SPRINT_GLOBAL_FILTER,
-                        aiFilterService, mapper, "Sprint"
-                ),
-                getGridPanelWrapper()
-        );
+        add(createSmartHeader("Sprints", SPRINT_LIST_PAGE_TITLE, VaadinIcon.EXIT,
+                CREATE_SPRINT_BUTTON, () -> openSprintDialog(null),
+                SPRINT_ROW_COUNTER, SPRINT_GLOBAL_FILTER, aiFilterService, mapper, "Sprint"));
+
+        aiToggleButton = new Button("AI");
+        aiToggleButton.setId(SPRINT_AI_PANEL_BUTTON);
+        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        aiToggleButton.getElement().setAttribute("title", "AI Assistant");
+        addHeaderButton(aiToggleButton);
+
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi, chatPanelSessionState);
+        chatAgentPanel.setSizeFull();
+
+        chatPane = new Div(chatAgentPanel);
+        chatPane.getStyle()
+                .set("height", "100%").set("overflow", "hidden")
+                .set("transition", "width 0.3s ease, opacity 0.3s ease")
+                .set("width", "0").set("opacity", "0").set("min-width", "0");
+
+        bodySplit = new SplitLayout(getGridPanelWrapper(), chatPane);
+        bodySplit.setOrientation(SplitLayout.Orientation.HORIZONTAL);
+        bodySplit.setSizeFull();
+        bodySplit.setSplitterPosition(100);
+        add(bodySplit);
+
+        aiToggleButton.addClickListener(e -> {
+            chatOpen = !chatOpen;
+            applyChatPaneState(chatOpen);
+            updateUrlParameters();
+        });
     }
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
         log.info("=== afterNavigation called ===");
-        //- Get query parameters
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
         if (queryParameters.getParameters().containsKey("product")) {
@@ -150,7 +181,37 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                     }
                 });
 
+        restoringFromUrl = true;
+        boolean shouldOpen = queryParameters.getParameters().containsKey(PARAM_AI_PANEL);
+        if (shouldOpen != chatOpen) {
+            chatOpen = shouldOpen;
+            applyChatPaneState(chatOpen);
+        }
+        restoringFromUrl = false;
+
+        final String userEmail  = SecurityUtils.getUserEmail();
+        User         userFromDb = null;
+        if (!userEmail.equals(SecurityUtils.GUEST)) {
+            try {
+                userFromDb = userApi.getByEmail(userEmail).get();
+            } catch (Exception ignored) {
+            }
+        }
+        chatAgentPanel.setCurrentUser(userFromDb);
+
         refreshGrid();
+    }
+
+    private void applyChatPaneState(boolean open) {
+        if (open) {
+            chatPane.getStyle().set("width", "35%").set("opacity", "1").set("min-width", "280px");
+            bodySplit.setSplitterPosition(65);
+            aiToggleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        } else {
+            chatPane.getStyle().set("width", "0").set("opacity", "0").set("min-width", "0");
+            bodySplit.setSplitterPosition(100);
+            aiToggleButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        }
     }
 
     private void confirmDelete(Sprint sprint) {
@@ -337,5 +398,15 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
 
         // Push UI updates if in push mode
         getUI().ifPresent(ui -> ui.push());
+    }
+
+    private void updateUrlParameters() {
+        if (restoringFromUrl) return;
+        Map<String, String> params = new HashMap<>();
+        if (productId != null) params.put("product", String.valueOf(productId));
+        if (versionId != null) params.put("version", String.valueOf(versionId));
+        if (featureId != null) params.put("feature", String.valueOf(featureId));
+        if (chatOpen) params.put(PARAM_AI_PANEL, "open");
+        getUI().ifPresent(ui -> ui.navigate(SprintListView.class, QueryParameters.simple(params)));
     }
 }

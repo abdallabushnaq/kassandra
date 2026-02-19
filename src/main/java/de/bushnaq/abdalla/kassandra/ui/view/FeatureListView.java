@@ -18,22 +18,32 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.VersionApi;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.FeatureDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -52,46 +62,76 @@ import java.util.Map;
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Restrict access to users with specific roles
 public class FeatureListView extends AbstractMainGrid<Feature> implements AfterNavigationObserver {
-    public static final String                 CREATE_FEATURE_BUTTON_ID          = "create-feature-button";
-    public static final String                 FEATURE_GLOBAL_FILTER             = "feature-global-filter";
-    public static final String                 FEATURE_GRID                      = "feature-grid";
-    public static final String                 FEATURE_GRID_DELETE_BUTTON_PREFIX = "feature-grid-delete-button-prefix-";
-    public static final String                 FEATURE_GRID_EDIT_BUTTON_PREFIX   = "feature-grid-edit-button-prefix-";
-    public static final String                 FEATURE_GRID_NAME_PREFIX          = "feature-grid-name-";
-    public static final String                 FEATURE_LIST_PAGE_TITLE           = "feature-list-page-title";
-    public static final String                 FEATURE_ROW_COUNTER               = "feature-row-counter";
-    private final       FeatureApi             featureApi;
-    private final       ProductApi             productApi;
-    private             Long                   productId;
-    private final       StableDiffusionService stableDiffusionService;
-    private final       VersionApi             versionApi;
-    private             Long                   versionId;
+    public static final  String                 CREATE_FEATURE_BUTTON_ID          = "create-feature-button";
+    public static final  String                 FEATURE_AI_PANEL_BUTTON           = "feature-ai-panel-button";
+    public static final  String                 FEATURE_GLOBAL_FILTER             = "feature-global-filter";
+    public static final  String                 FEATURE_GRID                      = "feature-grid";
+    public static final  String                 FEATURE_GRID_DELETE_BUTTON_PREFIX = "feature-grid-delete-button-prefix-";
+    public static final  String                 FEATURE_GRID_EDIT_BUTTON_PREFIX   = "feature-grid-edit-button-prefix-";
+    public static final  String                 FEATURE_GRID_NAME_PREFIX          = "feature-grid-name-";
+    public static final  String                 FEATURE_LIST_PAGE_TITLE           = "feature-list-page-title";
+    public static final  String                 FEATURE_ROW_COUNTER               = "feature-row-counter";
+    private static final String                 PARAM_AI_PANEL                    = "aiPanel";
+    private final        Button                 aiToggleButton;
+    private final        SplitLayout            bodySplit;
+    private final        ChatAgentPanel         chatAgentPanel;
+    private              boolean                chatOpen                          = false;
+    private final        Div                    chatPane;
+    private final        FeatureApi             featureApi;
+    private final        ProductApi             productApi;
+    private              Long                   productId;
+    private              boolean                restoringFromUrl                  = false;
+    private final        StableDiffusionService stableDiffusionService;
+    private final        UserApi                userApi;
+    private final        VersionApi             versionApi;
+    private              Long                   versionId;
 
-    public FeatureListView(FeatureApi featureApi, ProductApi productApi, VersionApi versionApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService) {
+    public FeatureListView(FeatureApi featureApi, ProductApi productApi, VersionApi versionApi, UserApi userApi,
+                           Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
+                           StableDiffusionService stableDiffusionService,
+                           AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider,
+                           ChatPanelSessionState chatPanelSessionState) {
         super(clock);
         this.featureApi             = featureApi;
         this.productApi             = productApi;
         this.versionApi             = versionApi;
+        this.userApi                = userApi;
         this.stableDiffusionService = stableDiffusionService;
 
-        add(
-                createSmartHeader(
-                        "Features",
-                        FEATURE_LIST_PAGE_TITLE,
-                        VaadinIcon.LIGHTBULB,
-                        CREATE_FEATURE_BUTTON_ID,
-                        () -> openFeatureDialog(null),
-                        FEATURE_ROW_COUNTER,
-                        FEATURE_GLOBAL_FILTER,
-                        aiFilterService, mapper, "Feature"
-                ),
-                getGridPanelWrapper()
-        );
+        add(createSmartHeader("Features", FEATURE_LIST_PAGE_TITLE, VaadinIcon.LIGHTBULB,
+                CREATE_FEATURE_BUTTON_ID, () -> openFeatureDialog(null),
+                FEATURE_ROW_COUNTER, FEATURE_GLOBAL_FILTER, aiFilterService, mapper, "Feature"));
+
+        aiToggleButton = new Button("AI");
+        aiToggleButton.setId(FEATURE_AI_PANEL_BUTTON);
+        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        aiToggleButton.getElement().setAttribute("title", "AI Assistant");
+        addHeaderButton(aiToggleButton);
+
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi, chatPanelSessionState);
+        chatAgentPanel.setSizeFull();
+
+        chatPane = new Div(chatAgentPanel);
+        chatPane.getStyle()
+                .set("height", "100%").set("overflow", "hidden")
+                .set("transition", "width 0.3s ease, opacity 0.3s ease")
+                .set("width", "0").set("opacity", "0").set("min-width", "0");
+
+        bodySplit = new SplitLayout(getGridPanelWrapper(), chatPane);
+        bodySplit.setOrientation(SplitLayout.Orientation.HORIZONTAL);
+        bodySplit.setSizeFull();
+        bodySplit.setSplitterPosition(100);
+        add(bodySplit);
+
+        aiToggleButton.addClickListener(e -> {
+            chatOpen = !chatOpen;
+            applyChatPaneState(chatOpen);
+            updateUrlParameters();
+        });
     }
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        //- Get query parameters
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
         if (queryParameters.getParameters().containsKey("product")) {
@@ -122,7 +162,37 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                     }
                 });
 
+        restoringFromUrl = true;
+        boolean shouldOpen = queryParameters.getParameters().containsKey(PARAM_AI_PANEL);
+        if (shouldOpen != chatOpen) {
+            chatOpen = shouldOpen;
+            applyChatPaneState(chatOpen);
+        }
+        restoringFromUrl = false;
+
+        final String userEmail  = SecurityUtils.getUserEmail();
+        User         userFromDb = null;
+        if (!userEmail.equals(SecurityUtils.GUEST)) {
+            try {
+                userFromDb = userApi.getByEmail(userEmail).get();
+            } catch (Exception ignored) {
+            }
+        }
+        chatAgentPanel.setCurrentUser(userFromDb);
+
         refreshGrid();
+    }
+
+    private void applyChatPaneState(boolean open) {
+        if (open) {
+            chatPane.getStyle().set("width", "35%").set("opacity", "1").set("min-width", "280px");
+            bodySplit.setSplitterPosition(65);
+            aiToggleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        } else {
+            chatPane.getStyle().set("width", "0").set("opacity", "0").set("min-width", "0");
+            bodySplit.setSplitterPosition(100);
+            aiToggleButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        }
     }
 
     private void confirmDelete(Feature feature) {
@@ -249,5 +319,14 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
 
         // Push UI updates if in push mode
         getUI().ifPresent(ui -> ui.push());
+    }
+
+    private void updateUrlParameters() {
+        if (restoringFromUrl) return;
+        Map<String, String> params = new HashMap<>();
+        if (productId != null) params.put("product", String.valueOf(productId));
+        if (versionId != null) params.put("version", String.valueOf(versionId));
+        if (chatOpen) params.put(PARAM_AI_PANEL, "open");
+        getUI().ifPresent(ui -> ui.navigate(FeatureListView.class, QueryParameters.simple(params)));
     }
 }

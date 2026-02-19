@@ -17,21 +17,26 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import com.vaadin.flow.router.AfterNavigationEvent;
-import com.vaadin.flow.router.AfterNavigationObserver;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -42,44 +47,74 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Route(value = "user-list", layout = MainLayout.class)
 @PageTitle("User List Page")
 @RolesAllowed("ADMIN") // Only admins can access this view
 public class UserListView extends AbstractMainGrid<User> implements AfterNavigationObserver {
-    public static final String                 CREATE_USER_BUTTON             = "create-user-button";
-    public static final String                 ROUTE                          = "user-list";
-    public static final String                 USER_GLOBAL_FILTER             = "user-global-filter";
-    public static final String                 USER_GRID                      = "user-grid";
-    public static final String                 USER_GRID_DELETE_BUTTON_PREFIX = "user-grid-delete-button-prefix-";
-    public static final String                 USER_GRID_EDIT_BUTTON_PREFIX   = "user-grid-edit-button-prefix-";
-    public static final String                 USER_GRID_NAME_PREFIX          = "user-grid-name-";
-    public static final String                 USER_LIST_PAGE_TITLE           = "user-list-page-title";
-    public static final String                 USER_ROW_COUNTER               = "user-row-counter";
-    private final       Clock                  clock;
-    private final       StableDiffusionService stableDiffusionService;
-    private final       UserApi                userApi;
+    public static final  String                 CREATE_USER_BUTTON             = "create-user-button";
+    private static final String                 PARAM_AI_PANEL                 = "aiPanel";
+    public static final  String                 ROUTE                          = "user-list";
+    public static final  String                 USER_AI_PANEL_BUTTON           = "user-ai-panel-button";
+    public static final  String                 USER_GLOBAL_FILTER             = "user-global-filter";
+    public static final  String                 USER_GRID                      = "user-grid";
+    public static final  String                 USER_GRID_DELETE_BUTTON_PREFIX = "user-grid-delete-button-prefix-";
+    public static final  String                 USER_GRID_EDIT_BUTTON_PREFIX   = "user-grid-edit-button-prefix-";
+    public static final  String                 USER_GRID_NAME_PREFIX          = "user-grid-name-";
+    public static final  String                 USER_LIST_PAGE_TITLE           = "user-list-page-title";
+    public static final  String                 USER_ROW_COUNTER               = "user-row-counter";
+    private final        Button                 aiToggleButton;
+    private final        SplitLayout            bodySplit;
+    private final        ChatAgentPanel         chatAgentPanel;
+    private              boolean                chatOpen                       = false;
+    private final        Div                    chatPane;
+    private final        Clock                  clock;
+    private              boolean                restoringFromUrl               = false;
+    private final        StableDiffusionService stableDiffusionService;
+    private final        UserApi                userApi;
 
-    public UserListView(UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService) {
+    public UserListView(UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
+                        StableDiffusionService stableDiffusionService,
+                        AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider,
+                        ChatPanelSessionState chatPanelSessionState) {
         super(clock);
         this.userApi                = userApi;
         this.clock                  = clock;
         this.stableDiffusionService = stableDiffusionService;
 
-        add(
-                createSmartHeader(
-                        "Users",
-                        USER_LIST_PAGE_TITLE,
-                        VaadinIcon.USERS,
-                        CREATE_USER_BUTTON,
-                        () -> openUserDialog(null),
-                        USER_ROW_COUNTER,
-                        USER_GLOBAL_FILTER,
-                        aiFilterService, mapper, "User"
-                ),
-                getGridPanelWrapper()
-        );
+        add(createSmartHeader("Users", USER_LIST_PAGE_TITLE, VaadinIcon.USERS,
+                CREATE_USER_BUTTON, () -> openUserDialog(null),
+                USER_ROW_COUNTER, USER_GLOBAL_FILTER, aiFilterService, mapper, "User"));
+
+        aiToggleButton = new Button("AI");
+        aiToggleButton.setId(USER_AI_PANEL_BUTTON);
+        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        aiToggleButton.getElement().setAttribute("title", "AI Assistant");
+        addHeaderButton(aiToggleButton);
+
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi, chatPanelSessionState);
+        chatAgentPanel.setSizeFull();
+
+        chatPane = new Div(chatAgentPanel);
+        chatPane.getStyle()
+                .set("height", "100%").set("overflow", "hidden")
+                .set("transition", "width 0.3s ease, opacity 0.3s ease")
+                .set("width", "0").set("opacity", "0").set("min-width", "0");
+
+        bodySplit = new SplitLayout(getGridPanelWrapper(), chatPane);
+        bodySplit.setOrientation(SplitLayout.Orientation.HORIZONTAL);
+        bodySplit.setSizeFull();
+        bodySplit.setSplitterPosition(100);
+        add(bodySplit);
+
+        aiToggleButton.addClickListener(e -> {
+            chatOpen = !chatOpen;
+            applyChatPaneState(chatOpen);
+            updateUrlParameters();
+        });
     }
 
     @Override
@@ -92,7 +127,37 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
                     }
                 });
 
+        restoringFromUrl = true;
+        boolean shouldOpen = event.getLocation().getQueryParameters().getParameters().containsKey(PARAM_AI_PANEL);
+        if (shouldOpen != chatOpen) {
+            chatOpen = shouldOpen;
+            applyChatPaneState(chatOpen);
+        }
+        restoringFromUrl = false;
+
+        final String userEmail  = SecurityUtils.getUserEmail();
+        User         userFromDb = null;
+        if (!userEmail.equals(SecurityUtils.GUEST)) {
+            try {
+                userFromDb = userApi.getByEmail(userEmail).get();
+            } catch (Exception ignored) {
+            }
+        }
+        chatAgentPanel.setCurrentUser(userFromDb);
+
         refreshGrid();
+    }
+
+    private void applyChatPaneState(boolean open) {
+        if (open) {
+            chatPane.getStyle().set("width", "35%").set("opacity", "1").set("min-width", "280px");
+            bodySplit.setSplitterPosition(65);
+            aiToggleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        } else {
+            chatPane.getStyle().set("width", "0").set("opacity", "0").set("min-width", "0");
+            bodySplit.setSplitterPosition(100);
+            aiToggleButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        }
     }
 
     private void confirmDelete(User user) {
@@ -255,5 +320,12 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
 
         // Push UI updates if in push mode
         getUI().ifPresent(ui -> ui.push());
+    }
+
+    private void updateUrlParameters() {
+        if (restoringFromUrl) return;
+        Map<String, String> params = new HashMap<>();
+        if (chatOpen) params.put(PARAM_AI_PANEL, "open");
+        getUI().ifPresent(ui -> ui.navigate(UserListView.class, QueryParameters.simple(params)));
     }
 }

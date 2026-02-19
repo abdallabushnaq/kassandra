@@ -18,20 +18,30 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.VersionApi;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.VersionDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -49,111 +59,81 @@ import java.util.Map;
 @PageTitle("Version List Page")
 @PermitAll // When security is enabled, allow all authenticated users
 public class VersionListView extends AbstractMainGrid<Version> implements AfterNavigationObserver {
-    public static final String                              CREATE_VERSION_BUTTON             = "create-version-button";
-    public static final String                              ROUTE                             = "version-list";
-    public static final String                              VERSION_GLOBAL_FILTER             = "version-global-filter";
-    public static final String                              VERSION_GRID                      = "version-grid";
-    public static final String                              VERSION_GRID_DELETE_BUTTON_PREFIX = "version-grid-delete-button-prefix-";
-    public static final String                              VERSION_GRID_EDIT_BUTTON_PREFIX   = "version-grid-edit-button-prefix-";
-    public static final String                              VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
-    public static final String                              VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
-    public static final String                              VERSION_ROW_COUNTER               = "version-row-counter";
-    private final       AiFilterService                     aiFilterService;
-    private             com.vaadin.flow.component.Component headerComponent; // Track the header
-    private final       JsonMapper                          mapper;
-    private final       ProductApi                          productApi;
-    private             Long                                productId;
-    private final       VersionApi                          versionApi;
+    public static final  String                              CREATE_VERSION_BUTTON             = "create-version-button";
+    private static final String                              PARAM_AI_PANEL                    = "aiPanel";
+    public static final  String                              ROUTE                             = "version-list";
+    public static final  String                              VERSION_AI_PANEL_BUTTON           = "version-ai-panel-button";
+    public static final  String                              VERSION_GLOBAL_FILTER             = "version-global-filter";
+    public static final  String                              VERSION_GRID                      = "version-grid";
+    public static final  String                              VERSION_GRID_DELETE_BUTTON_PREFIX = "version-grid-delete-button-prefix-";
+    public static final  String                              VERSION_GRID_EDIT_BUTTON_PREFIX   = "version-grid-edit-button-prefix-";
+    public static final  String                              VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
+    public static final  String                              VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
+    public static final  String                              VERSION_ROW_COUNTER               = "version-row-counter";
+    private final        AiAssistantService                  aiAssistantService;
+    private final        AiFilterService                     aiFilterService;
+    private final        Button                              aiToggleButton;
+    private final        SplitLayout                         bodySplit;
+    private final        ChatAgentPanel                      chatAgentPanel;
+    private              boolean                             chatOpen                          = false;
+    private final        Div                                 chatPane;
+    private              com.vaadin.flow.component.Component headerComponent;
+    private final        JsonMapper                          mapper;
+    private final        AuthenticationProvider              mcpAuthProvider;
+    private final        ProductApi                          productApi;
+    private              Long                                productId;
+    private              boolean                             restoringFromUrl                  = false;
+    private final        UserApi                             userApi;
+    private final        VersionApi                          versionApi;
 
-    public VersionListView(VersionApi versionApi, ProductApi productApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper) {
+    public VersionListView(VersionApi versionApi, ProductApi productApi, UserApi userApi, Clock clock,
+                           AiFilterService aiFilterService, JsonMapper mapper,
+                           AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider,
+                           ChatPanelSessionState chatPanelSessionState) {
         super(clock);
-        this.versionApi      = versionApi;
-        this.productApi      = productApi;
-        this.aiFilterService = aiFilterService;
-        this.mapper          = mapper;
-    }
+        this.versionApi         = versionApi;
+        this.productApi         = productApi;
+        this.userApi            = userApi;
+        this.aiFilterService    = aiFilterService;
+        this.mapper             = mapper;
+        this.aiAssistantService = aiAssistantService;
+        this.mcpAuthProvider    = mcpAuthProvider;
 
-//    {
-//        // --- Create header with avatar and name ---
-//        com.vaadin.flow.component.Component newHeader;
-//        final String                        HEADER_ID = "version-list-header";
-//        if (product.getAvatarHash() != null && !product.getAvatarHash().isEmpty()) {
-//            com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
-//            avatar.setWidth("32px");
-//            avatar.setHeight("32px");
-//            avatar.getStyle()
-//                    .set("border-radius", "var(--lumo-border-radius)")
-//                    .set("object-fit", "cover")
-//                    .set("display", "inline-block")
-//                    .set("margin-right", "12px");
-//            // Use REST API endpoint for avatar with hash-based caching
-//            avatar.setSrc(product.getAvatarUrl());
-//            avatar.setAlt(product.getName());
-//            com.vaadin.flow.component.html.Span nameSpan = new com.vaadin.flow.component.html.Span(product.getName());
-//            nameSpan.getStyle().set("font-size", "1.5em").set("vertical-align", "middle");
-//            com.vaadin.flow.component.html.Div headerDiv = new com.vaadin.flow.component.html.Div(avatar, nameSpan);
-//            headerDiv.setId(HEADER_ID);
-//            headerDiv.getStyle().set("display", "flex").set("align-items", "center").set("gap", "8px");
-//            newHeader = headerDiv;
-//        } else {
-//            com.vaadin.flow.component.icon.Icon defaultIcon = new com.vaadin.flow.component.icon.Icon(VaadinIcon.CUBE);
-//            defaultIcon.setSize("32px");
-//            defaultIcon.getStyle().set("margin-right", "12px");
-//            com.vaadin.flow.component.html.Span nameSpan = new com.vaadin.flow.component.html.Span(product.getName());
-//            nameSpan.getStyle().set("font-size", "1.5em").set("vertical-align", "middle");
-//            com.vaadin.flow.component.html.Div headerDiv = new com.vaadin.flow.component.html.Div(defaultIcon, nameSpan);
-//            headerDiv.setId(HEADER_ID);
-//            headerDiv.getStyle().set("display", "flex").set("align-items", "center").set("gap", "8px");
-//            newHeader = headerDiv;
-//        }
-//        // Remove previous header by id if present
-//        getChildren()
-//                .filter(c -> HEADER_ID.equals(c.getId().orElse(null)))
-//                .findFirst()
-//                .ifPresent(this::remove);
-//        // Insert header before the grid panel (which is always present)
-//        addComponentAtIndex(0, newHeader);
-//        headerComponent = newHeader;
-//
-//    }
+        // AI toggle button — added to header later in addHeader() once we have the product
+        aiToggleButton = new Button("AI");
+        aiToggleButton.setId(VERSION_AI_PANEL_BUTTON);
+        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        aiToggleButton.getElement().setAttribute("title", "AI Assistant");
 
-    void addHeader(Product product) {
-        Image avatar = new Image();
-        avatar.setWidth("32px");
-        avatar.setHeight("32px");
-        avatar.getStyle()
-                .set("border-radius", "var(--lumo-border-radius)")
-                .set("object-fit", "cover")
-                .set("display", "inline-block")
-                .set("margin-right", "12px");
-        if (product.getAvatarHash() != null && !product.getAvatarHash().isEmpty()) {
-            avatar.setSrc(product.getAvatarUrl());
-        }
-        add(
-                createSmartHeader(
-                        product.getName(),
-                        VERSION_LIST_PAGE_TITLE,
-                        avatar,
-                        CREATE_VERSION_BUTTON,
-                        () -> openVersionDialog(null),
-                        VERSION_ROW_COUNTER,
-                        VERSION_GLOBAL_FILTER,
-                        aiFilterService, mapper, "Version"
-                ),
-                getGridPanelWrapper()
-        );
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi, chatPanelSessionState);
+        chatAgentPanel.setSizeFull();
 
+        chatPane = new Div(chatAgentPanel);
+        chatPane.getStyle()
+                .set("height", "100%").set("overflow", "hidden")
+                .set("transition", "width 0.3s ease, opacity 0.3s ease")
+                .set("width", "0").set("opacity", "0").set("min-width", "0");
+
+        bodySplit = new SplitLayout(getGridPanelWrapper(), chatPane);
+        bodySplit.setOrientation(SplitLayout.Orientation.HORIZONTAL);
+        bodySplit.setSizeFull();
+        bodySplit.setSplitterPosition(100);
+
+        aiToggleButton.addClickListener(e -> {
+            chatOpen = !chatOpen;
+            applyChatPaneState(chatOpen);
+            updateUrlParameters();
+        });
     }
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        //- Get query parameters
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
         if (queryParameters.getParameters().containsKey("product")) {
             this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
         }
-        //- update breadcrumbs and header
+
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
@@ -164,11 +144,63 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         params.put("product", String.valueOf(productId));
                         mainLayout.getBreadcrumbs().addItem("Versions", VersionListView.class, params);
 
-                        addHeader(product);
+                        // Build header now that we have the product — remove previous one if navigating back
+                        if (headerComponent != null) remove(headerComponent);
+                        remove(bodySplit);
+
+                        Image avatar = new Image();
+                        avatar.setWidth("32px");
+                        avatar.setHeight("32px");
+                        avatar.getStyle()
+                                .set("border-radius", "var(--lumo-border-radius)")
+                                .set("object-fit", "cover")
+                                .set("display", "inline-block")
+                                .set("margin-right", "12px");
+                        if (product.getAvatarHash() != null && !product.getAvatarHash().isEmpty()) {
+                            avatar.setSrc(product.getAvatarUrl());
+                        }
+                        headerComponent = createSmartHeader(
+                                product.getName(), VERSION_LIST_PAGE_TITLE, avatar,
+                                CREATE_VERSION_BUTTON, () -> openVersionDialog(null),
+                                VERSION_ROW_COUNTER, VERSION_GLOBAL_FILTER,
+                                aiFilterService, mapper, "Version");
+                        add(headerComponent);
+                        addHeaderButton(aiToggleButton);
+                        add(bodySplit);
                     }
                 });
 
+        restoringFromUrl = true;
+        boolean shouldOpen = queryParameters.getParameters().containsKey(PARAM_AI_PANEL);
+        if (shouldOpen != chatOpen) {
+            chatOpen = shouldOpen;
+            applyChatPaneState(chatOpen);
+        }
+        restoringFromUrl = false;
+
+        final String userEmail  = SecurityUtils.getUserEmail();
+        User         userFromDb = null;
+        if (!userEmail.equals(SecurityUtils.GUEST)) {
+            try {
+                userFromDb = userApi.getByEmail(userEmail).get();
+            } catch (Exception ignored) {
+            }
+        }
+        chatAgentPanel.setCurrentUser(userFromDb);
+
         refreshGrid();
+    }
+
+    private void applyChatPaneState(boolean open) {
+        if (open) {
+            chatPane.getStyle().set("width", "35%").set("opacity", "1").set("min-width", "280px");
+            bodySplit.setSplitterPosition(65);
+            aiToggleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        } else {
+            chatPane.getStyle().set("width", "0").set("opacity", "0").set("min-width", "0");
+            bodySplit.setSplitterPosition(100);
+            aiToggleButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        }
     }
 
     private void confirmDelete(Version version) {
@@ -306,5 +338,13 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         getDataProvider().getItems().clear();
         getDataProvider().getItems().addAll((productId != null) ? versionApi.getAll(productId) : versionApi.getAll());
         getDataProvider().refreshAll();
+    }
+
+    private void updateUrlParameters() {
+        if (restoringFromUrl) return;
+        Map<String, String> params = new HashMap<>();
+        if (productId != null) params.put("product", String.valueOf(productId));
+        if (chatOpen) params.put(PARAM_AI_PANEL, "open");
+        getUI().ifPresent(ui -> ui.navigate(VersionListView.class, QueryParameters.simple(params)));
     }
 }
