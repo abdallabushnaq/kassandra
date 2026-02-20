@@ -124,6 +124,27 @@ public class UserGroupApi extends AbstractApi {
     }
 
     /**
+     * Get a single user group by name
+     *
+     * @param name the group name
+     * @return the group, or null if not found
+     */
+    public Optional<UserGroup> getByName(String name) {
+        try {
+            ResponseEntity<UserGroup> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/user-group/by-name/{name}",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    UserGroup.class,
+                    name
+            ));
+            return Optional.ofNullable(response.getBody());
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
      * Create a new user group
      *
      * @param userGroup the group to create

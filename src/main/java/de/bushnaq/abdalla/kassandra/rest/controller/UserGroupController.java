@@ -25,6 +25,7 @@ import jakarta.transaction.Transactional;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -112,6 +113,20 @@ public class UserGroupController {
     @PreAuthorize("hasRole('ADMIN')")
     public List<UserGroupDAO> getAll() {
         return userGroupService.getAllGroups();
+    }
+
+    /**
+     * Get a single user group by name
+     *
+     * @param name the group name
+     * @return the group, or 404 if not found
+     */
+    @GetMapping("/by-name/{name}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserGroupDAO> getByName(@PathVariable String name) {
+        return userGroupRepository.findByName(name)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     /**

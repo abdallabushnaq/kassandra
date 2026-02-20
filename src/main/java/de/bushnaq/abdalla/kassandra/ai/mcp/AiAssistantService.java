@@ -19,9 +19,11 @@ package de.bushnaq.abdalla.kassandra.ai.mcp;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.feature.FeatureTools;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.product.ProductAclTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.product.ProductTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint.SprintTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.user.UserTools;
+import de.bushnaq.abdalla.kassandra.ai.mcp.api.usergroup.UserGroupTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.version.VersionTools;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -81,10 +83,14 @@ public class AiAssistantService {
     @Autowired
     private              FeatureTools                            featureTools;
     @Autowired
+    private              ProductAclTools                         productAclTools;
+    @Autowired
     private              ProductTools                            productTools;
     @Autowired
     private              SprintTools                             sprintTools;
     private final        List<ThinkingStep>                      thinkingSteps        = new ArrayList<>();
+    @Autowired
+    private              UserGroupTools                          userGroupTools;
     @Autowired
     private              UserTools                               userTools;
     @Autowired
@@ -136,7 +142,7 @@ public class AiAssistantService {
      * Dynamically build a list of available tools from all registered tool beans using reflection.
      */
     public String getAvailableTools() {
-        Object[]      toolBeans = {productTools, userTools, versionTools, featureTools, sprintTools};
+        Object[]      toolBeans = {productTools, productAclTools, userTools, userGroupTools, versionTools, featureTools, sprintTools};
         StringBuilder sb        = new StringBuilder();
         for (Object bean : toolBeans) {
             for (Method method : bean.getClass().getMethods()) {
@@ -202,7 +208,7 @@ public class AiAssistantService {
                 .conversationId(conversationId)
                 .build();
 
-        Object[]                                           userTools                     = {this.userTools, productTools, versionTools, featureTools, sprintTools};
+        Object[]                                           userTools                     = {this.userTools, userGroupTools, productTools, productAclTools, versionTools, featureTools, sprintTools};
         List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = createToolCallbackProviders(userTools);
 
         // Create ChatClient with:
@@ -212,7 +218,7 @@ public class AiAssistantService {
         ChatClient chatClient = ChatClient.builder(chatModel)
                 .defaultSystem(augmentSystemPrompt(SYSTEM_PROMPT))
                 .defaultAdvisors(memoryAdvisor)
-                .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4))
+                .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4), augmentedToolCallbackProvider.get(5), augmentedToolCallbackProvider.get(6))
                 .build();
 
 //        OpenAiChatOptions openAiOptions = OpenAiChatOptions.builder()

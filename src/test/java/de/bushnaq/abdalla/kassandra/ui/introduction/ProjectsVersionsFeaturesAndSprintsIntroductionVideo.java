@@ -28,10 +28,7 @@ import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.FeatureListView;
-import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
-import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
-import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
+import de.bushnaq.abdalla.kassandra.ui.view.*;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -56,6 +53,8 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.junit.Assert.assertTrue;
 
 @Tag("IntroductionVideo")
 @ExtendWith(SpringExtension.class)
@@ -106,6 +105,13 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
     private             VersionListViewTester      versionListViewTester;
     private             String                     versionName;
 
+    private void approveAiPlan() {
+        //assuming the ai has a question
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "yes");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        waitForAi();
+    }
+
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
@@ -120,7 +126,7 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
         seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setSilent(false);
+        paul.setSilent(true);
         productName = "Jupiter";
         versionName = "1.0.0";
         featureName = "Config server";
@@ -131,6 +137,7 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         paul.narrateAsync(NORMAL, "Good morning, my name is Christopher Paul. I am the product manager of Kassandra and I will be demonstrating the latest alpha version of the Kassandra project server to you today.");
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 
+        seleniumHandler.setEnabled(false);
         //---------------------------------------------------------------------------------------
         logHeader("Products Page");
         //---------------------------------------------------------------------------------------
@@ -158,6 +165,40 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         productListViewTester.closeDialog(ProductDialog.CONFIRM_BUTTON);
         paul.narrate(INTENSE, "And we got ourself a new product! Notice the access column shows that one group has access to this product.").pause();
 
+        //---------------------------------------------------------------------------------------
+        logHeader("Product AI");
+        //---------------------------------------------------------------------------------------
+        paul.narrate(NORMAL, "Everything we can do via the user interface, we can also do with the help of the Kassandra AI.").pause();
+        seleniumHandler.click(ProductListView.PRODUCT_AI_PANEL_BUTTON);
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Add following new products Andromsda, Maestro and Hannibal and give the Team group access to all of them.");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        paul.narrate(NORMAL, "As you can see, kassandra does not have only read access. I however mistyped the name of the first product. Lets ask Kassandra to fix that.").pause();
+        waitForAi();
+        if (productApi.getByName("Andromeda").isPresent()) {
+            paul.narrate(NORMAL, "Kassandra fixed the type for me, I was going to ask it to fix it, but i no longer need to do so.").pause();
+        } else {
+            if (productApi.getByName("Andromsda").isEmpty()) {
+                approveAiPlan();//assuming the ai has a question
+            }
+            seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please fix the typo in the product.");
+            seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+            waitForAi();
+            if (productApi.getByName("Andromeda").isEmpty()) {
+                approveAiPlan();//assuming the ai has a question
+            }
+        }
+        assertTrue(productApi.getByName("Andromeda").isPresent());//test
+        assertTrue(productApi.getByName("Maestro").isPresent());//test
+        assertTrue(productApi.getByName("Hannibal").isPresent());//test
+        paul.narrate(NORMAL, "Lets undo that.").pause();
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please delete the last product you created.");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        waitForAi();
+        if (productApi.getByName("Hannibal").isPresent()) {
+            approveAiPlan();//assuming the ai has a question
+        }
+        assertTrue(productApi.getByName("Hannibal").isEmpty());//test
+        //---------------------------------------------------------------------------------------
 
         paul.narrate(NORMAL, "With the little notepad and trashcan icons, on the right side, you can edit or delete your product.").pause();
         paul.narrate(NORMAL, "Lets select our product...");
@@ -223,65 +264,8 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         logHeader(" Tasks Page");
         //---------------------------------------------------------------------------------------
         paul.narrate(NORMAL, "This is the page where you plan your sprint including the gantt chart.").pause();
-//        paul.narrate(NORMAL, "Lets start by adding a milestone that will fix the starting point of our sprint.").pause();
-//        paul.narrate(NORMAL, "Select the Create Milestone button...");
-//        seleniumHandler.click(TaskListView.CREATE_MILESTONE_BUTTON_ID);
-//        String milestoneName = "New Milestone-1";
-//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, milestoneName);
-//        paul.narrate(NORMAL, "Lets also create a story. We use stories as containers for the actual work items called tasks.");
-//        seleniumHandler.click(TaskListView.CREATE_STORY_BUTTON_ID);
-//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Story-2");
-//        paul.narrate(NORMAL, "You can see that all the new created items are always added to the end of our table.").pause();
-//        paul.narrate(NORMAL, "Lets create 3 additional tasks as work units for our first sprint.");
-//        seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
-//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-3");
-//        seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
-//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-4");
-//        seleniumHandler.click(TaskListView.CREATE_TASK_BUTTON_ID);
-//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-5");
-//        paul.narrate(INTENSE, "Good!").longPause();
-//        paul.narrate(NORMAL, "Select the edit button to change to whole table into edit mode...").pause();
-//        seleniumHandler.click(TaskListView.EDIT_BUTTON_ID);
-//        paul.narrate(NORMAL, "We can now edit all valid milestone, story or task cells.").pause();
-//        paul.narrate(NORMAL, "Lets give the milestone a fixed start date and time. We want our developers to start working on this Monday first thing in the morning.");
-//        seleniumHandler.click(TaskGrid.TASK_GRID_NAME_PREFIX + milestoneName);
-//
-//
-//        paul.narrate(NORMAL, "If you look carefully, you will notice that all three tasks have been assigned to the story.").pause();
-//        paul.narrate(NORMAL, "The story is the parent of these tasks.").pause();
-//        paul.narrate(NORMAL, "Kassandra does that automatically. All three tasks also are automatically assigned to myself.").pause();
-//        paul.narrate(NORMAL, "But, as i am not a developer, we will assign these tasks to a developer.").pause();
-//        paul.narrate(NORMAL, "We want our story to depend on our milestone. The story can only start after the milestone.").pause();
-//        paul.narrate(NORMAL, "Defining such a dependency between a task or story to other tasks or stories can be done in 3 different ways...");
-
-
-//        sprintListViewTester.selectSprint(sprintName);
-//        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
-//        seleniumHandler.waitForElementToBeClickable(RenderUtil.BURNDOWN_CHART);
-//
-//        // After visiting the SprintQualityBoard, go back to SprintListView and use the column config button
-//        seleniumHandler.click("Sprints (" + sprintName + ")"); // Go back to SprintListView using breadcrumb
-//        // Find and click the column configuration button
-//        seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
         seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
-        if (false) {
 
-
-//        userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-//        takeUserDialogScreenshots();
-
-            // Navigate to AvailabilityListView for the current user and take screenshots
-//        availabilityListViewTester.switchToAvailabilityListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-//        takeAvailabilityDialogScreenshots();
-
-            // Navigate to LocationListView for the current user and take screenshots
-//        locationListViewTester.switchToLocationListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-//        takeLocationDialogScreenshots();
-
-            // Navigate to OffDayListView for the current user and take screenshots
-//        offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-//        takeOffDayDialogScreenshots();
-        }
         paul.pauseIfSilent(5000);
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
@@ -295,13 +279,6 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         return Arrays.stream(randomCases).toList();
     }
 
-    // Method to get the public-facing URL, fixing potential redirect issues
-//    private static String getPublicFacingUrl(KeycloakContainer container) {
-//        return String.format("http://%s:%s",
-//                container.getHost(),
-//                container.getMappedPort(8080));
-//    }
-
     private void printAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
@@ -311,6 +288,19 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         } else {
             log.warn("No authenticated user found. Running demo without authentication.");
         }
+    }
+
+    // Method to get the public-facing URL, fixing potential redirect issues
+//    private static String getPublicFacingUrl(KeycloakContainer container) {
+//        return String.format("http://%s:%s",
+//                container.getHost(),
+//                container.getMappedPort(8080));
+//    }
+
+    private void waitForAi() {
+        seleniumHandler.pushWaitDuration(Duration.ofSeconds(240));
+        seleniumHandler.waitForElementToBeEnabled(Kassandra.AI_SUBMIT_BUTTON);
+        seleniumHandler.popWaitDuration();
     }
 
 }
