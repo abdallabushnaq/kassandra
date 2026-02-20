@@ -138,17 +138,18 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         if (queryParameters.getParameters().containsKey("version")) {
             this.versionId = Long.parseLong(queryParameters.getParameters().get("version").getFirst());
         }
+
         //- update breadcrumbs
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();
                         Product product = productApi.getById(productId);
+                        Version version = versionApi.getById(versionId);
                         mainLayout.getBreadcrumbs().addItem("Products (" + product.getName() + ")", ProductListView.class);
                         {
                             Map<String, String> params = new HashMap<>();
                             params.put("product", String.valueOf(productId));
-                            Version version = versionApi.getById(versionId);
                             mainLayout.getBreadcrumbs().addItem("Versions (" + version.getName() + ")", VersionListView.class, params);
                         }
                         {
@@ -157,6 +158,12 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                             params.put("version", String.valueOf(versionId));
                             mainLayout.getBreadcrumbs().addItem("Features", FeatureListView.class, params);
                         }
+
+                        // Pass navigation context to the AI panel so the LLM knows which product
+                        // and version are selected and can supply the correct IDs to FeatureTools without asking.
+                        chatAgentPanel.setViewContext(
+                                "You are viewing the feature list of version '" + version.getName() + "' (versionId=" + versionId + ") of product '" + product.getName() + "' (productId=" + productId + "). " +
+                                        "Use versionId=" + versionId + " when calling createFeature or any other feature tool that requires a versionId.");
                     }
                 });
 

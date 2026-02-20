@@ -73,6 +73,10 @@ public class ChatAgentPanel extends VerticalLayout {
     private final       ChatPanelSessionState                         sessionState;
     private final       Button                                        submitButton;
     private final       UserApi                                       userApi;
+    /**
+     * Current navigation context sentence prepended to every query so the AI knows which entities are selected.
+     */
+    private             String                                        viewContext       = null;
 
     public ChatAgentPanel(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi) {
         this(aiAssistantService, mcpAuthProvider, userApi, null);
@@ -320,6 +324,11 @@ public class ChatAgentPanel extends VerticalLayout {
 
         addSystemMessage("🤔 Thinking...");
 
+        // Build the effective query – prepend view context so the AI knows the current selection
+        final String effectiveQuery = (viewContext != null && !viewContext.isEmpty())
+                ? "[Context: " + viewContext + "]\n" + query
+                : query;
+
         String capturedToken = mcpAuthProvider.captureCurrentUserToken();
         getUI().ifPresent(ui -> {
             new Thread(() -> {
@@ -339,7 +348,7 @@ public class ChatAgentPanel extends VerticalLayout {
                             });
                         });
                     }
-                    QueryResult response = aiAssistantService.processQueryWithThinking(query, conversationId);
+                    QueryResult response = aiAssistantService.processQueryWithThinking(effectiveQuery, conversationId);
                     log.info("AI response received: {} characters", response != null ? response.content().length() : 0);
 
                     ui.access(() -> {
@@ -414,6 +423,15 @@ public class ChatAgentPanel extends VerticalLayout {
      */
     public void setOnAiReply(Runnable onAiReply) {
         this.onAiReply = onAiReply;
+    }
+
+    /**
+     * Sets the navigation context sentence that is silently prepended to every user query
+     * so the AI always knows which entities are currently selected in the UI.
+     * Call this from the parent view's afterNavigation.
+     */
+    public void setViewContext(String context) {
+        this.viewContext = context;
     }
 
     /**

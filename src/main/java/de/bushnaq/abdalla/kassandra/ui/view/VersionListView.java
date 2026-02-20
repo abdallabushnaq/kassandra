@@ -165,6 +165,12 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         add(headerComponent);
                         addHeaderButton(aiToggleButton);
                         add(bodySplit);
+
+                        // Pass navigation context to the AI panel so the LLM knows which product
+                        // is selected and can supply the correct productId to VersionTools without asking.
+                        chatAgentPanel.setViewContext(
+                                "You are viewing the version list of product '" + product.getName() + "' (productId=" + productId + "). " +
+                                        "Use productId=" + productId + " when calling createVersion or any other version tool that requires a productId.");
                     }
                 });
 

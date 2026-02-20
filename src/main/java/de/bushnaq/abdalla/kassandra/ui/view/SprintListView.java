@@ -150,24 +150,25 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         if (queryParameters.getParameters().containsKey("feature")) {
             this.featureId = Long.parseLong(queryParameters.getParameters().get("feature").getFirst());
         }
+
         //- update breadcrumbs
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();
                         Product product = productApi.getById(productId);
+                        Version version = versionApi.getById(versionId);
+                        Feature feature = featureApi.getById(featureId);
                         mainLayout.getBreadcrumbs().addItem("Products (" + product.getName() + ")", ProductListView.class);
                         {
                             Map<String, String> params = new HashMap<>();
                             params.put("product", String.valueOf(productId));
-                            Version version = versionApi.getById(versionId);
                             mainLayout.getBreadcrumbs().addItem("Versions (" + version.getName() + ")", VersionListView.class, params);
                         }
                         {
                             Map<String, String> params = new HashMap<>();
                             params.put("product", String.valueOf(productId));
                             params.put("version", String.valueOf(versionId));
-                            Feature feature = featureApi.getById(featureId);
                             mainLayout.getBreadcrumbs().addItem("Features (" + feature.getName() + ")", FeatureListView.class, params);
                         }
                         {
@@ -177,6 +178,12 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                             params.put("feature", String.valueOf(featureId));
                             mainLayout.getBreadcrumbs().addItem("Sprints", SprintListView.class, params);
                         }
+
+                        // Pass navigation context to the AI panel so the LLM knows which product,
+                        // version, and feature are selected and can supply the correct IDs to SprintTools without asking.
+                        chatAgentPanel.setViewContext(
+                                "You are viewing the sprint list of feature '" + feature.getName() + "' (featureId=" + featureId + ") of version '" + version.getName() + "' (versionId=" + versionId + ") of product '" + product.getName() + "' (productId=" + productId + "). " +
+                                        "Use featureId=" + featureId + " when calling createSprint or any other sprint tool that requires a featureId.");
                     }
                 });
 
