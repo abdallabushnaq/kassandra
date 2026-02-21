@@ -184,16 +184,6 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         paul.narrateAsync(NORMAL, "Select Save to close the dialog and persist our version.");
         seleniumHandler.click(VersionDialog.CONFIRM_BUTTON);
         paul.narrate(INTENSE, "And we got ourself a new version!").longPause();
-        //---------------------------------------------------------------------------------------
-        logHeader("Version AI");
-        //---------------------------------------------------------------------------------------
-
-        paul.narrateAsync(NORMAL, "Kassandra AI knows the context of where you are and therefore knows that we are currently looking at teh versiosn of Product " + productName + ".");
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Add version 2.0.0.");
-        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-        waitForAi();
-
-        //---------------------------------------------------------------------------------------
 
         paul.narrate(NORMAL, "The little notepad and trashcan icons, on the right side, can be used to edit or delete your version.").pause();
         paul.narrate(NORMAL, "Lets select our version.");
@@ -217,16 +207,6 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         seleniumHandler.click(FeatureDialog.CONFIRM_BUTTON);
         paul.narrate(INTENSE, "Jupiter has its first feature!").longPause();
 
-        //---------------------------------------------------------------------------------------
-        logHeader("Feature AI");
-        //---------------------------------------------------------------------------------------
-
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "please rename 'Config server' to 'core-config-server'.");
-        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-        waitForAi();
-
-        //---------------------------------------------------------------------------------------
-
         paul.narrate(NORMAL, "Again, as in the other pages, the little notepad and trashcan icons, on the right side, can be used to edit or delete your feature.").pause();
         paul.narrate(NORMAL, "Lets select our feature...");
         featureListViewTester.selectFeature(featureName);
@@ -243,16 +223,6 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         paul.narrateAsync(NORMAL, "Select Save to close the dialog and persist our sprint.");
         seleniumHandler.click(SprintDialog.CONFIRM_BUTTON);
         paul.narrate(INTENSE, "That was easy!").longPause();
-
-        //---------------------------------------------------------------------------------------
-        logHeader("Sprint AI");
-        //---------------------------------------------------------------------------------------
-
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "add sprint 'Muenchen'.");
-        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-        waitForAi();
-
-        //---------------------------------------------------------------------------------------
 
         paul.narrate(NORMAL, "Now we need to start planning our sprint. We do this in the Tasks page. Not by selecting the sprint, but configuring it with the small crog icon on the right side.");
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);

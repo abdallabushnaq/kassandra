@@ -69,7 +69,7 @@ public class SprintTools {
             @ToolParam(description = "The sprint name (must be unique)") String name,
             @ToolParam(description = "The featureId this sprint belongs to") Long featureId) {
         try {
-            ToolActivityContextHolder.reportActivity("Creating sprint with name: " + name + " for feature " + featureId);
+//            ToolActivityContextHolder.reportActivity("Creating sprint with name: " + name + " for feature " + featureId);
             Sprint sprint = new Sprint();
             sprint.setName(name);
             sprint.setFeatureId(featureId);
@@ -152,6 +152,27 @@ public class SprintTools {
             return "Sprint not found with ID: " + sprintId;
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting sprint " + sprintId + ": " + e.getMessage());
+            return "Error: " + e.getMessage();
+        }
+    }
+
+    @Tool(description = "Get a specific sprint by its name within a feature. " + RETURNS_SPRINT_JSON)
+    public String getSprintByName(
+            @ToolParam(description = "The featureId the sprint belongs to") Long featureId,
+            @ToolParam(description = "The sprint name") String name) {
+        try {
+            ToolActivityContextHolder.reportActivity("Getting sprint with name: " + name + " in feature " + featureId);
+            return sprintApi.getByName(featureId, name)
+                    .map(sprint -> {
+                        try {
+                            return jsonMapper.writeValueAsString(SprintDto.from(sprint));
+                        } catch (Exception e) {
+                            return "Error: " + e.getMessage();
+                        }
+                    })
+                    .orElse("Sprint not found with name: " + name + " in feature " + featureId);
+        } catch (Exception e) {
+            ToolActivityContextHolder.reportActivity("Error getting sprint by name " + name + ": " + e.getMessage());
             return "Error: " + e.getMessage();
         }
     }

@@ -131,6 +131,16 @@ public class FeatureController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/version/{versionId}/by-name/{name}")
+    @PreAuthorize("@aclSecurityService.hasVersionAccess(#versionId) or hasRole('ADMIN')")
+    public ResponseEntity<FeatureDAO> getByName(@PathVariable Long versionId, @PathVariable String name) {
+        FeatureDAO feature = featureRepository.findByNameAndVersionId(name, versionId);
+        if (feature == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(feature);
+    }
+
     @PostMapping()
     @PreAuthorize("@aclSecurityService.hasVersionAccess(#feature.versionId) or hasRole('ADMIN')")
     @Transactional

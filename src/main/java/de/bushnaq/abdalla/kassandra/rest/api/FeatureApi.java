@@ -24,11 +24,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.ErrorResponseException;
 import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class FeatureApi extends AbstractApi {
@@ -128,6 +130,25 @@ public class FeatureApi extends AbstractApi {
                 id
         ));
         return response.getBody();
+    }
+
+    public Optional<Feature> getByName(Long versionId, String name) {
+        try {
+            ResponseEntity<Feature> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/feature/version/{versionId}/by-name/{name}",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    Feature.class,
+                    versionId,
+                    name
+            ));
+            return Optional.of(response.getBody());
+        } catch (ErrorResponseException e) {
+            if (e.getStatusCode().value() == 404) {
+                return Optional.empty();
+            }
+            throw e;
+        }
     }
 
     public Feature persist(Feature feature) {

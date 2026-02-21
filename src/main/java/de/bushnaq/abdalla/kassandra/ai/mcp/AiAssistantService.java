@@ -60,10 +60,16 @@ import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 @Slf4j
 public class AiAssistantService {
 
+    /**
+     * Maximum number of user+AI messages kept in the snapshot.
+     * tool/system/error messages are also stored for UI replay but do not count toward this limit,
+     * matching the agent's ChatMemory window which only tracks user and AI turns.
+     */
+    public static final int MAX_MESSAGES = 20;
     private static final String                                  SYSTEM_PROMPT        = """
             You are Kassandra an AI assistant that helps manage a project management system.
             You have access to various tools to interact with the system.
-            Use the available tools when needed to fulfill user requests.
+            Keep your answers short and to the point. Use tools to get information instead of making assumptions.
             After using tools, provide helpful and concise responses based on the results.
             If you don't need to use any tools, just provide a direct answer.
             Careful when you are using an ID in a tool, make sure it is the correct one, you will not be able to guess an ID.
@@ -173,7 +179,7 @@ public class AiAssistantService {
 //            log.info("Creating new ChatMemory for conversation: {}", id);
             return MessageWindowChatMemory.builder()
                     .chatMemoryRepository(new InMemoryChatMemoryRepository())
-                    .maxMessages(20) // Keep last 20 messages in context
+                    .maxMessages(MAX_MESSAGES)
                     .build();
         });
     }

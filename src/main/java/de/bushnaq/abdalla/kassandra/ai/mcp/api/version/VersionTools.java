@@ -72,7 +72,7 @@ public class VersionTools {
             @ToolParam(description = "The version name (must be unique)") String name,
             @ToolParam(description = "The productId this version belongs to") Long productId) {
         try {
-            ToolActivityContextHolder.reportActivity("Creating version with name: " + name + " for product " + productId);
+//            ToolActivityContextHolder.reportActivity("Creating version with name: " + name + " for product " + productId);
             Version version = new Version();
             version.setName(name);
             version.setProductId(productId);

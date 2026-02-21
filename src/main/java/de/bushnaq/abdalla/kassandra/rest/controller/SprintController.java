@@ -150,6 +150,16 @@ public class SprintController {
         return backlog;
     }
 
+    @GetMapping("/feature/{featureId}/by-name/{name}")
+    @PreAuthorize("@aclSecurityService.hasFeatureAccess(#featureId) or hasRole('ADMIN')")
+    public ResponseEntity<SprintDAO> getByName(@PathVariable Long featureId, @PathVariable String name) {
+        SprintDAO sprint = sprintRepository.findByNameAndFeatureId(name, featureId);
+        if (sprint == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(sprint);
+    }
+
     @PostMapping()
     @PreAuthorize("@aclSecurityService.hasFeatureAccess(#sprintDAO.featureId) or hasRole('ADMIN')")
     @Transactional

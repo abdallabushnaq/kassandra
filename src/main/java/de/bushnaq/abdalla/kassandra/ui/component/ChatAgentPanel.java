@@ -223,12 +223,14 @@ public class ChatAgentPanel extends VerticalLayout {
         Div messageDiv = createMessageDiv(message, "error");
         conversationHistory.add(messageDiv);
         scrollToBottom();
+        snapshotMessage("error", message);
     }
 
     private void addSystemMessage(String message) {
         Div messageDiv = createMessageDiv(message, "system");
         conversationHistory.add(messageDiv);
         scrollToBottom();
+        snapshotMessage("system", message);
     }
 
     // -----------------------------------------------------------------------
@@ -239,6 +241,7 @@ public class ChatAgentPanel extends VerticalLayout {
         Div messageDiv = createMessageDiv(message, "tool");
         conversationHistory.add(messageDiv);
         scrollToBottom();
+        snapshotMessage("tool", message);
     }
 
     private void addUserMessage(String message) {
@@ -313,16 +316,9 @@ public class ChatAgentPanel extends VerticalLayout {
                 icon.setText("ℹ️ ");
                 break;
             case "tool":
-                messageDiv.addClassNames(LumoUtility.Background.CONTRAST_10);
-                Span toolIconWrapper = new Span("🔧 ");
-                toolIconWrapper.getStyle()
-                        .set("color", "var(--lumo-warning-color)");
-//                        .set("background", "var(--lumo-contrast-20pct)")
-//                        .set("border-radius", "2px")
-//                        .set("padding", "0 2px")
-//                        .set("margin-right", "2px");
-                messageDiv.add(toolIconWrapper, content);
-                return messageDiv;
+                icon.setText("🪛 ");
+                icon.getStyle().set("color", "yellow");
+                break;
             case "error":
                 messageDiv.addClassNames(LumoUtility.Background.ERROR_10);
                 icon.setText("⚠️ ");
@@ -422,11 +418,13 @@ public class ChatAgentPanel extends VerticalLayout {
 
     /**
      * Replays stored message records into the conversation history UI on reload.
-     * Only user and AI messages are replayed (system/error are transient).
+     * All message types (user, ai, system, tool, error) are replayed.
      */
     private void replayHistory(List<ChatPanelSessionState.ChatMessageRecord> records) {
         for (ChatPanelSessionState.ChatMessageRecord record : records) {
-            Div messageDiv = createMessageDiv(record.text(), record.role());
+            String role       = record.role();
+            String contentId  = "ai".equals(role) ? AI_LAST_RESPONSE : null;
+            Div    messageDiv = createMessageDiv(record.text(), role, contentId);
             conversationHistory.add(messageDiv);
         }
         scrollToBottom();
@@ -463,16 +461,32 @@ public class ChatAgentPanel extends VerticalLayout {
     }
 
     /**
-     * Appends a user or AI message to the plain session list.
+     * Appends any message type to the plain session list for UI replay on F5.
+     * The eviction cap mirrors the agent's ChatMemory window: only "user" and "ai"
+     * messages count toward MAX_MESSAGES, because tool/system/error messages are
+     * never stored in the agent's history and must not shift the window.
      * Safe to call from any thread — operates on the captured List reference,
      * never on the session-scoped proxy.
      */
     private void snapshotMessage(String role, String text) {
         if (sessionMessages == null) return;
-        if (!"user".equals(role) && !"ai".equals(role)) return;
         synchronized (sessionMessages) {
-            if (sessionMessages.size() >= ChatPanelSessionState.MAX_MESSAGES) {
-                sessionMessages.remove(0);
+            if ("user".equals(role) || "ai".equals(role)) {
+                // Count only agent-history messages toward the cap, then evict oldest
+                // user/ai pair from the front until we are within budget.
+                long agentMessageCount = sessionMessages.stream()
+                        .filter(r -> "user".equals(r.role()) || "ai".equals(r.role()))
+                        .count();
+                while (agentMessageCount >= AiAssistantService.MAX_MESSAGES) {
+                    // Remove the first user or ai message (and stop after one removal per call)
+                    for (int i = 0; i < sessionMessages.size(); i++) {
+                        if ("user".equals(sessionMessages.get(i).role()) || "ai".equals(sessionMessages.get(i).role())) {
+                            sessionMessages.remove(i);
+                            agentMessageCount--;
+                            break;
+                        }
+                    }
+                }
             }
             sessionMessages.add(new ChatPanelSessionState.ChatMessageRecord(role, text));
         }

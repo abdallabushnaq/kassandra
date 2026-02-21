@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp;
 
+import de.bushnaq.abdalla.util.AnsiColorConstants;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -37,7 +38,7 @@ public class ToolActivityContextHolder {
     public static void reportActivity(String message) {
         ToolActivityContext context = getContext();
         if (context != null) context.reportActivity(message);
-        log.info(message);
+        log.info(AnsiColorConstants.ANSI_GRAY + message + AnsiColorConstants.ANSI_RESET);
     }
 
     public static void setContext(ToolActivityContext context) {

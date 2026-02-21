@@ -201,6 +201,27 @@ public class FeatureTools {
         }
     }
 
+    @Tool(description = "Get a specific feature by its name within a version. " + RETURNS_FEATURE_JSON)
+    public String getFeatureByName(
+            @ToolParam(description = "The versionId the feature belongs to") Long versionId,
+            @ToolParam(description = "The feature name") String name) {
+        try {
+            ToolActivityContextHolder.reportActivity("Getting feature with name: " + name + " in version " + versionId);
+            return featureApi.getByName(versionId, name)
+                    .map(feature -> {
+                        try {
+                            return jsonMapper.writeValueAsString(FeatureDto.from(feature));
+                        } catch (Exception e) {
+                            return "Error: " + e.getMessage();
+                        }
+                    })
+                    .orElse("Feature not found with name: " + name + " in version " + versionId);
+        } catch (Exception e) {
+            ToolActivityContextHolder.reportActivity("Error getting feature by name " + name + ": " + e.getMessage());
+            return "Error: " + e.getMessage();
+        }
+    }
+
     @Tool(description = "Update an existing feature by its ID. " + RETURNS_FEATURE_JSON)
     public String updateFeature(
             @ToolParam(description = "The feature ID") Long id,

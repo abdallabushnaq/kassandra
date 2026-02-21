@@ -38,22 +38,19 @@ import java.util.UUID;
 public class ChatPanelSessionState {
 
     /**
-     * Maximum number of user+AI messages kept in the snapshot.
-     */
-    public static final int                     MAX_MESSAGES   = 20;
-    /**
      * Reused across reloads so server-side ChatMemory is not abandoned.
      */
-    private             String                  conversationId = UUID.randomUUID().toString();
+    private       String                  conversationId = UUID.randomUUID().toString();
     /**
-     * Snapshot of rendered messages (user + AI only, capped at MAX_MESSAGES).
+     * Snapshot of all rendered messages (user, ai, system, tool, error), capped so that
+     * the number of user+ai entries never exceeds MAX_MESSAGES.
      */
-    private final       List<ChatMessageRecord> messages       = new ArrayList<>();
+    private final List<ChatMessageRecord> messages       = new ArrayList<>();
     /**
      * Whether the AI chat panel is open. Shared across all views so navigating
      * between pages preserves the open/closed state.
      */
-    private             boolean                 panelOpen      = false;
+    private       boolean                 panelOpen      = false;
 
     /**
      * Clears history and assigns a fresh conversation ID.

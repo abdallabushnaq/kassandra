@@ -83,7 +83,7 @@ public class ProductTools {
     public String createProduct(
             @ToolParam(description = "The product name (must be unique)") String name,
             @ToolParam(description = "(Optional) The product avatar stable-diffusion prompt. If null or empty, a default prompt will be generated.") String avatarPrompt) {
-        ToolActivityContextHolder.reportActivity("Creating product with name: " + name);
+//        ToolActivityContextHolder.reportActivity("Creating product with name: " + name);
         try {
             Product product = new Product();
             product.setName(name);
@@ -109,7 +109,7 @@ public class ProductTools {
             }
             Product    savedProduct = productApi.persist(product);
             ProductDto productDto   = ProductDto.from(savedProduct);
-            ToolActivityContextHolder.reportActivity("created product '" + productDto.getName() + "' with ID: " + savedProduct.getId());
+            ToolActivityContextHolder.reportActivity("created product '" + savedProduct.getName() + "' with ID: " + savedProduct.getId());
             return jsonMapper.writeValueAsString(productDto);
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error creating product: " + e.getMessage());
