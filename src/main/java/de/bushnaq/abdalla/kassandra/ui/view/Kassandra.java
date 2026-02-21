@@ -46,6 +46,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
 
     // Re-exported for backwards compatibility with tests that reference Kassandra.AI_*
     public static final String         AI_CLEAR_BUTTON  = ChatAgentPanel.AI_CLEAR_BUTTON;
+    public static final String         AI_LAST_RESPONSE = ChatAgentPanel.AI_LAST_RESPONSE;
     public static final String         AI_QUERY_INPUT   = ChatAgentPanel.AI_QUERY_INPUT;
     public static final String         AI_RESPONSE_AREA = ChatAgentPanel.AI_RESPONSE_AREA;
     public static final String         AI_SUBMIT_BUTTON = ChatAgentPanel.AI_SUBMIT_BUTTON;

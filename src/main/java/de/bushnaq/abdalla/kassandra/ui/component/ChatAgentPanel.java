@@ -51,6 +51,7 @@ import java.util.List;
 public class ChatAgentPanel extends VerticalLayout {
 
     public static final String                                        AI_CLEAR_BUTTON   = "ai-clear-button";
+    public static final String                                        AI_LAST_RESPONSE  = "ai-last-response";
     public static final String                                        AI_QUERY_INPUT    = "ai-query-input";
     public static final String                                        AI_RESPONSE_AREA  = "ai-response-area";
     public static final String                                        AI_SUBMIT_BUTTON  = "ai-submit-button";
@@ -205,7 +206,7 @@ public class ChatAgentPanel extends VerticalLayout {
     }
 
     private void addAiMessage(String message) {
-        Div messageDiv = createMessageDiv(message, "ai");
+        Div messageDiv = createMessageDiv(message, "ai", AI_LAST_RESPONSE);
         conversationHistory.add(messageDiv);
         scrollToBottom();
         snapshotMessage("ai", message);
@@ -256,6 +257,10 @@ public class ChatAgentPanel extends VerticalLayout {
     }
 
     private Div createMessageDiv(String message, String type) {
+        return createMessageDiv(message, type, null);
+    }
+
+    private Div createMessageDiv(String message, String type, String contentId) {
         Div messageDiv = new Div();
         messageDiv.addClassNames(
                 LumoUtility.BorderRadius.SMALL,
@@ -269,6 +274,9 @@ public class ChatAgentPanel extends VerticalLayout {
         Span content = new Span(message);
         content.getStyle().set("white-space", "pre-wrap");
         content.getStyle().set("font-family", "monospace");
+        if (contentId != null) {
+            content.setId(contentId);
+        }
 
         switch (type) {
             case "user":

@@ -75,10 +75,10 @@
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.narrator          | AudioMirrorRegistry.java                                 | src      |        8 |        4 |       16 |       16 |       44 |
 | kassandra.ai.narrator          | AudioPlayer.java                                         | src      |       13 |        7 |       17 |       58 |       95 |
-| kassandra.ai.narrator          | Narrator.java                                            | src      |       36 |       80 |       41 |      175 |      332 |
+| kassandra.ai.narrator          | Narrator.java                                            | src      |       37 |       84 |       41 |      178 |      340 |
 | kassandra.ai.narrator          | NarratorAttribute.java                                   | src      |       26 |       29 |       21 |      151 |      227 |
 | kassandra.ai.narrator          | Playback.java                                            | src      |       13 |       25 |       17 |       62 |      117 |
-| kassandra.ai.narrator          | TtsCacheManager.java                                     | src      |       25 |       83 |       20 |      134 |      262 |
+| kassandra.ai.narrator          | TtsCacheManager.java                                     | src      |       26 |       83 |       20 |      137 |      266 |
 | kassandra.ai.narrator          | TtsCacheManagerTest.java                                 | src      |       11 |        0 |       20 |       39 |       70 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.stablediffusion   | GenerateDefaultAvatarTest.java                           | src      |       20 |        7 |       27 |       67 |      121 |
@@ -329,7 +329,7 @@
 | kassandra.ui.component         | BacklogStoryCard.java                                    | src      |       42 |       17 |       30 |      212 |      301 |
 | kassandra.ui.component         | BacklogTaskCard.java                                     | src      |       37 |       18 |       25 |      183 |      263 |
 | kassandra.ui.component         | Breadcrumbs.java                                         | src      |       17 |        0 |       21 |       83 |      121 |
-| kassandra.ui.component         | ChatAgentPanel.java                                      | src      |       50 |       38 |       36 |      337 |      461 |
+| kassandra.ui.component         | ChatAgentPanel.java                                      | src      |       51 |       38 |       36 |      344 |      469 |
 | kassandra.ui.component         | ChatPanelSessionState.java                               | src      |        8 |       28 |       16 |       24 |       76 |
 | kassandra.ui.component         | CrossGridDragDropCoordinator.java                        | src      |       24 |       90 |       23 |      105 |      242 |
 | kassandra.ui.component         | FeatureCard.java                                         | src      |       64 |       15 |       49 |      307 |      435 |
@@ -362,11 +362,12 @@
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.introduction.util | InstructionVideosUtil.java                               | src      |        2 |        0 |       16 |        8 |       26 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.ui.introduction      | KassandraIntroductionVideo.java                          | src      |       26 |        0 |       27 |      178 |      231 |
+| kassandra.ui.introduction      | AbstractAiIntroductionVideo.java                         | src      |       10 |       45 |       16 |       51 |      122 |
+| kassandra.ui.introduction      | KassandraIntroductionVideo.java                          | src      |       29 |        0 |       36 |      221 |      286 |
 | kassandra.ui.introduction      | LoggingWorkIntroductionVideo.java                        | src      |       95 |        0 |       78 |      289 |      462 |
 | kassandra.ui.introduction      | ManagingUserGroupsIntroductionVideo.java                 | src      |       45 |       13 |       64 |      118 |      240 |
 | kassandra.ui.introduction      | ManagingUsersIntroductionVideo.java                      | src      |       40 |        0 |       67 |      113 |      220 |
-| kassandra.ui.introduction      | ProjectsVersionsFeaturesAndSprintsIntroductionVideo.java | src      |       27 |        0 |       47 |      232 |      306 |
+| kassandra.ui.introduction      | ProductsVersionsFeaturesAndSprintsIntroductionVideo.java | src      |       37 |        0 |       53 |      213 |      303 |
 | kassandra.ui.introduction      | RearrangeStoriesAndTasksIntroductionVideo.java           | src      |       50 |        0 |       36 |      221 |      307 |
 | kassandra.ui.introduction      | StoriesAndTasksIntroductionVideo.java                    | src      |       57 |        0 |       29 |      247 |      333 |
 | kassandra.ui.introduction      | StoryAndTaskRelationsIntroductionVideo.java              | src      |       42 |        0 |       38 |      195 |      275 |
@@ -411,7 +412,7 @@
 | kassandra.ui.view              | GridRowReordering.java                                   | src      |       18 |        0 |        3 |       62 |       83 |
 | kassandra.ui.view              | GroupingMode.java                                        | src      |        6 |       12 |       16 |       12 |       46 |
 | kassandra.ui.view              | InsightsView.java                                        | src      |       58 |        0 |       46 |      345 |      449 |
-| kassandra.ui.view              | Kassandra.java                                           | src      |       15 |        3 |       21 |       87 |      126 |
+| kassandra.ui.view              | Kassandra.java                                           | src      |       15 |        3 |       21 |       88 |      127 |
 | kassandra.ui.view              | LegacyBacklog.java                                       | src      |      107 |       46 |       97 |      627 |      877 |
 | kassandra.ui.view              | LocationListView.java                                    | src      |       35 |       19 |       68 |      234 |      356 |
 | kassandra.ui.view              | LocationListViewTest.java                                | src      |       13 |       74 |       25 |      100 |      212 |
@@ -516,5 +517,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 50 package(s)                  | 465 file(s)                                              | java     |    10410 |     7815 |    13150 |    54168 |    85543 |
+| 50 package(s)                  | 466 file(s)                                              | java     |    10436 |     7864 |    13181 |    54257 |    85738 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

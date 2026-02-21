@@ -54,8 +54,6 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
-
 @Tag("IntroductionVideo")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(
@@ -165,45 +163,6 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         productListViewTester.closeDialog(ProductDialog.CONFIRM_BUTTON);
         paul.narrate(INTENSE, "And we got ourself a new product! Notice the access column shows that one group has access to this product.").pause();
 
-        //---------------------------------------------------------------------------------------
-        logHeader("Product AI");
-        //---------------------------------------------------------------------------------------
-        paul.narrate(NORMAL, "Everything we can do via the user interface, we can also do with the help of the Kassandra AI.").pause();
-        seleniumHandler.click(ProductListView.PRODUCT_AI_PANEL_BUTTON);
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Add following new products Andromsda, Maestro and Hannibal and give the Team group access to all of them.");
-        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-        paul.narrate(NORMAL, "As you can see, kassandra does not have only read access. I however mistyped the name of the first product. Lets ask Kassandra to fix that.").pause();
-        waitForAi();
-        if (productApi.getByName("Andromeda").isPresent()) {
-            paul.narrate(NORMAL, "Kassandra fixed the type for me, I was going to ask it to fix it, but i no longer need to do so.").pause();
-        } else {
-            paul.narrateGap();
-            if (productApi.getByName("Andromsda").isEmpty()) {
-                approveAiPlan();//assuming the ai has a question
-            }
-            seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please fix the typo in the product.");
-            seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-            waitForAi();
-            if (productApi.getByName("Andromeda").isEmpty()) {
-                approveAiPlan();//assuming the ai has a question
-            }
-        }
-        if (seleniumHandler.isEnabled()) {
-            assertTrue(productApi.getByName("Andromeda").isPresent());//test
-            assertTrue(productApi.getByName("Maestro").isPresent());//test
-            assertTrue(productApi.getByName("Hannibal").isPresent());//test
-        }
-        paul.narrate(NORMAL, "Lets delete a product.").pause();
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please delete the last product you created.");
-        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-        waitForAi();
-        if (productApi.getByName("Hannibal").isPresent()) {
-            approveAiPlan();//assuming the ai has a question
-        }
-        if (seleniumHandler.isEnabled()) {
-            assertTrue(productApi.getByName("Hannibal").isEmpty());//test
-        }
-        //---------------------------------------------------------------------------------------
 
         paul.narrate(NORMAL, "With the little notepad and trashcan icons, on the right side, you can edit or delete your product.").pause();
         paul.narrate(NORMAL, "Lets select our product...");

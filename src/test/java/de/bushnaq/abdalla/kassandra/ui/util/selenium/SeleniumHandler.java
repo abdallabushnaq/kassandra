@@ -90,6 +90,7 @@ class SeleniumHandler {
         moveMouseToElement(element);
         element.click();
         log.trace("Clicked element with ID: " + id);
+        wait(100);
     }
 
     /**
