@@ -139,6 +139,10 @@ public class TtsCacheManager {
         return !h1.isEmpty() && h1.equals(h2);
     }
 
+    public void increment() {
+        nextId++;
+    }
+
     private void initNextId() {
         this.nextId = 1;
         logger.debug("Initialized nextId={} for directory {}", this.nextId, audioDir);

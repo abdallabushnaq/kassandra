@@ -73,7 +73,7 @@ import static org.junit.Assert.assertTrue;
 //@Transactional
 //@Testcontainers
 @Slf4j
-public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends AbstractKeycloakUiTestUtil {
+public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends AbstractKeycloakUiTestUtil {
     public static final NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final String                     VIDEO_TITLE = "Products, Versions, Features and Sprints";
@@ -137,7 +137,7 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         paul.narrateAsync(NORMAL, "Good morning, my name is Christopher Paul. I am the product manager of Kassandra and I will be demonstrating the latest alpha version of the Kassandra project server to you today.");
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 
-        seleniumHandler.setEnabled(false);
+        seleniumHandler.setEnabled(true);
         //---------------------------------------------------------------------------------------
         logHeader("Products Page");
         //---------------------------------------------------------------------------------------
@@ -177,6 +177,7 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         if (productApi.getByName("Andromeda").isPresent()) {
             paul.narrate(NORMAL, "Kassandra fixed the type for me, I was going to ask it to fix it, but i no longer need to do so.").pause();
         } else {
+            paul.narrateGap();
             if (productApi.getByName("Andromsda").isEmpty()) {
                 approveAiPlan();//assuming the ai has a question
             }
@@ -187,17 +188,21 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
                 approveAiPlan();//assuming the ai has a question
             }
         }
-        assertTrue(productApi.getByName("Andromeda").isPresent());//test
-        assertTrue(productApi.getByName("Maestro").isPresent());//test
-        assertTrue(productApi.getByName("Hannibal").isPresent());//test
-        paul.narrate(NORMAL, "Lets undo that.").pause();
+        if (seleniumHandler.isEnabled()) {
+            assertTrue(productApi.getByName("Andromeda").isPresent());//test
+            assertTrue(productApi.getByName("Maestro").isPresent());//test
+            assertTrue(productApi.getByName("Hannibal").isPresent());//test
+        }
+        paul.narrate(NORMAL, "Lets delete a product.").pause();
         seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please delete the last product you created.");
         seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
         waitForAi();
         if (productApi.getByName("Hannibal").isPresent()) {
             approveAiPlan();//assuming the ai has a question
         }
-        assertTrue(productApi.getByName("Hannibal").isEmpty());//test
+        if (seleniumHandler.isEnabled()) {
+            assertTrue(productApi.getByName("Hannibal").isEmpty());//test
+        }
         //---------------------------------------------------------------------------------------
 
         paul.narrate(NORMAL, "With the little notepad and trashcan icons, on the right side, you can edit or delete your product.").pause();
@@ -220,6 +225,17 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         paul.narrateAsync(NORMAL, "Select Save to close the dialog and persist our version.");
         seleniumHandler.click(VersionDialog.CONFIRM_BUTTON);
         paul.narrate(INTENSE, "And we got ourself a new version!").longPause();
+        //---------------------------------------------------------------------------------------
+        logHeader("Version AI");
+        //---------------------------------------------------------------------------------------
+
+        paul.narrateAsync(NORMAL, "Kassandra AI knows the context of where you are and therefore knows that we are currently looking at teh versiosn of Product " + productName + ".");
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Add version 2.0.0.");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        waitForAi();
+
+        //---------------------------------------------------------------------------------------
+
         paul.narrate(NORMAL, "The little notepad and trashcan icons, on the right side, can be used to edit or delete your version.").pause();
         paul.narrate(NORMAL, "Lets select our version.");
         versionListViewTester.selectVersion(versionName);
@@ -241,6 +257,17 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         paul.narrateAsync(NORMAL, "Select Save to close the dialog and persist our feature.");
         seleniumHandler.click(FeatureDialog.CONFIRM_BUTTON);
         paul.narrate(INTENSE, "Jupiter has its first feature!").longPause();
+
+        //---------------------------------------------------------------------------------------
+        logHeader("Feature AI");
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "please rename 'Config server' to 'core-config-server'.");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        waitForAi();
+
+        //---------------------------------------------------------------------------------------
+
         paul.narrate(NORMAL, "Again, as in the other pages, the little notepad and trashcan icons, on the right side, can be used to edit or delete your feature.").pause();
         paul.narrate(NORMAL, "Lets select our feature...");
         featureListViewTester.selectFeature(featureName);
@@ -257,6 +284,17 @@ public class ProjectsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         paul.narrateAsync(NORMAL, "Select Save to close the dialog and persist our sprint.");
         seleniumHandler.click(SprintDialog.CONFIRM_BUTTON);
         paul.narrate(INTENSE, "That was easy!").longPause();
+
+        //---------------------------------------------------------------------------------------
+        logHeader("Sprint AI");
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "add sprint 'Muenchen'.");
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        waitForAi();
+
+        //---------------------------------------------------------------------------------------
+
         paul.narrate(NORMAL, "Now we need to start planning our sprint. We do this in the Tasks page. Not by selecting the sprint, but configuring it with the small crog icon on the right side.");
         seleniumHandler.click(SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprintName);
 

@@ -224,6 +224,14 @@ public class Narrator {
     }
 
     /**
+     * Create a narration gap for narration that might happen in a different block
+     * reserves index slot in narration.
+     */
+    public void narrateGap() {
+        cacheManager.increment();
+    }
+
+    /**
      * Core flow:
      * <ol>
      *   <li>Build canonical name containing sanitized text + hash.</li>
