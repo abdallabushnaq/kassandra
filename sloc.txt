@@ -59,7 +59,7 @@
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.mcp               | AbstractMcpTest.java                                     | src      |       10 |        0 |       21 |       55 |       86 |
 | kassandra.ai.mcp               | AgentThinking.java                                       | src      |        4 |        0 |       16 |        9 |       29 |
-| kassandra.ai.mcp               | AiAssistantService.java                                  | src      |       29 |       31 |       45 |      177 |      282 |
+| kassandra.ai.mcp               | AiAssistantService.java                                  | src      |       30 |       31 |       50 |      182 |      293 |
 | kassandra.ai.mcp               | AiAssistantServiceBasicTest.java                         | src      |       22 |        5 |       26 |       75 |      128 |
 | kassandra.ai.mcp               | AiAssistantServiceFeatureTest.java                       | src      |       19 |        5 |       24 |      102 |      150 |
 | kassandra.ai.mcp               | AiAssistantServiceMixedTest.java                         | src      |       14 |        5 |       64 |       63 |      146 |
@@ -329,7 +329,7 @@
 | kassandra.ui.component         | BacklogStoryCard.java                                    | src      |       42 |       17 |       30 |      212 |      301 |
 | kassandra.ui.component         | BacklogTaskCard.java                                     | src      |       37 |       18 |       25 |      183 |      263 |
 | kassandra.ui.component         | Breadcrumbs.java                                         | src      |       17 |        0 |       21 |       83 |      121 |
-| kassandra.ui.component         | ChatAgentPanel.java                                      | src      |       51 |       38 |       36 |      344 |      469 |
+| kassandra.ui.component         | ChatAgentPanel.java                                      | src      |       51 |       38 |       36 |      346 |      471 |
 | kassandra.ui.component         | ChatPanelSessionState.java                               | src      |        8 |       28 |       16 |       24 |       76 |
 | kassandra.ui.component         | CrossGridDragDropCoordinator.java                        | src      |       24 |       90 |       23 |      105 |      242 |
 | kassandra.ui.component         | FeatureCard.java                                         | src      |       64 |       15 |       49 |      307 |      435 |
@@ -362,8 +362,8 @@
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.introduction.util | InstructionVideosUtil.java                               | src      |        2 |        0 |       16 |        8 |       26 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.ui.introduction      | AbstractAiIntroductionVideo.java                         | src      |       10 |       45 |       16 |       51 |      122 |
-| kassandra.ui.introduction      | KassandraIntroductionVideo.java                          | src      |       29 |        0 |       36 |      221 |      286 |
+| kassandra.ui.introduction      | AbstractAiIntroductionVideo.java                         | src      |       13 |       45 |       16 |       64 |      138 |
+| kassandra.ui.introduction      | KassandraAgentIntroductionVideo.java                     | src      |       23 |        0 |       93 |      165 |      281 |
 | kassandra.ui.introduction      | LoggingWorkIntroductionVideo.java                        | src      |       95 |        0 |       78 |      289 |      462 |
 | kassandra.ui.introduction      | ManagingUserGroupsIntroductionVideo.java                 | src      |       45 |       13 |       64 |      118 |      240 |
 | kassandra.ui.introduction      | ManagingUsersIntroductionVideo.java                      | src      |       40 |        0 |       67 |      113 |      220 |
@@ -517,5 +517,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 50 package(s)                  | 466 file(s)                                              | java     |    10436 |     7864 |    13181 |    54257 |    85738 |
+| 50 package(s)                  | 466 file(s)                                              | java     |    10434 |     7864 |    13243 |    54221 |    85762 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

@@ -62,7 +62,7 @@ public class AbstractMcpTest extends AbstractUiTestUtil {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String         username       = authentication.getName();
             log.info("{}{}: {}{}{}", ANSI_YELLOW, username, ANSI_BLUE, query, ANSI_RESET);
-            QueryResult result    = aiAssistantService.processQueryWithThinking(query, TEST_CONVERSATION_ID);
+            QueryResult result    = aiAssistantService.processQueryWithThinking(username, query, TEST_CONVERSATION_ID);
             String      modelName = aiAssistantService.getModelName();
             String      response  = result.content();
 //            if (result.hasThinking()) {

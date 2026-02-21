@@ -37,6 +37,7 @@ import de.bushnaq.abdalla.kassandra.ai.mcp.SessionToolActivityContext;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -115,7 +116,9 @@ public class ChatAgentPanel extends VerticalLayout {
                 .set("display", "flex")
                 .set("flex-direction", "column")
                 .set("padding", "4px")
-                .set("flex", "1 1 auto");
+                .set("flex", "1 1 auto")
+                .set("font-size", "var(--lumo-font-size-xxs)")
+                .set("font-family", "monospace");
 
         // Response area - takes all available space
         responseArea = new Div();
@@ -137,8 +140,8 @@ public class ChatAgentPanel extends VerticalLayout {
         queryInput.setSizeFull();
         queryInput.setMinHeight("40px");
         queryInput.getStyle()
-                .set("font-size", "var(--lumo-font-size-s)")
-                .set("--vaadin-input-field-font-size", "var(--lumo-font-size-s)");
+                .set("font-size", "var(--lumo-font-size-xxs)")
+                .set("--vaadin-input-field-font-size", "var(--lumo-font-size-xxs)");
 
         // Handle Enter key to submit
         queryInput.setValueChangeMode(com.vaadin.flow.data.value.ValueChangeMode.EAGER);
@@ -222,12 +225,18 @@ public class ChatAgentPanel extends VerticalLayout {
         scrollToBottom();
     }
 
+    private void addSystemMessage(String message) {
+        Div messageDiv = createMessageDiv(message, "system");
+        conversationHistory.add(messageDiv);
+        scrollToBottom();
+    }
+
     // -----------------------------------------------------------------------
     // Private helpers
     // -----------------------------------------------------------------------
 
-    private void addSystemMessage(String message) {
-        Div messageDiv = createMessageDiv(message, "system");
+    private void addToolMessage(String message) {
+        Div messageDiv = createMessageDiv(message, "tool");
         conversationHistory.add(messageDiv);
         scrollToBottom();
     }
@@ -263,17 +272,15 @@ public class ChatAgentPanel extends VerticalLayout {
     private Div createMessageDiv(String message, String type, String contentId) {
         Div messageDiv = new Div();
         messageDiv.addClassNames(
-                LumoUtility.BorderRadius.SMALL,
-                LumoUtility.FontSize.XSMALL
+                LumoUtility.BorderRadius.SMALL
         );
         messageDiv.getStyle()
-                .set("padding", "4px 6px")
+                .set("padding", "user".equals(type) ? "4px 6px" : "1px 4px")
                 .set("margin-bottom", "2px");
 
         Span icon    = new Span();
         Span content = new Span(message);
         content.getStyle().set("white-space", "pre-wrap");
-        content.getStyle().set("font-family", "monospace");
         if (contentId != null) {
             content.setId(contentId);
         }
@@ -305,6 +312,17 @@ public class ChatAgentPanel extends VerticalLayout {
                 messageDiv.addClassNames(LumoUtility.Background.CONTRAST_5);
                 icon.setText("ℹ️ ");
                 break;
+            case "tool":
+                messageDiv.addClassNames(LumoUtility.Background.CONTRAST_10);
+                Span toolIconWrapper = new Span("🔧 ");
+                toolIconWrapper.getStyle()
+                        .set("color", "var(--lumo-warning-color)");
+//                        .set("background", "var(--lumo-contrast-20pct)")
+//                        .set("border-radius", "2px")
+//                        .set("padding", "0 2px")
+//                        .set("margin-right", "2px");
+                messageDiv.add(toolIconWrapper, content);
+                return messageDiv;
             case "error":
                 messageDiv.addClassNames(LumoUtility.Background.ERROR_10);
                 icon.setText("⚠️ ");
@@ -330,14 +348,15 @@ public class ChatAgentPanel extends VerticalLayout {
 
         getUI().ifPresent(ui -> ui.access(() -> submitButton.setEnabled(false)));
 
-        addSystemMessage("🤔 Thinking...");
+//        addSystemMessage("🤔 Thinking...");
 
         // Build the effective query – prepend view context so the AI knows the current selection
         final String effectiveQuery = (viewContext != null && !viewContext.isEmpty())
                 ? "[Context: " + viewContext + "]\n" + query
                 : query;
 
-        String capturedToken = mcpAuthProvider.captureCurrentUserToken();
+        String       capturedToken = mcpAuthProvider.captureCurrentUserToken();
+        final String username      = SecurityUtils.getUserEmail();
         getUI().ifPresent(ui -> {
             new Thread(() -> {
                 final SessionToolActivityContext[] activityContextRef = new SessionToolActivityContext[1];
@@ -351,12 +370,12 @@ public class ChatAgentPanel extends VerticalLayout {
                         activityContextRef[0].setActivityListener(msg -> {
                             if (!activityStreaming) return;
                             ui.access(() -> {
-                                addSystemMessage("[AI activity] " + msg);
+                                addToolMessage(msg);
                                 ui.push();
                             });
                         });
                     }
-                    QueryResult response = aiAssistantService.processQueryWithThinking(effectiveQuery, conversationId);
+                    QueryResult response = aiAssistantService.processQueryWithThinking(username, effectiveQuery, conversationId);
                     log.info("AI response received: {} characters", response != null ? response.content().length() : 0);
 
                     ui.access(() -> {
@@ -365,7 +384,7 @@ public class ChatAgentPanel extends VerticalLayout {
                             removeLastMessage();
                             addAiMessage(response.content());
                         } catch (Exception e) {
-                            log.error("Error updating UI with response", e);
+                            log.error("Error displaying response: {}", e.getMessage(), e);
                             addErrorMessage("Error displaying response: " + e.getMessage());
                         } finally {
                             activityStreaming = false;
@@ -379,6 +398,7 @@ public class ChatAgentPanel extends VerticalLayout {
                     ui.access(() -> {
                         try {
                             removeLastMessage();
+                            log.error("Error processing AI query: {}", e.getMessage(), e);
                             addErrorMessage("Error: " + e.getMessage());
                         } catch (Exception ex) {
                             log.error("Error updating UI with error message", ex);

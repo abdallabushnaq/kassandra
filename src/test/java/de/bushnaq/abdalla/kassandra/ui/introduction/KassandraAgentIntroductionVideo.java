@@ -141,13 +141,12 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
         seleniumHandler.click(ProductListView.PRODUCT_AI_PANEL_BUTTON);
         paul.narrateAsync(NORMAL, "Lets take a look what we can do.").pause();
 
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Hi, do you know where you are and what can you help me with?");
-        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-        waitForAi();
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Hi, give me a brief idea what you can do.");
+        submitQueryAndWaitForAiAndGetResponse();
 
         paul.narrateAsync(NORMAL, "Everything we can do via the user interface, we can also do with the help of the Kassandra AI.").pause();
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Add following new products Andromsda, Maestro and Hannibal and give the Team group access to all of them.");
-        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+
+        processQuery("Add following new products Andromsda, Maestro and Hannibal and give the Team group access to all of them.");
         paul.narrate(NORMAL, "As you can see, kassandra does not have only read access.").pause();
         waitForAi();
 
@@ -172,9 +171,7 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
                 //nothing was done
                 approveAiPlan();//assuming the ai has a question
             }
-            seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please fix the typo in the product.");
-            seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-            waitForAi();
+            processQueryAndWaitForAnswer("Please fix the typo in the product.");
             if (productApi.getByName("Andromeda").isEmpty()) {
                 //nothing was done
                 approveAiPlan();//assuming the ai has a question
@@ -185,9 +182,7 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
         }
 
         paul.narrate(NORMAL, "Lets delete a product.").pause();
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "Please delete the last product you created.");
-        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-        waitForAi();
+        processQueryAndWaitForAnswer("Please delete the last product you created.");
         if (productApi.getByName("Hannibal").isPresent()) {
             //nothing was done
             approveAiPlan();//assuming the ai has a question
@@ -197,8 +192,7 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
         }
 
         paul.narrate(NORMAL, "Lets ask for something a little bit more complex involving reformatting.").pause();
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "List all products with their versions and features in a table so that every row has only one feature.");
-        String        response    = submitQuestionAndWaitForAiAndGetResponse();
+        String        response    = processQueryAndWaitForAnswer("List all products with their versions and features in a table so that every row has only one feature.");
         List<Product> allProducts = productApi.getAll();
         log.info("Total products in system: {}", allProducts.size());
         List<Version> allVersions = versionApi.getAll();

@@ -32,7 +32,7 @@ import java.util.Locale;
  * Provides helpers to:
  * <ul>
  *   <li>Wait for the AI to finish responding ({@link #waitForAi()})</li>
- *   <li>Wait and return the AI's reply text ({@link #submitQuestionAndWaitForAiAndGetResponse()})</li>
+ *   <li>Wait and return the AI's reply text ({@link #submitQueryAndWaitForAiAndGetResponse()})</li>
  *   <li>Read the text of the last AI response bubble ({@link #getLastAiResponse()})</li>
  *   <li>Detect whether the agent is asking for explicit confirmation ({@link #isAgentAskingForConfirmation()})</li>
  * </ul>
@@ -69,7 +69,8 @@ public abstract class AbstractAiIntroductionVideo extends AbstractKeycloakUiTest
      */
     protected String getLastAiResponse() {
         Object result = seleniumHandler.executeJavaScript(
-                "var el = document.getElementById('" + Kassandra.AI_LAST_RESPONSE + "');" +
+                "var els = document.querySelectorAll('#" + Kassandra.AI_LAST_RESPONSE + "');" +
+                        "var el = els.length > 0 ? els[els.length - 1] : null;" +
                         "return el ? el.innerText : '';");
         return result != null ? result.toString() : "";
     }
@@ -99,14 +100,29 @@ public abstract class AbstractAiIntroductionVideo extends AbstractKeycloakUiTest
         return false;
     }
 
+    protected void processQuery(String query) {
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, query);
+        submitQuery();
+    }
+
+    protected String processQueryAndWaitForAnswer(String query) {
+        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, query);
+        return submitQueryAndWaitForAiAndGetResponse();
+    }
+
+    protected void submitQuery() {
+        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+        seleniumHandler.waitForElementToBeDisabled(Kassandra.AI_SUBMIT_BUTTON);
+    }
+
     /**
      * Waits for the AI to finish responding and returns the reply text.
      * Equivalent to calling {@link #waitForAi()} followed by {@link #getLastAiResponse()}.
      *
      * @return the AI response text, or an empty string if the element is not found
      */
-    protected String submitQuestionAndWaitForAiAndGetResponse() {
-        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+    protected String submitQueryAndWaitForAiAndGetResponse() {
+        submitQuery();
         waitForAi();
         return getLastAiResponse();
     }

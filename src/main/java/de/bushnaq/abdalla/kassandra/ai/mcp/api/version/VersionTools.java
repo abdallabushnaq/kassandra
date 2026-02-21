@@ -65,7 +65,7 @@ public class VersionTools {
     @Qualifier("aiVersionApi")
     private VersionApi versionApi;
 
-    @Tool(description = "Create a new version for a product (requires USER or ADMIN role). " +
+    @Tool(description = "Create a new version for a product. " +
             "IMPORTANT: The returned JSON includes an 'versionId' field - you MUST extract and use this ID for subsequent operations (like deleting this version). " +
             RETURNS_VERSION_JSON)
     public String createVersion(

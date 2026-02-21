@@ -25,6 +25,7 @@ import de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint.SprintTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.user.UserTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.usergroup.UserGroupTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.version.VersionTools;
+import de.bushnaq.abdalla.profiler.TimeKeeping;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -185,78 +186,75 @@ public class AiAssistantService {
      * @param conversationId Unique identifier for this conversation session
      * @return QueryResult containing both the thinking process and final content
      */
-    public QueryResult processQueryWithThinking(String userQuery, String conversationId) {
-        thinkingSteps.clear();
+    public QueryResult processQueryWithThinking(String username, String userQuery, String conversationId) {
+        try (TimeKeeping t = new TimeKeeping()) {
+            log.info("{}{}: {}{}{}", ANSI_YELLOW, username, ANSI_BLUE, userQuery, ANSI_RESET);
+            thinkingSteps.clear();
 //        log.info("=== Starting AI query processing (with thinking) ===");
 
-        // Log model information
-        try {
-            String modelName = chatModel.getDefaultOptions().getModel();
+            // Log model information
+            try {
+                String modelName = chatModel.getDefaultOptions().getModel();
 //            log.info("Using LLM Model: {}", modelName != null ? modelName : "default");
-        } catch (Exception e) {
-            log.debug("Could not determine model name: {}", e.getMessage());
-        }
+            } catch (Exception e) {
+                log.debug("Could not determine model name: {}", e.getMessage());
+            }
 
 //        log.info("User query: {}", userQuery);
 //        log.info("Conversation ID: {}", conversationId);
 
-        // Get or create the ChatMemory for this conversation
-        ChatMemory chatMemory = getOrCreateMemory(conversationId);
+            // Get or create the ChatMemory for this conversation
+            ChatMemory chatMemory = getOrCreateMemory(conversationId);
 
-        // Create MessageChatMemoryAdvisor with conversation ID
-        MessageChatMemoryAdvisor memoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory)
-                .conversationId(conversationId)
-                .build();
+            // Create MessageChatMemoryAdvisor with conversation ID
+            MessageChatMemoryAdvisor memoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory)
+                    .conversationId(conversationId)
+                    .build();
 
-        Object[]                                           userTools                     = {this.userTools, userGroupTools, productTools, productAclTools, versionTools, featureTools, sprintTools};
-        List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = createToolCallbackProviders(userTools);
+            Object[]                                           userTools                     = {this.userTools, userGroupTools, productTools, productAclTools, versionTools, featureTools, sprintTools};
+            List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = createToolCallbackProviders(userTools);
 
-        // Create ChatClient with:
-        // - System prompt defining the assistant's role
-        // - Memory advisor for conversation history
-        // - Tool beans with @Tool annotated methods
-        ChatClient chatClient = ChatClient.builder(chatModel)
-                .defaultSystem(augmentSystemPrompt(SYSTEM_PROMPT))
-                .defaultAdvisors(memoryAdvisor)
-                .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4), augmentedToolCallbackProvider.get(5), augmentedToolCallbackProvider.get(6))
-                .build();
+            // Create ChatClient with:
+            // - System prompt defining the assistant's role
+            // - Memory advisor for conversation history
+            // - Tool beans with @Tool annotated methods
+            ChatClient chatClient = ChatClient.builder(chatModel)
+                    .defaultSystem(augmentSystemPrompt(SYSTEM_PROMPT))
+                    .defaultAdvisors(memoryAdvisor)
+                    .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4), augmentedToolCallbackProvider.get(5), augmentedToolCallbackProvider.get(6))
+                    .build();
 
-//        OpenAiChatOptions openAiOptions = OpenAiChatOptions.builder()
-//                .seed(42)                   // OpenAI-specific deterministic generation
-//                .build();
-        try {
-//            log.info("Calling LLM via ChatClient with native Spring AI tool support...");
-            ChatResponse chatResponse = chatClient.prompt(userQuery)
-//                    .options(openAiOptions)
-                    .call()
-                    .chatResponse();  // Get full ChatResponse instead of just text
+            try {
+                ChatResponse chatResponse = chatClient.prompt(userQuery)
+                        .call()
+                        .chatResponse();  // Get full ChatResponse instead of just text
 
-            // Add defensive null checks for LMStudio compatibility
-            if (chatResponse == null) {
-                log.error("ChatResponse is null - LMStudio returned no response");
-                throw new RuntimeException("LLM returned null response");
-            }
+                // Add defensive null checks for LMStudio compatibility
+                if (chatResponse == null) {
+                    log.error("ChatResponse is null - LMStudio returned no response");
+                    throw new RuntimeException("LLM returned null response");
+                }
 
 //            log.debug("ChatResponse metadata: {}", chatResponse.getMetadata());
 
 //            log.debug("ChatResponse results count: {}", chatResponse.getResults() != null ? chatResponse.getResults().size() : "null");
 
-            if (chatResponse.getResult() == null) {
-                log.error("ChatResponse.getResult() is null - LMStudio response may be malformed");
-                log.error("Full ChatResponse: {}", chatResponse);
-                throw new RuntimeException("LLM response has no result. Check if LMStudio model is loaded and responding correctly.");
-            }
+                if (chatResponse.getResult() == null) {
+                    log.error("ChatResponse.getResult() is null - LMStudio response may be malformed");
+                    log.error("Full ChatResponse: {}", chatResponse);
+                    throw new RuntimeException("LLM response has no result. Check if LMStudio model is loaded and responding correctly.");
+                }
 
-            if (chatResponse.getResult().getOutput() == null) {
-                log.error("ChatResponse.getResult().getOutput() is null");
-                throw new RuntimeException("LLM response result has no output");
-            }
-            Generation                      result    = chatResponse.getResult();
-            AssistantMessage                output    = chatResponse.getResult().getOutput();
-            List<AssistantMessage.ToolCall> toolCalls = chatResponse.getResult().getOutput().getToolCalls();
-            String                          text      = chatResponse.getResult().getOutput().getText();
+                if (chatResponse.getResult().getOutput() == null) {
+                    log.error("ChatResponse.getResult().getOutput() is null");
+                    throw new RuntimeException("LLM response result has no output");
+                }
+                Generation                      result    = chatResponse.getResult();
+                AssistantMessage                output    = chatResponse.getResult().getOutput();
+                List<AssistantMessage.ToolCall> toolCalls = chatResponse.getResult().getOutput().getToolCalls();
+                String                          text      = chatResponse.getResult().getOutput().getText();
 //            String                          thinking  = extractThinkingProcess(chatResponse);
-            String thinking = null;
+                String thinking = null;
 
 //            log.info("=== AI query processing complete ===");
 //            log.info("Final response length: {} characters", text != null ? text.length() : 0);
@@ -264,9 +262,19 @@ public class AiAssistantService {
 //                log.info("Thinking process length: {} characters", thinking.length());
 //            }
 
-            return new QueryResult(text, thinkingSteps);
-        } finally {
-            ToolActivityContextHolder.clear();
+                QueryResult queryResult = new QueryResult(text, thinkingSteps);
+                String      modelName   = getModelName();
+                String      response    = text;
+//            if (result.hasThinking()) {
+//                for (ThinkingStep step : result.thinkingSteps()) {
+//                    log.info("{}Tool{}{}: {}{}{}", ANSI_GRAY, step.toolName(), ANSI_RESET, ANSI_DARK_GRAY, step.agentThinking().innerThought(), ANSI_RESET);
+//                }
+//            }
+                log.info("({}{}ms){}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_GREEN, response, ANSI_RESET);
+                return queryResult;
+            } finally {
+                ToolActivityContextHolder.clear();
+            }
         }
     }
 
