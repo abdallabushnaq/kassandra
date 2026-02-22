@@ -62,9 +62,10 @@ import java.util.Map;
 //@Menu(order = 1, icon = "vaadin:factory", title = "project List")
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
-public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
+public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver, BeforeLeaveObserver {
     public static final  String                 CREATE_SPRINT_BUTTON             = "create-sprint-button";
     private static final String                 PARAM_AI_PANEL                   = "aiPanel";
+    private static final String                 ROUTE_KEY_PREFIX                 = "sprint-list:";
     public static final  String                 SPRINT_AI_PANEL_BUTTON           = "sprint-ai-panel-button";
     public static final  String                 SPRINT_GLOBAL_FILTER             = "sprint-global-filter";
     public static final  String                 SPRINT_GRID                      = "sprint-grid";
@@ -151,6 +152,13 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             this.featureId = Long.parseLong(queryParameters.getParameters().get("feature").getFirst());
         }
 
+        // Clear conversation when arriving from a different page or different feature (covers F5 after route change)
+        String routeKey = ROUTE_KEY_PREFIX + productId + ":" + versionId + ":" + featureId;
+        if (!routeKey.equals(sessionState.getLastViewRoute())) {
+            chatAgentPanel.clearConversation();
+        }
+        sessionState.setLastViewRoute(routeKey);
+
         //- update breadcrumbs
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
@@ -213,6 +221,11 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             bodySplit.setSplitterPosition(100);
             aiToggleButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
         }
+    }
+
+    @Override
+    public void beforeLeave(BeforeLeaveEvent event) {
+        chatAgentPanel.clearConversation();
     }
 
     private void confirmDelete(Sprint sprint) {

@@ -65,28 +65,29 @@ import java.util.Map;
 @Menu(order = 1, icon = "vaadin:factory", title = "Products")
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
-public class ProductListView extends AbstractMainGrid<Product> implements AfterNavigationObserver {
-    public static final String                 CREATE_PRODUCT_BUTTON             = "create-product-button";
-    public static final String                 PRODUCT_AI_PANEL_BUTTON           = "product-ai-panel-button";
-    public static final String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
-    public static final String                 PRODUCT_GRID                      = "product-grid";
-    public static final String                 PRODUCT_GRID_ACCESS_PREFIX        = "product-grid-access-";
-    public static final String                 PRODUCT_GRID_DELETE_BUTTON_PREFIX = "product-grid-delete-button-prefix-";
-    public static final String                 PRODUCT_GRID_EDIT_BUTTON_PREFIX   = "product-grid-edit-button-prefix-";
-    public static final String                 PRODUCT_GRID_NAME_PREFIX          = "product-grid-name-";
-    public static final String                 PRODUCT_LIST_PAGE_TITLE           = "product-list-page-title";
-    public static final String                 PRODUCT_ROW_COUNTER               = "product-row-counter";
-    public static final String                 ROUTE                             = "product-list";
-    private final       Button                 aiToggleButton;
-    private final       SplitLayout            bodySplit;
-    private final       ChatAgentPanel         chatAgentPanel;
-    private final       Div                    chatPane;
-    private final       ProductAclApi          productAclApi;
-    private final       ProductApi             productApi;
-    private final       ChatPanelSessionState  sessionState;
-    private final       StableDiffusionService stableDiffusionService;
-    private final       UserApi                userApi;
-    private final       UserGroupApi           userGroupApi;
+public class ProductListView extends AbstractMainGrid<Product> implements AfterNavigationObserver, BeforeLeaveObserver {
+    public static final  String                 CREATE_PRODUCT_BUTTON             = "create-product-button";
+    public static final  String                 PRODUCT_AI_PANEL_BUTTON           = "product-ai-panel-button";
+    public static final  String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
+    public static final  String                 PRODUCT_GRID                      = "product-grid";
+    public static final  String                 PRODUCT_GRID_ACCESS_PREFIX        = "product-grid-access-";
+    public static final  String                 PRODUCT_GRID_DELETE_BUTTON_PREFIX = "product-grid-delete-button-prefix-";
+    public static final  String                 PRODUCT_GRID_EDIT_BUTTON_PREFIX   = "product-grid-edit-button-prefix-";
+    public static final  String                 PRODUCT_GRID_NAME_PREFIX          = "product-grid-name-";
+    public static final  String                 PRODUCT_LIST_PAGE_TITLE           = "product-list-page-title";
+    public static final  String                 PRODUCT_ROW_COUNTER               = "product-row-counter";
+    public static final  String                 ROUTE                             = "product-list";
+    private static final String                 ROUTE_KEY                         = "product-list";
+    private final        Button                 aiToggleButton;
+    private final        SplitLayout            bodySplit;
+    private final        ChatAgentPanel         chatAgentPanel;
+    private final        Div                    chatPane;
+    private final        ProductAclApi          productAclApi;
+    private final        ProductApi             productApi;
+    private final        ChatPanelSessionState  sessionState;
+    private final        StableDiffusionService stableDiffusionService;
+    private final        UserApi                userApi;
+    private final        UserGroupApi           userGroupApi;
 
     public ProductListView(ProductApi productApi, ProductAclApi productAclApi, UserApi userApi, UserGroupApi userGroupApi,
                            Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService,
@@ -150,6 +151,12 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
+        // Clear conversation when arriving from a different page (covers F5 after route change)
+        if (!ROUTE_KEY.equals(sessionState.getLastViewRoute())) {
+            chatAgentPanel.clearConversation();
+        }
+        sessionState.setLastViewRoute(ROUTE_KEY);
+
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
@@ -196,6 +203,11 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
             bodySplit.setSplitterPosition(100);
             aiToggleButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
         }
+    }
+
+    @Override
+    public void beforeLeave(BeforeLeaveEvent event) {
+        chatAgentPanel.clearConversation();
     }
 
     private void confirmDelete(Product product) {

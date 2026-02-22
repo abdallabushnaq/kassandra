@@ -236,6 +236,7 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         Product firstProduct = productApi.getAll().get(1);
 
         {
+            log.info("Product ID: {}, Product Name: {}", firstProduct.getId(), firstProduct.getName());
             processQuery("Add a new version with the name 1.0.0-alpa to product " + firstProduct.getName() + ".");
             Optional<Version> misspelledVersion = versionApi.getByName(firstProduct.getId(), "1.0.0-alpa");
             if (misspelledVersion.isEmpty()) {
@@ -250,9 +251,6 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
                     log.info("Updated version ID is: {}.", updatedVersion.get().getId());
                 }
             } else {
-                Optional<Version> version = versionApi.getByName(firstProduct.getId(), "1.0.0-alpha");
-                assertTrue(version.isPresent(), "Version should be created");
-                log.info("Version 1.0.0-alpa ID is: {}.", version.get().getId());
                 {
                     processQuery("Please fix the typo in the version you created to 1.0.0-alpha.");
                     List<Version>     versions        = versionApi.getAll(firstProduct.getId());

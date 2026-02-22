@@ -256,7 +256,8 @@ public class ChatAgentPanel extends VerticalLayout {
         addSystemMessage(welcomeMessage);
     }
 
-    private void clearConversation() {
+    public void clearConversation() {
+        activityStreaming = false;
         conversationHistory.removeAll();
         aiAssistantService.clearConversation(conversationId);
         conversationId = java.util.UUID.randomUUID().toString();
@@ -266,6 +267,7 @@ public class ChatAgentPanel extends VerticalLayout {
         } else if (sessionMessages != null) {
             sessionMessages.clear();
         }
+        addWelcomeMessage();
     }
 
     private Div createMessageDiv(String message, String type) {

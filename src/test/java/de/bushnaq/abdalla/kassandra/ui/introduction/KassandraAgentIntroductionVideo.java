@@ -179,7 +179,7 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
                 //nothing was done
                 approveAiPlan();//assuming the ai has a question
             }
-            processQueryAndWaitForAnswer("Please fix the typo in the product.");
+            processQueryAndWaitForAnswer("Please fix the typo in the product Andromsda.");
             if (productApi.getByName("Andromeda").isEmpty()) {
                 //nothing was done
                 approveAiPlan();//assuming the ai has a question

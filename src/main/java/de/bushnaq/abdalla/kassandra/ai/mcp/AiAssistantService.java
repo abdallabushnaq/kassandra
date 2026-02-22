@@ -65,17 +65,19 @@ public class AiAssistantService {
      */
     public static final  int                                     MAX_MESSAGES         = 20;
     private static final String                                  SYSTEM_PROMPT        = """
-            You are Kassandra an AI assistant that helps manage a project management system.
-            Keep your answers short and to the point. Use tools to get information instead of making assumptions.
-            Careful when you are using an ID in a tool, make sure it is the correct one, you will not be able to guess an ID.
-            The ID is the unique identifier of an entity in the system, for example a product, version, feature or sprint. You can only get an ID by using a tool that returns it, you cannot make up an ID or guess it.
-            Your answer should be complete. Do not show templates or create answers using fake values.
-            Do not invent any parameters, optional parameters can be ignored, if you do not know the value.
-            Take a deep breath and think step-by-step.
-            Read the question carefully and try to find a solution for it.
-            When asked to delete, update, or create items, you MUST call the appropriate tool. Never fabricate a confirmation message. Never claim you performed an action without calling a tool first.
-            The system is made of a hierarchical structure of a list of Product(s), each product has a list of Version(s), each Version has a list of Feature(s) and each Feature has a list of Sprint(s).
-            This hierarchy is linked together using foreign keys. For example, a Version has a productId to its parent Product, a Feature has a versionId to its parent Version and a Sprint has a featureId to its parent Feature.
+            - You are Kassandra an AI assistant that helps manage a project management system.
+            - Keep your answers short and to the point. Use tools to get information instead of making assumptions.
+            - Careful when you are using an ID in a tool, make sure it is the correct one, you will not be able to guess an ID.
+            - The ID is the unique identifier of an entity in the system, for example a product, version, feature or sprint. You can only get an ID by using a tool that returns it, you cannot make up an ID or guess it.
+            - updating or deleting operations need an ID. You can get elements by name to obtain their ID. 
+            - Your answer should be complete. Do not show templates or create answers using fake values.
+            - Do not invent any parameters, optional parameters can be ignored, if you do not know the value.
+            - Take a deep breath and think step-by-step.
+            - Read the question carefully and try to find a solution for it.
+            - When asked to delete, update, or create items, you MUST call the appropriate tool. Never fabricate a confirmation message. Never claim you performed an action without calling a tool first.
+            - Explain your thought process within <think></think> tags to indicate your thinking process.
+            - The system is made of a hierarchical structure of a list of Product(s), each product has a list of Version(s), each Version has a list of Feature(s) and each Feature has a list of Sprint(s).
+            - This hierarchy is linked together using foreign keys. For example, a Version has a productId to its parent Product, a Feature has a versionId to its parent Version and a Sprint has a featureId to its parent Feature.
             """;
     // Store ToolActivityContext per conversation/session for UI streaming
     private final        Map<String, SessionToolActivityContext> activityContexts     = new ConcurrentHashMap<>();
@@ -128,6 +130,48 @@ public class AiAssistantService {
             augmentedToolCallbackProvider.add(toolProvider);
         }
         return augmentedToolCallbackProvider;
+    }
+
+    /**
+     * Extract thinking/reasoning process from ChatResponse.
+     * For reasoning models like DeepSeek-R1, this extracts the thinking tokens.
+     */
+    private String extractThinkingProcess(ChatResponse chatResponse) {
+        try {
+            // Null-safe checks for LMStudio compatibility
+            if (chatResponse == null) {
+                return null;
+            }
+
+            // Try to get thinking from metadata
+            if (chatResponse.getMetadata() != null) {
+                Object thinking = chatResponse.getMetadata().get("thinking");
+                if (thinking != null) {
+                    return thinking.toString();
+                }
+            }
+
+            // Some models include thinking in the raw content between special tags
+            if (chatResponse.getResult() != null &&
+                    chatResponse.getResult().getOutput() != null) {
+                String rawContent = chatResponse.getResult().getOutput().getText();
+                if (rawContent != null) {
+                    // Check for <think> tags (DeepSeek-R1 format)
+                    if (rawContent.contains("<think>") && rawContent.contains("</think>")) {
+                        int startIdx = rawContent.indexOf("<think>");
+                        int endIdx   = rawContent.indexOf("</think>") + 8;
+                        if (startIdx >= 0 && endIdx > startIdx) {
+                            return rawContent.substring(startIdx + 7, endIdx - 8);
+                        }
+                    }
+                }
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.debug("Could not extract thinking process: {}", e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -257,9 +301,10 @@ public class AiAssistantService {
 //                AssistantMessage                output    = chatResponse.getResult().getOutput();
 //                List<AssistantMessage.ToolCall> toolCalls = chatResponse.getResult().getOutput().getToolCalls();
 //                String                          text      = chatResponse.getResult().getOutput().getText();
-                String text = chatResponse.getResult().getOutput().getText();
+//                String text = chatResponse.getResult().getOutput().getText();
 //                String thinking = chatResponse.thinking().innerThought();
-
+                String thinking = extractThinkingProcess(chatResponse);
+                String text     = removeThinkingFromResponse(chatResponse.getResult().getOutput().getText());
 //            log.info("=== AI query processing complete ===");
 //            log.info("Final response length: {} characters", text != null ? text.length() : 0);
 //            if (thinking != null && !thinking.isEmpty()) {
@@ -274,13 +319,42 @@ public class AiAssistantService {
 //                    log.info("{}Tool{}{}: {}{}{}", ANSI_GRAY, step.toolName(), ANSI_RESET, ANSI_DARK_GRAY, step.agentThinking().innerThought(), ANSI_RESET);
 //                }
 //            }
-//                log.info("({}{}ms){}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_YELLOW, thinking, ANSI_RESET);
-                log.info("({}{}ms){}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_GREEN, response, ANSI_RESET);
+                log.info("{}({}ms) {}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_YELLOW, thinking, ANSI_RESET);
+                log.info("{}({}ms) {}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_GREEN, response, ANSI_RESET);
                 return queryResult;
             } finally {
                 ToolActivityContextHolder.clear();
             }
         }
+    }
+
+    /**
+     * Extract the actual answer from AI response by removing thinking process.
+     */
+    private String removeThinkingFromResponse(String rawResponse) {
+        if (rawResponse == null || rawResponse.trim().isEmpty()) {
+            return rawResponse;
+        }
+
+        String response = rawResponse.trim();
+
+        // Remove content between thinking tags
+        response = response.replaceAll("(?s)<think>.*?</think>", "").trim();
+        response = response.replaceAll("(?s)<thinking>.*?</thinking>", "").trim();
+        response = response.replaceAll("(?s)<!--\\s*thinking.*?-->", "").trim();
+
+        // Remove lines that start with reasoning markers
+        response = response.replaceAll("(?m)^(Thinking:|Let me think:).*$", "").trim();
+
+        // Extract content after answer markers
+        if (response.matches("(?s).*\\b(Answer|Result|Output):\\s*(.*)")) {
+            String[] parts = response.split("\\b(?:Answer|Result|Output):\\s*", 2);
+            if (parts.length > 1) {
+                response = parts[1].trim();
+            }
+        }
+
+        return response.isEmpty() ? rawResponse : response;
     }
 
     /**

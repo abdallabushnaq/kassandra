@@ -77,7 +77,7 @@ public class VersionTools {
             version.setName(name);
             version.setProductId(productId);
             Version savedVersion = versionApi.persist(version);
-            ToolActivityContextHolder.reportActivity("created version '" + savedVersion.getName() + "' with ID: " + savedVersion.getId());
+            ToolActivityContextHolder.reportActivity("created version '" + savedVersion.getName() + "' with ID: " + savedVersion.getId() + " for product " + productId);
             VersionDto versionDto = VersionDto.from(savedVersion);
             return jsonMapper.writeValueAsString(versionDto);
         } catch (Exception e) {

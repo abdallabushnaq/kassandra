@@ -42,6 +42,12 @@ public class ChatPanelSessionState {
      */
     private       String                  conversationId = UUID.randomUUID().toString();
     /**
+     * The route key of the last view that used this session state (including any
+     * context-discriminating URL parameters). Used to detect navigation changes
+     * on F5 (same-page reload after a route change) and within-view param changes.
+     */
+    private       String                  lastViewRoute  = null;
+    /**
      * Snapshot of all rendered messages (user, ai, system, tool, error), capped so that
      * the number of user+ai entries never exceeds MAX_MESSAGES.
      */
@@ -59,6 +65,7 @@ public class ChatPanelSessionState {
     public void reset(String newConversationId) {
         messages.clear();
         this.conversationId = newConversationId;
+        this.lastViewRoute  = null;
     }
 
     /**

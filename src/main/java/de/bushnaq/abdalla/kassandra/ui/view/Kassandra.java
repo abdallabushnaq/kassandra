@@ -31,6 +31,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,20 +43,24 @@ import lombok.extern.slf4j.Slf4j;
 @Menu(order = 10, icon = "vaadin:brain", title = "Kassandra")
 @RolesAllowed("ADMIN")
 @Slf4j
-public class Kassandra extends VerticalLayout implements AfterNavigationObserver {
+public class Kassandra extends VerticalLayout implements AfterNavigationObserver, BeforeLeaveObserver {
 
     // Re-exported for backwards compatibility with tests that reference Kassandra.AI_*
-    public static final String         AI_CLEAR_BUTTON  = ChatAgentPanel.AI_CLEAR_BUTTON;
-    public static final String         AI_LAST_RESPONSE = ChatAgentPanel.AI_LAST_RESPONSE;
-    public static final String         AI_QUERY_INPUT   = ChatAgentPanel.AI_QUERY_INPUT;
-    public static final String         AI_RESPONSE_AREA = ChatAgentPanel.AI_RESPONSE_AREA;
-    public static final String         AI_SUBMIT_BUTTON = ChatAgentPanel.AI_SUBMIT_BUTTON;
-    public static final String         AI_VIEW_TITLE    = "ai-view-title";
-    private final       ChatAgentPanel chatAgentPanel;
-    private final       UserApi        userApi;
+    public static final  String                AI_CLEAR_BUTTON  = ChatAgentPanel.AI_CLEAR_BUTTON;
+    public static final  String                AI_LAST_RESPONSE = ChatAgentPanel.AI_LAST_RESPONSE;
+    public static final  String                AI_QUERY_INPUT   = ChatAgentPanel.AI_QUERY_INPUT;
+    public static final  String                AI_RESPONSE_AREA = ChatAgentPanel.AI_RESPONSE_AREA;
+    public static final  String                AI_SUBMIT_BUTTON = ChatAgentPanel.AI_SUBMIT_BUTTON;
+    public static final  String                AI_VIEW_TITLE    = "ai-view-title";
+    private static final String                ROUTE_KEY        = "kassandra";
+    private final        ChatAgentPanel        chatAgentPanel;
+    private final        ChatPanelSessionState sessionState;
+    private final        UserApi               userApi;
 
-    public Kassandra(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi) {
-        this.userApi = userApi;
+    public Kassandra(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi,
+                     ChatPanelSessionState chatPanelSessionState) {
+        this.userApi      = userApi;
+        this.sessionState = chatPanelSessionState;
 
         setSizeFull();
         setPadding(false);
@@ -95,7 +100,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
                 .set("flex-direction", "column")
                 .set("overflow", "hidden");
 
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi);
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi, chatPanelSessionState);
         rightPanel.add(chatAgentPanel);
 
         mainContent.add(leftPanel, rightPanel);
@@ -104,6 +109,12 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
+        // Clear conversation when arriving from a different page (covers F5 after route change)
+        if (!ROUTE_KEY.equals(sessionState.getLastViewRoute())) {
+            chatAgentPanel.clearConversation();
+        }
+        sessionState.setLastViewRoute(ROUTE_KEY);
+
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
@@ -122,6 +133,11 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
             }
         }
         chatAgentPanel.setCurrentUser(userFromDb);
+    }
+
+    @Override
+    public void beforeLeave(BeforeLeaveEvent event) {
+        chatAgentPanel.clearConversation();
     }
 }
 
