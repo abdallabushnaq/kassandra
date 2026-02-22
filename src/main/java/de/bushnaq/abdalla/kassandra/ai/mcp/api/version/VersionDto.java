@@ -32,7 +32,7 @@ import java.time.OffsetDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonPropertyOrder({"id", "name", "productId", "created", "updated"})
+@JsonPropertyOrder({"versionId", "name", "productId", "created", "updated"})
 public class VersionDto {
     private OffsetDateTime created;
     private String         name;

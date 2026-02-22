@@ -69,6 +69,28 @@ public class ProductController {
         productRepository.deleteById(id);
     }
 
+    @DeleteMapping("/by-name/{name}")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<Void> deleteByName(@PathVariable String name) {
+        ProductDAO product = productRepository.findByName(name);
+        if (product == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        Long id = product.getId();
+        if (!SecurityUtils.isAdmin() && !productAclService.hasAccess(id, SecurityUtils.getUserEmail())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        // Delete ACL entries first
+        productAclService.deleteProductAcl(id);
+        // Delete avatars
+        productAvatarRepository.deleteByProductId(id);
+        productAvatarGenerationDataRepository.deleteByProductId(id);
+        // Then delete product
+        productRepository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     public Optional<ProductDAO> get(@PathVariable Long id) {
@@ -77,7 +99,7 @@ public class ProductController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     public List<ProductDAO> getAll() {
         // Get current user
         String userEmail = SecurityUtils.getUserEmail();
@@ -137,7 +159,7 @@ public class ProductController {
      * Returns 404 if not found or access denied.
      */
     @GetMapping("/by-name/{name}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     public ResponseEntity<ProductDAO> getByName(@PathVariable String name) {
         // Admin can access any product by name
         if (SecurityUtils.isAdmin()) {
@@ -191,7 +213,7 @@ public class ProductController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     public void update(@RequestBody ProductDAO product) {
         // Check if user has access to the product (unless admin)
         if (!SecurityUtils.isAdmin() &&

@@ -33,7 +33,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonPropertyOrder({"id", "name", "email", "color", "roles", "firstWorkingDay", "lastWorkingDay"})
+@JsonPropertyOrder({"userId", "name", "email", "color", "roles", "firstWorkingDay", "lastWorkingDay"})
 public class UserDto {
     private Color     color;
     private String    email;

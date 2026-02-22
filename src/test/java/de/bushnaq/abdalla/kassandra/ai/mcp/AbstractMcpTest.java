@@ -34,7 +34,8 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
+import static de.bushnaq.abdalla.util.AnsiColorConstants.ANSI_BLUE;
+import static de.bushnaq.abdalla.util.AnsiColorConstants.ANSI_RESET;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
@@ -61,7 +62,7 @@ public class AbstractMcpTest extends AbstractUiTestUtil {
         try (TimeKeeping t = new TimeKeeping()) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String         username       = authentication.getName();
-            log.info("{}{}: {}{}{}", ANSI_YELLOW, username, ANSI_BLUE, query, ANSI_RESET);
+//            log.info("{}{}: {}{}{}", ANSI_YELLOW, username, ANSI_BLUE, query, ANSI_RESET);
             QueryResult result    = aiAssistantService.processQueryWithThinking(username, query, TEST_CONVERSATION_ID);
             String      modelName = aiAssistantService.getModelName();
             String      response  = result.content();
@@ -70,7 +71,7 @@ public class AbstractMcpTest extends AbstractUiTestUtil {
 //                    log.info("{}Tool{}{}: {}{}{}", ANSI_GRAY, step.toolName(), ANSI_RESET, ANSI_DARK_GRAY, step.agentThinking().innerThought(), ANSI_RESET);
 //                }
 //            }
-            log.info("({}{}ms){}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_GREEN, response, ANSI_RESET);
+//            log.info("({}{}ms){}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_GREEN, response, ANSI_RESET);
             assertNotNull(response, "Response should not be null");
             return response;
         }

@@ -29,7 +29,7 @@ import java.time.OffsetDateTime;
  */
 @Data
 @NoArgsConstructor
-@JsonPropertyOrder({"id", "name", "versionId", "created", "updated", "avatarPrompt"})
+@JsonPropertyOrder({"featureId", "name", "versionId", "created", "updated", "avatarPrompt"})
 public class FeatureDto {
     private String         avatarPrompt;
     //    private String         avatarPrompt;

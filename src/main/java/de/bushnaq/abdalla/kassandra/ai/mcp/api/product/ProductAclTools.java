@@ -101,7 +101,7 @@ public class ProductAclTools {
             @ToolParam(description = "The productId to grant access to.") Long productId,
             @ToolParam(description = "The groupId of the group to grant access.") Long groupId) {
         try {
-            ToolActivityContextHolder.reportActivity("Granting group " + groupId + " access to product " + productId);
+//            ToolActivityContextHolder.reportActivity("Granting group " + groupId + " access to product " + productId);
             ProductAclEntry entry = productAclApi.grantGroupAccess(productId, groupId);
             ToolActivityContextHolder.reportActivity("Granted group " + groupId + " access to product " + productId);
             ProductAclDto dto = ProductAclDto.from(entry);
@@ -120,7 +120,7 @@ public class ProductAclTools {
             @ToolParam(description = "The productId to grant access to") Long productId,
             @ToolParam(description = "The userId of the user to grant access") Long userId) {
         try {
-            ToolActivityContextHolder.reportActivity("Granting user " + userId + " access to product " + productId);
+//            ToolActivityContextHolder.reportActivity("Granting user " + userId + " access to product " + productId);
             ProductAclEntry entry = productAclApi.grantUserAccess(productId, userId);
             ToolActivityContextHolder.reportActivity("Granted user " + userId + " access to product " + productId);
             ProductAclDto dto = ProductAclDto.from(entry);
@@ -138,7 +138,7 @@ public class ProductAclTools {
             @ToolParam(description = "The productId to revoke access from") Long productId,
             @ToolParam(description = "The groupId of the group whose access should be revoked") Long groupId) {
         try {
-            ToolActivityContextHolder.reportActivity("Revoking group " + groupId + " access from product " + productId);
+//            ToolActivityContextHolder.reportActivity("Revoking group " + groupId + " access from product " + productId);
             productAclApi.revokeGroupAccess(productId, groupId);
             ToolActivityContextHolder.reportActivity("Revoked group " + groupId + " access from product " + productId);
             return "Group " + groupId + " access to product " + productId + " revoked successfully";
@@ -155,7 +155,7 @@ public class ProductAclTools {
             @ToolParam(description = "The productId to revoke access from") Long productId,
             @ToolParam(description = "The userId of the user whose access should be revoked") Long userId) {
         try {
-            ToolActivityContextHolder.reportActivity("Revoking user " + userId + " access from product " + productId);
+//            ToolActivityContextHolder.reportActivity("Revoking user " + userId + " access from product " + productId);
             productAclApi.revokeUserAccess(productId, userId);
             ToolActivityContextHolder.reportActivity("Revoked user " + userId + " access from product " + productId);
             return "User " + userId + " access to product " + productId + " revoked successfully";

@@ -58,6 +58,16 @@ public class ProductApi extends AbstractApi {
         ));
     }
 
+    public void deleteByName(String name) {
+        executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/product/by-name/{name}",
+                HttpMethod.DELETE,
+                createHttpEntity(),
+                Void.class,
+                name
+        ));
+    }
+
     public List<Product> getAll() {
         ResponseEntity<Product[]> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/product",

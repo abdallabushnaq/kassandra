@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -146,5 +147,27 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
             assertTrue(updatedFeature.isPresent(), "Feature should be renamed");
             assertTrue(mistypedFeature.isEmpty(), "Mistyped feature should not exist");
         }
+    }
+
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
+    public void testUpdateWithContext(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        Product product     = productApi.getAll().get(1);
+        String  productName = product.getName();
+        Version version     = versionApi.getAll(product.getId()).getFirst();
+        String  versionName = version.getName();
+
+        // Get the first product and version to add features to
+//        Version firstVersion = versionApi.getAll().get(1);
+//        Product product      = productApi.getById(firstVersion.getProductId());
+
+        {
+            processQuery("[Context: You are viewing the feature list of version '1.0.0' (versionId=3) of product 'Orion' (productId=3). Use versionId=3 when calling createFeature, updateFeature or any other feature tool that requires a versionId.]\n" +
+                    "please rename 'dashboard' to 'Game Dashboard'.");
+            Assert.assertTrue(featureApi.getByName(version.getId(), "Game Dashboard").isPresent()); //test
+        }
+
     }
 }

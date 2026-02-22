@@ -119,7 +119,7 @@ public class FeatureTools {
         }
     }
 
-    @Tool(description = "Delete a feature by its ID. " +
+    @Tool(description = "Delete a feature by its featureId. " +
             "IMPORTANT: You must provide the exact featureId. If you just created a feature, use the 'featureId' field from the createFeature response. " +
             "Do NOT guess or use a different featureId. " +
             "Returns: Success message (string) confirming deletion")
@@ -222,9 +222,9 @@ public class FeatureTools {
         }
     }
 
-    @Tool(description = "Update an existing feature by its ID. " + RETURNS_FEATURE_JSON)
+    @Tool(description = "Update an existing feature name by its featureId. " + RETURNS_FEATURE_JSON)
     public String updateFeature(
-            @ToolParam(description = "The feature ID") Long id,
+            @ToolParam(description = "The featureId") Long id,
             @ToolParam(description = "The new feature name") String name) {
         try {
             ToolActivityContextHolder.reportActivity("Updating feature " + id + " with name: " + name);

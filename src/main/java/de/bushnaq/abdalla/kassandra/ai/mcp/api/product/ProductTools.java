@@ -117,11 +117,11 @@ public class ProductTools {
         }
     }
 
-    @Tool(description = "Delete a product by productId. " +
+    @Tool(description = "Delete a product and all ACL entries related to it by its productId. " +
             "IMPORTANT: You must provide the exact productId. If you just created a product, use the 'productId' field from the createProduct response. " +
             "Do NOT guess or use a different productId. " +
             "Returns: Success message (string) confirming deletion")
-    public String deleteProduct(
+    public String deleteProductById(
             @ToolParam(description = "The productId") Long id) {
         try {
             // First, get the product details to log what we're about to delete
@@ -135,6 +135,28 @@ public class ProductTools {
             productApi.deleteById(id);
             ToolActivityContextHolder.reportActivity("Successfully deleted product with ID: " + id);
             return "Product with ID " + id + " deleted successfully";
+        } catch (Exception e) {
+            ToolActivityContextHolder.reportActivity("Error deleting product: " + e.getMessage());
+            return "Error: " + e.getMessage();
+        }
+    }
+
+    @Tool(description = "Delete a product and all ACL entries related to it by its name. " +
+            "Returns: Success message (string) confirming deletion")
+    public String deleteProductByName(
+            @ToolParam(description = "The product name") String name) {
+        try {
+            // First, get the product details to log what we're about to delete
+            Optional<Product> productToDelete = productApi.getByName(name);
+            if (productToDelete.isPresent()) {
+//                ToolActivityContextHolder.reportActivity("Deleting product '" + productToDelete.getName() + "' (ID: " + productToDelete.getId() + ")");
+            } else {
+                ToolActivityContextHolder.reportActivity("Attempting to delete product : " + name + " (product not found)");
+            }
+
+            productApi.deleteByName(name);
+            ToolActivityContextHolder.reportActivity("Successfully deleted product : " + name);
+            return "Product " + name + " deleted successfully";
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting product: " + e.getMessage());
             return "Error: " + e.getMessage();

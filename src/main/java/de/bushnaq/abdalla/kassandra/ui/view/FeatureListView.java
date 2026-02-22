@@ -163,7 +163,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                         // and version are selected and can supply the correct IDs to FeatureTools without asking.
                         chatAgentPanel.setViewContext(
                                 "You are viewing the feature list of version '" + version.getName() + "' (versionId=" + versionId + ") of product '" + product.getName() + "' (productId=" + productId + "). " +
-                                        "Use versionId=" + versionId + " when calling createFeature or any other feature tool that requires a versionId.");
+                                        "Use versionId=" + versionId + " when calling createFeature, updateFeature or any other feature tool that requires a versionId.");
                     }
                 });
 

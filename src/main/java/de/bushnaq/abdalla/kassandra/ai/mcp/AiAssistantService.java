@@ -33,10 +33,8 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
-import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.augment.AugmentedToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,19 +63,17 @@ public class AiAssistantService {
      * tool/system/error messages are also stored for UI replay but do not count toward this limit,
      * matching the agent's ChatMemory window which only tracks user and AI turns.
      */
-    public static final int MAX_MESSAGES = 20;
+    public static final  int                                     MAX_MESSAGES         = 20;
     private static final String                                  SYSTEM_PROMPT        = """
             You are Kassandra an AI assistant that helps manage a project management system.
-            You have access to various tools to interact with the system.
             Keep your answers short and to the point. Use tools to get information instead of making assumptions.
-            After using tools, provide helpful and concise responses based on the results.
-            If you don't need to use any tools, just provide a direct answer.
             Careful when you are using an ID in a tool, make sure it is the correct one, you will not be able to guess an ID.
             The ID is the unique identifier of an entity in the system, for example a product, version, feature or sprint. You can only get an ID by using a tool that returns it, you cannot make up an ID or guess it.
             Your answer should be complete. Do not show templates or create answers using fake values.
             Do not invent any parameters, optional parameters can be ignored, if you do not know the value.
-            Think step-by-step and reevaluate your answer before submitting.
-            Explain your thinking process.
+            Take a deep breath and think step-by-step.
+            Read the question carefully and try to find a solution for it.
+            When asked to delete, update, or create items, you MUST call the appropriate tool. Never fabricate a confirmation message. Never claim you performed an action without calling a tool first.
             The system is made of a hierarchical structure of a list of Product(s), each product has a list of Version(s), each Version has a list of Feature(s) and each Feature has a list of Sprint(s).
             This hierarchy is linked together using foreign keys. For example, a Version has a productId to its parent Product, a Feature has a versionId to its parent Version and a Sprint has a featureId to its parent Feature.
             """;
@@ -124,8 +120,7 @@ public class AiAssistantService {
                     .argumentType(AgentThinking.class)
                     .argumentConsumer(event -> {
                         AgentThinking thinking = event.arguments();
-//                        log.info("Tool: {} | Reasoning: {}", event.toolDefinition().name(), thinking.innerThought());
-                        log.info("{}Tool{}{}: {}{}{}", ANSI_GRAY, event.toolDefinition().name(), ANSI_RESET, ANSI_DARK_GRAY, thinking.innerThought(), ANSI_RESET);
+                        log.info("{}Tool {}{}: {}{}{}", ANSI_GRAY, event.toolDefinition().name(), ANSI_RESET, ANSI_DARK_GRAY, thinking.innerThought(), ANSI_RESET);
                         thinkingSteps.add(ThinkingStep.create(event.toolDefinition().name(), thinking));
                     })
                     .removeExtraArgumentsAfterProcessing(true)
@@ -234,6 +229,9 @@ public class AiAssistantService {
                 ChatResponse chatResponse = chatClient.prompt(userQuery)
                         .call()
                         .chatResponse();  // Get full ChatResponse instead of just text
+//                ResponseWithReasoning chatResponse = chatClient.prompt(userQuery)
+//                        .call()
+//                        .entity(ResponseWithReasoning.class);
 
                 // Add defensive null checks for LMStudio compatibility
                 if (chatResponse == null) {
@@ -251,16 +249,16 @@ public class AiAssistantService {
                     throw new RuntimeException("LLM response has no result. Check if LMStudio model is loaded and responding correctly.");
                 }
 
-                if (chatResponse.getResult().getOutput() == null) {
-                    log.error("ChatResponse.getResult().getOutput() is null");
-                    throw new RuntimeException("LLM response result has no output");
-                }
-                Generation                      result    = chatResponse.getResult();
-                AssistantMessage                output    = chatResponse.getResult().getOutput();
-                List<AssistantMessage.ToolCall> toolCalls = chatResponse.getResult().getOutput().getToolCalls();
-                String                          text      = chatResponse.getResult().getOutput().getText();
-//            String                          thinking  = extractThinkingProcess(chatResponse);
-                String thinking = null;
+//                if (chatResponse.getResult().getOutput() == null) {
+//                    log.error("ChatResponse.getResult().getOutput() is null");
+//                    throw new RuntimeException("LLM response result has no output");
+//                }
+//                Generation                      result    = chatResponse.getResult();
+//                AssistantMessage                output    = chatResponse.getResult().getOutput();
+//                List<AssistantMessage.ToolCall> toolCalls = chatResponse.getResult().getOutput().getToolCalls();
+//                String                          text      = chatResponse.getResult().getOutput().getText();
+                String text = chatResponse.getResult().getOutput().getText();
+//                String thinking = chatResponse.thinking().innerThought();
 
 //            log.info("=== AI query processing complete ===");
 //            log.info("Final response length: {} characters", text != null ? text.length() : 0);
@@ -276,6 +274,7 @@ public class AiAssistantService {
 //                    log.info("{}Tool{}{}: {}{}{}", ANSI_GRAY, step.toolName(), ANSI_RESET, ANSI_DARK_GRAY, step.agentThinking().innerThought(), ANSI_RESET);
 //                }
 //            }
+//                log.info("({}{}ms){}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_YELLOW, thinking, ANSI_RESET);
                 log.info("({}{}ms){}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_GREEN, response, ANSI_RESET);
                 return queryResult;
             } finally {

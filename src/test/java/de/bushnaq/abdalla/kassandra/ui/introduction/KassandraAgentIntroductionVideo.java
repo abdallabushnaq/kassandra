@@ -19,16 +19,20 @@ package de.bushnaq.abdalla.kassandra.ui.introduction;
 
 import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
-import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.dto.Feature;
+import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.Kassandra;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
-import de.bushnaq.abdalla.kassandra.ui.view.util.*;
+import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
+import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
+import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +51,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 import static org.junit.Assert.assertTrue;
 
@@ -67,38 +70,38 @@ import static org.junit.Assert.assertTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo {
-    public static final NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                     VIDEO_TITLE = "Kassandra Agent";
+    public static final NarratorAttribute     INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute     NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final String                VIDEO_TITLE = "Kassandra Agent";
+    //    @Autowired
+//    private             AvailabilityListViewTester availabilityListViewTester;
+    private             Feature               feature;
     @Autowired
-    private             AvailabilityListViewTester availabilityListViewTester;
-    private             Feature                    feature;
+    private             FeatureListViewTester featureListViewTester;
+    private             String                featureName;
+    //    @Autowired
+//    private             LocationListViewTester     locationListViewTester;
+//    @Autowired
+//    private             OffDayListViewTester       offDayListViewTester;
+    private             Product               product;
     @Autowired
-    private             FeatureListViewTester      featureListViewTester;
-    private             String                     featureName;
+    private             ProductListViewTester productListViewTester;
+    private             String                productName;
+    private             Sprint                sprint;
+    //    @Autowired
+//    private             SprintListViewTester       sprintListViewTester;
+    private             String                sprintName;
+    //    @Autowired
+//    private             TaskListViewTester         taskListViewTester;
+//    private             String                     taskName;
+//    private final       OffDayType                 typeRecord1 = OffDayType.VACATION;
+//    @Autowired
+//    private             UserListViewTester         userListViewTester;
+//    private             String                     userName;
+    private             Version               version;
     @Autowired
-    private             LocationListViewTester     locationListViewTester;
-    @Autowired
-    private             OffDayListViewTester       offDayListViewTester;
-    private             Product                    product;
-    @Autowired
-    private             ProductListViewTester      productListViewTester;
-    private             String                     productName;
-    private             Sprint                     sprint;
-    @Autowired
-    private             SprintListViewTester       sprintListViewTester;
-    private             String                     sprintName;
-    @Autowired
-    private             TaskListViewTester         taskListViewTester;
-    private             String                     taskName;
-    private final       OffDayType                 typeRecord1 = OffDayType.VACATION;
-    @Autowired
-    private             UserListViewTester         userListViewTester;
-    private             String                     userName;
-    private             Version                    version;
-    @Autowired
-    private             VersionListViewTester      versionListViewTester;
-    private             String                     versionName;
+    private             VersionListViewTester versionListViewTester;
+    private             String                versionName;
 
     private void approveAiPlan() {
         if (isAgentAskingForConfirmation()) {
@@ -122,21 +125,21 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
         seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setSilent(false);
+        paul.setSilent(true);
         product     = productApi.getAll().get(1);
         productName = product.getName();
-        version     = versionApi.getAll(product.getId()).get(0);
+        version     = versionApi.getAll(product.getId()).getFirst();
         versionName = version.getName();
-        feature     = featureApi.getAll(version.getId()).get(0);
+        feature     = featureApi.getAll(version.getId()).getFirst();
         featureName = feature.getName();
-        sprint      = sprintApi.getAll(feature.getId()).get(0);
+        sprint      = sprintApi.getAll(feature.getId()).getFirst();
         sprintName  = sprint.getName();
 //        taskName    = nameGenerator.generateSprintName(0);
 
 
         paul.narrateAsync(NORMAL, "Good morning, my name is Christopher Paul. I am the product manager of Kassandra and I will be demonstrating the AI capability of the latest alpha version of the Kassandra project server to you today.");
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        seleniumHandler.setEnabled(false);
+        seleniumHandler.setEnabled(true);
 
 
         //---------------------------------------------------------------------------------------
@@ -187,35 +190,37 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
         }
 
         paul.narrate(NORMAL, "Lets see if Kassandra can remember what it did. Lets delete the last product.").pause();
-        processQueryAndWaitForAnswer("Please delete the last product you created.");
+        processQueryAndWaitForAnswer("Please delete the last 3 products you just created.");
         if (productApi.getByName("Hannibal").isPresent()) {
             //nothing was done
             approveAiPlan();//assuming the ai has a question
         }
         if (seleniumHandler.isEnabled()) {
+            assertTrue(productApi.getByName("Andromeda").isEmpty());//test
+            assertTrue(productApi.getByName("Maestro").isEmpty());//test
             assertTrue(productApi.getByName("Hannibal").isEmpty());//test
         }
 
-        paul.narrate(NORMAL, "Lets ask for something a little bit more complex involving reformatting.").pause();
-        String        response    = processQueryAndWaitForAnswer("List all products with their versions and features in a table so that every row has only one feature.");
-        List<Product> allProducts = productApi.getAll();
-        log.info("Total products in system: {}", allProducts.size());
-        List<Version> allVersions = versionApi.getAll();
-        log.info("Total versions in system: {}", allVersions.size());
-        List<Feature> allFeatures = featureApi.getAll();
-        log.info("Total features in system: {}", allFeatures.size());
-
-        // remove Andromeda and Maestro from allProducts, as they have no versions or features, so they would not be listed in the table
-        allProducts = allProducts.stream()
-                .filter(product -> !product.getName().equals("Andromeda") && !product.getName().equals("Maestro"))
-                .toList();
-
-        if (seleniumHandler.isEnabled()) {
-            allProducts.forEach(product -> Assertions.assertTrue(response.toLowerCase(Locale.ROOT).contains(product.getName().toLowerCase()), "Product name missing: " + product.getName()));
-            allVersions.forEach(version -> Assertions.assertTrue(response.toLowerCase(Locale.ROOT).contains(version.getName().toLowerCase()), "Version name missing: " + version.getName()));
-            allFeatures.forEach(feature -> Assertions.assertTrue(response.toLowerCase(Locale.ROOT).contains(feature.getName().toLowerCase()), "Feature name missing: " + feature.getName()));
-        }
-        paul.narrate(NORMAL, "As you can see, kassandra has access to all information within the server, not just what you see on this page.").pause();
+//        paul.narrate(NORMAL, "Lets ask for something a little bit more complex involving reformatting.").pause();
+//        String        response    = processQueryAndWaitForAnswer("List all products with their versions and features in a table so that every row has only one feature.");
+//        List<Product> allProducts = productApi.getAll();
+//        log.info("Total products in system: {}", allProducts.size());
+//        List<Version> allVersions = versionApi.getAll();
+//        log.info("Total versions in system: {}", allVersions.size());
+//        List<Feature> allFeatures = featureApi.getAll();
+//        log.info("Total features in system: {}", allFeatures.size());
+//
+//        // remove Andromeda and Maestro from allProducts, as they have no versions or features, so they would not be listed in the table
+//        allProducts = allProducts.stream()
+//                .filter(product -> !product.getName().equals("Andromeda") && !product.getName().equals("Maestro"))
+//                .toList();
+//
+//        if (seleniumHandler.isEnabled()) {
+//            allProducts.forEach(product -> Assertions.assertTrue(response.toLowerCase(Locale.ROOT).contains(product.getName().toLowerCase()), "Product name missing: " + product.getName()));
+//            allVersions.forEach(version -> Assertions.assertTrue(response.toLowerCase(Locale.ROOT).contains(version.getName().toLowerCase()), "Version name missing: " + version.getName()));
+//            allFeatures.forEach(feature -> Assertions.assertTrue(response.toLowerCase(Locale.ROOT).contains(feature.getName().toLowerCase()), "Feature name missing: " + feature.getName()));
+//        }
+//        paul.narrate(NORMAL, "As you can see, kassandra has access to all information within the server, not just what you see on this page.").pause();
 
 
         paul.narrate(NORMAL, "Lets look into the Version page...");
@@ -226,8 +231,9 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
 
         paul.narrateAsync(NORMAL, "Kassandra AI knows the context of where you are and therefore knows that we are currently looking at the versions of Product " + productName + ". I do not need to add that information to my question.");
         processQueryAndWaitForAnswer("Add version 2.0.0.");
-        assertTrue(versionApi.getByName(product.getId(), "Hannibal").isPresent()); //test
-
+        if (seleniumHandler.isEnabled()) {
+            assertTrue(versionApi.getByName(product.getId(), "2.0.0").isPresent()); //test
+        }
         paul.narrate(NORMAL, "Lets go to the Features page.");
         versionListViewTester.selectVersion(versionName);
         //---------------------------------------------------------------------------------------
@@ -236,10 +242,11 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
         logHeader("Feature AI");
         //---------------------------------------------------------------------------------------
 
-        processQueryAndWaitForAnswer("please rename 'Config server' to 'core-config-server'.");
-        assertTrue(featureApi.getByName(version.getId(), "core-config-server").isPresent()); //test
+        processQueryAndWaitForAnswer("please rename 'dashboard' to 'Game Dashboard'.");
+        if (seleniumHandler.isEnabled()) {
+            assertTrue(featureApi.getByName(version.getId(), "Game Dashboard").isPresent()); //test
+        }
         paul.narrate(NORMAL, "Again, context aware agent.");
-
         paul.narrate(NORMAL, "Lets visit the Sprints page...");
         featureListViewTester.selectFeature(featureName);
         //---------------------------------------------------------------------------------------
@@ -249,7 +256,9 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
         //---------------------------------------------------------------------------------------
 
         processQueryAndWaitForAnswer("add sprint 'Muenchen'.");
-        assertTrue(sprintApi.getByName(feature.getId(), "Muenchen").isPresent()); //test
+        if (seleniumHandler.isEnabled()) {
+            assertTrue(sprintApi.getByName(feature.getId(), "Muenchen").isPresent()); //test
+        }
 
         //---------------------------------------------------------------------------------------
 

@@ -31,7 +31,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
-@JsonPropertyOrder({"id", "name", "featureId", "userId", "start", "end", "releaseDate", "originalEstimation", "remaining", "worked", "status", "avatarHash"})
+@JsonPropertyOrder({"sprintId", "name", "featureId", "userId", "start", "end", "releaseDate", "originalEstimation", "remaining", "worked", "status", "avatarHash"})
 public class SprintDto {
     private String        avatarHash;
     private LocalDateTime end;
