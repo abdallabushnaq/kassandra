@@ -43,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 @Menu(order = 10, icon = "vaadin:brain", title = "Kassandra")
 @RolesAllowed("ADMIN")
 @Slf4j
-public class Kassandra extends VerticalLayout implements AfterNavigationObserver, BeforeLeaveObserver {
+public class Kassandra extends VerticalLayout implements AfterNavigationObserver {
 
     // Re-exported for backwards compatibility with tests that reference Kassandra.AI_*
     public static final  String                AI_CLEAR_BUTTON  = ChatAgentPanel.AI_CLEAR_BUTTON;
@@ -109,11 +109,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        // Clear conversation when arriving from a different page (covers F5 after route change)
-        if (!ROUTE_KEY.equals(sessionState.getLastViewRoute())) {
-            chatAgentPanel.clearConversation();
-        }
-        sessionState.setLastViewRoute(ROUTE_KEY);
+        chatAgentPanel.restoreOrStart(ROUTE_KEY);
 
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
@@ -133,11 +129,6 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
             }
         }
         chatAgentPanel.setCurrentUser(userFromDb);
-    }
-
-    @Override
-    public void beforeLeave(BeforeLeaveEvent event) {
-        chatAgentPanel.clearConversation();
     }
 }
 

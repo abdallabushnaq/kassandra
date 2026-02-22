@@ -62,7 +62,7 @@ import java.util.Map;
 //@Menu(order = 1, icon = "vaadin:factory", title = "project List")
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
-public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver, BeforeLeaveObserver {
+public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
     public static final  String                 CREATE_SPRINT_BUTTON             = "create-sprint-button";
     private static final String                 PARAM_AI_PANEL                   = "aiPanel";
     private static final String                 ROUTE_KEY_PREFIX                 = "sprint-list:";
@@ -152,12 +152,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             this.featureId = Long.parseLong(queryParameters.getParameters().get("feature").getFirst());
         }
 
-        // Clear conversation when arriving from a different page or different feature (covers F5 after route change)
-        String routeKey = ROUTE_KEY_PREFIX + productId + ":" + versionId + ":" + featureId;
-        if (!routeKey.equals(sessionState.getLastViewRoute())) {
-            chatAgentPanel.clearConversation();
-        }
-        sessionState.setLastViewRoute(routeKey);
+        chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId + ":" + versionId + ":" + featureId);
 
         //- update breadcrumbs
         getElement().getParent().getComponent()
@@ -223,10 +218,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         }
     }
 
-    @Override
-    public void beforeLeave(BeforeLeaveEvent event) {
-        chatAgentPanel.clearConversation();
-    }
 
     private void confirmDelete(Sprint sprint) {
         String message = "Are you sure you want to delete sprint \"" + sprint.getName() + "\"?";

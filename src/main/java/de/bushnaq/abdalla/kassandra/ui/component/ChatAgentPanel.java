@@ -60,6 +60,10 @@ public class ChatAgentPanel extends VerticalLayout {
     private final       AiAssistantService                            aiAssistantService;
     private final       Div                                           conversationHistory;
     private             String                                        conversationId;
+    /**
+     * Route key of the page currently using this panel. Set by restoreOrStart().
+     */
+    private             String                                        currentRouteKey;
     private             User                                          currentUser;
     private final       AuthenticationProvider                        mcpAuthProvider;
     /**
@@ -68,10 +72,10 @@ public class ChatAgentPanel extends VerticalLayout {
     private             Runnable                                      onAiReply;
     private final       TextArea                                      queryInput;
     private final       Div                                           responseArea;
-    // Plain list reference captured from the session bean — safe to use on any thread.
-    private final       List<ChatPanelSessionState.ChatMessageRecord> sessionMessages;
+    // Plain list reference for the active slot — re-pointed on every restoreOrStart().
+    // Safe to use from any thread because snapshotMessage() synchronises on it.
+    private             List<ChatPanelSessionState.ChatMessageRecord> sessionMessages;
     // Direct reference to the session state bean — resolved once on the request thread.
-    // Never accessed from background threads; only the plain List inside it is passed into lambdas.
     private final       ChatPanelSessionState                         sessionState;
     private final       Button                                        submitButton;
     private final       UserApi                                       userApi;
@@ -89,12 +93,10 @@ public class ChatAgentPanel extends VerticalLayout {
         this.mcpAuthProvider    = mcpAuthProvider;
         this.userApi            = userApi;
         this.sessionState       = sessionState;
-        // Capture the plain List reference NOW while we are on the HTTP request thread.
-        // Background threads will append to this list directly — never via the scoped proxy.
-        this.sessionMessages = (sessionState != null) ? sessionState.getMessages() : null;
-
-        // Reuse the stored conversationId so server-side ChatMemory is not abandoned on F5
-        this.conversationId = (sessionState != null) ? sessionState.getConversationId() : java.util.UUID.randomUUID().toString();
+        // sessionMessages and conversationId are set by restoreOrStart() on first afterNavigation call.
+        // Start with null / a temporary UUID so the component is valid before restoreOrStart() fires.
+        this.sessionMessages = null;
+        this.conversationId  = java.util.UUID.randomUUID().toString();
 
         setSizeFull();
         setPadding(false);
@@ -200,12 +202,10 @@ public class ChatAgentPanel extends VerticalLayout {
 
         add(splitLayoutWrapper, buttonLayout);
 
-        // On reload: replay stored messages; on fresh start: show welcome message
-        if (sessionState != null && !sessionState.getMessages().isEmpty()) {
-            replayHistory(sessionState.getMessages());
-        } else {
-            addWelcomeMessage();
-        }
+        // History replay and welcome message are handled by restoreOrStart(),
+        // which is called from each view's afterNavigation().
+        // Show a placeholder until then.
+        addWelcomeMessage();
     }
 
     private void addAiMessage(String message) {
@@ -259,13 +259,17 @@ public class ChatAgentPanel extends VerticalLayout {
     public void clearConversation() {
         activityStreaming = false;
         conversationHistory.removeAll();
+        // Destroy the server-side ChatMemory for this conversation.
         aiAssistantService.clearConversation(conversationId);
-        conversationId = java.util.UUID.randomUUID().toString();
-        if (sessionState != null) {
-            // Still on the request/UI thread here — safe to call the proxy
-            sessionState.reset(conversationId);
-        } else if (sessionMessages != null) {
-            sessionMessages.clear();
+        if (sessionState != null && currentRouteKey != null) {
+            // Remove the old slot and create a fresh one so the next message starts clean.
+            sessionState.removeSlot(currentRouteKey);
+            ChatPanelSessionState.ConversationSlot fresh = sessionState.getOrCreateSlot(currentRouteKey);
+            this.conversationId  = fresh.conversationId;
+            this.sessionMessages = fresh.messages;
+        } else {
+            this.conversationId  = java.util.UUID.randomUUID().toString();
+            this.sessionMessages = null;
         }
         addWelcomeMessage();
     }
@@ -430,6 +434,39 @@ public class ChatAgentPanel extends VerticalLayout {
             conversationHistory.add(messageDiv);
         }
         scrollToBottom();
+    }
+
+    /**
+     * Switches this panel to the conversation slot for the given route key.
+     * <p>
+     * If a slot already exists (returning to a page) its messages are replayed and
+     * its conversationId is reused — the server-side ChatMemory is untouched.
+     * If no slot exists yet a fresh one is created and the welcome message is shown.
+     * <p>
+     * Must be called on the Vaadin UI / request thread (from afterNavigation).
+     */
+    public void restoreOrStart(String routeKey) {
+        this.currentRouteKey = routeKey;
+
+        if (sessionState == null) {
+            // No session state (e.g. standalone use) — just reset the UI.
+            conversationHistory.removeAll();
+            addWelcomeMessage();
+            return;
+        }
+
+        ChatPanelSessionState.ConversationSlot slot = sessionState.getOrCreateSlot(routeKey);
+        this.conversationId  = slot.conversationId;
+        this.sessionMessages = slot.messages;
+
+        conversationHistory.removeAll();
+        activityStreaming = false;
+
+        if (!slot.messages.isEmpty()) {
+            replayHistory(slot.messages);
+        } else {
+            addWelcomeMessage();
+        }
     }
 
     private void scrollToBottom() {

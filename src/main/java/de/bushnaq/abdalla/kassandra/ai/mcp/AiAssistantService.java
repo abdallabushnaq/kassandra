@@ -110,6 +110,7 @@ public class AiAssistantService {
      */
     public void clearConversation(String conversationId) {
         conversationMemories.remove(conversationId);
+        activityContexts.remove(conversationId);
         log.info("Cleared conversation history for: {}", conversationId);
     }
 

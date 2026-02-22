@@ -65,7 +65,7 @@ import java.util.Map;
 @Menu(order = 1, icon = "vaadin:factory", title = "Products")
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
-public class ProductListView extends AbstractMainGrid<Product> implements AfterNavigationObserver, BeforeLeaveObserver {
+public class ProductListView extends AbstractMainGrid<Product> implements AfterNavigationObserver {
     public static final  String                 CREATE_PRODUCT_BUTTON             = "create-product-button";
     public static final  String                 PRODUCT_AI_PANEL_BUTTON           = "product-ai-panel-button";
     public static final  String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
@@ -151,11 +151,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        // Clear conversation when arriving from a different page (covers F5 after route change)
-        if (!ROUTE_KEY.equals(sessionState.getLastViewRoute())) {
-            chatAgentPanel.clearConversation();
-        }
-        sessionState.setLastViewRoute(ROUTE_KEY);
+        chatAgentPanel.restoreOrStart(ROUTE_KEY);
 
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
@@ -205,10 +201,6 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         }
     }
 
-    @Override
-    public void beforeLeave(BeforeLeaveEvent event) {
-        chatAgentPanel.clearConversation();
-    }
 
     private void confirmDelete(Product product) {
         String message = "Are you sure you want to delete product \"" + product.getName() + "\"?";

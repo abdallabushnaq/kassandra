@@ -58,7 +58,7 @@ import java.util.Map;
 @Route(value = "version-list", layout = MainLayout.class)
 @PageTitle("Version List Page")
 @PermitAll // When security is enabled, allow all authenticated users
-public class VersionListView extends AbstractMainGrid<Version> implements AfterNavigationObserver, BeforeLeaveObserver {
+public class VersionListView extends AbstractMainGrid<Version> implements AfterNavigationObserver {
     public static final  String                              CREATE_VERSION_BUTTON             = "create-version-button";
     public static final  String                              ROUTE                             = "version-list";
     private static final String                              ROUTE_KEY_PREFIX                  = "version-list:";
@@ -133,12 +133,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
             this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
         }
 
-        // Clear conversation when arriving from a different page or different product (covers F5 after route change)
-        String routeKey = ROUTE_KEY_PREFIX + productId;
-        if (!routeKey.equals(sessionState.getLastViewRoute())) {
-            chatAgentPanel.clearConversation();
-        }
-        sessionState.setLastViewRoute(routeKey);
+        chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId);
 
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
@@ -210,10 +205,6 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         }
     }
 
-    @Override
-    public void beforeLeave(BeforeLeaveEvent event) {
-        chatAgentPanel.clearConversation();
-    }
 
     private void confirmDelete(Version version) {
         String message = "Are you sure you want to delete version \"" + version.getName() + "\"?";

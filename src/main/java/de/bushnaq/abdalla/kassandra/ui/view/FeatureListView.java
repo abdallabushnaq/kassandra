@@ -61,7 +61,7 @@ import java.util.Map;
 @PageTitle("Feature List Page")
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Restrict access to users with specific roles
-public class FeatureListView extends AbstractMainGrid<Feature> implements AfterNavigationObserver, BeforeLeaveObserver {
+public class FeatureListView extends AbstractMainGrid<Feature> implements AfterNavigationObserver {
     public static final  String                 CREATE_FEATURE_BUTTON_ID          = "create-feature-button";
     public static final  String                 FEATURE_AI_PANEL_BUTTON           = "feature-ai-panel-button";
     public static final  String                 FEATURE_GLOBAL_FILTER             = "feature-global-filter";
@@ -140,12 +140,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
             this.versionId = Long.parseLong(queryParameters.getParameters().get("version").getFirst());
         }
 
-        // Clear conversation when arriving from a different page or different version (covers F5 after route change)
-        String routeKey = ROUTE_KEY_PREFIX + productId + ":" + versionId;
-        if (!routeKey.equals(sessionState.getLastViewRoute())) {
-            chatAgentPanel.clearConversation();
-        }
-        sessionState.setLastViewRoute(routeKey);
+        chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId + ":" + versionId);
 
         //- update breadcrumbs
         getElement().getParent().getComponent()
@@ -203,10 +198,6 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         }
     }
 
-    @Override
-    public void beforeLeave(BeforeLeaveEvent event) {
-        chatAgentPanel.clearConversation();
-    }
 
     private void confirmDelete(Feature feature) {
         String message = "Are you sure you want to delete feature \"" + feature.getName() + "\"?";
