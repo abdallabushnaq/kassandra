@@ -125,7 +125,7 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
         seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
         seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setSilent(true);
+        paul.setSilent(false);
         product     = productApi.getAll().get(1);
         productName = product.getName();
         version     = versionApi.getAll(product.getId()).getFirst();
@@ -158,7 +158,7 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
         paul.narrate(NORMAL, "As you can see, kassandra does not have only read access.").pause();
         waitForAi();
 
-        if (productApi.getByName("Andromsda").isEmpty() || productApi.getByName("Andromeda").isEmpty()) {
+        if (productApi.getByName("Andromsda").isEmpty() && productApi.getByName("Andromeda").isEmpty()) {
             //nothing was done
             approveAiPlan();//assuming the ai has a question
         }

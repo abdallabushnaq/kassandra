@@ -52,7 +52,8 @@ public abstract class AbstractAiIntroductionVideo extends AbstractKeycloakUiTest
             "shall i",
             "would you like me to",
             "do you confirm",
-            "can you confirm"
+            "can you confirm",
+            "confirm"
     };
 
     @Autowired

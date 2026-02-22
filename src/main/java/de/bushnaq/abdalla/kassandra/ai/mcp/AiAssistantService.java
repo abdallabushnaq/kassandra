@@ -320,7 +320,8 @@ public class AiAssistantService {
 //                    log.info("{}Tool{}{}: {}{}{}", ANSI_GRAY, step.toolName(), ANSI_RESET, ANSI_DARK_GRAY, step.agentThinking().innerThought(), ANSI_RESET);
 //                }
 //            }
-                log.info("{}({}ms) {}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_YELLOW, thinking, ANSI_RESET);
+                if (thinking != null && !thinking.isEmpty())
+                    log.info("{}({}ms) {}: {}{}{}", ANSI_BLUE, t.getDelta().getNano() / 1000000, modelName, ANSI_YELLOW, thinking, ANSI_RESET);
                 log.info("{}({}ms) {}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_GREEN, response, ANSI_RESET);
                 return queryResult;
             } finally {

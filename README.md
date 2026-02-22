@@ -7,6 +7,10 @@
 tiny project management server.<br>
 project effort estimation and progress tracking and release date interpolation open source server.
 
+## Notice
+
+- for the agent tests to run, you need to load ministral-3-8B with 20480 token context and a sed of 42.
+
 ## features
 
 tbd
