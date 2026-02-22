@@ -169,7 +169,7 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
         }
         if (productApi.getByName("Andromeda").isPresent()) {
             //kassandra created the product as stated
-            paul.narrate(NORMAL, "Kassandra fixed the type for me, I was going to ask it to fix it, but I no longer need to do so. Sometimes this is a nice feature, sometimes iti can cause issues. You can ask it to not fix any typos.").pause();
+            paul.narrate(NORMAL, "Kassandra fixed the typo for me, I was going to ask it to fix it, but I no longer need to do so. Sometimes this is a nice feature, sometimes it can cause issues. You can ask it to not fix any typos.").pause();
             paul.narrateGap();
         } else {
             //kassandra automatically fixed the type
@@ -189,7 +189,7 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
             assertTrue(productApi.getByName("Andromeda").isPresent());//test
         }
 
-        paul.narrate(NORMAL, "Lets see if Kassandra can remember what it did. Lets delete the last product.").pause();
+        paul.narrate(NORMAL, "Lets see if Kassandra can remember what it did. Lets delete the last 3 products.").pause();
         processQueryAndWaitForAnswer("Please delete the last 3 products you just created.");
         if (productApi.getByName("Hannibal").isPresent()) {
             //nothing was done
