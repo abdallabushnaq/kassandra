@@ -50,6 +50,18 @@ src/main/java/de/bushnaq/abdalla/kassandra/
   report/
     gantt/ burndown/ calendar/            # SVG chart generators
   ai/                                     # Spring AI integration, TTS engines, MCP tools
+    mcp/
+      AiAssistantService.java             # Central AI chat service; wires all tool beans
+      ApiConfiguration.java              # @Configuration – creates *ApiAdapter beans
+      AgentThinking.java                 # Record injected by AugmentedToolCallbackProvider for inner reasoning
+      QueryResult.java                   # Return type: final text + List<ThinkingStep>
+      ThinkingStep.java                  # Records tool name + AgentThinking for one tool call
+      SessionToolActivityContext.java    # Buffers + streams activity messages to UI
+      ToolActivityContextHolder.java     # ThreadLocal holder for SessionToolActivityContext
+      api/
+        product/ feature/ version/       # *Tools beans (@Tool methods) + *ApiAdapter (REST calls)
+        sprint/ user/ usergroup/
+        AuthenticationProvider.java      # Supplies OIDC token for API calls
 
 src/main/resources/
   application.properties                  # Runtime configuration
@@ -172,12 +184,12 @@ Steps (in order):
 Tests are categorized using JUnit 5 `@Tag` annotations. Understanding these tags is critical for knowing what can run
 where.
 
-| Tag                 |  Can run in CI   | External dependency                       | Description                                                                                                                                            |
-|---------------------|:----------------:|-------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `UnitTest`          |      ✅ Yes       | None (in-memory H2, `@WithMockUser`)      | Self-contained tests. All `rest/api/*ApiTest` classes, SVG chart tests (`GanttTest`, `BurndownTest`, `CalendarTest`), date-util tests, profiler tests. |
-| `IntegrationUiTest` | ✅ Yes (headless) | Keycloak (auto-started via Testcontainer) | Full-stack Selenium UI tests against a live Spring Boot instance. Run headless in CI via `-Dselenium.headless=true`. All `ui/view/*ViewTest` classes.  |
-| `AiUnitTest`        |       ❌ No       | LM Studio + AI containers (see below)     | Requires local AI services. Cannot run in GitHub Actions. All tests under `ai/` package.                                                               |
-| `IntroductionVideo` |       ❌ No       | Real desktop browser + TTS containers     | Records introduction videos. Requires a visible browser and running TTS services. All `ui/introduction/*Video` classes.                                |
+| Tag                 |  Can run in CI   | External dependency                       | Description                                                                                                                                                                                                                                                                                       |
+|---------------------|:----------------:|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `UnitTest`          |      ✅ Yes       | None (in-memory H2, `@WithMockUser`)      | Self-contained tests. All `rest/api/*ApiTest` classes, SVG chart tests (`GanttTest`, `BurndownTest`, `CalendarTest`), date-util tests, profiler tests.                                                                                                                                            |
+| `IntegrationUiTest` | ✅ Yes (headless) | Keycloak (auto-started via Testcontainer) | Full-stack Selenium UI tests against a live Spring Boot instance. Run headless in CI via `-Dselenium.headless=true`. All `ui/view/*ViewTest` classes.                                                                                                                                             |
+| `AiUnitTest`        |       ❌ No       | LM Studio + AI containers (see below)     | Requires local AI services. Cannot run in GitHub Actions. All tests under `ai/` package, including `AiAssistantServiceBasicTest`, `AiAssistantServiceProductTest`, `AiAssistantServiceVersionTest`, `AiAssistantServiceFeatureTest`, `AiAssistantServiceUserTest`, `AiAssistantServiceMixedTest`. |
+| `IntroductionVideo` |       ❌ No       | Real desktop browser + TTS containers     | Records introduction videos. Requires a visible browser and running TTS services. All `ui/introduction/*Video` classes.                                                                                                                                                                           |
 
 ### External Services Required by `AiUnitTest`
 
@@ -230,10 +242,16 @@ The following are explicitly excluded from Surefire in `pom.xml` and **must not*
 - **Keycloak UI tests:** `AbstractKeycloakUiTestUtil` starts a Keycloak Testcontainer (
   `quay.io/keycloak/keycloak:24.0.1`) with the realm from `src/test/resources/keycloak/project-hub-realm.json` and
   allocates a random port before the Spring context starts.
-- **AI features:** Disabled by default. `kassandra.ai.dynamic-tool-search.enabled=true` activates
-  `DynamicToolSearchConfiguration`, which uses `LuceneToolSearcher` from
-  `org.springaicommunity:tool-searcher-lucene:2.0.1`. Spring AI BOM `2.0.0-M2` is resolved from the Spring Milestones
-  repository.
+- **AI features:** `AiAssistantService` (in `ai/mcp/`) is the central AI service. It uses Spring AI's native `@Tool`
+  annotation on dedicated tool beans (`ProductTools`, `ProductAclTools`, `UserTools`, `UserGroupTools`, `VersionTools`,
+  `FeatureTools`, `SprintTools`) wired together via `AugmentedToolCallbackProvider` for per-call inner-thought
+  reasoning. Each tool bean delegates to a corresponding `*ApiAdapter` (also in `ai/mcp/api/`) which calls the REST API
+  using the current user's OIDC token via `AuthenticationProvider`. `ApiConfiguration` is a `@Configuration` class that
+  wires up the `*ApiAdapter` beans. `AgentThinking` is a record injected as an extra argument by
+  `AugmentedToolCallbackProvider` to capture the model's inner reasoning. `QueryResult` carries the final text response
+  together with a list of `ThinkingStep` records for UI display. `SessionToolActivityContext` /
+  `ToolActivityContextHolder` stream per-step activity messages to the UI. Spring AI BOM `2.0.0-M2` is resolved from
+  the Spring Milestones repository.
 - **Lombok:** Used extensively (`@Getter`, `@Setter`, `@Slf4j`, etc.). The compiler plugin configures it as an
   annotation processor path – do not add it as a regular dependency.
 - **SVG Charts:** Generated server-side with Apache Batik 1.18 and compared against reference files in
