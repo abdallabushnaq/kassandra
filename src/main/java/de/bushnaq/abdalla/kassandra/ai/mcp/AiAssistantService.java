@@ -39,6 +39,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.augment.AugmentedToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.lang.reflect.Method;
 import java.time.format.DateTimeFormatter;
@@ -93,7 +94,6 @@ public class AiAssistantService {
     private              ProductTools                            productTools;
     @Autowired
     private              SprintTools                             sprintTools;
-    private final        List<ThinkingStep>                      thinkingSteps        = new ArrayList<>();
     @Autowired
     private              UserGroupTools                          userGroupTools;
     @Autowired
@@ -114,7 +114,7 @@ public class AiAssistantService {
         log.info("Cleared conversation history for: {}", conversationId);
     }
 
-    private List<AugmentedToolCallbackProvider<AgentThinking>> createToolCallbackProviders(Object[] userTools) {
+    private List<AugmentedToolCallbackProvider<AgentThinking>> createToolCallbackProviders(Object[] userTools, List<ThinkingStep> thinkingSteps) {
         List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = new ArrayList<AugmentedToolCallbackProvider<AgentThinking>>();
         for (Object userTool : userTools) {
             AugmentedToolCallbackProvider<AgentThinking> toolProvider = AugmentedToolCallbackProvider
@@ -235,19 +235,14 @@ public class AiAssistantService {
     public QueryResult processQueryWithThinking(String username, String userQuery, String conversationId) {
         try (TimeKeeping t = new TimeKeeping()) {
             log.info("{}{}: {}{}{}", ANSI_YELLOW, username, ANSI_BLUE, userQuery, ANSI_RESET);
-            thinkingSteps.clear();
-//        log.info("=== Starting AI query processing (with thinking) ===");
+            List<ThinkingStep> thinkingSteps = new ArrayList<>();
 
             // Log model information
             try {
                 String modelName = chatModel.getDefaultOptions().getModel();
-//            log.info("Using LLM Model: {}", modelName != null ? modelName : "default");
             } catch (Exception e) {
                 log.debug("Could not determine model name: {}", e.getMessage());
             }
-
-//        log.info("User query: {}", userQuery);
-//        log.info("Conversation ID: {}", conversationId);
 
             // Get or create the ChatMemory for this conversation
             ChatMemory chatMemory = getOrCreateMemory(conversationId);
@@ -258,7 +253,7 @@ public class AiAssistantService {
                     .build();
 
             Object[]                                           userTools                     = {this.userTools, userGroupTools, productTools, productAclTools, versionTools, featureTools, sprintTools};
-            List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = createToolCallbackProviders(userTools);
+            List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = createToolCallbackProviders(userTools, thinkingSteps);
 
             // Create ChatClient with:
             // - System prompt defining the assistant's role
@@ -270,29 +265,34 @@ public class AiAssistantService {
                     .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4), augmentedToolCallbackProvider.get(5), augmentedToolCallbackProvider.get(6))
                     .build();
 
-            try {
-                ChatResponse chatResponse = chatClient.prompt(userQuery)
-                        .call()
-                        .chatResponse();  // Get full ChatResponse instead of just text
+            // Build toolContext with auth token and activity context for propagation
+            // to @Tool methods on any thread Spring AI may use.
+            SessionToolActivityContext    activityCtx    = activityContexts.computeIfAbsent(conversationId, id -> new SessionToolActivityContext());
+            java.util.Map<String, Object> toolContextMap = ToolContextHelper.buildContextMap(null, activityCtx);
+
+            ChatResponse chatResponse = chatClient.prompt(userQuery)
+                    .toolContext(toolContextMap)
+                    .call()
+                    .chatResponse();  // Get full ChatResponse instead of just text
 //                ResponseWithReasoning chatResponse = chatClient.prompt(userQuery)
 //                        .call()
 //                        .entity(ResponseWithReasoning.class);
 
-                // Add defensive null checks for LMStudio compatibility
-                if (chatResponse == null) {
-                    log.error("ChatResponse is null - LMStudio returned no response");
-                    throw new RuntimeException("LLM returned null response");
-                }
+            // Add defensive null checks for LMStudio compatibility
+            if (chatResponse == null) {
+                log.error("ChatResponse is null - LMStudio returned no response");
+                throw new RuntimeException("LLM returned null response");
+            }
 
 //            log.debug("ChatResponse metadata: {}", chatResponse.getMetadata());
 
 //            log.debug("ChatResponse results count: {}", chatResponse.getResults() != null ? chatResponse.getResults().size() : "null");
 
-                if (chatResponse.getResult() == null) {
-                    log.error("ChatResponse.getResult() is null - LMStudio response may be malformed");
-                    log.error("Full ChatResponse: {}", chatResponse);
-                    throw new RuntimeException("LLM response has no result. Check if LMStudio model is loaded and responding correctly.");
-                }
+            if (chatResponse.getResult() == null) {
+                log.error("ChatResponse.getResult() is null - LMStudio response may be malformed");
+                log.error("Full ChatResponse: {}", chatResponse);
+                throw new RuntimeException("LLM response has no result. Check if LMStudio model is loaded and responding correctly.");
+            }
 
 //                if (chatResponse.getResult().getOutput() == null) {
 //                    log.error("ChatResponse.getResult().getOutput() is null");
@@ -304,36 +304,35 @@ public class AiAssistantService {
 //                String                          text      = chatResponse.getResult().getOutput().getText();
 //                String text = chatResponse.getResult().getOutput().getText();
 //                String thinking = chatResponse.thinking().innerThought();
-                String thinking = extractThinkingProcess(chatResponse);
-                String text     = removeThinkingFromResponse(chatResponse.getResult().getOutput().getText());
+            String thinking = extractThinkingProcess(chatResponse);
+            String text     = removeThinkingFromResponse(chatResponse.getResult().getOutput().getText());
 //            log.info("=== AI query processing complete ===");
 //            log.info("Final response length: {} characters", text != null ? text.length() : 0);
 //            if (thinking != null && !thinking.isEmpty()) {
 //                log.info("Thinking process length: {} characters", thinking.length());
 //            }
 
-                QueryResult queryResult = new QueryResult(text, thinkingSteps);
-                String      modelName   = getModelName();
-                String      response    = text;
+            QueryResult queryResult = new QueryResult(text, thinkingSteps);
+            String      modelName   = getModelName();
+            String      response    = text;
 //            if (result.hasThinking()) {
 //                for (ThinkingStep step : result.thinkingSteps()) {
 //                    log.info("{}Tool{}{}: {}{}{}", ANSI_GRAY, step.toolName(), ANSI_RESET, ANSI_DARK_GRAY, step.agentThinking().innerThought(), ANSI_RESET);
 //                }
 //            }
-                if (thinking != null && !thinking.isEmpty())
-                    log.info("{}({}ms) {}: {}{}{}", ANSI_BLUE, t.getDelta().getNano() / 1000000, modelName, ANSI_YELLOW, thinking, ANSI_RESET);
-                log.info("{}({}ms) {}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_GREEN, response, ANSI_RESET);
-                return queryResult;
-            } finally {
-                ToolActivityContextHolder.clear();
-            }
+            if (thinking != null && !thinking.isEmpty())
+                log.info("{}({}ms) {}: {}{}{}", ANSI_BLUE, t.getDelta().getNano() / 1000000, modelName, ANSI_YELLOW, thinking, ANSI_RESET);
+            log.info("{}({}ms) {}: {}{}{}", ANSI_YELLOW, t.getDelta().getNano() / 1000000, modelName, ANSI_GREEN, response, ANSI_RESET);
+            return queryResult;
         }
     }
 
     /**
      * Extract the actual answer from AI response by removing thinking process.
+     * Public so that {@link de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel}
+     * can strip thinking tokens from the accumulated streaming text at completion.
      */
-    private String removeThinkingFromResponse(String rawResponse) {
+    public String removeThinkingFromResponse(String rawResponse) {
         if (rawResponse == null || rawResponse.trim().isEmpty()) {
             return rawResponse;
         }
@@ -367,5 +366,63 @@ public class AiAssistantService {
     public void setChatModel(ChatModel chatModel) {
         this.chatModel = chatModel;
         log.debug("Chat model updated");
+    }
+
+    /**
+     * Stream a user query using the AI assistant with Spring AI native tool calling.
+     * Returns a Flux of text token chunks that can be subscribed to for progressive UI updates.
+     * Tool calls are still executed synchronously before text tokens begin streaming.
+     * <p>
+     * Authentication and activity context are propagated to @Tool methods via Spring AI's
+     * {@link org.springframework.ai.chat.model.ToolContext}, not ThreadLocals.
+     * <p>
+     * Note: thinking tokens (e.g. {@code <think>…</think>}) may appear in the stream briefly.
+     * The caller is responsible for stripping them from the accumulated text at completion
+     * using {@link #removeThinkingFromResponse(String)}.
+     *
+     * @param username       The username of the requesting user (for logging)
+     * @param userQuery      The user's query
+     * @param conversationId Unique identifier for this conversation session
+     * @param capturedToken  OIDC bearer token captured on the UI thread (may be null for test mode)
+     * @return Flux of raw text token chunks
+     */
+    public Flux<String> streamQuery(String username, String userQuery, String conversationId,
+                                    String capturedToken) {
+        log.info("{}{}: {}{}{} [streaming]", ANSI_YELLOW, username, ANSI_BLUE, userQuery, ANSI_RESET);
+
+        List<ThinkingStep> thinkingSteps = new ArrayList<>();
+        ChatMemory         chatMemory    = getOrCreateMemory(conversationId);
+        MessageChatMemoryAdvisor memoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory)
+                .conversationId(conversationId)
+                .build();
+
+        Object[]                                           toolBeans                     = {this.userTools, userGroupTools, productTools, productAclTools, versionTools, featureTools, sprintTools};
+        List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = createToolCallbackProviders(toolBeans, thinkingSteps);
+
+        ChatClient chatClient = ChatClient.builder(chatModel)
+                .defaultSystem(augmentSystemPrompt(SYSTEM_PROMPT))
+                .defaultAdvisors(memoryAdvisor)
+                .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4), augmentedToolCallbackProvider.get(5), augmentedToolCallbackProvider.get(6))
+                .build();
+
+        // Build toolContext with auth token and activity context — propagated to every
+        // @Tool method by Spring AI regardless of which thread executes the tool.
+        SessionToolActivityContext    activityCtx    = activityContexts.computeIfAbsent(conversationId, id -> new SessionToolActivityContext());
+        java.util.Map<String, Object> toolContextMap = ToolContextHelper.buildContextMap(capturedToken, activityCtx);
+
+        return chatClient.prompt(userQuery)
+                .toolContext(toolContextMap)
+                .stream()
+                .chatResponse()
+                .filter(r -> r != null
+                        && r.getResult() != null
+                        && r.getResult().getOutput() != null
+                        && r.getResult().getOutput().getText() != null
+                        && !r.getResult().getOutput().getText().isEmpty())
+                .map(r -> {
+                    String text = r.getResult().getOutput().getText();
+                    return text != null ? text : "";
+                })
+                .filter(t -> !t.isEmpty());
     }
 }

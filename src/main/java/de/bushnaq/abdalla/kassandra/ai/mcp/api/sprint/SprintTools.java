@@ -18,9 +18,11 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
+import de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.rest.api.SprintApi;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,9 +69,10 @@ public class SprintTools {
             RETURNS_SPRINT_JSON)
     public String createSprint(
             @ToolParam(description = "The sprint name (must be unique)") String name,
-            @ToolParam(description = "The featureId this sprint belongs to") Long featureId) {
+            @ToolParam(description = "The featureId this sprint belongs to") Long featureId,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
-//            ToolActivityContextHolder.reportActivity("Creating sprint with name: " + name + " for feature " + featureId);
             Sprint sprint = new Sprint();
             sprint.setName(name);
             sprint.setFeatureId(featureId);
@@ -80,6 +83,8 @@ public class SprintTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error creating sprint: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
@@ -88,7 +93,9 @@ public class SprintTools {
             "Do NOT guess or use a different sprint's ID. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteSprint(
-            @ToolParam(description = "The sprintId") Long sprintId) {
+            @ToolParam(description = "The sprintId") Long sprintId,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             // First, get the sprint details to log what we're about to delete
             Sprint sprintToDelete = sprintApi.getById(sprintId);
@@ -104,11 +111,14 @@ public class SprintTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting sprint " + sprintId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a list of all sprints accessible to the current user. " + RETURNS_SPRINT_ARRAY_JSON)
-    public String getAllSprints() {
+    public String getAllSprints(ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             List<Sprint> sprints = sprintApi.getAll();
             ToolActivityContextHolder.reportActivity("read " + sprints.size() + " sprints.");
@@ -119,12 +129,16 @@ public class SprintTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting all sprints: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a list of all sprints for a feature (requires access or admin role). " + RETURNS_SPRINT_ARRAY_JSON)
     public String getAllSprintsByFeatureId(
-            @ToolParam(description = "The featureId") Long featureId) {
+            @ToolParam(description = "The featureId") Long featureId,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             ToolActivityContextHolder.reportActivity("Getting all sprints for feature " + featureId);
             List<Sprint> sprints = sprintApi.getAll(featureId);
@@ -136,12 +150,16 @@ public class SprintTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting all sprints for feature " + featureId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a specific sprint by its ID (requires access or admin role). " + RETURNS_SPRINT_JSON)
     public String getSprintById(
-            @ToolParam(description = "The sprintId") Long sprintId) {
+            @ToolParam(description = "The sprintId") Long sprintId,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             ToolActivityContextHolder.reportActivity("Getting sprint with ID: " + sprintId);
             Sprint sprint = sprintApi.getById(sprintId);
@@ -153,13 +171,17 @@ public class SprintTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting sprint " + sprintId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a specific sprint by its name within a feature. " + RETURNS_SPRINT_JSON)
     public String getSprintByName(
             @ToolParam(description = "The featureId the sprint belongs to") Long featureId,
-            @ToolParam(description = "The sprint name") String name) {
+            @ToolParam(description = "The sprint name") String name,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             ToolActivityContextHolder.reportActivity("Getting sprint with name: " + name + " in feature " + featureId);
             return sprintApi.getByName(featureId, name)
@@ -174,13 +196,17 @@ public class SprintTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting sprint by name " + name + ": " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Update an existing sprint (requires access or admin role). " + RETURNS_SPRINT_JSON)
     public String updateSprint(
             @ToolParam(description = "The sprintId") Long sprintId,
-            @ToolParam(description = "The new sprint name") String name) {
+            @ToolParam(description = "The new sprint name") String name,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             ToolActivityContextHolder.reportActivity("Updating sprint " + sprintId + " with name: " + name);
             Sprint sprint = sprintApi.getById(sprintId);
@@ -194,6 +220,8 @@ public class SprintTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error updating sprint " + sprintId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 }

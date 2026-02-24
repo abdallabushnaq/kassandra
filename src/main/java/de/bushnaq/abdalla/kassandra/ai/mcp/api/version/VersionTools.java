@@ -18,9 +18,11 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.version;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
+import de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.rest.api.VersionApi;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,9 +72,10 @@ public class VersionTools {
             RETURNS_VERSION_JSON)
     public String createVersion(
             @ToolParam(description = "The version name (must be unique)") String name,
-            @ToolParam(description = "The productId this version belongs to") Long productId) {
+            @ToolParam(description = "The productId this version belongs to") Long productId,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
-//            ToolActivityContextHolder.reportActivity("Creating version with name: " + name + " for product " + productId);
             Version version = new Version();
             version.setName(name);
             version.setProductId(productId);
@@ -83,6 +86,8 @@ public class VersionTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error creating version: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
@@ -91,7 +96,9 @@ public class VersionTools {
             "Do NOT guess or use a different version's ID. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteVersion(
-            @ToolParam(description = "The versionId") Long versionId) {
+            @ToolParam(description = "The versionId") Long versionId,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             // First, get the version details to log what we're about to delete
             Version versionToDelete = versionApi.getById(versionId);
@@ -107,11 +114,14 @@ public class VersionTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting version " + versionId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a list of all versions accessible to the current user. Good if you need to retrieve versions for all products. " + RETURNS_VERSION_ARRAY_JSON)
-    public String getAllVersions() {
+    public String getAllVersions(ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             ToolActivityContextHolder.reportActivity("Getting all versions");
             List<Version> versions = versionApi.getAll();
@@ -123,14 +133,17 @@ public class VersionTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting all versions: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a list of all versions for a product. " + RETURNS_VERSION_ARRAY_JSON)
     public String getAllVersionsByProductId(
-            @ToolParam(description = "The productId") Long productId) {
+            @ToolParam(description = "The productId") Long productId,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
-//            ToolActivityContextHolder.reportActivity("Getting all versions for product ID: " + productId);
             List<Version> versions = versionApi.getAll(productId);
             ToolActivityContextHolder.reportActivity("Found " + versions.size() + " versions for product " + productId + ".");
             List<VersionDto> versionDtos = versions.stream()
@@ -140,12 +153,16 @@ public class VersionTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Failed getting all versions for product " + productId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a specific version by its versionId. " + RETURNS_VERSION_JSON)
     public String getVersionById(
-            @ToolParam(description = "The versionId") Long versionId) {
+            @ToolParam(description = "The versionId") Long versionId,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             ToolActivityContextHolder.reportActivity("Getting version with ID: " + versionId);
             Version version = versionApi.getById(versionId);
@@ -157,13 +174,17 @@ public class VersionTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting version " + versionId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Update an existing version by its versionId. " + RETURNS_VERSION_JSON)
     public String updateVersion(
             @ToolParam(description = "The versionId") Long versionId,
-            @ToolParam(description = "The new version name") String name) {
+            @ToolParam(description = "The new version name") String name,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             ToolActivityContextHolder.reportActivity("Updating version " + versionId + " with name: " + name);
             Version version = versionApi.getById(versionId);
@@ -177,6 +198,8 @@ public class VersionTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error updating version " + versionId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 }

@@ -18,9 +18,11 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.user;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
+import de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +69,9 @@ public class UserTools {
             @ToolParam(description = "The user color in hex format (e.g., '#FF0000' for red, '#336699' for blue). If not provided, defaults to blue.") String colorHex,
             @ToolParam(description = "(optional) The user roles (comma-separated, 'ROLE_USER' or 'ROLE_ADMIN')") String roles,
             @ToolParam(description = "(optional) The first working day in ISO format (YYYY-MM-DD), optional. If not provided, today's date will be used.") String firstWorkingDay,
-            @ToolParam(description = "(optional) The last working day in ISO format (YYYY-MM-DD), optional. If not provided, user is still employed.") String lastWorkingDay) {
+            @ToolParam(description = "(optional) The last working day in ISO format (YYYY-MM-DD), optional. If not provided, user is still employed.") String lastWorkingDay,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             log.info("Creating user: name={}, email={}", name, email);
             User user = new User();
@@ -95,6 +99,8 @@ public class UserTools {
         } catch (Exception e) {
             log.error("Error creating user: {}", e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
@@ -103,7 +109,9 @@ public class UserTools {
             "Do NOT guess or use a different user's ID. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteUser(
-            @ToolParam(description = "The userId") Long userId) {
+            @ToolParam(description = "The userId") Long userId,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             // First, get the user details to log what we're about to delete
             User userToDelete = userApi.getById(userId);
@@ -119,11 +127,14 @@ public class UserTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting user: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a list of all users in the system. " + RETURNS_USER_ARRAY_JSON)
-    public String getAllUsers() {
+    public String getAllUsers(ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             List<User> users = userApi.getAll();
             log.info("read " + users.size() + " users.");
@@ -132,12 +143,16 @@ public class UserTools {
         } catch (Exception e) {
             log.error("Error getting all users: {}", e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a specific user by their email address. " + RETURNS_USER_JSON)
     public String getUserByEmail(
-            @ToolParam(description = "The user email address") String email) {
+            @ToolParam(description = "The user email address") String email,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             log.info("Getting user by email: {}", email);
             User user = userApi.getByEmail(email).get();
@@ -148,12 +163,16 @@ public class UserTools {
         } catch (Exception e) {
             log.error("Error getting user by email {}: {}", email, e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a specific user by their userId. " + RETURNS_USER_JSON)
     public String getUserById(
-            @ToolParam(description = "The userId") Long userId) {
+            @ToolParam(description = "The userId") Long userId,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             log.info("Getting user by ID: {}", userId);
             User user = userApi.getById(userId);
@@ -164,12 +183,16 @@ public class UserTools {
         } catch (Exception e) {
             log.error("Error getting user by ID {}: {}", userId, e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a specific user by their name. " + RETURNS_USER_JSON)
     public String getUserByName(
-            @ToolParam(description = "The user name") String name) {
+            @ToolParam(description = "The user name") String name,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             log.info("Getting user by name: {}", name);
             User user = userApi.getByName(name);
@@ -180,6 +203,8 @@ public class UserTools {
         } catch (Exception e) {
             log.error("Error getting user by name {}: {}", name, e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
@@ -212,7 +237,9 @@ public class UserTools {
 
     @Tool(description = "Search for users by partial name match (case-insensitive). " + RETURNS_USER_ARRAY_JSON)
     public String searchUsers(
-            @ToolParam(description = "Partial name to search for") String partialName) {
+            @ToolParam(description = "Partial name to search for") String partialName,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             log.info("Searching users by partial name: {}", partialName);
             List<User>    users    = userApi.searchByName(partialName);
@@ -221,6 +248,8 @@ public class UserTools {
         } catch (Exception e) {
             log.error("Error searching users: {}", e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
@@ -232,7 +261,9 @@ public class UserTools {
             @ToolParam(description = "The new user color in hex format (e.g., '#FF0000' for red), optional") String colorHex,
             @ToolParam(description = "The new user roles, optional") String roles,
             @ToolParam(description = "The new first working day in ISO format (YYYY-MM-DD), optional") String firstWorkingDay,
-            @ToolParam(description = "The new last working day in ISO format (YYYY-MM-DD), optional") String lastWorkingDay) {
+            @ToolParam(description = "The new last working day in ISO format (YYYY-MM-DD), optional") String lastWorkingDay,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             User user = userApi.getById(userId);
             if (user == null) {
@@ -263,6 +294,8 @@ public class UserTools {
         } catch (Exception e) {
             log.error("Error updating user {}: {}", userId, e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 }

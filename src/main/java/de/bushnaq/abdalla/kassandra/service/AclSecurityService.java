@@ -40,6 +40,8 @@ public class AclSecurityService {
     @Autowired
     private ProductAclService productAclService;
     @Autowired
+    private ProductRepository productRepository;
+    @Autowired
     private SprintRepository  sprintRepository;
     @Autowired
     private TaskRepository    taskRepository;
@@ -156,6 +158,23 @@ public class AclSecurityService {
         // Check ACL
         Optional<UserDAO> user = userRepository.findByEmail(userEmail);
         return user.isPresent() && productAclService.hasUserAccess(productId, user.get().getId());
+    }
+
+    /**
+     * Check if current user has access to a product by its name.
+     * Used in @PreAuthorize expressions for name-based endpoints.
+     * Returns false if the product does not exist.
+     *
+     * @param name the product name
+     * @return true if user has access
+     */
+    public boolean hasProductAccessByName(String name) {
+        var product = productRepository.findByName(name);
+        if (product == null) {
+            // Product not found — deny to avoid leaking existence; 404 handled by controller
+            return false;
+        }
+        return hasProductAccess(product.getId());
     }
 
     /**

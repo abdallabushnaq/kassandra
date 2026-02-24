@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
+import de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
@@ -26,6 +27,7 @@ import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,8 +84,9 @@ public class ProductTools {
             RETURNS_PRODUCT_JSON)
     public String createProduct(
             @ToolParam(description = "The product name (must be unique)") String name,
-            @ToolParam(description = "(Optional) The product avatar stable-diffusion prompt. If null or empty, a default prompt will be generated.") String avatarPrompt) {
-//        ToolActivityContextHolder.reportActivity("Creating product with name: " + name);
+            @ToolParam(description = "(Optional) The product avatar stable-diffusion prompt. If null or empty, a default prompt will be generated.") String avatarPrompt,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             Product product = new Product();
             product.setName(name);
@@ -114,6 +117,8 @@ public class ProductTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error creating product: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
@@ -122,7 +127,9 @@ public class ProductTools {
             "Do NOT guess or use a different productId. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteProductById(
-            @ToolParam(description = "The productId") Long id) {
+            @ToolParam(description = "The productId") Long id,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             // First, get the product details to log what we're about to delete
             Product productToDelete = productApi.getById(id);
@@ -138,13 +145,17 @@ public class ProductTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting product: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Delete a product and all ACL entries related to it by its name. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteProductByName(
-            @ToolParam(description = "The product name") String name) {
+            @ToolParam(description = "The product name") String name,
+            ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             // First, get the product details to log what we're about to delete
             Optional<Product> productToDelete = productApi.getByName(name);
@@ -160,6 +171,8 @@ public class ProductTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting product: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
@@ -171,7 +184,8 @@ public class ProductTools {
     }
 
     @Tool(description = "Get a list of all products accessible to the current user. " + RETURNS_PRODUCT_ARRAY_JSON)
-    public String getAllProducts() {
+    public String getAllProducts(ToolContext toolContext) {
+        ToolContextHelper.setup(toolContext);
         try {
             List<Product> products = productApi.getAll();
             ToolActivityContextHolder.reportActivity("read " + products.size() + " products.");
@@ -182,13 +196,17 @@ public class ProductTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting all products: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a specific product by its productId. " + RETURNS_PRODUCT_JSON)
     public String getProductById(
-            @ToolParam(description = "The productId") Long productId) {
+            @ToolParam(description = "The productId") Long productId,
+            ToolContext toolContext) {
 //        ToolActivityContextHolder.reportActivity("Getting product with ID: " + id);
+        ToolContextHelper.setup(toolContext);
         try {
             Product product = productApi.getById(productId);
             if (product != null) {
@@ -201,12 +219,15 @@ public class ProductTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting product by ID: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a specific product by its name. " + RETURNS_PRODUCT_JSON)
-    public String getProductByName(String name) {
+    public String getProductByName(String name, ToolContext toolContext) {
 //        ToolActivityContextHolder.reportActivity("Getting product with name: " + name);
+        ToolContextHelper.setup(toolContext);
         try {
             Optional<Product> product = productApi.getByName(name);
             if (product.isPresent()) {
@@ -219,14 +240,18 @@ public class ProductTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting product by name: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Update an existing product by its productId. " + RETURNS_PRODUCT_JSON)
     public String updateProduct(
             @ToolParam(description = "The productId") Long productId,
-            @ToolParam(description = "The new product name") String name) {
+            @ToolParam(description = "The new product name") String name,
+            ToolContext toolContext) {
 //        ToolActivityContextHolder.reportActivity("Updating product " + id + " with name: " + name);
+        ToolContextHelper.setup(toolContext);
         try {
             Product product = productApi.getById(productId);
             if (product == null) {
@@ -241,6 +266,8 @@ public class ProductTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error updating product: " + e.getMessage());
             return "Error: " + e.getMessage();
+        } finally {
+            ToolContextHelper.cleanup();
         }
     }
 }

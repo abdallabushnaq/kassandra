@@ -32,13 +32,13 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
-import de.bushnaq.abdalla.kassandra.ai.mcp.QueryResult;
 import de.bushnaq.abdalla.kassandra.ai.mcp.SessionToolActivityContext;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.Disposable;
 
 import java.util.List;
 
@@ -350,8 +350,6 @@ public class ChatAgentPanel extends VerticalLayout {
 
         getUI().ifPresent(ui -> ui.access(() -> submitButton.setEnabled(false)));
 
-//        addSystemMessage("🤔 Thinking...");
-
         // Build the effective query – prepend view context so the AI knows the current selection
         final String effectiveQuery = (viewContext != null && !viewContext.isEmpty())
                 ? "[Context: " + viewContext + "]\n" + query
@@ -359,60 +357,64 @@ public class ChatAgentPanel extends VerticalLayout {
 
         String       capturedToken = mcpAuthProvider.captureCurrentUserToken();
         final String username      = SecurityUtils.getUserEmail();
-        getUI().ifPresent(ui -> {
-            new Thread(() -> {
-                final SessionToolActivityContext[] activityContextRef = new SessionToolActivityContext[1];
-                try {
-                    if (capturedToken != null) {
-                        mcpAuthProvider.setToken(capturedToken);
-                    }
-                    activityContextRef[0] = aiAssistantService.getActivityContext(conversationId);
-                    activityStreaming     = true;
-                    if (activityContextRef[0] != null) {
-                        activityContextRef[0].setActivityListener(msg -> {
-                            if (!activityStreaming) return;
-                            ui.access(() -> {
-                                addToolMessage(msg);
-                                ui.push();
-                            });
-                        });
-                    }
-                    QueryResult response = aiAssistantService.processQueryWithThinking(username, effectiveQuery, conversationId);
-                    log.info("AI response received: {} characters", response != null ? response.content().length() : 0);
 
-                    ui.access(() -> {
-                        try {
-                            log.info("Updating UI with AI response");
-                            removeLastMessage();
-                            addAiMessage(response.content());
-                        } catch (Exception e) {
-                            log.error("Error displaying response: {}", e.getMessage(), e);
-                            addErrorMessage("Error displaying response: " + e.getMessage());
-                        } finally {
+        getUI().ifPresent(ui -> {
+            // Set up tool activity streaming listener before subscribing
+            SessionToolActivityContext activityContext = aiAssistantService.getActivityContext(conversationId);
+            activityStreaming = true;
+            activityContext.setActivityListener(msg -> {
+                if (!activityStreaming) return;
+                ui.access(() -> {
+                    addToolMessage(msg);
+                    ui.push();
+                });
+            });
+
+            // Create the streaming bubble on the UI thread before subscribing
+            Span contentSpan = startAiStreamingBubble();
+            ui.push();
+
+            StringBuilder accumulator = new StringBuilder();
+
+            Disposable subscription = aiAssistantService.streamQuery(username, effectiveQuery, conversationId, capturedToken)
+                    .doOnNext(token -> {
+                        accumulator.append(token);
+                        ui.access(() -> {
+                            contentSpan.setText(accumulator.toString());
+                            scrollToBottom();
+                            ui.push();
+                        });
+                    })
+                    .doOnError(err -> {
+                        log.error("Streaming error during AI query", err);
+                        ui.access(() -> {
+                            // Replace the streaming bubble's content with an error indicator
+                            contentSpan.setText("⚠️ Error: " + err.getMessage());
                             activityStreaming = false;
-                            if (activityContextRef[0] != null) activityContextRef[0].setActivityListener(null);
+                            activityContext.setActivityListener(null);
                             submitButton.setEnabled(true);
                             ui.push();
-                        }
-                    });
-                } catch (Exception e) {
-                    log.error("Error processing AI query", e);
-                    ui.access(() -> {
-                        try {
-                            removeLastMessage();
-                            log.error("Error processing AI query: {}", e.getMessage(), e);
-                            addErrorMessage("Error: " + e.getMessage());
-                        } catch (Exception ex) {
-                            log.error("Error updating UI with error message", ex);
-                        } finally {
+                        });
+                    })
+                    .doFinally(signal -> {
+                        String finalText = aiAssistantService.removeThinkingFromResponse(accumulator.toString());
+                        log.info("AI streaming complete: {} characters, signal={}", finalText != null ? finalText.length() : 0, signal);
+                        ui.access(() -> {
+                            // Apply cleaned text (removes any <think>…</think> remnants)
+                            if (finalText != null && !finalText.isEmpty()) {
+                                contentSpan.setText(finalText);
+                            }
+                            snapshotMessage("ai", finalText != null ? finalText : accumulator.toString());
+                            if (onAiReply != null) {
+                                onAiReply.run();
+                            }
                             activityStreaming = false;
-                            if (activityContextRef[0] != null) activityContextRef[0].setActivityListener(null);
+                            activityContext.setActivityListener(null);
                             submitButton.setEnabled(true);
                             ui.push();
-                        }
-                    });
-                }
-            }).start();
+                        });
+                    })
+                    .subscribe();
         });
     }
 
@@ -529,6 +531,27 @@ public class ChatAgentPanel extends VerticalLayout {
             }
             sessionMessages.add(new ChatPanelSessionState.ChatMessageRecord(role, text));
         }
+    }
+
+    /**
+     * Creates an empty AI message bubble and returns the inner content Span so tokens
+     * can be appended to it in-place as they arrive from the streaming response.
+     */
+    private Span startAiStreamingBubble() {
+        Div messageDiv = new Div();
+        messageDiv.addClassNames(LumoUtility.BorderRadius.SMALL, LumoUtility.Background.SUCCESS_10);
+        messageDiv.getStyle()
+                .set("padding", "1px 4px")
+                .set("margin-bottom", "2px");
+        Span icon = new Span("🤖 Kassandra: ");
+        icon.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
+        Span content = new Span();
+        content.setId(AI_LAST_RESPONSE);
+        content.getStyle().set("white-space", "pre-wrap");
+        messageDiv.add(icon, content);
+        conversationHistory.add(messageDiv);
+        scrollToBottom();
+        return content;
     }
 
     /**

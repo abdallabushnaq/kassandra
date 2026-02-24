@@ -34,44 +34,58 @@ import java.util.Base64;
 
 /**
  * Provides authentication for AI API calls.
- * Uses the current user's OIDC token from the SecurityContext.
- * The token is captured when captureCurrentUserToken() is called (typically at the start of an AI query)
- * and then used for all subsequent tool calls within that request.
  * <p>
- * In production (with Keycloak), OAuth2 tokens are used.
+ * Token propagation uses Spring AI's {@link org.springframework.ai.chat.model.ToolContext}:
+ * the OIDC token is captured on the Vaadin UI thread, passed into the ChatClient via
+ * {@code .toolContext(map)}, and extracted in each @Tool method via
+ * {@link de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper#setup}.
+ * The helper sets a short-lived ThreadLocal that survives only for the synchronous
+ * RestTemplate call within the same stack frame.
+ * <p>
  * In unit tests (with @WithMockUser), falls back to basic authentication using TEST_PASSWORD.
  */
 @Component
 @Slf4j
 public class AuthenticationProvider {
 
+    /**
+     * Short-lived ThreadLocal set by {@link de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper#setup}
+     * at the top of each @Tool method and cleared in its finally block.
+     * Only needs to survive the synchronous RestTemplate call within that method.
+     */
     private static final ThreadLocal<String> currentUserToken = new ThreadLocal<>();
 
     @Autowired(required = false)
     private OAuth2AuthorizedClientService authorizedClientService;
 
+    /**
+     * Captures the OIDC token from the current SecurityContext (must be called on
+     * the request/UI thread where the SecurityContext is available).
+     *
+     * @return the raw bearer token string, or null if not available (e.g. test mode)
+     */
     public String captureCurrentUserToken() {
         String token = getTokenFromSecurityContext();
         if (token != null) {
-            currentUserToken.set(token);
             log.debug("Captured user token for AI tools");
             return token;
         } else {
-            // Check if we have basic auth available as fallback
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated()
                     && !(authentication instanceof OAuth2AuthenticationToken)) {
                 log.debug("No OAuth2 token available, will use basic auth fallback for user: {}", authentication.getName());
-                return null; // null is OK, createAuthHeaders will handle it
+                return null;
             }
             log.warn("No token available to capture for AI tools");
             return null;
         }
     }
 
-    public void clearCapturedToken() {
+    /**
+     * Clear the token from the current thread. Called by {@link de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper#cleanup}.
+     */
+    public static void clearCurrentToken() {
         currentUserToken.remove();
-        log.debug("Cleared captured AI token");
     }
 
     public HttpHeaders createAuthHeaders() {
@@ -80,23 +94,19 @@ public class AuthenticationProvider {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         if (token != null) {
-            // Use captured OAuth2 token (production flow with Keycloak)
             headers.setBearerAuth(token);
             log.debug("Using captured OAuth2 token for authentication");
         } else {
             // Fallback to basic auth (test flow with @WithMockUser)
-            // This ensures AI tools work in unit tests that use basic authentication
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated()
                     && !(authentication instanceof OAuth2AuthenticationToken)) {
-                // We have non-OAuth2 authentication (e.g., test context with @WithMockUser)
                 String username    = authentication.getName();
                 String password    = SecurityConfig.TEST_PASSWORD;
                 String auth        = username + ":" + password;
                 byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
                 String authHeader  = "Basic " + new String(encodedAuth);
                 headers.set("Authorization", authHeader);
-//                log.debug("Using basic auth fallback for user: {}", username);
             } else {
                 log.warn("No authentication token available (neither OAuth2 nor basic)");
             }
@@ -105,7 +115,12 @@ public class AuthenticationProvider {
         return headers;
     }
 
-    private String getTokenFromSecurityContext() {
+    /**
+     * Reads the OIDC token from the current SecurityContext.
+     * Public so that callers (e.g. ChatAgentPanel) can capture the raw token string
+     * on the UI thread before passing it into the AI pipeline via ToolContext.
+     */
+    public String getTokenFromSecurityContext() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
             String clientRegistrationId = oauthToken.getAuthorizedClientRegistrationId();
@@ -119,13 +134,11 @@ public class AuthenticationProvider {
     }
 
     /**
-     * Sets a specific token for MCP authentication.
-     * Useful for testing or when the token is obtained externally.
+     * Set the token on the current thread. Called by {@link de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper#setup}.
      */
-    public void setToken(String token) {
+    public static void setCurrentToken(String token) {
         if (token != null && !token.isEmpty()) {
             currentUserToken.set(token);
-            log.debug("Set explicit token for MCP tools");
         }
     }
 }
