@@ -38,22 +38,6 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class SprintTools {
-    private static final String SPRINT_FIELDS             = """
-            sprintId (number): Unique identifier of the sprint,
-            name (string): The sprint name,
-            featureId (number): The feature this sprint belongs to,
-            userId (number): The user this sprint is assigned to,
-            start (ISO 8601 datetime string): Sprint start,
-            end (ISO 8601 datetime string): Sprint end,
-            releaseDate (ISO 8601 datetime string): Calculated release date,
-            originalEstimation (ISO 8601 duration string): Original estimation,
-            remaining (ISO 8601 duration string): Remaining work,
-            worked (ISO 8601 duration string): Worked time,
-            status (string): Sprint status,
-            avatarHash (string): Avatar hash
-            """;
-    private static final String RETURNS_SPRINT_ARRAY_JSON = "Returns: JSON array of Sprint objects. Each Sprint contains: " + SPRINT_FIELDS;
-    private static final String RETURNS_SPRINT_JSON       = "Returns: JSON Sprint object with fields: " + SPRINT_FIELDS;
 
     @Autowired
     private JsonMapper jsonMapper;
@@ -62,11 +46,9 @@ public class SprintTools {
     @Qualifier("aiSprintApi")
     private SprintApi sprintApi;
 
-    @Tool(description = "Create a new sprint (requires USER or ADMIN role). " +
-            "IMPORTANT: The returned JSON includes an 'sprintId' field - you MUST extract and use this ID for subsequent operations (like deleting this sprint). " +
-            RETURNS_SPRINT_JSON)
+    @Tool(description = "Create a new sprint for a feature.")
     public String createSprint(
-            @ToolParam(description = "The sprint name (must be unique)") String name,
+            @ToolParam(description = "Unique sprint name") String name,
             @ToolParam(description = "The featureId this sprint belongs to") Long featureId) {
         try {
             Sprint sprint = new Sprint();
@@ -82,10 +64,7 @@ public class SprintTools {
         }
     }
 
-    @Tool(description = "Delete a sprint by ID (requires access or admin role). " +
-            "IMPORTANT: You must provide the exact sprint ID. If you just created a sprint, use the 'id' field from the createSprint response. " +
-            "Do NOT guess or use a different sprint's ID. " +
-            "Returns: Success message (string) confirming deletion")
+    @Tool(description = "Delete a sprint by its sprintId.")
     public String deleteSprint(
             @ToolParam(description = "The sprintId") Long sprintId) {
         try {
@@ -106,7 +85,7 @@ public class SprintTools {
         }
     }
 
-    @Tool(description = "Get a list of all sprints accessible to the current user. " + RETURNS_SPRINT_ARRAY_JSON)
+    @Tool(description = "Get all sprints accessible to the current user.")
     public String getAllSprints() {
         try {
             List<Sprint> sprints = sprintApi.getAll();
@@ -121,7 +100,7 @@ public class SprintTools {
         }
     }
 
-    @Tool(description = "Get a list of all sprints for a feature (requires access or admin role). " + RETURNS_SPRINT_ARRAY_JSON)
+    @Tool(description = "Get all sprints for a feature.")
     public String getAllSprintsByFeatureId(
             @ToolParam(description = "The featureId") Long featureId) {
         try {
@@ -138,7 +117,7 @@ public class SprintTools {
         }
     }
 
-    @Tool(description = "Get a specific sprint by its ID (requires access or admin role). " + RETURNS_SPRINT_JSON)
+    @Tool(description = "Get a sprint by its sprintId.")
     public String getSprintById(
             @ToolParam(description = "The sprintId") Long sprintId) {
         try {
@@ -155,7 +134,7 @@ public class SprintTools {
         }
     }
 
-    @Tool(description = "Get a specific sprint by its name within a feature. " + RETURNS_SPRINT_JSON)
+    @Tool(description = "Get a sprint by name within a feature.")
     public String getSprintByName(
             @ToolParam(description = "The featureId the sprint belongs to") Long featureId,
             @ToolParam(description = "The sprint name") String name) {
@@ -176,7 +155,7 @@ public class SprintTools {
         }
     }
 
-    @Tool(description = "Update an existing sprint (requires access or admin role). " + RETURNS_SPRINT_JSON)
+    @Tool(description = "Update a sprint name by its sprintId.")
     public String updateSprint(
             @ToolParam(description = "The sprintId") Long sprintId,
             @ToolParam(description = "The new sprint name") String name) {

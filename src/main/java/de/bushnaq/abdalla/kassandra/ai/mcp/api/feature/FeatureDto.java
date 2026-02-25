@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ai.mcp.api.feature;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -30,13 +31,19 @@ import java.time.OffsetDateTime;
 @Data
 @NoArgsConstructor
 @JsonPropertyOrder({"featureId", "name", "versionId", "created", "updated", "avatarPrompt"})
+@Schema(description = "A feature belonging to a version")
 public class FeatureDto {
+    @Schema(description = "Stable-diffusion prompt used to generate the feature avatar")
     private String         avatarPrompt;
-    //    private String         avatarPrompt;
+    @Schema(description = "Timestamp when the feature was created (ISO 8601)")
     private OffsetDateTime created;
+    @Schema(description = "Unique feature identifier; use this ID in subsequent operations")
     private Long           featureId;
+    @Schema(description = "Unique feature name")
     private String         name;
+    @Schema(description = "Timestamp when the feature was last updated (ISO 8601)")
     private OffsetDateTime updated;
+    @Schema(description = "Version this feature belongs to")
     private Long           versionId;
 
     /**

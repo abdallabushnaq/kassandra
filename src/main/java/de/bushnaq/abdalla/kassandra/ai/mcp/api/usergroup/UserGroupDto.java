@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ai.mcp.api.usergroup;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,18 +29,24 @@ import java.util.Set;
 
 /**
  * Simplified UserGroup DTO for AI tools.
- * Contains only fields relevant for AI interactions.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonPropertyOrder({"groupId", "name", "description", "memberIds", "created", "updated"})
+@Schema(description = "A user group used for product access control")
 public class UserGroupDto {
+    @Schema(description = "Timestamp when the group was created (ISO 8601)")
     private OffsetDateTime created;
+    @Schema(description = "Human-readable description of the group", nullable = true)
     private String         description;
+    @Schema(description = "Unique group identifier; use this ID in subsequent operations")
     private Long           groupId;
+    @Schema(description = "Set of user IDs that are members of this group")
     private Set<Long>      memberIds;
+    @Schema(description = "Unique group name")
     private String         name;
+    @Schema(description = "Timestamp when the group was last updated (ISO 8601)")
     private OffsetDateTime updated;
 
     public static UserGroupDto from(UserGroup group) {
@@ -65,4 +72,3 @@ public class UserGroupDto {
         return group;
     }
 }
-

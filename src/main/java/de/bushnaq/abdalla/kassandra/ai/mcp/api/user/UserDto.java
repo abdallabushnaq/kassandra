@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ai.mcp.api.user;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,19 +29,26 @@ import java.time.LocalDate;
 
 /**
  * Simplified User DTO for AI tools.
- * Contains only fields relevant for AI interactions, excluding internal fields like avatarHash, color, calendar, etc.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonPropertyOrder({"userId", "name", "email", "color", "roles", "firstWorkingDay", "lastWorkingDay"})
+@Schema(description = "A user in the system")
 public class UserDto {
+    @Schema(description = "User color (hex RGB)")
     private Color     color;
+    @Schema(description = "User email address")
     private String    email;
+    @Schema(description = "First working day (ISO 8601 date)")
     private LocalDate firstWorkingDay;
+    @Schema(description = "Last working day (ISO 8601 date); null means still employed", nullable = true)
     private LocalDate lastWorkingDay;
+    @Schema(description = "Unique user name")
     private String    name;
+    @Schema(description = "Comma-separated roles: ROLE_USER or ROLE_ADMIN")
     private String    roles;
+    @Schema(description = "Unique user identifier; use this ID in subsequent operations")
     private Long      userId;
 
     /**

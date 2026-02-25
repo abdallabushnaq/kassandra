@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,14 +34,23 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonPropertyOrder({"id", "productId", "userId", "groupId", "type", "displayName", "created", "updated"})
+@Schema(description = "An ACL entry controlling access to a product")
 public class ProductAclDto {
+    @Schema(description = "Timestamp when the entry was created (ISO 8601)")
     private OffsetDateTime               created;
+    @Schema(description = "Human-readable name of the user or group")
     private String                       displayName;
+    @Schema(description = "Group ID granted access; null for USER entries")
     private Long                         groupId;
+    @Schema(description = "Unique ACL entry identifier")
     private Long                         id;
+    @Schema(description = "Product this ACL entry belongs to")
     private Long                         productId;
+    @Schema(description = "Entry type: USER or GROUP")
     private ProductAclEntry.AclEntryType type;
+    @Schema(description = "Timestamp when the entry was last updated (ISO 8601)")
     private OffsetDateTime               updated;
+    @Schema(description = "User ID granted access; null for GROUP entries")
     private Long                         userId;
 
     public static ProductAclDto from(ProductAclEntry entry) {
@@ -59,4 +69,3 @@ public class ProductAclDto {
         return dto;
     }
 }
-

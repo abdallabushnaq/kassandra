@@ -54,35 +54,18 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class ProductTools {
-
-    /**
-     * Schema description for Product objects returned by tools.
-     * Describes the JSON structure and field meanings.
-     * Used in @Tool annotations - must be a compile-time constant.
-     */
-    private static final String                 PRODUCT_FIELDS             = """
-            productId (number): Unique identifier of the product, used to map versions to a product,
-            name (string): The product name,
-            created (ISO 8601 datetime string): Timestamp when the product was created,
-            updated (ISO 8601 datetime string): Timestamp when the product was last updated,
-            avatarPrompt (string): Default avatar prompt for stable-diffusion to generate.
-            """;
-    private static final String                 RETURNS_PRODUCT_ARRAY_JSON = "Returns: JSON array of Product objects. Each Product contains: " + PRODUCT_FIELDS;
-    private static final String                 RETURNS_PRODUCT_JSON       = "Returns: JSON Product object with fields: " + PRODUCT_FIELDS;
     @Autowired
-    private              JsonMapper             jsonMapper;
+    private   JsonMapper             jsonMapper;
     @Autowired
     @Qualifier("aiProductApi")
-    private              ProductApi             productApi;
+    private   ProductApi             productApi;
     @Autowired
-    protected            StableDiffusionService stableDiffusionService;
+    protected StableDiffusionService stableDiffusionService;
 
-    @Tool(description = "Create a new product. " +
-            "IMPORTANT: The returned JSON includes an 'productId' field - you MUST extract and use this ID for subsequent operations (like deleting this product). " +
-            RETURNS_PRODUCT_JSON)
+    @Tool(description = "Create a new product. Returns the created Product JSON including its productId.")
     public String createProduct(
-            @ToolParam(description = "The product name (must be unique)") String name,
-            @ToolParam(description = "(Optional) The product avatar stable-diffusion prompt. If null or empty, a default prompt will be generated.") String avatarPrompt) {
+            @ToolParam(description = "Unique product name") String name,
+            @ToolParam(description = "Stable-diffusion prompt for the avatar", required = false) String avatarPrompt) {
         try {
             Product product = new Product();
             product.setName(name);
@@ -116,10 +99,7 @@ public class ProductTools {
         }
     }
 
-    @Tool(description = "Delete a product and all ACL entries related to it by its productId. " +
-            "IMPORTANT: You must provide the exact productId. If you just created a product, use the 'productId' field from the createProduct response. " +
-            "Do NOT guess or use a different productId. " +
-            "Returns: Success message (string) confirming deletion")
+    @Tool(description = "Delete a product and all its ACL entries by productId.")
     public String deleteProductById(
             @ToolParam(description = "The productId") Long id) {
         try {
@@ -140,8 +120,7 @@ public class ProductTools {
         }
     }
 
-    @Tool(description = "Delete a product and all ACL entries related to it by its name. " +
-            "Returns: Success message (string) confirming deletion")
+    @Tool(description = "Delete a product and all its ACL entries by name.")
     public String deleteProductByName(
             @ToolParam(description = "The product name") String name) {
         try {
@@ -169,7 +148,7 @@ public class ProductTools {
         return image;
     }
 
-    @Tool(description = "Get a list of all products accessible to the current user. " + RETURNS_PRODUCT_ARRAY_JSON)
+    @Tool(description = "Get all products accessible to the current user.")
     public String getAllProducts() {
         try {
             List<Product> products = productApi.getAll();
@@ -184,7 +163,7 @@ public class ProductTools {
         }
     }
 
-    @Tool(description = "Get a specific product by its productId. " + RETURNS_PRODUCT_JSON)
+    @Tool(description = "Get a product by its productId.")
     public String getProductById(
             @ToolParam(description = "The productId") Long productId) {
         try {
@@ -202,7 +181,7 @@ public class ProductTools {
         }
     }
 
-    @Tool(description = "Get a specific product by its name. " + RETURNS_PRODUCT_JSON)
+    @Tool(description = "Get a product by its name.")
     public String getProductByName(String name) {
         try {
             Optional<Product> product = productApi.getByName(name);
@@ -219,7 +198,7 @@ public class ProductTools {
         }
     }
 
-    @Tool(description = "Update an existing product by its productId. " + RETURNS_PRODUCT_JSON)
+    @Tool(description = "Update an existing product by its productId.")
     public String updateProduct(
             @ToolParam(description = "The productId") Long productId,
             @ToolParam(description = "The new product name") String name) {

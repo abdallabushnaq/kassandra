@@ -48,15 +48,6 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class VersionTools {
-    private static final String VERSION_FIELDS             = """
-            versionId (number): Unique identifier of the version, used to map features to a version,
-            name (string): The version name,
-            productId (number): The product this version belongs to,
-            created (ISO 8601 datetime string): Timestamp when the version was created,
-            updated (ISO 8601 datetime string): Timestamp when the version was last updated
-            """;
-    private static final String RETURNS_VERSION_ARRAY_JSON = "Returns: JSON array of Version objects. Each Version contains: " + VERSION_FIELDS;
-    private static final String RETURNS_VERSION_JSON       = "Returns: JSON Version object with fields: " + VERSION_FIELDS;
 
     @Autowired
     private JsonMapper jsonMapper;
@@ -65,11 +56,9 @@ public class VersionTools {
     @Qualifier("aiVersionApi")
     private VersionApi versionApi;
 
-    @Tool(description = "Create a new version for a product. " +
-            "IMPORTANT: The returned JSON includes an 'versionId' field - you MUST extract and use this ID for subsequent operations (like deleting this version). " +
-            RETURNS_VERSION_JSON)
+    @Tool(description = "Create a new version for a product.")
     public String createVersion(
-            @ToolParam(description = "The version name (must be unique)") String name,
+            @ToolParam(description = "Unique version name") String name,
             @ToolParam(description = "The productId this version belongs to") Long productId) {
         try {
             Version version = new Version();
@@ -85,10 +74,7 @@ public class VersionTools {
         }
     }
 
-    @Tool(description = "Delete a version by its versionId. " +
-            "IMPORTANT: You must provide the exact versionId. If you just created a version, use the 'versionId' field from the createVersion response. " +
-            "Do NOT guess or use a different version's ID. " +
-            "Returns: Success message (string) confirming deletion")
+    @Tool(description = "Delete a version by its versionId.")
     public String deleteVersion(
             @ToolParam(description = "The versionId") Long versionId) {
         try {
@@ -109,7 +95,7 @@ public class VersionTools {
         }
     }
 
-    @Tool(description = "Get a list of all versions accessible to the current user. Good if you need to retrieve versions for all products. " + RETURNS_VERSION_ARRAY_JSON)
+    @Tool(description = "Get all versions accessible to the current user.")
     public String getAllVersions() {
         try {
             ToolActivityContextHolder.reportActivity("Getting all versions");
@@ -125,7 +111,7 @@ public class VersionTools {
         }
     }
 
-    @Tool(description = "Get a list of all versions for a product. " + RETURNS_VERSION_ARRAY_JSON)
+    @Tool(description = "Get all versions for a product.")
     public String getAllVersionsByProductId(
             @ToolParam(description = "The productId") Long productId) {
         try {
@@ -141,7 +127,7 @@ public class VersionTools {
         }
     }
 
-    @Tool(description = "Get a specific version by its versionId. " + RETURNS_VERSION_JSON)
+    @Tool(description = "Get a version by its versionId.")
     public String getVersionById(
             @ToolParam(description = "The versionId") Long versionId) {
         try {
@@ -158,7 +144,7 @@ public class VersionTools {
         }
     }
 
-    @Tool(description = "Update an existing version by its versionId. " + RETURNS_VERSION_JSON)
+    @Tool(description = "Update a version name by its versionId.")
     public String updateVersion(
             @ToolParam(description = "The versionId") Long versionId,
             @ToolParam(description = "The new version name") String name) {

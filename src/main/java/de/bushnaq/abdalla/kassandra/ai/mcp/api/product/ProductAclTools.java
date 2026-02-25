@@ -50,24 +50,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ProductAclTools {
 
-    /**
-     * Schema description for ProductAclEntry objects returned by tools.
-     * Describes the JSON structure and field meanings.
-     * Used in @Tool annotations - must be a compile-time constant.
-     */
-    private static final String ACL_ENTRY_FIELDS             = """
-            id (number): Unique identifier of the ACL entry,
-            productId (number): The product this ACL entry belongs to,
-            userId (number or null): The user granted access (null if this is a group entry),
-            groupId (number or null): The group granted access (null if this is a user entry),
-            type (string): Either 'USER' or 'GROUP',
-            displayName (string): Human-readable name of the user or group,
-            created (ISO 8601 datetime string): Timestamp when the entry was created,
-            updated (ISO 8601 datetime string): Timestamp when the entry was last updated.
-            """;
-    private static final String RETURNS_ACL_ENTRY_ARRAY_JSON = "Returns: JSON array of ProductAclEntry objects. Each entry contains: " + ACL_ENTRY_FIELDS;
-    private static final String RETURNS_ACL_ENTRY_JSON       = "Returns: JSON ProductAclEntry object with fields: " + ACL_ENTRY_FIELDS;
-
     @Autowired
     private JsonMapper jsonMapper;
 
@@ -75,11 +57,9 @@ public class ProductAclTools {
     @Qualifier("aiProductAclApi")
     private ProductAclApi productAclApi;
 
-    @Tool(description = "Get all ACL (Access Control List) entries for a product. " +
-            "Requires admin role or existing access to the product. " +
-            RETURNS_ACL_ENTRY_ARRAY_JSON)
+    @Tool(description = "Get all ACL entries for a product (requires admin or existing access).")
     public String getProductAcl(
-            @ToolParam(description = "The productId to retrieve ACL entries for") Long productId) {
+            @ToolParam(description = "The productId") Long productId) {
         try {
             List<ProductAclEntry> entries = productAclApi.getAcl(productId);
             ToolActivityContextHolder.reportActivity("read " + entries.size() + " ACL entries for product ID: " + productId);
@@ -93,13 +73,10 @@ public class ProductAclTools {
         }
     }
 
-    @Tool(description = "Grant a group access to a product by adding a GROUP ACL entry. " +
-            "Requires admin role or existing access to the product. " +
-            "IMPORTANT: The returned JSON includes the new ACL entry's 'id' field. " +
-            RETURNS_ACL_ENTRY_JSON)
+    @Tool(description = "Grant a group access to a product (requires admin or existing access).")
     public String grantGroupAccessToProduct(
-            @ToolParam(description = "The productId to grant access to.") Long productId,
-            @ToolParam(description = "The groupId of the group to grant access.") Long groupId) {
+            @ToolParam(description = "The productId") Long productId,
+            @ToolParam(description = "The groupId to grant access") Long groupId) {
         try {
             ProductAclEntry entry = productAclApi.grantGroupAccess(productId, groupId);
             ToolActivityContextHolder.reportActivity("Granted group " + groupId + " access to product " + productId);
@@ -111,13 +88,10 @@ public class ProductAclTools {
         }
     }
 
-    @Tool(description = "Grant a user access to a product by adding a USER ACL entry. " +
-            "Requires admin role or existing access to the product. " +
-            "IMPORTANT: The returned JSON includes the new ACL entry's 'id' field. " +
-            RETURNS_ACL_ENTRY_JSON)
+    @Tool(description = "Grant a user access to a product (requires admin or existing access).")
     public String grantUserAccessToProduct(
-            @ToolParam(description = "The productId to grant access to") Long productId,
-            @ToolParam(description = "The userId of the user to grant access") Long userId) {
+            @ToolParam(description = "The productId") Long productId,
+            @ToolParam(description = "The userId to grant access") Long userId) {
         try {
             ProductAclEntry entry = productAclApi.grantUserAccess(productId, userId);
             ToolActivityContextHolder.reportActivity("Granted user " + userId + " access to product " + productId);
@@ -129,12 +103,10 @@ public class ProductAclTools {
         }
     }
 
-    @Tool(description = "Revoke a group's access from a product by removing the GROUP ACL entry. " +
-            "Requires admin role or existing access to the product. " +
-            "Returns: Success message (string) confirming revocation")
+    @Tool(description = "Revoke a group's access from a product (requires admin or existing access).")
     public String revokeGroupAccessFromProduct(
-            @ToolParam(description = "The productId to revoke access from") Long productId,
-            @ToolParam(description = "The groupId of the group whose access should be revoked") Long groupId) {
+            @ToolParam(description = "The productId") Long productId,
+            @ToolParam(description = "The groupId to revoke") Long groupId) {
         try {
             productAclApi.revokeGroupAccess(productId, groupId);
             ToolActivityContextHolder.reportActivity("Revoked group " + groupId + " access from product " + productId);
@@ -145,12 +117,10 @@ public class ProductAclTools {
         }
     }
 
-    @Tool(description = "Revoke a user's access from a product by removing the USER ACL entry. " +
-            "Requires admin role or existing access to the product. " +
-            "Returns: Success message (string) confirming revocation")
+    @Tool(description = "Revoke a user's access from a product (requires admin or existing access).")
     public String revokeUserAccessFromProduct(
-            @ToolParam(description = "The productId to revoke access from") Long productId,
-            @ToolParam(description = "The userId of the user whose access should be revoked") Long userId) {
+            @ToolParam(description = "The productId") Long productId,
+            @ToolParam(description = "The userId to revoke") Long userId) {
         try {
             productAclApi.revokeUserAccess(productId, userId);
             ToolActivityContextHolder.reportActivity("Revoked user " + userId + " access from product " + productId);

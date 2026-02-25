@@ -52,33 +52,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserGroupTools {
 
-    /**
-     * Schema description for UserGroup objects returned by tools.
-     * Used in @Tool annotations - must be a compile-time constant.
-     */
-    private static final String GROUP_FIELDS             = """
-            groupId (number): Unique identifier of the group,
-            name (string): The group name (must be unique),
-            description (string): A human-readable description of the group,
-            memberIds (array of numbers): Set of user IDs that are members of this group,
-            created (ISO 8601 datetime string): Timestamp when the group was created,
-            updated (ISO 8601 datetime string): Timestamp when the group was last updated.
-            """;
-    private static final String RETURNS_GROUP_ARRAY_JSON = "Returns: JSON array of UserGroup objects. Each UserGroup contains: " + GROUP_FIELDS;
-    private static final String RETURNS_GROUP_JSON       = "Returns: JSON UserGroup object with fields: " + GROUP_FIELDS;
-
     @Autowired
     private JsonMapper   jsonMapper;
     @Autowired
     @Qualifier("aiUserGroupApi")
     private UserGroupApi userGroupApi;
 
-    @Tool(description = "Add a user to a user group. " +
-            "Requires ADMIN role. " +
-            "Returns: Success message (string) confirming the user was added")
+    @Tool(description = "Add a user to a group (requires ADMIN).")
     public String addMemberToGroup(
-            @ToolParam(description = "The groupId of the group to add the user to") Long groupId,
-            @ToolParam(description = "The userId of the user to add") Long userId) {
+            @ToolParam(description = "The groupId") Long groupId,
+            @ToolParam(description = "The userId to add") Long userId) {
         try {
             ToolActivityContextHolder.reportActivity("Adding user " + userId + " to group " + groupId);
             userGroupApi.addMember(groupId, userId);
@@ -90,13 +73,10 @@ public class UserGroupTools {
         }
     }
 
-    @Tool(description = "Create a new user group. " +
-            "Requires ADMIN role. " +
-            "IMPORTANT: The returned JSON includes a 'groupId' field - you MUST extract and use this ID for subsequent operations. " +
-            RETURNS_GROUP_JSON)
+    @Tool(description = "Create a new user group (requires ADMIN).")
     public String createUserGroup(
-            @ToolParam(description = "The group name (must be unique)") String name,
-            @ToolParam(description = "(Optional) A description for the group") String description) {
+            @ToolParam(description = "Unique group name") String name,
+            @ToolParam(description = "Group description", required = false) String description) {
         try {
             ToolActivityContextHolder.reportActivity("Creating user group with name: " + name);
             UserGroup group = userGroupApi.create(name, description, new HashSet<>());
@@ -108,11 +88,9 @@ public class UserGroupTools {
         }
     }
 
-    @Tool(description = "Delete a user group by its groupId. " +
-            "Requires ADMIN role. " +
-            "Returns: Success message (string) confirming deletion")
+    @Tool(description = "Delete a user group by its groupId (requires ADMIN).")
     public String deleteUserGroup(
-            @ToolParam(description = "The groupId of the group to delete") Long groupId) {
+            @ToolParam(description = "The groupId") Long groupId) {
         try {
             ToolActivityContextHolder.reportActivity("Deleting user group with ID: " + groupId);
             userGroupApi.deleteById(groupId);
@@ -124,9 +102,7 @@ public class UserGroupTools {
         }
     }
 
-    @Tool(description = "Get all user groups. " +
-            "Requires ADMIN role. " +
-            RETURNS_GROUP_ARRAY_JSON)
+    @Tool(description = "Get all user groups (requires ADMIN).")
     public String getAllUserGroups() {
         try {
             List<UserGroup> groups = userGroupApi.getAll();
@@ -141,11 +117,9 @@ public class UserGroupTools {
         }
     }
 
-    @Tool(description = "Get a user group by its ID. " +
-            "Requires ADMIN role. " +
-            RETURNS_GROUP_JSON)
+    @Tool(description = "Get a user group by its groupId (requires ADMIN).")
     public String getUserGroupById(
-            @ToolParam(description = "The groupId of the user group to retrieve") Long groupId) {
+            @ToolParam(description = "The groupId") Long groupId) {
         try {
             ToolActivityContextHolder.reportActivity("Getting user group with ID: " + groupId);
             UserGroup group = userGroupApi.getById(groupId);
@@ -159,11 +133,9 @@ public class UserGroupTools {
         }
     }
 
-    @Tool(description = "Get a user group by its name (exact match). " +
-            "Requires ADMIN role. " +
-            RETURNS_GROUP_JSON)
+    @Tool(description = "Get a user group by its name (requires ADMIN).")
     public String getUserGroupByName(
-            @ToolParam(description = "The name of the user group to retrieve") String name) {
+            @ToolParam(description = "The group name") String name) {
         try {
             ToolActivityContextHolder.reportActivity("Getting user group with name: " + name);
             return userGroupApi.getByName(name)
@@ -185,12 +157,10 @@ public class UserGroupTools {
         }
     }
 
-    @Tool(description = "Remove a user from a user group. " +
-            "Requires ADMIN role. " +
-            "Returns: Success message (string) confirming the user was removed")
+    @Tool(description = "Remove a user from a group (requires ADMIN).")
     public String removeMemberFromGroup(
-            @ToolParam(description = "The groupId of the group to remove the user from") Long groupId,
-            @ToolParam(description = "The userId of the user to remove") Long userId) {
+            @ToolParam(description = "The groupId") Long groupId,
+            @ToolParam(description = "The userId to remove") Long userId) {
         try {
             ToolActivityContextHolder.reportActivity("Removing user " + userId + " from group " + groupId);
             userGroupApi.removeMember(groupId, userId);
@@ -202,14 +172,11 @@ public class UserGroupTools {
         }
     }
 
-    @Tool(description = "Update an existing user group's name and/or description. " +
-            "Requires ADMIN role. " +
-            "The member list is preserved unless you also call addMemberToGroup or removeMemberFromGroup. " +
-            RETURNS_GROUP_JSON)
+    @Tool(description = "Update a user group's name and/or description (requires ADMIN).")
     public String updateUserGroup(
-            @ToolParam(description = "The groupId of the group to update") Long groupId,
-            @ToolParam(description = "The new name for the group (must be unique)") String name,
-            @ToolParam(description = "(Optional) The new description for the group") String description) {
+            @ToolParam(description = "The groupId") Long groupId,
+            @ToolParam(description = "New group name") String name,
+            @ToolParam(description = "New group description", required = false) String description) {
         try {
             ToolActivityContextHolder.reportActivity("Updating user group ID: " + groupId);
             UserGroup existing = userGroupApi.getById(groupId);

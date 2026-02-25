@@ -39,17 +39,6 @@ import java.util.List;
 @Component
 @Slf4j
 public class UserTools {
-    private static final String USER_FIELDS             = """
-            userId (number): Unique identifier of the user,
-            name (string): The user name,
-            email (string): The user email,
-            color (string): The user color in hex format,
-            roles (string): The user roles (comma-separated, 'ROLE_USER' or 'ROLE_ADMIN'),
-            firstWorkingDay (ISO 8601 date string): The first working day,
-            lastWorkingDay (ISO 8601 date string): The last working day
-            """;
-    private static final String RETURNS_USER_ARRAY_JSON = "Returns: JSON array of User objects. Each User contains: " + USER_FIELDS;
-    private static final String RETURNS_USER_JSON       = "Returns: JSON User object with fields: " + USER_FIELDS;
 
     @Autowired
     private JsonMapper jsonMapper;
@@ -57,17 +46,14 @@ public class UserTools {
     @Qualifier("aiUserApi")
     private UserApi    userApi;
 
-
-    @Tool(description = "Create a new user. " +
-            "IMPORTANT: The returned JSON includes an 'userId' field - you MUST extract and use this ID for subsequent operations (like deleting this user). " +
-            RETURNS_USER_JSON)
+    @Tool(description = "Create a new user.")
     public String createUser(
             @ToolParam(description = "The user name") String name,
             @ToolParam(description = "The user email address") String email,
-            @ToolParam(description = "The user color in hex format (e.g., '#FF0000' for red, '#336699' for blue). If not provided, defaults to blue.") String colorHex,
-            @ToolParam(description = "(optional) The user roles (comma-separated, 'ROLE_USER' or 'ROLE_ADMIN')") String roles,
-            @ToolParam(description = "(optional) The first working day in ISO format (YYYY-MM-DD), optional. If not provided, today's date will be used.") String firstWorkingDay,
-            @ToolParam(description = "(optional) The last working day in ISO format (YYYY-MM-DD), optional. If not provided, user is still employed.") String lastWorkingDay) {
+            @ToolParam(description = "User color in hex format (e.g. '#336699')", required = false) String colorHex,
+            @ToolParam(description = "Comma-separated roles: ROLE_USER or ROLE_ADMIN", required = false) String roles,
+            @ToolParam(description = "First working day (YYYY-MM-DD); defaults to today", required = false) String firstWorkingDay,
+            @ToolParam(description = "Last working day (YYYY-MM-DD); omit if still employed", required = false) String lastWorkingDay) {
         try {
             log.info("Creating user: name={}, email={}", name, email);
             User user = new User();
@@ -98,10 +84,7 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Delete a user by ID (requires access or admin role). " +
-            "IMPORTANT: You must provide the exact userId. If you just created a user, use the 'id' field from the createUser response. " +
-            "Do NOT guess or use a different user's ID. " +
-            "Returns: Success message (string) confirming deletion")
+    @Tool(description = "Delete a user by their userId.")
     public String deleteUser(
             @ToolParam(description = "The userId") Long userId) {
         try {
@@ -122,7 +105,7 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Get a list of all users in the system. " + RETURNS_USER_ARRAY_JSON)
+    @Tool(description = "Get all users in the system.")
     public String getAllUsers() {
         try {
             List<User> users = userApi.getAll();
@@ -135,7 +118,7 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Get a specific user by their email address. " + RETURNS_USER_JSON)
+    @Tool(description = "Get a user by their email address.")
     public String getUserByEmail(
             @ToolParam(description = "The user email address") String email) {
         try {
@@ -151,7 +134,7 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Get a specific user by their userId. " + RETURNS_USER_JSON)
+    @Tool(description = "Get a user by their userId.")
     public String getUserById(
             @ToolParam(description = "The userId") Long userId) {
         try {
@@ -167,7 +150,7 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Get a specific user by their name. " + RETURNS_USER_JSON)
+    @Tool(description = "Get a user by their name.")
     public String getUserByName(
             @ToolParam(description = "The user name") String name) {
         try {
@@ -210,7 +193,7 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Search for users by partial name match (case-insensitive). " + RETURNS_USER_ARRAY_JSON)
+    @Tool(description = "Search for users by partial name (case-insensitive).")
     public String searchUsers(
             @ToolParam(description = "Partial name to search for") String partialName) {
         try {
@@ -224,15 +207,15 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Update an existing user. " + RETURNS_USER_JSON)
+    @Tool(description = "Update an existing user by their userId.")
     public String updateUser(
             @ToolParam(description = "The userId") Long userId,
-            @ToolParam(description = "The new user name, optional") String name,
-            @ToolParam(description = "The new user email address, optional") String email,
-            @ToolParam(description = "The new user color in hex format (e.g., '#FF0000' for red), optional") String colorHex,
-            @ToolParam(description = "The new user roles, optional") String roles,
-            @ToolParam(description = "The new first working day in ISO format (YYYY-MM-DD), optional") String firstWorkingDay,
-            @ToolParam(description = "The new last working day in ISO format (YYYY-MM-DD), optional") String lastWorkingDay) {
+            @ToolParam(description = "New user name", required = false) String name,
+            @ToolParam(description = "New email address", required = false) String email,
+            @ToolParam(description = "New color in hex format (e.g. '#FF0000')", required = false) String colorHex,
+            @ToolParam(description = "New roles (ROLE_USER or ROLE_ADMIN)", required = false) String roles,
+            @ToolParam(description = "New first working day (YYYY-MM-DD)", required = false) String firstWorkingDay,
+            @ToolParam(description = "New last working day (YYYY-MM-DD)", required = false) String lastWorkingDay) {
         try {
             User user = userApi.getById(userId);
             if (user == null) {

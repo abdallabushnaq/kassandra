@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.Product;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,11 +34,17 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonPropertyOrder({"productId", "name", "created", "updated", "avatarPrompt"})
+@Schema(description = "A product in the system")
 public class ProductDto {
+    @Schema(description = "Stable-diffusion prompt used to generate the product avatar")
     private String         avatarPrompt;
+    @Schema(description = "Timestamp when the product was created (ISO 8601)")
     private OffsetDateTime created;
+    @Schema(description = "Unique product name")
     private String         name;
+    @Schema(description = "Unique product identifier; use this ID in subsequent operations")
     private Long           productId;
+    @Schema(description = "Timestamp when the product was last updated (ISO 8601)")
     private OffsetDateTime updated;
 
 

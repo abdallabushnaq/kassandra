@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ai.mcp.api.version;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.Version;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,17 +28,22 @@ import java.time.OffsetDateTime;
 
 /**
  * Simplified Version DTO for AI tools.
- * Contains only fields relevant for AI interactions, excluding internal fields.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonPropertyOrder({"versionId", "name", "productId", "created", "updated"})
+@Schema(description = "A version belonging to a product")
 public class VersionDto {
+    @Schema(description = "Timestamp when the version was created (ISO 8601)")
     private OffsetDateTime created;
+    @Schema(description = "Unique version name")
     private String         name;
+    @Schema(description = "Product this version belongs to")
     private Long           productId;
+    @Schema(description = "Timestamp when the version was last updated (ISO 8601)")
     private OffsetDateTime updated;
+    @Schema(description = "Unique version identifier; use this ID in subsequent operations")
     private Long           versionId;
 
     /**

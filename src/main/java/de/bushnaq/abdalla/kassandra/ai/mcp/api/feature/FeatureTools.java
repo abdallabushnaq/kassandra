@@ -54,36 +54,19 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FeatureTools {
 
-    /**
-     * Schema description for Feature objects returned by tools.
-     * Describes the JSON structure and field meanings.
-     * Used in @Tool annotations - must be a compile-time constant.
-     */
-    private static final String                 FEATURE_FIELDS             = """
-            featureId (number): Unique identifier of the feature, used to map sprints to a feature,
-            name (string): The feature name,
-            versionId (number): The version this feature belongs to,
-            created (ISO 8601 datetime string): Timestamp when the feature was created,
-            updated (ISO 8601 datetime string): Timestamp when the feature was last updated,
-            avatarPrompt (string): Default avatar prompt for stable-diffusion to generate.
-            """;
-    private static final String                 RETURNS_FEATURE_ARRAY_JSON = "Returns: JSON array of Feature objects. Each Feature contains: " + FEATURE_FIELDS;
-    private static final String                 RETURNS_FEATURE_JSON       = "Returns: JSON Feature object with fields: " + FEATURE_FIELDS;
     @Autowired
     @Qualifier("aiFeatureApi")
-    private              FeatureApi             featureApi;
+    private   FeatureApi             featureApi;
     @Autowired
-    private              JsonMapper             jsonMapper;
+    private   JsonMapper             jsonMapper;
     @Autowired
-    protected            StableDiffusionService stableDiffusionService;
+    protected StableDiffusionService stableDiffusionService;
 
-    @Tool(description = "Create a new feature for a specific version. " +
-            "IMPORTANT: The returned JSON includes an 'featureId' field - you MUST extract and use this ID for subsequent operations (like deleting or updating this feature). " +
-            RETURNS_FEATURE_JSON)
+    @Tool(description = "Create a new feature for a version.")
     public String createFeature(
-            @ToolParam(description = "The feature name (must be unique)") String name,
+            @ToolParam(description = "Unique feature name") String name,
             @ToolParam(description = "The versionId this feature belongs to") Long versionId,
-            @ToolParam(description = "(Optional) The feature avatar stable-diffusion prompt. If null or empty, a default prompt will be generated.") String avatarPrompt) {
+            @ToolParam(description = "Stable-diffusion prompt for the avatar", required = false) String avatarPrompt) {
         try {
             Feature feature = new Feature();
             feature.setName(name);
@@ -119,10 +102,7 @@ public class FeatureTools {
         }
     }
 
-    @Tool(description = "Delete a feature by its featureId. " +
-            "IMPORTANT: You must provide the exact featureId. If you just created a feature, use the 'featureId' field from the createFeature response. " +
-            "Do NOT guess or use a different featureId. " +
-            "Returns: Success message (string) confirming deletion")
+    @Tool(description = "Delete a feature by its featureId.")
     public String deleteFeature(
             @ToolParam(description = "The featureId") Long featureId) {
         try {
@@ -151,7 +131,7 @@ public class FeatureTools {
     }
 
 
-    @Tool(description = "Get a list of all features accessible to the current user (Admin sees all). Good if you need to retrieve features for all versions or all possible products. " + RETURNS_FEATURE_ARRAY_JSON)
+    @Tool(description = "Get all features accessible to the current user.")
     public String getAllFeatures() {
         try {
             ToolActivityContextHolder.reportActivity("Getting all features");
@@ -167,9 +147,9 @@ public class FeatureTools {
         }
     }
 
-    @Tool(description = "Get a list of all features for a version (requires access or admin role). This can be used to retrieve all features belonging to a specific product version. " + RETURNS_FEATURE_ARRAY_JSON)
+    @Tool(description = "Get all features for a version.")
     public String getAllFeaturesByVersionId(
-            @ToolParam(description = "The versionId (use VersionTools to get version IDs for a product)") Long versionId) {
+            @ToolParam(description = "The versionId") Long versionId) {
         try {
             ToolActivityContextHolder.reportActivity("Getting all features for version ID: " + versionId);
             List<Feature> features = featureApi.getAll(versionId);
@@ -184,7 +164,7 @@ public class FeatureTools {
         }
     }
 
-    @Tool(description = "Get a specific feature by its ID (requires access or admin role). " + RETURNS_FEATURE_JSON)
+    @Tool(description = "Get a feature by its featureId.")
     public String getFeatureById(
             @ToolParam(description = "The featureId") Long featureId) {
         try {
@@ -201,7 +181,7 @@ public class FeatureTools {
         }
     }
 
-    @Tool(description = "Get a specific feature by its name within a version. " + RETURNS_FEATURE_JSON)
+    @Tool(description = "Get a feature by name within a version.")
     public String getFeatureByName(
             @ToolParam(description = "The versionId the feature belongs to") Long versionId,
             @ToolParam(description = "The feature name") String name) {
@@ -222,7 +202,7 @@ public class FeatureTools {
         }
     }
 
-    @Tool(description = "Update an existing feature name by its featureId. " + RETURNS_FEATURE_JSON)
+    @Tool(description = "Update a feature name by its featureId.")
     public String updateFeature(
             @ToolParam(description = "The featureId") Long id,
             @ToolParam(description = "The new feature name") String name) {
