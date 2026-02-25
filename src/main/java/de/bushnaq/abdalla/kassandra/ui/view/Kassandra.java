@@ -25,7 +25,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
@@ -57,7 +56,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
     private final        ChatPanelSessionState sessionState;
     private final        UserApi               userApi;
 
-    public Kassandra(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi,
+    public Kassandra(AiAssistantService aiAssistantService, UserApi userApi,
                      ChatPanelSessionState chatPanelSessionState) {
         this.userApi      = userApi;
         this.sessionState = chatPanelSessionState;
@@ -100,7 +99,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
                 .set("flex-direction", "column")
                 .set("overflow", "hidden");
 
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi, chatPanelSessionState);
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState);
         rightPanel.add(chatAgentPanel);
 
         mainContent.add(leftPanel, rightPanel);

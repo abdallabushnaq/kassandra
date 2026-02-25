@@ -33,11 +33,12 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.SessionToolActivityContext;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import reactor.core.Disposable;
 
 import java.util.List;
@@ -65,7 +66,6 @@ public class ChatAgentPanel extends VerticalLayout {
      */
     private             String                                        currentRouteKey;
     private             User                                          currentUser;
-    private final       AuthenticationProvider                        mcpAuthProvider;
     /**
      * Called on the UI thread after every successful AI reply — use to refresh the host view's grid.
      */
@@ -84,13 +84,12 @@ public class ChatAgentPanel extends VerticalLayout {
      */
     private             String                                        viewContext       = null;
 
-    public ChatAgentPanel(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi) {
-        this(aiAssistantService, mcpAuthProvider, userApi, null);
+    public ChatAgentPanel(AiAssistantService aiAssistantService, UserApi userApi) {
+        this(aiAssistantService, userApi, null);
     }
 
-    public ChatAgentPanel(AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider, UserApi userApi, ChatPanelSessionState sessionState) {
+    public ChatAgentPanel(AiAssistantService aiAssistantService, UserApi userApi, ChatPanelSessionState sessionState) {
         this.aiAssistantService = aiAssistantService;
-        this.mcpAuthProvider    = mcpAuthProvider;
         this.userApi            = userApi;
         this.sessionState       = sessionState;
         // sessionMessages and conversationId are set by restoreOrStart() on first afterNavigation call.
@@ -355,8 +354,8 @@ public class ChatAgentPanel extends VerticalLayout {
                 ? "[Context: " + viewContext + "]\n" + query
                 : query;
 
-        String       capturedToken = mcpAuthProvider.captureCurrentUserToken();
-        final String username      = SecurityUtils.getUserEmail();
+        SecurityContext capturedSecurityContext = SecurityContextHolder.getContext();
+        final String    username                = SecurityUtils.getUserEmail();
 
         getUI().ifPresent(ui -> {
             // Set up tool activity streaming listener before subscribing
@@ -376,7 +375,7 @@ public class ChatAgentPanel extends VerticalLayout {
 
             StringBuilder accumulator = new StringBuilder();
 
-            Disposable subscription = aiAssistantService.streamQuery(username, effectiveQuery, conversationId, capturedToken)
+            Disposable subscription = aiAssistantService.streamQuery(username, effectiveQuery, conversationId, capturedSecurityContext)
                     .doOnNext(token -> {
                         accumulator.append(token);
                         ui.access(() -> {

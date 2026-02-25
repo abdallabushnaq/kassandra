@@ -38,6 +38,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.augment.AugmentedToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -265,10 +267,11 @@ public class AiAssistantService {
                     .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4), augmentedToolCallbackProvider.get(5), augmentedToolCallbackProvider.get(6))
                     .build();
 
-            // Build toolContext with auth token and activity context for propagation
+            // Build toolContext with SecurityContext and activity context for propagation
             // to @Tool methods on any thread Spring AI may use.
             SessionToolActivityContext    activityCtx    = activityContexts.computeIfAbsent(conversationId, id -> new SessionToolActivityContext());
-            java.util.Map<String, Object> toolContextMap = ToolContextHelper.buildContextMap(null, activityCtx);
+            SecurityContext               securityCtx    = SecurityContextHolder.getContext();
+            java.util.Map<String, Object> toolContextMap = ToolContextHelper.buildContextMap(securityCtx, activityCtx);
 
             ChatResponse chatResponse = chatClient.prompt(userQuery)
                     .toolContext(toolContextMap)
@@ -375,19 +378,21 @@ public class AiAssistantService {
      * <p>
      * Authentication and activity context are propagated to @Tool methods via Spring AI's
      * {@link org.springframework.ai.chat.model.ToolContext}, not ThreadLocals.
+     * The full {@link SecurityContext} is passed so that {@code AbstractApi.createAuthHeaders()}
+     * works natively on the tool-execution thread.
      * <p>
      * Note: thinking tokens (e.g. {@code <think>…</think>}) may appear in the stream briefly.
      * The caller is responsible for stripping them from the accumulated text at completion
      * using {@link #removeThinkingFromResponse(String)}.
      *
-     * @param username       The username of the requesting user (for logging)
-     * @param userQuery      The user's query
-     * @param conversationId Unique identifier for this conversation session
-     * @param capturedToken  OIDC bearer token captured on the UI thread (may be null for test mode)
+     * @param username                The username of the requesting user (for logging)
+     * @param userQuery               The user's query
+     * @param conversationId          Unique identifier for this conversation session
+     * @param capturedSecurityContext Spring SecurityContext captured on the UI thread (may be null for test mode)
      * @return Flux of raw text token chunks
      */
     public Flux<String> streamQuery(String username, String userQuery, String conversationId,
-                                    String capturedToken) {
+                                    SecurityContext capturedSecurityContext) {
         log.info("{}{}: {}{}{} [streaming]", ANSI_YELLOW, username, ANSI_BLUE, userQuery, ANSI_RESET);
 
         List<ThinkingStep> thinkingSteps = new ArrayList<>();
@@ -405,10 +410,10 @@ public class AiAssistantService {
                 .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4), augmentedToolCallbackProvider.get(5), augmentedToolCallbackProvider.get(6))
                 .build();
 
-        // Build toolContext with auth token and activity context — propagated to every
+        // Build toolContext with SecurityContext and activity context — propagated to every
         // @Tool method by Spring AI regardless of which thread executes the tool.
         SessionToolActivityContext    activityCtx    = activityContexts.computeIfAbsent(conversationId, id -> new SessionToolActivityContext());
-        java.util.Map<String, Object> toolContextMap = ToolContextHelper.buildContextMap(capturedToken, activityCtx);
+        java.util.Map<String, Object> toolContextMap = ToolContextHelper.buildContextMap(capturedSecurityContext, activityCtx);
 
         return chatClient.prompt(userQuery)
                 .toolContext(toolContextMap)

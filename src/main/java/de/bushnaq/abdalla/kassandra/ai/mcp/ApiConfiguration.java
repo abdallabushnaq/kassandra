@@ -17,14 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp;
 
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.feature.FeatureApiAdapter;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.product.ProductAclApiAdapter;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.product.ProductApiAdapter;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint.SprintApiAdapter;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.user.UserApiAdapter;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.usergroup.UserGroupApiAdapter;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.version.VersionApiAdapter;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -34,57 +26,53 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Configuration for AI-specific API beans.
- * Creates API instances that use the current user's OIDC token for authentication.
+ * <p>
+ * These are plain *Api instances (not adapters). The SecurityContext is propagated to the
+ * tool-execution thread via {@link ToolContextHelper}, so {@code AbstractApi.createAuthHeaders()}
+ * works natively — no adapter override is needed.
  */
 @Configuration
 public class ApiConfiguration {
 
     @Bean
     @Qualifier("aiFeatureApi")
-    public FeatureApi aiFeatureApi(RestTemplate restTemplate, JsonMapper jsonMapper,
-                                   AuthenticationProvider authProvider) {
-        return new FeatureApiAdapter(restTemplate, jsonMapper, authProvider);
+    public FeatureApi aiFeatureApi(RestTemplate restTemplate, JsonMapper jsonMapper) {
+        return new FeatureApi(restTemplate, jsonMapper);
     }
 
     @Bean
     @Qualifier("aiProductAclApi")
-    public ProductAclApi aiProductAclApi(RestTemplate restTemplate, JsonMapper jsonMapper,
-                                         AuthenticationProvider authProvider) {
-        return new ProductAclApiAdapter(restTemplate, jsonMapper, authProvider);
+    public ProductAclApi aiProductAclApi(RestTemplate restTemplate, JsonMapper jsonMapper) {
+        return new ProductAclApi(restTemplate, jsonMapper);
     }
 
     @Bean
     @Qualifier("aiProductApi")
-    public ProductApi aiProductApi(RestTemplate restTemplate, JsonMapper jsonMapper,
-                                   AuthenticationProvider authProvider) {
-        return new ProductApiAdapter(restTemplate, jsonMapper, authProvider);
+    public ProductApi aiProductApi(RestTemplate restTemplate, JsonMapper jsonMapper) {
+        return new ProductApi(restTemplate, jsonMapper);
     }
 
     @Bean
     @Qualifier("aiSprintApi")
-    public SprintApi aiSprintApi(RestTemplate restTemplate, JsonMapper jsonMapper,
-                                 AuthenticationProvider authProvider) {
-        return new SprintApiAdapter(restTemplate, jsonMapper, authProvider);
+    public SprintApi aiSprintApi(RestTemplate restTemplate, JsonMapper jsonMapper) {
+        return new SprintApi(restTemplate, jsonMapper);
     }
 
     @Bean
     @Qualifier("aiUserApi")
-    public UserApi aiUserApi(RestTemplate restTemplate, JsonMapper jsonMapper,
-                             AuthenticationProvider authProvider) {
-        return new UserApiAdapter(restTemplate, jsonMapper, authProvider);
+    public UserApi aiUserApi(RestTemplate restTemplate, JsonMapper jsonMapper) {
+        return new UserApi(restTemplate, jsonMapper);
     }
 
     @Bean
     @Qualifier("aiUserGroupApi")
-    public UserGroupApi aiUserGroupApi(RestTemplate restTemplate, JsonMapper jsonMapper,
-                                       AuthenticationProvider authProvider) {
-        return new UserGroupApiAdapter(restTemplate, jsonMapper, authProvider);
+    public UserGroupApi aiUserGroupApi(RestTemplate restTemplate, JsonMapper jsonMapper) {
+        return new UserGroupApi(restTemplate, jsonMapper);
     }
 
     @Bean
     @Qualifier("aiVersionApi")
-    public VersionApi aiVersionApi(RestTemplate restTemplate, JsonMapper jsonMapper,
-                                   AuthenticationProvider authProvider) {
-        return new VersionApiAdapter(restTemplate, jsonMapper, authProvider);
+    public VersionApi aiVersionApi(RestTemplate restTemplate, JsonMapper jsonMapper) {
+        return new VersionApi(restTemplate, jsonMapper);
     }
 }

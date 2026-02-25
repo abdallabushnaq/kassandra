@@ -31,7 +31,6 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.Product;
@@ -91,7 +90,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
 
     public ProductListView(ProductApi productApi, ProductAclApi productAclApi, UserApi userApi, UserGroupApi userGroupApi,
                            Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService,
-                           AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider,
+                           AiAssistantService aiAssistantService,
                            ChatPanelSessionState chatPanelSessionState) {
         super(clock);
         this.productApi             = productApi;
@@ -123,7 +122,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         addHeaderButton(aiToggleButton);
 
         // Chat panel (session-aware: reuses conversationId + replays history on F5)
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi, chatPanelSessionState);
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState);
         chatAgentPanel.setSizeFull();
 
         chatPane = new Div(chatAgentPanel);

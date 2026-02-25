@@ -30,7 +30,6 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Version;
@@ -78,7 +77,6 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     private final        Div                                 chatPane;
     private              com.vaadin.flow.component.Component headerComponent;
     private final        JsonMapper                          mapper;
-    private final        AuthenticationProvider              mcpAuthProvider;
     private final        ProductApi                          productApi;
     private              Long                                productId;
     private final        ChatPanelSessionState               sessionState;
@@ -87,7 +85,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
 
     public VersionListView(VersionApi versionApi, ProductApi productApi, UserApi userApi, Clock clock,
                            AiFilterService aiFilterService, JsonMapper mapper,
-                           AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider,
+                           AiAssistantService aiAssistantService,
                            ChatPanelSessionState chatPanelSessionState) {
         super(clock);
         this.versionApi         = versionApi;
@@ -96,7 +94,6 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         this.aiFilterService    = aiFilterService;
         this.mapper             = mapper;
         this.aiAssistantService = aiAssistantService;
-        this.mcpAuthProvider    = mcpAuthProvider;
         this.sessionState       = chatPanelSessionState;
 
         // AI toggle button — added to header later in addHeader() once we have the product
@@ -105,7 +102,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
 
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi, chatPanelSessionState);
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState);
         chatAgentPanel.setSizeFull();
 
         chatPane = new Div(chatAgentPanel);

@@ -99,7 +99,7 @@ mvn -B package --file pom.xml -DskipTests
 ### 2. Run fast unit tests only (recommended default)
 
 ```bash
-mvn test -Dtest="ProductApiTest,SprintApiTest,GanttTest,BurndownTest,CalendarTest"
+mvn test -Dtest="ProductApiTest,SprintApiTest,CalendarTest"
 ```
 
 - Pass any comma-separated list of `@Tag("UnitTest")` class names to `-Dtest=` to run only the fast, self-contained

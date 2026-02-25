@@ -33,7 +33,6 @@ import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
 import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
-import de.bushnaq.abdalla.kassandra.ai.mcp.api.AuthenticationProvider;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -94,7 +93,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     public SprintListView(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi,
                           UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
                           StableDiffusionService stableDiffusionService,
-                          AiAssistantService aiAssistantService, AuthenticationProvider mcpAuthProvider,
+                          AiAssistantService aiAssistantService,
                           ChatPanelSessionState chatPanelSessionState) {
         super(clock);
         this.sprintApi              = sprintApi;
@@ -116,7 +115,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
 
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, mcpAuthProvider, userApi, chatPanelSessionState);
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState);
         chatAgentPanel.setSizeFull();
 
         chatPane = new Div(chatAgentPanel);
