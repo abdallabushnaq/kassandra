@@ -18,7 +18,6 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.feature;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
-import de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
@@ -27,7 +26,6 @@ import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,9 +83,7 @@ public class FeatureTools {
     public String createFeature(
             @ToolParam(description = "The feature name (must be unique)") String name,
             @ToolParam(description = "The versionId this feature belongs to") Long versionId,
-            @ToolParam(description = "(Optional) The feature avatar stable-diffusion prompt. If null or empty, a default prompt will be generated.") String avatarPrompt,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "(Optional) The feature avatar stable-diffusion prompt. If null or empty, a default prompt will be generated.") String avatarPrompt) {
         try {
             Feature feature = new Feature();
             feature.setName(name);
@@ -120,8 +116,6 @@ public class FeatureTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Failed creating feature: " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -130,9 +124,7 @@ public class FeatureTools {
             "Do NOT guess or use a different featureId. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteFeature(
-            @ToolParam(description = "The featureId") Long featureId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The featureId") Long featureId) {
         try {
             // First, get the feature details to log what we're about to delete
             Feature featureToDelete = featureApi.getById(featureId);
@@ -148,8 +140,6 @@ public class FeatureTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting feature " + featureId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -162,8 +152,7 @@ public class FeatureTools {
 
 
     @Tool(description = "Get a list of all features accessible to the current user (Admin sees all). Good if you need to retrieve features for all versions or all possible products. " + RETURNS_FEATURE_ARRAY_JSON)
-    public String getAllFeatures(ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+    public String getAllFeatures() {
         try {
             ToolActivityContextHolder.reportActivity("Getting all features");
             List<Feature> features = featureApi.getAll();
@@ -175,16 +164,12 @@ public class FeatureTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting all features: " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a list of all features for a version (requires access or admin role). This can be used to retrieve all features belonging to a specific product version. " + RETURNS_FEATURE_ARRAY_JSON)
     public String getAllFeaturesByVersionId(
-            @ToolParam(description = "The versionId (use VersionTools to get version IDs for a product)") Long versionId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The versionId (use VersionTools to get version IDs for a product)") Long versionId) {
         try {
             ToolActivityContextHolder.reportActivity("Getting all features for version ID: " + versionId);
             List<Feature> features = featureApi.getAll(versionId);
@@ -196,16 +181,12 @@ public class FeatureTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting all features for version " + versionId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a specific feature by its ID (requires access or admin role). " + RETURNS_FEATURE_JSON)
     public String getFeatureById(
-            @ToolParam(description = "The featureId") Long featureId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The featureId") Long featureId) {
         try {
             ToolActivityContextHolder.reportActivity("Getting feature with ID: " + featureId);
             Feature feature = featureApi.getById(featureId);
@@ -217,17 +198,13 @@ public class FeatureTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting feature " + featureId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get a specific feature by its name within a version. " + RETURNS_FEATURE_JSON)
     public String getFeatureByName(
             @ToolParam(description = "The versionId the feature belongs to") Long versionId,
-            @ToolParam(description = "The feature name") String name,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The feature name") String name) {
         try {
             ToolActivityContextHolder.reportActivity("Getting feature with name: " + name + " in version " + versionId);
             return featureApi.getByName(versionId, name)
@@ -242,17 +219,13 @@ public class FeatureTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting feature by name " + name + ": " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Update an existing feature name by its featureId. " + RETURNS_FEATURE_JSON)
     public String updateFeature(
             @ToolParam(description = "The featureId") Long id,
-            @ToolParam(description = "The new feature name") String name,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The new feature name") String name) {
         try {
             ToolActivityContextHolder.reportActivity("Updating feature " + id + " with name: " + name);
             Feature feature = featureApi.getById(id);
@@ -266,8 +239,6 @@ public class FeatureTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error updating feature " + id + ": " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 }

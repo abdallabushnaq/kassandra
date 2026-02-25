@@ -18,11 +18,9 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
-import de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper;
 import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductAclApi;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,9 +79,7 @@ public class ProductAclTools {
             "Requires admin role or existing access to the product. " +
             RETURNS_ACL_ENTRY_ARRAY_JSON)
     public String getProductAcl(
-            @ToolParam(description = "The productId to retrieve ACL entries for") Long productId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The productId to retrieve ACL entries for") Long productId) {
         try {
             List<ProductAclEntry> entries = productAclApi.getAcl(productId);
             ToolActivityContextHolder.reportActivity("read " + entries.size() + " ACL entries for product ID: " + productId);
@@ -94,8 +90,6 @@ public class ProductAclTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting ACL for product " + productId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -105,11 +99,8 @@ public class ProductAclTools {
             RETURNS_ACL_ENTRY_JSON)
     public String grantGroupAccessToProduct(
             @ToolParam(description = "The productId to grant access to.") Long productId,
-            @ToolParam(description = "The groupId of the group to grant access.") Long groupId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The groupId of the group to grant access.") Long groupId) {
         try {
-//            ToolActivityContextHolder.reportActivity("Granting group " + groupId + " access to product " + productId);
             ProductAclEntry entry = productAclApi.grantGroupAccess(productId, groupId);
             ToolActivityContextHolder.reportActivity("Granted group " + groupId + " access to product " + productId);
             ProductAclDto dto = ProductAclDto.from(entry);
@@ -117,8 +108,6 @@ public class ProductAclTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error granting group access: " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -128,11 +117,8 @@ public class ProductAclTools {
             RETURNS_ACL_ENTRY_JSON)
     public String grantUserAccessToProduct(
             @ToolParam(description = "The productId to grant access to") Long productId,
-            @ToolParam(description = "The userId of the user to grant access") Long userId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The userId of the user to grant access") Long userId) {
         try {
-//            ToolActivityContextHolder.reportActivity("Granting user " + userId + " access to product " + productId);
             ProductAclEntry entry = productAclApi.grantUserAccess(productId, userId);
             ToolActivityContextHolder.reportActivity("Granted user " + userId + " access to product " + productId);
             ProductAclDto dto = ProductAclDto.from(entry);
@@ -140,8 +126,6 @@ public class ProductAclTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error granting user access: " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -150,19 +134,14 @@ public class ProductAclTools {
             "Returns: Success message (string) confirming revocation")
     public String revokeGroupAccessFromProduct(
             @ToolParam(description = "The productId to revoke access from") Long productId,
-            @ToolParam(description = "The groupId of the group whose access should be revoked") Long groupId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The groupId of the group whose access should be revoked") Long groupId) {
         try {
-//            ToolActivityContextHolder.reportActivity("Revoking group " + groupId + " access from product " + productId);
             productAclApi.revokeGroupAccess(productId, groupId);
             ToolActivityContextHolder.reportActivity("Revoked group " + groupId + " access from product " + productId);
             return "Group " + groupId + " access to product " + productId + " revoked successfully";
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error revoking group access: " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -171,19 +150,14 @@ public class ProductAclTools {
             "Returns: Success message (string) confirming revocation")
     public String revokeUserAccessFromProduct(
             @ToolParam(description = "The productId to revoke access from") Long productId,
-            @ToolParam(description = "The userId of the user whose access should be revoked") Long userId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The userId of the user whose access should be revoked") Long userId) {
         try {
-//            ToolActivityContextHolder.reportActivity("Revoking user " + userId + " access from product " + productId);
             productAclApi.revokeUserAccess(productId, userId);
             ToolActivityContextHolder.reportActivity("Revoked user " + userId + " access from product " + productId);
             return "User " + userId + " access to product " + productId + " revoked successfully";
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error revoking user access: " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 }

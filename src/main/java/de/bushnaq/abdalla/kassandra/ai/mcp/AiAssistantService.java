@@ -35,6 +35,7 @@ import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.augment.AugmentedToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,10 +117,10 @@ public class AiAssistantService {
         log.info("Cleared conversation history for: {}", conversationId);
     }
 
-    private List<AugmentedToolCallbackProvider<AgentThinking>> createToolCallbackProviders(Object[] userTools, List<ThinkingStep> thinkingSteps) {
-        List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = new ArrayList<AugmentedToolCallbackProvider<AgentThinking>>();
+    private List<ToolCallbackProvider> createToolCallbackProviders(Object[] userTools, List<ThinkingStep> thinkingSteps) {
+        List<ToolCallbackProvider> providers = new ArrayList<>();
         for (Object userTool : userTools) {
-            AugmentedToolCallbackProvider<AgentThinking> toolProvider = AugmentedToolCallbackProvider
+            AugmentedToolCallbackProvider<AgentThinking> augmented = AugmentedToolCallbackProvider
                     .<AgentThinking>builder()
                     .toolObject(userTool)
                     .argumentType(AgentThinking.class)
@@ -130,9 +131,9 @@ public class AiAssistantService {
                     })
                     .removeExtraArgumentsAfterProcessing(true)
                     .build();
-            augmentedToolCallbackProvider.add(toolProvider);
+            providers.add(new ContextPropagatingToolCallbackProvider(augmented));
         }
-        return augmentedToolCallbackProvider;
+        return providers;
     }
 
     /**
@@ -254,8 +255,8 @@ public class AiAssistantService {
                     .conversationId(conversationId)
                     .build();
 
-            Object[]                                           userTools                     = {this.userTools, userGroupTools, productTools, productAclTools, versionTools, featureTools, sprintTools};
-            List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = createToolCallbackProviders(userTools, thinkingSteps);
+            Object[]                   userTools     = {this.userTools, userGroupTools, productTools, productAclTools, versionTools, featureTools, sprintTools};
+            List<ToolCallbackProvider> toolProviders = createToolCallbackProviders(userTools, thinkingSteps);
 
             // Create ChatClient with:
             // - System prompt defining the assistant's role
@@ -264,7 +265,7 @@ public class AiAssistantService {
             ChatClient chatClient = ChatClient.builder(chatModel)
                     .defaultSystem(augmentSystemPrompt(SYSTEM_PROMPT))
                     .defaultAdvisors(memoryAdvisor)
-                    .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4), augmentedToolCallbackProvider.get(5), augmentedToolCallbackProvider.get(6))
+                    .defaultToolCallbacks(toolProviders.get(0), toolProviders.get(1), toolProviders.get(2), toolProviders.get(3), toolProviders.get(4), toolProviders.get(5), toolProviders.get(6))
                     .build();
 
             // Build toolContext with SecurityContext and activity context for propagation
@@ -401,13 +402,13 @@ public class AiAssistantService {
                 .conversationId(conversationId)
                 .build();
 
-        Object[]                                           toolBeans                     = {this.userTools, userGroupTools, productTools, productAclTools, versionTools, featureTools, sprintTools};
-        List<AugmentedToolCallbackProvider<AgentThinking>> augmentedToolCallbackProvider = createToolCallbackProviders(toolBeans, thinkingSteps);
+        Object[]                   toolBeans     = {this.userTools, userGroupTools, productTools, productAclTools, versionTools, featureTools, sprintTools};
+        List<ToolCallbackProvider> toolProviders = createToolCallbackProviders(toolBeans, thinkingSteps);
 
         ChatClient chatClient = ChatClient.builder(chatModel)
                 .defaultSystem(augmentSystemPrompt(SYSTEM_PROMPT))
                 .defaultAdvisors(memoryAdvisor)
-                .defaultToolCallbacks(augmentedToolCallbackProvider.get(0), augmentedToolCallbackProvider.get(1), augmentedToolCallbackProvider.get(2), augmentedToolCallbackProvider.get(3), augmentedToolCallbackProvider.get(4), augmentedToolCallbackProvider.get(5), augmentedToolCallbackProvider.get(6))
+                .defaultToolCallbacks(toolProviders.get(0), toolProviders.get(1), toolProviders.get(2), toolProviders.get(3), toolProviders.get(4), toolProviders.get(5), toolProviders.get(6))
                 .build();
 
         // Build toolContext with SecurityContext and activity context — propagated to every

@@ -18,11 +18,9 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.usergroup;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
-import de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
 import de.bushnaq.abdalla.kassandra.rest.api.UserGroupApi;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,9 +78,7 @@ public class UserGroupTools {
             "Returns: Success message (string) confirming the user was added")
     public String addMemberToGroup(
             @ToolParam(description = "The groupId of the group to add the user to") Long groupId,
-            @ToolParam(description = "The userId of the user to add") Long userId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The userId of the user to add") Long userId) {
         try {
             ToolActivityContextHolder.reportActivity("Adding user " + userId + " to group " + groupId);
             userGroupApi.addMember(groupId, userId);
@@ -91,8 +87,6 @@ public class UserGroupTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error adding user to group: " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -102,9 +96,7 @@ public class UserGroupTools {
             RETURNS_GROUP_JSON)
     public String createUserGroup(
             @ToolParam(description = "The group name (must be unique)") String name,
-            @ToolParam(description = "(Optional) A description for the group") String description,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "(Optional) A description for the group") String description) {
         try {
             ToolActivityContextHolder.reportActivity("Creating user group with name: " + name);
             UserGroup group = userGroupApi.create(name, description, new HashSet<>());
@@ -113,8 +105,6 @@ public class UserGroupTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error creating user group: " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -122,9 +112,7 @@ public class UserGroupTools {
             "Requires ADMIN role. " +
             "Returns: Success message (string) confirming deletion")
     public String deleteUserGroup(
-            @ToolParam(description = "The groupId of the group to delete") Long groupId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The groupId of the group to delete") Long groupId) {
         try {
             ToolActivityContextHolder.reportActivity("Deleting user group with ID: " + groupId);
             userGroupApi.deleteById(groupId);
@@ -133,16 +121,13 @@ public class UserGroupTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error deleting user group " + groupId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
     @Tool(description = "Get all user groups. " +
             "Requires ADMIN role. " +
             RETURNS_GROUP_ARRAY_JSON)
-    public String getAllUserGroups(ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+    public String getAllUserGroups() {
         try {
             List<UserGroup> groups = userGroupApi.getAll();
             ToolActivityContextHolder.reportActivity("Found " + groups.size() + " user groups.");
@@ -153,8 +138,6 @@ public class UserGroupTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting all user groups: " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -162,9 +145,7 @@ public class UserGroupTools {
             "Requires ADMIN role. " +
             RETURNS_GROUP_JSON)
     public String getUserGroupById(
-            @ToolParam(description = "The groupId of the user group to retrieve") Long groupId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The groupId of the user group to retrieve") Long groupId) {
         try {
             ToolActivityContextHolder.reportActivity("Getting user group with ID: " + groupId);
             UserGroup group = userGroupApi.getById(groupId);
@@ -175,8 +156,6 @@ public class UserGroupTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting user group " + groupId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -184,9 +163,7 @@ public class UserGroupTools {
             "Requires ADMIN role. " +
             RETURNS_GROUP_JSON)
     public String getUserGroupByName(
-            @ToolParam(description = "The name of the user group to retrieve") String name,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The name of the user group to retrieve") String name) {
         try {
             ToolActivityContextHolder.reportActivity("Getting user group with name: " + name);
             return userGroupApi.getByName(name)
@@ -205,8 +182,6 @@ public class UserGroupTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error getting user group by name '" + name + "': " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -215,9 +190,7 @@ public class UserGroupTools {
             "Returns: Success message (string) confirming the user was removed")
     public String removeMemberFromGroup(
             @ToolParam(description = "The groupId of the group to remove the user from") Long groupId,
-            @ToolParam(description = "The userId of the user to remove") Long userId,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "The userId of the user to remove") Long userId) {
         try {
             ToolActivityContextHolder.reportActivity("Removing user " + userId + " from group " + groupId);
             userGroupApi.removeMember(groupId, userId);
@@ -226,8 +199,6 @@ public class UserGroupTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error removing user from group: " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 
@@ -238,9 +209,7 @@ public class UserGroupTools {
     public String updateUserGroup(
             @ToolParam(description = "The groupId of the group to update") Long groupId,
             @ToolParam(description = "The new name for the group (must be unique)") String name,
-            @ToolParam(description = "(Optional) The new description for the group") String description,
-            ToolContext toolContext) {
-        ToolContextHelper.setup(toolContext);
+            @ToolParam(description = "(Optional) The new description for the group") String description) {
         try {
             ToolActivityContextHolder.reportActivity("Updating user group ID: " + groupId);
             UserGroup existing = userGroupApi.getById(groupId);
@@ -254,8 +223,6 @@ public class UserGroupTools {
         } catch (Exception e) {
             ToolActivityContextHolder.reportActivity("Error updating user group " + groupId + ": " + e.getMessage());
             return "Error: " + e.getMessage();
-        } finally {
-            ToolContextHelper.cleanup();
         }
     }
 }

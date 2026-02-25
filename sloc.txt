@@ -29,28 +29,28 @@
 | kassandra.ai.indextts          | VoiceReferencePathTest.java                              | src      |       14 |        3 |       19 |       45 |       81 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.mcp.api.feature   | FeatureDto.java                                          | src      |        7 |        6 |       17 |       47 |       77 |
-| kassandra.ai.mcp.api.feature   | FeatureTools.java                                        | src      |       16 |       19 |       17 |      221 |      273 |
+| kassandra.ai.mcp.api.feature   | FeatureTools.java                                        | src      |       16 |       19 |       17 |      192 |      244 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.mcp.api.product   | ProductAclDto.java                                       | src      |        6 |        4 |       16 |       36 |       62 |
-| kassandra.ai.mcp.api.product   | ProductAclTools.java                                     | src      |       12 |       20 |       20 |      137 |      189 |
+| kassandra.ai.mcp.api.product   | ProductAclTools.java                                     | src      |       12 |       20 |       16 |      115 |      163 |
 | kassandra.ai.mcp.api.product   | ProductDto.java                                          | src      |        8 |        4 |       16 |       45 |       73 |
-| kassandra.ai.mcp.api.product   | ProductTools.java                                        | src      |       16 |       19 |       22 |      216 |      273 |
+| kassandra.ai.mcp.api.product   | ProductTools.java                                        | src      |       16 |       19 |       19 |      188 |      242 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.mcp.api.sprint    | SprintDto.java                                           | src      |        6 |        3 |       16 |       56 |       81 |
-| kassandra.ai.mcp.api.sprint    | SprintTools.java                                         | src      |       14 |        4 |       17 |      192 |      227 |
+| kassandra.ai.mcp.api.sprint    | SprintTools.java                                         | src      |       14 |        4 |       17 |      163 |      198 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.mcp.api.user      | UserDto.java                                             | src      |        7 |        7 |       16 |       55 |       85 |
-| kassandra.ai.mcp.api.user      | UserTools.java                                           | src      |       19 |       12 |       20 |      250 |      301 |
+| kassandra.ai.mcp.api.user      | UserTools.java                                           | src      |       19 |       12 |       20 |      217 |      268 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.mcp.api.usergroup | UserGroupDto.java                                        | src      |        7 |        4 |       16 |       41 |       68 |
-| kassandra.ai.mcp.api.usergroup | UserGroupTools.java                                      | src      |       14 |       19 |       16 |      212 |      261 |
+| kassandra.ai.mcp.api.usergroup | UserGroupTools.java                                      | src      |       14 |       19 |       16 |      179 |      228 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.mcp.api.version   | VersionDto.java                                          | src      |        7 |        7 |       16 |       46 |       76 |
-| kassandra.ai.mcp.api.version   | VersionTools.java                                        | src      |       13 |       14 |       17 |      161 |      205 |
+| kassandra.ai.mcp.api.version   | VersionTools.java                                        | src      |       13 |       14 |       17 |      136 |      180 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.mcp               | AbstractMcpTest.java                                     | src      |       10 |        0 |       23 |       54 |       87 |
 | kassandra.ai.mcp               | AgentThinking.java                                       | src      |        4 |        0 |       16 |        9 |       29 |
-| kassandra.ai.mcp               | AiAssistantService.java                                  | src      |       44 |       65 |       63 |      261 |      433 |
+| kassandra.ai.mcp               | AiAssistantService.java                                  | src      |       44 |       65 |       63 |      262 |      434 |
 | kassandra.ai.mcp               | AiAssistantServiceBasicTest.java                         | src      |       22 |        5 |       26 |       75 |      128 |
 | kassandra.ai.mcp               | AiAssistantServiceFeatureTest.java                       | src      |       23 |        5 |       27 |      118 |      173 |
 | kassandra.ai.mcp               | AiAssistantServiceMixedTest.java                         | src      |       14 |        5 |       64 |       63 |      146 |
@@ -58,6 +58,7 @@
 | kassandra.ai.mcp               | AiAssistantServiceUserTest.java                          | src      |       17 |        5 |       18 |       80 |      120 |
 | kassandra.ai.mcp               | AiAssistantServiceVersionTest.java                       | src      |       62 |        5 |       40 |      235 |      342 |
 | kassandra.ai.mcp               | ApiConfiguration.java                                    | src      |       10 |        7 |       16 |       45 |       78 |
+| kassandra.ai.mcp               | ContextPropagatingToolCallbackProvider.java              | src      |       12 |       16 |       16 |       44 |       88 |
 | kassandra.ai.mcp               | QueryResult.java                                         | src      |        4 |        7 |       16 |        7 |       34 |
 | kassandra.ai.mcp               | SessionToolActivityContext.java                          | src      |        6 |        4 |       16 |       18 |       44 |
 | kassandra.ai.mcp               | ThinkingStep.java                                        | src      |        3 |        0 |       16 |        6 |       25 |
@@ -509,5 +510,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 49 package(s)                  | 459 file(s)                                              | java     |    10437 |     7941 |    13191 |    54552 |    86121 |
+| 49 package(s)                  | 460 file(s)                                              | java     |    10449 |     7957 |    13200 |    54398 |    86004 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
