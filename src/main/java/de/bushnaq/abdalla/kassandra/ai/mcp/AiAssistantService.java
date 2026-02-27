@@ -117,6 +117,22 @@ public class AiAssistantService {
         log.info("Cleared conversation history for: {}", conversationId);
     }
 
+    /**
+     * Collects all @Tool-annotated methods across all registered tool beans using reflection.
+     */
+    private List<Method> collectToolMethods() {
+        Object[]     toolBeans = {productTools, productAclTools, userTools, userGroupTools, versionTools, featureTools, sprintTools};
+        List<Method> methods   = new ArrayList<>();
+        for (Object bean : toolBeans) {
+            for (Method method : bean.getClass().getMethods()) {
+                if (method.getAnnotation(Tool.class) != null) {
+                    methods.add(method);
+                }
+            }
+        }
+        return methods;
+    }
+
     private List<ToolCallbackProvider> createToolCallbackProviders(Object[] userTools, List<ThinkingStep> thinkingSteps) {
         List<ToolCallbackProvider> providers = new ArrayList<>();
         for (Object userTool : userTools) {
@@ -192,19 +208,13 @@ public class AiAssistantService {
      * Dynamically build a list of available tools from all registered tool beans using reflection.
      */
     public String getAvailableTools() {
-        Object[]      toolBeans = {productTools, productAclTools, userTools, userGroupTools, versionTools, featureTools, sprintTools};
-        StringBuilder sb        = new StringBuilder();
-        for (Object bean : toolBeans) {
-            for (Method method : bean.getClass().getMethods()) {
-                Tool toolAnnotation = method.getAnnotation(Tool.class);
-                if (toolAnnotation != null) {
-                    sb.append("• ")
-                            .append(method.getName())
-                            .append(": ")
-                            .append(toolAnnotation.description())
-                            .append("\n");
-                }
-            }
+        StringBuilder sb = new StringBuilder();
+        for (Method method : collectToolMethods()) {
+            sb.append("• ")
+                    .append(method.getName())
+                    .append(": ")
+                    .append(method.getAnnotation(Tool.class).description())
+                    .append("\n");
         }
         return sb.toString();
     }
@@ -225,6 +235,13 @@ public class AiAssistantService {
                     .maxMessages(MAX_MESSAGES)
                     .build();
         });
+    }
+
+    /**
+     * Returns the total number of @Tool-annotated methods across all registered tool beans.
+     */
+    public int getToolCount() {
+        return collectToolMethods().size();
     }
 
     /**

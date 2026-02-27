@@ -251,7 +251,9 @@ public class ChatAgentPanel extends VerticalLayout {
     }
 
     private void addWelcomeMessage() {
-        String welcomeMessage = "👋 Hello! I'm Kassandra powered by " + aiAssistantService.getModelName() + ". Ask me anything about your system data.";
+        int toolCount = aiAssistantService.getToolCount();
+        String welcomeMessage = "👋 Hello! I'm Kassandra powered by " + aiAssistantService.getModelName()
+                + ". I have access to " + toolCount + " tool" + (toolCount != 1 ? "s" : "") + ". Ask me anything about your system data.";
         addSystemMessage(welcomeMessage);
     }
 
