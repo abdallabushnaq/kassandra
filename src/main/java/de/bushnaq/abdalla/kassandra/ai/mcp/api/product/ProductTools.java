@@ -31,10 +31,8 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -55,167 +53,103 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ProductTools {
     @Autowired
-    private   JsonMapper             jsonMapper;
-    @Autowired
     @Qualifier("aiProductApi")
     private   ProductApi             productApi;
     @Autowired
     protected StableDiffusionService stableDiffusionService;
 
-    @Tool(description = "Create a new product. Returns the created Product JSON including its productId.")
-    public String createProduct(
+    @Tool(description = "Create a new product. Returns the created Product including its productId.")
+    public ProductDto createProduct(
             @ToolParam(description = "Unique product name") String name,
             @ToolParam(description = "Stable-diffusion prompt for the avatar", required = false) String avatarPrompt) {
-        try {
-            Product product = new Product();
-            product.setName(name);
-
-            if (avatarPrompt == null || avatarPrompt.isEmpty()) {
-                avatarPrompt = product.getDefaultAvatarPrompt();
-            }
-            {
-                GeneratedImageResult image     = null;
-                long                 startTime = System.currentTimeMillis();
-                if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-                    try {
-                        image = generateProductAvatar(name);
-                    } catch (StableDiffusionException e) {
-                        System.err.println("Failed to generate image for product " + name + ": " + e.getMessage());
-                        image = stableDiffusionService.generateDefaultAvatar("cube");
-                    }
-                } else {
-                    log.warn("Stable Diffusion not available, using default avatar for product: " + name);
-                    image = stableDiffusionService.generateDefaultAvatar("cube");
-                }
-                product.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
-            }
-            Product    savedProduct = productApi.persist(product);
-            ProductDto productDto   = ProductDto.from(savedProduct);
-            ToolActivityContextHolder.reportActivity("created product '" + savedProduct.getName() + "' with ID: " + savedProduct.getId());
-            return jsonMapper.writeValueAsString(productDto);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error creating product: " + e.getMessage());
-            return "Error: " + e.getMessage();
+        Product product = new Product();
+        product.setName(name);
+        if (avatarPrompt == null || avatarPrompt.isEmpty()) {
+            avatarPrompt = product.getDefaultAvatarPrompt();
         }
+        GeneratedImageResult image;
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            try {
+                image = generateProductAvatar(name);
+            } catch (StableDiffusionException e) {
+                log.warn("Failed to generate image for product {}: {}", name, e.getMessage());
+                image = stableDiffusionService.generateDefaultAvatar("cube");
+            }
+        } else {
+            log.warn("Stable Diffusion not available, using default avatar for product: {}", name);
+            image = stableDiffusionService.generateDefaultAvatar("cube");
+        }
+        product.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+        Product savedProduct = productApi.persist(product);
+        ToolActivityContextHolder.reportActivity("created product '" + savedProduct.getName() + "' with ID: " + savedProduct.getId());
+        return ProductDto.from(savedProduct);
     }
 
     @Tool(description = "Delete a product and all its ACL entries by productId.")
-    public String deleteProductById(
+    public void deleteProductById(
             @ToolParam(description = "The productId") Long id) {
-        try {
-            // First, get the product details to log what we're about to delete
-            Product productToDelete = productApi.getById(id);
-            if (productToDelete != null) {
-                ToolActivityContextHolder.reportActivity("Deleting product '" + productToDelete.getName() + "' (ID: " + id + ")");
-            } else {
-                ToolActivityContextHolder.reportActivity("Attempting to delete product with ID: " + id + " (product not found)");
-            }
-
-            productApi.deleteById(id);
-            ToolActivityContextHolder.reportActivity("Successfully deleted product with ID: " + id);
-            return "Product with ID " + id + " deleted successfully";
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error deleting product: " + e.getMessage());
-            return "Error: " + e.getMessage();
+        Product product = productApi.getById(id);
+        if (product == null) {
+            throw new IllegalArgumentException("Product not found with ID: " + id);
         }
+        ToolActivityContextHolder.reportActivity("Deleting product '" + product.getName() + "' (ID: " + id + ")");
+        productApi.deleteById(id);
+        ToolActivityContextHolder.reportActivity("Deleted product '" + product.getName() + "' (ID: " + id + ")");
     }
 
     @Tool(description = "Delete a product and all its ACL entries by name.")
-    public String deleteProductByName(
+    public void deleteProductByName(
             @ToolParam(description = "The product name") String name) {
-        try {
-            // First, get the product details to log what we're about to delete
-            Optional<Product> productToDelete = productApi.getByName(name);
-            if (productToDelete.isPresent()) {
-//                ToolActivityContextHolder.reportActivity("Deleting product '" + productToDelete.getName() + "' (ID: " + productToDelete.getId() + ")");
-            } else {
-                ToolActivityContextHolder.reportActivity("Attempting to delete product : " + name + " (product not found)");
-            }
-
-            productApi.deleteByName(name);
-            ToolActivityContextHolder.reportActivity("Successfully deleted product : " + name);
-            return "Product " + name + " deleted successfully";
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error deleting product: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        productApi.getByName(name).orElseThrow(() -> new IllegalArgumentException("Product not found with name: " + name));
+        ToolActivityContextHolder.reportActivity("Deleting product: " + name);
+        productApi.deleteByName(name);
+        ToolActivityContextHolder.reportActivity("Deleted product: " + name);
     }
 
     private @NonNull GeneratedImageResult generateProductAvatar(String name) throws StableDiffusionException {
         String prompt = Product.getDefaultAvatarPrompt(name);
-        log.trace("Generating image for product: " + name + " with prompt: " + prompt);
-        GeneratedImageResult image = stableDiffusionService.generateImageWithOriginal(prompt);
-        return image;
+        log.trace("Generating image for product: {} with prompt: {}", name, prompt);
+        return stableDiffusionService.generateImageWithOriginal(prompt);
     }
 
     @Tool(description = "Get all products accessible to the current user.")
-    public String getAllProducts() {
-        try {
-            List<Product> products = productApi.getAll();
-            ToolActivityContextHolder.reportActivity("read " + products.size() + " products.");
-            List<ProductDto> productDtos = products.stream()
-                    .map(ProductDto::from)
-                    .collect(Collectors.toList());
-            return jsonMapper.writeValueAsString(productDtos);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting all products: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+    public List<ProductDto> getAllProducts() {
+        List<Product> products = productApi.getAll();
+        ToolActivityContextHolder.reportActivity("read " + products.size() + " products.");
+        return products.stream().map(ProductDto::from).collect(Collectors.toList());
     }
 
     @Tool(description = "Get a product by its productId.")
-    public String getProductById(
+    public ProductDto getProductById(
             @ToolParam(description = "The productId") Long productId) {
-        try {
-            Product product = productApi.getById(productId);
-            if (product != null) {
-                ToolActivityContextHolder.reportActivity("read product : " + product.getName() + ".");
-                ProductDto productDto = ProductDto.from(product);
-                return jsonMapper.writeValueAsString(productDto);
-            }
-            ToolActivityContextHolder.reportActivity("failed to find product by ID: " + productId + ".");
-            return "Product not found with ID: " + productId;
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting product by ID: " + e.getMessage());
-            return "Error: " + e.getMessage();
+        Product product = productApi.getById(productId);
+        if (product == null) {
+            throw new IllegalArgumentException("Product not found with ID: " + productId);
         }
+        ToolActivityContextHolder.reportActivity("read product: " + product.getName());
+        return ProductDto.from(product);
     }
 
     @Tool(description = "Get a product by its name.")
-    public String getProductByName(String name) {
-        try {
-            Optional<Product> product = productApi.getByName(name);
-            if (product.isPresent()) {
-                ToolActivityContextHolder.reportActivity("found product: " + product.get().getName() + ".");
-                ProductDto productDto = ProductDto.from(product.get());
-                return jsonMapper.writeValueAsString(productDto);
-            }
-            ToolActivityContextHolder.reportActivity("failed to find product by name: " + name + ".");
-            return "Product not found with name: " + name;
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting product by name: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+    public ProductDto getProductByName(
+            @ToolParam(description = "The product name") String name) {
+        Product product = productApi.getByName(name)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found with name: " + name));
+        ToolActivityContextHolder.reportActivity("found product: " + product.getName());
+        return ProductDto.from(product);
     }
 
     @Tool(description = "Update an existing product by its productId.")
-    public String updateProduct(
+    public ProductDto updateProduct(
             @ToolParam(description = "The productId") Long productId,
             @ToolParam(description = "The new product name") String name) {
-        try {
-            Product product = productApi.getById(productId);
-            if (product == null) {
-                ToolActivityContextHolder.reportActivity("failed to update product by ID: " + productId + ".");
-                return "Product not found with ID: " + productId;
-            }
-            product.setName(name);
-            productApi.update(product);
-            ProductDto productDto = ProductDto.from(product);
-            ToolActivityContextHolder.reportActivity("updated product: " + productDto.getName() + ".");
-            return jsonMapper.writeValueAsString(productDto);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error updating product: " + e.getMessage());
-            return "Error: " + e.getMessage();
+        Product product = productApi.getById(productId);
+        if (product == null) {
+            throw new IllegalArgumentException("Product not found with ID: " + productId);
         }
+        product.setName(name);
+        productApi.update(product);
+        ToolActivityContextHolder.reportActivity("updated product: " + name);
+        return ProductDto.from(product);
     }
 }

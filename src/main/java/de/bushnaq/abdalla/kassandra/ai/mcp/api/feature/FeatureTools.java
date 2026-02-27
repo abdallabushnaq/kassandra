@@ -31,7 +31,6 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,167 +57,101 @@ public class FeatureTools {
     @Qualifier("aiFeatureApi")
     private   FeatureApi             featureApi;
     @Autowired
-    private   JsonMapper             jsonMapper;
-    @Autowired
     protected StableDiffusionService stableDiffusionService;
 
     @Tool(description = "Create a new feature for a version.")
-    public String createFeature(
+    public FeatureDto createFeature(
             @ToolParam(description = "Unique feature name") String name,
             @ToolParam(description = "The versionId this feature belongs to") Long versionId,
             @ToolParam(description = "Stable-diffusion prompt for the avatar", required = false) String avatarPrompt) {
-        try {
-            Feature feature = new Feature();
-            feature.setName(name);
-            feature.setVersionId(versionId);
-
-            if (avatarPrompt == null || avatarPrompt.isEmpty()) {
-                avatarPrompt = feature.getDefaultAvatarPrompt();
-            }
-            {
-                GeneratedImageResult image     = null;
-                long                 startTime = System.currentTimeMillis();
-                if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-                    try {
-                        image = generateFeatureAvatar(name);
-                    } catch (StableDiffusionException e) {
-                        System.err.println("Failed to generate image for feature " + name + ": " + e.getMessage());
-                        image = stableDiffusionService.generateDefaultAvatar("lightbulb");
-                    }
-                } else {
-                    log.warn("Stable Diffusion not available, using default avatar for feature: " + name);
-                    image = stableDiffusionService.generateDefaultAvatar("lightbulb");
-                }
-                feature.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
-                Feature savedFeature = featureApi.persist(feature);
-                featureApi.updateAvatarFull(savedFeature.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
-                ToolActivityContextHolder.reportActivity("created feature '" + savedFeature.getName() + "' with ID: " + savedFeature.getId());
-                FeatureDto featureDto = FeatureDto.from(savedFeature);
-                return jsonMapper.writeValueAsString(featureDto);
-            }
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Failed creating feature: " + e.getMessage());
-            return "Error: " + e.getMessage();
+        Feature feature = new Feature();
+        feature.setName(name);
+        feature.setVersionId(versionId);
+        if (avatarPrompt == null || avatarPrompt.isEmpty()) {
+            avatarPrompt = feature.getDefaultAvatarPrompt();
         }
+        GeneratedImageResult image;
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            try {
+                image = generateFeatureAvatar(name);
+            } catch (StableDiffusionException e) {
+                log.warn("Failed to generate image for feature {}: {}", name, e.getMessage());
+                image = stableDiffusionService.generateDefaultAvatar("lightbulb");
+            }
+        } else {
+            log.warn("Stable Diffusion not available, using default avatar for feature: {}", name);
+            image = stableDiffusionService.generateDefaultAvatar("lightbulb");
+        }
+        feature.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+        Feature savedFeature = featureApi.persist(feature);
+        featureApi.updateAvatarFull(savedFeature.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
+        ToolActivityContextHolder.reportActivity("created feature '" + savedFeature.getName() + "' with ID: " + savedFeature.getId());
+        return FeatureDto.from(savedFeature);
     }
 
     @Tool(description = "Delete a feature by its featureId.")
-    public String deleteFeature(
+    public void deleteFeature(
             @ToolParam(description = "The featureId") Long featureId) {
-        try {
-            // First, get the feature details to log what we're about to delete
-            Feature featureToDelete = featureApi.getById(featureId);
-            if (featureToDelete != null) {
-                ToolActivityContextHolder.reportActivity("Deleting feature '" + featureToDelete.getName() + "' (ID: " + featureId + ")");
-            } else {
-                ToolActivityContextHolder.reportActivity("Attempting to delete feature with ID: " + featureId + " (feature not found)");
-            }
-
-            featureApi.deleteById(featureId);
-            ToolActivityContextHolder.reportActivity("Successfully deleted feature with ID: " + featureId);
-            return "Feature deleted successfully with ID: " + featureId;
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error deleting feature " + featureId + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
+        Feature feature = featureApi.getById(featureId);
+        if (feature == null) {
+            throw new IllegalArgumentException("Feature not found with ID: " + featureId);
         }
+        ToolActivityContextHolder.reportActivity("Deleting feature '" + feature.getName() + "' (ID: " + featureId + ")");
+        featureApi.deleteById(featureId);
+        ToolActivityContextHolder.reportActivity("Deleted feature '" + feature.getName() + "' (ID: " + featureId + ")");
     }
 
     private @NonNull GeneratedImageResult generateFeatureAvatar(String name) throws StableDiffusionException {
         String prompt = Feature.getDefaultAvatarPrompt(name);
-        log.trace("Generating image for feature: " + name + " with prompt: " + prompt);
-        GeneratedImageResult image = stableDiffusionService.generateImageWithOriginal(prompt);
-        return image;
+        log.trace("Generating image for feature: {} with prompt: {}", name, prompt);
+        return stableDiffusionService.generateImageWithOriginal(prompt);
     }
 
-
     @Tool(description = "Get all features accessible to the current user.")
-    public String getAllFeatures() {
-        try {
-            ToolActivityContextHolder.reportActivity("Getting all features");
-            List<Feature> features = featureApi.getAll();
-            ToolActivityContextHolder.reportActivity("Found " + features.size() + " features.");
-            List<FeatureDto> featureDtos = features.stream()
-                    .map(FeatureDto::from)
-                    .collect(Collectors.toList());
-            return jsonMapper.writeValueAsString(featureDtos);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting all features: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+    public List<FeatureDto> getAllFeatures() {
+        List<Feature> features = featureApi.getAll();
+        ToolActivityContextHolder.reportActivity("Found " + features.size() + " features.");
+        return features.stream().map(FeatureDto::from).collect(Collectors.toList());
     }
 
     @Tool(description = "Get all features for a version.")
-    public String getAllFeaturesByVersionId(
+    public List<FeatureDto> getAllFeaturesByVersionId(
             @ToolParam(description = "The versionId") Long versionId) {
-        try {
-            ToolActivityContextHolder.reportActivity("Getting all features for version ID: " + versionId);
-            List<Feature> features = featureApi.getAll(versionId);
-            ToolActivityContextHolder.reportActivity("Found " + features.size() + " features.");
-            List<FeatureDto> featureDtos = features.stream()
-                    .map(FeatureDto::from)
-                    .collect(Collectors.toList());
-            return jsonMapper.writeValueAsString(featureDtos);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting all features for version " + versionId + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        List<Feature> features = featureApi.getAll(versionId);
+        ToolActivityContextHolder.reportActivity("Found " + features.size() + " features for version " + versionId + ".");
+        return features.stream().map(FeatureDto::from).collect(Collectors.toList());
     }
 
     @Tool(description = "Get a feature by its featureId.")
-    public String getFeatureById(
+    public FeatureDto getFeatureById(
             @ToolParam(description = "The featureId") Long featureId) {
-        try {
-            ToolActivityContextHolder.reportActivity("Getting feature with ID: " + featureId);
-            Feature feature = featureApi.getById(featureId);
-            if (feature != null) {
-                FeatureDto featureDto = FeatureDto.from(feature);
-                return jsonMapper.writeValueAsString(featureDto);
-            }
-            return "Feature not found with ID: " + featureId;
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting feature " + featureId + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
+        Feature feature = featureApi.getById(featureId);
+        if (feature == null) {
+            throw new IllegalArgumentException("Feature not found with ID: " + featureId);
         }
+        return FeatureDto.from(feature);
     }
 
     @Tool(description = "Get a feature by name within a version.")
-    public String getFeatureByName(
+    public FeatureDto getFeatureByName(
             @ToolParam(description = "The versionId the feature belongs to") Long versionId,
             @ToolParam(description = "The feature name") String name) {
-        try {
-            ToolActivityContextHolder.reportActivity("Getting feature with name: " + name + " in version " + versionId);
-            return featureApi.getByName(versionId, name)
-                    .map(feature -> {
-                        try {
-                            return jsonMapper.writeValueAsString(FeatureDto.from(feature));
-                        } catch (Exception e) {
-                            return "Error: " + e.getMessage();
-                        }
-                    })
-                    .orElse("Feature not found with name: " + name + " in version " + versionId);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting feature by name " + name + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        return featureApi.getByName(versionId, name)
+                .map(FeatureDto::from)
+                .orElseThrow(() -> new IllegalArgumentException("Feature '" + name + "' not found in version " + versionId));
     }
 
     @Tool(description = "Update a feature name by its featureId.")
-    public String updateFeature(
+    public FeatureDto updateFeature(
             @ToolParam(description = "The featureId") Long id,
             @ToolParam(description = "The new feature name") String name) {
-        try {
-            ToolActivityContextHolder.reportActivity("Updating feature " + id + " with name: " + name);
-            Feature feature = featureApi.getById(id);
-            if (feature == null) {
-                return "Feature not found with ID: " + id;
-            }
-            feature.setName(name);
-            featureApi.update(feature);
-            FeatureDto featureDto = FeatureDto.from(feature);
-            return jsonMapper.writeValueAsString(featureDto);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error updating feature " + id + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
+        Feature feature = featureApi.getById(id);
+        if (feature == null) {
+            throw new IllegalArgumentException("Feature not found with ID: " + id);
         }
+        ToolActivityContextHolder.reportActivity("Updating feature " + id + " with name: " + name);
+        feature.setName(name);
+        featureApi.update(feature);
+        return FeatureDto.from(feature);
     }
 }

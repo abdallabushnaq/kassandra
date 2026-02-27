@@ -26,7 +26,6 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.awt.*;
 import java.time.LocalDate;
@@ -41,174 +40,107 @@ import java.util.List;
 public class UserTools {
 
     @Autowired
-    private JsonMapper jsonMapper;
-    @Autowired
     @Qualifier("aiUserApi")
-    private UserApi    userApi;
+    private UserApi userApi;
 
     @Tool(description = "Create a new user.")
-    public String createUser(
+    public UserDto createUser(
             @ToolParam(description = "The user name") String name,
             @ToolParam(description = "The user email address") String email,
             @ToolParam(description = "User color in hex format (e.g. '#336699')", required = false) String colorHex,
             @ToolParam(description = "Comma-separated roles: ROLE_USER or ROLE_ADMIN", required = false) String roles,
             @ToolParam(description = "First working day (YYYY-MM-DD); defaults to today", required = false) String firstWorkingDay,
             @ToolParam(description = "Last working day (YYYY-MM-DD); omit if still employed", required = false) String lastWorkingDay) {
-        try {
-            log.info("Creating user: name={}, email={}", name, email);
-            User user = new User();
-            user.setName(name);
-            user.setEmail(email);
-            user.setColor(parseColorFromHex(colorHex));
-            if (roles == null)
-                user.setRoles("ROLE_USER");
-            else
-                user.setRoles(roles);
-
-            // Use today's date if firstWorkingDay is not provided
-            if (firstWorkingDay != null && !firstWorkingDay.isEmpty()) {
-                user.setFirstWorkingDay(LocalDate.parse(firstWorkingDay));
-            } else {
-                user.setFirstWorkingDay(LocalDate.now());
-            }
-
-            if (lastWorkingDay != null && !lastWorkingDay.isEmpty()) {
-                user.setLastWorkingDay(LocalDate.parse(lastWorkingDay));
-            }
-            User createdUser = userApi.persist(user);
-            ToolActivityContextHolder.reportActivity("created user '" + createdUser.getName() + "' with ID: " + createdUser.getId());
-            return jsonMapper.writeValueAsString(UserDto.from(createdUser));
-        } catch (Exception e) {
-            log.error("Error creating user: {}", e.getMessage());
-            return "Error: " + e.getMessage();
+        log.info("Creating user: name={}, email={}", name, email);
+        User user = new User();
+        user.setName(name);
+        user.setEmail(email);
+        user.setColor(parseColorFromHex(colorHex));
+        user.setRoles(roles != null ? roles : "ROLE_USER");
+        user.setFirstWorkingDay(firstWorkingDay != null && !firstWorkingDay.isEmpty()
+                ? LocalDate.parse(firstWorkingDay) : LocalDate.now());
+        if (lastWorkingDay != null && !lastWorkingDay.isEmpty()) {
+            user.setLastWorkingDay(LocalDate.parse(lastWorkingDay));
         }
+        User createdUser = userApi.persist(user);
+        ToolActivityContextHolder.reportActivity("created user '" + createdUser.getName() + "' with ID: " + createdUser.getId());
+        return UserDto.from(createdUser);
     }
 
     @Tool(description = "Delete a user by their userId.")
-    public String deleteUser(
+    public void deleteUser(
             @ToolParam(description = "The userId") Long userId) {
-        try {
-            // First, get the user details to log what we're about to delete
-            User userToDelete = userApi.getById(userId);
-            if (userToDelete != null) {
-                ToolActivityContextHolder.reportActivity("Deleting user '" + userToDelete.getName() + "' (ID: " + userId + ")");
-            } else {
-                ToolActivityContextHolder.reportActivity("Attempting to delete user with ID: " + userId + " (user not found)");
-            }
-
-            userApi.deleteById(userId);
-            ToolActivityContextHolder.reportActivity("Successfully deleted user with ID: " + userId);
-            return "User with ID " + userId + " deleted successfully";
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error deleting user: " + e.getMessage());
-            return "Error: " + e.getMessage();
+        User user = userApi.getById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found with ID: " + userId);
         }
+        ToolActivityContextHolder.reportActivity("Deleting user '" + user.getName() + "' (ID: " + userId + ")");
+        userApi.deleteById(userId);
+        ToolActivityContextHolder.reportActivity("Deleted user '" + user.getName() + "' (ID: " + userId + ")");
     }
 
     @Tool(description = "Get all users in the system.")
-    public String getAllUsers() {
-        try {
-            List<User> users = userApi.getAll();
-            log.info("read " + users.size() + " users.");
-            List<UserDto> userDtos = users.stream().map(UserDto::from).toList();
-            return jsonMapper.writeValueAsString(userDtos);
-        } catch (Exception e) {
-            log.error("Error getting all users: {}", e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+    public List<UserDto> getAllUsers() {
+        List<User> users = userApi.getAll();
+        log.info("read {} users.", users.size());
+        return users.stream().map(UserDto::from).toList();
     }
 
     @Tool(description = "Get a user by their email address.")
-    public String getUserByEmail(
+    public UserDto getUserByEmail(
             @ToolParam(description = "The user email address") String email) {
-        try {
-            log.info("Getting user by email: {}", email);
-            User user = userApi.getByEmail(email).get();
-            if (user != null) {
-                return jsonMapper.writeValueAsString(UserDto.from(user));
-            }
-            return "User not found with email: " + email;
-        } catch (Exception e) {
-            log.error("Error getting user by email {}: {}", email, e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        return userApi.getByEmail(email)
+                .map(UserDto::from)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
     }
 
     @Tool(description = "Get a user by their userId.")
-    public String getUserById(
+    public UserDto getUserById(
             @ToolParam(description = "The userId") Long userId) {
-        try {
-            log.info("Getting user by ID: {}", userId);
-            User user = userApi.getById(userId);
-            if (user != null) {
-                return jsonMapper.writeValueAsString(UserDto.from(user));
-            }
-            return "User not found with ID: " + userId;
-        } catch (Exception e) {
-            log.error("Error getting user by ID {}: {}", userId, e.getMessage());
-            return "Error: " + e.getMessage();
+        User user = userApi.getById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found with ID: " + userId);
         }
+        return UserDto.from(user);
     }
 
     @Tool(description = "Get a user by their name.")
-    public String getUserByName(
+    public UserDto getUserByName(
             @ToolParam(description = "The user name") String name) {
-        try {
-            log.info("Getting user by name: {}", name);
-            User user = userApi.getByName(name);
-            if (user != null) {
-                return jsonMapper.writeValueAsString(UserDto.from(user));
-            }
-            return "User not found with name: " + name;
-        } catch (Exception e) {
-            log.error("Error getting user by name {}: {}", name, e.getMessage());
-            return "Error: " + e.getMessage();
+        User user = userApi.getByName(name);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found with name: " + name);
         }
+        return UserDto.from(user);
     }
 
     /**
      * Parse a hex color string into a Color object.
-     * Supports formats: "#RRGGBB" or "#RRGGBBAA"
-     * Returns a default blue color if input is null, empty, or invalid.
-     *
-     * @param colorHex Hex color string (e.g., "#FF0000" or "#FF0000FF")
-     * @return Color object
+     * Supports formats: "#RRGGBB" or "#RRGGBBAA".
+     * Returns default blue if input is null, empty, or invalid.
      */
     private Color parseColorFromHex(String colorHex) {
         if (colorHex == null || colorHex.isEmpty()) {
-            return new Color(51, 102, 204); // Default blue
+            return new Color(51, 102, 204);
         }
-
         try {
-            // If color string has # prefix, parse it
-            if (colorHex.startsWith("#")) {
-                return new Color((int) Long.parseLong(colorHex.substring(1), 16), true);
-            } else {
-                // Parse integer RGB value without prefix
-                return new Color((int) Long.parseLong(colorHex, 16), true);
-            }
+            String hex = colorHex.startsWith("#") ? colorHex.substring(1) : colorHex;
+            return new Color((int) Long.parseLong(hex, 16), true);
         } catch (NumberFormatException e) {
             log.warn("Invalid color format '{}', using default blue color", colorHex);
-            return new Color(51, 102, 204); // Default blue
+            return new Color(51, 102, 204);
         }
     }
 
     @Tool(description = "Search for users by partial name (case-insensitive).")
-    public String searchUsers(
+    public List<UserDto> searchUsers(
             @ToolParam(description = "Partial name to search for") String partialName) {
-        try {
-            log.info("Searching users by partial name: {}", partialName);
-            List<User>    users    = userApi.searchByName(partialName);
-            List<UserDto> userDtos = users.stream().map(UserDto::from).toList();
-            return jsonMapper.writeValueAsString(userDtos);
-        } catch (Exception e) {
-            log.error("Error searching users: {}", e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        List<User> users = userApi.searchByName(partialName);
+        return users.stream().map(UserDto::from).toList();
     }
 
     @Tool(description = "Update an existing user by their userId.")
-    public String updateUser(
+    public UserDto updateUser(
             @ToolParam(description = "The userId") Long userId,
             @ToolParam(description = "New user name", required = false) String name,
             @ToolParam(description = "New email address", required = false) String email,
@@ -216,36 +148,18 @@ public class UserTools {
             @ToolParam(description = "New roles (ROLE_USER or ROLE_ADMIN)", required = false) String roles,
             @ToolParam(description = "New first working day (YYYY-MM-DD)", required = false) String firstWorkingDay,
             @ToolParam(description = "New last working day (YYYY-MM-DD)", required = false) String lastWorkingDay) {
-        try {
-            User user = userApi.getById(userId);
-            if (user == null) {
-                return "User not found with ID: " + userId;
-            }
-            if (name != null && !name.isEmpty()) {
-                user.setName(name);
-            }
-            if (email != null && !email.isEmpty()) {
-                user.setEmail(email);
-            }
-            if (colorHex != null && !colorHex.isEmpty()) {
-                user.setColor(parseColorFromHex(colorHex));
-            }
-            if (roles != null && !roles.isEmpty()) {
-                user.setRoles(roles);
-            }
-            if (firstWorkingDay != null && !firstWorkingDay.isEmpty()) {
-                user.setFirstWorkingDay(LocalDate.parse(firstWorkingDay));
-            }
-            if (lastWorkingDay != null && !lastWorkingDay.isEmpty()) {
-                user.setLastWorkingDay(LocalDate.parse(lastWorkingDay));
-            }
-            userApi.update(user);
-            log.info("updated user: id={}", userId);
-            UserDto userDto = UserDto.from(user);
-            return jsonMapper.writeValueAsString(userDto);
-        } catch (Exception e) {
-            log.error("Error updating user {}: {}", userId, e.getMessage());
-            return "Error: " + e.getMessage();
+        User user = userApi.getById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found with ID: " + userId);
         }
+        if (name != null && !name.isEmpty()) user.setName(name);
+        if (email != null && !email.isEmpty()) user.setEmail(email);
+        if (colorHex != null && !colorHex.isEmpty()) user.setColor(parseColorFromHex(colorHex));
+        if (roles != null && !roles.isEmpty()) user.setRoles(roles);
+        if (firstWorkingDay != null && !firstWorkingDay.isEmpty()) user.setFirstWorkingDay(LocalDate.parse(firstWorkingDay));
+        if (lastWorkingDay != null && !lastWorkingDay.isEmpty()) user.setLastWorkingDay(LocalDate.parse(lastWorkingDay));
+        userApi.update(user);
+        log.info("updated user: id={}", userId);
+        return UserDto.from(user);
     }
 }

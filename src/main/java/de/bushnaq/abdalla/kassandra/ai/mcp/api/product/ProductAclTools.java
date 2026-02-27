@@ -26,7 +26,6 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,83 +50,48 @@ import java.util.stream.Collectors;
 public class ProductAclTools {
 
     @Autowired
-    private JsonMapper jsonMapper;
-
-    @Autowired
     @Qualifier("aiProductAclApi")
     private ProductAclApi productAclApi;
 
     @Tool(description = "Get all ACL entries for a product (requires admin or existing access).")
-    public String getProductAcl(
+    public List<ProductAclDto> getProductAcl(
             @ToolParam(description = "The productId") Long productId) {
-        try {
-            List<ProductAclEntry> entries = productAclApi.getAcl(productId);
-            ToolActivityContextHolder.reportActivity("read " + entries.size() + " ACL entries for product ID: " + productId);
-            List<ProductAclDto> dtos = entries.stream()
-                    .map(ProductAclDto::from)
-                    .collect(Collectors.toList());
-            return jsonMapper.writeValueAsString(dtos);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting ACL for product " + productId + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        List<ProductAclEntry> entries = productAclApi.getAcl(productId);
+        ToolActivityContextHolder.reportActivity("read " + entries.size() + " ACL entries for product ID: " + productId);
+        return entries.stream().map(ProductAclDto::from).collect(Collectors.toList());
     }
 
     @Tool(description = "Grant a group access to a product (requires admin or existing access).")
-    public String grantGroupAccessToProduct(
+    public ProductAclDto grantGroupAccessToProduct(
             @ToolParam(description = "The productId") Long productId,
             @ToolParam(description = "The groupId to grant access") Long groupId) {
-        try {
-            ProductAclEntry entry = productAclApi.grantGroupAccess(productId, groupId);
-            ToolActivityContextHolder.reportActivity("Granted group " + groupId + " access to product " + productId);
-            ProductAclDto dto = ProductAclDto.from(entry);
-            return jsonMapper.writeValueAsString(dto);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error granting group access: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        ProductAclEntry entry = productAclApi.grantGroupAccess(productId, groupId);
+        ToolActivityContextHolder.reportActivity("Granted group " + groupId + " access to product " + productId);
+        return ProductAclDto.from(entry);
     }
 
     @Tool(description = "Grant a user access to a product (requires admin or existing access).")
-    public String grantUserAccessToProduct(
+    public ProductAclDto grantUserAccessToProduct(
             @ToolParam(description = "The productId") Long productId,
             @ToolParam(description = "The userId to grant access") Long userId) {
-        try {
-            ProductAclEntry entry = productAclApi.grantUserAccess(productId, userId);
-            ToolActivityContextHolder.reportActivity("Granted user " + userId + " access to product " + productId);
-            ProductAclDto dto = ProductAclDto.from(entry);
-            return jsonMapper.writeValueAsString(dto);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error granting user access: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        ProductAclEntry entry = productAclApi.grantUserAccess(productId, userId);
+        ToolActivityContextHolder.reportActivity("Granted user " + userId + " access to product " + productId);
+        return ProductAclDto.from(entry);
     }
 
     @Tool(description = "Revoke a group's access from a product (requires admin or existing access).")
-    public String revokeGroupAccessFromProduct(
+    public void revokeGroupAccessFromProduct(
             @ToolParam(description = "The productId") Long productId,
             @ToolParam(description = "The groupId to revoke") Long groupId) {
-        try {
-            productAclApi.revokeGroupAccess(productId, groupId);
-            ToolActivityContextHolder.reportActivity("Revoked group " + groupId + " access from product " + productId);
-            return "Group " + groupId + " access to product " + productId + " revoked successfully";
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error revoking group access: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        productAclApi.revokeGroupAccess(productId, groupId);
+        ToolActivityContextHolder.reportActivity("Revoked group " + groupId + " access from product " + productId);
     }
 
     @Tool(description = "Revoke a user's access from a product (requires admin or existing access).")
-    public String revokeUserAccessFromProduct(
+    public void revokeUserAccessFromProduct(
             @ToolParam(description = "The productId") Long productId,
             @ToolParam(description = "The userId to revoke") Long userId) {
-        try {
-            productAclApi.revokeUserAccess(productId, userId);
-            ToolActivityContextHolder.reportActivity("Revoked user " + userId + " access from product " + productId);
-            return "User " + userId + " access to product " + productId + " revoked successfully";
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error revoking user access: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        productAclApi.revokeUserAccess(productId, userId);
+        ToolActivityContextHolder.reportActivity("Revoked user " + userId + " access from product " + productId);
     }
 }

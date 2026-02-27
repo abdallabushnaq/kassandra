@@ -26,7 +26,6 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -50,117 +49,69 @@ import java.util.stream.Collectors;
 public class VersionTools {
 
     @Autowired
-    private JsonMapper jsonMapper;
-
-    @Autowired
     @Qualifier("aiVersionApi")
     private VersionApi versionApi;
 
     @Tool(description = "Create a new version for a product.")
-    public String createVersion(
+    public VersionDto createVersion(
             @ToolParam(description = "Unique version name") String name,
             @ToolParam(description = "The productId this version belongs to") Long productId) {
-        try {
-            Version version = new Version();
-            version.setName(name);
-            version.setProductId(productId);
-            Version savedVersion = versionApi.persist(version);
-            ToolActivityContextHolder.reportActivity("created version '" + savedVersion.getName() + "' with ID: " + savedVersion.getId() + " for product " + productId);
-            VersionDto versionDto = VersionDto.from(savedVersion);
-            return jsonMapper.writeValueAsString(versionDto);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error creating version: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        Version version = new Version();
+        version.setName(name);
+        version.setProductId(productId);
+        Version savedVersion = versionApi.persist(version);
+        ToolActivityContextHolder.reportActivity("created version '" + savedVersion.getName() + "' with ID: " + savedVersion.getId() + " for product " + productId);
+        return VersionDto.from(savedVersion);
     }
 
     @Tool(description = "Delete a version by its versionId.")
-    public String deleteVersion(
+    public void deleteVersion(
             @ToolParam(description = "The versionId") Long versionId) {
-        try {
-            // First, get the version details to log what we're about to delete
-            Version versionToDelete = versionApi.getById(versionId);
-            if (versionToDelete != null) {
-                ToolActivityContextHolder.reportActivity("Deleting version '" + versionToDelete.getName() + "' (ID: " + versionId + ")");
-            } else {
-                ToolActivityContextHolder.reportActivity("Attempting to delete version with ID: " + versionId + " (version not found)");
-            }
-
-            versionApi.deleteById(versionId);
-            ToolActivityContextHolder.reportActivity("Successfully deleted version with ID: " + versionId);
-            return "Version deleted successfully with ID: " + versionId;
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error deleting version " + versionId + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
+        Version version = versionApi.getById(versionId);
+        if (version == null) {
+            throw new IllegalArgumentException("Version not found with ID: " + versionId);
         }
+        ToolActivityContextHolder.reportActivity("Deleting version '" + version.getName() + "' (ID: " + versionId + ")");
+        versionApi.deleteById(versionId);
+        ToolActivityContextHolder.reportActivity("Deleted version '" + version.getName() + "' (ID: " + versionId + ")");
     }
 
     @Tool(description = "Get all versions accessible to the current user.")
-    public String getAllVersions() {
-        try {
-            ToolActivityContextHolder.reportActivity("Getting all versions");
-            List<Version> versions = versionApi.getAll();
-            ToolActivityContextHolder.reportActivity("Found " + versions.size() + " versions.");
-            List<VersionDto> versionDtos = versions.stream()
-                    .map(VersionDto::from)
-                    .collect(Collectors.toList());
-            return jsonMapper.writeValueAsString(versionDtos);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting all versions: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+    public List<VersionDto> getAllVersions() {
+        List<Version> versions = versionApi.getAll();
+        ToolActivityContextHolder.reportActivity("Found " + versions.size() + " versions.");
+        return versions.stream().map(VersionDto::from).collect(Collectors.toList());
     }
 
     @Tool(description = "Get all versions for a product.")
-    public String getAllVersionsByProductId(
+    public List<VersionDto> getAllVersionsByProductId(
             @ToolParam(description = "The productId") Long productId) {
-        try {
-            List<Version> versions = versionApi.getAll(productId);
-            ToolActivityContextHolder.reportActivity("Found " + versions.size() + " versions for product " + productId + ".");
-            List<VersionDto> versionDtos = versions.stream()
-                    .map(VersionDto::from)
-                    .collect(Collectors.toList());
-            return jsonMapper.writeValueAsString(versionDtos);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Failed getting all versions for product " + productId + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        List<Version> versions = versionApi.getAll(productId);
+        ToolActivityContextHolder.reportActivity("Found " + versions.size() + " versions for product " + productId + ".");
+        return versions.stream().map(VersionDto::from).collect(Collectors.toList());
     }
 
     @Tool(description = "Get a version by its versionId.")
-    public String getVersionById(
+    public VersionDto getVersionById(
             @ToolParam(description = "The versionId") Long versionId) {
-        try {
-            ToolActivityContextHolder.reportActivity("Getting version with ID: " + versionId);
-            Version version = versionApi.getById(versionId);
-            if (version != null) {
-                VersionDto versionDto = VersionDto.from(version);
-                return jsonMapper.writeValueAsString(versionDto);
-            }
-            return "Version not found with ID: " + versionId;
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting version " + versionId + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
+        Version version = versionApi.getById(versionId);
+        if (version == null) {
+            throw new IllegalArgumentException("Version not found with ID: " + versionId);
         }
+        return VersionDto.from(version);
     }
 
     @Tool(description = "Update a version name by its versionId.")
-    public String updateVersion(
+    public VersionDto updateVersion(
             @ToolParam(description = "The versionId") Long versionId,
             @ToolParam(description = "The new version name") String name) {
-        try {
-            ToolActivityContextHolder.reportActivity("Updating version " + versionId + " with name: " + name);
-            Version version = versionApi.getById(versionId);
-            if (version == null) {
-                return "Version not found with ID: " + versionId;
-            }
-            version.setName(name);
-            versionApi.update(version);
-            VersionDto versionDto = VersionDto.from(version);
-            return jsonMapper.writeValueAsString(versionDto);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error updating version " + versionId + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
+        Version version = versionApi.getById(versionId);
+        if (version == null) {
+            throw new IllegalArgumentException("Version not found with ID: " + versionId);
         }
+        ToolActivityContextHolder.reportActivity("Updating version " + versionId + " with name: " + name);
+        version.setName(name);
+        versionApi.update(version);
+        return VersionDto.from(version);
     }
 }

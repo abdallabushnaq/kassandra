@@ -26,7 +26,6 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.HashSet;
 import java.util.List;
@@ -53,143 +52,83 @@ import java.util.stream.Collectors;
 public class UserGroupTools {
 
     @Autowired
-    private JsonMapper   jsonMapper;
-    @Autowired
     @Qualifier("aiUserGroupApi")
     private UserGroupApi userGroupApi;
 
     @Tool(description = "Add a user to a group (requires ADMIN).")
-    public String addMemberToGroup(
+    public void addMemberToGroup(
             @ToolParam(description = "The groupId") Long groupId,
             @ToolParam(description = "The userId to add") Long userId) {
-        try {
-            ToolActivityContextHolder.reportActivity("Adding user " + userId + " to group " + groupId);
-            userGroupApi.addMember(groupId, userId);
-            ToolActivityContextHolder.reportActivity("Added user " + userId + " to group " + groupId);
-            return "User " + userId + " added to group " + groupId + " successfully";
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error adding user to group: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        userGroupApi.addMember(groupId, userId);
+        ToolActivityContextHolder.reportActivity("Added user " + userId + " to group " + groupId);
     }
 
     @Tool(description = "Create a new user group (requires ADMIN).")
-    public String createUserGroup(
+    public UserGroupDto createUserGroup(
             @ToolParam(description = "Unique group name") String name,
             @ToolParam(description = "Group description", required = false) String description) {
-        try {
-            ToolActivityContextHolder.reportActivity("Creating user group with name: " + name);
-            UserGroup group = userGroupApi.create(name, description, new HashSet<>());
-            ToolActivityContextHolder.reportActivity("Created user group '" + group.getName() + "' with ID: " + group.getId());
-            return jsonMapper.writeValueAsString(UserGroupDto.from(group));
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error creating user group: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        UserGroup group = userGroupApi.create(name, description, new HashSet<>());
+        ToolActivityContextHolder.reportActivity("Created user group '" + group.getName() + "' with ID: " + group.getId());
+        return UserGroupDto.from(group);
     }
 
     @Tool(description = "Delete a user group by its groupId (requires ADMIN).")
-    public String deleteUserGroup(
+    public void deleteUserGroup(
             @ToolParam(description = "The groupId") Long groupId) {
-        try {
-            ToolActivityContextHolder.reportActivity("Deleting user group with ID: " + groupId);
-            userGroupApi.deleteById(groupId);
-            ToolActivityContextHolder.reportActivity("Deleted user group with ID: " + groupId);
-            return "User group deleted successfully with ID: " + groupId;
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error deleting user group " + groupId + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
+        UserGroup group = userGroupApi.getById(groupId);
+        if (group == null) {
+            throw new IllegalArgumentException("User group not found with ID: " + groupId);
         }
+        ToolActivityContextHolder.reportActivity("Deleting user group '" + group.getName() + "' (ID: " + groupId + ")");
+        userGroupApi.deleteById(groupId);
+        ToolActivityContextHolder.reportActivity("Deleted user group '" + group.getName() + "' (ID: " + groupId + ")");
     }
 
     @Tool(description = "Get all user groups (requires ADMIN).")
-    public String getAllUserGroups() {
-        try {
-            List<UserGroup> groups = userGroupApi.getAll();
-            ToolActivityContextHolder.reportActivity("Found " + groups.size() + " user groups.");
-            List<UserGroupDto> dtos = groups.stream()
-                    .map(UserGroupDto::from)
-                    .collect(Collectors.toList());
-            return jsonMapper.writeValueAsString(dtos);
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting all user groups: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+    public List<UserGroupDto> getAllUserGroups() {
+        List<UserGroup> groups = userGroupApi.getAll();
+        ToolActivityContextHolder.reportActivity("Found " + groups.size() + " user groups.");
+        return groups.stream().map(UserGroupDto::from).collect(Collectors.toList());
     }
 
     @Tool(description = "Get a user group by its groupId (requires ADMIN).")
-    public String getUserGroupById(
+    public UserGroupDto getUserGroupById(
             @ToolParam(description = "The groupId") Long groupId) {
-        try {
-            ToolActivityContextHolder.reportActivity("Getting user group with ID: " + groupId);
-            UserGroup group = userGroupApi.getById(groupId);
-            if (group != null) {
-                return jsonMapper.writeValueAsString(UserGroupDto.from(group));
-            }
-            return "User group not found with ID: " + groupId;
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting user group " + groupId + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
+        UserGroup group = userGroupApi.getById(groupId);
+        if (group == null) {
+            throw new IllegalArgumentException("User group not found with ID: " + groupId);
         }
+        return UserGroupDto.from(group);
     }
 
     @Tool(description = "Get a user group by its name (requires ADMIN).")
-    public String getUserGroupByName(
+    public UserGroupDto getUserGroupByName(
             @ToolParam(description = "The group name") String name) {
-        try {
-            ToolActivityContextHolder.reportActivity("Getting user group with name: " + name);
-            return userGroupApi.getByName(name)
-                    .map(group -> {
-                        try {
-                            ToolActivityContextHolder.reportActivity("Found user group '" + group.getName() + "' with ID: " + group.getId());
-                            return jsonMapper.writeValueAsString(UserGroupDto.from(group));
-                        } catch (Exception e) {
-                            return "Error serializing user group: " + e.getMessage();
-                        }
-                    })
-                    .orElseGet(() -> {
-                        ToolActivityContextHolder.reportActivity("No user group found with name: " + name);
-                        return "User group not found with name: " + name;
-                    });
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error getting user group by name '" + name + "': " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        return userGroupApi.getByName(name)
+                .map(UserGroupDto::from)
+                .orElseThrow(() -> new IllegalArgumentException("User group not found with name: " + name));
     }
 
     @Tool(description = "Remove a user from a group (requires ADMIN).")
-    public String removeMemberFromGroup(
+    public void removeMemberFromGroup(
             @ToolParam(description = "The groupId") Long groupId,
             @ToolParam(description = "The userId to remove") Long userId) {
-        try {
-            ToolActivityContextHolder.reportActivity("Removing user " + userId + " from group " + groupId);
-            userGroupApi.removeMember(groupId, userId);
-            ToolActivityContextHolder.reportActivity("Removed user " + userId + " from group " + groupId);
-            return "User " + userId + " removed from group " + groupId + " successfully";
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error removing user from group: " + e.getMessage());
-            return "Error: " + e.getMessage();
-        }
+        userGroupApi.removeMember(groupId, userId);
+        ToolActivityContextHolder.reportActivity("Removed user " + userId + " from group " + groupId);
     }
 
     @Tool(description = "Update a user group's name and/or description (requires ADMIN).")
-    public String updateUserGroup(
+    public UserGroupDto updateUserGroup(
             @ToolParam(description = "The groupId") Long groupId,
             @ToolParam(description = "New group name") String name,
             @ToolParam(description = "New group description", required = false) String description) {
-        try {
-            ToolActivityContextHolder.reportActivity("Updating user group ID: " + groupId);
-            UserGroup existing = userGroupApi.getById(groupId);
-            if (existing == null) {
-                return "User group not found with ID: " + groupId;
-            }
-            Set<Long> memberIds = existing.getMemberIds() != null ? existing.getMemberIds() : new HashSet<>();
-            UserGroup updated   = userGroupApi.update(groupId, name, description, memberIds);
-            ToolActivityContextHolder.reportActivity("Updated user group '" + updated.getName() + "' (ID: " + groupId + ")");
-            return jsonMapper.writeValueAsString(UserGroupDto.from(updated));
-        } catch (Exception e) {
-            ToolActivityContextHolder.reportActivity("Error updating user group " + groupId + ": " + e.getMessage());
-            return "Error: " + e.getMessage();
+        UserGroup existing = userGroupApi.getById(groupId);
+        if (existing == null) {
+            throw new IllegalArgumentException("User group not found with ID: " + groupId);
         }
+        Set<Long> memberIds = existing.getMemberIds() != null ? existing.getMemberIds() : new HashSet<>();
+        UserGroup updated   = userGroupApi.update(groupId, name, description, memberIds);
+        ToolActivityContextHolder.reportActivity("Updated user group '" + updated.getName() + "' (ID: " + groupId + ")");
+        return UserGroupDto.from(updated);
     }
 }
