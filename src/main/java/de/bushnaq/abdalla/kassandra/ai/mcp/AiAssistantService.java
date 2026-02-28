@@ -153,6 +153,20 @@ public class AiAssistantService {
     }
 
     /**
+     * Extract the thinking content from raw text between {@code <think>…</think>} tags.
+     */
+    private String extractThinkingFromText(String rawContent) {
+        if (rawContent != null && rawContent.contains("<think>") && rawContent.contains("</think>")) {
+            int startIdx = rawContent.indexOf("<think>");
+            int endIdx   = rawContent.indexOf("</think>") + 8;
+            if (startIdx >= 0 && endIdx > startIdx) {
+                return rawContent.substring(startIdx + 7, endIdx - 8);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Extract thinking/reasoning process from ChatResponse.
      * For reasoning models like DeepSeek-R1, this extracts the thinking tokens.
      */
@@ -175,16 +189,7 @@ public class AiAssistantService {
             if (chatResponse.getResult() != null &&
                     chatResponse.getResult().getOutput() != null) {
                 String rawContent = chatResponse.getResult().getOutput().getText();
-                if (rawContent != null) {
-                    // Check for <think> tags (DeepSeek-R1 format)
-                    if (rawContent.contains("<think>") && rawContent.contains("</think>")) {
-                        int startIdx = rawContent.indexOf("<think>");
-                        int endIdx   = rawContent.indexOf("</think>") + 8;
-                        if (startIdx >= 0 && endIdx > startIdx) {
-                            return rawContent.substring(startIdx + 7, endIdx - 8);
-                        }
-                    }
-                }
+                return extractThinkingFromText(rawContent);
             }
 
             return null;
@@ -433,6 +438,10 @@ public class AiAssistantService {
         SessionToolActivityContext    activityCtx    = activityContexts.computeIfAbsent(conversationId, id -> new SessionToolActivityContext());
         java.util.Map<String, Object> toolContextMap = ToolContextHelper.buildContextMap(capturedSecurityContext, activityCtx);
 
+        long          startNano   = System.nanoTime();
+        final String  modelName   = getModelName();
+        StringBuilder accumulated = new StringBuilder();
+
         return chatClient.prompt(userQuery)
                 .toolContext(toolContextMap)
                 .stream()
@@ -446,6 +455,18 @@ public class AiAssistantService {
                     String text = r.getResult().getOutput().getText();
                     return text != null ? text : "";
                 })
-                .filter(t -> !t.isEmpty());
+                .filter(t -> !t.isEmpty())
+                .doOnNext(accumulated::append)
+                .doOnComplete(() -> {
+                    long   elapsedMs = (System.nanoTime() - startNano) / 1_000_000;
+                    String fullText  = accumulated.toString();
+                    String thinking  = extractThinkingFromText(fullText);
+                    String response  = removeThinkingFromResponse(fullText);
+                    if (thinking != null && !thinking.isEmpty())
+                        log.info("{}({}ms) {}: {}{}{}", ANSI_BLUE, elapsedMs, modelName, ANSI_YELLOW, thinking, ANSI_RESET);
+                    log.info("{}({}ms) {}: {}{}{}", ANSI_YELLOW, elapsedMs, modelName, ANSI_GREEN, response, ANSI_RESET);
+                })
+                .doOnError(e -> log.error("{}streamQuery error after {}ms: {}{}", ANSI_YELLOW,
+                        (System.nanoTime() - startNano) / 1_000_000, e.getMessage(), ANSI_RESET));
     }
 }
