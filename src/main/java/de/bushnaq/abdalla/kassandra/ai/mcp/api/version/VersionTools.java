@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.version;
 
+import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.rest.api.VersionApi;
@@ -52,7 +53,7 @@ public class VersionTools {
     @Qualifier("aiVersionApi")
     private VersionApi versionApi;
 
-    @Tool(description = "Create a new version for a product.")
+    @Tool(description = "Create a new version for a product.", resultConverter = KassandraToolCallResultConverter.class)
     public VersionDto createVersion(
             @ToolParam(description = "Unique version name") String name,
             @ToolParam(description = "The productId this version belongs to") Long productId) {
@@ -64,7 +65,7 @@ public class VersionTools {
         return VersionDto.from(savedVersion);
     }
 
-    @Tool(description = "Delete a version by its versionId.")
+    @Tool(description = "Delete a version by its versionId.", resultConverter = KassandraToolCallResultConverter.class)
     public void deleteVersion(
             @ToolParam(description = "The versionId") Long versionId) {
         Version version = versionApi.getById(versionId);
@@ -76,14 +77,14 @@ public class VersionTools {
         ToolActivityContextHolder.reportActivity("Deleted version '" + version.getName() + "' (ID: " + versionId + ")");
     }
 
-    @Tool(description = "Get all versions accessible to the current user.")
+    @Tool(description = "Get all versions accessible to the current user.", resultConverter = KassandraToolCallResultConverter.class)
     public List<VersionDto> getAllVersions() {
         List<Version> versions = versionApi.getAll();
         ToolActivityContextHolder.reportActivity("Found " + versions.size() + " versions.");
         return versions.stream().map(VersionDto::from).collect(Collectors.toList());
     }
 
-    @Tool(description = "Get all versions for a product.")
+    @Tool(description = "Get all versions for a product.", resultConverter = KassandraToolCallResultConverter.class)
     public List<VersionDto> getAllVersionsByProductId(
             @ToolParam(description = "The productId") Long productId) {
         List<Version> versions = versionApi.getAll(productId);
@@ -91,7 +92,7 @@ public class VersionTools {
         return versions.stream().map(VersionDto::from).collect(Collectors.toList());
     }
 
-    @Tool(description = "Get a version by its versionId.")
+    @Tool(description = "Get a version by its versionId.", resultConverter = KassandraToolCallResultConverter.class)
     public VersionDto getVersionById(
             @ToolParam(description = "The versionId") Long versionId) {
         Version version = versionApi.getById(versionId);
@@ -101,7 +102,7 @@ public class VersionTools {
         return VersionDto.from(version);
     }
 
-    @Tool(description = "Update a version name by its versionId.")
+    @Tool(description = "Update a version name by its versionId.", resultConverter = KassandraToolCallResultConverter.class)
     public VersionDto updateVersion(
             @ToolParam(description = "The versionId") Long versionId,
             @ToolParam(description = "The new version name") String name) {

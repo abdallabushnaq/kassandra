@@ -4,6 +4,37 @@ Trust these instructions. Only search the codebase if information here is incomp
 
 ---
 
+## Development Environment
+
+- **IDE:** IntelliJ IDEA on **Windows 11**
+- **Shell:** IntelliJ's integrated terminal uses **Git Bash** — always generate terminal/shell commands as Bash (not
+  PowerShell or CMD).
+
+### Accessing Web Pages from the Terminal
+
+Use **`curl`** — it is available in Git Bash and works correctly. `wget` is **not** available.
+
+```bash
+# Fetch a URL silently and print to stdout
+curl -s https://example.com
+
+# Fetch with a timeout
+curl -s --max-time 10 https://example.com
+
+# Save response to a file
+curl -s -o output.html https://example.com
+
+# Follow redirects
+curl -s -L https://example.com
+
+# Fetch JSON API and pipe through a pager
+curl -s https://api.example.com/data | head -40
+```
+
+> **Note:** `wget` is not installed in this Git Bash environment. Always use `curl` instead.
+
+---
+
 ## What This Repository Is
 
 **Kassandra** is an open-source, self-hosted project management server written in Java. It provides effort estimation,

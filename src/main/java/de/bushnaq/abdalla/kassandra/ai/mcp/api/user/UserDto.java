@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ai.mcp.api.user;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.util.ColorUtil;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -33,11 +34,11 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonPropertyOrder({"userId", "name", "email", "color", "roles", "firstWorkingDay", "lastWorkingDay"})
+@JsonPropertyOrder({"userId", "name", "email", "colorHex", "roles", "firstWorkingDay", "lastWorkingDay"})
 @Schema(description = "A user in the system")
 public class UserDto {
-    @Schema(description = "User color (hex RGB)")
-    private Color     color;
+    @Schema(description = "User color in hex format (e.g. '#FF336699')")
+    private String    colorHex;
     @Schema(description = "User email address")
     private String    email;
     @Schema(description = "First working day (ISO 8601 date)")
@@ -54,11 +55,11 @@ public class UserDto {
     /**
      * Custom constructor for UserDto with explicit parameter order.
      */
-    public UserDto(Long userId, String name, String email, Color color, String roles, LocalDate firstWorkingDay, LocalDate lastWorkingDay) {
+    public UserDto(Long userId, String name, String email, String colorHex, String roles, LocalDate firstWorkingDay, LocalDate lastWorkingDay) {
         this.userId          = userId;
         this.name            = name;
         this.email           = email;
-        this.color           = color;
+        this.colorHex        = colorHex;
         this.roles           = roles;
         this.firstWorkingDay = firstWorkingDay;
         this.lastWorkingDay  = lastWorkingDay;
@@ -72,7 +73,7 @@ public class UserDto {
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
-                user.getColor(),
+                ColorUtil.colorToHexString(user.getColor()),
                 user.getRoles(),
                 user.getFirstWorkingDay(),
                 user.getLastWorkingDay()
@@ -84,7 +85,14 @@ public class UserDto {
         user.setId(this.userId);
         user.setName(this.name);
         user.setEmail(this.email);
-        user.setColor(this.color);
+        if (this.colorHex != null && !this.colorHex.isEmpty()) {
+            try {
+                String hex = this.colorHex.startsWith("#") ? this.colorHex.substring(1) : this.colorHex;
+                user.setColor(new Color((int) Long.parseLong(hex, 16), true));
+            } catch (NumberFormatException e) {
+                user.setColor(new Color(51, 102, 204)); // default blue
+            }
+        }
         user.setRoles(this.roles);
         user.setFirstWorkingDay(this.firstWorkingDay);
         user.setLastWorkingDay(this.lastWorkingDay);

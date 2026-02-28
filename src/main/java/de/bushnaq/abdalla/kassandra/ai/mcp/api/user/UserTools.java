@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.user;
 
+import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
@@ -26,6 +27,7 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.awt.*;
 import java.time.LocalDate;
@@ -33,17 +35,32 @@ import java.util.List;
 
 /**
  * Spring AI native tool implementations for User operations.
- * Uses @Tool annotation for automatic tool registration with ChatClient.
+ * <p>
+ * Users represent individuals in the system. They can be assigned roles, colors, and
+ * working-day ranges, and can be members of user groups.
+ * <p>
+ * Example usage:
+ * 1. Use getAllUsers() to list all users, or searchUsers(partialName) to find by name.
+ * 2. Use getUserByEmail(email) or getUserByName(name) to look up a specific user and obtain their userId.
+ * 3. Use createUser(name, email, ...) to create a new user. The userId is returned and must be used for further operations.
+ * 4. Use updateUser(userId, ...) to change a user's name, email, color, roles, or working-day range.
+ * 5. Use deleteUser(userId) to delete a user. Always look up the userId first — never guess it.
+ * <p>
+ * When asked to add a user to a group after creating them, first obtain the groupId via
+ * UserGroupTools.getUserGroupByName(name), then call UserGroupTools.addMemberToGroup(groupId, userId).
+ * <p>
  */
 @Component
 @Slf4j
 public class UserTools {
 
     @Autowired
+    private JsonMapper jsonMapper;
+    @Autowired
     @Qualifier("aiUserApi")
-    private UserApi userApi;
+    private UserApi    userApi;
 
-    @Tool(description = "Create a new user.")
+    @Tool(description = "Create a new user.", resultConverter = KassandraToolCallResultConverter.class)
     public UserDto createUser(
             @ToolParam(description = "The user name") String name,
             @ToolParam(description = "The user email address") String email,
@@ -67,7 +84,7 @@ public class UserTools {
         return UserDto.from(createdUser);
     }
 
-    @Tool(description = "Delete a user by their userId.")
+    @Tool(description = "Delete a user by their userId.", resultConverter = KassandraToolCallResultConverter.class)
     public void deleteUser(
             @ToolParam(description = "The userId") Long userId) {
         User user = userApi.getById(userId);
@@ -79,14 +96,27 @@ public class UserTools {
         ToolActivityContextHolder.reportActivity("Deleted user '" + user.getName() + "' (ID: " + userId + ")");
     }
 
-    @Tool(description = "Get all users in the system.")
+    //    @Tool(description = "Get all users in the system.")
+//    public String getAllUsers() {
+//        try {
+//            List<User> users = userApi.getAll();
+//            log.info("read " + users.size() + " users.");
+//            List<UserDto> userDtos = users.stream().map(UserDto::from).toList();
+//            return jsonMapper.writeValueAsString(userDtos);
+//        } catch (Exception e) {
+//            log.error("Error getting all users: {}", e.getMessage());
+//            return "Error: " + e.getMessage();
+//        }
+//    }
+    @Tool(description = "Get all users in the system.", resultConverter = KassandraToolCallResultConverter.class)
     public List<UserDto> getAllUsers() {
         List<User> users = userApi.getAll();
         log.info("read {} users.", users.size());
         return users.stream().map(UserDto::from).toList();
     }
 
-    @Tool(description = "Get a user by their email address.")
+
+    @Tool(description = "Get a user by their email address.", resultConverter = KassandraToolCallResultConverter.class)
     public UserDto getUserByEmail(
             @ToolParam(description = "The user email address") String email) {
         return userApi.getByEmail(email)
@@ -94,7 +124,7 @@ public class UserTools {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
     }
 
-    @Tool(description = "Get a user by their userId.")
+    @Tool(description = "Get a user by their userId.", resultConverter = KassandraToolCallResultConverter.class)
     public UserDto getUserById(
             @ToolParam(description = "The userId") Long userId) {
         User user = userApi.getById(userId);
@@ -104,7 +134,7 @@ public class UserTools {
         return UserDto.from(user);
     }
 
-    @Tool(description = "Get a user by their name.")
+    @Tool(description = "Get a user by their name.", resultConverter = KassandraToolCallResultConverter.class)
     public UserDto getUserByName(
             @ToolParam(description = "The user name") String name) {
         User user = userApi.getByName(name);
@@ -132,14 +162,14 @@ public class UserTools {
         }
     }
 
-    @Tool(description = "Search for users by partial name (case-insensitive).")
+    @Tool(description = "Search for users by partial name (case-insensitive).", resultConverter = KassandraToolCallResultConverter.class)
     public List<UserDto> searchUsers(
             @ToolParam(description = "Partial name to search for") String partialName) {
         List<User> users = userApi.searchByName(partialName);
         return users.stream().map(UserDto::from).toList();
     }
 
-    @Tool(description = "Update an existing user by their userId.")
+    @Tool(description = "Update an existing user by their userId.", resultConverter = KassandraToolCallResultConverter.class)
     public UserDto updateUser(
             @ToolParam(description = "The userId") Long userId,
             @ToolParam(description = "New user name", required = false) String name,

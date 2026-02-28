@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.usergroup;
 
+import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
 import de.bushnaq.abdalla.kassandra.rest.api.UserGroupApi;
@@ -55,7 +56,7 @@ public class UserGroupTools {
     @Qualifier("aiUserGroupApi")
     private UserGroupApi userGroupApi;
 
-    @Tool(description = "Add a user to a group (requires ADMIN).")
+    @Tool(description = "Add a user to a group (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public void addMemberToGroup(
             @ToolParam(description = "The groupId") Long groupId,
             @ToolParam(description = "The userId to add") Long userId) {
@@ -63,7 +64,7 @@ public class UserGroupTools {
         ToolActivityContextHolder.reportActivity("Added user " + userId + " to group " + groupId);
     }
 
-    @Tool(description = "Create a new user group (requires ADMIN).")
+    @Tool(description = "Create a new user group (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public UserGroupDto createUserGroup(
             @ToolParam(description = "Unique group name") String name,
             @ToolParam(description = "Group description", required = false) String description) {
@@ -72,7 +73,7 @@ public class UserGroupTools {
         return UserGroupDto.from(group);
     }
 
-    @Tool(description = "Delete a user group by its groupId (requires ADMIN).")
+    @Tool(description = "Delete a user group by its groupId (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public void deleteUserGroup(
             @ToolParam(description = "The groupId") Long groupId) {
         UserGroup group = userGroupApi.getById(groupId);
@@ -84,14 +85,14 @@ public class UserGroupTools {
         ToolActivityContextHolder.reportActivity("Deleted user group '" + group.getName() + "' (ID: " + groupId + ")");
     }
 
-    @Tool(description = "Get all user groups (requires ADMIN).")
+    @Tool(description = "Get all user groups (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public List<UserGroupDto> getAllUserGroups() {
         List<UserGroup> groups = userGroupApi.getAll();
         ToolActivityContextHolder.reportActivity("Found " + groups.size() + " user groups.");
         return groups.stream().map(UserGroupDto::from).collect(Collectors.toList());
     }
 
-    @Tool(description = "Get a user group by its groupId (requires ADMIN).")
+    @Tool(description = "Get a user group by its groupId (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public UserGroupDto getUserGroupById(
             @ToolParam(description = "The groupId") Long groupId) {
         UserGroup group = userGroupApi.getById(groupId);
@@ -101,7 +102,7 @@ public class UserGroupTools {
         return UserGroupDto.from(group);
     }
 
-    @Tool(description = "Get a user group by its name (requires ADMIN).")
+    @Tool(description = "Get a user group by its name (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public UserGroupDto getUserGroupByName(
             @ToolParam(description = "The group name") String name) {
         return userGroupApi.getByName(name)
@@ -109,7 +110,7 @@ public class UserGroupTools {
                 .orElseThrow(() -> new IllegalArgumentException("User group not found with name: " + name));
     }
 
-    @Tool(description = "Remove a user from a group (requires ADMIN).")
+    @Tool(description = "Remove a user from a group (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public void removeMemberFromGroup(
             @ToolParam(description = "The groupId") Long groupId,
             @ToolParam(description = "The userId to remove") Long userId) {
@@ -117,7 +118,7 @@ public class UserGroupTools {
         ToolActivityContextHolder.reportActivity("Removed user " + userId + " from group " + groupId);
     }
 
-    @Tool(description = "Update a user group's name and/or description (requires ADMIN).")
+    @Tool(description = "Update a user group's name and/or description (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public UserGroupDto updateUserGroup(
             @ToolParam(description = "The groupId") Long groupId,
             @ToolParam(description = "New group name") String name,

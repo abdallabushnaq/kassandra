@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -43,6 +45,8 @@ import java.util.Arrays;
  */
 public class ContextPropagatingToolCallbackProvider implements ToolCallbackProvider {
 
+    private static final Logger log = LoggerFactory.getLogger(ContextPropagatingToolCallbackProvider.class);
+
     private final ToolCallbackProvider delegate;
 
     public ContextPropagatingToolCallbackProvider(ToolCallbackProvider delegate) {
@@ -67,7 +71,14 @@ public class ContextPropagatingToolCallbackProvider implements ToolCallbackProvi
             public String call(String toolInput, ToolContext toolContext) {
                 ToolContextHelper.setup(toolContext);
                 try {
-                    return cb.call(toolInput, toolContext);
+                    String result = cb.call(toolInput, toolContext);
+                    int    len    = result == null ? 0 : result.length();
+                    log.debug("[tool-result] tool={} inputChars={} resultChars={} result={}",
+                            cb.getToolDefinition().name(),
+                            toolInput == null ? 0 : toolInput.length(),
+                            len,
+                            result);
+                    return result;
                 } finally {
                     ToolContextHelper.cleanup();
                 }

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.feature;
 
+import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
@@ -59,7 +60,7 @@ public class FeatureTools {
     @Autowired
     protected StableDiffusionService stableDiffusionService;
 
-    @Tool(description = "Create a new feature for a version.")
+    @Tool(description = "Create a new feature for a version.", resultConverter = KassandraToolCallResultConverter.class)
     public FeatureDto createFeature(
             @ToolParam(description = "Unique feature name") String name,
             @ToolParam(description = "The versionId this feature belongs to") Long versionId,
@@ -89,7 +90,7 @@ public class FeatureTools {
         return FeatureDto.from(savedFeature);
     }
 
-    @Tool(description = "Delete a feature by its featureId.")
+    @Tool(description = "Delete a feature by its featureId.", resultConverter = KassandraToolCallResultConverter.class)
     public void deleteFeature(
             @ToolParam(description = "The featureId") Long featureId) {
         Feature feature = featureApi.getById(featureId);
@@ -107,14 +108,14 @@ public class FeatureTools {
         return stableDiffusionService.generateImageWithOriginal(prompt);
     }
 
-    @Tool(description = "Get all features accessible to the current user.")
+    @Tool(description = "Get all features accessible to the current user.", resultConverter = KassandraToolCallResultConverter.class)
     public List<FeatureDto> getAllFeatures() {
         List<Feature> features = featureApi.getAll();
         ToolActivityContextHolder.reportActivity("Found " + features.size() + " features.");
         return features.stream().map(FeatureDto::from).collect(Collectors.toList());
     }
 
-    @Tool(description = "Get all features for a version.")
+    @Tool(description = "Get all features for a version.", resultConverter = KassandraToolCallResultConverter.class)
     public List<FeatureDto> getAllFeaturesByVersionId(
             @ToolParam(description = "The versionId") Long versionId) {
         List<Feature> features = featureApi.getAll(versionId);
@@ -122,7 +123,7 @@ public class FeatureTools {
         return features.stream().map(FeatureDto::from).collect(Collectors.toList());
     }
 
-    @Tool(description = "Get a feature by its featureId.")
+    @Tool(description = "Get a feature by its featureId.", resultConverter = KassandraToolCallResultConverter.class)
     public FeatureDto getFeatureById(
             @ToolParam(description = "The featureId") Long featureId) {
         Feature feature = featureApi.getById(featureId);
@@ -132,7 +133,7 @@ public class FeatureTools {
         return FeatureDto.from(feature);
     }
 
-    @Tool(description = "Get a feature by name within a version.")
+    @Tool(description = "Get a feature by name within a version.", resultConverter = KassandraToolCallResultConverter.class)
     public FeatureDto getFeatureByName(
             @ToolParam(description = "The versionId the feature belongs to") Long versionId,
             @ToolParam(description = "The feature name") String name) {
@@ -141,7 +142,7 @@ public class FeatureTools {
                 .orElseThrow(() -> new IllegalArgumentException("Feature '" + name + "' not found in version " + versionId));
     }
 
-    @Tool(description = "Update a feature name by its featureId.")
+    @Tool(description = "Update a feature name by its featureId.", resultConverter = KassandraToolCallResultConverter.class)
     public FeatureDto updateFeature(
             @ToolParam(description = "The featureId") Long id,
             @ToolParam(description = "The new feature name") String name) {

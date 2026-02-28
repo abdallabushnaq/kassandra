@@ -64,7 +64,7 @@ public class AiAssistantServiceUserTest extends AbstractMcpTest {
     public void testAdd(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
 
-        String         response = processQuery("create a new user Ahmet Mustafa, ahmet.mustafa@kassandra.org.");
+        String         response = processQuery("create a new user Ahmet Mustafa, ahmet.mustafa@kassandra.org and add him to the Team group.");
         Optional<User> user     = userApi.getByEmail("ahmet.mustafa@kassandra.org");
         assertTrue(user.isPresent(), "User should have been created");
     }

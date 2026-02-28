@@ -58,6 +58,7 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
     public static final  String                 CREATE_USER_BUTTON             = "create-user-button";
     private static final String                 PARAM_AI_PANEL                 = "aiPanel";
     public static final  String                 ROUTE                          = "user-list";
+    private static final String                 ROUTE_KEY                      = "user-list";
     public static final  String                 USER_AI_PANEL_BUTTON           = "user-ai-panel-button";
     public static final  String                 USER_GLOBAL_FILTER             = "user-global-filter";
     public static final  String                 USER_GRID                      = "user-grid";
@@ -118,6 +119,8 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
+        chatAgentPanel.restoreOrStart(ROUTE_KEY);
+
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {

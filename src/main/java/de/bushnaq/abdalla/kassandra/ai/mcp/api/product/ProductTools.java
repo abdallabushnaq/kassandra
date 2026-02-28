@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
+import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
@@ -58,7 +59,7 @@ public class ProductTools {
     @Autowired
     protected StableDiffusionService stableDiffusionService;
 
-    @Tool(description = "Create a new product. Returns the created Product including its productId.")
+    @Tool(description = "Create a new product. Returns the created Product including its productId.", resultConverter = KassandraToolCallResultConverter.class)
     public ProductDto createProduct(
             @ToolParam(description = "Unique product name") String name,
             @ToolParam(description = "Stable-diffusion prompt for the avatar", required = false) String avatarPrompt) {
@@ -85,7 +86,7 @@ public class ProductTools {
         return ProductDto.from(savedProduct);
     }
 
-    @Tool(description = "Delete a product and all its ACL entries by productId.")
+    @Tool(description = "Delete a product and all its ACL entries by productId.", resultConverter = KassandraToolCallResultConverter.class)
     public void deleteProductById(
             @ToolParam(description = "The productId") Long id) {
         Product product = productApi.getById(id);
@@ -97,7 +98,7 @@ public class ProductTools {
         ToolActivityContextHolder.reportActivity("Deleted product '" + product.getName() + "' (ID: " + id + ")");
     }
 
-    @Tool(description = "Delete a product and all its ACL entries by name.")
+    @Tool(description = "Delete a product and all its ACL entries by name.", resultConverter = KassandraToolCallResultConverter.class)
     public void deleteProductByName(
             @ToolParam(description = "The product name") String name) {
         productApi.getByName(name).orElseThrow(() -> new IllegalArgumentException("Product not found with name: " + name));
@@ -112,14 +113,14 @@ public class ProductTools {
         return stableDiffusionService.generateImageWithOriginal(prompt);
     }
 
-    @Tool(description = "Get all products accessible to the current user.")
+    @Tool(description = "Get all products accessible to the current user.", resultConverter = KassandraToolCallResultConverter.class)
     public List<ProductDto> getAllProducts() {
         List<Product> products = productApi.getAll();
         ToolActivityContextHolder.reportActivity("read " + products.size() + " products.");
         return products.stream().map(ProductDto::from).collect(Collectors.toList());
     }
 
-    @Tool(description = "Get a product by its productId.")
+    @Tool(description = "Get a product by its productId.", resultConverter = KassandraToolCallResultConverter.class)
     public ProductDto getProductById(
             @ToolParam(description = "The productId") Long productId) {
         Product product = productApi.getById(productId);
@@ -130,7 +131,7 @@ public class ProductTools {
         return ProductDto.from(product);
     }
 
-    @Tool(description = "Get a product by its name.")
+    @Tool(description = "Get a product by its name.", resultConverter = KassandraToolCallResultConverter.class)
     public ProductDto getProductByName(
             @ToolParam(description = "The product name") String name) {
         Product product = productApi.getByName(name)
@@ -139,7 +140,7 @@ public class ProductTools {
         return ProductDto.from(product);
     }
 
-    @Tool(description = "Update an existing product by its productId.")
+    @Tool(description = "Update an existing product by its productId.", resultConverter = KassandraToolCallResultConverter.class)
     public ProductDto updateProduct(
             @ToolParam(description = "The productId") Long productId,
             @ToolParam(description = "The new product name") String name) {
