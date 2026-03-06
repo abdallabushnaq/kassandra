@@ -65,7 +65,7 @@ public class UserTools {
             @ToolParam(description = "The user name") String name,
             @ToolParam(description = "The user email address") String email,
             @ToolParam(description = "User color in hex format (e.g. '#336699')", required = false) String colorHex,
-            @ToolParam(description = "Comma-separated roles: ROLE_USER or ROLE_ADMIN", required = false) String roles,
+            @ToolParam(description = "Comma-separated roles: USER or ADMIN", required = false) String roles,
             @ToolParam(description = "First working day (YYYY-MM-DD); defaults to today", required = false) String firstWorkingDay,
             @ToolParam(description = "Last working day (YYYY-MM-DD); omit if still employed", required = false) String lastWorkingDay) {
         log.info("Creating user: name={}, email={}", name, email);
@@ -73,7 +73,7 @@ public class UserTools {
         user.setName(name);
         user.setEmail(email);
         user.setColor(parseColorFromHex(colorHex));
-        user.setRoles(roles != null ? roles : "ROLE_USER");
+        user.setRoles(roles != null ? roles : "USER");
         user.setFirstWorkingDay(firstWorkingDay != null && !firstWorkingDay.isEmpty()
                 ? LocalDate.parse(firstWorkingDay) : LocalDate.now());
         if (lastWorkingDay != null && !lastWorkingDay.isEmpty()) {
@@ -175,7 +175,7 @@ public class UserTools {
             @ToolParam(description = "New user name", required = false) String name,
             @ToolParam(description = "New email address", required = false) String email,
             @ToolParam(description = "New color in hex format (e.g. '#FF0000')", required = false) String colorHex,
-            @ToolParam(description = "New roles (ROLE_USER or ROLE_ADMIN)", required = false) String roles,
+            @ToolParam(description = "New roles (USER or ADMIN)", required = false) String roles,
             @ToolParam(description = "New first working day (YYYY-MM-DD)", required = false) String firstWorkingDay,
             @ToolParam(description = "New last working day (YYYY-MM-DD)", required = false) String lastWorkingDay) {
         User user = userApi.getById(userId);
