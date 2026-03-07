@@ -19,14 +19,14 @@
 | kassandra.ai.filter.prompt     | UserFilterPrompt.java                                    | src      |       46 |        3 |       16 |      130 |      195 |
 | kassandra.ai.filter.prompt     | VersionFilterPrompt.java                                 | src      |       25 |        3 |       16 |       95 |      139 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.ai.filter            | AbstractAiFilterTest.java                                | src      |       15 |       14 |       34 |       83 |      146 |
+| kassandra.ai.filter            | AbstractAiFilterTest.java                                | src      |       20 |       23 |       34 |       94 |      171 |
 | kassandra.ai.filter            | AiFilterGenerator.java                                   | src      |        5 |       20 |       16 |        9 |       50 |
 | kassandra.ai.filter            | AiFilterService.java                                     | src      |       25 |       26 |       45 |      119 |      215 |
 | kassandra.ai.filter            | AvailabilityAiFilterTest.java                            | src      |       62 |        8 |       21 |      301 |      392 |
 | kassandra.ai.filter            | FeatureAiFilterTest.java                                 | src      |       37 |        7 |       21 |      184 |      249 |
 | kassandra.ai.filter            | LocationAiFilterTest.java                                | src      |       56 |        7 |       20 |      251 |      334 |
 | kassandra.ai.filter            | OffDayAiFilterTest.java                                  | src      |       88 |        7 |       21 |      475 |      591 |
-| kassandra.ai.filter            | ProductAiFilterTest.java                                 | src      |       36 |       10 |       21 |      153 |      220 |
+| kassandra.ai.filter            | ProductAiFilterTest.java                                 | src      |       24 |       10 |       21 |      126 |      181 |
 | kassandra.ai.filter            | SprintAiFilterTest.java                                  | src      |       78 |       10 |       20 |      412 |      520 |
 | kassandra.ai.filter            | UserAiFilterTest.java                                    | src      |       69 |       11 |       23 |      332 |      435 |
 | kassandra.ai.filter            | VersionAiFilterTest.java                                 | src      |       68 |       10 |       23 |      321 |      422 |
@@ -516,5 +516,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 53 package(s)                  | 462 file(s)                                              | java     |    10466 |     8016 |    13354 |    54224 |    86060 |
+| 53 package(s)                  | 462 file(s)                                              | java     |    10459 |     8025 |    13354 |    54208 |    86046 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

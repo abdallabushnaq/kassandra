@@ -31,6 +31,8 @@ import java.util.function.Predicate;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class AbstractAiFilterTest<T> {
     private final   AiFilterService aiFilterService;
     protected final JsonMapper      filterMapper;
@@ -65,10 +67,26 @@ public class AbstractAiFilterTest<T> {
 //    }
 
     /**
-     * Perform search using regex approach (existing method)
+     * Runs the LLM filter for {@code query} and asserts its result matches
+     * the reference set produced by {@code referenceJs} — a plain JS function
+     * body that is the ground-truth for what the query should return.
+     *
+     * @param query       natural-language query passed to the LLM
+     * @param entityType  entity type string (e.g. "Product")
+     * @param referenceJs hand-written JS function body used as ground-truth
      */
-    protected List<T> performSearch(String searchValue, String entityType) throws Exception {
-        return performSearch(searchValue, entityType, AiFilterGenerator.FilterType.JAVASCRIPT);
+    protected List<T> assertSearchMatchesReference(String query, String entityType, String referenceJs) throws Exception {
+        List<T> expected = aiFilterService.applyJavaScriptSearchQuery(referenceJs, testProducts, now);
+        List<T> actual   = performSearch(query, entityType);
+
+        System.out.println("\n=== Reference filter produced " + expected.size() + " result(s) ===");
+        System.out.println("=== LLM filter produced      " + actual.size() + " result(s) ===");
+
+        assertThat(actual)
+                .as("LLM filter for query '%s' should match reference JS filter", query)
+                .containsExactlyInAnyOrderElementsOf(expected);
+
+        return actual;
     }
 
     /**
@@ -126,6 +144,13 @@ public class AbstractAiFilterTest<T> {
             System.out.println(json);
         }
         return filtered;
+    }
+
+    /**
+     * Perform search using regex approach (existing method)
+     */
+    protected List<T> performSearch(String searchValue, String entityType) throws Exception {
+        return performSearch(searchValue, entityType, AiFilterGenerator.FilterType.JAVASCRIPT);
     }
 
     /**

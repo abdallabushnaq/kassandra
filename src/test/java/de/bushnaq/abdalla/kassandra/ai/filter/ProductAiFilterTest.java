@@ -28,20 +28,16 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Predicate;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 
 /**
- * Integration test for NaturalLanguageSearchService testing real LLM regex pattern generation
- * and filtering capabilities with various search scenarios.
- * <p>
- * This test requires Ollama to be running with a model available (e.g., llama3.2:1b).
- * The test will be skipped if Ollama is not available.
+ * Tests the JavaScript AI filter generator for Product entities.
+ *
+ * <p>Each test verifies that the LLM-generated JS filter for a natural-language
+ * query produces the same result as a hand-written reference JS predicate applied
+ * to the same product list.  The reference predicate is the ground truth — it must
+ * be simple, obvious, and unambiguous.  The product list is the only place that
+ * needs to change when test data is updated; no individual test hard-codes expected
+ * indices or counts.</p>
  */
 @Tag("AiUnitTest")
 @SpringBootTest
@@ -65,14 +61,12 @@ public class ProductAiFilterTest extends AbstractAiFilterTest<Product> {
 
     @BeforeEach
     void setUp() {
-        // Create test data
         setupTestProducts();
     }
 
     private void setupTestProducts() {
         testProducts = new ArrayList<>();
 
-        // Products with different names and dates for comprehensive testing
         testProducts.add(createProduct(1L, "Orion Space System",
                 OffsetDateTime.of(2023, 6, 15, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 20, 14, 30, 0, 0, ZoneOffset.UTC)));
@@ -106,115 +100,82 @@ public class ProductAiFilterTest extends AbstractAiFilterTest<Product> {
                 OffsetDateTime.of(2025, 1, 20, 15, 50, 0, 0, ZoneOffset.UTC)));
     }
 
+    // -------------------------------------------------------------------------
+    // Tests — each has an unambiguous natural-language query and a hand-written
+    // reference JS predicate that is the ground truth for that query.
+    // -------------------------------------------------------------------------
+
     @Test
     @DisplayName("MARS")
     void testMARS() throws Exception {
-        List<Product> results  = performSearch("MARS", "Product");
-        List<Product> expected = Collections.singletonList(testProducts.get(2)); // Mars Explorer
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "MARS",
+                "Product",
+                "return entity.getName().toLowerCase().includes('mars');"
+        );
     }
 
     @Test
     @DisplayName("name contains project")
     void testNameContainsProject() throws Exception {
-        List<Product> results  = performSearch("name contains project", "Product");
-        List<Product> expected = Collections.singletonList(testProducts.get(1)); // Project Apollo
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "name contains project",
+                "Product",
+                "return entity.getName().toLowerCase().includes('project');"
+        );
     }
 
     @Test
     @DisplayName("Orion")
     void testOrion() throws Exception {
-        List<Product> results  = performSearch("Orion", "Product");
-        List<Product> expected = Collections.singletonList(testProducts.get(0)); // Orion Space System
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "Orion",
+                "Product",
+                "return entity.getName().toLowerCase().includes('orion');"
+        );
     }
 
     @Test
     @DisplayName("products created after July 2024")
     void testProductsCreatedAfterJuly2024() throws Exception {
-        List<Product> results = performSearch("products created after July 2024", "Product");
-//        List<Product> results = performSearch(new ExampleProductFilter());
-        List<Product> expected = Arrays.asList(
-                testProducts.get(5), // Deep Space Probe (created 2024-09-05)
-                testProducts.get(6), // Space Station Alpha (created 2024-11-12)
-                testProducts.get(7)  // Rocket Engine X (created 2025-01-05)
+        // "after July 2024" means after the last moment of July 31, 2024
+        assertSearchMatchesReference(
+                "products created after July 2024",
+                "Product",
+                """
+                        const boundary = Java.type('java.time.OffsetDateTime').of(2024, 7, 31, 23, 59, 59, 0, entity.getCreated().getOffset());
+                        return entity.getCreated().isAfter(boundary);
+                        """
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
     @DisplayName("products created in 2024")
     void testProductsCreatedIn2024() throws Exception {
-        List<Product> results = performSearch("products created in 2024", "Product");
-        List<Product> expected = Arrays.asList(
-                testProducts.get(1),
-                testProducts.get(2),
-                testProducts.get(3),
-                testProducts.get(4),
-                testProducts.get(5),
-                testProducts.get(6)
+        assertSearchMatchesReference(
+                "products created in 2024",
+                "Product",
+                "return entity.getCreated().getYear() === 2024;"
         );
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
     @DisplayName("products updated in 2025")
     void testProductsUpdatedIn2025() throws Exception {
-        List<Product> results = performSearch("products updated in 2025", "Product");
-        List<Product> expected = Arrays.asList(
-                testProducts.get(5), // Deep Space Probe (updated 2025-01-15)
-                testProducts.get(6), // Space Station Alpha (updated 2025-02-08)
-                testProducts.get(7)  // Rocket Engine X (updated 2025-01-20)
+        assertSearchMatchesReference(
+                "products updated in 2025",
+                "Product",
+                "return entity.getUpdated().getYear() === 2025;"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
     @DisplayName("space products created in 2024")
     void testSpaceProductsCreatedIn2024() throws Exception {
-        List<Product> results = performSearch("space products created in 2024", "Product");
-        List<Product> expected = Arrays.asList(
-                testProducts.get(5),//
-                testProducts.get(6)//
-        ); // Space Station Alpha
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "space products created in 2024",
+                "Product",
+                "return entity.getName().toLowerCase().includes('space') && entity.getCreated().getYear() === 2024;"
+        );
     }
-
-    /**
-     * add generated ai code to test against one of the tests.
-     */
-    class ExampleProductFilter implements Predicate<Product> {
-
-        @Override
-        public boolean test(Product entity) {
-            if (entity == null) {
-                return false;
-            }
-
-            try {
-                // Execute the generated filter code
-                return entity.getCreated() != null && entity.getCreated().isAfter(OffsetDateTime.of(2024, 7, 31, 23, 59, 59, 0, OffsetDateTime.now().getOffset()));
-            } catch (Exception e) {
-                // Log the error but don't fail the entire filter
-                System.err.println("Error in filter execution: " + e.getMessage());
-                return false;
-            }
-        }
-
-    }
-
 }
