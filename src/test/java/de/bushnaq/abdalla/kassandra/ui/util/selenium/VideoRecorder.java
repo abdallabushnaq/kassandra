@@ -17,8 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.util.selenium;
 
-import de.bushnaq.abdalla.kassandra.ai.narrator.AudioMirrorRegistry;
-import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
+import de.bushnaq.abdalla.kassandra.ai.tts.narrator.AudioMirrorRegistry;
+import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import lombok.Getter;
 import lombok.Setter;
 import org.bytedeco.ffmpeg.global.avcodec;

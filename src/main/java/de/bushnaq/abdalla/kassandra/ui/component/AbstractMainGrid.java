@@ -36,7 +36,7 @@ import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import de.bushnaq.abdalla.kassandra.ai.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import lombok.Getter;
 import tools.jackson.databind.json.JsonMapper;
@@ -54,7 +54,7 @@ public abstract class AbstractMainGrid<T> extends Main {
      * Holds a reference to the last-built smart-header's right layout so that
      * callers can append extra buttons after construction.
      */
-    private HorizontalLayout lastHeaderRightLayout;
+    private       HorizontalLayout    lastHeaderRightLayout;
 
     public AbstractMainGrid(Clock clock) {
         setClassName("grid-wrapper");

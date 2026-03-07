@@ -17,8 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
-import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
-import de.bushnaq.abdalla.kassandra.ai.narrator.NarratorAttribute;
+import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
+import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AvailabilityCalendarComponent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.AvailabilityDialog;

@@ -70,6 +70,8 @@ tbd
 
 # Kassandra Introduction Videos
 
+https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
+
 1. Managing Users Introduction Video
 2. Managing User Groups Introduction Video
 3. User Profile Introduction Video

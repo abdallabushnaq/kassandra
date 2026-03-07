@@ -19,8 +19,8 @@ package de.bushnaq.abdalla.kassandra.ui.util;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
-import de.bushnaq.abdalla.kassandra.ai.narrator.Narrator;
-import de.bushnaq.abdalla.kassandra.ai.narrator.TtsCacheManager;
+import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
+import de.bushnaq.abdalla.kassandra.ai.tts.narrator.TtsCacheManager;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +31,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
@@ -81,9 +80,9 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
                     .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false")
                     //.withEnv("KC_HTTP_ENABLED", "true")
                     .withReuse(true); // Enable container reuse
-                    //.waitingFor(Wait.forHttp("/realms/project-hub-realm")
-                    //        .forPort(8080) // Make sure wait strategy uses the correct port
-                    //        .forStatusCode(200));
+            //.waitingFor(Wait.forHttp("/realms/project-hub-realm")
+            //        .forPort(8080) // Make sure wait strategy uses the correct port
+            //        .forStatusCode(200));
 
             System.out.println("=== CREATING NEW KEYCLOAK CONTAINER ===");
         } else {
