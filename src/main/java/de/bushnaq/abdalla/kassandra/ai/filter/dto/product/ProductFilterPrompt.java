@@ -15,12 +15,12 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.filter.prompt;
+package de.bushnaq.abdalla.kassandra.ai.filter.dto.product;
 
-import de.bushnaq.abdalla.kassandra.ai.filter.prompt.FilterPromptRegistry.PromptConfig;
+import de.bushnaq.abdalla.kassandra.ai.filter.FilterPromptRegistry.PromptConfig;
 
 /**
- * Configuration for Product entity AI filtering
+ * Configuration for Product entity AI filtering.
  */
 public class ProductFilterPrompt {
 
@@ -29,15 +29,15 @@ public class ProductFilterPrompt {
                 """
                         @Getter
                         @Setter
-                        public class Product {
-                            private String name;//never null
-                            private OffsetDateTime created;//never null
-                            private OffsetDateTime updated;//never null
+                        public class ProductFilterDto {
+                            private String         name;    // never null
+                            private OffsetDateTime created; // never null
+                            private OffsetDateTime updated; // never null
                         }
                         """,
                 """
                         Special considerations for Products:
-                        - Remember: you are filtering Product entities, so each 'entity' is a Product.
+                        - Remember: you are filtering ProductFilterDto entities, so each 'entity' is a ProductFilterDto.
                         - When queries mention "products created in 2024" - this means filter by creation year.
                         - Terms like "products", "items", or similar generic terms refer to the entity type, not name content.
                         - Use only getter methods like entity.getName(), entity.getCreated(), entity.getUpdated().
@@ -90,7 +90,8 @@ public class ProductFilterPrompt {
                         Output: return entity.getName().toLowerCase().includes('mars');
                         
                         Input: "space products created in 2024"
-                        Output: const hasSpace = entity.getName().toLowerCase().includes('space'); const isCreated2024 = entity.getCreated().getYear() === 2024; return hasSpace && isCreated2024;""",
+                        Output: const hasSpace = entity.getName().toLowerCase().includes('space'); const isCreated2024 = entity.getCreated().getYear() === 2024; return hasSpace && isCreated2024;
+                        """,
                 """
                         Examples:
                         Input: "Orion"
@@ -98,7 +99,6 @@ public class ProductFilterPrompt {
                         
                         Input: "name contains project"
                         Output: return entity.getName().toLowerCase().contains("project");
-                        
                         
                         Input: "created in 2024"
                         Output: return entity.getCreated().getYear() == 2024;
@@ -118,7 +118,6 @@ public class ProductFilterPrompt {
                         Input: "products created this year"
                         Output: return entity.getCreated().getYear() == java.time.Year.now().getValue();
                         
-                        
                         Input: "updated in 2024"
                         Output: return entity.getUpdated().getYear() == 2024;
                         
@@ -136,8 +135,8 @@ public class ProductFilterPrompt {
                         
                         Input: "products updated this year"
                         Output: return entity.getUpdated().getYear() == java.time.Year.now().getValue();
-                        
                         """
         );
     }
 }
+

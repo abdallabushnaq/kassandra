@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter;
 
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.version.VersionFilterDto;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.version.VersionFilterPrompt;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,33 +30,50 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 
 /**
- * Integration test for Version AI filtering testing real LLM regex pattern generation
- * and filtering capabilities with various search scenarios.
- * <p>
- * This test requires Ollama to be running with a model available (e.g., llama3.2:1b).
- * The test will be skipped if Ollama is not available.
+ * Tests the JavaScript AI filter generator for Version entities.
+ *
+ * <p>Each test verifies that the LLM-generated JS filter for a natural-language
+ * query produces the same result as a hand-written reference JS predicate applied
+ * to the same version list. Both the LLM filter and the reference filter operate
+ * on {@link VersionFilterDto} objects. The version list is the only place that
+ * needs to change when test data is updated; no individual test hard-codes
+ * expected indices or counts.</p>
+ *
+ * <p>For numeric version comparisons the reference JS uses the same
+ * {@code major*10000 + minor*100 + patch} weighted scheme documented in
+ * {@link VersionFilterPrompt},
+ * so both the LLM and the reference are judged by the same rule.</p>
  */
 @Tag("AiUnitTest")
 @SpringBootTest
 @ActiveProfiles("test")
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-class VersionAiFilterTest extends AbstractAiFilterTest<Version> {
+class VersionAiFilterTest extends AbstractAiFilterTest<VersionFilterDto> {
+
+    // -------------------------------------------------------------------------
+    // Shared JS helper embedded in every version-comparison reference predicate.
+    // Converts "MAJOR.MINOR.PATCH[-suffix]" to an integer weight.
+    // Pre-release suffixes do NOT affect the numeric value — the suffix presence
+    // is checked separately where needed.
+    // -------------------------------------------------------------------------
+    private static final String VERSION_VALUE_JS =
+            "function versionValue(n) {" +
+                    " const p = n.split('.');" +
+                    " if (p.length < 3) return -1;" +
+                    " const patch = parseInt(p[2].includes('-') ? p[2].substring(0, p[2].indexOf('-')) : p[2]);" +
+                    " return parseInt(p[0])*10000 + parseInt(p[1])*100 + patch;" +
+                    "} ";
 
     public VersionAiFilterTest(JsonMapper mapper, AiFilterService aiFilterService) {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
     }
 
-    private Version createVersion(Long id, String name, Long productId, OffsetDateTime created, OffsetDateTime updated) {
+    private Version createVersion(Long id, String name, Long productId,
+                                  OffsetDateTime created, OffsetDateTime updated) {
         Version version = new Version();
         version.setId(id);
         version.setName(name);
@@ -66,357 +85,272 @@ class VersionAiFilterTest extends AbstractAiFilterTest<Version> {
 
     @BeforeEach
     void setUp() {
-        // Create test data
-        setupTestVersions();
-    }
+        List<Version> raw = new ArrayList<>();
 
-    private void setupTestVersions() {
-        testProducts = new ArrayList<>();
-
-        // Versions with different semantic version patterns and dates for comprehensive testing
-        testProducts.add(createVersion(1L, "1.0.0",
-                1L,
+        // id=1  "1.0.0"          product=1  stable    created 2023-06-15  updated 2024-03-20
+        raw.add(createVersion(1L, "1.0.0", 1L,
                 OffsetDateTime.of(2023, 6, 15, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 20, 14, 30, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createVersion(2L, "1.2.3",
-                1L,
+        // id=2  "1.2.3"          product=1  stable    created 2024-01-10  updated 2024-06-05
+        raw.add(createVersion(2L, "1.2.3", 1L,
                 OffsetDateTime.of(2024, 1, 10, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createVersion(3L, "2.0.0",
-                2L,
+        // id=3  "2.0.0"          product=2  stable    created 2024-02-28  updated 2024-08-12
+        raw.add(createVersion(3L, "2.0.0", 2L,
                 OffsetDateTime.of(2024, 2, 28, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 12, 13, 20, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createVersion(4L, "2.1.5",
-                2L,
+        // id=4  "2.1.5"          product=2  stable    created 2024-04-03  updated 2024-09-18
+        raw.add(createVersion(4L, "2.1.5", 2L,
                 OffsetDateTime.of(2024, 4, 3, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 18, 12, 10, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createVersion(5L, "3.0.0-beta",
-                3L,
+        // id=5  "3.0.0-beta"     product=3  pre-rel   created 2024-07-22  updated 2024-12-01
+        raw.add(createVersion(5L, "3.0.0-beta", 3L,
                 OffsetDateTime.of(2024, 7, 22, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 12, 1, 10, 25, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createVersion(6L, "3.1.0-alpha",
-                3L,
+        // id=6  "3.1.0-alpha"    product=3  pre-rel   created 2024-09-05  updated 2025-01-15
+        raw.add(createVersion(6L, "3.1.0-alpha", 3L,
                 OffsetDateTime.of(2024, 9, 5, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 15, 11, 40, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createVersion(7L, "4.0.0-rc1",
-                4L,
+        // id=7  "4.0.0-rc1"      product=4  pre-rel   created 2024-11-12  updated 2025-02-08
+        raw.add(createVersion(7L, "4.0.0-rc1", 4L,
                 OffsetDateTime.of(2024, 11, 12, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 8, 16, 15, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createVersion(8L, "0.9.0",
-                4L,
+        // id=8  "0.9.0"          product=4  stable    created 2025-01-05  updated 2025-01-20
+        raw.add(createVersion(8L, "0.9.0", 4L,
                 OffsetDateTime.of(2025, 1, 5, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 20, 15, 50, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createVersion(9L, "1.0.0-SNAPSHOT",
-                5L,
+        // id=9  "1.0.0-SNAPSHOT" product=5  pre-rel   created 2025-02-10  updated 2025-02-25
+        raw.add(createVersion(9L, "1.0.0-SNAPSHOT", 5L,
                 OffsetDateTime.of(2025, 2, 10, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 25, 17, 30, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createVersion(10L, "5.2.1",
-                5L,
+        // id=10 "5.2.1"          product=5  stable    created 2025-03-18  updated 2025-04-02
+        raw.add(createVersion(10L, "5.2.1", 5L,
                 OffsetDateTime.of(2025, 3, 18, 13, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 4, 2, 9, 20, 0, 0, ZoneOffset.UTC)));
+
+        testProducts = new ArrayList<>();
+        for (Version v : raw) {
+            testProducts.add(VersionFilterDto.from(v));
+        }
     }
+
+    // -------------------------------------------------------------------------
+    // Tests
+    // -------------------------------------------------------------------------
 
     @Test
     @DisplayName("1.2.3")
     void test1_2_3() throws Exception {
-        List<Version> results  = performSearch("1.2.3", "Version");
-        List<Version> expected = Collections.singletonList(testProducts.get(1)); // 1.2.3
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "1.2.3",
+                "Version",
+                "return entity.getName().toLowerCase().includes('1.2.3');"
+        );
     }
+
+    // --- name / substring filters --------------------------------------------
 
     @Test
     @DisplayName("alpha")
     void testAlpha() throws Exception {
-        List<Version> results  = performSearch("alpha", "Version");
-        List<Version> expected = Collections.singletonList(testProducts.get(5)); // 3.1.0-alpha
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "alpha",
+                "Version",
+                "return entity.getName().toLowerCase().includes('alpha');"
+        );
     }
 
     @Test
     @DisplayName("beta")
     void testBeta() throws Exception {
-        List<Version> results  = performSearch("beta", "Version");
-        List<Version> expected = Collections.singletonList(testProducts.get(4)); // 3.0.0-beta
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "beta",
+                "Version",
+                "return entity.getName().toLowerCase().includes('beta');"
+        );
     }
 
     @Test
     @DisplayName("created in 2025")
     void testCreatedIn2025() throws Exception {
-        List<Version> results  = performSearch("created in 2025", "Version");
-        List<Version> expected = Arrays.asList(testProducts.get(7), testProducts.get(8), testProducts.get(9)); // 0.9.0, 1.0.0-SNAPSHOT, 5.2.1
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "created in 2025",
+                "Version",
+                "return entity.getCreated().getYear() === 2025;"
+        );
     }
 
     @Test
     @DisplayName("empty search query")
     void testEmptySearchQuery() throws Exception {
-        List<Version> results  = performSearch("", "Version");
-        List<Version> expected = new ArrayList<>(testProducts); // All versions should match empty query
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "",
+                "Version",
+                "return true;"
+        );
     }
 
-    // === COLUMN-SPECIFIC TESTS (one per column) ===
     @Test
     @DisplayName("name contains beta")
     void testNameContainsBeta() throws Exception {
-        List<Version> results  = performSearch("name contains beta", "Version");
-        List<Version> expected = Collections.singletonList(testProducts.get(4)); // 3.0.0-beta
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "name contains beta",
+                "Version",
+                "return entity.getName().toLowerCase().includes('beta');"
+        );
     }
 
-    // === OTHER VALUABLE TEST CASES (preserved from original) ===
     @Test
     @DisplayName("pre-release versions")
     void testPreReleaseVersions() throws Exception {
-        List<Version> results = performSearch("pre-release versions", "Version");
-        List<Version> expected = Arrays.asList(
-                testProducts.get(4), // 3.0.0-beta
-                testProducts.get(5), // 3.1.0-alpha
-                testProducts.get(6), // 4.0.0-rc1
-                testProducts.get(8)  // 1.0.0-SNAPSHOT
+        // A pre-release version is one whose name contains a hyphen
+        assertSearchMatchesReference(
+                "pre-release versions",
+                "Version",
+                "return entity.getName().includes('-');"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
-    @Test
-    @DisplayName("purple elephant dancing")
-    void testPurpleElephantDancing() throws Exception {
-        List<Version> results  = performSearch("purple elephant dancing", "Version");
-        List<Version> expected = Collections.emptyList(); // Should return empty results for nonsensical queries
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
+    // --- major-version prefix filters ----------------------------------------
 
     @Test
     @DisplayName("rc")
     void testRc() throws Exception {
-        List<Version> results  = performSearch("rc", "Version");
-        List<Version> expected = Collections.singletonList(testProducts.get(6)); // 4.0.0-rc1
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "rc",
+                "Version",
+                "return entity.getName().toLowerCase().includes('rc');"
+        );
     }
 
     @Test
     @DisplayName("snapshot")
     void testSnapshot() throws Exception {
-        List<Version> results  = performSearch("snapshot", "Version");
-        List<Version> expected = Collections.singletonList(testProducts.get(8)); // 1.0.0-SNAPSHOT
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "snapshot",
+                "Version",
+                "return entity.getName().toLowerCase().includes('snapshot');"
+        );
     }
 
+    // --- pre-release / stable filters ----------------------------------------
+
     @Test
-    @DisplayName("stable versions")
+    @DisplayName("stable versions (no pre-release suffix)")
     void testStableVersions() throws Exception {
-        List<Version> results = performSearch("stable versions", "Version");
-        List<Version> expected = Arrays.asList(
-                testProducts.get(0), // 1.0.0
-                testProducts.get(1), // 1.2.3
-                testProducts.get(2), // 2.0.0
-                testProducts.get(3), // 2.1.5
-                testProducts.get(7), // 0.9.0
-                testProducts.get(9)  // 5.2.1
+        // A stable version has no hyphen in the name
+        assertSearchMatchesReference(
+                "stable versions (no pre-release suffix)",
+                "Version",
+                "return !entity.getName().includes('-');"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("updated in 2025")
-    void testUpdatedIn2025() throws Exception {
-        List<Version> results = performSearch("updated in 2025", "Version");
-        List<Version> expected = Arrays.asList(
-                testProducts.get(5), //3.1.0-alpha
-                testProducts.get(6), // 4.0.0-rc1 (created 2024-11-12)
-                testProducts.get(7), // 0.9.0 (created 2025-01-05)
-                testProducts.get(8), // 1.0.0-SNAPSHOT (created 2025-02-10)
-                testProducts.get(9)  // 5.2.1
-        );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
     @DisplayName("version 1")
     void testVersion1() throws Exception {
-        List<Version> results  = performSearch("version 1", "Version");
-        List<Version> expected = Arrays.asList(testProducts.get(0), testProducts.get(1), testProducts.get(8)); // 1.0.0, 1.2.3, 1.0.0-SNAPSHOT
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        // Names that start with "1." (major version 1)
+        assertSearchMatchesReference(
+                "version 1",
+                "Version",
+                "return entity.getName().startsWith('1.');"
+        );
     }
+
+    // --- numeric version comparison filters ----------------------------------
 
     @Test
     @DisplayName("version 3")
     void testVersion3() throws Exception {
-        List<Version> results  = performSearch("version 3", "Version");
-        List<Version> expected = Arrays.asList(testProducts.get(4), testProducts.get(5)); // 3.0.0-beta, 3.1.0-alpha
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        // Names that start with "3." (major version 3)
+        assertSearchMatchesReference(
+                "version 3",
+                "Version",
+                "return entity.getName().startsWith('3.');"
+        );
     }
 
     @Test
-    @DisplayName("version greater than 1.0.0")
-    void testVersionGreaterThan1_0_0() throws Exception {
-        List<Version> results = performSearch("version greater than 1.0.0", "Version");
-//        List<Version> results = performSearch(new ExampleVersionFilter());
-        List<Version> expected = Arrays.asList(
-                testProducts.get(1), // 1.2.3
-                testProducts.get(2), // 2.0.0
-                testProducts.get(3), // 2.1.5
-                testProducts.get(4), // 3.0.0-beta
-                testProducts.get(5), // 3.1.0-alpha
-                testProducts.get(6), // 4.0.0-rc1
-                testProducts.get(9)  // 5.2.1
+    @DisplayName("version greater than 2.0.0")
+    void testVersionGreaterThan2_0_0() throws Exception {
+        // Numeric weight > 20000 (2.0.0 itself is excluded)
+        assertSearchMatchesReference(
+                "version greater than 2.0.0",
+                "Version",
+                VERSION_VALUE_JS + "return versionValue(entity.getName()) > 20000;"
         );
+    }
 
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+    // --- productId filter ----------------------------------------------------
+
+    @Test
+    @DisplayName("versions belonging to product 3")
+    void testVersionsBelongingToProduct3() throws Exception {
+        assertSearchMatchesReference(
+                "versions belonging to product 3",
+                "Version",
+                "return entity.getProductId() === 3;"
+        );
+    }
+
+    // --- created / updated date filters --------------------------------------
+
+    @Test
+    @DisplayName("versions between 1.0.0 and 3.0.0 inclusive")
+    void testVersionsBetween1_0_0And3_0_0Inclusive() throws Exception {
+        // weight >= 10000 (1.0.0) AND <= 30000 (3.0.0); pre-release suffixes
+        // do not change the numeric weight so "3.0.0-beta" (weight=30000) is included
+        assertSearchMatchesReference(
+                "versions between 1.0.0 and 3.0.0 inclusive",
+                "Version",
+                VERSION_VALUE_JS + "const v = versionValue(entity.getName()); return v >= 10000 && v <= 30000;"
+        );
     }
 
     @Test
-    @DisplayName("versions between 1.0.0 and 3.0.0")
-    void testVersionsBetween1_0_0And3_0_0() throws Exception {
-        List<Version> results = performSearch("versions between 1.0.0 and 3.0.0", "Version");
-//        List<Version> results = performSearch(new ExampleVersionFilter());
-        List<Version> expected = Arrays.asList(
-                testProducts.get(0), // 1.0.0
-                testProducts.get(1), // 1.2.3
-                testProducts.get(2), // 2.0.0
-                testProducts.get(3), // 2.1.5
-                testProducts.get(4), // 3.0.0-beta
-                testProducts.get(8) // 1.0.0-SNAPSHOT (created 2025-02-10)
+    @DisplayName("versions created after January 31 2024")
+    void testVersionsCreatedAfterJanuary31_2024() throws Exception {
+        // Explicit day removes ambiguity about "after January 2024"
+        assertSearchMatchesReference(
+                "versions created after January 31 2024",
+                "Version",
+                """
+                        const boundary = Java.type('java.time.OffsetDateTime').of(2024, 1, 31, 23, 59, 59, 0, Java.type('java.time.ZoneOffset').UTC);
+                        return entity.getCreated().isAfter(boundary);
+                        """
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
-    @DisplayName("versions created after January 2024")
-    void testVersionsCreatedAfterJanuary2024() throws Exception {
-        List<Version> results = performSearch("versions created after January 2024", "Version");
-        List<Version> expected = Arrays.asList(
-                testProducts.get(2), // 2.0.0 (created 2024-02-28)
-                testProducts.get(3), // 2.1.5 (created 2024-04-03)
-                testProducts.get(4), // 3.0.0-beta (created 2024-07-22)
-                testProducts.get(5), // 3.1.0-alpha (created 2024-09-05)
-                testProducts.get(6), // 4.0.0-rc1 (created 2024-11-12)
-                testProducts.get(7), // 0.9.0 (created 2025-01-05)
-                testProducts.get(8), // 1.0.0-SNAPSHOT (created 2025-02-10)
-                testProducts.get(9)  // 5.2.1 (created 2025-03-18)
+    @DisplayName("versions created before March 1 2024")
+    void testVersionsCreatedBeforeMarch1_2024() throws Exception {
+        // Explicit day removes ambiguity about "before March 2024"
+        assertSearchMatchesReference(
+                "versions created before March 1 2024",
+                "Version",
+                """
+                        const boundary = Java.type('java.time.OffsetDateTime').of(2024, 3, 1, 0, 0, 0, 0, Java.type('java.time.ZoneOffset').UTC);
+                        return entity.getCreated().isBefore(boundary);
+                        """
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("versions created before March 2024")
-    void testVersionsCreatedBeforeMarch2024() throws Exception {
-        List<Version> results = performSearch("versions created before March 2024", "Version");
-        List<Version> expected = Arrays.asList(
-                testProducts.get(0), // 1.0.0 (created 2023-06-15)
-                testProducts.get(1), // 1.2.3 (created 2024-01-10)
-                testProducts.get(2)  // 2.0.0 (created 2024-02-28)
-        );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
     @DisplayName("versions updated in 2025")
     void testVersionsUpdatedIn2025() throws Exception {
-        List<Version> results = performSearch("versions updated in 2025", "Version");
-        List<Version> expected = Arrays.asList(
-                testProducts.get(5), // 3.1.0-alpha (updated 2025-01-15)
-                testProducts.get(6), // 4.0.0-rc1 (updated 2025-02-08)
-                testProducts.get(7), // 0.9.0 (updated 2025-01-20)
-                testProducts.get(8), // 1.0.0-SNAPSHOT (updated 2025-02-25)
-                testProducts.get(9)  // 5.2.1 (updated 2025-04-02)
+        assertSearchMatchesReference(
+                "versions updated in 2025",
+                "Version",
+                "return entity.getUpdated().getYear() === 2025;"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    /**
-     * add generated ai code to test against one of the tests.
-     */
-    class ExampleVersionFilter implements Predicate<Version> {
-
-        @Override
-        public boolean test(Version entity) {
-            if (entity == null) {
-                return false;
-            }
-
-            try {
-                if (entity.getName() == null) return false;
-                String[] parts = entity.getName().split("\\.");
-                if (parts.length < 3) return false;
-                try {
-                    int    majorStart     = Integer.parseInt(parts[0]);
-                    int    minorStart     = Integer.parseInt(parts[1]);
-                    String patchPartStart = parts[2];
-                    int    patchStart     = Integer.parseInt(patchPartStart.contains("-") ? patchPartStart.substring(0, patchPartStart.indexOf("-")) : patchPartStart);
-
-                    int versionValueStart = majorStart * 10000 + minorStart * 100 + patchStart;
-
-                    if (parts.length >= 4) {
-                        String patchPartEnd = parts[3];
-                        int    patchEnd     = Integer.parseInt(patchPartEnd.contains("-") ? patchPartEnd.substring(0, patchPartEnd.indexOf("-")) : patchPartEnd);
-
-                        int versionValueEnd = majorStart * 10000 + minorStart * 100 + patchEnd;
-                    } else {
-                        String patchPartEnd = parts[2];
-                        int    patchEnd     = Integer.parseInt(patchPartEnd.contains("-") ? patchPartEnd.substring(0, patchPartEnd.indexOf("-")) : patchPartEnd);
-
-                        int versionValueEnd = majorStart * 10000 + minorStart * 100 + patchEnd;
-                    }
-
-                    return versionValueStart >= 10000 && versionValueStart <= 30000;
-                } catch (NumberFormatException e) {
-                    return false;
-                }
-
-            } catch (Exception e) {
-                // Log the error but don't fail the entire filter
-                System.err.println("Error in filter execution: " + e.getMessage());
-                return false;
-            }
-        }
-
     }
 }

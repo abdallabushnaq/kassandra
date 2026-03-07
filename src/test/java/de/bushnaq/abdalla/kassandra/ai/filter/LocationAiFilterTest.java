@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter;
 
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.location.LocationFilterDto;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import org.junit.jupiter.api.*;
@@ -29,25 +30,24 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
- * Integration test for Location AI filtering testing real LLM regex pattern generation
- * and filtering capabilities with various search scenarios.
- * <p>
- * This test requires Ollama to be running with a model available (e.g., llama3.2:1b).
- * The test will be skipped if Ollama is not available.
+ * Tests the JavaScript AI filter generator for Location entities.
+ *
+ * <p>Each test verifies that the LLM-generated JS filter for a natural-language
+ * query produces the same result as a hand-written reference JS predicate applied
+ * to the same location list. Both the LLM filter and the reference filter operate
+ * on {@link LocationFilterDto} objects, keeping the filter layer decoupled from
+ * the full entity. The location list is the only place that needs to change when
+ * test data is updated; no individual test hard-codes expected indices or counts.</p>
  */
 @Tag("AiUnitTest")
 @SpringBootTest
 @ActiveProfiles("test")
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-class LocationAiFilterTest extends AbstractAiFilterTest<Location> {
+class LocationAiFilterTest extends AbstractAiFilterTest<LocationFilterDto> {
 
     public LocationAiFilterTest(JsonMapper mapper, AiFilterService aiFilterService) {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
@@ -75,260 +75,203 @@ class LocationAiFilterTest extends AbstractAiFilterTest<Location> {
 
     @BeforeEach
     void setUp() {
-        // Create test data
-        setupTestLocations();
-    }
-
-    private void setupTestLocations() {
-        testProducts = new ArrayList<>();
-
-        // Create test users
         User johnDoe     = createUser(1L, "John Doe");
         User janeSmith   = createUser(2L, "Jane Smith");
         User bobJohnson  = createUser(3L, "Bob Johnson");
         User aliceWilson = createUser(4L, "Alice Wilson");
         User mikeBrown   = createUser(5L, "Mike Brown");
 
-        // Locations with different countries, states, and dates for comprehensive testing
-        testProducts.add(createLocation(1L, "Germany", "Bavaria", LocalDate.of(2024, 1, 15), johnDoe,
+        List<Location> raw = new ArrayList<>();
+
+        raw.add(createLocation(1L, "Germany", "Bavaria", LocalDate.of(2024, 1, 15), johnDoe,
                 OffsetDateTime.of(2023, 12, 20, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 1, 10, 14, 30, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createLocation(2L, "United States", "California", LocalDate.of(2024, 2, 1), janeSmith,
+        raw.add(createLocation(2L, "United States", "California", LocalDate.of(2024, 2, 1), janeSmith,
                 OffsetDateTime.of(2024, 1, 15, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 2, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createLocation(3L, "Australia", "Victoria", LocalDate.of(2024, 3, 1), bobJohnson,
+        raw.add(createLocation(3L, "Australia", "Victoria", LocalDate.of(2024, 3, 1), bobJohnson,
                 OffsetDateTime.of(2024, 2, 20, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 16, 13, 20, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createLocation(4L, "United Kingdom", "England", LocalDate.of(2024, 4, 1), aliceWilson,
+        raw.add(createLocation(4L, "United Kingdom", "England", LocalDate.of(2024, 4, 1), aliceWilson,
                 OffsetDateTime.of(2024, 3, 25, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 4, 15, 12, 10, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createLocation(5L, "France", "Île-de-France", LocalDate.of(2024, 5, 1), mikeBrown,
+        raw.add(createLocation(5L, "France", "Île-de-France", LocalDate.of(2024, 5, 1), mikeBrown,
                 OffsetDateTime.of(2024, 4, 20, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 5, 1, 11, 40, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createLocation(6L, "Germany", "North Rhine-Westphalia", LocalDate.of(2024, 6, 1), johnDoe,
+        raw.add(createLocation(6L, "Germany", "North Rhine-Westphalia", LocalDate.of(2024, 6, 1), johnDoe,
                 OffsetDateTime.of(2024, 5, 28, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 10, 16, 15, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createLocation(7L, "Canada", "Ontario", LocalDate.of(2024, 7, 1), janeSmith,
+        raw.add(createLocation(7L, "Canada", "Ontario", LocalDate.of(2024, 7, 1), janeSmith,
                 OffsetDateTime.of(2024, 6, 25, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 7, 29, 15, 50, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createLocation(8L, "Netherlands", "North Holland", LocalDate.of(2024, 8, 1), bobJohnson,
+        raw.add(createLocation(8L, "Netherlands", "North Holland", LocalDate.of(2024, 8, 1), bobJohnson,
                 OffsetDateTime.of(2024, 7, 30, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 15, 17, 30, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createLocation(9L, "Italy", "Lombardy", LocalDate.of(2024, 9, 1), aliceWilson,
+        raw.add(createLocation(9L, "Italy", "Lombardy", LocalDate.of(2024, 9, 1), aliceWilson,
                 OffsetDateTime.of(2024, 8, 28, 13, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 5, 9, 20, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createLocation(10L, "Spain", "Catalonia", LocalDate.of(2024, 10, 1), mikeBrown,
+        raw.add(createLocation(10L, "Spain", "Catalonia", LocalDate.of(2024, 10, 1), mikeBrown,
                 OffsetDateTime.of(2024, 9, 25, 10, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 10, 22, 14, 45, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createLocation(11L, "United States", "New York", LocalDate.of(2025, 1, 1), johnDoe,
+        raw.add(createLocation(11L, "United States", "New York", LocalDate.of(2025, 1, 1), johnDoe,
                 OffsetDateTime.of(2024, 12, 28, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 10, 16, 30, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createLocation(12L, "Australia", "New South Wales", LocalDate.of(2025, 2, 1), janeSmith,
+        raw.add(createLocation(12L, "Australia", "New South Wales", LocalDate.of(2025, 2, 1), janeSmith,
                 OffsetDateTime.of(2025, 1, 28, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 10, 12, 20, 0, 0, ZoneOffset.UTC)));
+
+        testProducts = new ArrayList<>();
+        for (Location l : raw) {
+            testProducts.add(LocationFilterDto.from(l));
+        }
     }
 
-    @Test
-    @DisplayName("California")
-    void testCalifornia() throws Exception {
-        List<Location> results  = performSearch("California", "Location");
-        List<Location> expected = Collections.singletonList(testProducts.get(1)); // United States, California
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
+    // -------------------------------------------------------------------------
+    // Tests — each has an unambiguous natural-language query and a hand-written
+    // reference JS predicate that is the ground truth for that query.
+    // -------------------------------------------------------------------------
 
     @Test
     @DisplayName("country is Australia")
     void testCountryIsAustralia() throws Exception {
-        List<Location> results  = performSearch("country is Australia", "Location");
-        List<Location> expected = Arrays.asList(testProducts.get(2), testProducts.get(11)); // Australia Victoria, Australia New South Wales
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("created in 2025")
-    void testCreatedIn2025() throws Exception {
-        List<Location> results  = performSearch("created in 2025", "Location");
-        List<Location> expected = Collections.singletonList(testProducts.get(11)); // Australia, New South Wales (created 2025-01-28)
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "country is Australia",
+                "Location",
+                "return entity.getCountry().toLowerCase().includes('australia');"
+        );
     }
 
     @Test
     @DisplayName("empty search query")
     void testEmptySearchQuery() throws Exception {
-        List<Location> results  = performSearch("", "Location");
-        List<Location> expected = new ArrayList<>(testProducts); // All locations should match empty query
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("German states")
-    void testGermanStates() throws Exception {
-        List<Location> results = performSearch("German states", "Location");
-        List<Location> expected = Arrays.asList(
-                testProducts.get(0), // Germany, Bavaria
-                testProducts.get(5)  // Germany, North Rhine-Westphalia
+        assertSearchMatchesReference(
+                "",
+                "Location",
+                "return true;"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
-    // === SIMPLE TEST CASE (keeping only ONE) ===
     @Test
     @DisplayName("Germany")
     void testGermany() throws Exception {
-        List<Location> results  = performSearch("Germany", "Location");
-        List<Location> expected = Arrays.asList(testProducts.get(0), testProducts.get(5)); // Germany Bavaria, Germany North Rhine-Westphalia
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "Germany",
+                "Location",
+                "return entity.getCountry().toLowerCase().includes('germany');"
+        );
     }
 
     @Test
     @DisplayName("locations created in 2025")
     void testLocationsCreatedIn2025() throws Exception {
-        List<Location> results  = performSearch("locations created in 2025", "Location");
-        List<Location> expected = Collections.singletonList(testProducts.get(11)); // Australia, New South Wales (created 2025-01-28)
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "locations created in 2025",
+                "Location",
+                "return entity.getCreated().getYear() === 2025;"
+        );
     }
 
     @Test
     @DisplayName("locations in Australia")
     void testLocationsInAustralia() throws Exception {
-        List<Location> results = performSearch("locations in Australia", "Location");
-        List<Location> expected = Arrays.asList(
-                testProducts.get(2),  // Australia, Victoria
-                testProducts.get(11)  // Australia, New South Wales
+        assertSearchMatchesReference(
+                "locations in Australia",
+                "Location",
+                "return entity.getCountry().toLowerCase().includes('australia');"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
-    @DisplayName("locations starting after January 2024")
-    void testLocationsStartingAfterJanuary2024() throws Exception {
-        List<Location> results = performSearch("locations starting after January 2024", "Location");
-        List<Location> expected = Arrays.asList(
-                testProducts.get(1),  // United States, California (Feb 2024)
-                testProducts.get(2),  // Australia, Victoria (Mar 2024)
-                testProducts.get(3),  // United Kingdom, England (Apr 2024)
-                testProducts.get(4),  // France, Île-de-France (May 2024)
-                testProducts.get(5),  // Germany, North Rhine-Westphalia (Jun 2024)
-                testProducts.get(6),  // Canada, Ontario (Jul 2024)
-                testProducts.get(7),  // Netherlands, North Holland (Aug 2024)
-                testProducts.get(8),  // Italy, Lombardy (Sep 2024)
-                testProducts.get(9),  // Spain, Catalonia (Oct 2024)
-                testProducts.get(10), // United States, New York (Jan 2025)
-                testProducts.get(11)  // Australia, New South Wales (Feb 2025)
+    @DisplayName("locations starting after January 31 2024")
+    void testLocationsStartingAfterJanuary31_2024() throws Exception {
+        // Explicit day removes all ambiguity about whether "after January" means after Jan 1 or Jan 31
+        assertSearchMatchesReference(
+                "locations starting after January 31 2024",
+                "Location",
+                """
+                        const boundary = Java.type('java.time.LocalDate').of(2024, 1, 31);
+                        return entity.getStart().isAfter(boundary);
+                        """
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
-    @DisplayName("locations starting before March 2024")
-    void testLocationsStartingBeforeMarch2024() throws Exception {
-        List<Location> results = performSearch("locations starting before March 2024", "Location");
-        List<Location> expected = Arrays.asList(
-                testProducts.get(0), // Germany, Bavaria (Jan 2024)
-                testProducts.get(1)  // United States, California (Feb 2024)
+    @DisplayName("locations starting before March 1 2024")
+    void testLocationsStartingBeforeMarch1_2024() throws Exception {
+        // Explicit day removes all ambiguity about whether "before March" means before Mar 1 or Mar 31
+        assertSearchMatchesReference(
+                "locations starting before March 1 2024",
+                "Location",
+                """
+                        const boundary = Java.type('java.time.LocalDate').of(2024, 3, 1);
+                        return entity.getStart().isBefore(boundary);
+                        """
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
     @DisplayName("locations starting in 2025")
     void testLocationsStartingIn2025() throws Exception {
-        List<Location> results = performSearch("locations starting in 2025", "Location");
-        List<Location> expected = Arrays.asList(
-                testProducts.get(10), // United States, New York (Jan 2025)
-                testProducts.get(11)  // Australia, New South Wales (Feb 2025)
+        assertSearchMatchesReference(
+                "locations starting in 2025",
+                "Location",
+                "return entity.getStart().getYear() === 2025;"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
-    @DisplayName("locations starting in summer 2024")
-    void testLocationsStartingInSummer2024() throws Exception {
-        List<Location> results = performSearch("locations starting in summer 2024", "Location");
-        List<Location> expected = Arrays.asList(
-                testProducts.get(5), // Germany, North Rhine-Westphalia (Jun 2024)
-                testProducts.get(6), // Canada, Ontario (Jul 2024)
-                testProducts.get(7)  // Netherlands, North Holland (Aug 2024)
+    @DisplayName("locations starting in June, July or August 2024")
+    void testLocationsStartingInJuneJulyOrAugust2024() throws Exception {
+        // Explicit months instead of the subjective term "summer"
+        assertSearchMatchesReference(
+                "locations starting in June, July or August 2024",
+                "Location",
+                """
+                        const month = entity.getStart().getMonthValue();
+                        const year  = entity.getStart().getYear();
+                        return year === 2024 && (month === 6 || month === 7 || month === 8);
+                        """
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
     @DisplayName("locations updated in 2025")
     void testLocationsUpdatedIn2025() throws Exception {
-        List<Location> results = performSearch("locations updated in 2025", "Location");
-        List<Location> expected = Arrays.asList(
-                testProducts.get(10), // United States, New York (updated 2025-01-10)
-                testProducts.get(11)  // Australia, New South Wales (updated 2025-02-10)
+        assertSearchMatchesReference(
+                "locations updated in 2025",
+                "Location",
+                "return entity.getUpdated().getYear() === 2025;"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
-    @DisplayName("purple elephant dancing")
-    void testPurpleElephantDancing() throws Exception {
-        List<Location> results  = performSearch("purple elephant dancing", "Location");
-        List<Location> expected = Collections.emptyList(); // Should return empty results for nonsensical queries
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+    @DisplayName("state is Bavaria")
+    void testStateIsBavaria() throws Exception {
+        assertSearchMatchesReference(
+                "state is Bavaria",
+                "Location",
+                "return entity.getState().toLowerCase().includes('bavaria');"
+        );
     }
 
     @Test
-    @DisplayName("start date in 2025")
-    void testStartDateIn2025() throws Exception {
-        List<Location> results  = performSearch("start date in 2025", "Location");
-        List<Location> expected = Arrays.asList(testProducts.get(10), testProducts.get(11)); // United States New York, Australia New South Wales
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+    @DisplayName("state is California")
+    void testStateIsCalifornia() throws Exception {
+        assertSearchMatchesReference(
+                "state is California",
+                "Location",
+                "return entity.getState().toLowerCase().includes('california');"
+        );
     }
-
-    @Test
-    @DisplayName("updated in 2025")
-    void testUpdatedIn2025() throws Exception {
-        List<Location> results  = performSearch("updated in 2025", "Location");
-        List<Location> expected = Arrays.asList(testProducts.get(10), testProducts.get(11)); // United States New York, Australia New South Wales
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
 }

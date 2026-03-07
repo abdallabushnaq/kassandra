@@ -199,6 +199,26 @@ public class AiFilterService {
     }
 
     /**
+     * Parses a natural language search query, forwarding the real entity list and reference
+     * date so the JS execution-validator tool can run the generated function against actual data
+     * via Spring AI's {@link org.springframework.ai.chat.model.ToolContext}.
+     *
+     * @param query      The natural language query from the user
+     * @param entityType The type of entity being searched (e.g., "Product", "Version")
+     * @param filterType The type of filter to generate
+     * @param entities   The filter-DTO objects from the data provider
+     * @param now        The reference date for the {@code now} JS parameter
+     * @return Filter string for filtering objects
+     */
+    public String parseQuery(String query, String entityType, AiFilterGenerator.FilterType filterType,
+                             List<Object> entities, LocalDate now) {
+        return switch (filterType) {
+            case JAVASCRIPT -> javaScriptGenerator.generateFilter(query, entityType, entities, now);
+            case JAVA -> javaGenerator.generateFilter(query, entityType);
+        };
+    }
+
+    /**
      * Parses a natural language search query and returns a compiled Java Predicate.
      *
      * @param query      The natural language query from the user

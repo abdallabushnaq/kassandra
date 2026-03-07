@@ -32,14 +32,25 @@ import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterGenerator;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.availability.AvailabilityFilterDto;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.feature.FeatureFilterDto;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.location.LocationFilterDto;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.offday.OffDayFilterDto;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.product.ProductFilterDto;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.sprint.SprintFilterDto;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.user.UserFilterDto;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.version.VersionFilterDto;
+import de.bushnaq.abdalla.kassandra.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 /**
  * Enhanced global filter component that supports both simple text search and natural language queries.
@@ -191,57 +202,59 @@ public class GlobalAiFilter<T> extends HorizontalLayout {
             clearFilters();
             return;
         }
-        int    tryCount    = 10;
         String regexString = "";
-//        do {
         // Parse the query using natural language service with entity type
         try {
-//                regexString = aiFilterService.parseQuery(searchValue, entityType, AiFilterGenerator.FilterType.JAVASCRIPT);
-//                Pattern regexPattern = Pattern.compile(regexString);
-//                applySearchQuery(regexPattern);
             AiFilterGenerator.FilterType filterType = AiFilterGenerator.FilterType.JAVASCRIPT;
             switch (filterType) {
                 case JAVASCRIPT: {
-                    // Parse the query using JavaScript generation
-                    String              javascriptFunction = aiFilterService.parseQuery(searchValue, entityType, filterType);
-                    ListDataProvider<T> dataProvider       = (ListDataProvider<T>) grid.getDataProvider();
+                    ListDataProvider<T> dataProvider = (ListDataProvider<T>) grid.getDataProvider();
+
+                    // Collect the real filter-DTO objects so the execution-validator tool
+                    // can run the generated JS against actual data via ToolContext.
+                    LocalDate now = LocalDate.now();
+                    List<Object> filterDtos = dataProvider.getItems().stream()
+                            .map(item -> switch (item) {
+                                case Availability availability -> (Object) AvailabilityFilterDto.from(availability);
+                                case Product product -> ProductFilterDto.from(product);
+                                case Feature feature -> FeatureFilterDto.from(feature);
+                                case Location location -> LocationFilterDto.from(location);
+                                case OffDay offDay -> OffDayFilterDto.from(offDay);
+                                case Sprint sprint -> SprintFilterDto.from(sprint);
+                                case User user -> UserFilterDto.from(user);
+                                case Version version -> VersionFilterDto.from(version);
+                                default -> item;
+                            })
+                            .collect(Collectors.toList());
+
+                    String javascriptFunction = aiFilterService.parseQuery(searchValue, entityType, filterType, filterDtos, now);
+
                     dataProvider.setFilter(item -> {
-//                                    String json = filterMapper.writerWithDefaultPrettyPrinter().writeValueAsString(item);
-                                // Apply the LLM-generated regex pattern
-                                return aiFilterService.applyJavaScriptSearchQuery(javascriptFunction, item, LocalDate.now());
+                                Object filterItem = switch (item) {
+                                    case Availability availability -> AvailabilityFilterDto.from(availability);
+                                    case Product product -> ProductFilterDto.from(product);
+                                    case Feature feature -> FeatureFilterDto.from(feature);
+                                    case Location location -> LocationFilterDto.from(location);
+                                    case OffDay offDay -> OffDayFilterDto.from(offDay);
+                                    case Sprint sprint -> SprintFilterDto.from(sprint);
+                                    case User user -> UserFilterDto.from(user);
+                                    case Version version -> VersionFilterDto.from(version);
+                                    default -> item;
+                                };
+                                return aiFilterService.applyJavaScriptSearchQuery(javascriptFunction, filterItem, now);
                             }
                     );
-
-//                        List<T> filtered = aiFilterService.applyJavaScriptSearchQuery(javascriptFunction, testProducts, now);
-//                        System.out.println("\n=== Products matched by JavaScript filter ===");
-//                        System.out.println("JavaScript function: " + javascriptFunction);
-//                        for (T product : filtered) {
-//                            String json = filterMapper.writeValueAsString(product);
-//                            System.out.println(json);
-//                        }
-//                        return filtered;
                 }
                 case JAVA: {
                     // Parse the query using Java generation and get compiled predicate
-                    var javaPredicate = aiFilterService.parseQueryToPredicate(searchValue, entityType, LocalDate.now());
-//                        List<T>             filtered      = testProducts.stream().filter(javaPredicate).collect(Collectors.toList());
-                    ListDataProvider<T> dataProvider = (ListDataProvider<T>) grid.getDataProvider();
-//                        dataProvider.setFilter(javaPredicate);
-                    dataProvider.setFilter(javaPredicate::test
-                    );
-
-//                        System.out.println("\n=== Products matched by Java filter ===");
-//                        for (T product : filtered) {
-//                            String json = filterMapper.writeValueAsString(product);
-//                            System.out.println(json);
-//                        }
-//                        return filtered;
+                    var                 javaPredicate = aiFilterService.parseQueryToPredicate(searchValue, entityType, LocalDate.now());
+                    ListDataProvider<T> dataProvider  = (ListDataProvider<T>) grid.getDataProvider();
+                    dataProvider.setFilter(javaPredicate::test);
                 }
             }
         } catch (PatternSyntaxException e) {
             logger.error("Invalid regex pattern '{}', falling back to simple text search: {}", regexString, e.getMessage());
         }
-//        } while (--tryCount > 0);
 
         // Show feedback to user about what was understood
         showSearchFeedback(regexString, searchValue);

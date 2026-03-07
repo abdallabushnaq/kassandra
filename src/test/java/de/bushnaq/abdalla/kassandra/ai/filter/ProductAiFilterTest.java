@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter;
 
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.product.ProductFilterDto;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,23 +29,25 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Tests the JavaScript AI filter generator for Product entities.
  *
  * <p>Each test verifies that the LLM-generated JS filter for a natural-language
  * query produces the same result as a hand-written reference JS predicate applied
- * to the same product list.  The reference predicate is the ground truth — it must
- * be simple, obvious, and unambiguous.  The product list is the only place that
- * needs to change when test data is updated; no individual test hard-codes expected
- * indices or counts.</p>
+ * to the same product list.  Both the LLM filter and the reference filter operate
+ * on {@link ProductFilterDto} objects, keeping the filter layer decoupled from
+ * the full entity (parallel to {@link AvailabilityAiFilterTest}).  The product
+ * list is the only place that needs to change when test data is updated; no
+ * individual test hard-codes expected indices or counts.</p>
  */
 @Tag("AiUnitTest")
 @SpringBootTest
 @ActiveProfiles("test")
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-public class ProductAiFilterTest extends AbstractAiFilterTest<Product> {
+public class ProductAiFilterTest extends AbstractAiFilterTest<ProductFilterDto> {
 
     public ProductAiFilterTest(JsonMapper mapper, AiFilterService aiFilterService) {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
@@ -61,43 +64,44 @@ public class ProductAiFilterTest extends AbstractAiFilterTest<Product> {
 
     @BeforeEach
     void setUp() {
-        setupTestProducts();
-    }
+        List<Product> raw = new ArrayList<>();
 
-    private void setupTestProducts() {
-        testProducts = new ArrayList<>();
-
-        testProducts.add(createProduct(1L, "Orion Space System",
+        raw.add(createProduct(1L, "Orion Space System",
                 OffsetDateTime.of(2023, 6, 15, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 20, 14, 30, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createProduct(2L, "Project Apollo",
+        raw.add(createProduct(2L, "Project Apollo",
                 OffsetDateTime.of(2024, 1, 10, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createProduct(3L, "Mars Explorer",
+        raw.add(createProduct(3L, "Mars Explorer",
                 OffsetDateTime.of(2024, 2, 28, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 12, 13, 20, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createProduct(4L, "Satellite Network",
+        raw.add(createProduct(4L, "Satellite Network",
                 OffsetDateTime.of(2024, 4, 3, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 18, 12, 10, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createProduct(5L, "Lunar Base",
+        raw.add(createProduct(5L, "Lunar Base",
                 OffsetDateTime.of(2024, 7, 22, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 12, 1, 10, 25, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createProduct(6L, "Deep Space Probe",
+        raw.add(createProduct(6L, "Deep Space Probe",
                 OffsetDateTime.of(2024, 9, 5, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 15, 11, 40, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createProduct(7L, "Space Station Alpha",
+        raw.add(createProduct(7L, "Space Station Alpha",
                 OffsetDateTime.of(2024, 11, 12, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 8, 16, 15, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createProduct(8L, "Rocket Engine X",
+        raw.add(createProduct(8L, "Rocket Engine X",
                 OffsetDateTime.of(2025, 1, 5, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 20, 15, 50, 0, 0, ZoneOffset.UTC)));
+
+        testProducts = new ArrayList<>();
+        for (Product p : raw) {
+            testProducts.add(ProductFilterDto.from(p));
+        }
     }
 
     // -------------------------------------------------------------------------

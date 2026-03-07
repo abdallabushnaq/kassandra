@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ai.filter.java;
 
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterGenerator;
-import de.bushnaq.abdalla.kassandra.ai.filter.prompt.FilterPromptRegistry;
+import de.bushnaq.abdalla.kassandra.ai.filter.FilterPromptRegistry;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import org.slf4j.Logger;

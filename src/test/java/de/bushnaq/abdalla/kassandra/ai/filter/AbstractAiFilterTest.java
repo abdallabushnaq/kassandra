@@ -99,8 +99,10 @@ public class AbstractAiFilterTest<T> {
 
                 switch (filterType) {
                     case JAVASCRIPT: {
-                        // Parse the query using JavaScript generation
-                        javascriptFunction = aiFilterService.parseQuery(searchValue, entityType, filterType);
+                        // Pass the real entity list so the executeJavaScript tool can validate
+                        // against actual data via ToolContext — no ThreadLocals.
+                        List<Object> filterEntities = new java.util.ArrayList<>(testProducts);
+                        javascriptFunction = aiFilterService.parseQuery(searchValue, entityType, filterType, filterEntities, now);
 
                         List<T> filtered = aiFilterService.applyJavaScriptSearchQuery(javascriptFunction, testProducts, now);
                         System.out.println("\n=== Products matched by JavaScript filter ===");

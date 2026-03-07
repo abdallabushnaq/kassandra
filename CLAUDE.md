@@ -43,6 +43,7 @@ For all build commands, test strategy, module layout, technology versions, and C
 - Use `@Slf4j` + `log.debug/info/warn/error` — never `System.out.println`.
 - Formatting is enforced by **Spotless / Eclipse formatter**. Run `mvn spotless:apply` before committing. Never submit
   unformatted code.
+- we prefer imports to fully qualifying names.
 
 ### Spring
 

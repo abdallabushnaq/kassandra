@@ -18,7 +18,8 @@
 package de.bushnaq.abdalla.kassandra.ai.filter.js;
 
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterGenerator;
-import de.bushnaq.abdalla.kassandra.ai.filter.prompt.FilterPromptRegistry;
+import de.bushnaq.abdalla.kassandra.ai.filter.FilterPromptRegistry;
+import de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -26,6 +27,9 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+import java.util.List;
 
 import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 
@@ -73,8 +77,8 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
             
             VALIDATION TOOL:
             - You have access to a tool called 'validateJavaScript'.
-            - ALWAYS call validateJavaScript with your function body BEFORE returning your final answer.
-            - If the tool returns anything other than "OK", fix the reported error and call the tool again until it returns "OK".
+            - ALWAYS call validateJavaScript with your function body before returning your final answer.
+            - If the tool returns anything other than "OK", fix the reported error and call it again until it returns "OK".
             - Only return your final ```js block after validateJavaScript confirms "OK".
             
             STRICT OUTPUT FORMAT — YOU MUST FOLLOW THIS EXACTLY:
@@ -123,6 +127,11 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
 
     @Override
     public String generateFilter(String query, String entityType) {
+        return generateFilter(query, entityType, List.of(), LocalDate.now());
+    }
+
+    @Override
+    public String generateFilter(String query, String entityType, List<Object> entities, LocalDate now) {
         if (query == null || query.trim().isEmpty()) {
             return "return true"; // If query is empty, return a filter that matches everything
         }
@@ -143,9 +152,14 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
         System.out.printf("JavaScript LLM prompt for '%s%s%s'\n%s%s%s\n\n",
                 ANSI_BLUE, entityType, ANSI_RESET, ANSI_GREEN, formattedPrompt, ANSI_RESET);
 
-        // Wire the validateJavaScript tool so the LLM can call it during generation
+        // Build the tool context carrying the real entity list and reference date so that
+        // the executeJavaScript validator tool can run the generated function against actual data.
+        java.util.Map<String, Object> toolContext = ToolContextHelper.buildFilterContextMap(entities, now);
+
+        // Wire the validation tools so the LLM can call them during generation
         String content = chatModel.prompt(prompt)
                 .toolCallbacks(validatorToolProvider)
+                .toolContext(toolContext)
                 .call()
                 .content();
 

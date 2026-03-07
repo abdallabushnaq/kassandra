@@ -21,7 +21,9 @@ import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,6 +43,14 @@ import java.util.Map;
 public class ToolContextHelper {
 
     public static final  String                       ACTIVITY_CONTEXT_KEY    = "activityContext";
+    /**
+     * Key used to pass the real filter-DTO entity list to the JS execution-validator tool.
+     */
+    public static final  String                       FILTER_ENTITIES_KEY     = "filterEntities";
+    /**
+     * Key used to pass the reference date to the JS execution-validator tool.
+     */
+    public static final  String                       FILTER_NOW_KEY          = "filterNow";
     public static final  String                       SECURITY_CONTEXT_KEY    = "securityContext";
     /**
      * Saves the SecurityContext that was present on the thread before {@link #setup(ToolContext)}
@@ -66,6 +76,22 @@ public class ToolContextHelper {
         if (activityContext != null) {
             ctx.put(ACTIVITY_CONTEXT_KEY, activityContext);
         }
+        return ctx;
+    }
+
+    /**
+     * Build a toolContext map containing the real filter-DTO entity list and reference date for
+     * the JS execution-validator tool ({@code executeJavaScript}).
+     * The tool reads these values directly from the {@link ToolContext} it receives as a parameter.
+     *
+     * @param entities the filter-DTO objects already converted from the data-provider items
+     * @param now      the reference date injected as the {@code now} parameter in the JS function
+     * @return a map suitable for {@code ChatClient.prompt(...).toolContext(map)}
+     */
+    public static Map<String, Object> buildFilterContextMap(List<Object> entities, LocalDate now) {
+        Map<String, Object> ctx = new HashMap<>();
+        ctx.put(FILTER_ENTITIES_KEY, entities);
+        ctx.put(FILTER_NOW_KEY, now);
         return ctx;
     }
 

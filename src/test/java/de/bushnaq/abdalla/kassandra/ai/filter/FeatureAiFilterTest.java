@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter;
 
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.feature.FeatureFilterDto;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,25 +29,24 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
- * Integration test for Feature AI filtering testing real LLM regex pattern generation
- * and filtering capabilities with various search scenarios.
- * <p>
- * This test requires Ollama to be running with a model available (e.g., llama3.2:1b).
- * The test will be skipped if Ollama is not available.
+ * Tests the JavaScript AI filter generator for Feature entities.
+ *
+ * <p>Each test verifies that the LLM-generated JS filter for a natural-language
+ * query produces the same result as a hand-written reference JS predicate applied
+ * to the same feature list. Both the LLM filter and the reference filter operate
+ * on {@link FeatureFilterDto} objects, keeping the filter layer decoupled from
+ * the full entity. The feature list is the only place that needs to change when
+ * test data is updated; no individual test hard-codes expected indices or counts.</p>
  */
 @Tag("AiUnitTest")
 @SpringBootTest
 @ActiveProfiles("test")
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-class FeatureAiFilterTest extends AbstractAiFilterTest<Feature> {
+class FeatureAiFilterTest extends AbstractAiFilterTest<FeatureFilterDto> {
 
     public FeatureAiFilterTest(JsonMapper mapper, AiFilterService aiFilterService) {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
@@ -64,186 +64,163 @@ class FeatureAiFilterTest extends AbstractAiFilterTest<Feature> {
 
     @BeforeEach
     void setUp() {
-        // Create test data
-        setupTestFeatures();
-    }
+        List<Feature> raw = new ArrayList<>();
 
-    private void setupTestFeatures() {
-        testProducts = new ArrayList<>();
-
-        // Features with different functional domains and naming patterns for comprehensive testing
-        testProducts.add(createFeature(1L, "User Authentication",
-                1L,
+        raw.add(createFeature(1L, "User Authentication", 1L,
                 OffsetDateTime.of(2023, 6, 15, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 20, 14, 30, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createFeature(2L, "Payment Processing",
-                1L,
+        raw.add(createFeature(2L, "Payment Processing", 1L,
                 OffsetDateTime.of(2024, 1, 10, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createFeature(3L, "User Profile Management",
-                2L,
+        raw.add(createFeature(3L, "User Profile Management", 2L,
                 OffsetDateTime.of(2024, 2, 28, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 12, 13, 20, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createFeature(4L, "Shopping Cart",
-                2L,
+        raw.add(createFeature(4L, "Shopping Cart", 2L,
                 OffsetDateTime.of(2024, 4, 3, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 18, 12, 10, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createFeature(5L, "Email Notifications",
-                3L,
+        raw.add(createFeature(5L, "Email Notifications", 3L,
                 OffsetDateTime.of(2024, 7, 22, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 12, 1, 10, 25, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createFeature(6L, "Data Analytics Dashboard",
-                3L,
+        raw.add(createFeature(6L, "Data Analytics Dashboard", 3L,
                 OffsetDateTime.of(2024, 9, 5, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 15, 11, 40, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createFeature(7L, "API Security Enhancement",
-                4L,
+        raw.add(createFeature(7L, "API Security Enhancement", 4L,
                 OffsetDateTime.of(2024, 11, 12, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 8, 16, 15, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createFeature(8L, "Mobile App Integration",
-                4L,
+        raw.add(createFeature(8L, "Mobile App Integration", 4L,
                 OffsetDateTime.of(2025, 1, 5, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 20, 15, 50, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createFeature(9L, "Search Functionality",
-                5L,
+        raw.add(createFeature(9L, "Search Functionality", 5L,
                 OffsetDateTime.of(2025, 2, 10, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 25, 17, 30, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createFeature(10L, "Reporting System",
-                5L,
+        raw.add(createFeature(10L, "Reporting System", 5L,
                 OffsetDateTime.of(2025, 3, 18, 13, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 4, 2, 9, 20, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createFeature(11L, "Social Media Integration",
-                6L,
+        raw.add(createFeature(11L, "Social Media Integration", 6L,
                 OffsetDateTime.of(2025, 5, 10, 10, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 6, 15, 14, 45, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createFeature(12L, "Machine Learning Recommendations",
-                6L,
+        raw.add(createFeature(12L, "Machine Learning Recommendations", 6L,
                 OffsetDateTime.of(2025, 7, 1, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 8, 1, 16, 30, 0, 0, ZoneOffset.UTC)));
+
+        testProducts = new ArrayList<>();
+        for (Feature f : raw) {
+            testProducts.add(FeatureFilterDto.from(f));
+        }
     }
 
-    // === SIMPLE TEST CASE (keeping only ONE) ===
+    // -------------------------------------------------------------------------
+    // Tests — each has an unambiguous natural-language query and a hand-written
+    // reference JS predicate that is the ground truth for that query.
+    // -------------------------------------------------------------------------
+
     @Test
     @DisplayName("authentication")
     void testAuthentication() throws Exception {
-        List<Feature> results  = performSearch("authentication", "Feature");
-        List<Feature> expected = Collections.singletonList(testProducts.get(0)); // User Authentication
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("created in 2025")
-    void testCreatedIn2025() throws Exception {
-        List<Feature> results  = performSearch("created in 2025", "Feature");
-        List<Feature> expected = Arrays.asList(testProducts.get(7), testProducts.get(8), testProducts.get(9), testProducts.get(10), testProducts.get(11)); // Features created in 2025
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("features created after January 2024")
-    void testFeaturesCreatedAfterJanuary2024() throws Exception {
-        List<Feature> results = performSearch("features created after January 2024", "Feature");
-        List<Feature> expected = Arrays.asList(
-//                testProducts.get(1), // Payment Processing (created 2024-01-10)
-                testProducts.get(2), // User Profile Management (created 2024-02-28)
-                testProducts.get(3), // Shopping Cart (created 2024-04-03)
-                testProducts.get(4), // Email Notifications (created 2024-07-22)
-                testProducts.get(5), // Data Analytics Dashboard (created 2024-09-05)
-                testProducts.get(6), // API Security Enhancement (created 2024-11-12)
-                testProducts.get(7), // Mobile App Integration (created 2025-01-05)
-                testProducts.get(8), // Search Functionality (created 2025-02-10)
-                testProducts.get(9), // Reporting System (created 2025-03-18)
-                testProducts.get(10), // Social Media Integration (created 2025-05-10)
-                testProducts.get(11)  // Machine Learning Recommendations (created 2025-07-01)
+        assertSearchMatchesReference(
+                "authentication",
+                "Feature",
+                "return entity.getName().toLowerCase().includes('authentication');"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
-    @DisplayName("features created before March 2024")
-    void testFeaturesCreatedBeforeMarch2024() throws Exception {
-        List<Feature> results = performSearch("features created before March 2024", "Feature");
-        List<Feature> expected = Arrays.asList(
-                testProducts.get(0), // User Authentication (created 2023-06-15)
-                testProducts.get(1), // Payment Processing (created 2024-01-10)
-                testProducts.get(2)  // User Profile Management (created 2024-02-28)
+    @DisplayName("features belonging to version 1")
+    void testFeaturesBelongingToVersion1() throws Exception {
+        assertSearchMatchesReference(
+                "features belonging to version 1",
+                "Feature",
+                "return entity.getVersionId() === 1;"
         );
+    }
 
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+    @Test
+    @DisplayName("features created after January 31 2024")
+    void testFeaturesCreatedAfterJanuary31_2024() throws Exception {
+        // Explicit day removes all ambiguity about whether "after January" means after Jan 1 or Jan 31
+        assertSearchMatchesReference(
+                "features created after January 31 2024",
+                "Feature",
+                """
+                        const boundary = Java.type('java.time.OffsetDateTime').of(2024, 1, 31, 23, 59, 59, 0, entity.getCreated().getOffset());
+                        return entity.getCreated().isAfter(boundary);
+                        """
+        );
+    }
+
+    @Test
+    @DisplayName("features created before March 1 2024")
+    void testFeaturesCreatedBeforeMarch1_2024() throws Exception {
+        // Explicit day removes all ambiguity about whether "before March" means before Mar 1 or Mar 31
+        assertSearchMatchesReference(
+                "features created before March 1 2024",
+                "Feature",
+                """
+                        const boundary = Java.type('java.time.OffsetDateTime').of(2024, 3, 1, 0, 0, 0, 0, entity.getCreated().getOffset());
+                        return entity.getCreated().isBefore(boundary);
+                        """
+        );
+    }
+
+    @Test
+    @DisplayName("features created in 2024")
+    void testFeaturesCreatedIn2024() throws Exception {
+        assertSearchMatchesReference(
+                "features created in 2024",
+                "Feature",
+                "return entity.getCreated().getYear() === 2024;"
+        );
+    }
+
+    @Test
+    @DisplayName("features created in 2025")
+    void testFeaturesCreatedIn2025() throws Exception {
+        assertSearchMatchesReference(
+                "features created in 2025",
+                "Feature",
+                "return entity.getCreated().getYear() === 2025;"
+        );
     }
 
     @Test
     @DisplayName("features updated in 2025")
     void testFeaturesUpdatedIn2025() throws Exception {
-        List<Feature> results = performSearch("features updated in 2025", "Feature");
-        List<Feature> expected = Arrays.asList(
-                testProducts.get(5), // Data Analytics Dashboard (updated 2025-01-15)
-                testProducts.get(6), // API Security Enhancement (updated 2025-02-08)
-                testProducts.get(7), // Mobile App Integration (updated 2025-01-20)
-                testProducts.get(8), // Search Functionality (updated 2025-02-25)
-                testProducts.get(9), // Reporting System (updated 2025-04-02)
-                testProducts.get(10), // Social Media Integration (updated 2025-06-15)
-                testProducts.get(11)  // Machine Learning Recommendations (updated 2025-08-01)
+        assertSearchMatchesReference(
+                "features updated in 2025",
+                "Feature",
+                "return entity.getUpdated().getYear() === 2025;"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
-    // === COLUMN-SPECIFIC TESTS (one per column) ===
     @Test
     @DisplayName("name contains Payment")
     void testNameContainsPayment() throws Exception {
-        List<Feature> results  = performSearch("name contains Payment", "Feature");
-        List<Feature> expected = Collections.singletonList(testProducts.get(1)); // Payment Processing
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("purple elephant dancing")
-    void testPurpleElephantDancing() throws Exception {
-        List<Feature> results  = performSearch("purple elephant dancing", "Feature");
-        List<Feature> expected = Collections.emptyList(); // Should return empty results for nonsensical queries
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("updated in 2025")
-    void testUpdatedIn2025() throws Exception {
-        List<Feature> results = performSearch("updated in 2025", "Feature");
-        List<Feature> expected = Arrays.asList(
-                testProducts.get(5), // Data Analytics Dashboard (updated 2025-01-15)
-                testProducts.get(6), // API Security Enhancement (updated 2025-02-08)
-                testProducts.get(7), // Mobile App Integration (updated 2025-01-20)
-                testProducts.get(8), // Search Functionality (updated 2025-02-25)
-                testProducts.get(9), // Reporting System (updated 2025-04-02)
-                testProducts.get(10), // Social Media Integration (updated 2025-06-15)
-                testProducts.get(11)  // Machine Learning Recommendations (updated 2025-08-01)
+        assertSearchMatchesReference(
+                "name contains Payment",
+                "Feature",
+                "return entity.getName().toLowerCase().includes('payment');"
         );
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+    }
+
+    @Test
+    @DisplayName("name contains user")
+    void testNameContainsUser() throws Exception {
+        assertSearchMatchesReference(
+                "name contains user",
+                "Feature",
+                "return entity.getName().toLowerCase().includes('user');"
+        );
     }
 
 }

@@ -15,9 +15,9 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.filter.prompt;
+package de.bushnaq.abdalla.kassandra.ai.filter.dto.availability;
 
-import de.bushnaq.abdalla.kassandra.ai.filter.prompt.FilterPromptRegistry.PromptConfig;
+import de.bushnaq.abdalla.kassandra.ai.filter.FilterPromptRegistry.PromptConfig;
 
 /**
  * Configuration for Availability entity AI filtering
@@ -29,50 +29,53 @@ public class AvailabilityFilterPrompt {
                 """
                         @Getter
                         @Setter
-                        public class Availability {
-                            private float availability;
-                            private LocalDate start;//never null
-                            private OffsetDateTime created;//never null
-                            private OffsetDateTime updated;//never null
+                        public class AvailabilityFilterDto {
+                            private int           availabilityPercent; // whole-number percentage 0–100, e.g. 80 means 80%
+                            private LocalDate     start;               // never null
+                            private OffsetDateTime created;            // never null
+                            private OffsetDateTime updated;            // never null
                         }
                         """,
                 """
                         Special considerations for Availability:
-                        - Availability represents a users availability to work on projects.
-                        - Availability values are floats between 0.0 and 1.0 (e.g., 0.8 = 80% availability)
-                        - Due to floating point precision issues, ALWAYS round availability values to 2 decimal places before comparison: Number.parseFloat(entity.getAvailability().toFixed(2))
-                        - Convert percentages to decimal values for comparison (e.g., 70% = 0.7, 90% = 0.9)
+                        - Availability represents a user's availability to work on projects.
+                        - availabilityPercent is an integer from 0 to 100 (e.g. 80 means 80%). There are NO floating-point values.
+                        - Use direct integer comparison: entity.getAvailabilityPercent() === 80
+                        - Convert percentage queries directly to integers (e.g. "70%" → 70, "90%" → 90)
                         - Start dates indicate when this availability period begins
                         - Support percentage-based queries and date range filtering
-                        - Remember: you are filtering Availability entities, so each 'entity' is already an Availability
+                        - Remember: you are filtering AvailabilityFilterDto entities, so each 'entity' is already an AvailabilityFilterDto
                         - When queries mention "availability created in 2024" - this means filter by creation year, NOT by checking if entity content contains "availability"
                         - Never use reflection or field access, always use public getter methods
                         """,
                 """
                         Examples:
                         Input: "80% availability"
-                        Output: return Number.parseFloat(entity.getAvailability().toFixed(2)) === 0.8;
+                        Output: return entity.getAvailabilityPercent() === 80;
                         
                         Input: "availability greater than 50%"
-                        Output: return Number.parseFloat(entity.getAvailability().toFixed(2)) > 0.5;
+                        Output: return entity.getAvailabilityPercent() > 50;
                         
                         Input: "availability less than 90%"
-                        Output: return Number.parseFloat(entity.getAvailability().toFixed(2)) < 0.9;
+                        Output: return entity.getAvailabilityPercent() < 90;
                         
                         Input: "availability greater than or equal to 70%"
-                        Output: return Number.parseFloat(entity.getAvailability().toFixed(2)) >= 0.7;
+                        Output: return entity.getAvailabilityPercent() >= 70;
                         
                         Input: "availability less than or equal to 40%"
-                        Output: return Number.parseFloat(entity.getAvailability().toFixed(2)) <= 0.4;
+                        Output: return entity.getAvailabilityPercent() <= 40;
                         
-                        Input: "availability between 60% and 80%"
-                        Output: return Number.parseFloat(entity.getAvailability().toFixed(2)) > 0.6 && Number.parseFloat(entity.getAvailability().toFixed(2)) < 0.8;
+                        Input: "availability between 60% and 80% inclusive"
+                        Output: return entity.getAvailabilityPercent() >= 60 && entity.getAvailabilityPercent() <= 80;
                         
-                        Input: "full availability"
-                        Output: return Number.parseFloat(entity.getAvailability().toFixed(2)) === 1.0;
+                        Input: "100% availability"
+                        Output: return entity.getAvailabilityPercent() === 100;
+                        
+                        Input: "0% availability"
+                        Output: return entity.getAvailabilityPercent() === 0;
                         
                         Input: "partial availability"
-                        Output: return Number.parseFloat(entity.getAvailability().toFixed(2)) > 0.0 && Number.parseFloat(entity.getAvailability().toFixed(2)) < 1.0;
+                        Output: return entity.getAvailabilityPercent() > 0 && entity.getAvailabilityPercent() < 100;
                         
                         Input: "availability starting after January 2025"
                         Output: const refDate = Java.type('java.time.LocalDate').of(2025, 1, 31); return entity.getStart().isAfter(refDate);
@@ -101,28 +104,31 @@ public class AvailabilityFilterPrompt {
                 """
                         Examples:
                         Input: "80% availability"
-                        Output: return entity.getAvailability() == 0.8f;
+                        Output: return entity.getAvailabilityPercent() == 80;
                         
                         Input: "availability greater than 50%"
-                        Output: return entity.getAvailability() > 0.5f;
+                        Output: return entity.getAvailabilityPercent() > 50;
                         
                         Input: "availability less than 90%"
-                        Output: return entity.getAvailability() < 0.9f;
+                        Output: return entity.getAvailabilityPercent() < 90;
                         
                         Input: "availability greater than or equal to 70%"
-                        Output: return entity.getAvailability() >= 0.7f;
+                        Output: return entity.getAvailabilityPercent() >= 70;
                         
                         Input: "availability less than or equal to 40%"
-                        Output: return entity.getAvailability() <= 0.4f;
+                        Output: return entity.getAvailabilityPercent() <= 40;
                         
-                        Input: "availability between 60% and 80%"
-                        Output: return entity.getAvailability() > 0.6f && entity.getAvailability() < 0.8f;
+                        Input: "availability between 60% and 80% inclusive"
+                        Output: return entity.getAvailabilityPercent() >= 60 && entity.getAvailabilityPercent() <= 80;
                         
-                        Input: "full availability"
-                        Output: return entity.getAvailability() == 1.0f;
+                        Input: "100% availability"
+                        Output: return entity.getAvailabilityPercent() == 100;
+                        
+                        Input: "0% availability"
+                        Output: return entity.getAvailabilityPercent() == 0;
                         
                         Input: "partial availability"
-                        Output: return entity.getAvailability() > 0.0f && entity.getAvailability() < 1.0f;
+                        Output: return entity.getAvailabilityPercent() > 0 && entity.getAvailabilityPercent() < 100;
                         
                         Input: "availability starting after January 2025"
                         Output: return entity.getStart() != null && entity.getStart().isAfter(LocalDate.of(2025, 1, 31));
@@ -151,3 +157,4 @@ public class AvailabilityFilterPrompt {
         );
     }
 }
+

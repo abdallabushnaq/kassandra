@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter;
 
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.sprint.SprintFilterDto;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import org.junit.jupiter.api.*;
@@ -27,27 +28,30 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.time.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 
 /**
- * Integration test for Sprint AI filtering testing real LLM regex pattern generation
- * and filtering capabilities with various search scenarios.
- * <p>
- * This test requires Ollama to be running with a model available (e.g., llama3.2:1b).
- * The test will be skipped if Ollama is not available.
+ * Tests the JavaScript AI filter generator for Sprint entities.
+ *
+ * <p>Each test verifies that the LLM-generated JS filter for a natural-language
+ * query produces the same result as a hand-written reference JS predicate applied
+ * to the same sprint list. Both the LLM filter and the reference filter operate
+ * on {@link SprintFilterDto} objects, where:
+ * <ul>
+ *   <li>{@code status} is a plain {@code String} (e.g. {@code "STARTED"}) — no
+ *       {@code Java.type()} enum lookup needed in the JS.</li>
+ *   <li>{@code originalEstimationHours}, {@code workedHours}, {@code remainingHours}
+ *       are plain {@code long} values — no {@code .toHours()} call needed in the JS.</li>
+ * </ul>
+ * The sprint list is the only place that needs to change when test data is updated;
+ * no individual test hard-codes expected indices or counts.</p>
  */
 @Tag("AiUnitTest")
 @SpringBootTest
 @ActiveProfiles("test")
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-class SprintAiFilterTest extends AbstractAiFilterTest<Sprint> {
+class SprintAiFilterTest extends AbstractAiFilterTest<SprintFilterDto> {
 
     public SprintAiFilterTest(JsonMapper mapper, AiFilterService aiFilterService) {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
@@ -76,445 +80,349 @@ class SprintAiFilterTest extends AbstractAiFilterTest<Sprint> {
 
     @BeforeEach
     void setUp() {
-        // Create test data
-        setupTestSprints();
-    }
+        List<Sprint> raw = new ArrayList<>();
 
-    private void setupTestSprints() {
-        testProducts = new ArrayList<>();
-
-        // Sprints with different patterns, statuses, and time estimates for comprehensive testing
-        testProducts.add(createSprint(1L, "Sprint 1.0.0-Alpha", Status.CREATED, 1L, 1L,
-                LocalDateTime.of(2024, 1, 15, 9, 0),
-                LocalDateTime.of(2024, 1, 29, 17, 0),
-                LocalDateTime.of(2024, 1, 29, 17, 0),
+        // id=1  CREATED  80h est  0h worked  80h remaining  starts 2024-01-15  ends 2024-01-29
+        raw.add(createSprint(1L, "Sprint 1.0.0-Alpha", Status.CREATED, 1L, 1L,
+                LocalDateTime.of(2024, 1, 15, 9, 0), LocalDateTime.of(2024, 1, 29, 17, 0), LocalDateTime.of(2024, 1, 29, 17, 0),
                 Duration.ofHours(80), Duration.ofHours(0), Duration.ofHours(80),
                 OffsetDateTime.of(2023, 12, 20, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 1, 10, 14, 30, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createSprint(2L, "Sprint 1.2.3-Beta", Status.STARTED, 1L, 2L,
-                LocalDateTime.of(2024, 2, 1, 9, 0),
-                LocalDateTime.of(2024, 2, 14, 17, 0),
-                LocalDateTime.of(2024, 2, 14, 17, 0),
+        // id=2  STARTED  120h est  60h worked  60h remaining  starts 2024-02-01  ends 2024-02-14
+        raw.add(createSprint(2L, "Sprint 1.2.3-Beta", Status.STARTED, 1L, 2L,
+                LocalDateTime.of(2024, 2, 1, 9, 0), LocalDateTime.of(2024, 2, 14, 17, 0), LocalDateTime.of(2024, 2, 14, 17, 0),
                 Duration.ofHours(120), Duration.ofHours(60), Duration.ofHours(60),
                 OffsetDateTime.of(2024, 1, 15, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 2, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createSprint(3L, "Sprint 2.0.0-RC1", Status.CLOSED, 2L, 1L,
-                LocalDateTime.of(2024, 3, 1, 9, 0),
-                LocalDateTime.of(2024, 3, 15, 17, 0),
-                LocalDateTime.of(2024, 3, 15, 17, 0),
+        // id=3  CLOSED   100h est  100h worked  0h remaining  starts 2024-03-01  ends 2024-03-15
+        raw.add(createSprint(3L, "Sprint 2.0.0-RC1", Status.CLOSED, 2L, 1L,
+                LocalDateTime.of(2024, 3, 1, 9, 0), LocalDateTime.of(2024, 3, 15, 17, 0), LocalDateTime.of(2024, 3, 15, 17, 0),
                 Duration.ofHours(100), Duration.ofHours(100), Duration.ofHours(0),
                 OffsetDateTime.of(2024, 2, 20, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 16, 13, 20, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createSprint(4L, "Authentication Sprint", Status.STARTED, 3L, 3L,
-                LocalDateTime.of(2024, 4, 1, 9, 0),
-                LocalDateTime.of(2024, 4, 30, 17, 0),
-                LocalDateTime.of(2024, 4, 30, 17, 0),
+        // id=4  STARTED  160h est  80h worked  80h remaining  starts 2024-04-01  ends 2024-04-30
+        raw.add(createSprint(4L, "Authentication Sprint", Status.STARTED, 3L, 3L,
+                LocalDateTime.of(2024, 4, 1, 9, 0), LocalDateTime.of(2024, 4, 30, 17, 0), LocalDateTime.of(2024, 4, 30, 17, 0),
                 Duration.ofHours(160), Duration.ofHours(80), Duration.ofHours(80),
                 OffsetDateTime.of(2024, 3, 25, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 4, 15, 12, 10, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createSprint(5L, "Payment Integration Sprint", Status.CREATED, 4L, 2L,
-                LocalDateTime.of(2024, 5, 1, 9, 0),
-                LocalDateTime.of(2024, 5, 21, 17, 0),
-                LocalDateTime.of(2024, 5, 21, 17, 0),
+        // id=5  CREATED  140h est  0h worked  140h remaining  starts 2024-05-01  ends 2024-05-21
+        raw.add(createSprint(5L, "Payment Integration Sprint", Status.CREATED, 4L, 2L,
+                LocalDateTime.of(2024, 5, 1, 9, 0), LocalDateTime.of(2024, 5, 21, 17, 0), LocalDateTime.of(2024, 5, 21, 17, 0),
                 Duration.ofHours(140), Duration.ofHours(0), Duration.ofHours(140),
                 OffsetDateTime.of(2024, 4, 20, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 5, 1, 11, 40, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createSprint(6L, "Dashboard Development", Status.STARTED, 5L, 4L,
-                LocalDateTime.of(2024, 6, 3, 9, 0),
-                LocalDateTime.of(2024, 6, 24, 17, 0),
-                LocalDateTime.of(2024, 6, 24, 17, 0),
+        // id=6  STARTED  180h est  90h worked  90h remaining  starts 2024-06-03  ends 2024-06-24
+        raw.add(createSprint(6L, "Dashboard Development", Status.STARTED, 5L, 4L,
+                LocalDateTime.of(2024, 6, 3, 9, 0), LocalDateTime.of(2024, 6, 24, 17, 0), LocalDateTime.of(2024, 6, 24, 17, 0),
                 Duration.ofHours(180), Duration.ofHours(90), Duration.ofHours(90),
                 OffsetDateTime.of(2024, 5, 28, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 10, 16, 15, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createSprint(7L, "Mobile App Sprint", Status.CLOSED, 6L, 1L,
-                LocalDateTime.of(2024, 7, 1, 9, 0),
-                LocalDateTime.of(2024, 7, 28, 17, 0),
-                LocalDateTime.of(2024, 7, 28, 17, 0),
+        // id=7  CLOSED   200h est  200h worked  0h remaining  starts 2024-07-01  ends 2024-07-28
+        raw.add(createSprint(7L, "Mobile App Sprint", Status.CLOSED, 6L, 1L,
+                LocalDateTime.of(2024, 7, 1, 9, 0), LocalDateTime.of(2024, 7, 28, 17, 0), LocalDateTime.of(2024, 7, 28, 17, 0),
                 Duration.ofHours(200), Duration.ofHours(200), Duration.ofHours(0),
                 OffsetDateTime.of(2024, 6, 25, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 7, 29, 15, 50, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createSprint(8L, "Security Enhancement", Status.STARTED, 7L, 3L,
-                LocalDateTime.of(2024, 8, 5, 9, 0),
-                LocalDateTime.of(2024, 8, 26, 17, 0),
-                LocalDateTime.of(2024, 8, 26, 17, 0),
+        // id=8  STARTED  150h est  50h worked  100h remaining  starts 2024-08-05  ends 2024-08-26
+        raw.add(createSprint(8L, "Security Enhancement", Status.STARTED, 7L, 3L,
+                LocalDateTime.of(2024, 8, 5, 9, 0), LocalDateTime.of(2024, 8, 26, 17, 0), LocalDateTime.of(2024, 8, 26, 17, 0),
                 Duration.ofHours(150), Duration.ofHours(50), Duration.ofHours(100),
                 OffsetDateTime.of(2024, 7, 30, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 15, 17, 30, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createSprint(9L, "API Documentation Sprint", Status.CREATED, 8L, 4L,
-                LocalDateTime.of(2024, 9, 2, 9, 0),
-                LocalDateTime.of(2024, 9, 16, 17, 0),
-                LocalDateTime.of(2024, 9, 16, 17, 0),
+        // id=9  CREATED  80h est  0h worked  80h remaining  starts 2024-09-02  ends 2024-09-16
+        raw.add(createSprint(9L, "API Documentation Sprint", Status.CREATED, 8L, 4L,
+                LocalDateTime.of(2024, 9, 2, 9, 0), LocalDateTime.of(2024, 9, 16, 17, 0), LocalDateTime.of(2024, 9, 16, 17, 0),
                 Duration.ofHours(80), Duration.ofHours(0), Duration.ofHours(80),
                 OffsetDateTime.of(2024, 8, 28, 13, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 5, 9, 20, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createSprint(10L, "Performance Optimization", Status.CLOSED, 9L, 2L,
-                LocalDateTime.of(2024, 10, 1, 9, 0),
-                LocalDateTime.of(2024, 10, 21, 17, 0),
-                LocalDateTime.of(2024, 10, 21, 17, 0),
+        // id=10 CLOSED   120h est  120h worked  0h remaining  starts 2024-10-01  ends 2024-10-21
+        raw.add(createSprint(10L, "Performance Optimization", Status.CLOSED, 9L, 2L,
+                LocalDateTime.of(2024, 10, 1, 9, 0), LocalDateTime.of(2024, 10, 21, 17, 0), LocalDateTime.of(2024, 10, 21, 17, 0),
                 Duration.ofHours(120), Duration.ofHours(120), Duration.ofHours(0),
                 OffsetDateTime.of(2024, 9, 25, 10, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 10, 22, 14, 45, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createSprint(11L, "Sprint 3.0.0-SNAPSHOT", Status.CREATED, 10L, 1L,
-                LocalDateTime.of(2025, 1, 6, 9, 0),
-                LocalDateTime.of(2025, 1, 27, 17, 0),
-                LocalDateTime.of(2025, 1, 27, 17, 0),
+        // id=11 CREATED  160h est  0h worked  160h remaining  starts 2025-01-06  ends 2025-01-27
+        raw.add(createSprint(11L, "Sprint 3.0.0-SNAPSHOT", Status.CREATED, 10L, 1L,
+                LocalDateTime.of(2025, 1, 6, 9, 0), LocalDateTime.of(2025, 1, 27, 17, 0), LocalDateTime.of(2025, 1, 27, 17, 0),
                 Duration.ofHours(160), Duration.ofHours(0), Duration.ofHours(160),
                 OffsetDateTime.of(2024, 12, 28, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 10, 16, 30, 0, 0, ZoneOffset.UTC)));
 
-        testProducts.add(createSprint(12L, "Bug Fix Sprint", Status.STARTED, 11L, 5L,
-                LocalDateTime.of(2025, 2, 3, 9, 0),
-                LocalDateTime.of(2025, 2, 17, 17, 0),
-                LocalDateTime.of(2025, 2, 17, 17, 0),
+        // id=12 STARTED  60h est  30h worked  30h remaining  starts 2025-02-03  ends 2025-02-17
+        raw.add(createSprint(12L, "Bug Fix Sprint", Status.STARTED, 11L, 5L,
+                LocalDateTime.of(2025, 2, 3, 9, 0), LocalDateTime.of(2025, 2, 17, 17, 0), LocalDateTime.of(2025, 2, 17, 17, 0),
                 Duration.ofHours(60), Duration.ofHours(30), Duration.ofHours(30),
                 OffsetDateTime.of(2025, 1, 28, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 10, 12, 20, 0, 0, ZoneOffset.UTC)));
+
+        testProducts = new ArrayList<>();
+        for (Sprint s : raw) {
+            testProducts.add(SprintFilterDto.from(s));
+        }
     }
 
-    @Test
-    @DisplayName("active sprints")
-    void testActiveSprints() throws Exception {
-        List<Sprint> results = performSearch("active sprints", "Sprint");
-        List<Sprint> expected = Arrays.asList(
-                testProducts.get(1), // Sprint 1.2.3-Beta (STARTED)
-                testProducts.get(3), // Authentication Sprint (STARTED)
-                testProducts.get(5), // Dashboard Development (STARTED)
-                testProducts.get(7), // Security Enhancement (STARTED)
-                testProducts.get(11) // Bug Fix Sprint (STARTED)
-        );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
+    // -------------------------------------------------------------------------
+    // Tests — each has an unambiguous natural-language query and a hand-written
+    // reference JS predicate that is the ground truth for that query.
+    // -------------------------------------------------------------------------
 
     @Test
     @DisplayName("alpha")
     void testAlpha() throws Exception {
-        List<Sprint> results  = performSearch("alpha", "Sprint");
-        List<Sprint> expected = Collections.singletonList(testProducts.get(0)); // Sprint 1.0.0-Alpha
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "alpha",
+                "Sprint",
+                "return entity.getName().toLowerCase().includes('alpha');"
+        );
     }
+
+    // --- name filters ---------------------------------------------------------
 
     @Test
     @DisplayName("beta")
     void testBeta() throws Exception {
-        List<Sprint> results  = performSearch("beta", "Sprint");
-        List<Sprint> expected = Collections.singletonList(testProducts.get(1)); // Sprint 1.2.3-Beta
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("completed sprints")
-    void testCompletedSprints() throws Exception {
-        List<Sprint> results = performSearch("completed sprints", "Sprint");
-        List<Sprint> expected = Arrays.asList(
-                testProducts.get(2), // Sprint 2.0.0-RC1 (CLOSED)
-                testProducts.get(6), // Mobile App Sprint (CLOSED)
-                testProducts.get(9)  // Performance Optimization (CLOSED)
+        assertSearchMatchesReference(
+                "beta",
+                "Sprint",
+                "return entity.getName().toLowerCase().includes('beta');"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("created in 2025")
-    void testCreatedIn2025() throws Exception {
-        List<Sprint> results  = performSearch("created in 2025", "Sprint");
-        List<Sprint> expected = Collections.singletonList(testProducts.get(11)); // Bug Fix Sprint
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
     @DisplayName("empty search query")
     void testEmptySearchQuery() throws Exception {
-        List<Sprint> results  = performSearch("", "Sprint");
-        List<Sprint> expected = new ArrayList<>(testProducts); // All sprints should match empty query
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "",
+                "Sprint",
+                "return true;"
+        );
     }
 
     @Test
     @DisplayName("end date in January 2024")
     void testEndDateInJanuary2024() throws Exception {
-        List<Sprint> results  = performSearch("end date in January 2024", "Sprint");
-        List<Sprint> expected = Collections.singletonList(testProducts.get(0)); // Sprint 1.0.0-Alpha
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "end date in January 2024",
+                "Sprint",
+                "return entity.getEnd() !== null && entity.getEnd().getYear() === 2024 && entity.getEnd().getMonthValue() === 1;"
+        );
     }
 
     @Test
     @DisplayName("integration")
     void testIntegration() throws Exception {
-        List<Sprint> results  = performSearch("integration", "Sprint");
-        List<Sprint> expected = Collections.singletonList(testProducts.get(4)); // Payment Integration Sprint
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "integration",
+                "Sprint",
+                "return entity.getName().toLowerCase().includes('integration');"
+        );
     }
 
     @Test
     @DisplayName("name contains development")
     void testNameContainsDevelopment() throws Exception {
-        List<Sprint> results  = performSearch("name contains development", "Sprint");
-        List<Sprint> expected = Collections.singletonList(testProducts.get(5)); // Dashboard Development
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "name contains development",
+                "Sprint",
+                "return entity.getName().toLowerCase().includes('development');"
+        );
     }
 
-    // === COLUMN-SPECIFIC TESTS (one per column) ===
     @Test
     @DisplayName("name contains Payment")
     void testNameContainsPayment() throws Exception {
-        List<Sprint> results  = performSearch("name contains Payment", "Sprint");
-        List<Sprint> expected = Collections.singletonList(testProducts.get(4)); // Payment Integration Sprint
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "name contains Payment",
+                "Sprint",
+                "return entity.getName().toLowerCase().includes('payment');"
+        );
     }
 
     @Test
-    @DisplayName("originalEstimation über 180 Stunden")
+    @DisplayName("originalEstimation over 180 hours")
     void testOriginalEstimationOver180Hours() throws Exception {
-        List<Sprint> results  = performSearch("originalEstimation über 180 Stunden", "Sprint");
-        List<Sprint> expected = Collections.singletonList(testProducts.get(6)); // Mobile App Sprint (200 hours)
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "originalEstimation over 180 hours",
+                "Sprint",
+                "return entity.getOriginalEstimationHours() > 180;"
+        );
     }
 
-    @Test
-    @DisplayName("purple elephant dancing")
-    void testPurpleElephantDancing() throws Exception {
-        List<Sprint> results  = performSearch("purple elephant dancing", "Sprint");
-        List<Sprint> expected = Collections.emptyList(); // Should return empty results for nonsensical queries
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
+    // --- status filters -------------------------------------------------------
 
     @Test
     @DisplayName("rc")
     void testRc() throws Exception {
-        List<Sprint> results  = performSearch("rc", "Sprint");
-        List<Sprint> expected = Collections.singletonList(testProducts.get(2)); // Sprint 2.0.0-RC1
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("remaining is 0 hours")
-    void testRemainingIs0Hours() throws Exception {
-        List<Sprint> results  = performSearch("remaining is 0 hours", "Sprint");
-        List<Sprint> expected = Arrays.asList(testProducts.get(2), testProducts.get(6), testProducts.get(9)); // Completed sprints
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "rc",
+                "Sprint",
+                "return entity.getName().toLowerCase().includes('rc');"
+        );
     }
 
     @Test
     @DisplayName("snapshot")
     void testSnapshot() throws Exception {
-        List<Sprint> results  = performSearch("snapshot", "Sprint");
-        List<Sprint> expected = Collections.singletonList(testProducts.get(10)); // Sprint 3.0.0-SNAPSHOT
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "snapshot",
+                "Sprint",
+                "return entity.getName().toLowerCase().includes('snapshot');"
+        );
     }
 
     @Test
-    @DisplayName("sprints between 80 and 150 hours")
-    void testSprintsBetween80And150Hours() throws Exception {
-        List<Sprint> results = performSearch("sprints between 80 and 150 hours", "Sprint");
-        List<Sprint> expected = Arrays.asList(
-                testProducts.get(0), // Sprint 1.0.0-Alpha (80h)
-                testProducts.get(1), // Sprint 1.2.3-Beta (120h)
-                testProducts.get(2), // Sprint 2.0.0-RC1 (100h)
-                testProducts.get(4), // Payment Integration Sprint (140h)
-                testProducts.get(7), // Security Enhancement (150h)
-                testProducts.get(8), // API Documentation Sprint (80h)
-                testProducts.get(9)  // Performance Optimization (120h)
+    @DisplayName("sprints between 80 and 150 hours original estimation")
+    void testSprintsBetween80And150HoursEstimation() throws Exception {
+        assertSearchMatchesReference(
+                "sprints between 80 and 150 hours original estimation",
+                "Sprint",
+                "return entity.getOriginalEstimationHours() >= 80 && entity.getOriginalEstimationHours() <= 150;"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
+
+    // --- effort filters -------------------------------------------------------
 
     @Test
     @DisplayName("sprints created in 2025")
     void testSprintsCreatedIn2025() throws Exception {
-        List<Sprint> results  = performSearch("sprints created in 2025", "Sprint");
-        List<Sprint> expected = Collections.singletonList(testProducts.get(11)); // Bug Fix Sprint (created 2025-01-28)
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("sprints ending before March 2024")
-    void testSprintsEndingBeforeMarch2024() throws Exception {
-        List<Sprint> results = performSearch("sprints ending before March 2024", "Sprint");
-        List<Sprint> expected = Arrays.asList(
-                testProducts.get(0), // Sprint 1.0.0-Alpha (ends 2024-01-29)
-                testProducts.get(1)  // Sprint 1.2.3-Beta (ends 2024-02-14)
+        assertSearchMatchesReference(
+                "sprints created in 2025",
+                "Sprint",
+                "return entity.getCreated().getYear() === 2025;"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
-    @DisplayName("sprints over 100 hours estimation")
+    @DisplayName("sprints ending before March 1 2024")
+    void testSprintsEndingBeforeMarch1_2024() throws Exception {
+        // Explicit day removes all ambiguity about "before March"
+        assertSearchMatchesReference(
+                "sprints ending before March 1 2024",
+                "Sprint",
+                """
+                        const boundary = Java.type('java.time.LocalDateTime').of(2024, 3, 1, 0, 0, 0);
+                        return entity.getEnd() !== null && entity.getEnd().isBefore(boundary);
+                        """
+        );
+    }
+
+    @Test
+    @DisplayName("sprints over 100 hours original estimation")
     void testSprintsOver100HoursEstimation() throws Exception {
-        List<Sprint> results = performSearch("sprints over 100 hours estimation", "Sprint");
-        List<Sprint> expected = Arrays.asList(
-                testProducts.get(1), // Sprint 1.2.3-Beta (120h)
-                testProducts.get(3), // Authentication Sprint (160h)
-                testProducts.get(4), // Payment Integration Sprint (140h)
-                testProducts.get(5), // Dashboard Development (180h)
-                testProducts.get(6), // Mobile App Sprint (200h)
-                testProducts.get(7), // Security Enhancement (150h)
-                testProducts.get(9), // Performance Optimization (120h)
-                testProducts.get(10) // Sprint 3.0.0-SNAPSHOT (160h)
+        assertSearchMatchesReference(
+                "sprints over 100 hours original estimation",
+                "Sprint",
+                "return entity.getOriginalEstimationHours() > 100;"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
-    @DisplayName("sprints starting after February 2024")
-    void testSprintsStartingAfterFebruary2024() throws Exception {
-        List<Sprint> results = performSearch("sprints starting after February 2024", "Sprint");
-        List<Sprint> expected = Arrays.asList(
-                testProducts.get(2), // Sprint 2.0.0-RC1 (starts 2024-03-01)
-                testProducts.get(3), // Authentication Sprint (starts 2024-04-01)
-                testProducts.get(4), // Payment Integration Sprint (starts 2024-05-01)
-                testProducts.get(5), // Dashboard Development (starts 2024-06-03)
-                testProducts.get(6), // Mobile App Sprint (starts 2024-07-01)
-                testProducts.get(7), // Security Enhancement (starts 2024-08-05)
-                testProducts.get(8), // API Documentation Sprint (starts 2024-09-02)
-                testProducts.get(9), // Performance Optimization (starts 2024-10-01)
-                testProducts.get(10), // Sprint 3.0.0-SNAPSHOT (starts 2025-01-06)
-                testProducts.get(11)  // Bug Fix Sprint (starts 2025-02-03)
+    @DisplayName("sprints starting after February 28 2024")
+    void testSprintsStartingAfterFebruary28_2024() throws Exception {
+        // Explicit day removes all ambiguity about "after February"
+        assertSearchMatchesReference(
+                "sprints starting after February 28 2024",
+                "Sprint",
+                """
+                        const boundary = Java.type('java.time.LocalDateTime').of(2024, 2, 28, 23, 59, 59);
+                        return entity.getStart() !== null && entity.getStart().isAfter(boundary);
+                        """
         );
+    }
 
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+    @Test
+    @DisplayName("sprints starting in 2025")
+    void testSprintsStartingIn2025() throws Exception {
+        assertSearchMatchesReference(
+                "sprints starting in 2025",
+                "Sprint",
+                "return entity.getStart() !== null && entity.getStart().getYear() === 2025;"
+        );
     }
 
     @Test
     @DisplayName("sprints updated in 2025")
     void testSprintsUpdatedIn2025() throws Exception {
-        List<Sprint> results = performSearch("sprints updated in 2025", "Sprint");
-        List<Sprint> expected = Arrays.asList(
-                testProducts.get(10), // Sprint 3.0.0-SNAPSHOT (updated 2025-01-10)
-                testProducts.get(11)  // Bug Fix Sprint (updated 2025-02-10)
+        assertSearchMatchesReference(
+                "sprints updated in 2025",
+                "Sprint",
+                "return entity.getUpdated().getYear() === 2025;"
         );
 
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+    }
+
+    // --- start / end date filters ---------------------------------------------
+
+    @Test
+    @DisplayName("sprints with no remaining work")
+    void testSprintsWithNoRemainingWork() throws Exception {
+        assertSearchMatchesReference(
+                "sprints with no remaining work",
+                "Sprint",
+                "return entity.getRemainingHours() === 0;"
+        );
     }
 
     @Test
     @DisplayName("sprints with remaining work")
     void testSprintsWithRemainingWork() throws Exception {
-        List<Sprint> results = performSearch("sprints with remaining work", "Sprint");
-        List<Sprint> expected = Arrays.asList(
-                testProducts.get(0), // Sprint 1.0.0-Alpha (80h remaining)
-                testProducts.get(1), // Sprint 1.2.3-Beta (60h remaining)
-                testProducts.get(3), // Authentication Sprint (80h remaining)
-                testProducts.get(4), // Payment Integration Sprint (140h remaining)
-                testProducts.get(5), // Dashboard Development (90h remaining)
-                testProducts.get(7), // Security Enhancement (100h remaining)
-                testProducts.get(8), // API Documentation Sprint (80h remaining)
-                testProducts.get(10), // Sprint 3.0.0-SNAPSHOT (160h remaining)
-                testProducts.get(11)  // Bug Fix Sprint (30h remaining)
+        assertSearchMatchesReference(
+                "sprints with remaining work",
+                "Sprint",
+                "return entity.getRemainingHours() > 0;"
         );
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    @Test
-    @DisplayName("start date in 2025")
-    void testStartDateIn2025() throws Exception {
-        List<Sprint> results  = performSearch("start date in 2025", "Sprint");
-        List<Sprint> expected = Arrays.asList(testProducts.get(10), testProducts.get(11)); // Sprint 3.0.0-SNAPSHOT, Bug Fix Sprint
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
     @DisplayName("status is CLOSED")
     void testStatusIsClosed() throws Exception {
-        List<Sprint> results  = performSearch("status is CLOSED", "Sprint");
-        List<Sprint> expected = Arrays.asList(testProducts.get(2), testProducts.get(6), testProducts.get(9)); // Sprint 2.0.0-RC1, Mobile App Sprint, Performance Optimization
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+        assertSearchMatchesReference(
+                "status is CLOSED",
+                "Sprint",
+                "return entity.getStatus() === 'CLOSED';"
+        );
     }
 
     @Test
-    @DisplayName("updated in 2025")
-    void testUpdatedIn2025() throws Exception {
-        List<Sprint> results  = performSearch("updated in 2025", "Sprint");
-        List<Sprint> expected = Arrays.asList(testProducts.get(10), testProducts.get(11)); // Sprint 3.0.0-SNAPSHOT, Bug Fix Sprint
+    @DisplayName("status is CREATED")
+    void testStatusIsCreated() throws Exception {
+        assertSearchMatchesReference(
+                "status is CREATED",
+                "Sprint",
+                "return entity.getStatus() === 'CREATED';"
+        );
+    }
 
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
+    // --- created / updated filters -------------------------------------------
+
+    @Test
+    @DisplayName("status is STARTED")
+    void testStatusIsStarted() throws Exception {
+        assertSearchMatchesReference(
+                "status is STARTED",
+                "Sprint",
+                "return entity.getStatus() === 'STARTED';"
+        );
     }
 
     @Test
     @DisplayName("worked is 0 hours")
     void testWorkedIs0Hours() throws Exception {
-        List<Sprint> results  = performSearch("worked is 0 hours", "Sprint");
-        List<Sprint> expected = Arrays.asList(testProducts.get(0), testProducts.get(4), testProducts.get(8), testProducts.get(10)); // Sprints with no work done yet
-
-        assertThat(results).hasSize(expected.size());
-        assertThat(results).containsExactlyInAnyOrderElementsOf(expected);
-    }
-
-    /**
-     * add generated ai code to test against one of the tests.
-     */
-    class ExampleSprintFilter implements Predicate<Sprint> {
-
-        @Override
-        public boolean test(Sprint entity) {
-            if (entity == null) {
-                return false;
-            }
-
-            try {
-                return entity.getOriginalEstimation() != null && entity.getOriginalEstimation().toHours() > 180;
-            } catch (Exception e) {
-                // Log the error but don't fail the entire filter
-                System.err.println("Error in filter execution: " + e.getMessage());
-                return false;
-            }
-        }
-
+        assertSearchMatchesReference(
+                "worked is 0 hours",
+                "Sprint",
+                "return entity.getWorkedHours() === 0;"
+        );
     }
 }

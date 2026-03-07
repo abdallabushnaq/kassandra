@@ -15,7 +15,16 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.filter.prompt;
+package de.bushnaq.abdalla.kassandra.ai.filter;
+
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.availability.AvailabilityFilterPrompt;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.feature.FeatureFilterPrompt;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.location.LocationFilterPrompt;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.offday.OffDayFilterPrompt;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.product.ProductFilterPrompt;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.sprint.SprintFilterPrompt;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.user.UserFilterPrompt;
+import de.bushnaq.abdalla.kassandra.ai.filter.dto.version.VersionFilterPrompt;
 
 import java.util.HashMap;
 import java.util.Map;

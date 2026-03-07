@@ -17,6 +17,9 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter;
 
+import java.time.LocalDate;
+import java.util.List;
+
 /**
  * Interface for AI-powered filter generators.
  * Implementations convert natural language queries into different types of filters.
@@ -32,6 +35,22 @@ public interface AiFilterGenerator {
      * @throws RuntimeException if generation fails
      */
     String generateFilter(String query, String entityType);
+
+    /**
+     * Parses a natural language search query and generates a filter, providing the real
+     * entity list so that the JS execution-validator tool can run the generated code
+     * against actual data via the Spring AI {@link org.springframework.ai.chat.model.ToolContext}.
+     *
+     * @param query      The natural language query from the user
+     * @param entityType The type of entity being searched (e.g., "Product", "Version")
+     * @param entities   The filter-DTO objects from the data provider (may be empty)
+     * @param now        The reference date injected as the {@code now} parameter
+     * @return Filter string for filtering objects
+     * @throws RuntimeException if generation fails
+     */
+    default String generateFilter(String query, String entityType, List<Object> entities, LocalDate now) {
+        return generateFilter(query, entityType);
+    }
 
     /**
      * Gets the filter type supported by this generator.

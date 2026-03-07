@@ -15,12 +15,12 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.filter.prompt;
+package de.bushnaq.abdalla.kassandra.ai.filter.dto.feature;
 
-import de.bushnaq.abdalla.kassandra.ai.filter.prompt.FilterPromptRegistry.PromptConfig;
+import de.bushnaq.abdalla.kassandra.ai.filter.FilterPromptRegistry.PromptConfig;
 
 /**
- * Configuration for Feature entity AI filtering
+ * Configuration for Feature entity AI filtering.
  */
 public class FeatureFilterPrompt {
 
@@ -29,22 +29,21 @@ public class FeatureFilterPrompt {
                 """
                         @Getter
                         @Setter
-                        public class Feature {
-                            private String name;//never null
-                            private OffsetDateTime created;//never null
-                            private OffsetDateTime updated;//never null
+                        public class FeatureFilterDto {
+                            private String         name;      // never null
+                            private Long           versionId; // never null
+                            private OffsetDateTime created;   // never null
+                            private OffsetDateTime updated;   // never null
                         }
                         """,
                 """
                         Special considerations for Features:
                         - Feature names describe functionality (e.g., "User Authentication", "Payment Processing")
-                        - Feature keys follow patterns like F-1, F-123. Keys are basically just unique database IDs of the Feature entity.
-                        - Features are grouped under versions and contain sprints
-                        - Focus on feature purpose and functionality descriptions
-                        - Remember: you are filtering Feature entities, so each 'entity' is already a Feature
+                        - Features are grouped under versions (identified by versionId)
+                        - Remember: you are filtering FeatureFilterDto entities, so each 'entity' is a FeatureFilterDto
                         - When queries mention "features created in 2024" - this means filter by creation year, NOT by checking if entity.name contains "features"
                         - Terms like "features", "items", or similar generic terms refer to the entity type, not name content
-                        - Use only getter methods like entity.getName(), entity.getCreated(), entity.getUpdated(), entity.getId(), entity.getVersionId(), entity.getKey()
+                        - Use only getter methods like entity.getName(), entity.getCreated(), entity.getUpdated(), entity.getVersionId()
                         - Never use reflection or field access, always use public getter methods
                         """,
                 """
@@ -61,14 +60,11 @@ public class FeatureFilterPrompt {
                         Input: "features created in 2024"
                         Output: return entity.getCreated().getYear() === 2024;
                         
-                        Input: "items created in 2024"
-                        Output: return entity.getCreated().getYear() === 2024;
-                        
-                        Input: "features created after January 2024"
+                        Input: "features created after January 31 2024"
                         Output: const refDate = Java.type('java.time.OffsetDateTime').of(2024, 1, 31, 23, 59, 59, 0, entity.getCreated().getOffset()); return entity.getCreated().isAfter(refDate);
                         
-                        Input: "features created before December 2024"
-                        Output: const refDate = Java.type('java.time.OffsetDateTime').of(2024, 12, 1, 0, 0, 0, 0, entity.getCreated().getOffset()); return entity.getCreated().isBefore(refDate);
+                        Input: "features created before March 1 2024"
+                        Output: const refDate = Java.type('java.time.OffsetDateTime').of(2024, 3, 1, 0, 0, 0, 0, entity.getCreated().getOffset()); return entity.getCreated().isBefore(refDate);
                         
                         Input: "features created this year"
                         Output: const currentYear = Java.type('java.time.Year').now().getValue(); return entity.getCreated().getYear() === currentYear;
@@ -79,17 +75,8 @@ public class FeatureFilterPrompt {
                         Input: "features updated in 2025"
                         Output: return entity.getUpdated().getYear() === 2025;
                         
-                        Input: "items updated in 2025"
-                        Output: return entity.getUpdated().getYear() === 2025;
-                        
-                        Input: "features updated after January 2025"
+                        Input: "features updated after January 31 2025"
                         Output: const refDate = Java.type('java.time.OffsetDateTime').of(2025, 1, 31, 23, 59, 59, 0, entity.getUpdated().getOffset()); return entity.getUpdated().isAfter(refDate);
-                        
-                        Input: "features updated before December 2025"
-                        Output: const refDate = Java.type('java.time.OffsetDateTime').of(2025, 12, 1, 0, 0, 0, 0, entity.getUpdated().getOffset()); return entity.getUpdated().isBefore(refDate);
-                        
-                        Input: "features updated this year"
-                        Output: const currentYear = Java.type('java.time.Year').now().getValue(); return entity.getUpdated().getYear() === currentYear;
                         
                         Input: "payment features"
                         Output: return entity.getName().toLowerCase().includes('payment');
@@ -111,11 +98,11 @@ public class FeatureFilterPrompt {
                         Input: "features created in 2024"
                         Output: return entity.getCreated().getYear() == 2024;
                         
-                        Input: "features created after January 2024"
+                        Input: "features created after January 31 2024"
                         Output: return entity.getCreated().isAfter(OffsetDateTime.of(2024, 1, 31, 23, 59, 59, 0, OffsetDateTime.now().getOffset()));
                         
-                        Input: "features created before December 2024"
-                        Output: return entity.getCreated().isBefore(OffsetDateTime.of(2024, 12, 1, 0, 0, 0, 0, OffsetDateTime.now().getOffset()));
+                        Input: "features created before March 1 2024"
+                        Output: return entity.getCreated().isBefore(OffsetDateTime.of(2024, 3, 1, 0, 0, 0, 0, OffsetDateTime.now().getOffset()));
                         
                         Input: "updated in 2025"
                         Output: return entity.getUpdated().getYear() == 2025;
@@ -129,3 +116,4 @@ public class FeatureFilterPrompt {
         );
     }
 }
+
