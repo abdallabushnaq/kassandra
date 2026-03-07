@@ -15,7 +15,7 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.filter;
+package de.bushnaq.abdalla.kassandra.ai.filter.java;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -15,9 +15,10 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.filter;
+package de.bushnaq.abdalla.kassandra.ai.filter.js;
 
-import de.bushnaq.abdalla.kassandra.ai.filter.config.AiFilterConfig;
+import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterGenerator;
+import de.bushnaq.abdalla.kassandra.ai.filter.prompt.FilterPromptRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -106,7 +107,7 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
         logger.info("Generating JavaScript filter for query: '{}' and entity type: '{}'", query, entityType);
 
         try {
-            AiFilterConfig.PromptConfig config = AiFilterConfig.getPromptConfig(entityType);
+            FilterPromptRegistry.PromptConfig config = FilterPromptRegistry.getPromptConfig(entityType);
 
             // Create prompt with current year context and entity-specific configuration
             String formattedPrompt = String.format(JAVASCRIPT_PROMPT_TEMPLATE,

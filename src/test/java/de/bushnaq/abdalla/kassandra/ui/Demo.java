@@ -29,7 +29,6 @@ import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -144,12 +143,6 @@ public class Demo extends AbstractKeycloakUiTestUtil {
 //                new RandomCase(3, LocalDate.parse("2024-12-01"), Duration.ofDays(10), 4, 3, 3, 3, 10, 5, 8, 5, 1)//
         };
         return Arrays.stream(randomCases).toList();
-    }
-
-    @BeforeAll
-    static void setupOllama() {
-        logger.info("=== Setting up Ollama for Natural Language Search Demo ===");
-//        OllamaTestHelper.ensureOllamaForTests();
     }
 
     @ParameterizedTest

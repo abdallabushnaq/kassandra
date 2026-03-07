@@ -15,7 +15,7 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.filter.config;
+package de.bushnaq.abdalla.kassandra.ai.filter.prompt;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * Shared configuration for entity-specific prompts across all AI filter implementations.
  */
-public class AiFilterConfig {
+public class FilterPromptRegistry {
 
     private static final Map<String, PromptConfig> PROMPT_CONFIGS = initializePromptConfigs();
 
@@ -44,29 +44,29 @@ public class AiFilterConfig {
         Map<String, PromptConfig> configs = new HashMap<>();
 
         // Load configurations from separate config classes
-        configs.put("Product", ProductConfig.getConfig());
-        configs.put("Version", VersionConfig.getConfig());
-        configs.put("Feature", FeatureConfig.getConfig());
-        configs.put("Sprint", SprintConfig.getConfig());
-        configs.put("User", UserConfig.getConfig());
-        configs.put("Availability", AvailabilityConfig.getConfig());
-        configs.put("Location", LocationConfig.getConfig());
-        configs.put("OffDay", OffDayConfig.getConfig());
+        configs.put("Product", ProductFilterPrompt.getConfig());
+        configs.put("Version", VersionFilterPrompt.getConfig());
+        configs.put("Feature", FeatureFilterPrompt.getConfig());
+        configs.put("Sprint", SprintFilterPrompt.getConfig());
+        configs.put("User", UserFilterPrompt.getConfig());
+        configs.put("Availability", AvailabilityFilterPrompt.getConfig());
+        configs.put("Location", LocationFilterPrompt.getConfig());
+        configs.put("OffDay", OffDayFilterPrompt.getConfig());
 
         return configs;
     }
 
     /**
-         * Configuration class for entity-specific prompts
-         */
-        public record PromptConfig(String javaClass, String specialConsiderations, String javascriptExamples,
-                                   String javaExamples) {
-            //        public PromptConfig(String javaClass, String specialConsiderations, String javaExamples) {
-    //            this.javaClass             = javaClass;
-    //            this.specialConsiderations = specialConsiderations;
-    //            this.javascriptExamples    = null;
-    //            this.javaExamples          = javaExamples;
-    //        }
+     * Configuration class for entity-specific prompts
+     */
+    public record PromptConfig(String javaClass, String specialConsiderations, String javascriptExamples,
+                               String javaExamples) {
+        //        public PromptConfig(String javaClass, String specialConsiderations, String javaExamples) {
+        //            this.javaClass             = javaClass;
+        //            this.specialConsiderations = specialConsiderations;
+        //            this.javascriptExamples    = null;
+        //            this.javaExamples          = javaExamples;
+        //        }
 
     }
 }

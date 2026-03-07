@@ -15,14 +15,14 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.filter.config;
+package de.bushnaq.abdalla.kassandra.ai.filter.prompt;
 
-import de.bushnaq.abdalla.kassandra.ai.filter.config.AiFilterConfig.PromptConfig;
+import de.bushnaq.abdalla.kassandra.ai.filter.prompt.FilterPromptRegistry.PromptConfig;
 
 /**
  * Configuration for Version entity AI filtering
  */
-public class VersionConfig {
+public class VersionFilterPrompt {
 
     public static PromptConfig getConfig() {
         return new PromptConfig(

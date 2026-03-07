@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter;
 
+import de.bushnaq.abdalla.kassandra.ai.filter.java.JavaAiFilterGenerator;
+import de.bushnaq.abdalla.kassandra.ai.filter.js.JavaScriptAiFilterGenerator;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.ResourceLimits;

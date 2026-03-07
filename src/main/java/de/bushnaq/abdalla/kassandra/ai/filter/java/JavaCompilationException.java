@@ -15,7 +15,7 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ai.filter;
+package de.bushnaq.abdalla.kassandra.ai.filter.java;
 
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;

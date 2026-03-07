@@ -17,19 +17,62 @@
 
 package de.bushnaq.abdalla.kassandra.ai.insights;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
+import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.dto.Task;
+import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.dto.Worklog;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.view.SprintStatistics;
+import de.bushnaq.abdalla.kassandra.util.RandomCase;
+import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Test class for SprintInsightsGenerator.
  * Demonstrates how to use the AI-powered sprint analysis functionality.
  */
 @Tag("AiUnitTest")
-@SpringBootTest
-public class SprintInsightsGeneratorTest {
-
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=${test.server.port:0}",
+                "spring.profiles.active=test",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
+@AutoConfigureMockMvc
+@AutoConfigureTestRestTemplate
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@Slf4j
+public class SprintInsightsGeneratorTest extends AbstractKeycloakUiTestUtil {
     /**
      * Sample sprint statistics data for testing (reduced size matching @JsonIgnore fields)
      */
@@ -147,76 +190,205 @@ public class SprintInsightsGeneratorTest {
             """;
     @Autowired
     private              SprintInsightsGenerator sprintInsightsGenerator;
+    //    @Test
+//    public void testGenerateQuickSummary() {
+//        System.out.println("\n=== Testing Quick Sprint Summary ===");
+//
+//        try {
+//            String summary = sprintInsightsGenerator.generateQuickSummary(SAMPLE_SPRINT_STATISTICS_DATA);
+//
+//            System.out.println("Quick Summary:");
+//            System.out.println(summary);
+//
+//            // Basic validation
+//            assert summary != null && !summary.trim().isEmpty() : "Summary should not be empty";
+//
+//        } catch (Exception e) {
+//            System.err.println("Error generating quick summary: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 
-    @Test
-    public void testEstimationAccuracyAnalysis() {
-        System.out.println("\n=== Testing Estimation Accuracy Analysis ===");
-
-        try {
-            String question = "How accurate are our sprint estimations? Are we consistently over or under-estimating?";
-            String analysis = sprintInsightsGenerator.generateFocusedInsights(SAMPLE_SPRINT_STATISTICS_DATA, question);
-
-            System.out.println("Question: " + question);
-            System.out.println("Analysis:");
-            System.out.println(analysis);
-
-        } catch (Exception e) {
-            System.err.println("Error generating estimation analysis: " + e.getMessage());
-            e.printStackTrace();
-        }
+    private String generateJson(SprintStatistics sprintStatistics) {
+        // Create a separate ObjectMapper that respects @JsonIgnore annotations for AI insights
+        JsonMapper jsonMapper = new JsonMapper();
+        //todo do we need this?
+//        jsonMapper.registerModule(new JavaTimeModule());
+//        jsonMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        String jsonString = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(sprintStatistics);
+//        log.info("Generated JSON for {} sprints", sprintStatistics.size());
+        return jsonString;
     }
 
-    @Test
-    public void testGenerateFocusedInsights() {
-        System.out.println("\n=== Testing Focused Sprint Insights ===");
-
-        try {
-            String question        = "Which sprints are at risk of missing their deadlines and why?";
-            String focusedInsights = sprintInsightsGenerator.generateFocusedInsights(SAMPLE_SPRINT_STATISTICS_DATA, question);
-
-            System.out.println("Question: " + question);
-            System.out.println("Focused Insights:");
-            System.out.println(focusedInsights);
-
-            // Basic validation
-            assert focusedInsights != null && !focusedInsights.trim().isEmpty() : "Focused insights should not be empty";
-
-        } catch (Exception e) {
-            System.err.println("Error generating focused insights: " + e.getMessage());
-            e.printStackTrace();
-        }
+    private static List<RandomCase> listRandomCases() {
+        RandomCase[] randomCases = new RandomCase[]{//
+                new RandomCase(3, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 2, 2, 2, 2, 2, 2, 1, 5, 5, 8, 8, 6, 7)//
+        };
+        return Arrays.stream(randomCases).toList();
     }
 
-    @Test
-    public void testGenerateInsights() {
-        System.out.println("=== Testing General Sprint Insights ===");
+    private List<SprintStatistics> loadData() {
+        List<SprintStatistics> sprintStatistics = new ArrayList<>();
+        // Capture the security context from the current thread
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        try {
-            String insights = sprintInsightsGenerator.generateInsights(SAMPLE_SPRINT_STATISTICS_DATA);
-            System.out.println("Generated Insights:");
-            System.out.println(insights);
+        List<Sprint> sprintIds = sprintApi.getAll();
 
-            // Basic validation
-            assert insights != null && !insights.trim().isEmpty() : "Insights should not be empty";
-
-        } catch (Exception e) {
-            System.err.println("Error generating insights: " + e.getMessage());
-            e.printStackTrace();
+        for (Sprint sprint : sprintIds) {
+            if (!sprint.getName().equals(DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME)) {
+                sprintStatistics.add(new SprintStatistics(loadSprintData(authentication, sprint.getId()), ParameterOptions.getLocalNow()));
+            }
         }
+        return sprintStatistics;
     }
 
-    @Test
-    public void testGenerateQuickSummary() {
-        System.out.println("\n=== Testing Quick Sprint Summary ===");
+    private Sprint loadSprintData(Authentication authentication, Long sprintId) {
+        Sprint sprint = null;
+        long   time   = System.currentTimeMillis();
+        // Load in parallel with security context propagation
+        CompletableFuture<Sprint> sprintFuture = CompletableFuture.supplyAsync(() -> {
+            // Set security context in this thread
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                Sprint s = sprintApi.getById(sprintId);
+                s.initialize();
+                return s;
+            } finally {
+                SecurityContextHolder.clearContext();// Clear the security context after execution
+            }
+        });
 
+        CompletableFuture<List<User>> usersFuture = CompletableFuture.supplyAsync(() -> {
+            // Set security context in this thread
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                return userApi.getAll(sprintId);
+            } finally {
+                SecurityContextHolder.clearContext();// Clear the security context after execution
+            }
+        });
+
+        CompletableFuture<List<Task>> tasksFuture = CompletableFuture.supplyAsync(() -> {
+            // Set security context in this thread
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                return taskApi.getAll(sprintId);
+            } finally {
+                SecurityContextHolder.clearContext();// Clear the security context after execution
+            }
+        });
+
+        CompletableFuture<List<Worklog>> worklogsFuture = CompletableFuture.supplyAsync(() -> {
+            // Set security context in this thread
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                return worklogApi.getAll(sprintId);
+            } finally {
+                SecurityContextHolder.clearContext();// Clear the security context after execution
+            }
+        });
+
+        // Wait for all futures and combine results
         try {
-            String summary = sprintInsightsGenerator.generateQuickSummary(SAMPLE_SPRINT_STATISTICS_DATA);
+            sprint = sprintFuture.get();
+            log.info("sprint loaded and initialized in {} ms", System.currentTimeMillis() - time);
+            time = System.currentTimeMillis();
+            sprint.initUserMap(usersFuture.get());
+            sprint.initTaskMap(tasksFuture.get(), worklogsFuture.get());
+            log.info("sprint user, task and worklog maps initialized in {} ms", System.currentTimeMillis() - time);
+            sprint.recalculate(ParameterOptions.getLocalNow());
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error loading sprint data", e);
+        }
+        return sprint;
+    }
 
-            System.out.println("Quick Summary:");
-            System.out.println(summary);
+//    @Test
+//    public void testEstimationAccuracyAnalysis() {
+//        System.out.println("\n=== Testing Estimation Accuracy Analysis ===");
+//
+//        try {
+//            String question = "How accurate are our sprint estimations? Are we consistently over or under-estimating?";
+//            String analysis = sprintInsightsGenerator.generateFocusedInsights(SAMPLE_SPRINT_STATISTICS_DATA, question);
+//
+//            System.out.println("Question: " + question);
+//            System.out.println("Analysis:");
+//            System.out.println(analysis);
+//
+//        } catch (Exception e) {
+//            System.err.println("Error generating estimation analysis: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+
+//    @Test
+//    public void testGenerateFocusedInsights() {
+//        System.out.println("\n=== Testing Focused Sprint Insights ===");
+//
+//        try {
+//            String question        = "Which sprints are at risk of missing their deadlines and why?";
+//            String focusedInsights = sprintInsightsGenerator.generateFocusedInsights(SAMPLE_SPRINT_STATISTICS_DATA, question);
+//
+//            System.out.println("Question: " + question);
+//            System.out.println("Focused Insights:");
+//            System.out.println(focusedInsights);
+//
+//            // Basic validation
+//            assert focusedInsights != null && !focusedInsights.trim().isEmpty() : "Focused insights should not be empty";
+//
+//        } catch (Exception e) {
+//            System.err.println("Error generating focused insights: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+
+//    @Test
+//    public void testGenerateInsights() {
+//        System.out.println("=== Testing General Sprint Insights ===");
+//
+//        try {
+//            String insights = sprintInsightsGenerator.generateInsights(SAMPLE_SPRINT_STATISTICS_DATA);
+//            System.out.println("Generated Insights:");
+//            System.out.println(insights);
+//
+//            // Basic validation
+//            assert insights != null && !insights.trim().isEmpty() : "Insights should not be empty";
+//
+//        } catch (Exception e) {
+//            System.err.println("Error generating insights: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testGenerateInsights(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
+        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+        generateProductsIfNeeded(testInfo, randomCase);
+        try {
+            List<SprintStatistics> sprintStatistics = loadData();
+            for (SprintStatistics sprintStatistic : sprintStatistics) {
+                String result = sprintInsightsGenerator.generateInsights(generateJson(sprintStatistic));
+                assert result != null && !result.trim().isEmpty() : "Summary should not be empty";
+                break;
+            }
+
+
+//            System.out.println("Quick Summary:");
+//            System.out.println(result);
 
             // Basic validation
-            assert summary != null && !summary.trim().isEmpty() : "Summary should not be empty";
 
         } catch (Exception e) {
             System.err.println("Error generating quick summary: " + e.getMessage());
@@ -224,21 +396,21 @@ public class SprintInsightsGeneratorTest {
         }
     }
 
-    @Test
-    public void testWorkloadPatternsAnalysis() {
-        System.out.println("\n=== Testing Workload Patterns Analysis ===");
-
-        try {
-            String question = "What patterns can you identify in our sprint workload and team velocity?";
-            String analysis = sprintInsightsGenerator.generateFocusedInsights(SAMPLE_SPRINT_STATISTICS_DATA, question);
-
-            System.out.println("Question: " + question);
-            System.out.println("Analysis:");
-            System.out.println(analysis);
-
-        } catch (Exception e) {
-            System.err.println("Error generating workload analysis: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+//    @Test
+//    public void testWorkloadPatternsAnalysis() {
+//        System.out.println("\n=== Testing Workload Patterns Analysis ===");
+//
+//        try {
+//            String question = "What patterns can you identify in our sprint workload and team velocity?";
+//            String analysis = sprintInsightsGenerator.generateFocusedInsights(SAMPLE_SPRINT_STATISTICS_DATA, question);
+//
+//            System.out.println("Question: " + question);
+//            System.out.println("Analysis:");
+//            System.out.println(analysis);
+//
+//        } catch (Exception e) {
+//            System.err.println("Error generating workload analysis: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 }
