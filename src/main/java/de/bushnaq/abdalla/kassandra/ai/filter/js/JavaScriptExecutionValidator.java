@@ -114,6 +114,7 @@ public class JavaScriptExecutionValidator {
                     return "JavaScript runtime error on entity #" + (i + 1) + " (" + entity
                             + "): " + e.getMessage() + "\n\nFailed code:\n" + jsFunctionBody;
                 }
+                break; // only test the first entity to keep validation fast, we just want to catch syntax errors or basic runtime issues
             }
         } catch (Exception e) {
             logger.debug("Unexpected error during JS execution validation", e);

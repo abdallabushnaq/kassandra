@@ -78,8 +78,9 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
             VALIDATION TOOL:
             - You have access to a tool called 'validateJavaScript'.
             - ALWAYS call validateJavaScript with your function body before returning your final answer.
-            - If the tool returns anything other than "OK", fix the reported error and call it again until it returns "OK".
-            - Only return your final ```js block after validateJavaScript confirms "OK".
+            - If the tool returns anything other than "OK", fix the reported error and call it again.
+            - If the tool returns "VALIDATION_LIMIT_EXCEEDED", stop retrying immediately and return your best-effort answer inside a ```js block.
+            - Only return your final ```js block after validateJavaScript confirms "OK" (or the limit is exceeded).
             
             STRICT OUTPUT FORMAT — YOU MUST FOLLOW THIS EXACTLY:
             - Your entire response MUST contain exactly one fenced code block.

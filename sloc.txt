@@ -29,10 +29,10 @@
 | kassandra.ai.filter.java             | JavaCompilationException.java                            | src      |       12 |       10 |       16 |       46 |       84 |
 | kassandra.ai.filter.java             | JavaFilterCompiler.java                                  | src      |       51 |       48 |       54 |      195 |      348 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.ai.filter.js               | JavaScriptAiFilterGenerator.java                         | src      |       40 |        7 |       25 |      141 |      213 |
+| kassandra.ai.filter.js               | JavaScriptAiFilterGenerator.java                         | src      |       40 |        7 |       25 |      142 |      214 |
 | kassandra.ai.filter.js               | JavaScriptExecutionValidator.java                        | src      |       12 |        7 |       16 |       89 |      124 |
 | kassandra.ai.filter.js               | JavaScriptSyntaxValidator.java                           | src      |       14 |       16 |       22 |       51 |      103 |
-| kassandra.ai.filter.js               | JavaScriptValidatorTools.java                            | src      |        9 |       18 |       18 |       42 |       87 |
+| kassandra.ai.filter.js               | JavaScriptValidatorTools.java                            | src      |       11 |       18 |       20 |       57 |      106 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.filter                  | AbstractAiFilterTest.java                                | src      |       20 |       23 |       35 |       95 |      173 |
 | kassandra.ai.filter                  | AiFilterGenerator.java                                   | src      |        7 |       32 |       16 |       14 |       69 |
@@ -87,7 +87,7 @@
 | kassandra.ai.mcp                     | ThinkingStep.java                                        | src      |        3 |        0 |       16 |        6 |       25 |
 | kassandra.ai.mcp                     | ToolActivityContext.java                                 | src      |        2 |        9 |       16 |        4 |       31 |
 | kassandra.ai.mcp                     | ToolActivityContextHolder.java                           | src      |        7 |        3 |       16 |       21 |       47 |
-| kassandra.ai.mcp                     | ToolContextHelper.java                                   | src      |       11 |       58 |       17 |       54 |      140 |
+| kassandra.ai.mcp                     | ToolContextHelper.java                                   | src      |       11 |       64 |       17 |       57 |      149 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.stablediffusion         | GenerateDefaultAvatarTest.java                           | src      |       20 |        7 |       27 |       67 |      121 |
 | kassandra.ai.stablediffusion         | GeneratedImageResult.java                                | src      |        4 |       12 |       16 |       12 |       44 |
@@ -532,5 +532,5 @@
 | util                                 | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                                 | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 60 package(s)                        | 471 file(s)                                              | java     |    10367 |     8231 |    13574 |    54045 |    86217 |
+| 60 package(s)                        | 471 file(s)                                              | java     |    10369 |     8237 |    13576 |    54064 |    86246 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

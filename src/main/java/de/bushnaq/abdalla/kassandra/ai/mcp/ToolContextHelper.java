@@ -42,16 +42,24 @@ import java.util.Map;
  */
 public class ToolContextHelper {
 
-    public static final  String                       ACTIVITY_CONTEXT_KEY    = "activityContext";
+    public static final  String                       ACTIVITY_CONTEXT_KEY           = "activityContext";
     /**
      * Key used to pass the real filter-DTO entity list to the JS execution-validator tool.
      */
-    public static final  String                       FILTER_ENTITIES_KEY     = "filterEntities";
+    public static final  String                       FILTER_ENTITIES_KEY            = "filterEntities";
     /**
      * Key used to pass the reference date to the JS execution-validator tool.
      */
-    public static final  String                       FILTER_NOW_KEY          = "filterNow";
-    public static final  String                       SECURITY_CONTEXT_KEY    = "securityContext";
+    public static final  String                       FILTER_NOW_KEY                 = "filterNow";
+    /**
+     * Key for the AtomicInteger that counts validateJavaScript calls; enforces the retry limit.
+     */
+    public static final  String                       FILTER_VALIDATION_ATTEMPTS_KEY = "filterValidationAttempts";
+    /**
+     * Maximum number of times the LLM may call validateJavaScript before it is told to give up.
+     */
+    public static final  int                          FILTER_VALIDATION_MAX_ATTEMPTS = 2;
+    public static final  String                       SECURITY_CONTEXT_KEY           = "securityContext";
     /**
      * Saves the SecurityContext that was present on the thread before {@link #setup(ToolContext)}
      * replaced it. {@link #cleanup()} restores this context, so the thread is left exactly as it
@@ -59,7 +67,7 @@ public class ToolContextHelper {
      * is empty → restore is effectively a clear) or on the same thread as the caller
      * (e.g. a blocking test thread with @WithMockUser → the test's SecurityContext survives).
      */
-    private static final ThreadLocal<SecurityContext> previousSecurityContext = new ThreadLocal<>();
+    private static final ThreadLocal<SecurityContext> previousSecurityContext        = new ThreadLocal<>();
 
     /**
      * Build the toolContext map to pass to {@code ChatClient.prompt(...).toolContext(map)}.
@@ -92,6 +100,7 @@ public class ToolContextHelper {
         Map<String, Object> ctx = new HashMap<>();
         ctx.put(FILTER_ENTITIES_KEY, entities);
         ctx.put(FILTER_NOW_KEY, now);
+        ctx.put(FILTER_VALIDATION_ATTEMPTS_KEY, new java.util.concurrent.atomic.AtomicInteger(0));
         return ctx;
     }
 

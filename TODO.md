@@ -35,6 +35,12 @@
 
 # Failing Tests
 
+1. FeatureAiFilterTest.testFeaturesBelongingToVersion1
+2. OffDayAiFilterTest.testOffDaysLastingMoreThan5Days
+3. VersionAiFilterTest.testVersion1
+4. AvailabilityAiFilterTest.testAvailabilityStartingInJanuary2025
+5. AvailabilityAiFilterTest.testAvailabilityStartingInJuneJulyOrAugust2024
+
 # Next Tooling Ideas
 
 Based on the latest trends and developer experiences in 2025-2026, the best default Model Context Protocol (MCP) tools

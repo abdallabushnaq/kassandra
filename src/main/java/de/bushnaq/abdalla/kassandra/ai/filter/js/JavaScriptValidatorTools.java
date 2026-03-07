@@ -17,11 +17,14 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter.js;
 
+import de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Spring AI tool bean that exposes JavaScript validation to the LLM.
@@ -66,6 +69,22 @@ public class JavaScriptValidatorTools {
             String functionBody,
             ToolContext toolContext) {
         log.debug("LLM requested JS validation, body: {}", functionBody);
+
+        // Guard: enforce a maximum number of validation attempts per generation call so the
+        // LLM cannot loop indefinitely when it cannot fix the error.
+        if (toolContext != null) {
+            Object attemptsObj = toolContext.getContext().get(ToolContextHelper.FILTER_VALIDATION_ATTEMPTS_KEY);
+            if (attemptsObj instanceof AtomicInteger counter) {
+                int attempt = counter.incrementAndGet();
+                log.debug("JS validation attempt {}/{}", attempt, ToolContextHelper.FILTER_VALIDATION_MAX_ATTEMPTS);
+                if (attempt > ToolContextHelper.FILTER_VALIDATION_MAX_ATTEMPTS) {
+                    log.warn("JS validation attempt limit ({}) exceeded – telling LLM to return best-effort answer",
+                            ToolContextHelper.FILTER_VALIDATION_MAX_ATTEMPTS);
+                    return "VALIDATION_LIMIT_EXCEEDED: You have reached the maximum number of validation attempts. "
+                            + "Stop retrying and return your best-effort JavaScript answer now inside a ```js block.";
+                }
+            }
+        }
 
         // Phase 1: syntax check
         String syntaxError = syntaxValidator.validate(functionBody);
