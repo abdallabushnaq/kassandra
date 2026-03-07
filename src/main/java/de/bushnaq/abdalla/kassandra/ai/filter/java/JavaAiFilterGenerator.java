@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -80,11 +82,15 @@ public class JavaAiFilterGenerator implements AiFilterGenerator {
     private static final Logger             logger                 = LoggerFactory.getLogger(JavaAiFilterGenerator.class);
     private final        ChatClient         chatModel;
     public static        int                compilerExceptionCount = 0;
+    private final        String             filterModel;
     private final        JavaFilterCompiler javaFilterCompiler;
 
-    public JavaAiFilterGenerator(ChatClient.Builder builder, JavaFilterCompiler javaFilterCompiler) {
+    public JavaAiFilterGenerator(ChatClient.Builder builder,
+                                 JavaFilterCompiler javaFilterCompiler,
+                                 @Value("${kassandra.ai.filter.model:}") String filterModel) {
         this.chatModel          = builder.build();
         this.javaFilterCompiler = javaFilterCompiler;
+        this.filterModel        = filterModel;
     }
 
     /**
@@ -154,7 +160,9 @@ public class JavaAiFilterGenerator implements AiFilterGenerator {
                     query);
 
             // Create prompt and get response using Spring AI
-            Prompt prompt = new Prompt(formattedPrompt);
+            Prompt prompt = (filterModel != null && !filterModel.isBlank())
+                    ? new Prompt(formattedPrompt, OpenAiChatOptions.builder().model(filterModel).build())
+                    : new Prompt(formattedPrompt);
 
             System.out.printf("Java LLM prompt for '%s%s%s'\n%s%s%s\n\n", ANSI_BLUE, entityType, ANSI_RESET, ANSI_GREEN, formattedPrompt, ANSI_RESET);
 //            logger.debug("Java LLM prompt for '{}': {}", entityType, formattedPrompt);

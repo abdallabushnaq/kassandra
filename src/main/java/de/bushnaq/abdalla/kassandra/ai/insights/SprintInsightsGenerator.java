@@ -111,14 +111,14 @@ public class SprintInsightsGenerator {
 
     @Autowired
     public SprintInsightsGenerator(ChatModel chatModel,
-                                   @Value("${kassandra.ai.sprint-insights.model:}") String insightsModel) {
+                                   @Value("${kassandra.ai.insights.model:}") String insightsModel) {
         this.chatModel     = chatModel;
         this.insightsModel = insightsModel;
     }
 
     /**
      * Builds a {@link Prompt} for the given text, applying a model override when
-     * {@code kassandra.ai.sprint-insights.model} is configured.
+     * {@code kassandra.ai.insights.model} is configured.
      */
     private Prompt buildPrompt(String text) {
         if (insightsModel != null && !insightsModel.isBlank()) {

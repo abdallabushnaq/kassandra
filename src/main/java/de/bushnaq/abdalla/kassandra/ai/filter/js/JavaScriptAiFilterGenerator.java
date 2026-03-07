@@ -24,8 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -101,11 +103,15 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
             """;
     private static final Logger               logger                     = LoggerFactory.getLogger(JavaScriptAiFilterGenerator.class);
     private final        ChatClient           chatModel;
+    private final        String               filterModel;
     private final        ToolCallbackProvider validatorToolProvider;
 
-    public JavaScriptAiFilterGenerator(ChatClient.Builder builder, JavaScriptValidatorTools validatorTools) {
+    public JavaScriptAiFilterGenerator(ChatClient.Builder builder,
+                                       JavaScriptValidatorTools validatorTools,
+                                       @Value("${kassandra.ai.filter.model:}") String filterModel) {
         this.chatModel             = builder.build();
         this.validatorToolProvider = MethodToolCallbackProvider.builder().toolObjects(validatorTools).build();
+        this.filterModel           = filterModel;
     }
 
     private String extractJsCodeFromResponse(String content) {
@@ -149,7 +155,9 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
                 config.javascriptExamples(),    // Examples
                 query);                         // The query
 
-        Prompt prompt = new Prompt(formattedPrompt);
+        Prompt prompt = (filterModel != null && !filterModel.isBlank())
+                ? new Prompt(formattedPrompt, OpenAiChatOptions.builder().model(filterModel).build())
+                : new Prompt(formattedPrompt);
         System.out.printf("JavaScript LLM prompt for '%s%s%s'\n%s%s%s\n\n",
                 ANSI_BLUE, entityType, ANSI_RESET, ANSI_GREEN, formattedPrompt, ANSI_RESET);
 

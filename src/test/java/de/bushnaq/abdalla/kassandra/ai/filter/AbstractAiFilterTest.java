@@ -18,8 +18,12 @@
 package de.bushnaq.abdalla.kassandra.ai.filter;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import tools.jackson.databind.cfg.MapperConfig;
 import tools.jackson.databind.introspect.AnnotatedMember;
 import tools.jackson.databind.json.JsonMapper;
@@ -36,7 +40,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class AbstractAiFilterTest<T> {
     private final   AiFilterService aiFilterService;
     protected final JsonMapper      filterMapper;
+    @Value("${kassandra.ai.filter.model:}")
+    private         String          filterModel;
     protected       String          javascriptFunction;
+    @Autowired
+    private         LmStudioService lmStudioService;
     protected final Logger          logger = LoggerFactory.getLogger(this.getClass());
     protected final LocalDate       now;
     protected       String          regexString;
@@ -47,24 +55,6 @@ public class AbstractAiFilterTest<T> {
         this.aiFilterService = aiFilterService;
         this.now             = now;
     }
-
-
-    /**
-     * Helper method to simulate filtering products using regex patterns
-     * (mimics what SmartGlobalFilter does)
-     */
-//    private List<T> applyRegexSearchQuery(Pattern regexPattern) throws Exception {
-//        return testProducts.stream()
-//                .filter(product -> {
-//                    try {
-//                        String json = filterMapper.writerWithDefaultPrettyPrinter().writeValueAsString(product);
-//                        return regexPattern.matcher(json).find();
-//                    } catch (Exception e) {
-//                        return false;
-//                    }
-//                })
-//                .collect(Collectors.toList());
-//    }
 
     /**
      * Runs the LLM filter for {@code query} and asserts its result matches
@@ -87,6 +77,30 @@ public class AbstractAiFilterTest<T> {
                 .containsExactlyInAnyOrderElementsOf(expected);
 
         return actual;
+    }
+
+
+    /**
+     * Helper method to simulate filtering products using regex patterns
+     * (mimics what SmartGlobalFilter does)
+     */
+//    private List<T> applyRegexSearchQuery(Pattern regexPattern) throws Exception {
+//        return testProducts.stream()
+//                .filter(product -> {
+//                    try {
+//                        String json = filterMapper.writerWithDefaultPrettyPrinter().writeValueAsString(product);
+//                        return regexPattern.matcher(json).find();
+//                    } catch (Exception e) {
+//                        return false;
+//                    }
+//                })
+//                .collect(Collectors.toList());
+//    }
+    @BeforeEach
+    void ensureCorrectModelLoaded() {
+        if (filterModel != null && !filterModel.isBlank()) {
+            lmStudioService.ensureModelLoaded(filterModel);
+        }
     }
 
     /**

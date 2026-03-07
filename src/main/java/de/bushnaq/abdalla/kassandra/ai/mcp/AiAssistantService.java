@@ -35,10 +35,12 @@ import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.augment.AugmentedToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -91,6 +93,8 @@ public class AiAssistantService {
     private final        Map<String, ChatMemory>                 conversationMemories = new ConcurrentHashMap<>();
     @Autowired
     private              FeatureTools                            featureTools;
+    @Value("${kassandra.ai.mcp.model:}")
+    private              String                                  mcpModel;
     @Autowired
     private              ProductAclTools                         productAclTools;
     @Autowired
@@ -225,6 +229,9 @@ public class AiAssistantService {
     }
 
     public String getModelName() {
+        if (mcpModel != null && !mcpModel.isBlank()) {
+            return mcpModel;
+        }
         String modelName = chatModel.getDefaultOptions().getModel();
         return modelName != null ? modelName : "default";
     }
@@ -298,6 +305,9 @@ public class AiAssistantService {
 
             ChatResponse chatResponse = chatClient.prompt(userQuery)
                     .toolContext(toolContextMap)
+                    .options(mcpModel != null && !mcpModel.isBlank()
+                            ? OpenAiChatOptions.builder().model(mcpModel).build()
+                            : OpenAiChatOptions.builder().build())
                     .call()
                     .chatResponse();  // Get full ChatResponse instead of just text
 //                ResponseWithReasoning chatResponse = chatClient.prompt(userQuery)
@@ -444,6 +454,9 @@ public class AiAssistantService {
 
         return chatClient.prompt(userQuery)
                 .toolContext(toolContextMap)
+                .options(mcpModel != null && !mcpModel.isBlank()
+                        ? OpenAiChatOptions.builder().model(mcpModel).build()
+                        : OpenAiChatOptions.builder().build())
                 .stream()
                 .chatResponse()
                 .filter(r -> r != null
