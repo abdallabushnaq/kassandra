@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.stereotype.Component;
 
 import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
@@ -33,7 +35,8 @@ import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
  */
 @Component
 public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
-    private static final String     JAVASCRIPT_PROMPT_TEMPLATE = """
+
+    private static final String               JAVASCRIPT_PROMPT_TEMPLATE = """
             You are a JavaScript function generator for filtering Java objects via GraalJS. Convert natural language search queries into JavaScript filter functions.
             
             IMPORTANT CONTEXT: You are filtering %s entities. Each 'entity' parameter passed to your function is a Java %s object with host access enabled. This entity is never null.
@@ -58,7 +61,7 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
             - Explain your thought process within <think></think> tags to indicate your thinking process.
             - Important: add ```js ``` tags to indicate the actual code you are returning.
             - NEVER access properties directly like entity.name - always use getter methods like entity.getName().
-            - CRITICAL: Do not ue LocalDate.now(). For current date/time reference operations, use the 'now' parameter of type LocalDate.
+            - CRITICAL: Do not use LocalDate.now(). For current date/time reference operations, use the 'now' parameter of type LocalDate.
               Example: Use 'now' instead of 'LocalDate.now()' for getting the current date.
               Example: Use 'now.minusDays(7)' for getting a week ago from the current date.
             - CRITICAL DATE INTERPRETATION: When filtering by "after [Month] [Year]" (e.g., "after July 2024"):
@@ -68,16 +71,36 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
               * Example: "after March 2025" means after 2025-03-31 23:59:59, NOT after 2025-03-01
               * Alternatively, use the first day of the NEXT month: "after July 2024" = on or after 2024-08-01 00:00:00
             
+            VALIDATION TOOL:
+            - You have access to a tool called 'validateJavaScript'.
+            - ALWAYS call validateJavaScript with your function body BEFORE returning your final answer.
+            - If the tool returns anything other than "OK", fix the reported error and call the tool again until it returns "OK".
+            - Only return your final ```js block after validateJavaScript confirms "OK".
+            
+            STRICT OUTPUT FORMAT — YOU MUST FOLLOW THIS EXACTLY:
+            - Your entire response MUST contain exactly one fenced code block.
+            - The code block MUST be opened with ```js (three back-ticks followed by the letters j and s).
+            - The code block MUST be closed with ``` (three back-ticks on their own line).
+            - Inside the code block put ONLY the JavaScript function body — nothing else.
+            - Do NOT include the function signature (function filterEntity …) — only the body.
+            - Do NOT add any prose, explanation, comments, or extra text outside the code block.
+            - Correct example of the required format:
+              ```js
+              return entity.getName().toLowerCase().includes('orion');
+              ```
+            
             %s
             
             Now generate a JavaScript function body for this EXACT query:
             "%s"
             """;
-    private static final Logger     logger                     = LoggerFactory.getLogger(JavaScriptAiFilterGenerator.class);
-    private final        ChatClient chatModel;
+    private static final Logger               logger                     = LoggerFactory.getLogger(JavaScriptAiFilterGenerator.class);
+    private final        ChatClient           chatModel;
+    private final        ToolCallbackProvider validatorToolProvider;
 
-    public JavaScriptAiFilterGenerator(ChatClient.Builder builder) {
-        this.chatModel = builder.build();
+    public JavaScriptAiFilterGenerator(ChatClient.Builder builder, JavaScriptValidatorTools validatorTools) {
+        this.chatModel             = builder.build();
+        this.validatorToolProvider = MethodToolCallbackProvider.builder().toolObjects(validatorTools).build();
     }
 
     private String extractJsCodeFromResponse(String content) {
@@ -106,50 +129,39 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
 
         logger.info("Generating JavaScript filter for query: '{}' and entity type: '{}'", query, entityType);
 
-        try {
-            FilterPromptRegistry.PromptConfig config = FilterPromptRegistry.getPromptConfig(entityType);
+        FilterPromptRegistry.PromptConfig config = FilterPromptRegistry.getPromptConfig(entityType);
 
-            // Create prompt with current year context and entity-specific configuration
-            String formattedPrompt = String.format(JAVASCRIPT_PROMPT_TEMPLATE,
-                    entityType,           // You are filtering %s entities
-                    entityType,           // Each 'entity' parameter passed to your function is already a %s object
-                    config.javaClass(), // The JavaScript objects you'll be filtering have properties matching this JSON structure:
-                    config.specialConsiderations(),
-                    config.javascriptExamples(),
-                    query);
+        String formattedPrompt = String.format(JAVASCRIPT_PROMPT_TEMPLATE,
+                entityType,                     // You are filtering %s entities
+                entityType,                     // Each 'entity' is a Java %s object
+                config.javaClass(),             // Java class structure
+                config.specialConsiderations(), // Special considerations
+                config.javascriptExamples(),    // Examples
+                query);                         // The query
 
-            // Create prompt and get response using Spring AI
-            Prompt prompt = new Prompt(formattedPrompt);
+        Prompt prompt = new Prompt(formattedPrompt);
+        System.out.printf("JavaScript LLM prompt for '%s%s%s'\n%s%s%s\n\n",
+                ANSI_BLUE, entityType, ANSI_RESET, ANSI_GREEN, formattedPrompt, ANSI_RESET);
 
-            System.out.printf("JavaScript LLM prompt for '%s%s%s'\n%s%s%s\n\n", ANSI_BLUE, entityType, ANSI_RESET, ANSI_GREEN, formattedPrompt, ANSI_RESET);
-//            logger.debug("JavaScript LLM prompt for '{}': {}", entityType, formattedPrompt);
+        // Wire the validateJavaScript tool so the LLM can call it during generation
+        String content = chatModel.prompt(prompt)
+                .toolCallbacks(validatorToolProvider)
+                .call()
+                .content();
 
-            ChatClient.ChatClientRequestSpec request  = chatModel.prompt(prompt);
-            ChatClient.CallResponseSpec      response = request.call();
-            String                           content  = response.content();
+        System.out.printf("JavaScript LLM raw response\n\n%s%s%s\n\n", ANSI_YELLOW, content, ANSI_RESET);
 
-            System.out.printf("JavaScript LLM raw response\n\n%s%s%s\n\n", ANSI_YELLOW, content, ANSI_RESET);
-//            logger.debug("JavaScript LLM raw response: {}", content);
+        String extractedCode = extractJsCodeFromResponse(removeThinkingFromResponse(content));
 
-            // Extract actual answer from response (remove thinking process)
-            String extractedAnswerWithoutThinking = removeThinkingFromResponse(content);
-            String extractedCode                  = extractJsCodeFromResponse(extractedAnswerWithoutThinking);
+        System.out.printf("JavaScript LLM extracted answer\n\n%s%s%s\n\n", ANSI_YELLOW, extractedCode, ANSI_RESET);
 
-            System.out.printf("JavaScript LLM extracted answer\n\n%s%s%s\n\n", ANSI_YELLOW, extractedCode, ANSI_RESET);
-//            logger.debug("JavaScript LLM extracted answer: {}", extractedAnswer);
-
-            if (extractedCode == null || extractedCode.trim().isEmpty()) {
-                logger.warn("JavaScript generation failed, result is empty");
-                throw new RuntimeException("JavaScript generation failed, result is empty");
-            }
-
-            return extractedCode.trim();
-
-        } catch (Exception e) {
-            logger.error("Error generating JavaScript filter: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to generate JavaScript filter: " + e.getMessage(), e);
+        if (extractedCode == null || extractedCode.trim().isEmpty()) {
+            throw new RuntimeException("JavaScript generation failed: response did not contain a ```js code block");
         }
+
+        return extractedCode.trim();
     }
+
 
     @Override
     public FilterType getFilterType() {
