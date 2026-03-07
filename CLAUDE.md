@@ -10,6 +10,10 @@
 
 ---
 
+## Infrastructure
+
+- you are running in Intellij, use the integrated tools you have to access the codebase. you do nto need to use grep.
+
 ## Project Reference
 
 For all build commands, test strategy, module layout, technology versions, and CI pipeline details see

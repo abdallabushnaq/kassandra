@@ -50,14 +50,14 @@
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.mcp               | AbstractMcpTest.java                                     | src      |       10 |        0 |       23 |       54 |       87 |
 | kassandra.ai.mcp               | AgentThinking.java                                       | src      |        4 |        0 |       16 |        9 |       29 |
-| kassandra.ai.mcp               | AiAssistantService.java                                  | src      |       46 |       71 |       63 |      271 |      451 |
+| kassandra.ai.mcp               | AiAssistantService.java                                  | src      |       48 |       74 |       62 |      288 |      472 |
 | kassandra.ai.mcp               | AiAssistantServiceBasicTest.java                         | src      |       22 |        5 |       26 |       75 |      128 |
 | kassandra.ai.mcp               | AiAssistantServiceFeatureTest.java                       | src      |       23 |        5 |       27 |      118 |      173 |
 | kassandra.ai.mcp               | AiAssistantServiceMixedTest.java                         | src      |       14 |        5 |       64 |       63 |      146 |
 | kassandra.ai.mcp               | AiAssistantServiceProductTest.java                       | src      |       15 |        5 |       22 |       84 |      126 |
 | kassandra.ai.mcp               | AiAssistantServiceUserTest.java                          | src      |       17 |        5 |       18 |       80 |      120 |
 | kassandra.ai.mcp               | AiAssistantServiceVersionTest.java                       | src      |       62 |        5 |       40 |      235 |      342 |
-| kassandra.ai.mcp               | ApiConfiguration.java                                    | src      |       10 |        7 |       16 |       45 |       78 |
+| kassandra.ai.mcp               | ApiConfiguration.java                                    | src      |       12 |       13 |       16 |       58 |       99 |
 | kassandra.ai.mcp               | ContextPropagatingToolCallbackProvider.java              | src      |       13 |       16 |       16 |       54 |       99 |
 | kassandra.ai.mcp               | KassandraToolCallResultConverter.java                    | src      |       13 |       24 |       24 |       67 |      128 |
 | kassandra.ai.mcp               | QueryResult.java                                         | src      |        4 |        7 |       16 |        7 |       34 |
@@ -101,7 +101,7 @@
 | kassandra.ai                   | OffDayAiFilterTest.java                                  | src      |       88 |        7 |       21 |      475 |      591 |
 | kassandra.ai                   | ProductAiFilterTest.java                                 | src      |       36 |       10 |       21 |      153 |      220 |
 | kassandra.ai                   | SprintAiFilterTest.java                                  | src      |       78 |       10 |       20 |      412 |      520 |
-| kassandra.ai                   | SprintInsightsGenerator.java                             | src      |       46 |       27 |       19 |      131 |      223 |
+| kassandra.ai                   | SprintInsightsGenerator.java                             | src      |       45 |       31 |       18 |      143 |      237 |
 | kassandra.ai                   | SprintInsightsGeneratorTest.java                         | src      |       26 |        7 |       19 |      192 |      244 |
 | kassandra.ai                   | SyncResult.java                                          | src      |        6 |        3 |       16 |       16 |       41 |
 | kassandra.ai                   | TestAi.java                                              | src      |       10 |        0 |       16 |       21 |       47 |
@@ -357,7 +357,7 @@
 | kassandra.ui.introduction.util | InstructionVideosUtil.java                               | src      |        2 |        0 |       16 |        8 |       26 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.introduction      | AbstractAiIntroductionVideo.java                         | src      |       13 |       45 |       16 |       66 |      140 |
-| kassandra.ui.introduction      | KassandraAgentIntroductionVideo.java                     | src      |       32 |        0 |      130 |      179 |      341 |
+| kassandra.ui.introduction      | KassandraAgentIntroductionVideo.java                     | src      |       37 |        0 |       48 |      198 |      283 |
 | kassandra.ui.introduction      | LoggingWorkIntroductionVideo.java                        | src      |       95 |        0 |       78 |      289 |      462 |
 | kassandra.ui.introduction      | ManagingUserGroupsIntroductionVideo.java                 | src      |       45 |       13 |       64 |      118 |      240 |
 | kassandra.ui.introduction      | ManagingUsersIntroductionVideo.java                      | src      |       40 |        0 |       67 |      113 |      220 |
@@ -511,5 +511,5 @@
 | util                           | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                           | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 49 package(s)                  | 461 file(s)                                              | java     |    10446 |     7975 |    13225 |    54038 |    85684 |
+| 49 package(s)                  | 461 file(s)                                              | java     |    10454 |     7988 |    13141 |    54099 |    85682 |
 +--------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

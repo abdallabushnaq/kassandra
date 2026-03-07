@@ -22,7 +22,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
@@ -105,11 +107,27 @@ public class SprintInsightsGenerator {
 
     private static final Logger    logger = LoggerFactory.getLogger(SprintInsightsGenerator.class);
     private final        ChatModel chatModel;
+    private final        String    insightsModel;
 
     @Autowired
-    public SprintInsightsGenerator(ChatModel chatModel) {
-        // Use the injected chat model (will be Anthropic Claude Haiku 3)
-        this.chatModel = chatModel;
+    public SprintInsightsGenerator(ChatModel chatModel,
+                                   @Value("${kassandra.ai.sprint-insights.model:}") String insightsModel) {
+        this.chatModel     = chatModel;
+        this.insightsModel = insightsModel;
+    }
+
+    /**
+     * Builds a {@link Prompt} for the given text, applying a model override when
+     * {@code kassandra.ai.sprint-insights.model} is configured.
+     */
+    private Prompt buildPrompt(String text) {
+        if (insightsModel != null && !insightsModel.isBlank()) {
+            OpenAiChatOptions options = OpenAiChatOptions.builder()
+                    .model(insightsModel)
+                    .build();
+            return new Prompt(text, options);
+        }
+        return new Prompt(text);
     }
 
     /**
@@ -139,13 +157,11 @@ public class SprintInsightsGenerator {
             String formattedPrompt = String.format(focusedPrompt, sprintJsonData);
 
 
-            Prompt prompt = new Prompt(formattedPrompt);
-
             System.out.printf("Focused Sprint Insights LLM prompt for '%s':\n%s%s%s\n\n", focusQuestion, ANSI_GREEN, formattedPrompt, ANSI_RESET);
             logger.debug("Focused Sprint Insights LLM prompt for '{}': {}", focusQuestion, formattedPrompt);
             logger.debug("Focused Sprint Insights LLM prompt for '{}': {}", focusQuestion, formattedPrompt);
 
-            ChatResponse response = chatModel.call(prompt);
+            ChatResponse response = chatModel.call(buildPrompt(formattedPrompt));
             String       content  = response.getResult().getOutput().getText();
 
             System.out.printf("Focused Sprint Insights LLM response:\n\n%s%s%s\n\n", ANSI_YELLOW, content, ANSI_RESET);
@@ -182,12 +198,10 @@ public class SprintInsightsGenerator {
             // Create prompt with the sprint data
             String formattedPrompt = String.format(SPRINT_INSIGHTS_PROMPT_TEMPLATE, sprintJsonData);
 
-            Prompt prompt = new Prompt(formattedPrompt);
-
             System.out.printf("Sprint Insights LLM prompt:\n%s%s%s\n\n", ANSI_GREEN, formattedPrompt, ANSI_RESET);
             logger.debug("Sprint Insights LLM prompt: {}", formattedPrompt);
 
-            ChatResponse response = chatModel.call(prompt);
+            ChatResponse response = chatModel.call(buildPrompt(formattedPrompt));
             String       content  = response.getResult().getOutput().getText();
 
             System.out.printf("Sprint Insights LLM response:\n\n%s%s%s\n\n", ANSI_YELLOW, content, ANSI_RESET);
