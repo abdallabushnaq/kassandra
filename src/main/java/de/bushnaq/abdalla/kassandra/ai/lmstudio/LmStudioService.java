@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.lmstudio;
 
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -54,11 +55,11 @@ public class LmStudioService {
     private static final String MODELS   = API_BASE + "/models";
     private static final String UNLOAD   = API_BASE + "/models/unload";
 
-    private final LmStudioConfig config;
-    private final WebClient      webClient;
+    private final KassandraProperties.LmStudio config;
+    private final WebClient                    webClient;
 
-    public LmStudioService(LmStudioConfig config) {
-        this.config = config;
+    public LmStudioService(KassandraProperties kassandraProperties) {
+        this.config = kassandraProperties.getLmStudio();
 
         WebClient.Builder builder = WebClient.builder()
                 .baseUrl(config.getApiUrl())

@@ -35,7 +35,7 @@ public class KassandraProperties {
     /**
      * Bound from {@code kassandra.ai.*}.
      */
-    private Ai       ai       = new Ai();
+    private        Ai       ai                     = new Ai();
     /**
      * Static holder so plain DTOs (e.g. User) can access the value without injection.
      * -- GETTER --
@@ -44,11 +44,15 @@ public class KassandraProperties {
      * @return the number of months to look ahead for holidays
      */
     @Getter
-    private static long holidayLookAheadMonths = 24;
+    private static long     holidayLookAheadMonths = 24;
     /**
      * Bound from {@code kassandra.holidays.*}.
      */
-    private Holidays holidays = new Holidays();
+    private        Holidays holidays               = new Holidays();
+    /**
+     * Bound from {@code kassandra.lm-studio.*}.
+     */
+    private        LmStudio lmStudio               = new LmStudio();
 
     /**
      * Copies the bound instance values into static fields after Spring has set them.
@@ -80,5 +84,35 @@ public class KassandraProperties {
          * Bound from {@code kassandra.holidays.look-ahead-months}.
          */
         private long lookAheadMonths = 24;
+    }
+
+    @Data
+    public static class LmStudio {
+        /**
+         * Optional Bearer token for LM Studio authentication.
+         * Leave empty to skip the Authorization header (LM Studio default has no auth).
+         */
+        private String  apiKey              = "";
+        /**
+         * Base URL of the LM Studio server (native API, not the OpenAI-compatible endpoint).
+         */
+        private String  apiUrl              = "http://localhost:1234";
+        /**
+         * Maximum context length (in tokens) to use when loading a model.
+         * 0 means "use the model's default".
+         */
+        private int     contextLength       = 0;
+        /**
+         * Whether to enable Flash Attention when loading a model.
+         */
+        private boolean flashAttention      = true;
+        /**
+         * Whether to offload the KV cache to GPU memory when loading a model.
+         */
+        private boolean offloadKvCacheToGpu = true;
+        /**
+         * Timeout in seconds for API requests to LM Studio.
+         */
+        private int     timeoutSeconds      = 300;
     }
 }
