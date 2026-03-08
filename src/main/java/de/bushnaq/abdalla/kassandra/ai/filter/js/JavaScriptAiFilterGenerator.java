@@ -103,7 +103,7 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
             """;
     private static final Logger               logger                     = LoggerFactory.getLogger(JavaScriptAiFilterGenerator.class);
     private final        ChatClient           chatModel;
-    private final        String               filterModel;
+    private final        KassandraProperties  kassandraProperties;
     private final        ToolCallbackProvider validatorToolProvider;
 
     public JavaScriptAiFilterGenerator(ChatClient.Builder builder,
@@ -111,7 +111,28 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
                                        KassandraProperties kassandraProperties) {
         this.chatModel             = builder.build();
         this.validatorToolProvider = MethodToolCallbackProvider.builder().toolObjects(validatorTools).build();
-        this.filterModel           = kassandraProperties.getAi().getFilterModel();
+        this.kassandraProperties   = kassandraProperties;
+    }
+
+    private OpenAiChatOptions buildChatOptions() {
+        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
+        String                    filterModel    = kassandraProperties.getAi().getFilterModel();
+        if (filterModel != null && !filterModel.isBlank()) {
+            optionsBuilder.model(filterModel);
+        }
+        Double temperature = kassandraProperties.getAi().getTemperature();
+        if (temperature != null) {
+            optionsBuilder.temperature(temperature);
+        }
+        Integer maxTokens = kassandraProperties.getAi().getMaxTokens();
+        if (maxTokens != null) {
+            optionsBuilder.maxTokens(maxTokens);
+        }
+        Integer seed = kassandraProperties.getAi().getSeed();
+        if (seed != null) {
+            optionsBuilder.seed(seed);
+        }
+        return optionsBuilder.build();
     }
 
     private String extractJsCodeFromResponse(String content) {
@@ -155,9 +176,7 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
                 config.javascriptExamples(),    // Examples
                 query);                         // The query
 
-        Prompt prompt = (filterModel != null && !filterModel.isBlank())
-                ? new Prompt(formattedPrompt, OpenAiChatOptions.builder().model(filterModel).build())
-                : new Prompt(formattedPrompt);
+        Prompt prompt = new Prompt(formattedPrompt, buildChatOptions());
         System.out.printf("JavaScript LLM prompt for '%s%s%s'\n%s%s%s\n\n",
                 ANSI_BLUE, entityType, ANSI_RESET, ANSI_GREEN, formattedPrompt, ANSI_RESET);
 

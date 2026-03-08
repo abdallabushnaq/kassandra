@@ -19,11 +19,11 @@ package de.bushnaq.abdalla.kassandra.ai.filter;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import tools.jackson.databind.cfg.MapperConfig;
 import tools.jackson.databind.introspect.AnnotatedMember;
 import tools.jackson.databind.json.JsonMapper;
@@ -38,17 +38,17 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AbstractAiFilterTest<T> {
-    private final   AiFilterService aiFilterService;
-    protected final JsonMapper      filterMapper;
-    @Value("${kassandra.ai.filter.model:}")
-    private         String          filterModel;
-    protected       String          javascriptFunction;
+    private final   AiFilterService     aiFilterService;
+    protected final JsonMapper          filterMapper;
+    protected       String              javascriptFunction;
     @Autowired
-    private         LmStudioService lmStudioService;
-    protected final Logger          logger = LoggerFactory.getLogger(this.getClass());
-    protected final LocalDate       now;
-    protected       String          regexString;
-    protected       List<T>         testProducts;
+    private         KassandraProperties kassandraProperties;
+    @Autowired
+    private         LmStudioService     lmStudioService;
+    protected final Logger              logger = LoggerFactory.getLogger(this.getClass());
+    protected final LocalDate           now;
+    protected       String              regexString;
+    protected       List<T>             testProducts;
 
     public AbstractAiFilterTest(JsonMapper mapper, AiFilterService aiFilterService, LocalDate now) {
         this.filterMapper    = mapper;
@@ -98,6 +98,7 @@ public class AbstractAiFilterTest<T> {
 //    }
     @BeforeEach
     void ensureCorrectModelLoaded() {
+        String filterModel = kassandraProperties.getAi().getFilterModel();
         if (filterModel != null && !filterModel.isBlank()) {
             lmStudioService.ensureModelLoaded(filterModel);
         }

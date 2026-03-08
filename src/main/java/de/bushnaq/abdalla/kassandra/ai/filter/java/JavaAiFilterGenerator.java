@@ -40,7 +40,7 @@ import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
  */
 @Component
 public class JavaAiFilterGenerator implements AiFilterGenerator {
-    private static final String             JAVA_PROMPT_TEMPLATE   = """
+    private static final String              JAVA_PROMPT_TEMPLATE   = """
             You are a Java method body generator for filtering Java objects. Convert natural language search queries into Java code that can be compiled and executed.
             
             IMPORTANT CONTEXT: You are filtering %s entities. The 'entity' parameter passed to your method is a %s object. This entity is never null.
@@ -79,18 +79,39 @@ public class JavaAiFilterGenerator implements AiFilterGenerator {
             Now generate a Java method body for this EXACT query:
             "%s"
             """;
-    private static final Logger             logger                 = LoggerFactory.getLogger(JavaAiFilterGenerator.class);
-    private final        ChatClient         chatModel;
-    public static        int                compilerExceptionCount = 0;
-    private final        String             filterModel;
-    private final        JavaFilterCompiler javaFilterCompiler;
+    private static final Logger              logger                 = LoggerFactory.getLogger(JavaAiFilterGenerator.class);
+    private final        ChatClient          chatModel;
+    public static        int                 compilerExceptionCount = 0;
+    private final        JavaFilterCompiler  javaFilterCompiler;
+    private final        KassandraProperties kassandraProperties;
 
     public JavaAiFilterGenerator(ChatClient.Builder builder,
                                  JavaFilterCompiler javaFilterCompiler,
                                  KassandraProperties kassandraProperties) {
-        this.chatModel          = builder.build();
-        this.javaFilterCompiler = javaFilterCompiler;
-        this.filterModel        = kassandraProperties.getAi().getFilterModel();
+        this.chatModel           = builder.build();
+        this.javaFilterCompiler  = javaFilterCompiler;
+        this.kassandraProperties = kassandraProperties;
+    }
+
+    private OpenAiChatOptions buildChatOptions() {
+        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
+        String                    filterModel    = kassandraProperties.getAi().getFilterModel();
+        if (filterModel != null && !filterModel.isBlank()) {
+            optionsBuilder.model(filterModel);
+        }
+        Double temperature = kassandraProperties.getAi().getTemperature();
+        if (temperature != null) {
+            optionsBuilder.temperature(temperature);
+        }
+        Integer maxTokens = kassandraProperties.getAi().getMaxTokens();
+        if (maxTokens != null) {
+            optionsBuilder.maxTokens(maxTokens);
+        }
+        Integer seed = kassandraProperties.getAi().getSeed();
+        if (seed != null) {
+            optionsBuilder.seed(seed);
+        }
+        return optionsBuilder.build();
     }
 
     /**
@@ -160,9 +181,7 @@ public class JavaAiFilterGenerator implements AiFilterGenerator {
                     query);
 
             // Create prompt and get response using Spring AI
-            Prompt prompt = (filterModel != null && !filterModel.isBlank())
-                    ? new Prompt(formattedPrompt, OpenAiChatOptions.builder().model(filterModel).build())
-                    : new Prompt(formattedPrompt);
+            Prompt prompt = new Prompt(formattedPrompt, buildChatOptions());
 
             System.out.printf("Java LLM prompt for '%s%s%s'\n%s%s%s\n\n", ANSI_BLUE, entityType, ANSI_RESET, ANSI_GREEN, formattedPrompt, ANSI_RESET);
 //            logger.debug("Java LLM prompt for '{}': {}", entityType, formattedPrompt);

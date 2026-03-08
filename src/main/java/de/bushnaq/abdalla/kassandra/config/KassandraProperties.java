@@ -65,17 +65,32 @@ public class KassandraProperties {
     @Data
     public static class Ai {
         /**
-         * Bound from {@code kassandra.ai.filter.model}.
+         * Bound from {@code kassandra.ai.filter-model}.
          */
-        private String filterModel   = "";
+        private String  filterModel   = "";
         /**
-         * Bound from {@code kassandra.ai.insights.model}.
+         * Bound from {@code kassandra.ai.insights-model}.
          */
-        private String insightsModel = "";
+        private String  insightsModel = "";
         /**
-         * Bound from {@code kassandra.ai.mcp.model}.
+         * Maximum number of tokens to generate. Bound from {@code kassandra.ai.max-tokens}.
+         * When null the model default is used.
          */
-        private String mcpModel      = "";
+        private Integer maxTokens     = null;
+        /**
+         * Bound from {@code kassandra.ai.mcp-model}.
+         */
+        private String  mcpModel      = "";
+        /**
+         * Random seed for reproducible outputs. Bound from {@code kassandra.ai.seed}.
+         * When null the model default is used.
+         */
+        private Integer seed          = null;
+        /**
+         * Sampling temperature (0.0 = deterministic). Bound from {@code kassandra.ai.temperature}.
+         * When null the model default is used.
+         */
+        private Double  temperature   = null;
     }
 
     @Data

@@ -112,6 +112,27 @@ public class AiAssistantService {
         return "Today is " + DateUtil.createDateString(ParameterOptions.getNow().toLocalDate(), DateTimeFormatter.ISO_LOCAL_DATE) + ". " + systemPrompt;
     }
 
+    private OpenAiChatOptions buildChatOptions() {
+        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
+        String                    mcpModel       = kassandraProperties.getAi().getMcpModel();
+        if (mcpModel != null && !mcpModel.isBlank()) {
+            optionsBuilder.model(mcpModel);
+        }
+        Double temperature = kassandraProperties.getAi().getTemperature();
+        if (temperature != null) {
+            optionsBuilder.temperature(temperature);
+        }
+        Integer maxTokens = kassandraProperties.getAi().getMaxTokens();
+        if (maxTokens != null) {
+            optionsBuilder.maxTokens(maxTokens);
+        }
+        Integer seed = kassandraProperties.getAi().getSeed();
+        if (seed != null) {
+            optionsBuilder.seed(seed);
+        }
+        return optionsBuilder.build();
+    }
+
     /**
      * Clear the conversation history for a specific conversation ID
      */
@@ -306,9 +327,7 @@ public class AiAssistantService {
 
             ChatResponse chatResponse = chatClient.prompt(userQuery)
                     .toolContext(toolContextMap)
-                    .options(kassandraProperties.getAi().getMcpModel() != null && !kassandraProperties.getAi().getMcpModel().isBlank()
-                            ? OpenAiChatOptions.builder().model(kassandraProperties.getAi().getMcpModel()).build()
-                            : OpenAiChatOptions.builder().build())
+                    .options(buildChatOptions())
                     .call()
                     .chatResponse();  // Get full ChatResponse instead of just text
 //                ResponseWithReasoning chatResponse = chatClient.prompt(userQuery)
@@ -455,9 +474,7 @@ public class AiAssistantService {
 
         return chatClient.prompt(userQuery)
                 .toolContext(toolContextMap)
-                .options(kassandraProperties.getAi().getMcpModel() != null && !kassandraProperties.getAi().getMcpModel().isBlank()
-                        ? OpenAiChatOptions.builder().model(kassandraProperties.getAi().getMcpModel()).build()
-                        : OpenAiChatOptions.builder().build())
+                .options(buildChatOptions())
                 .stream()
                 .chatResponse()
                 .filter(r -> r != null

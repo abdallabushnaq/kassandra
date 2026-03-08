@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp;
 
 import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -26,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -42,13 +42,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
 public class AbstractMcpTest extends AbstractUiTestUtil {
-    protected static final String             TEST_CONVERSATION_ID = "test-conversation-id";
+    protected static final String              TEST_CONVERSATION_ID = "test-conversation-id";
     @Autowired
-    protected              AiAssistantService aiAssistantService;
+    protected              AiAssistantService  aiAssistantService;
     @Autowired
-    protected              LmStudioService    lmStudioService;
-    @Value("${kassandra.ai.mcp.model:}")
-    private                String             mcpModel;
+    private                KassandraProperties kassandraProperties;
+    @Autowired
+    protected              LmStudioService     lmStudioService;
 
     protected void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
@@ -85,6 +85,7 @@ public class AbstractMcpTest extends AbstractUiTestUtil {
 
     @BeforeEach
     protected void setupTest() {
+        String mcpModel = kassandraProperties.getAi().getMcpModel();
         if (mcpModel != null && !mcpModel.isBlank()) {
             lmStudioService.ensureModelLoaded(mcpModel);
         }

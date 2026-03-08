@@ -198,6 +198,7 @@ public class LmStudioService {
         if (config.getContextLength() > 0) {
             body.put("context_length", config.getContextLength());
         }
+        body.put("echo_load_config", true);
         body.put("flash_attention", config.isFlashAttention());
         body.put("offload_kv_cache_to_gpu", config.isOffloadKvCacheToGpu());
 
@@ -210,7 +211,7 @@ public class LmStudioService {
                     .block(Duration.ofSeconds(config.getTimeoutSeconds()));
 
             if (response != null && "loaded".equals(response.status())) {
-                log.info("Model '{}' loaded successfully in {}s", modelId, response.loadTimeSeconds());
+                log.info("Model '{}' loaded successfully in {}s {}", modelId, response.loadTimeSeconds(), response);
                 return true;
             }
 
@@ -238,15 +239,20 @@ public class LmStudioService {
         body.put("instance_id", instanceId);
 
         try {
-            webClient.post()
+            LmStudioUnloadResponse response = webClient.post()
                     .uri(UNLOAD)
                     .bodyValue(body)
                     .retrieve()
-                    .bodyToMono(Void.class)
+                    .bodyToMono(LmStudioUnloadResponse.class)
                     .block(Duration.ofSeconds(config.getTimeoutSeconds()));
 
-            log.info("Model instance '{}' unloaded", instanceId);
-            return true;
+            if (response != null && response.instanceId() != null) {
+                log.info("Model instance '{}' unloaded successfully: {}", instanceId, response);
+                return true;
+            }
+
+            log.error("Unexpected unload response for instance '{}': {}", instanceId, response);
+            return false;
 
         } catch (WebClientResponseException e) {
             log.error("LM Studio returned HTTP {} when unloading '{}': {}", e.getStatusCode(), instanceId, e.getResponseBodyAsString());

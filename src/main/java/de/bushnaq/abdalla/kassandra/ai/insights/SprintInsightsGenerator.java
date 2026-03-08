@@ -105,14 +105,35 @@ public class SprintInsightsGenerator {
             %s
             """;
 
-    private static final Logger    logger = LoggerFactory.getLogger(SprintInsightsGenerator.class);
-    private final        ChatModel chatModel;
-    private final        String    insightsModel;
+    private static final Logger              logger = LoggerFactory.getLogger(SprintInsightsGenerator.class);
+    private final        ChatModel           chatModel;
+    private final        KassandraProperties kassandraProperties;
 
     @Autowired
     public SprintInsightsGenerator(ChatModel chatModel, KassandraProperties kassandraProperties) {
-        this.chatModel     = chatModel;
-        this.insightsModel = kassandraProperties.getAi().getInsightsModel();
+        this.chatModel           = chatModel;
+        this.kassandraProperties = kassandraProperties;
+    }
+
+    private OpenAiChatOptions buildChatOptions() {
+        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
+        String                    insightsModel  = kassandraProperties.getAi().getInsightsModel();
+        if (insightsModel != null && !insightsModel.isBlank()) {
+            optionsBuilder.model(insightsModel);
+        }
+        Double temperature = kassandraProperties.getAi().getTemperature();
+        if (temperature != null) {
+            optionsBuilder.temperature(temperature);
+        }
+        Integer maxTokens = kassandraProperties.getAi().getMaxTokens();
+        if (maxTokens != null) {
+            optionsBuilder.maxTokens(maxTokens);
+        }
+        Integer seed = kassandraProperties.getAi().getSeed();
+        if (seed != null) {
+            optionsBuilder.seed(seed);
+        }
+        return optionsBuilder.build();
     }
 
     /**
@@ -120,13 +141,7 @@ public class SprintInsightsGenerator {
      * {@code kassandra.ai.insights.model} is configured.
      */
     private Prompt buildPrompt(String text) {
-        if (insightsModel != null && !insightsModel.isBlank()) {
-            OpenAiChatOptions options = OpenAiChatOptions.builder()
-                    .model(insightsModel)
-                    .build();
-            return new Prompt(text, options);
-        }
-        return new Prompt(text);
+        return new Prompt(text, buildChatOptions());
     }
 
     /**
