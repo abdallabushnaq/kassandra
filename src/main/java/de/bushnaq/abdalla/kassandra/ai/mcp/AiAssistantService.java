@@ -25,6 +25,7 @@ import de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint.SprintTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.user.UserTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.usergroup.UserGroupTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.version.VersionTools;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.profiler.TimeKeeping;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,6 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.augment.AugmentedToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -93,8 +93,8 @@ public class AiAssistantService {
     private final        Map<String, ChatMemory>                 conversationMemories = new ConcurrentHashMap<>();
     @Autowired
     private              FeatureTools                            featureTools;
-    @Value("${kassandra.ai.mcp.model:}")
-    private              String                                  mcpModel;
+    @Autowired
+    private              KassandraProperties                     kassandraProperties;
     @Autowired
     private              ProductAclTools                         productAclTools;
     @Autowired
@@ -229,6 +229,7 @@ public class AiAssistantService {
     }
 
     public String getModelName() {
+        String mcpModel = kassandraProperties.getAi().getMcpModel();
         if (mcpModel != null && !mcpModel.isBlank()) {
             return mcpModel;
         }
@@ -305,8 +306,8 @@ public class AiAssistantService {
 
             ChatResponse chatResponse = chatClient.prompt(userQuery)
                     .toolContext(toolContextMap)
-                    .options(mcpModel != null && !mcpModel.isBlank()
-                            ? OpenAiChatOptions.builder().model(mcpModel).build()
+                    .options(kassandraProperties.getAi().getMcpModel() != null && !kassandraProperties.getAi().getMcpModel().isBlank()
+                            ? OpenAiChatOptions.builder().model(kassandraProperties.getAi().getMcpModel()).build()
                             : OpenAiChatOptions.builder().build())
                     .call()
                     .chatResponse();  // Get full ChatResponse instead of just text
@@ -454,8 +455,8 @@ public class AiAssistantService {
 
         return chatClient.prompt(userQuery)
                 .toolContext(toolContextMap)
-                .options(mcpModel != null && !mcpModel.isBlank()
-                        ? OpenAiChatOptions.builder().model(mcpModel).build()
+                .options(kassandraProperties.getAi().getMcpModel() != null && !kassandraProperties.getAi().getMcpModel().isBlank()
+                        ? OpenAiChatOptions.builder().model(kassandraProperties.getAi().getMcpModel()).build()
                         : OpenAiChatOptions.builder().build())
                 .stream()
                 .chatResponse()

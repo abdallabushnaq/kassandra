@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ai.filter.js;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterGenerator;
 import de.bushnaq.abdalla.kassandra.ai.filter.FilterPromptRegistry;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -27,7 +28,6 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -108,10 +108,10 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
 
     public JavaScriptAiFilterGenerator(ChatClient.Builder builder,
                                        JavaScriptValidatorTools validatorTools,
-                                       @Value("${kassandra.ai.filter.model:}") String filterModel) {
+                                       KassandraProperties kassandraProperties) {
         this.chatModel             = builder.build();
         this.validatorToolProvider = MethodToolCallbackProvider.builder().toolObjects(validatorTools).build();
-        this.filterModel           = filterModel;
+        this.filterModel           = kassandraProperties.getAi().getFilterModel();
     }
 
     private String extractJsCodeFromResponse(String content) {

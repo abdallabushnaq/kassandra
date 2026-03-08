@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ai.filter.java;
 
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterGenerator;
 import de.bushnaq.abdalla.kassandra.ai.filter.FilterPromptRegistry;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import org.slf4j.Logger;
@@ -26,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -87,10 +87,10 @@ public class JavaAiFilterGenerator implements AiFilterGenerator {
 
     public JavaAiFilterGenerator(ChatClient.Builder builder,
                                  JavaFilterCompiler javaFilterCompiler,
-                                 @Value("${kassandra.ai.filter.model:}") String filterModel) {
+                                 KassandraProperties kassandraProperties) {
         this.chatModel          = builder.build();
         this.javaFilterCompiler = javaFilterCompiler;
-        this.filterModel        = filterModel;
+        this.filterModel        = kassandraProperties.getAi().getFilterModel();
     }
 
     /**

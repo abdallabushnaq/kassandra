@@ -17,8 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.config;
 
+import jakarta.annotation.PostConstruct;
+import lombok.Data;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,27 +28,57 @@ import org.springframework.stereotype.Component;
  * Provides static access to configuration values for use in DTOs.
  */
 @Component
+@ConfigurationProperties(prefix = "kassandra")
+@Data
 public class KassandraProperties {
 
     /**
+     * Bound from {@code kassandra.ai.*}.
+     */
+    private Ai       ai       = new Ai();
+    /**
+     * Static holder so plain DTOs (e.g. User) can access the value without injection.
      * -- GETTER --
-     * Get the number of years to look ahead for holidays.
+     * Get the number of months to look ahead for holidays.
      *
-     * @return the number of years to look ahead for holidays
+     * @return the number of months to look ahead for holidays
      */
     @Getter
-    private static long holidayLookAheadMonths = 2;
+    private static long holidayLookAheadMonths = 24;
+    /**
+     * Bound from {@code kassandra.holidays.*}.
+     */
+    private Holidays holidays = new Holidays();
 
     /**
-     * Set the look ahead value from application.properties.
-     * Spring will inject this value at startup using the @Value annotation.
-     *
-     * @param value the number of years to look ahead for holidays
+     * Copies the bound instance values into static fields after Spring has set them.
      */
-    @Value("${kassandra.holidays.look.ahead.months:24}")
-    public void setHolidayLookAheadMonths(long value) {
-        holidayLookAheadMonths = value;
+    @PostConstruct
+    void init() {
+        holidayLookAheadMonths = holidays.getLookAheadMonths();
+    }
+
+    @Data
+    public static class Ai {
+        /**
+         * Bound from {@code kassandra.ai.filter.model}.
+         */
+        private String filterModel   = "";
+        /**
+         * Bound from {@code kassandra.ai.insights.model}.
+         */
+        private String insightsModel = "";
+        /**
+         * Bound from {@code kassandra.ai.mcp.model}.
+         */
+        private String mcpModel      = "";
+    }
+
+    @Data
+    public static class Holidays {
+        /**
+         * Bound from {@code kassandra.holidays.look-ahead-months}.
+         */
+        private long lookAheadMonths = 24;
     }
 }
-
-

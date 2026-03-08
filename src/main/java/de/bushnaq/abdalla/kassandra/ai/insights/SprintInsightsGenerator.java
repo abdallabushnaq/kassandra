@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.insights;
 
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
@@ -24,7 +25,6 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
@@ -110,10 +110,9 @@ public class SprintInsightsGenerator {
     private final        String    insightsModel;
 
     @Autowired
-    public SprintInsightsGenerator(ChatModel chatModel,
-                                   @Value("${kassandra.ai.insights.model:}") String insightsModel) {
+    public SprintInsightsGenerator(ChatModel chatModel, KassandraProperties kassandraProperties) {
         this.chatModel     = chatModel;
-        this.insightsModel = insightsModel;
+        this.insightsModel = kassandraProperties.getAi().getInsightsModel();
     }
 
     /**
