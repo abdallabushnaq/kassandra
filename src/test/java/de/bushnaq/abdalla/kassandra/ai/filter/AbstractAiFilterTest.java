@@ -68,9 +68,13 @@ public class AbstractAiFilterTest<T> {
     protected List<T> assertSearchMatchesReference(String query, String entityType, String referenceJs) throws Exception {
         List<T> expected = aiFilterService.applyJavaScriptSearchQuery(referenceJs, testProducts, now);
         List<T> actual   = performSearch(query, entityType);
+//        System.out.println("=== LLM filter produced      " + actual.size() + " result(s) ===");
 
         System.out.println("\n=== Reference filter produced " + expected.size() + " result(s) ===");
-        System.out.println("=== LLM filter produced      " + actual.size() + " result(s) ===");
+        for (T product : expected) {
+            String json = filterMapper.writeValueAsString(product);
+            System.out.println(json);
+        }
 
         assertThat(actual)
                 .as("LLM filter for query '%s' should match reference JS filter", query)

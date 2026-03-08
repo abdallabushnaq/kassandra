@@ -231,13 +231,13 @@ class OffDayAiFilterTest extends AbstractAiFilterTest<OffDayFilterDto> {
     @Test
     @DisplayName("off days lasting more than 5 days")
     void testOffDaysLastingMoreThan5Days() throws Exception {
-        // duration = ChronoUnit.DAYS.between(firstDay, lastDay); strictly > 5
+        // duration = inclusive day count = ChronoUnit.DAYS.between(firstDay, lastDay) + 1; strictly > 5
         assertSearchMatchesReference(
                 "off days lasting more than 5 days",
                 "OffDay",
                 """
                         const ChronoUnit = Java.type('java.time.temporal.ChronoUnit');
-                        return ChronoUnit.DAYS.between(entity.getFirstDay(), entity.getLastDay()) > 5;
+                        return ChronoUnit.DAYS.between(entity.getFirstDay(), entity.getLastDay()) + 1 > 5;
                         """
         );
     }
