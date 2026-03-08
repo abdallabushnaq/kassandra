@@ -38,6 +38,7 @@ import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRe
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.Duration;
@@ -48,11 +49,11 @@ import java.util.List;
 
 @Tag("IntroductionVideo")
 @ExtendWith(SpringExtension.class)
+@ActiveProfiles("test")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
         properties = {
                 "server.port=${test.server.port:0}",
-                "spring.profiles.active=test",
                 // Disable basic authentication for these tests
                 "spring.security.basic.enabled=false"
         }

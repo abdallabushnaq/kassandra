@@ -36,6 +36,7 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.server.ServerErrorException;
 
@@ -51,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Tag("UnitTest")
 @ExtendWith(SpringExtension.class)
+@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc

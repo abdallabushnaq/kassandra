@@ -42,6 +42,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -60,6 +61,7 @@ import java.util.concurrent.ExecutionException;
  */
 @Tag("AiUnitTest")
 @ExtendWith(SpringExtension.class)
+@ActiveProfiles("test")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
         properties = {
