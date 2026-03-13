@@ -20,14 +20,14 @@ package de.bushnaq.abdalla.kassandra.ui.introduction;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserDialog;
-import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.UserListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.UserListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,10 +61,9 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 //@Transactional
-public class ManagingUsersIntroductionVideo extends AbstractKeycloakUiTestUtil {
-    public static final NarratorAttribute        INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                   VIDEO_TITLE = "Managing Users";
+public class ManagingUsersIntroductionVideo extends AbstractIntroductionVideo {
+    public static final NarratorAttribute        INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
     private             ProductListViewTester    productListViewTester;
     @Autowired
@@ -72,11 +71,18 @@ public class ManagingUsersIntroductionVideo extends AbstractKeycloakUiTestUtil {
     @Autowired
     private             UserListViewTester       userListViewTester;
 
+    @BeforeAll
+    static void beforeAll() {
+        video.setTitle("Managing Users");
+        video.setVersion(1);
+    }
+
+
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createVideo(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        seleniumHandler.setWindowSize(InstructionVideosUtil.VIDEO_WIDTH, InstructionVideosUtil.VIDEO_HEIGHT);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT);
 
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
@@ -85,8 +91,8 @@ public class ManagingUsersIntroductionVideo extends AbstractKeycloakUiTestUtil {
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         HumanizedSeleniumHandler.setHumanize(true);
         //seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.VIDEO_SUBTITLE);
+        startRecording();
         seleniumHandler.wait(3000);
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about User Management in Kassandra. As an administrator, the Users page is where you add team members to the system so they can access Kassandra and be assigned to projects.");
         seleniumHandler.hideOverlay();
@@ -207,7 +213,7 @@ public class ManagingUsersIntroductionVideo extends AbstractKeycloakUiTestUtil {
 
         paul.narrate(NORMAL, "That's all there is to managing users in Kassandra. Remember, add new team members before they need to log in, and make sure to use their correct authentication email address. Thanks for watching!");
 
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 

@@ -23,13 +23,13 @@ import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.OffDaysCalendarComponent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.OffDayDialog;
-import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.OffDayListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,10 +62,9 @@ import java.util.List;
 )
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
-public class UserOffDaysIntroductionVideo extends AbstractKeycloakUiTestUtil {
-    public static final NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                     VIDEO_TITLE = "User Off Days";
+public class UserOffDaysIntroductionVideo extends AbstractIntroductionVideo {
+    public static final NarratorAttribute          INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute          NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
     private             AvailabilityListViewTester availabilityListViewTester;
     @Autowired
@@ -88,11 +87,17 @@ public class UserOffDaysIntroductionVideo extends AbstractKeycloakUiTestUtil {
     @Autowired
     private             VersionListViewTester      versionListViewTester;
 
+    @BeforeAll
+    static void beforeAll() {
+        video.setTitle("User Off Days");
+        video.setVersion(1);
+    }
+
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createVideo(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        seleniumHandler.setWindowSize(InstructionVideosUtil.VIDEO_WIDTH, InstructionVideosUtil.VIDEO_HEIGHT);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT);
 
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
@@ -101,8 +106,8 @@ public class UserOffDaysIntroductionVideo extends AbstractKeycloakUiTestUtil {
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         HumanizedSeleniumHandler.setHumanize(true);
         //seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.VIDEO_SUBTITLE);
+        startRecording();
         seleniumHandler.wait(3000);
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today I am happy to release our first instruction video for our Kassandra project management server.");
         seleniumHandler.hideOverlay();
@@ -149,7 +154,7 @@ public class UserOffDaysIntroductionVideo extends AbstractKeycloakUiTestUtil {
 
         paul.narrate(NORMAL, "the vacation immediately becomes visible in the calendar. Kassandra skips any weekend day or holiday that falls in your vacation.").pause();
 
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 

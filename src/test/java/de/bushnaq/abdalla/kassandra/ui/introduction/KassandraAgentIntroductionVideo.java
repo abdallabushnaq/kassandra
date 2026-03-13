@@ -23,9 +23,8 @@ import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Version;
-import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
+import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.Kassandra;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
@@ -34,6 +33,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,10 +74,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @AutoConfigureTestRestTemplate
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
-public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo {
-    public static final NarratorAttribute     INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final NarratorAttribute     NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                VIDEO_TITLE = "Kassandra Agent";
+public class KassandraAgentIntroductionVideo extends AbstractIntroductionVideo {
+    public static final NarratorAttribute     INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute     NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     //    @Autowired
 //    private             AvailabilityListViewTester availabilityListViewTester;
     private             Feature               feature;
@@ -108,29 +107,27 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
     private             VersionListViewTester versionListViewTester;
     private             String                versionName;
 
-    private void approveAiPlan() {
-        if (isAgentAskingForConfirmation()) {
-            seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "yes");
-            seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-            waitForAi();
-        }
+    @BeforeAll
+    static void beforeAll() {
+        video.setTitle("Kassandra Agent");
+        video.setVersion(1);
     }
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createASprint(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        seleniumHandler.setWindowSize(InstructionVideosUtil.VIDEO_WIDTH, InstructionVideosUtil.VIDEO_HEIGHT);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT);
 
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
         HumanizedSeleniumHandler.setHumanize(true);
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.VIDEO_SUBTITLE);
+        startRecording();
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setSilent(false);
+        paul.setEnabled(true);
         product     = productApi.getAll().get(1);
         productName = product.getName();
         version     = versionApi.getAll(product.getId()).getFirst();
@@ -268,7 +265,7 @@ public class KassandraAgentIntroductionVideo extends AbstractAiIntroductionVideo
         paul.narrate(NORMAL, "That's all there is to using the agent in kassandra. Thanks for watching!");
 
         paul.pauseIfSilent(5000);
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
 
     }

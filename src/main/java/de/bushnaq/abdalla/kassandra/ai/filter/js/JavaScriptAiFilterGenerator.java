@@ -24,6 +24,9 @@ import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -31,6 +34,7 @@ import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
@@ -42,7 +46,7 @@ import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 @Component
 public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
 
-    private static final String               JAVASCRIPT_PROMPT_TEMPLATE = """
+    private static final String                       JAVASCRIPT_PROMPT_TEMPLATE = """
             You are a JavaScript function generator for filtering Java objects via GraalJS. Convert natural language search queries into JavaScript filter functions.
             
             IMPORTANT CONTEXT: You are filtering %s entities. Each 'entity' parameter passed to your function is a Java %s object with host access enabled. This entity is never null.
@@ -101,16 +105,26 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
             Now generate a JavaScript function body for this EXACT query:
             "%s"
             """;
-    private static final Logger               logger                     = LoggerFactory.getLogger(JavaScriptAiFilterGenerator.class);
-    private final        ChatClient           chatModel;
-    private final        KassandraProperties  kassandraProperties;
-    private final        ToolCallbackProvider validatorToolProvider;
+    /**
+     * Max number of times we will re-prompt the model to fix an invalid JS body.
+     */
+    private static final int                          MAX_FIX_RETRIES            = 3;
+    private static final Logger                       logger                     = LoggerFactory.getLogger(JavaScriptAiFilterGenerator.class);
+    private final        ChatClient                   chatModel;
+    private final        JavaScriptExecutionValidator executionValidator;
+    private final        KassandraProperties          kassandraProperties;
+    private final        JavaScriptSyntaxValidator    syntaxValidator;
+    private final        ToolCallbackProvider         validatorToolProvider;
 
     public JavaScriptAiFilterGenerator(ChatClient.Builder builder,
                                        JavaScriptValidatorTools validatorTools,
+                                       JavaScriptSyntaxValidator syntaxValidator,
+                                       JavaScriptExecutionValidator executionValidator,
                                        KassandraProperties kassandraProperties) {
         this.chatModel             = builder.build();
         this.validatorToolProvider = MethodToolCallbackProvider.builder().toolObjects(validatorTools).build();
+        this.syntaxValidator       = syntaxValidator;
+        this.executionValidator    = executionValidator;
         this.kassandraProperties   = kassandraProperties;
     }
 
@@ -201,9 +215,72 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
             throw new RuntimeException("JavaScript generation failed: response did not contain a ```js code block");
         }
 
-        return extractedCode.trim();
-    }
+        // --- Post-generation validation + retry loop ---
+        // Even if the LLM skipped calling the validateJavaScript tool we still
+        // validate the final code ourselves and ask the model to fix it.
+        List<Message> conversationHistory = null;
+        String        currentCode         = extractedCode.trim();
 
+        for (int attempt = 1; attempt <= MAX_FIX_RETRIES; attempt++) {
+            String validationError = validateExtractedCode(currentCode, entities, now);
+            if (validationError == null) {
+                // Code is valid – return it
+                return currentCode;
+            }
+
+            logger.warn("Post-generation JS validation failed (attempt {}/{}): {}", attempt, MAX_FIX_RETRIES, validationError);
+
+            if (attempt == MAX_FIX_RETRIES) {
+                logger.error("JavaScript generation failed after {} fix attempts – last error: {}", MAX_FIX_RETRIES, validationError);
+                throw new RuntimeException(
+                        "JavaScript generation failed after " + MAX_FIX_RETRIES + " fix attempts. Last error: " + validationError);
+            }
+
+            // Build (or extend) the conversation so the model has full context
+            if (conversationHistory == null) {
+                conversationHistory = new ArrayList<>();
+                conversationHistory.add(new UserMessage(formattedPrompt));
+                conversationHistory.add(new AssistantMessage(content));
+            } else {
+                // Previous fix attempt: add the assistant's reply to history
+                conversationHistory.add(new AssistantMessage(content));
+            }
+
+            String fixRequest = String.format(
+                    "The JavaScript function body you returned failed validation with the following error:\n\n%s\n\n"
+                            + "Please fix the error and return a corrected JavaScript function body inside a ```js code block. "
+                            + "Remember to call validateJavaScript with your fixed code before returning the final answer.",
+                    validationError);
+            conversationHistory.add(new UserMessage(fixRequest));
+
+            System.out.printf("Asking model to fix JS error (attempt %d/%d):\n%s%s%s\n\n",
+                    attempt, MAX_FIX_RETRIES, ANSI_YELLOW, fixRequest, ANSI_RESET);
+
+            Prompt fixPrompt = new Prompt(conversationHistory, buildChatOptions());
+            // Reset validation-attempt counter for the new call
+            toolContext = ToolContextHelper.buildFilterContextMap(entities, now);
+
+            content = chatModel.prompt(fixPrompt)
+                    .toolCallbacks(validatorToolProvider)
+                    .toolContext(toolContext)
+                    .call()
+                    .content();
+
+            System.out.printf("JavaScript LLM fix response (attempt %d)\n\n%s%s%s\n\n",
+                    attempt, ANSI_YELLOW, content, ANSI_RESET);
+
+            String fixedCode = extractJsCodeFromResponse(removeThinkingFromResponse(content));
+            if (fixedCode == null || fixedCode.trim().isEmpty()) {
+                logger.warn("Fix attempt {} did not return a ```js block – keeping previous code", attempt);
+                continue;
+            }
+            currentCode = fixedCode.trim();
+            System.out.printf("JavaScript LLM fixed code (attempt %d)\n\n%s%s%s\n\n",
+                    attempt, ANSI_YELLOW, currentCode, ANSI_RESET);
+        }
+
+        return currentCode;
+    }
 
     @Override
     public FilterType getFilterType() {
@@ -237,5 +314,26 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
         }
 
         return response.isEmpty() ? rawResponse : response;
+    }
+
+    /**
+     * Validates the extracted JS function body using both the syntax validator and the
+     * execution validator.  Returns {@code null} when the code is valid, or a human-readable
+     * error message when it is not.
+     */
+    private String validateExtractedCode(String code, List<Object> entities, LocalDate now) {
+        // Phase 1: syntax
+        String syntaxError = syntaxValidator.validate(code);
+        if (syntaxError != null) {
+            return syntaxError;
+        }
+        // Phase 2: execution (only when we have entities to test against)
+        if (entities != null && !entities.isEmpty()) {
+            org.springframework.ai.chat.model.ToolContext tc = new org.springframework.ai.chat.model.ToolContext(
+                    ToolContextHelper.buildFilterContextMap(entities, now));
+            String executionError = executionValidator.validate(code, tc);
+            return executionError;
+        }
+        return null;
     }
 }

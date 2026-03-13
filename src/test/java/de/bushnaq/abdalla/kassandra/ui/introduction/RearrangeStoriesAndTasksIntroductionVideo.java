@@ -21,8 +21,7 @@ import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
-import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.Backlog;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
@@ -32,6 +31,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.util.SprintListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,13 +65,12 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 //@Transactional
-public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakUiTestUtil {
+public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute        EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final String                   NEW_MILESTONE = "New Milestone-";
     public static final String                   NEW_STORY     = "New Story-";
     public static final String                   NEW_TASK      = "New Task-";
     public static final NarratorAttribute        NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                   VIDEO_TITLE   = "Rearranging Stories and Tasks";
     @Autowired
     private             FeatureListViewTester    featureListViewTester;
     private             String                   featureName;
@@ -95,12 +94,18 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
     private             VersionListViewTester    versionListViewTester;
     private             String                   versionName;
 
+    @BeforeAll
+    static void beforeAll() {
+        video.setTitle("Rearranging Stories and Tasks");
+        video.setVersion(1);
+    }
+
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createVideo(RandomCase randomCase, TestInfo testInfo) throws Exception {
         //generate the users
-        seleniumHandler.setWindowSize(InstructionVideosUtil.VIDEO_WIDTH, InstructionVideosUtil.VIDEO_HEIGHT);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT);
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
@@ -109,9 +114,9 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         Sprint sprint = generateData();
 
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setSilent(false);
+        paul.setEnabled(true);
         Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
-        grace.setSilent(false);
+        grace.setEnabled(true);
         //seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
 
@@ -123,8 +128,8 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
         seleniumHandler.waitForElementToBeClickable(Backlog.CLEAR_FILTER_BUTTON_ID);
 
         HumanizedSeleniumHandler.setHumanize(true);
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.VIDEO_SUBTITLE);
+        startRecording();
         paul.pause(3000);
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn how to rearrange and copy stories and tasks. By rearranging we mean changing the order in the list to change the priority of a story or task, or moving a task from a story to another story. We'll also see how to quickly duplicate stories with all their child tasks using copy and paste.");
         seleniumHandler.hideOverlay();
@@ -261,7 +266,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractKeycloakU
 
         paul.narrate(NORMAL, "That's all there is to rearranging and copying stories and tasks in Kassandra. Thanks for watching!");
 
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 

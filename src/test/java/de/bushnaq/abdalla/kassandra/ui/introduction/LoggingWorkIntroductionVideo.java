@@ -21,8 +21,7 @@ import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.ui.dialog.WorklogDialog;
-import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.ActiveSprints;
@@ -30,6 +29,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.util.ActiveSprintsTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,10 +63,9 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 //@Transactional
-public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
-    public static final NarratorAttribute        EXCITED     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
-    public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.6f).withCfgWeight(.2f).withTemperature(1f);
-    public static final String                   VIDEO_TITLE = "Logging Work";
+public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
+    public static final NarratorAttribute        EXCITED = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
+    public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.6f).withCfgWeight(.2f).withTemperature(1f);
     @Autowired
     private             ActiveSprintsTester      activeSprintsTester;
     private             String                   featureName;
@@ -90,12 +89,19 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
     private             Task                     task33;
     private             String                   versionName;
 
+    @BeforeAll
+    static void beforeAll() {
+        video.setTitle("Logging Work");
+        video.setVersion(1);
+    }
+
+
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createVideo(RandomCase randomCase, TestInfo testInfo) throws Exception {
         //generate the users
-        seleniumHandler.setWindowSize(InstructionVideosUtil.VIDEO_WIDTH, InstructionVideosUtil.VIDEO_HEIGHT);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT);
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
@@ -104,7 +110,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         Sprint sprint = generateData();
 
         Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
-        grace.setSilent(false);
+        grace.setEnabled(true);
 
         // Login as Grace Martin
 //        seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
@@ -115,8 +121,8 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
 
         HumanizedSeleniumHandler.setHumanize(true);
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.VIDEO_SUBTITLE);
+        startRecording();
         grace.pause(3000);
         grace.narrateAsync(NORMAL, "Hi everyone, Grace Martin here from kassandra.org. Today I'm going to show you how to log work on your tasks using the Active Sprints view and the Worklog dialog. This is essential for tracking your progress and keeping the team informed about task status.");
         seleniumHandler.hideOverlay();
@@ -398,7 +404,7 @@ public class LoggingWorkIntroductionVideo extends AbstractKeycloakUiTestUtil {
         grace.narrate(NORMAL, "That's how easy it is to log work in Kassandra! Remember to log your time regularly to keep everyone informed about progress. Thanks for watching!");
         grace.pause(1000);
 
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 

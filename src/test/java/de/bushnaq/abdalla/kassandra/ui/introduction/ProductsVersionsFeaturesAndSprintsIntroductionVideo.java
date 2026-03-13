@@ -20,19 +20,19 @@ package de.bushnaq.abdalla.kassandra.ui.introduction;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
-import de.bushnaq.abdalla.kassandra.ui.dialog.FeatureDialog;
-import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
-import de.bushnaq.abdalla.kassandra.ui.dialog.SprintDialog;
-import de.bushnaq.abdalla.kassandra.ui.dialog.VersionDialog;
-import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.dialog.*;
+import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.*;
+import de.bushnaq.abdalla.kassandra.ui.view.FeatureListView;
+import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
+import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
+import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,10 +72,9 @@ import java.util.List;
 //@Transactional
 //@Testcontainers
 @Slf4j
-public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends AbstractKeycloakUiTestUtil {
+public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                     VIDEO_TITLE = "Products, Versions, Features and Sprints";
     @Autowired
     private             AvailabilityListViewTester availabilityListViewTester;
     @Autowired
@@ -104,28 +103,28 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
     private             VersionListViewTester      versionListViewTester;
     private             String                     versionName;
 
-    private void approveAiPlan() {
-        //assuming the ai has a question
-        seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "yes");
-        seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
-        waitForAi();
+    @BeforeAll
+    static void beforeAll() {
+        video.setTitle("Products, Versions, Features and Sprints");
+        video.setVersion(1);
     }
+
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createASprint(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        seleniumHandler.setWindowSize(InstructionVideosUtil.VIDEO_WIDTH, InstructionVideosUtil.VIDEO_HEIGHT);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT);
 
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
         HumanizedSeleniumHandler.setHumanize(true);
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.VIDEO_SUBTITLE);
+        startRecording();
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setSilent(true);
+        paul.setEnabled(true);
         productName = "Jupiter";
         versionName = "1.0.0";
         featureName = "Config server";
@@ -153,6 +152,44 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, productName);
 
         //---------------------------------------------------------------------------------------
+        logHeader(" avatar");
+        //---------------------------------------------------------------------------------------
+        seleniumHandler.highlight(ProductDialog.GENERATE_IMAGE_BUTTON);
+        paul.narrate(NORMAL, "Now let's create a custom product avatar using Kassandra's AI image generation feature. I'll click the magic wand button next to my name field.");
+        seleniumHandler.click(ProductDialog.GENERATE_IMAGE_BUTTON);
+        seleniumHandler.wait(1000);
+
+        //---------------------------------------------------------------------------------------
+        // Explain Image Dialog
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "This opens the AI Image Generation Dialog. Here I can describe the avatar I want, generate it, upload an existing image, or download the result.");
+
+        //---------------------------------------------------------------------------------------
+        // Enter Prompt
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "I am happy with the default prompt.");
+
+        //---------------------------------------------------------------------------------------
+        // Generate Image
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_GENERATE_BUTTON);
+        paul.narrateAsync(NORMAL, "Now I'll click the Generate button to create the avatar using AI. This will take a few moments.");
+        seleniumHandler.click(ImagePromptDialog.ID_GENERATE_BUTTON);
+
+        // Wait for generation to complete (showing progress)
+        waitForStableDiffusion();
+
+        paul.narrate(NORMAL, "Great! The AI has generated an avatar based on my description. I can see the preview here in the dialog.");
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_ACCEPT_BUTTON);
+        paul.narrateAsync(NORMAL, "I'm happy with this avatar, so I'll click Accept to use it for my product.");
+        seleniumHandler.click(ImagePromptDialog.ID_ACCEPT_BUTTON);
+        seleniumHandler.wait(1000);
+
+        //---------------------------------------------------------------------------------------
         logHeader(" Grant access to Team group via ACL");
         //---------------------------------------------------------------------------------------
         paul.narrate(NORMAL, "Kassandra supports Access Control Lists, or A C L for short. This allows us to control who can access our product.").pause();
@@ -160,6 +197,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         seleniumHandler.setMultiSelectComboBoxValue(ProductDialog.PRODUCT_ACL_GROUPS_FIELD, new String[]{"Team"});
         paul.narrate(NORMAL, "Perfect! Now all members of the Team group will have access to the Jupiter product, all its versions, features and sprints.").pause();
 
+        //---------------------------------------------------------------------------------------
         paul.narrate(NORMAL, "Select Save to close the dialog and persist our new product with its access control settings.").pause();
         productListViewTester.closeDialog(ProductDialog.CONFIRM_BUTTON);
         paul.narrate(INTENSE, "And we got ourself a new product! Notice the access column shows that one group has access to this product.").pause();
@@ -204,6 +242,61 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         seleniumHandler.click(FeatureListView.CREATE_FEATURE_BUTTON_ID);
         paul.narrate(NORMAL, "Lets call the feature 'Config server'.");
         seleniumHandler.setTextField(FeatureDialog.FEATURE_NAME_FIELD, featureName);
+
+        //---------------------------------------------------------------------------------------
+        logHeader(" avatar");
+        //---------------------------------------------------------------------------------------
+        seleniumHandler.highlight(FeatureDialog.GENERATE_IMAGE_BUTTON);
+        paul.narrate(NORMAL, "Now let's create a custom feature avatar using Kassandra's AI image generation feature. I'll click the magic wand button next to my name field.");
+        seleniumHandler.click(FeatureDialog.GENERATE_IMAGE_BUTTON);
+        seleniumHandler.wait(1000);
+
+        //---------------------------------------------------------------------------------------
+        // Explain Image Dialog
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "This opens the AI Image Generation Dialog, just like in the product dialog.");
+
+        //---------------------------------------------------------------------------------------
+        // Enter Prompt
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD);
+        paul.narrate(NORMAL, "I'll describe an avatar that will represent our feature.");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Icon representing the feature '" + featureName + "', minimalist, 3D design, white background");
+        seleniumHandler.wait(500);
+
+        //---------------------------------------------------------------------------------------
+        // Generate Image
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_GENERATE_BUTTON);
+        paul.narrateAsync(NORMAL, "Again, generation will take a few moments. The speed depends on your GPU's performance.");
+        seleniumHandler.click(ImagePromptDialog.ID_GENERATE_BUTTON);
+
+        // Wait for generation to complete (showing progress)
+        waitForStableDiffusion();
+
+        paul.narrate(NORMAL, "OK! The AI has generated an avatar based on my description. I can see the preview here in the dialog.");
+        paul.narrate(NORMAL, "If I want to refine the image, I can use the Update button. This uses the current image as a starting point and applies my prompt to modify it. Let me adjust my description slightly.");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Icon representing the feature '" + featureName + "' including cogs, minimalist, 3D design, white background");
+        seleniumHandler.wait(500);
+
+        paul.narrateAsync(NORMAL, "I'll click Update to refine the avatar with green tones instead.");
+        seleniumHandler.click(ImagePromptDialog.ID_UPDATE_BUTTON);
+        waitForStableDiffusion();
+
+        paul.narrate(NORMAL, "Perfect! The avatar has been updated with the new color scheme while maintaining the overall style.");
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_ACCEPT_BUTTON);
+        paul.narrateAsync(NORMAL, "I'm happy with this avatar, so I'll click Accept to use it for my feature.");
+        seleniumHandler.click(ImagePromptDialog.ID_ACCEPT_BUTTON);
+        seleniumHandler.wait(1000);
+
+        //---------------------------------------------------------------------------------------
+        logHeader(" Save feature");
+        //---------------------------------------------------------------------------------------
+
         paul.narrateAsync(NORMAL, "Select Save to close the dialog and persist our feature.");
         seleniumHandler.click(FeatureDialog.CONFIRM_BUTTON);
         paul.narrate(INTENSE, "Jupiter has its first feature!").longPause();
@@ -221,6 +314,52 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         logHeader(" Create a Sprint");
         seleniumHandler.click(SprintListView.CREATE_SPRINT_BUTTON);
         seleniumHandler.setTextField(SprintDialog.SPRINT_NAME_FIELD, sprintName);
+
+        //---------------------------------------------------------------------------------------
+        logHeader(" avatar");
+        //---------------------------------------------------------------------------------------
+        seleniumHandler.highlight(SprintDialog.GENERATE_IMAGE_BUTTON);
+        paul.narrate(NORMAL, "Now let's create also a custom sprint avatar using Kassandra's AI image generation feature.");
+        seleniumHandler.click(SprintDialog.GENERATE_IMAGE_BUTTON);
+        seleniumHandler.wait(1000);
+
+        //---------------------------------------------------------------------------------------
+        // Explain Image Dialog
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "Again, the AI Image Generation Dialog, just like in the product and feature dialog. You will find this dialog in a lot of places.");
+
+        //---------------------------------------------------------------------------------------
+        // Enter Prompt
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD);
+        paul.narrate(NORMAL, "I'll describe an avatar that will represent our feature.");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Icon representing the sprint '" + sprintName + "', minimalist, 3D design, white background");
+        seleniumHandler.wait(500);
+
+        //---------------------------------------------------------------------------------------
+        // Generate Image
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_GENERATE_BUTTON);
+        paul.narrateAsync(NORMAL, "Again, generation will take a few moments depending on your GPU.");
+        seleniumHandler.click(ImagePromptDialog.ID_GENERATE_BUTTON);
+
+        // Wait for generation to complete (showing progress)
+        waitForStableDiffusion();
+
+        paul.narrate(NORMAL, "OK! The AI has generated an avatar based on my description. I can see the preview here in the dialog.");
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_ACCEPT_BUTTON);
+        paul.narrateAsync(NORMAL, "I'm happy with this avatar, so I'll click Accept to use it for this sprint.");
+        seleniumHandler.click(ImagePromptDialog.ID_ACCEPT_BUTTON);
+        seleniumHandler.wait(1000);
+
+        //---------------------------------------------------------------------------------------
+        logHeader(" Save sprint");
+        //---------------------------------------------------------------------------------------
+
         paul.narrateAsync(NORMAL, "Select Save to close the dialog and persist our sprint.");
         seleniumHandler.click(SprintDialog.CONFIRM_BUTTON);
         paul.narrate(INTENSE, "That was easy!").longPause();
@@ -235,7 +374,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
 
         paul.pauseIfSilent(5000);
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
 
     }
@@ -256,19 +395,6 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         } else {
             log.warn("No authenticated user found. Running demo without authentication.");
         }
-    }
-
-    // Method to get the public-facing URL, fixing potential redirect issues
-//    private static String getPublicFacingUrl(KeycloakContainer container) {
-//        return String.format("http://%s:%s",
-//                container.getHost(),
-//                container.getMappedPort(8080));
-//    }
-
-    private void waitForAi() {
-        seleniumHandler.pushWaitDuration(Duration.ofSeconds(240));
-        seleniumHandler.waitForElementToBeEnabled(Kassandra.AI_SUBMIT_BUTTON);
-        seleniumHandler.popWaitDuration();
     }
 
 }

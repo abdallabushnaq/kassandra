@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
+import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.Kassandra;
@@ -38,14 +40,14 @@ import java.util.Locale;
  * </ul>
  */
 @Slf4j
-public abstract class AbstractAiIntroductionVideo extends AbstractKeycloakUiTestUtil {
+public abstract class AbstractIntroductionVideo extends AbstractKeycloakUiTestUtil {
 
     /**
      * Phrases that indicate the AI is asking the user to confirm a destructive or significant action.
      * Deliberately narrow to avoid false positives from "Can I help you with anything else?"-style
      * tail questions that agents commonly append after completing a task.
      */
-    private static final String[] CONFIRMATION_PHRASES = {
+    private static final String[]                 CONFIRMATION_PHRASES = {
             "are you sure",
             "please confirm",
             "do you want me to",
@@ -55,9 +57,18 @@ public abstract class AbstractAiIntroductionVideo extends AbstractKeycloakUiTest
             "can you confirm",
             "confirm"
     };
-
     @Autowired
-    protected HumanizedSeleniumHandler seleniumHandler;
+    protected            HumanizedSeleniumHandler seleniumHandler;
+    protected static     InstructionVideo         video                = new InstructionVideo();
+
+    protected void approveAiPlan() {
+        if (isAgentAskingForConfirmation()) {
+            seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, "yes");
+            seleniumHandler.click(Kassandra.AI_SUBMIT_BUTTON);
+            waitForAi();
+        }
+    }
+
 
     /**
      * Returns the text content of the last AI response bubble currently visible in the chat panel.
@@ -101,6 +112,10 @@ public abstract class AbstractAiIntroductionVideo extends AbstractKeycloakUiTest
         return false;
     }
 
+    private String prepareVideoName(String videoName) {
+        return videoName.toLowerCase().replaceAll("[\\\\/:*?\"<>|_,. ]", "-");
+    }
+
     protected void processQuery(String query) {
         seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, query);
         submitQuery();
@@ -109,6 +124,10 @@ public abstract class AbstractAiIntroductionVideo extends AbstractKeycloakUiTest
     protected String processQueryAndWaitForAnswer(String query) {
         seleniumHandler.setTextArea(Kassandra.AI_QUERY_INPUT, query);
         return submitQueryAndWaitForAiAndGetResponse();
+    }
+
+    protected void startRecording() {
+        seleniumHandler.startRecording(InstructionVideo.TARGET_FOLDER, prepareVideoName(video.getTitle() + " " + InstructionVideo.VIDEO_SUBTITLE + "-" + video.getVersion()));
     }
 
     protected void submitQuery() {
@@ -135,6 +154,12 @@ public abstract class AbstractAiIntroductionVideo extends AbstractKeycloakUiTest
     protected void waitForAi() {
         seleniumHandler.pushWaitDuration(Duration.ofSeconds(240));
         seleniumHandler.waitForElementToBeEnabled(Kassandra.AI_SUBMIT_BUTTON);
+        seleniumHandler.popWaitDuration();
+    }
+
+    protected void waitForStableDiffusion() {
+        seleniumHandler.pushWaitDuration(Duration.ofSeconds(120));
+        seleniumHandler.waitForElementToBeInteractable(ImagePromptDialog.ID_GENERATE_BUTTON);
         seleniumHandler.popWaitDuration();
     }
 }

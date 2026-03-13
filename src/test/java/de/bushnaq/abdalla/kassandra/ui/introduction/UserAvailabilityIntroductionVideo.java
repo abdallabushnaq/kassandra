@@ -22,13 +22,13 @@ import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AvailabilityCalendarComponent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.AvailabilityDialog;
-import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.AvailabilityListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,10 +61,9 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 //@Transactional
-public class UserAvailabilityIntroductionVideo extends AbstractKeycloakUiTestUtil {
-    public static final NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                     VIDEO_TITLE = "User Availability";
+public class UserAvailabilityIntroductionVideo extends AbstractIntroductionVideo {
+    public static final NarratorAttribute          INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute          NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
     private             AvailabilityListViewTester availabilityListViewTester;
     @Autowired
@@ -87,11 +86,17 @@ public class UserAvailabilityIntroductionVideo extends AbstractKeycloakUiTestUti
     @Autowired
     private             VersionListViewTester      versionListViewTester;
 
+    @BeforeAll
+    static void beforeAll() {
+        video.setTitle("User Availability");
+        video.setVersion(1);
+    }
+
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createVideo(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        seleniumHandler.setWindowSize(InstructionVideosUtil.VIDEO_WIDTH, InstructionVideosUtil.VIDEO_HEIGHT);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT);
 
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
@@ -100,8 +105,8 @@ public class UserAvailabilityIntroductionVideo extends AbstractKeycloakUiTestUti
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         HumanizedSeleniumHandler.setHumanize(true);
 //        seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.VIDEO_SUBTITLE);
+        startRecording();
         seleniumHandler.wait(3000);
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about User Availability management in Kassandra. User availability defines what percentage of your time you can dedicate to project work. This is essential for accurate sprint planning and capacity calculations.");
         seleniumHandler.hideOverlay();
@@ -201,7 +206,7 @@ public class UserAvailabilityIntroductionVideo extends AbstractKeycloakUiTestUti
 
         paul.narrate(NORMAL, "That's all there is to managing your availability in Kassandra. Remember, keeping your availability up to date ensures accurate capacity planning and realistic sprint commitments. Thanks for watching!");
 
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 

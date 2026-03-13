@@ -21,13 +21,13 @@ import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
-import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideosUtil;
-import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.UserProfileView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,30 +61,35 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 //@Transactional
-public class UserProfileIntroductionVideo extends AbstractKeycloakUiTestUtil {
-    public static final NarratorAttribute        NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                   VIDEO_TITLE = "User Profile";
+public class UserProfileIntroductionVideo extends AbstractIntroductionVideo {
+    public static final NarratorAttribute        NORMAL = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
     private             ProductListViewTester    productListViewTester;
     @Autowired
     private             HumanizedSeleniumHandler seleniumHandler;
 
+    @BeforeAll
+    static void beforeAll() {
+        video.setTitle("User Profile");
+        video.setVersion(1);
+    }
+
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createVideo(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        seleniumHandler.setWindowSize(InstructionVideosUtil.VIDEO_WIDTH, InstructionVideosUtil.VIDEO_HEIGHT);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT);
 
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setSilent(false);
+        paul.setEnabled(true);
         HumanizedSeleniumHandler.setHumanize(true);
         //seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.VIDEO_SUBTITLE);
-        seleniumHandler.startRecording(InstructionVideosUtil.TARGET_FOLDER, VIDEO_TITLE + " " + InstructionVideosUtil.VIDEO_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.VIDEO_SUBTITLE);
+        startRecording();
         seleniumHandler.wait(3000);
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about managing your user profile and creating custom avatar icons using AI in Kassandra. Your profile contains important information about how you're identified in the system and displayed in reports.");
         seleniumHandler.hideOverlay();
@@ -235,7 +240,7 @@ public class UserProfileIntroductionVideo extends AbstractKeycloakUiTestUtil {
 
         paul.narrate(NORMAL, "That's all there is to managing your profile and creating custom avatars in Kassandra. You can generate AI-powered avatars, upload your own images, or update existing ones. Keep your profile up to date so your team members can easily identify you. Thanks for watching!");
 
-        seleniumHandler.showOverlay(VIDEO_TITLE, InstructionVideosUtil.COPYLEFT_SUBTITLE);
+        seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 
@@ -253,12 +258,6 @@ public class UserProfileIntroductionVideo extends AbstractKeycloakUiTestUtil {
                         6, 8, 12, 6, 13)//
         };
         return Arrays.stream(randomCases).toList();
-    }
-
-    private void waitForStableDiffusion() {
-        seleniumHandler.pushWaitDuration(Duration.ofSeconds(120));
-        seleniumHandler.waitForElementToBeInteractable(ImagePromptDialog.ID_GENERATE_BUTTON);
-        seleniumHandler.popWaitDuration();
     }
 
 

@@ -66,7 +66,7 @@ public class ImagePromptDialog extends Dialog {
     private final       Button         generateButton;
     private             byte[]         generatedImage;
     private             byte[]         generatedImageOriginal;
-    private final       byte[]         initialImage;
+    private             byte[]         initialImage;
     private final       Div            previewContainer;
     private final       TextArea       promptField;
     @Autowired
@@ -364,6 +364,7 @@ public class ImagePromptDialog extends Dialog {
 
                     generatedImage         = result.getResizedImage();
                     generatedImageOriginal = result.getOriginalImage();
+                    initialImage           = result.getResizedImage();
 
                     ui.access(() -> {
                         displayGeneratedImage(result.getResizedImage());

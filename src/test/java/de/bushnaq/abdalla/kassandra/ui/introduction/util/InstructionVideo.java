@@ -17,10 +17,15 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction.util;
 
-public class InstructionVideosUtil {
+import lombok.Data;
+
+@Data
+public class InstructionVideo {
     public static final String COPYLEFT_SUBTITLE = "Apache License, version 2.0";
     public static final String TARGET_FOLDER     = "introduction";
     public static final int    VIDEO_HEIGHT      = 1200;
     public static final String VIDEO_SUBTITLE    = "Introduction Video";
     public static final int    VIDEO_WIDTH       = 1750;
+    private             String title;
+    private             int    version;
 }

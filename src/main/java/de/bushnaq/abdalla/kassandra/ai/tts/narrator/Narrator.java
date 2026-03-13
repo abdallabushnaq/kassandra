@@ -43,16 +43,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class Narrator {
 
-    private static final Logger            logger = LoggerFactory.getLogger(Narrator.class);
+    private static final Logger            logger  = LoggerFactory.getLogger(Narrator.class);
     private final        AudioPlayer       audioPlayer;  // playback queue/handles
     private static       TtsCacheManager   cacheManager; // chronological file coordinator, static to support mixing narrators
     @Getter
     @Setter
     private              NarratorAttribute defaultAttributes; // default TTS attributes for this narrator
+    @Setter
+    private              boolean           enabled = false;
     @Getter
     private volatile     Playback          playback; // most recently scheduled playback for external access
-    @Setter
-    private              boolean           silent = false;
     @Getter
     @Setter
     private static       long              startTime;//used by VideoRecorder to sync time with audio playing (only used to log the time)
@@ -181,7 +181,7 @@ public class Narrator {
      * Synchronously synthesize and play using per-call attributes. Blocks until playback finishes.
      */
     public Narrator narrate(NarratorAttribute attrs, String text) throws Exception {
-        if (!silent) {
+        if (enabled) {
             narrateAsync(attrs, text);
             getPlayback().await();
         }
@@ -193,7 +193,7 @@ public class Narrator {
      * Blocks until playback finishes.
      */
     public Narrator narrate(String text) throws Exception {
-        if (!silent) {
+        if (enabled) {
             narrateAsync(text);
             getPlayback().await();
         }
@@ -205,7 +205,7 @@ public class Narrator {
      * The provided attributes are used directly without merging with defaults.
      */
     public Narrator narrateAsync(NarratorAttribute attrs, String text) throws Exception {
-        if (!silent) {
+        if (enabled) {
 
             return narrateResolved(attrs, text);
         }
@@ -217,7 +217,7 @@ public class Narrator {
      * Returns immediately with a {@link Playback} handle available via {@link #getPlayback()}.
      */
     public Narrator narrateAsync(String text) throws Exception {
-        if (!silent) {
+        if (enabled) {
             return narrateResolved(defaultAttributes, text);
         }
         return this;
@@ -285,7 +285,7 @@ public class Narrator {
      * @param millis duration in milliseconds
      */
     public void pause(long millis) {
-        if (!silent) {
+        if (enabled) {
             try {
                 logger.trace("Pausing for {} ms.", millis);
                 Thread.sleep(millis);
@@ -301,7 +301,7 @@ public class Narrator {
      * @param millis duration in milliseconds
      */
     public void pauseIfSilent(long millis) {
-        if (silent) {
+        if (!enabled) {
             try {
                 Thread.sleep(millis);
             } catch (InterruptedException e) {
