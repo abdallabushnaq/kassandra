@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
@@ -45,43 +46,56 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.VersionDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
+import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Route(value = "version-list", layout = MainLayout.class)
 @PageTitle("Version List Page")
 @PermitAll // When security is enabled, allow all authenticated users
+@Slf4j
 public class VersionListView extends AbstractMainGrid<Version> implements AfterNavigationObserver {
-    public static final  String                              CREATE_VERSION_BUTTON             = "create-version-button";
-    public static final  String                              ROUTE                             = "version-list";
-    private static final String                              ROUTE_KEY_PREFIX                  = "version-list:";
-    public static final  String                              VERSION_AI_PANEL_BUTTON           = "version-ai-panel-button";
-    public static final  String                              VERSION_GLOBAL_FILTER             = "version-global-filter";
-    public static final  String                              VERSION_GRID                      = "version-grid";
-    public static final  String                              VERSION_GRID_DELETE_BUTTON_PREFIX = "version-grid-delete-button-prefix-";
-    public static final  String                              VERSION_GRID_EDIT_BUTTON_PREFIX   = "version-grid-edit-button-prefix-";
-    public static final  String                              VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
-    public static final  String                              VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
-    public static final  String                              VERSION_ROW_COUNTER               = "version-row-counter";
-    private final        AiAssistantService                  aiAssistantService;
-    private final        AiFilterService                     aiFilterService;
-    private final        Button                              aiToggleButton;
-    private final        SplitLayout                         bodySplit;
-    private final        ChatAgentPanel                      chatAgentPanel;
-    private final        Div                                 chatPane;
+    public static final  String                      CREATE_VERSION_BUTTON             = "create-version-button";
+    public static final  String                      ROUTE                             = "version-list";
+    private static final String                      ROUTE_KEY_PREFIX                  = "version-list:";
+    public static final  String                      VERSION_AI_PANEL_BUTTON           = "version-ai-panel-button";
+    public static final  String                      VERSION_GLOBAL_FILTER             = "version-global-filter";
+    public static final  String                      VERSION_GRID                      = "version-grid";
+    public static final  String                      VERSION_GRID_DELETE_BUTTON_PREFIX = "version-grid-delete-button-prefix-";
+    public static final  String                      VERSION_GRID_EDIT_BUTTON_PREFIX   = "version-grid-edit-button-prefix-";
+    public static final  String                      VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
+    public static final  String                      VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
+    public static final  String                      VERSION_ROW_COUNTER               = "version-row-counter";
+    public static final  String                      VERSION_SELECTOR                  = "version-selector";
+    private              List<Version>               allVersions                       = new ArrayList<>();
+    private final        AiAssistantService          aiAssistantService;
+    private final        AiFilterService             aiFilterService;
+    private final        Button                      aiToggleButton;
+    private final        SplitLayout                 bodySplit;
+    private final        ChatAgentPanel              chatAgentPanel;
+    private final        Div                         chatPane;
     private              com.vaadin.flow.component.Component headerComponent;
-    private final        JsonMapper                          mapper;
-    private final        ProductApi                          productApi;
-    private              Long                                productId;
-    private final        ChatPanelSessionState               sessionState;
-    private final        UserApi                             userApi;
-    private final        VersionApi                          versionApi;
+    private              boolean                     isRestoringFromUrl                = false;
+    private final        JsonMapper                  mapper;
+    private final        ProductApi                  productApi;
+    private              Long                        productId;
+    private final        Map<Long, Product>          productMap                        = new HashMap<>();
+    private              String                      requestedVersionIds;
+    private              Set<Version>                selectedVersions                  = new HashSet<>();
+    private final        ChatPanelSessionState       sessionState;
+    private final        UserApi                     userApi;
+    private final        VersionApi                  versionApi;
+    private              MultiSelectComboBox<Version> versionSelector;
 
     public VersionListView(VersionApi versionApi, ProductApi productApi, UserApi userApi, Clock clock,
                            AiFilterService aiFilterService, JsonMapper mapper,
@@ -129,6 +143,12 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         if (queryParameters.getParameters().containsKey("product")) {
             this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
         }
+        // Capture requested versions from URL for initial ComboBox preselection.
+        // Cleared here so each navigation cycle starts fresh.
+        requestedVersionIds = null;
+        if (queryParameters.getParameters().containsKey("versions")) {
+            requestedVersionIds = queryParameters.getParameters().get("versions").getFirst();
+        }
 
         chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId);
 
@@ -163,6 +183,28 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                                 VERSION_ROW_COUNTER, VERSION_GLOBAL_FILTER,
                                 aiFilterService, mapper, "Version");
                         add(headerComponent);
+
+                        // Create a fresh version selector and insert it at the far left of the header
+                        versionSelector = new MultiSelectComboBox<>();
+                        versionSelector.setId(VERSION_SELECTOR);
+                        // Version names are only unique within one product, so prefix with the product name
+                        // to avoid visual deduplication when two products share a version name (e.g. "1.0.0").
+                        versionSelector.setItemLabelGenerator(v -> {
+                            Product p = productMap.get(v.getProductId());
+                            return p != null ? p.getName() + " / " + v.getName() : v.getName();
+                        });
+                        versionSelector.setPlaceholder("All versions");
+                        versionSelector.setClearButtonVisible(true);
+                        versionSelector.setWidth("280px");
+                        versionSelector.addValueChangeListener(e -> {
+                            if (e.isFromClient()) {
+                                selectedVersions = new HashSet<>(e.getValue());
+                                updateUrlParameters();
+                                applyVersionFilter();
+                            }
+                        });
+                        getLastHeaderRightLayout().addComponentAtIndex(0, versionSelector);
+
                         addHeaderButton(aiToggleButton);
                         add(bodySplit);
 
@@ -260,20 +302,23 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         // Add click listener to navigate to FeatureListView with the selected version ID
         getGrid().addItemClickListener(event -> {
             Version selectedVersion = event.getItem();
-            // Create parameters map
             Map<String, String> params = new HashMap<>();
             params.put("product", String.valueOf(productId));
             params.put("version", String.valueOf(selectedVersion.getId()));
-            // Navigate with query parameters
-            UI.getCurrent().navigate(
-                    FeatureListView.class,
-                    QueryParameters.simple(params)
-            );
+            UI.getCurrent().navigate(FeatureListView.class, QueryParameters.simple(params));
         });
 
         {
             Grid.Column<Version> keyColumn = getGrid().addColumn(Version::getKey);
             VaadinUtil.addSimpleHeader(keyColumn, "Key", VaadinIcon.KEY);
+        }
+        {
+            // product
+            Grid.Column<Version> productColumn = getGrid().addColumn(version -> {
+                Product p = productMap.get(version.getProductId());
+                return p != null ? p.getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(productColumn, "Product", VaadinIcon.PACKAGE);
         }
         {
             // Add name column with filtering and sorting
@@ -283,10 +328,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                 div.setId(VERSION_GRID_NAME_PREFIX + version.getName());
                 return div;
             }));
-
-            // Configure a custom comparator to properly sort by the name property
             nameColumn.setComparator((version1, version2) -> version1.getName().compareToIgnoreCase(version2.getName()));
-
             VaadinUtil.addSimpleHeader(nameColumn, "Name", VaadinIcon.TAG);
         }
         {
@@ -307,7 +349,6 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                 this::openVersionDialog,
                 this::confirmDelete
         );
-
     }
 
     private void openVersionDialog(Version version) {
@@ -334,9 +375,107 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         dialog.open();
     }
 
+    /**
+     * Applies a data-provider filter so the grid shows only the versions selected in
+     * the MultiSelectComboBox.  When the selection is empty the filter is cleared
+     * and all versions are shown.
+     */
+    private void applyVersionFilter() {
+        if (selectedVersions.isEmpty()) {
+            getDataProvider().setFilter(null);
+        } else {
+            Set<Long> ids = selectedVersions.stream().map(Version::getId).collect(Collectors.toSet());
+            getDataProvider().setFilter(version -> ids.contains(version.getId()));
+        }
+    }
+
     private void refreshGrid() {
+        // Load all versions and rebuild the product lookup map
+        List<Version> freshVersions = versionApi.getAll();
+        allVersions = freshVersions;
+
+        productMap.clear();
+        productApi.getAll().forEach(p -> productMap.put(p.getId(), p));
+
+        // Replace data-provider items
         getDataProvider().getItems().clear();
-        getDataProvider().getItems().addAll((productId != null) ? versionApi.getAll(productId) : versionApi.getAll());
+        getDataProvider().getItems().addAll(freshVersions);
+
+        // Update ComboBox items while preserving / establishing selection
+        if (versionSelector != null) {
+            Set<Version> currentSelection = versionSelector.getValue();
+            isRestoringFromUrl = true;
+            versionSelector.setItems(freshVersions);
+            if (!currentSelection.isEmpty()) {
+                // Preserve the previously selected versions (match by ID)
+                Set<Long> selectedIds = currentSelection.stream().map(Version::getId).collect(Collectors.toSet());
+                Set<Version> toRestore = freshVersions.stream()
+                        .filter(v -> selectedIds.contains(v.getId()))
+                        .collect(Collectors.toSet());
+                if (!toRestore.isEmpty()) {
+                    selectedVersions = toRestore;
+                    versionSelector.setValue(toRestore);
+                }
+            } else if (requestedVersionIds != null) {
+                // URL contained a 'versions' key — it is authoritative.
+                // Non-empty → restore those IDs; empty string → user explicitly cleared, leave empty.
+                if (!requestedVersionIds.isEmpty()) {
+                    Set<Version> toSelect = new HashSet<>();
+                    for (String idStr : requestedVersionIds.split(",")) {
+                        try {
+                            Long id = Long.parseLong(idStr.trim());
+                            freshVersions.stream().filter(v -> v.getId().equals(id)).findFirst().ifPresent(toSelect::add);
+                        } catch (NumberFormatException e) {
+                            log.warn("Invalid version ID in URL: {}", idStr);
+                        }
+                    }
+                    if (!toSelect.isEmpty()) {
+                        selectedVersions = toSelect;
+                        versionSelector.setValue(toSelect);
+                    }
+                }
+                // else: empty string → leave selector empty (applyVersionFilter will clear the filter)
+            } else if (productId != null) {
+                // Default: preselect versions belonging to the navigation-context product
+                Set<Version> forProduct = freshVersions.stream()
+                        .filter(v -> productId.equals(v.getProductId()))
+                        .collect(Collectors.toSet());
+                if (!forProduct.isEmpty()) {
+                    selectedVersions = forProduct;
+                    versionSelector.setValue(forProduct);
+                }
+            } else if (!freshVersions.isEmpty()) {
+                // No context ID given → select all versions
+                selectedVersions = new HashSet<>(freshVersions);
+                versionSelector.setValue(selectedVersions);
+            }
+            isRestoringFromUrl = false;
+        }
+
+        // Apply ComboBox-driven filter
+        applyVersionFilter();
+
         getDataProvider().refreshAll();
+    }
+
+    /**
+     * Pushes the current {@code product} and selected {@code versions} into the URL
+     * so that the filter state survives browser refresh and can be bookmarked.
+     * No-op while restoring state from a URL to prevent feedback loops.
+     */
+    private void updateUrlParameters() {
+        if (isRestoringFromUrl) {
+            return;
+        }
+        Map<String, String> params = new HashMap<>();
+        if (productId != null) {
+            params.put("product", String.valueOf(productId));
+        }
+        // Always write the key — empty string signals "user intentionally cleared".
+        String versionIds = selectedVersions.stream()
+                .map(v -> String.valueOf(v.getId()))
+                .collect(Collectors.joining(","));
+        params.put("versions", versionIds);
+        getUI().ifPresent(ui -> ui.navigate(VersionListView.class, QueryParameters.simple(params)));
     }
 }

@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
@@ -54,10 +54,8 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Route(value = "sprint-list", layout = MainLayout.class)
 @PageTitle("Sprint List Page")
@@ -65,38 +63,42 @@ import java.util.Map;
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
 public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
-    public static final  String                 CREATE_SPRINT_BUTTON             = "create-sprint-button";
-    private static final String                 PARAM_AI_PANEL                   = "aiPanel";
-    private static final String                 ROUTE_KEY_PREFIX                 = "sprint-list:";
-    public static final  String                 SPRINT_AI_PANEL_BUTTON           = "sprint-ai-panel-button";
-    public static final  String                 SPRINT_GLOBAL_FILTER             = "sprint-global-filter";
-    public static final  String                 SPRINT_GRID                      = "sprint-grid";
-    public static final  String                 SPRINT_GRID_CONFIG_BUTTON_PREFIX = "sprint-grid-config-button-prefix-";
-    public static final  String                 SPRINT_GRID_DELETE_BUTTON_PREFIX = "sprint-grid-delete-button-prefix-";
-    public static final  String                 SPRINT_GRID_EDIT_BUTTON_PREFIX   = "sprint-grid-edit-button-prefix-";
-    public static final  String                 SPRINT_GRID_NAME_PREFIX          = "sprint-grid-name-";
-    public static final  String                 SPRINT_LIST_PAGE_TITLE           = "sprint-list-page-title";
-    public static final  String                 SPRINT_ROW_COUNTER               = "sprint-row-counter";
-    public static final  String                 SPRINT_SELECTOR                  = "sprint-selector";
-    private final        Button                 aiToggleButton;
-    private              List<Sprint>           allSprints                       = new ArrayList<>();
-    private final        SplitLayout            bodySplit;
-    private final        ChatAgentPanel         chatAgentPanel;
-    private final        Div                    chatPane;
-    private final        Clock                  clock;
-    private final        FeatureApi             featureApi;
-    private              Long                   featureId;
-    private              boolean                isRestoringFromUrl               = false;
-    private final        ProductApi             productApi;
-    private              Long                   productId;
-    private              Long                   requestedSprintId;
-    private final        ChatPanelSessionState  sessionState;
-    private final        SprintApi              sprintApi;
-    private final        ComboBox<Sprint>       sprintSelector;
-    private final        StableDiffusionService stableDiffusionService;
-    private final        UserApi                userApi;
-    private final        VersionApi             versionApi;
-    private              Long                   versionId;
+    public static final  String                      CREATE_SPRINT_BUTTON             = "create-sprint-button";
+    private static final String                      PARAM_AI_PANEL                   = "aiPanel";
+    private static final String                      ROUTE_KEY_PREFIX                 = "sprint-list:";
+    public static final  String                      SPRINT_AI_PANEL_BUTTON           = "sprint-ai-panel-button";
+    public static final  String                      SPRINT_GLOBAL_FILTER             = "sprint-global-filter";
+    public static final  String                      SPRINT_GRID                      = "sprint-grid";
+    public static final  String                      SPRINT_GRID_CONFIG_BUTTON_PREFIX = "sprint-grid-config-button-prefix-";
+    public static final  String                      SPRINT_GRID_DELETE_BUTTON_PREFIX = "sprint-grid-delete-button-prefix-";
+    public static final  String                      SPRINT_GRID_EDIT_BUTTON_PREFIX   = "sprint-grid-edit-button-prefix-";
+    public static final  String                      SPRINT_GRID_NAME_PREFIX          = "sprint-grid-name-";
+    public static final  String                      SPRINT_LIST_PAGE_TITLE           = "sprint-list-page-title";
+    public static final  String                      SPRINT_ROW_COUNTER               = "sprint-row-counter";
+    public static final  String                      SPRINT_SELECTOR                  = "sprint-selector";
+    private final        Button                      aiToggleButton;
+    private              List<Sprint>                allSprints                       = new ArrayList<>();
+    private final        SplitLayout                 bodySplit;
+    private final        ChatAgentPanel              chatAgentPanel;
+    private final        Div                         chatPane;
+    private final        Clock                       clock;
+    private final        FeatureApi                  featureApi;
+    private              Long                        featureId;
+    private final        Map<Long, Feature>          featureMap                       = new HashMap<>();
+    private              boolean                     isRestoringFromUrl               = false;
+    private final        ProductApi                  productApi;
+    private              Long                        productId;
+    private final        Map<Long, Product>          productMap                       = new HashMap<>();
+    private              String                      requestedSprintIds;
+    private              Set<Sprint>                 selectedSprints                  = new HashSet<>();
+    private final        ChatPanelSessionState       sessionState;
+    private final        SprintApi                   sprintApi;
+    private final        MultiSelectComboBox<Sprint> sprintSelector;
+    private final        StableDiffusionService      stableDiffusionService;
+    private final        UserApi                     userApi;
+    private final        VersionApi                  versionApi;
+    private              Long                        versionId;
+    private final        Map<Long, Version>          versionMap                       = new HashMap<>();
 
     public SprintListView(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi,
                           UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
@@ -117,14 +119,27 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 CREATE_SPRINT_BUTTON, () -> openSprintDialog(null),
                 SPRINT_ROW_COUNTER, SPRINT_GLOBAL_FILTER, aiFilterService, mapper, "Sprint"));
 
-        sprintSelector = new ComboBox<>();
+        sprintSelector = new MultiSelectComboBox<>();
         sprintSelector.setId(SPRINT_SELECTOR);
-        sprintSelector.setItemLabelGenerator(Sprint::getName);
+        // Sprint names are only unique within one feature, feature names within one version,
+        // and version names within one product — prefix with "Product / Version / Feature"
+        // to guarantee uniqueness across the entire server.
+        sprintSelector.setItemLabelGenerator(s -> {
+            Feature f = featureMap.get(s.getFeatureId());
+            if (f == null) return s.getName();
+            Version v = versionMap.get(f.getVersionId());
+            Product p = v != null ? productMap.get(v.getProductId()) : null;
+            String prefix = (p != null ? p.getName() + " / " : "")
+                    + (v != null ? v.getName() + " / " : "")
+                    + f.getName() + " / ";
+            return prefix + s.getName();
+        });
         sprintSelector.setPlaceholder("All sprints");
         sprintSelector.setClearButtonVisible(true);
-        sprintSelector.setWidth("220px");
+        sprintSelector.setWidth("380px");
         sprintSelector.addValueChangeListener(e -> {
             if (e.isFromClient()) {
+                selectedSprints = new HashSet<>(e.getValue());
                 updateUrlParameters();
                 applySprintFilter();
             }
@@ -173,15 +188,11 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         if (queryParameters.getParameters().containsKey("feature")) {
             this.featureId = Long.parseLong(queryParameters.getParameters().get("feature").getFirst());
         }
-        // Capture requested sprint from URL for initial ComboBox preselection.
+        // Capture requested sprints from URL for initial ComboBox preselection.
         // Cleared here so each navigation cycle starts fresh.
-        requestedSprintId = null;
-        if (queryParameters.getParameters().containsKey("sprint")) {
-            try {
-                requestedSprintId = Long.parseLong(queryParameters.getParameters().get("sprint").getFirst());
-            } catch (NumberFormatException e) {
-                log.warn("Invalid sprint ID in URL: {}", queryParameters.getParameters().get("sprint").getFirst());
-            }
+        requestedSprintIds = null;
+        if (queryParameters.getParameters().containsKey("sprints")) {
+            requestedSprintIds = queryParameters.getParameters().get("sprints").getFirst();
         }
 
         chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId + ":" + versionId + ":" + featureId);
@@ -251,16 +262,16 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     }
 
     /**
-     * Applies a data-provider filter so the grid shows only the sprint selected in
-     * the ComboBox.  When nothing is selected the filter is cleared and all sprints
-     * are shown.
+     * Applies a data-provider filter so the grid shows only the sprints selected in
+     * the MultiSelectComboBox.  When the selection is empty the filter is cleared
+     * and all sprints are shown.
      */
     private void applySprintFilter() {
-        Sprint selected = sprintSelector != null ? sprintSelector.getValue() : null;
-        if (selected == null) {
+        if (selectedSprints.isEmpty()) {
             getDataProvider().setFilter(null);
         } else {
-            getDataProvider().setFilter(sprint -> sprint.getId().equals(selected.getId()));
+            Set<Long> ids = selectedSprints.stream().map(Sprint::getId).collect(Collectors.toSet());
+            getDataProvider().setFilter(sprint -> ids.contains(sprint.getId()));
         }
     }
 
@@ -326,6 +337,39 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             avatarColumn.setWidth("48px");
             avatarColumn.setFlexGrow(0);
             avatarColumn.setHeader("");
+        }
+
+        {
+            //product
+            Grid.Column<Sprint> productColumn = getGrid().addColumn(sprint -> {
+                Feature f = featureMap.get(sprint.getFeatureId());
+                if (f == null) return "";
+                Version v = versionMap.get(f.getVersionId());
+                if (v == null) return "";
+                Product p = productMap.get(v.getProductId());
+                return p != null ? p.getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(productColumn, "Product", VaadinIcon.PACKAGE);
+        }
+
+        {
+            //version
+            Grid.Column<Sprint> versionColumn = getGrid().addColumn(sprint -> {
+                Feature f = featureMap.get(sprint.getFeatureId());
+                if (f == null) return "";
+                Version v = versionMap.get(f.getVersionId());
+                return v != null ? v.getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(versionColumn, "Version", VaadinIcon.COMPILE);
+        }
+
+        {
+            //feature
+            Grid.Column<Sprint> featureColumn = getGrid().addColumn(sprint -> {
+                Feature f = featureMap.get(sprint.getFeatureId());
+                return f != null ? f.getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(featureColumn, "Feature", VaadinIcon.LIGHTBULB);
         }
 
         {
@@ -442,7 +486,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
      * {@code null}):
      * <ol>
      *   <li>Sprint whose ID was supplied via the {@code sprint} URL parameter
-     *       ({@link #requestedSprintId}).</li>
+     *       ({@link #requestedSprintIds}).</li>
      *   <li>First sprint in the list.</li>
      * </ol>
      * On subsequent calls the existing ComboBox value is preserved by ID.
@@ -452,37 +496,67 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         List<Sprint> freshSprints = sprintApi.getAll();
         allSprints = freshSprints;
 
+        // Rebuild lookup maps so the Feature / Version / Product columns always reflect current data
+        featureMap.clear();
+        featureApi.getAll().forEach(f -> featureMap.put(f.getId(), f));
+
+        versionMap.clear();
+        versionApi.getAll().forEach(v -> versionMap.put(v.getId(), v));
+
+        productMap.clear();
+        productApi.getAll().forEach(p -> productMap.put(p.getId(), p));
+
         // Replace data-provider items
         getDataProvider().getItems().clear();
         getDataProvider().getItems().addAll(freshSprints);
 
         // Update ComboBox items while preserving / establishing selection
         if (sprintSelector != null) {
-            Sprint currentSelection = sprintSelector.getValue();
+            Set<Sprint> currentSelection = sprintSelector.getValue();
             isRestoringFromUrl = true;
             sprintSelector.setItems(freshSprints);
-            if (currentSelection != null) {
-                // Preserve the previously selected sprint (match by ID)
-                Long selectedId = currentSelection.getId();
-                freshSprints.stream()
-                        .filter(s -> s.getId().equals(selectedId))
-                        .findFirst()
-                        .ifPresent(sprintSelector::setValue);
-            } else if (requestedSprintId != null) {
-                // Initial selection from URL parameter
-                Long requested = requestedSprintId;
-                freshSprints.stream()
-                        .filter(s -> s.getId().equals(requested))
-                        .findFirst()
-                        .ifPresent(sprintSelector::setValue);
+            if (!currentSelection.isEmpty()) {
+                // Preserve the previously selected sprints (match by ID)
+                Set<Long> selectedIds = currentSelection.stream().map(Sprint::getId).collect(Collectors.toSet());
+                Set<Sprint> toRestore = freshSprints.stream()
+                        .filter(s -> selectedIds.contains(s.getId()))
+                        .collect(Collectors.toSet());
+                if (!toRestore.isEmpty()) {
+                    selectedSprints = toRestore;
+                    sprintSelector.setValue(toRestore);
+                }
+            } else if (requestedSprintIds != null) {
+                // URL contained a 'sprints' key — it is authoritative.
+                // Non-empty → restore those IDs; empty string → user explicitly cleared, leave empty.
+                if (!requestedSprintIds.isEmpty()) {
+                    Set<Sprint> toSelect = new HashSet<>();
+                    for (String idStr : requestedSprintIds.split(",")) {
+                        try {
+                            Long id = Long.parseLong(idStr.trim());
+                            freshSprints.stream().filter(s -> s.getId().equals(id)).findFirst().ifPresent(toSelect::add);
+                        } catch (NumberFormatException e) {
+                            log.warn("Invalid sprint ID in URL: {}", idStr);
+                        }
+                    }
+                    if (!toSelect.isEmpty()) {
+                        selectedSprints = toSelect;
+                        sprintSelector.setValue(toSelect);
+                    }
+                }
+                // else: empty string → leave selector empty (applySprintFilter will clear the filter)
+            } else if (featureId != null) {
+                // Default: preselect sprints belonging to the navigation-context feature
+                Set<Sprint> forFeature = freshSprints.stream()
+                        .filter(s -> featureId.equals(s.getFeatureId()))
+                        .collect(Collectors.toSet());
+                if (!forFeature.isEmpty()) {
+                    selectedSprints = forFeature;
+                    sprintSelector.setValue(selectedSprints);
+                }
             } else if (!freshSprints.isEmpty()) {
-                // Default: skip the Backlog and select the first real sprint; fall back to
-                // Backlog only when every sprint in the list is the Backlog.
-                Sprint defaultSprint = freshSprints.stream()
-                        .filter(s -> !DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s.getName()))
-                        .findFirst()
-                        .orElse(freshSprints.get(0));
-                sprintSelector.setValue(defaultSprint);
+                // No context ID given → select all sprints
+                selectedSprints = new HashSet<>(freshSprints);
+                sprintSelector.setValue(selectedSprints);
             }
             isRestoringFromUrl = false;
         }
@@ -520,10 +594,11 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         if (featureId != null) {
             params.put("feature", String.valueOf(featureId));
         }
-        Sprint selected = sprintSelector != null ? sprintSelector.getValue() : null;
-        if (selected != null) {
-            params.put("sprint", String.valueOf(selected.getId()));
-        }
+        // Always write the key — empty string signals "user intentionally cleared".
+        String sprintIds = selectedSprints.stream()
+                .map(s -> String.valueOf(s.getId()))
+                .collect(Collectors.joining(","));
+        params.put("sprints", sprintIds);
         getUI().ifPresent(ui -> ui.navigate(SprintListView.class, QueryParameters.simple(params)));
     }
 }

@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -48,41 +49,56 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.FeatureDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
+import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Route(value = "feature-list", layout = MainLayout.class)
 @PageTitle("Feature List Page")
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Restrict access to users with specific roles
+@Slf4j
 public class FeatureListView extends AbstractMainGrid<Feature> implements AfterNavigationObserver {
-    public static final  String                 CREATE_FEATURE_BUTTON_ID          = "create-feature-button";
-    public static final  String                 FEATURE_AI_PANEL_BUTTON           = "feature-ai-panel-button";
-    public static final  String                 FEATURE_GLOBAL_FILTER             = "feature-global-filter";
-    public static final  String                 FEATURE_GRID                      = "feature-grid";
-    public static final  String                 FEATURE_GRID_DELETE_BUTTON_PREFIX = "feature-grid-delete-button-prefix-";
-    public static final  String                 FEATURE_GRID_EDIT_BUTTON_PREFIX   = "feature-grid-edit-button-prefix-";
-    public static final  String                 FEATURE_GRID_NAME_PREFIX          = "feature-grid-name-";
-    public static final  String                 FEATURE_LIST_PAGE_TITLE           = "feature-list-page-title";
-    public static final  String                 FEATURE_ROW_COUNTER               = "feature-row-counter";
-    private static final String                 ROUTE_KEY_PREFIX                  = "feature-list:";
-    private final        Button                 aiToggleButton;
-    private final        SplitLayout            bodySplit;
-    private final        ChatAgentPanel         chatAgentPanel;
-    private final        Div                    chatPane;
-    private final        FeatureApi             featureApi;
-    private final        ProductApi             productApi;
-    private              Long                   productId;
-    private final        ChatPanelSessionState  sessionState;
-    private final        StableDiffusionService stableDiffusionService;
-    private final        UserApi                userApi;
-    private final        VersionApi             versionApi;
-    private              Long                   versionId;
+    public static final  String                       CREATE_FEATURE_BUTTON_ID          = "create-feature-button";
+    public static final  String                       FEATURE_AI_PANEL_BUTTON           = "feature-ai-panel-button";
+    public static final  String                       FEATURE_GLOBAL_FILTER             = "feature-global-filter";
+    public static final  String                       FEATURE_GRID                      = "feature-grid";
+    public static final  String                       FEATURE_GRID_DELETE_BUTTON_PREFIX = "feature-grid-delete-button-prefix-";
+    public static final  String                       FEATURE_GRID_EDIT_BUTTON_PREFIX   = "feature-grid-edit-button-prefix-";
+    public static final  String                       FEATURE_GRID_NAME_PREFIX          = "feature-grid-name-";
+    public static final  String                       FEATURE_LIST_PAGE_TITLE           = "feature-list-page-title";
+    public static final  String                       FEATURE_ROW_COUNTER               = "feature-row-counter";
+    public static final  String                       FEATURE_SELECTOR                  = "feature-selector";
+    private static final String                       ROUTE_KEY_PREFIX                  = "feature-list:";
+    private              List<Feature>                allFeatures                       = new ArrayList<>();
+    private final        Button                       aiToggleButton;
+    private final        SplitLayout                  bodySplit;
+    private final        ChatAgentPanel               chatAgentPanel;
+    private final        Div                          chatPane;
+    private final        FeatureApi                   featureApi;
+    private final        MultiSelectComboBox<Feature> featureSelector;
+    private              boolean                      isRestoringFromUrl                = false;
+    private final        ProductApi                   productApi;
+    private              Long                         productId;
+    private final        Map<Long, Product>           productMap                        = new HashMap<>();
+    private              String                       requestedFeatureIds;
+    private              Set<Feature>                 selectedFeatures                  = new HashSet<>();
+    private final        ChatPanelSessionState        sessionState;
+    private final        StableDiffusionService       stableDiffusionService;
+    private final        UserApi                      userApi;
+    private final        VersionApi                   versionApi;
+    private              Long                         versionId;
+    private final        Map<Long, Version>           versionMap                        = new HashMap<>();
 
     public FeatureListView(FeatureApi featureApi, ProductApi productApi, VersionApi versionApi, UserApi userApi,
                            Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
@@ -100,6 +116,30 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         add(createSmartHeader("Features", FEATURE_LIST_PAGE_TITLE, VaadinIcon.LIGHTBULB,
                 CREATE_FEATURE_BUTTON_ID, () -> openFeatureDialog(null),
                 FEATURE_ROW_COUNTER, FEATURE_GLOBAL_FILTER, aiFilterService, mapper, "Feature"));
+
+        featureSelector = new MultiSelectComboBox<>();
+        featureSelector.setId(FEATURE_SELECTOR);
+        // Feature names are only unique within one version, and version names are only unique
+        // within one product, so prefix with "Product / Version" to guarantee uniqueness.
+        featureSelector.setItemLabelGenerator(f -> {
+            Version v = versionMap.get(f.getVersionId());
+            Product p = v != null ? productMap.get(v.getProductId()) : null;
+            String prefix = (p != null ? p.getName() + " / " : "")
+                    + (v != null ? v.getName() + " / " : "");
+            return prefix + f.getName();
+        });
+        featureSelector.setPlaceholder("All features");
+        featureSelector.setClearButtonVisible(true);
+        featureSelector.setWidth("380px");
+        featureSelector.addValueChangeListener(e -> {
+            if (e.isFromClient()) {
+                selectedFeatures = new HashSet<>(e.getValue());
+                updateUrlParameters();
+                applyFeatureFilter();
+            }
+        });
+        // Insert before the smart-filter so the feature selector appears on the far left
+        getLastHeaderRightLayout().addComponentAtIndex(0, featureSelector);
 
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(FEATURE_AI_PANEL_BUTTON);
@@ -137,6 +177,12 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         }
         if (queryParameters.getParameters().containsKey("version")) {
             this.versionId = Long.parseLong(queryParameters.getParameters().get("version").getFirst());
+        }
+        // Capture requested features from URL for initial ComboBox preselection.
+        // Cleared here so each navigation cycle starts fresh.
+        requestedFeatureIds = null;
+        if (queryParameters.getParameters().containsKey("features")) {
+            requestedFeatureIds = queryParameters.getParameters().get("features").getFirst();
         }
 
         chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId + ":" + versionId);
@@ -213,6 +259,20 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         dialog.open();
     }
 
+    /**
+     * Applies a data-provider filter so the grid shows only the features selected in
+     * the MultiSelectComboBox.  When the selection is empty the filter is cleared
+     * and all features are shown.
+     */
+    private void applyFeatureFilter() {
+        if (selectedFeatures.isEmpty()) {
+            getDataProvider().setFilter(null);
+        } else {
+            Set<Long> ids = selectedFeatures.stream().map(Feature::getId).collect(Collectors.toSet());
+            getDataProvider().setFilter(feature -> ids.contains(feature.getId()));
+        }
+    }
+
     protected void initGrid(Clock clock) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
 
@@ -221,16 +281,11 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         // Add click listener to navigate to SprintListView with the selected feature ID
         getGrid().addItemClickListener(event -> {
             Feature selectedFeature = event.getItem();
-            // Create parameters map
             Map<String, String> params = new HashMap<>();
             params.put("product", String.valueOf(productId));
             params.put("version", String.valueOf(versionId));
             params.put("feature", String.valueOf(selectedFeature.getId()));
-            // Navigate with query parameters
-            UI.getCurrent().navigate(
-                    SprintListView.class,
-                    QueryParameters.simple(params)
-            );
+            UI.getCurrent().navigate(SprintListView.class, QueryParameters.simple(params));
         });
 
         {
@@ -259,6 +314,24 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
             avatarColumn.setWidth("48px");
             avatarColumn.setFlexGrow(0);
             avatarColumn.setHeader("");
+        }
+        {
+            // product
+            Grid.Column<Feature> productColumn = getGrid().addColumn(feature -> {
+                Version v = versionMap.get(feature.getVersionId());
+                if (v == null) return "";
+                Product p = productMap.get(v.getProductId());
+                return p != null ? p.getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(productColumn, "Product", VaadinIcon.PACKAGE);
+        }
+        {
+            // version
+            Grid.Column<Feature> versionColumn = getGrid().addColumn(feature -> {
+                Version v = versionMap.get(feature.getVersionId());
+                return v != null ? v.getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(versionColumn, "Version", VaadinIcon.COMPILE);
         }
         {
             // Add name column with filtering and sorting
@@ -293,7 +366,6 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                 this::openFeatureDialog,
                 this::confirmDelete
         );
-
     }
 
     private void openFeatureDialog(Feature feature) {
@@ -308,19 +380,101 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     }
 
     private void refreshGrid() {
-        // Clear existing items
-        getDataProvider().getItems().clear();
+        // Load all features and rebuild lookup maps
+        List<Feature> freshFeatures = featureApi.getAll();
+        allFeatures = freshFeatures;
 
-        // Fetch fresh data from API (with updated hashes)
-        getDataProvider().getItems().addAll((versionId != null) ? featureApi.getAll(versionId) : featureApi.getAll());
+        versionMap.clear();
+        versionApi.getAll().forEach(v -> versionMap.put(v.getId(), v));
+
+        productMap.clear();
+        productApi.getAll().forEach(p -> productMap.put(p.getId(), p));
+
+        // Replace data-provider items
+        getDataProvider().getItems().clear();
+        getDataProvider().getItems().addAll(freshFeatures);
+
+        // Update ComboBox items while preserving / establishing selection
+        if (featureSelector != null) {
+            Set<Feature> currentSelection = featureSelector.getValue();
+            isRestoringFromUrl = true;
+            featureSelector.setItems(freshFeatures);
+            if (!currentSelection.isEmpty()) {
+                // Preserve the previously selected features (match by ID)
+                Set<Long> selectedIds = currentSelection.stream().map(Feature::getId).collect(Collectors.toSet());
+                Set<Feature> toRestore = freshFeatures.stream()
+                        .filter(f -> selectedIds.contains(f.getId()))
+                        .collect(Collectors.toSet());
+                if (!toRestore.isEmpty()) {
+                    selectedFeatures = toRestore;
+                    featureSelector.setValue(toRestore);
+                }
+            } else if (requestedFeatureIds != null) {
+                // URL contained a 'features' key — it is authoritative.
+                // Non-empty → restore those IDs; empty string → user explicitly cleared, leave empty.
+                if (!requestedFeatureIds.isEmpty()) {
+                    Set<Feature> toSelect = new HashSet<>();
+                    for (String idStr : requestedFeatureIds.split(",")) {
+                        try {
+                            Long id = Long.parseLong(idStr.trim());
+                            freshFeatures.stream().filter(f -> f.getId().equals(id)).findFirst().ifPresent(toSelect::add);
+                        } catch (NumberFormatException e) {
+                            log.warn("Invalid feature ID in URL: {}", idStr);
+                        }
+                    }
+                    if (!toSelect.isEmpty()) {
+                        selectedFeatures = toSelect;
+                        featureSelector.setValue(toSelect);
+                    }
+                }
+                // else: empty string → leave selector empty (applyFeatureFilter will clear the filter)
+            } else if (versionId != null) {
+                // Default: preselect features belonging to the navigation-context version
+                Set<Feature> forVersion = freshFeatures.stream()
+                        .filter(f -> versionId.equals(f.getVersionId()))
+                        .collect(Collectors.toSet());
+                if (!forVersion.isEmpty()) {
+                    selectedFeatures = forVersion;
+                    featureSelector.setValue(forVersion);
+                }
+            } else if (!freshFeatures.isEmpty()) {
+                // No context ID given → select all features
+                selectedFeatures = new HashSet<>(freshFeatures);
+                featureSelector.setValue(selectedFeatures);
+            }
+            isRestoringFromUrl = false;
+        }
+
+        // Apply ComboBox-driven filter
+        applyFeatureFilter();
 
         // Force complete refresh of the grid
         getDataProvider().refreshAll();
-
-        // Force the grid to re-render
         getGrid().getDataProvider().refreshAll();
-
-        // Push UI updates if in push mode
         getUI().ifPresent(ui -> ui.push());
+    }
+
+    /**
+     * Pushes the current {@code product}, {@code version}, and selected {@code features}
+     * into the URL so that the filter state survives browser refresh and can be
+     * bookmarked.  No-op while restoring state from a URL to prevent feedback loops.
+     */
+    private void updateUrlParameters() {
+        if (isRestoringFromUrl) {
+            return;
+        }
+        Map<String, String> params = new HashMap<>();
+        if (productId != null) {
+            params.put("product", String.valueOf(productId));
+        }
+        if (versionId != null) {
+            params.put("version", String.valueOf(versionId));
+        }
+        // Always write the key — empty string signals "user intentionally cleared".
+        String featureIds = selectedFeatures.stream()
+                .map(f -> String.valueOf(f.getId()))
+                .collect(Collectors.joining(","));
+        params.put("features", featureIds);
+        getUI().ifPresent(ui -> ui.navigate(FeatureListView.class, QueryParameters.simple(params)));
     }
 }
