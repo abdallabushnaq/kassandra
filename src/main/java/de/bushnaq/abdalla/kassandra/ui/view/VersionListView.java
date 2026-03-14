@@ -76,7 +76,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     public static final  String                      VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
     public static final  String                      VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
     public static final  String                      VERSION_ROW_COUNTER               = "version-row-counter";
-    public static final  String                      VERSION_SELECTOR                  = "version-selector";
+    public static final  String                      PRODUCT_SELECTOR                  = "product-selector";
     private              List<Version>               allVersions                       = new ArrayList<>();
     private final        AiAssistantService          aiAssistantService;
     private final        AiFilterService             aiFilterService;
@@ -90,12 +90,12 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     private final        ProductApi                  productApi;
     private              Long                        productId;
     private final        Map<Long, Product>          productMap                        = new HashMap<>();
-    private              String                      requestedVersionIds;
-    private              Set<Version>                selectedVersions                  = new HashSet<>();
+    private              String                      requestedProductIds;
+    private              Set<Product>                selectedProducts                  = new HashSet<>();
     private final        ChatPanelSessionState       sessionState;
     private final        UserApi                     userApi;
     private final        VersionApi                  versionApi;
-    private              MultiSelectComboBox<Version> versionSelector;
+    private              MultiSelectComboBox<Product> productSelector;
 
     public VersionListView(VersionApi versionApi, ProductApi productApi, UserApi userApi, Clock clock,
                            AiFilterService aiFilterService, JsonMapper mapper,
@@ -143,11 +143,11 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         if (queryParameters.getParameters().containsKey("product")) {
             this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
         }
-        // Capture requested versions from URL for initial ComboBox preselection.
+        // Capture requested products from URL for initial ComboBox preselection.
         // Cleared here so each navigation cycle starts fresh.
-        requestedVersionIds = null;
-        if (queryParameters.getParameters().containsKey("versions")) {
-            requestedVersionIds = queryParameters.getParameters().get("versions").getFirst();
+        requestedProductIds = null;
+        if (queryParameters.getParameters().containsKey("products")) {
+            requestedProductIds = queryParameters.getParameters().get("products").getFirst();
         }
 
         chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId);
@@ -184,26 +184,22 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                                 aiFilterService, mapper, "Version");
                         add(headerComponent);
 
-                        // Create a fresh version selector and insert it at the far left of the header
-                        versionSelector = new MultiSelectComboBox<>();
-                        versionSelector.setId(VERSION_SELECTOR);
-                        // Version names are only unique within one product, so prefix with the product name
-                        // to avoid visual deduplication when two products share a version name (e.g. "1.0.0").
-                        versionSelector.setItemLabelGenerator(v -> {
-                            Product p = productMap.get(v.getProductId());
-                            return p != null ? p.getName() + " / " + v.getName() : v.getName();
-                        });
-                        versionSelector.setPlaceholder("All versions");
-                        versionSelector.setClearButtonVisible(true);
-                        versionSelector.setWidth("280px");
-                        versionSelector.addValueChangeListener(e -> {
+                        // Create a fresh product selector and insert it at the far left of the header
+                        productSelector = new MultiSelectComboBox<>();
+                        productSelector.setId(PRODUCT_SELECTOR);
+                        // Product names are unique server-wide — no prefix needed.
+                        productSelector.setItemLabelGenerator(Product::getName);
+                        productSelector.setPlaceholder("All products");
+                        productSelector.setClearButtonVisible(true);
+                        productSelector.setWidth("220px");
+                        productSelector.addValueChangeListener(e -> {
                             if (e.isFromClient()) {
-                                selectedVersions = new HashSet<>(e.getValue());
+                                selectedProducts = new HashSet<>(e.getValue());
                                 updateUrlParameters();
                                 applyVersionFilter();
                             }
                         });
-                        getLastHeaderRightLayout().addComponentAtIndex(0, versionSelector);
+                        getLastHeaderRightLayout().addComponentAtIndex(0, productSelector);
 
                         addHeaderButton(aiToggleButton);
                         add(bodySplit);
@@ -376,16 +372,16 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     }
 
     /**
-     * Applies a data-provider filter so the grid shows only the versions selected in
-     * the MultiSelectComboBox.  When the selection is empty the filter is cleared
-     * and all versions are shown.
+     * Applies a data-provider filter so the grid shows only versions whose product is
+     * selected in the MultiSelectComboBox.  When the selection is empty the filter is
+     * cleared and all versions are shown.
      */
     private void applyVersionFilter() {
-        if (selectedVersions.isEmpty()) {
-            getDataProvider().setFilter(null);
+        if (!selectedProducts.isEmpty()) {
+            Set<Long> productIds = selectedProducts.stream().map(Product::getId).collect(Collectors.toSet());
+            getDataProvider().setFilter(v -> productIds.contains(v.getProductId()));
         } else {
-            Set<Long> ids = selectedVersions.stream().map(Version::getId).collect(Collectors.toSet());
-            getDataProvider().setFilter(version -> ids.contains(version.getId()));
+            getDataProvider().setFilter(null);
         }
     }
 
@@ -394,60 +390,61 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         List<Version> freshVersions = versionApi.getAll();
         allVersions = freshVersions;
 
+        List<Product> freshProducts = productApi.getAll();
         productMap.clear();
-        productApi.getAll().forEach(p -> productMap.put(p.getId(), p));
+        freshProducts.forEach(p -> productMap.put(p.getId(), p));
 
         // Replace data-provider items
         getDataProvider().getItems().clear();
         getDataProvider().getItems().addAll(freshVersions);
 
         // Update ComboBox items while preserving / establishing selection
-        if (versionSelector != null) {
-            Set<Version> currentSelection = versionSelector.getValue();
+        if (productSelector != null) {
+            Set<Product> currentSelection = productSelector.getValue();
             isRestoringFromUrl = true;
-            versionSelector.setItems(freshVersions);
+            productSelector.setItems(freshProducts);
             if (!currentSelection.isEmpty()) {
-                // Preserve the previously selected versions (match by ID)
-                Set<Long> selectedIds = currentSelection.stream().map(Version::getId).collect(Collectors.toSet());
-                Set<Version> toRestore = freshVersions.stream()
-                        .filter(v -> selectedIds.contains(v.getId()))
+                // Preserve the previously selected products (match by ID)
+                Set<Long> selectedIds = currentSelection.stream().map(Product::getId).collect(Collectors.toSet());
+                Set<Product> toRestore = freshProducts.stream()
+                        .filter(p -> selectedIds.contains(p.getId()))
                         .collect(Collectors.toSet());
                 if (!toRestore.isEmpty()) {
-                    selectedVersions = toRestore;
-                    versionSelector.setValue(toRestore);
+                    selectedProducts = toRestore;
+                    productSelector.setValue(toRestore);
                 }
-            } else if (requestedVersionIds != null) {
-                // URL contained a 'versions' key — it is authoritative.
+            } else if (requestedProductIds != null) {
+                // URL contained a 'products' key — it is authoritative.
                 // Non-empty → restore those IDs; empty string → user explicitly cleared, leave empty.
-                if (!requestedVersionIds.isEmpty()) {
-                    Set<Version> toSelect = new HashSet<>();
-                    for (String idStr : requestedVersionIds.split(",")) {
+                if (!requestedProductIds.isEmpty()) {
+                    Set<Product> toSelect = new HashSet<>();
+                    for (String idStr : requestedProductIds.split(",")) {
                         try {
                             Long id = Long.parseLong(idStr.trim());
-                            freshVersions.stream().filter(v -> v.getId().equals(id)).findFirst().ifPresent(toSelect::add);
+                            freshProducts.stream().filter(p -> p.getId().equals(id)).findFirst().ifPresent(toSelect::add);
                         } catch (NumberFormatException e) {
-                            log.warn("Invalid version ID in URL: {}", idStr);
+                            log.warn("Invalid product ID in URL: {}", idStr);
                         }
                     }
                     if (!toSelect.isEmpty()) {
-                        selectedVersions = toSelect;
-                        versionSelector.setValue(toSelect);
+                        selectedProducts = toSelect;
+                        productSelector.setValue(toSelect);
                     }
                 }
                 // else: empty string → leave selector empty (applyVersionFilter will clear the filter)
             } else if (productId != null) {
-                // Default: preselect versions belonging to the navigation-context product
-                Set<Version> forProduct = freshVersions.stream()
-                        .filter(v -> productId.equals(v.getProductId()))
-                        .collect(Collectors.toSet());
-                if (!forProduct.isEmpty()) {
-                    selectedVersions = forProduct;
-                    versionSelector.setValue(forProduct);
-                }
-            } else if (!freshVersions.isEmpty()) {
-                // No context ID given → select all versions
-                selectedVersions = new HashSet<>(freshVersions);
-                versionSelector.setValue(selectedVersions);
+                // Default: preselect the navigation-context product
+                freshProducts.stream()
+                        .filter(p -> productId.equals(p.getId()))
+                        .findFirst()
+                        .ifPresent(p -> {
+                            selectedProducts = new HashSet<>(Set.of(p));
+                            productSelector.setValue(selectedProducts);
+                        });
+            } else if (!freshProducts.isEmpty()) {
+                // No context ID given → select all products
+                selectedProducts = new HashSet<>(freshProducts);
+                productSelector.setValue(selectedProducts);
             }
             isRestoringFromUrl = false;
         }
@@ -472,10 +469,10 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
             params.put("product", String.valueOf(productId));
         }
         // Always write the key — empty string signals "user intentionally cleared".
-        String versionIds = selectedVersions.stream()
-                .map(v -> String.valueOf(v.getId()))
+        String productIds = selectedProducts.stream()
+                .map(p -> String.valueOf(p.getId()))
                 .collect(Collectors.joining(","));
-        params.put("versions", versionIds);
+        params.put("products", productIds);
         getUI().ifPresent(ui -> ui.navigate(VersionListView.class, QueryParameters.simple(params)));
     }
 }

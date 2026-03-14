@@ -55,12 +55,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Route(value = "feature-list", layout = MainLayout.class)
@@ -78,27 +73,27 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     public static final  String                       FEATURE_GRID_NAME_PREFIX          = "feature-grid-name-";
     public static final  String                       FEATURE_LIST_PAGE_TITLE           = "feature-list-page-title";
     public static final  String                       FEATURE_ROW_COUNTER               = "feature-row-counter";
-    public static final  String                       FEATURE_SELECTOR                  = "feature-selector";
     private static final String                       ROUTE_KEY_PREFIX                  = "feature-list:";
-    private              List<Feature>                allFeatures                       = new ArrayList<>();
+    public static final  String                       VERSION_SELECTOR                  = "version-selector";
     private final        Button                       aiToggleButton;
+    private              List<Feature>                allFeatures                       = new ArrayList<>();
     private final        SplitLayout                  bodySplit;
     private final        ChatAgentPanel               chatAgentPanel;
     private final        Div                          chatPane;
     private final        FeatureApi                   featureApi;
-    private final        MultiSelectComboBox<Feature> featureSelector;
     private              boolean                      isRestoringFromUrl                = false;
     private final        ProductApi                   productApi;
     private              Long                         productId;
     private final        Map<Long, Product>           productMap                        = new HashMap<>();
-    private              String                       requestedFeatureIds;
-    private              Set<Feature>                 selectedFeatures                  = new HashSet<>();
+    private              String                       requestedVersionIds;
+    private              Set<Version>                 selectedVersions                  = new HashSet<>();
     private final        ChatPanelSessionState        sessionState;
     private final        StableDiffusionService       stableDiffusionService;
     private final        UserApi                      userApi;
     private final        VersionApi                   versionApi;
     private              Long                         versionId;
     private final        Map<Long, Version>           versionMap                        = new HashMap<>();
+    private final        MultiSelectComboBox<Version> versionSelector;
 
     public FeatureListView(FeatureApi featureApi, ProductApi productApi, VersionApi versionApi, UserApi userApi,
                            Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
@@ -117,29 +112,25 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                 CREATE_FEATURE_BUTTON_ID, () -> openFeatureDialog(null),
                 FEATURE_ROW_COUNTER, FEATURE_GLOBAL_FILTER, aiFilterService, mapper, "Feature"));
 
-        featureSelector = new MultiSelectComboBox<>();
-        featureSelector.setId(FEATURE_SELECTOR);
-        // Feature names are only unique within one version, and version names are only unique
-        // within one product, so prefix with "Product / Version" to guarantee uniqueness.
-        featureSelector.setItemLabelGenerator(f -> {
-            Version v = versionMap.get(f.getVersionId());
-            Product p = v != null ? productMap.get(v.getProductId()) : null;
-            String prefix = (p != null ? p.getName() + " / " : "")
-                    + (v != null ? v.getName() + " / " : "");
-            return prefix + f.getName();
+        versionSelector = new MultiSelectComboBox<>();
+        versionSelector.setId(VERSION_SELECTOR);
+        // Version names are only unique within one product — prefix with product name.
+        versionSelector.setItemLabelGenerator(v -> {
+            Product p = productMap.get(v.getProductId());
+            return p != null ? p.getName() + " / " + v.getName() : v.getName();
         });
-        featureSelector.setPlaceholder("All features");
-        featureSelector.setClearButtonVisible(true);
-        featureSelector.setWidth("380px");
-        featureSelector.addValueChangeListener(e -> {
+        versionSelector.setPlaceholder("All versions");
+        versionSelector.setClearButtonVisible(true);
+        versionSelector.setWidth("280px");
+        versionSelector.addValueChangeListener(e -> {
             if (e.isFromClient()) {
-                selectedFeatures = new HashSet<>(e.getValue());
+                selectedVersions = new HashSet<>(e.getValue());
                 updateUrlParameters();
                 applyFeatureFilter();
             }
         });
-        // Insert before the smart-filter so the feature selector appears on the far left
-        getLastHeaderRightLayout().addComponentAtIndex(0, featureSelector);
+        // Insert before the smart-filter so the version selector appears on the far left
+        getLastHeaderRightLayout().addComponentAtIndex(0, versionSelector);
 
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(FEATURE_AI_PANEL_BUTTON);
@@ -178,11 +169,11 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         if (queryParameters.getParameters().containsKey("version")) {
             this.versionId = Long.parseLong(queryParameters.getParameters().get("version").getFirst());
         }
-        // Capture requested features from URL for initial ComboBox preselection.
+        // Capture requested versions from URL for initial ComboBox preselection.
         // Cleared here so each navigation cycle starts fresh.
-        requestedFeatureIds = null;
-        if (queryParameters.getParameters().containsKey("features")) {
-            requestedFeatureIds = queryParameters.getParameters().get("features").getFirst();
+        requestedVersionIds = null;
+        if (queryParameters.getParameters().containsKey("versions")) {
+            requestedVersionIds = queryParameters.getParameters().get("versions").getFirst();
         }
 
         chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId + ":" + versionId);
@@ -243,6 +234,19 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         }
     }
 
+    /**
+     * Applies a data-provider filter so the grid shows only features whose version is
+     * selected in the MultiSelectComboBox.  When the selection is empty the filter is
+     * cleared and all features are shown.
+     */
+    private void applyFeatureFilter() {
+        if (!selectedVersions.isEmpty()) {
+            Set<Long> versionIds = selectedVersions.stream().map(Version::getId).collect(Collectors.toSet());
+            getDataProvider().setFilter(f -> versionIds.contains(f.getVersionId()));
+        } else {
+            getDataProvider().setFilter(null);
+        }
+    }
 
     private void confirmDelete(Feature feature) {
         String message = "Are you sure you want to delete feature \"" + feature.getName() + "\"?";
@@ -259,20 +263,6 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         dialog.open();
     }
 
-    /**
-     * Applies a data-provider filter so the grid shows only the features selected in
-     * the MultiSelectComboBox.  When the selection is empty the filter is cleared
-     * and all features are shown.
-     */
-    private void applyFeatureFilter() {
-        if (selectedFeatures.isEmpty()) {
-            getDataProvider().setFilter(null);
-        } else {
-            Set<Long> ids = selectedFeatures.stream().map(Feature::getId).collect(Collectors.toSet());
-            getDataProvider().setFilter(feature -> ids.contains(feature.getId()));
-        }
-    }
-
     protected void initGrid(Clock clock) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
 
@@ -280,8 +270,8 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
 
         // Add click listener to navigate to SprintListView with the selected feature ID
         getGrid().addItemClickListener(event -> {
-            Feature selectedFeature = event.getItem();
-            Map<String, String> params = new HashMap<>();
+            Feature             selectedFeature = event.getItem();
+            Map<String, String> params          = new HashMap<>();
             params.put("product", String.valueOf(productId));
             params.put("version", String.valueOf(versionId));
             params.put("feature", String.valueOf(selectedFeature.getId()));
@@ -291,6 +281,24 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         {
             Grid.Column<Feature> keyColumn = getGrid().addColumn(Feature::getKey);
             VaadinUtil.addSimpleHeader(keyColumn, "Key", VaadinIcon.KEY);
+        }
+        {
+            // product
+            Grid.Column<Feature> productColumn = getGrid().addColumn(feature -> {
+                Version v = versionMap.get(feature.getVersionId());
+                if (v == null) return "";
+                Product p = productMap.get(v.getProductId());
+                return p != null ? p.getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(productColumn, "Product", VaadinIcon.PACKAGE);
+        }
+        {
+            // version
+            Grid.Column<Feature> versionColumn = getGrid().addColumn(feature -> {
+                Version v = versionMap.get(feature.getVersionId());
+                return v != null ? v.getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(versionColumn, "Version", VaadinIcon.COMPILE);
         }
         {
             // Add avatar image column
@@ -314,24 +322,6 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
             avatarColumn.setWidth("48px");
             avatarColumn.setFlexGrow(0);
             avatarColumn.setHeader("");
-        }
-        {
-            // product
-            Grid.Column<Feature> productColumn = getGrid().addColumn(feature -> {
-                Version v = versionMap.get(feature.getVersionId());
-                if (v == null) return "";
-                Product p = productMap.get(v.getProductId());
-                return p != null ? p.getName() : "";
-            });
-            VaadinUtil.addSimpleHeader(productColumn, "Product", VaadinIcon.PACKAGE);
-        }
-        {
-            // version
-            Grid.Column<Feature> versionColumn = getGrid().addColumn(feature -> {
-                Version v = versionMap.get(feature.getVersionId());
-                return v != null ? v.getName() : "";
-            });
-            VaadinUtil.addSimpleHeader(versionColumn, "Version", VaadinIcon.COMPILE);
         }
         {
             // Add name column with filtering and sorting
@@ -395,52 +385,49 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         getDataProvider().getItems().addAll(freshFeatures);
 
         // Update ComboBox items while preserving / establishing selection
-        if (featureSelector != null) {
-            Set<Feature> currentSelection = featureSelector.getValue();
+        if (versionSelector != null) {
+            Set<Version> currentSelection = versionSelector.getValue();
             isRestoringFromUrl = true;
-            featureSelector.setItems(freshFeatures);
+            versionSelector.setItems(new ArrayList<>(versionMap.values()));
             if (!currentSelection.isEmpty()) {
-                // Preserve the previously selected features (match by ID)
-                Set<Long> selectedIds = currentSelection.stream().map(Feature::getId).collect(Collectors.toSet());
-                Set<Feature> toRestore = freshFeatures.stream()
-                        .filter(f -> selectedIds.contains(f.getId()))
+                // Preserve the previously selected versions (match by ID)
+                Set<Long> selectedIds = currentSelection.stream().map(Version::getId).collect(Collectors.toSet());
+                Set<Version> toRestore = versionMap.values().stream()
+                        .filter(v -> selectedIds.contains(v.getId()))
                         .collect(Collectors.toSet());
                 if (!toRestore.isEmpty()) {
-                    selectedFeatures = toRestore;
-                    featureSelector.setValue(toRestore);
+                    selectedVersions = toRestore;
+                    versionSelector.setValue(toRestore);
                 }
-            } else if (requestedFeatureIds != null) {
-                // URL contained a 'features' key — it is authoritative.
+            } else if (requestedVersionIds != null) {
+                // URL contained a 'versions' key — it is authoritative.
                 // Non-empty → restore those IDs; empty string → user explicitly cleared, leave empty.
-                if (!requestedFeatureIds.isEmpty()) {
-                    Set<Feature> toSelect = new HashSet<>();
-                    for (String idStr : requestedFeatureIds.split(",")) {
+                if (!requestedVersionIds.isEmpty()) {
+                    Set<Version> toSelect = new HashSet<>();
+                    for (String idStr : requestedVersionIds.split(",")) {
                         try {
                             Long id = Long.parseLong(idStr.trim());
-                            freshFeatures.stream().filter(f -> f.getId().equals(id)).findFirst().ifPresent(toSelect::add);
+                            Optional.ofNullable(versionMap.get(id)).ifPresent(toSelect::add);
                         } catch (NumberFormatException e) {
-                            log.warn("Invalid feature ID in URL: {}", idStr);
+                            log.warn("Invalid version ID in URL: {}", idStr);
                         }
                     }
                     if (!toSelect.isEmpty()) {
-                        selectedFeatures = toSelect;
-                        featureSelector.setValue(toSelect);
+                        selectedVersions = toSelect;
+                        versionSelector.setValue(toSelect);
                     }
                 }
                 // else: empty string → leave selector empty (applyFeatureFilter will clear the filter)
             } else if (versionId != null) {
-                // Default: preselect features belonging to the navigation-context version
-                Set<Feature> forVersion = freshFeatures.stream()
-                        .filter(f -> versionId.equals(f.getVersionId()))
-                        .collect(Collectors.toSet());
-                if (!forVersion.isEmpty()) {
-                    selectedFeatures = forVersion;
-                    featureSelector.setValue(forVersion);
-                }
-            } else if (!freshFeatures.isEmpty()) {
-                // No context ID given → select all features
-                selectedFeatures = new HashSet<>(freshFeatures);
-                featureSelector.setValue(selectedFeatures);
+                // Default: preselect the navigation-context version
+                Optional.ofNullable(versionMap.get(versionId)).ifPresent(v -> {
+                    selectedVersions = new HashSet<>(Set.of(v));
+                    versionSelector.setValue(selectedVersions);
+                });
+            } else if (!versionMap.isEmpty()) {
+                // No context ID given → select all versions
+                selectedVersions = new HashSet<>(versionMap.values());
+                versionSelector.setValue(selectedVersions);
             }
             isRestoringFromUrl = false;
         }
@@ -455,7 +442,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     }
 
     /**
-     * Pushes the current {@code product}, {@code version}, and selected {@code features}
+     * Pushes the current {@code product}, {@code version}, and selected {@code versions}
      * into the URL so that the filter state survives browser refresh and can be
      * bookmarked.  No-op while restoring state from a URL to prevent feedback loops.
      */
@@ -471,10 +458,10 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
             params.put("version", String.valueOf(versionId));
         }
         // Always write the key — empty string signals "user intentionally cleared".
-        String featureIds = selectedFeatures.stream()
-                .map(f -> String.valueOf(f.getId()))
+        String versionIds = selectedVersions.stream()
+                .map(v -> String.valueOf(v.getId()))
                 .collect(Collectors.joining(","));
-        params.put("features", featureIds);
+        params.put("versions", versionIds);
         getUI().ifPresent(ui -> ui.navigate(FeatureListView.class, QueryParameters.simple(params)));
     }
 }

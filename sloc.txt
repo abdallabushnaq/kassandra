@@ -431,7 +431,7 @@
 | kassandra.ui.view                    | AvailabilityListView.java                                | src      |       28 |       11 |       48 |      207 |      294 |
 | kassandra.ui.view                    | AvailabilityListViewTest.java                            | src      |       15 |       80 |       26 |      103 |      224 |
 | kassandra.ui.view                    | Backlog.java                                             | src      |      182 |      106 |      159 |     1005 |     1452 |
-| kassandra.ui.view                    | FeatureListView.java                                     | src      |       40 |       10 |       40 |      375 |      465 |
+| kassandra.ui.view                    | FeatureListView.java                                     | src      |       40 |       10 |       45 |      379 |      474 |
 | kassandra.ui.view                    | FeatureListViewTest.java                                 | src      |       14 |       81 |       23 |      107 |      225 |
 | kassandra.ui.view                    | GridRowReordering.java                                   | src      |       18 |        0 |        3 |       62 |       83 |
 | kassandra.ui.view                    | GroupingMode.java                                        | src      |        6 |       12 |       16 |       12 |       46 |
@@ -446,7 +446,7 @@
 | kassandra.ui.view                    | OffDayListViewTest.java                                  | src      |       23 |       77 |       35 |      142 |      277 |
 | kassandra.ui.view                    | ProductListView.java                                     | src      |       41 |        6 |       23 |      321 |      391 |
 | kassandra.ui.view                    | ProductListViewTest.java                                 | src      |       35 |      119 |       24 |      219 |      397 |
-| kassandra.ui.view                    | SprintListView.java                                      | src      |       57 |       25 |       52 |      451 |      585 |
+| kassandra.ui.view                    | SprintListView.java                                      | src      |       55 |       24 |       55 |      462 |      596 |
 | kassandra.ui.view                    | SprintListViewTest.java                                  | src      |       15 |       82 |       24 |      113 |      234 |
 | kassandra.ui.view                    | SprintQualityBoard.java                                  | src      |       50 |        0 |       47 |      370 |      467 |
 | kassandra.ui.view                    | SprintQualityBoardTest.java                              | src      |       12 |        0 |       18 |      115 |      145 |
@@ -458,7 +458,7 @@
 | kassandra.ui.view                    | UserListViewTest.java                                    | src      |       11 |       63 |       16 |       87 |      177 |
 | kassandra.ui.view                    | UserProfileView.java                                     | src      |       42 |        6 |       70 |      310 |      428 |
 | kassandra.ui.view                    | UserProfileViewTest.java                                 | src      |       11 |       30 |       20 |       67 |      128 |
-| kassandra.ui.view                    | VersionListView.java                                     | src      |       46 |       13 |       40 |      370 |      469 |
+| kassandra.ui.view                    | VersionListView.java                                     | src      |       46 |       13 |       45 |      374 |      478 |
 | kassandra.ui.view                    | VersionListViewTest.java                                 | src      |       13 |       80 |       20 |      101 |      214 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui                         | Demo.java                                                | src      |       15 |        3 |       79 |       87 |      184 |
@@ -541,5 +541,5 @@
 | util                                 | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                                 | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 61 package(s)                        | 479 file(s)                                              | java     |    10554 |     8467 |    13785 |    55106 |    87912 |
+| 61 package(s)                        | 479 file(s)                                              | java     |    10552 |     8466 |    13798 |    55125 |    87941 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
