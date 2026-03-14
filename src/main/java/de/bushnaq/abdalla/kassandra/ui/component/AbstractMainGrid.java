@@ -104,6 +104,23 @@ public abstract class AbstractMainGrid<T> extends Main {
     }
 
     /**
+     * Inserts a component into the right side of the most recently created smart
+     * header, placed immediately before the create button (the last component added
+     * by {@code createSmartHeader}).  Use this to add filter widgets such as a
+     * {@link com.vaadin.flow.component.combobox.ComboBox} next to the existing
+     * search field.  Call this immediately after {@code createSmartHeader(...)}.
+     *
+     * @param component the component to insert
+     */
+    public void addHeaderComponent(Component component) {
+        if (lastHeaderRightLayout != null) {
+            int count = lastHeaderRightLayout.getComponentCount();
+            // Insert before the last component (the create button)
+            lastHeaderRightLayout.addComponentAtIndex(Math.max(0, count - 1), component);
+        }
+    }
+
+    /**
      * Creates a standardized header layout with a title, icon, and create button.
      * If a grid is provided, also includes a row counter showing filtered/total rows.
      *
