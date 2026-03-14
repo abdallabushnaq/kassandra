@@ -105,8 +105,9 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
 
     @BeforeAll
     static void beforeAll() {
-        video.setTitle("Products, Versions, Features and Sprints");
         video.setVersion(1);
+        video.setTitle("Products, Versions, Features and Sprints");
+        video.setDescription("Good morning, my name is Christopher Paul. I am the product manager of Kassandra and I will be demonstrating the latest alpha version of the Kassandra project server to you today.");
     }
 
 
@@ -262,9 +263,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.highlight(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD);
-        paul.narrate(NORMAL, "I'll describe an avatar that will represent our feature.");
-        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Icon representing the feature '" + featureName + "', minimalist, 3D design, white background");
-        seleniumHandler.wait(500);
+        paul.narrate(NORMAL, "Lets again use the default prompt.");
 
         //---------------------------------------------------------------------------------------
         // Generate Image
@@ -279,7 +278,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
 
         paul.narrate(NORMAL, "OK! The AI has generated an avatar based on my description. I can see the preview here in the dialog.");
         paul.narrate(NORMAL, "If I want to refine the image, I can use the Update button. This uses the current image as a starting point and applies my prompt to modify it. Let me adjust my description slightly.");
-        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Icon representing the feature '" + featureName + "' including cogs, minimalist, 3D design, white background");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Golden Icon representing the feature '" + featureName + "' including several cogs of a complex machine, 3D design, white background");
         seleniumHandler.wait(500);
 
         paul.narrateAsync(NORMAL, "I'll click Update to refine the avatar with green tones instead.");
@@ -334,9 +333,9 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.highlight(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD);
-        paul.narrate(NORMAL, "I'll describe an avatar that will represent our feature.");
-        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Icon representing the sprint '" + sprintName + "', minimalist, 3D design, white background");
-        seleniumHandler.wait(500);
+        paul.narrate(NORMAL, "lets use the default prompt.");
+//        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Icon representing the sprint '" + sprintName + "', minimalist, 3D design, white background");
+//        seleniumHandler.wait(500);
 
         //---------------------------------------------------------------------------------------
         // Generate Image

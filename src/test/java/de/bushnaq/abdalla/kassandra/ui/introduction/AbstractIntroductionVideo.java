@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
@@ -25,8 +27,14 @@ import de.bushnaq.abdalla.kassandra.ui.view.Kassandra;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Abstract base class for introduction video tests that interact with the Kassandra AI chat panel.
@@ -69,6 +77,26 @@ public abstract class AbstractIntroductionVideo extends AbstractKeycloakUiTestUt
         }
     }
 
+    private void createSideCar() {
+        String videoName   = prepareVideoName(video.getTitle() + " " + InstructionVideo.VIDEO_SUBTITLE + "-" + video.getVersion());
+        Path   sideCarPath = Paths.get("test-recordings", InstructionVideo.TARGET_FOLDER, videoName + ".json");
+        try {
+            Files.createDirectories(sideCarPath.getParent());
+            Map<String, Object> metadata = new LinkedHashMap<>();
+            metadata.put("title", video.getTitle());
+            metadata.put("description", video.getDescription());
+            metadata.put("tags", video.getTags());
+            metadata.put("categoryId", video.getCategoryId());
+            metadata.put("privacyStatus", video.getPrivacyStatus());
+            metadata.put("playlistId", video.getPlaylistId());
+            new ObjectMapper()
+                    .enable(SerializationFeature.INDENT_OUTPUT)
+                    .writeValue(sideCarPath.toFile(), metadata);
+            log.debug("Created sidecar file: {}", sideCarPath.toAbsolutePath());
+        } catch (IOException e) {
+            log.warn("Failed to create sidecar file: {}", sideCarPath.toAbsolutePath(), e);
+        }
+    }
 
     /**
      * Returns the text content of the last AI response bubble currently visible in the chat panel.
@@ -128,6 +156,7 @@ public abstract class AbstractIntroductionVideo extends AbstractKeycloakUiTestUt
 
     protected void startRecording() {
         seleniumHandler.startRecording(InstructionVideo.TARGET_FOLDER, prepareVideoName(video.getTitle() + " " + InstructionVideo.VIDEO_SUBTITLE + "-" + video.getVersion()));
+        createSideCar();
     }
 
     protected void submitQuery() {
