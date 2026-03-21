@@ -50,7 +50,7 @@ public class Narrator {
     @Setter
     private              NarratorAttribute defaultAttributes; // default TTS attributes for this narrator
     @Setter
-    private              boolean           enabled = false;
+    private              boolean           enabled = true;
     @Getter
     private volatile     Playback          playback; // most recently scheduled playback for external access
     @Getter
@@ -255,7 +255,7 @@ public class Narrator {
         } else {
 
             long t0 = System.nanoTime();
-            logger.info("TTS generate start: attrs={}, file={}, text=\"{}\"", eff, plan.path().getFileName(), text);
+            logger.info("⚡ TTS generate start: attrs={}, file={}, text=\"{}\"", eff, plan.path().getFileName(), text);
 
             byte[] audio = ttsEngine.synthesize(text, eff);
 
@@ -300,7 +300,7 @@ public class Narrator {
      *
      * @param millis duration in milliseconds
      */
-    public void pauseIfSilent(long millis) {
+    public void pauseIfDisabled(long millis) {
         if (!enabled) {
             try {
                 Thread.sleep(millis);

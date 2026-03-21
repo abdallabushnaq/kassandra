@@ -158,7 +158,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
 
         paul.narrate(NORMAL, "First, I'll hold down Control and drag the API story onto the persistence story.");
         seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story1.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + story2.getName());
-        paul.pauseIfSilent(1000);
+        paul.pauseIfDisabled(1000);
         paul.pause(1500);
 
         paul.narrate(NORMAL, "Notice in the Dependency column, the API story now shows the ID of the persistence story. This means the API story can only start after the persistence story is finished.");
@@ -172,7 +172,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
 
         paul.narrate(NORMAL, "I'll hold Control and drag the API documentation task onto the create controller task.");
         seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + task12.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task11.getName());
-        paul.pauseIfSilent(1000);
+        paul.pauseIfDisabled(1000);
         paul.pause(1500);
 
         paul.narrate(NORMAL, "Perfect! Now the API documentation task depends on the create controller task.");
@@ -186,7 +186,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
 
         paul.narrate(NORMAL, "I'll hold Control and drag the security audit task from the security story onto the API error handling task in the API story.");
         seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + task33.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task13.getName());
-        paul.pauseIfSilent(1000);
+        paul.pauseIfDisabled(1000);
         paul.pause(1500);
 
         paul.narrate(NORMAL, "Excellent! Now the security audit won't start until the API error handling is complete. This gives us a clear path through our work.");
@@ -200,7 +200,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
 
         paul.narrate(NORMAL, "Let's remove the dependency between the security audit and API error handling.");
         seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + task33.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task13.getName());
-        paul.pauseIfSilent(1000);
+        paul.pauseIfDisabled(1000);
         paul.pause(1500);
 
         paul.narrate(NORMAL, "See? The dependency is gone. The Dependency column for the security audit task is now empty again.");
@@ -214,12 +214,12 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
 
         paul.narrate(NORMAL, "I'll add a dependency from the security story to the API story.");
         seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story3.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + story1.getName());
-        paul.pauseIfSilent(1000);
+        paul.pauseIfDisabled(1000);
         paul.pause(1500);
 
         paul.narrate(NORMAL, "And now I'll add another dependency from the security story to the persistence story.");
         seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story3.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + story2.getName());
-        paul.pauseIfSilent(1000);
+        paul.pauseIfDisabled(1000);
         paul.pause(1500);
 
         paul.narrate(NORMAL, "Perfect! Now the security story has two dependencies. It can only start once both the API and persistence stories are complete. This is really powerful for managing complex project dependencies.");

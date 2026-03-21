@@ -140,14 +140,14 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
         grace.pause(2000);
 
         seleniumHandler.setTextField(ActiveSprints.ID_SEARCH_FIELD, "controller");
-        grace.pauseIfSilent(1000);
+        grace.pauseIfDisabled(1000);
         grace.pause(2000);
 
         grace.narrate(NORMAL, "See how the board now shows only tasks matching 'controller'. Now I'll clear this search by clicking the X button.");
         grace.pause(2000);
 
         seleniumHandler.clickClearButton(ActiveSprints.ID_SEARCH_FIELD);
-        grace.pauseIfSilent(1000);
+        grace.pauseIfDisabled(1000);
         grace.pause(1500);
 
         // Demonstrate User Filter
@@ -156,7 +156,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
 
         seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_USER_SELECTOR, new String[]{"Grace Martin"});
 //        seleniumHandler.closeMultiSelectComboBoxValue(ActiveSprints.ID_USER_SELECTOR);
-        grace.pauseIfSilent(1000);
+        grace.pauseIfDisabled(1000);
         grace.pause(2000);
 
         grace.narrate(NORMAL, "Perfect! Now the board shows only tasks assigned to me.");
@@ -171,14 +171,14 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
         grace.pause(2500);
 
         seleniumHandler.setComboBoxValue(ActiveSprints.ID_GROUPING_MODE_SELECTOR, "Stories");
-        grace.pauseIfSilent(1000);
+        grace.pauseIfDisabled(1000);
         grace.pause(2500);
 
         grace.narrate(NORMAL, "In Stories mode, each story is shown individually with its own lanes. This gives you a more detailed view. Let me switch back to Features mode for our demo.");
         grace.pause(2500);
 
         seleniumHandler.setComboBoxValue(ActiveSprints.ID_GROUPING_MODE_SELECTOR, "Features");
-        grace.pauseIfSilent(1000);
+        grace.pauseIfDisabled(1000);
         grace.pause(2000);
 
         // Demonstrate Clear Filter Button
@@ -187,7 +187,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
 
         seleniumHandler.highlight(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
         seleniumHandler.click(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
-        grace.pauseIfSilent(1000);
+        grace.pauseIfDisabled(1000);
         grace.pause(1500);
 
         grace.narrate(NORMAL, "Now let's get to work! I can see my tasks here in the Property request API feature, organized into the Config API Implementation story.");
@@ -211,7 +211,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
 
             grace.pause(500);
             seleniumHandler.dragAndDrop(taskCardId, inProgressLaneId);
-            grace.pauseIfSilent(1000);
+            grace.pauseIfDisabled(1000);
             grace.pause(1500);
 
             grace.narrate(NORMAL, "Perfect! The task is now in the in-progress lane. Everyone can see that I'm actively working on it.");
@@ -224,7 +224,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
             grace.narrate(NORMAL, "Now, to log the time I've worked on this task, I click on the task card. This opens the Worklog dialog where I can enter details about my work.");
 
             seleniumHandler.click(taskCardId);
-            grace.pauseIfSilent(500);
+            grace.pauseIfDisabled(500);
 
             // Wait for worklog dialog to appear
             seleniumHandler.waitForElementToBeClickable(WorklogDialog.TITLE_ID);
@@ -241,7 +241,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
             grace.narrate(NORMAL, "I'll enter the time I spent today. Let's say 1 hours. Notice how the Time Remaining field automatically updates based on what I enter.");
 
             seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "1h");
-            grace.pauseIfSilent(1000);
+            grace.pauseIfDisabled(1000);
             grace.pause(2000);
 
             grace.narrate(NORMAL, "See that? Originally this task had 4 hours remaining, and now it shows 3 hours after logging 1 hours of work. The system automatically calculates the burndown for us!");
@@ -250,7 +250,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
             grace.narrate(NORMAL, "In the comment field, I'll add a description of what I did. This helps the team understand what progress was made.");
 
             seleniumHandler.setTextArea(WorklogDialog.COMMENT_FIELD, "Implemented basic controller structure and routing");
-            grace.pauseIfSilent(1000);
+            grace.pauseIfDisabled(1000);
             grace.pause(2000);
 
             //---------------------------------------------------------------------------------------
@@ -260,7 +260,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
             grace.narrate(NORMAL, "Now I'll click Save to record this worklog entry.");
 
             activeSprintsTester.closeDialog(WorklogDialog.SAVE_BUTTON);
-            grace.pauseIfSilent(500);
+            grace.pauseIfDisabled(500);
 
             // Wait for dialog to close
 //            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
@@ -290,18 +290,18 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
             // Use real drag and drop for second task
             String task12CardId = "task-card-" + task12.getId();
             seleniumHandler.dragAndDrop(task12CardId, inProgressLaneId);
-            grace.pauseIfSilent(1000);
+            grace.pauseIfDisabled(1000);
             grace.pause(1500);
 
             grace.narrate(NORMAL, "Now I'll click on the API documentation task to log work.");
             seleniumHandler.click(task12CardId);
-            grace.pauseIfSilent(500);
+            grace.pauseIfDisabled(500);
             seleniumHandler.waitForElementToBeClickable(WorklogDialog.TITLE_ID);
             grace.pause(1500);
 
             grace.narrate(NORMAL, "I'll log 1 hour of work on this task.");
             seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "1h");
-            grace.pauseIfSilent(1000);
+            grace.pauseIfDisabled(1000);
             grace.pause(1500);
 
             grace.narrate(NORMAL, "Notice that the system automatically reduced the remaining time. But wait - sometimes you spend time on a task without actually making progress. Maybe you hit unexpected complexity or had to research something.");
@@ -311,7 +311,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
             grace.pause(2500);
 
             seleniumHandler.setTextField(WorklogDialog.TIME_REMAINING_FIELD, "2h");
-            grace.pauseIfSilent(1000);
+            grace.pauseIfDisabled(1000);
             grace.pause(1500);
 
             grace.narrate(NORMAL, "This is important for accurate tracking. We're being honest about both the time spent and the work remaining. This helps the team make better planning decisions.");
@@ -319,7 +319,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
 
             grace.narrate(NORMAL, "Now I'll add a comment explaining what happened.");
             seleniumHandler.setTextArea(WorklogDialog.COMMENT_FIELD, "Researched documentation approach - task more complex than expected");
-            grace.pauseIfSilent(1000);
+            grace.pauseIfDisabled(1000);
             grace.pause(2000);
 
             grace.narrate(NORMAL, "And I'll save this worklog entry.");
@@ -343,7 +343,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
             // Drag the third task to IN_PROGRESS
             String task13CardId = "task-card-" + task13.getId();
             seleniumHandler.dragAndDrop(task13CardId, inProgressLaneId);
-            grace.pauseIfSilent(1000);
+            grace.pauseIfDisabled(1000);
             grace.pause(1500);
 
             grace.narrate(NORMAL, "I've moved the error handling task to in-progress. Notice something important: the story itself has now moved to the in-progress lane! This happened because all tasks in the story are now either in-progress or done - none are left in the to-do lane.");
@@ -357,7 +357,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
 
             // Open worklog dialog
             seleniumHandler.click(task13CardId);
-            grace.pauseIfSilent(500);
+            grace.pauseIfDisabled(500);
             seleniumHandler.waitForElementToBeClickable(WorklogDialog.TITLE_ID);
             grace.pause(1500);
 
@@ -365,14 +365,14 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
             grace.pause(2000);
 
             seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "5h");
-            grace.pauseIfSilent(1000);
+            grace.pauseIfDisabled(1000);
             grace.pause(2000);
 
             grace.narrate(NORMAL, "Notice how the remaining time automatically goes to zero. This means the task is now complete.");
             grace.pause(2000);
 
             seleniumHandler.setTextArea(WorklogDialog.COMMENT_FIELD, "Completed error handling implementation and testing");
-            grace.pauseIfSilent(1000);
+            grace.pauseIfDisabled(1000);
             grace.pause(1500);
 
             activeSprintsTester.closeDialog(WorklogDialog.SAVE_BUTTON);
@@ -387,7 +387,7 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
             // Drag task to DONE lane
             String doneLaneId = VaadinUtil.generateFeatureLaneId(story1.getSprint().getFeature(), TaskStatus.DONE);
             seleniumHandler.dragAndDrop(task13CardId, doneLaneId);
-            grace.pauseIfSilent(1000);
+            grace.pauseIfDisabled(1000);
             grace.pause(2000);
 
             grace.narrate(NORMAL, "Perfect! The task is now in the done lane, showing it's complete. The story remains in the in-progress lane because we still have other tasks in progress.");

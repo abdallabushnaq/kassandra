@@ -72,17 +72,18 @@ tbd
 
 https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 
-1. Managing Users Introduction Video
-2. Managing User Groups Introduction Video
-3. User Profile Introduction Video
-4. User Off Days Introduction Video
-5. User Locations Introduction Video
-6. User Availability Introduction Video
-7. Projects, Versions, Features and Sprints Introduction Video
+1. ✅Managing Users in Kassandra Introduction Video
+2. ✅Managing User Groups in Kassandra Introduction Video
+3. ✅User Profiles in Kassandra Introduction Video
+4. ✅User Off Days Introduction Video
+5. ✅User Locations Introduction Video
+6. ✅User Availability Introduction Video
+7. ✅Kassandra Products, Versions, Features and Sprints Introduction Video
 8. Stories and Tasks Introduction Video
 9. Rearranging Stories and Tasks Introduction Video
 10. Story and Task Relations Introduction Video
 11. Logging Work Introduction Video
+12. Kassandra Agent Introduction Video
 
 # Screenshots
 

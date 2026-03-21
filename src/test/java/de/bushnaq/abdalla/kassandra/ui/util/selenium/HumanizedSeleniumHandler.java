@@ -1058,9 +1058,10 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             log.trace("Date picker overlay closed successfully");
         }
         {
-            // find the date picker element
+            // find the time picker element
             WebElement timePickerElement = dateTimePickerElement.findElement(By.tagName("vaadin-time-picker"));
-            setTimePickerValue(timePickerElement, date.toLocalTime().format(DateTimeFormatter.ofPattern("h:mm a")));
+            String     timeAsString      = date.toLocalTime().format(DateTimeFormatter.ofPattern("h:mm a"));
+            setTimePickerValue(timePickerElement, timeAsString);
         }
         log.trace("Successfully set date-time: {}", date);
     }

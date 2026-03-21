@@ -189,13 +189,15 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
             if (task.getStart() == null) {
                 continue;
             }
-            if (!task.isMilestone() && (task.getChildTasks().isEmpty()) && (task.getDuration() != null && !task.getDuration().isZero())) {
+//            if (!task.isMilestone() && (task.getChildTasks().isEmpty()) && (task.getDuration() != null && !task.getDuration().isZero()))
+            {
                 if (task.getStart().isBefore(earliestDate)) {
                     earliestDate = task.getStart();
                 }
-            } else {
-                //ignore milestones
             }
+//            else {
+//                //ignore milestones
+//            }
         }
         return earliestDate;
     }

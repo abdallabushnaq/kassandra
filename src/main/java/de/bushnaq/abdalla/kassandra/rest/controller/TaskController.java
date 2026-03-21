@@ -18,7 +18,6 @@
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.dao.TaskDAO;
-import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
 import de.bushnaq.abdalla.kassandra.repository.TaskRepository;
@@ -29,7 +28,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 import java.util.Optional;
@@ -101,10 +99,7 @@ public class TaskController {
             Integer maxOrderId = taskRepository.findMaxOrderId(task.getSprintId());
             task.setOrderId(maxOrderId + 1);
         }
-        TaskDAO    save   = taskRepository.save(task);
-        JsonMapper mapper = new JsonMapper();
-        String     s1     = mapper.writeValueAsString(save);
-        Task       t1     = mapper.readValue(s1, Task.class);
+        TaskDAO save = taskRepository.save(task);
         return save;
     }
 

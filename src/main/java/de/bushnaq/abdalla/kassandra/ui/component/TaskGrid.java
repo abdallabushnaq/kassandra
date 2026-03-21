@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.component;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.grid.Grid;
@@ -29,6 +30,7 @@ import com.vaadin.flow.component.grid.dnd.GridDropMode;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
@@ -37,6 +39,7 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import de.bushnaq.abdalla.kassandra.dto.Relation;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
+import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.dialog.DependencyDialog;
 import de.bushnaq.abdalla.util.ColorUtil;
@@ -56,15 +59,16 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class TaskGrid extends TreeGrid<Task> {
-    public static final String                       TASK_GRID_ASSIGNED_PREFIX   = "task-grid-assigned-";
-    public static final String                       TASK_GRID_DEPENDENCY_PREFIX = "task-grid-dependency-";
-    public static final String                       TASK_GRID_ID_PREFIX         = "task-grid-id-";
-    public static final String                       TASK_GRID_KEY_PREFIX        = "task-grid-key-";
-    public static final String                       TASK_GRID_MAX_EST_PREFIX    = "task-grid-max-est-";
-    public static final String                       TASK_GRID_MIN_EST_PREFIX    = "task-grid-min-est-";
-    public static final String                       TASK_GRID_NAME_PREFIX       = "task-grid-name-";
-    public static final String                       TASK_GRID_PARENT_PREFIX     = "task-grid-parent-";
-    public static final String                       TASK_GRID_START_PREFIX      = "task-grid-start-";
+    public static final String                       TASK_GRID_ASSIGNED_PREFIX             = "task-grid-assigned-";
+    public static final String                       TASK_GRID_DEPENDENCY_PREFIX           = "task-grid-dependency-";
+    public static final String                       TASK_GRID_ID_PREFIX                   = "task-grid-id-";
+    public static final String                       TASK_GRID_KEY_PREFIX                  = "task-grid-key-";
+    public static final String                       TASK_GRID_MANUALLY_SCHEDULED_PREFIX   = "task-grid-manually-scheduled-";
+    public static final String                       TASK_GRID_MAX_EST_PREFIX              = "task-grid-max-est-";
+    public static final String                       TASK_GRID_MIN_EST_PREFIX              = "task-grid-min-est-";
+    public static final String                       TASK_GRID_NAME_PREFIX                 = "task-grid-name-";
+    public static final String                       TASK_GRID_PARENT_PREFIX               = "task-grid-parent-";
+    public static final String                       TASK_GRID_START_PREFIX                = "task-grid-start-";
     private final       List<User>                   allUsers                    = new ArrayList<>();
     private final       TaskClipboardHandler         clipboardHandler;
     private final       Clock                        clock;
@@ -402,6 +406,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 return container;
             }).setHeader("Name").setAutoWidth(true).setFlexGrow(1);
             nameColumn.setId("task-grid-name-column");
+            nameColumn.setWidth("255px");
         }
 
         //ID
@@ -510,15 +515,32 @@ public class TaskGrid extends TreeGrid<Task> {
                 return div;
             })).setHeader("Parent").setAutoWidth(true);
         }
-        //Start - Editable only for Milestone tasks
+        //Start - Editable only for Milestone tasks; date/time only active when manually scheduled
         {
             Grid.Column<Task> startColumn = addColumn(new ComponentRenderer<>((Task task) -> {
                 if (isEditMode && task.isMilestone()) {
-                    // Editable for Milestone tasks
+                    boolean manuallyScheduled = task.getTaskMode() == TaskMode.MANUALLY_SCHEDULED;
+
+                    // Checkbox controls whether date/time is editable (i.e. MANUALLY_SCHEDULED mode)
+                    Checkbox manualCheckbox = new Checkbox();
+                    manualCheckbox.setValue(manuallyScheduled);
+                    manualCheckbox.setId(TASK_GRID_MANUALLY_SCHEDULED_PREFIX + task.getName());
+                    manualCheckbox.setTooltipText("Manually scheduled – uncheck to let the scheduler compute the date");
+
                     DateTimePicker startField = new DateTimePicker();
                     startField.setValue(task.getStart() != null ? task.getStart() : LocalDateTime.now());
+                    startField.setEnabled(manuallyScheduled);
                     startField.setWidthFull();
                     startField.setId(TASK_GRID_START_PREFIX + task.getName());
+
+                    manualCheckbox.addValueChangeListener(e -> {
+                        if (e.isFromClient()) {
+                            boolean isManual = e.getValue();
+                            task.setTaskMode(isManual ? TaskMode.MANUALLY_SCHEDULED : TaskMode.AUTO_SCHEDULED);
+                            startField.setEnabled(isManual);
+                            markTaskAsModified(task);
+                        }
+                    });
 
                     startField.addValueChangeListener(e -> {
                         if (e.isFromClient()) {
@@ -540,7 +562,11 @@ public class TaskGrid extends TreeGrid<Task> {
                         }
                     });
 
-                    return startField;
+                    HorizontalLayout container = new HorizontalLayout(manualCheckbox, startField);
+                    container.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+                    container.setPadding(false);
+                    container.setFlexGrow(1, startField);
+                    return container;
                 } else {
                     // Read-only for Story and Task tasks
                     Div div = new Div();

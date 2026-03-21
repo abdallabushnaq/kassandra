@@ -16,6 +16,10 @@
 
 # Bugs
 
+1. Backlog milestone date and time are not persisted. fixed, but now legacyGanttTest and GanttTest fail partially.
+2. StoriesAndTasksIntroductionVideo setting Grace Martin as resource is very slow after first time.
+3. StoriesAndTasksIntroductionVideo, some exceptions happen
+5.
 1. add gantt buffer calculation.
 2. editing estimation will not change gantt chart task duration.
 3. new task at the end will not take over last user assignment.
@@ -35,6 +39,14 @@
 
 # Failing Tests
 
+1. GantTest
+2. AprintAclApiTest
+3. TaskAclApiTest
+4. LocationApiTest
+5. OffDayApiTest
+6. UserApiTets
+7. TaskApiTest
+8. SprintApiTest
 1. FeatureAiFilterTest.testFeaturesBelongingToVersion1
 2. OffDayAiFilterTest.testOffDaysLastingMoreThan5Days
 3. VersionAiFilterTest.testVersion1

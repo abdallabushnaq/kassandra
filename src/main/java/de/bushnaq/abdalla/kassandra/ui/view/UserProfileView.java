@@ -160,11 +160,20 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         getUI().ifPresent(ui -> ui.access(() -> {
             // Create or update preview
             if (avatarPreview == null) {
+                // Preserve any unsaved user edits before re-initializing the view
+                String pendingName  = nameField   != null ? nameField.getValue()   : null;
+                String pendingColor = colorPicker != null ? colorPicker.getValue() : null;
+
                 // Avatar preview was an Icon, we need to recreate the view with an Image
-                // Easiest way is to just reinitialize the entire view
                 initializeView();
-                // After reinitializing, the generated avatar bytes are still stored
-                // and will be used when user saves
+
+                // Restore pending edits so the user's in-progress changes are not lost
+                if (pendingName != null) {
+                    nameField.setValue(pendingName);
+                }
+                if (pendingColor != null) {
+                    colorPicker.setValue(pendingColor);
+                }
             } else {
                 // Update existing preview using resized image
                 com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(

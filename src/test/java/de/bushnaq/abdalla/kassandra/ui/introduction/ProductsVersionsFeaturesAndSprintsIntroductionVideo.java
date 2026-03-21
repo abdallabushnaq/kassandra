@@ -105,7 +105,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
 
     @BeforeAll
     static void beforeAll() {
-        video.setVersion(1);
+        video.setVersion(2);
         video.setTitle("Kassandra Products, Versions, Features and Sprints");
         video.setDescription("Good morning, my name is Christopher Paul. I am the product manager of Kassandra and I will be demonstrating the latest alpha version of the Kassandra project server to you today.");
     }
@@ -124,6 +124,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         HumanizedSeleniumHandler.setHumanize(true);
         seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.VIDEO_SUBTITLE);
         startRecording();
+        seleniumHandler.wait(3000);
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         paul.setEnabled(true);
         productName = "Jupiter";
@@ -372,7 +373,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
         paul.narrate(NORMAL, "This is the page where you plan your sprint including the gantt chart.").pause();
         seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
 
-        paul.pauseIfSilent(5000);
+        paul.pauseIfDisabled(5000);
         seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
 

@@ -1074,8 +1074,8 @@ class SeleniumHandler {
 
         // If driver is already initialized, resize the current window
         if (driver != null) {
-            driver.manage().window().setSize(windowSize);
             driver.manage().window().setPosition(new Point(0, 0));
+            driver.manage().window().setSize(windowSize);
         }
     }
 

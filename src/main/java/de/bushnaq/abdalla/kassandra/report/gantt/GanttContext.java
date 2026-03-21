@@ -74,11 +74,11 @@ public class GanttContext {
             allUsers.forEach(user -> user.initialize(this));
         if (!allProducts.isEmpty())
             allProducts.forEach(product -> product.initialize(this));
-        else if (!allVersions.isEmpty())
+        if (!allVersions.isEmpty())
             allVersions.forEach(version -> version.initialize(this));
-        else if (!allFeatures.isEmpty())
-            allFeatures.forEach(project -> project.initialize(this));
-        else if (!allSprints.isEmpty())
+        if (!allFeatures.isEmpty())
+            allFeatures.forEach(feature -> feature.initialize(this));
+        if (!allSprints.isEmpty())
             allSprints.forEach(sprint -> sprint.initialize(this));
     }
 

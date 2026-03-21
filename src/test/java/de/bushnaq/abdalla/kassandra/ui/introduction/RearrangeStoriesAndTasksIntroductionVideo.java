@@ -156,20 +156,20 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractIntroduct
         seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_NAME_PREFIX + story2.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + story1.getName());
 
         paul.narrate(NORMAL, "Next, lets move the story back.");
-        paul.pauseIfSilent(500);
+        paul.pauseIfDisabled(500);
         seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_NAME_PREFIX + story2.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + story1.getName());
         paul.narrate(NORMAL, "Have you noticed that Kassandra only allowed me to drop the story above or below another story and that the child tasks always follow the story? This makes rearranging blocks of work really easy.");
 
         paul.narrate(NORMAL, "Great! Now, let's rearrange some tasks within the API story. I like open API first approach. We'll move API documentation before creating the controller.");
-        paul.pauseIfSilent(500);
+        paul.pauseIfDisabled(500);
         seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_NAME_PREFIX + task12.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task11.getName());
 
         paul.narrate(NORMAL, "Finally, let's say we need to address error handling first to ensure robustness. We'll move API error handling to the top of our task list into the persistence story.");
-        paul.pauseIfSilent(500);
+        paul.pauseIfDisabled(500);
         seleniumHandler.dragAndDropAbove(TaskGrid.TASK_GRID_NAME_PREFIX + task13.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task21.getName());
 
         paul.narrate(NORMAL, "Lets redo that. We do not want API related tasks in the story that is all about persistence.");
-        paul.pauseIfSilent(500);
+        paul.pauseIfDisabled(500);
         seleniumHandler.dragAndDropBelow(TaskGrid.TASK_GRID_NAME_PREFIX + task13.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task11.getName());
 
         //---------------------------------------------------------------------------------------
@@ -179,7 +179,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractIntroduct
         paul.narrate(NORMAL, "Now, let's learn about another powerful feature: copying tasks and stories. Sometimes you need to duplicate a story with all its child tasks. Kassandra makes this incredibly easy with copy and paste.");
 
         paul.narrate(NORMAL, "First, I'll select the first story, Config API implementation, by clicking on it.");
-        paul.pauseIfSilent(500);
+        paul.pauseIfDisabled(500);
 //        seleniumHandler.waitUntilBrowserClosed(0);
         seleniumHandler.selectGridRow(TaskGrid.TASK_GRID_ID_PREFIX, Backlog.class, story1.getName());
 
@@ -187,12 +187,12 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractIntroduct
 
         paul.narrate(NORMAL, "Now, I'll press control plus C to copy the story.");
         seleniumHandler.copy();
-        paul.pauseIfSilent(1000);
+        paul.pauseIfDisabled(1000);
         paul.pause(1000);
 
         paul.narrate(NORMAL, "And now, control plus V to paste it.");
         seleniumHandler.past();
-        paul.pauseIfSilent(1000);
+        paul.pauseIfDisabled(1000);
         paul.pause(1500);
 
         paul.narrate(NORMAL, "Notice how Kassandra automatically copied the entire story along with all three of its child tasks to the end of the grid. The copied story and tasks are exact duplicates, ready for you to modify as needed.");
@@ -214,7 +214,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractIntroduct
 
         paul.narrate(NORMAL, "First, we'll enter edit mode to modify the copied items.");
         seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
-        paul.pauseIfSilent(500);
+        paul.pauseIfDisabled(500);
         seleniumHandler.waitForPageLoaded();
 
         paul.narrate(NORMAL, "Let's rename the copied story to Config security implementation.");
@@ -244,7 +244,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractIntroduct
         seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
         seleniumHandler.waitForPageLoaded();
         grace.pause(500);
-        grace.pauseIfSilent(500);
+        grace.pauseIfDisabled(500);
 
         grace.narrateAsync(NORMAL, "Authentication will need more time. Let's set minimum to 6 hours and maximum to 8 hours.");
         seleniumHandler.setTextField(TaskGrid.TASK_GRID_MIN_EST_PREFIX + copiedTask11Name, "6h");

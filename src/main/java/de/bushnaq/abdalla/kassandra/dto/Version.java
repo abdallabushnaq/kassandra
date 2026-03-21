@@ -60,9 +60,9 @@ public class Version extends AbstractTimeAware implements Comparable<Version> {
 
     public void initialize(GanttContext gc) {
         features.clear();
-        gc.allFeatures.forEach(project -> {
-            if (project.getVersionId() == id) {
-                addFeature(project);
+        gc.allFeatures.forEach(feature -> {
+            if (feature.getVersionId().equals(id)) {
+                addFeature(feature);
             }
         });
         features.forEach(project -> project.initialize(gc));

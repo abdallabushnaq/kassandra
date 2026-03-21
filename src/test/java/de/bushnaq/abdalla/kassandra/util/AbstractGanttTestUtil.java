@@ -38,7 +38,6 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.json.JsonException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import tools.jackson.core.type.TypeReference;
 
@@ -58,7 +57,7 @@ import java.util.*;
 import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.MethodName.class)
 public class AbstractGanttTestUtil extends AbstractEntityGenerator {
@@ -102,6 +101,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             Map<String, User> users = jsonMapper.convertValue(map.get("users"), new TypeReference<Map<String, User>>() {
             });
             assertEquals(referenceUsers.size(), users.size(), "Number of users differs");
+
             for (String key : referenceUsers.keySet()) {
                 assertTrue(users.containsKey(key), "Missing user: " + referenceUsers.get(key).getName());
                 assertUserEquals(referenceUsers.get(key), users.get(key));

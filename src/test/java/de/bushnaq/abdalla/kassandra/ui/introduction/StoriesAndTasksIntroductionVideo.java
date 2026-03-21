@@ -100,8 +100,9 @@ public class StoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo 
 
     @BeforeAll
     static void beforeAll() {
-        video.setTitle("Stories and Tasks");
         video.setVersion(1);
+        video.setTitle("Stories and Tasks in Kassandra");
+        video.setDescription("Today we're going to learn about Stories and Tasks in Kassandra. A story is basically a container for a list of Tasks. Tasks represent the work we plan including the estimation for the effort. This is essential for accurate sprint planning and capacity calculations.");
     }
 
     @ParameterizedTest
@@ -125,7 +126,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo 
         Sprint  sprint  = addSprint(feature, sprintName);
 
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setEnabled(true);
+        paul.setEnabled(false);
         Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
 //        seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
@@ -189,17 +190,18 @@ public class StoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo 
             paul.narrate(NORMAL, "Kassandra does that automatically. All three tasks also are automatically assigned to myself.").pause();
 
             //edit
-            paul.narrate(EXCITED, "Good!").longPause();
             paul.narrate(NORMAL, "Select the edit button to change to whole table into edit mode...").pause();
+            paul.pauseIfDisabled(500);
             seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
 
             paul.narrate(NORMAL, "We can now edit all valid milestone, story or task cells.").pause();
             paul.narrate(NORMAL, "Lets give the milestone a name and fixed start date and time. We want our developers to start working first thing Monday morning.");
             paul.narrate(NORMAL, "Start is a short and descriptive name.");
             seleniumHandler.waitForPageLoaded();
-            paul.pause(500);// for debugging purposes only, has an effect if narrator is set to silent
+            paul.pauseIfDisabled(500);
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_NAME_PREFIX + milestone1Name, "Start");
             paul.narrate(NORMAL, "Monday morning would be 8 AM.");
+            seleniumHandler.setCheckCheckbox(TaskGrid.TASK_GRID_MANUALLY_SCHEDULED_PREFIX + milestone1Name, true);
             final LocalDateTime startDateTime = LocalDateTime.of(2025, 5, 5, 8, 0);
             seleniumHandler.setDateTimePickerValue(TaskGrid.TASK_GRID_START_PREFIX + milestone1Name, startDateTime);
 

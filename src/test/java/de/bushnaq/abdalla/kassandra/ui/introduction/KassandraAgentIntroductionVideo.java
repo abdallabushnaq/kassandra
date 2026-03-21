@@ -264,7 +264,7 @@ public class KassandraAgentIntroductionVideo extends AbstractIntroductionVideo {
 
         paul.narrate(NORMAL, "That's all there is to using the agent in kassandra. Thanks for watching!");
 
-        paul.pauseIfSilent(5000);
+        paul.pauseIfDisabled(5000);
         seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
 

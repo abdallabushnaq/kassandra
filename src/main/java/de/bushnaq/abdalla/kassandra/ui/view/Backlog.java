@@ -1402,7 +1402,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
         // Persist all modified tasks
         for (Task task : allModifiedTasks) {
-            if (!task.isMilestone())
+            if (task.getTaskMode() == de.bushnaq.abdalla.kassandra.dto.TaskMode.AUTO_SCHEDULED)
                 task.setStart(null); // Reset start date to force recalculation
             taskApi.persist(task);
         }
