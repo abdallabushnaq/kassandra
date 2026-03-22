@@ -96,3 +96,9 @@ vaadin-grid::part(cell)::before {
   --_lumo-grid-border-width: 0px;
 }
 
+/* Force hierarchy toggle to fill the full column cell width,
+   so that width:100% on child components resolves correctly. */
+vaadin-grid-tree-toggle {
+    width: 100%;
+    box-sizing: border-box;
+}

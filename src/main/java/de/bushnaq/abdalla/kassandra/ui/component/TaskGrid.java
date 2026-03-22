@@ -36,11 +36,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import de.bushnaq.abdalla.kassandra.dto.Relation;
-import de.bushnaq.abdalla.kassandra.dto.Sprint;
-import de.bushnaq.abdalla.kassandra.dto.Task;
-import de.bushnaq.abdalla.kassandra.dto.TaskMode;
-import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.ui.dialog.DependencyDialog;
 import de.bushnaq.abdalla.util.ColorUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -59,24 +55,24 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class TaskGrid extends TreeGrid<Task> {
-    public static final String                       TASK_GRID_ASSIGNED_PREFIX             = "task-grid-assigned-";
-    public static final String                       TASK_GRID_DEPENDENCY_PREFIX           = "task-grid-dependency-";
-    public static final String                       TASK_GRID_ID_PREFIX                   = "task-grid-id-";
-    public static final String                       TASK_GRID_KEY_PREFIX                  = "task-grid-key-";
-    public static final String                       TASK_GRID_MANUALLY_SCHEDULED_PREFIX   = "task-grid-manually-scheduled-";
-    public static final String                       TASK_GRID_MAX_EST_PREFIX              = "task-grid-max-est-";
-    public static final String                       TASK_GRID_MIN_EST_PREFIX              = "task-grid-min-est-";
-    public static final String                       TASK_GRID_NAME_PREFIX                 = "task-grid-name-";
-    public static final String                       TASK_GRID_PARENT_PREFIX               = "task-grid-parent-";
-    public static final String                       TASK_GRID_START_PREFIX                = "task-grid-start-";
-    private final       List<User>                   allUsers                    = new ArrayList<>();
+    public static final String                       TASK_GRID_ASSIGNED_PREFIX           = "task-grid-assigned-";
+    public static final String                       TASK_GRID_DEPENDENCY_PREFIX         = "task-grid-dependency-";
+    public static final String                       TASK_GRID_ID_PREFIX                 = "task-grid-id-";
+    public static final String                       TASK_GRID_KEY_PREFIX                = "task-grid-key-";
+    public static final String                       TASK_GRID_MANUALLY_SCHEDULED_PREFIX = "task-grid-manually-scheduled-";
+    public static final String                       TASK_GRID_MAX_EST_PREFIX            = "task-grid-max-est-";
+    public static final String                       TASK_GRID_MIN_EST_PREFIX            = "task-grid-min-est-";
+    public static final String                       TASK_GRID_NAME_PREFIX               = "task-grid-name-";
+    public static final String                       TASK_GRID_PARENT_PREFIX             = "task-grid-parent-";
+    public static final String                       TASK_GRID_START_PREFIX              = "task-grid-start-";
+    private final       List<User>                   allUsers                            = new ArrayList<>();
     private final       TaskClipboardHandler         clipboardHandler;
     private final       Clock                        clock;
     @Setter
     private             CrossGridDragDropCoordinator dragDropCoordinator; // Coordinator for cross-grid drag & drop
     private             String                       dragMode;
     private             Task                         draggedTask;          // Track the currently dragged task
-    private final       DateTimeFormatter            dtfymdhm                    = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
+    private final       DateTimeFormatter            dtfymdhm                            = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
     /**
      * -- SETTER --
      * Set whether items should be expanded initially when data is loaded.
@@ -85,26 +81,26 @@ public class TaskGrid extends TreeGrid<Task> {
      * @param expandInitially true to expand all items initially, false to keep them collapsed
      */
     @Setter
-    private             boolean                      expandInitially             = true; // Control whether to expand all items on first load
-    private final       Set<Long>                    expandedTaskIds             = new HashSet<>(); // Track expanded task IDs for state preservation
+    private             boolean                      expandInitially                     = true; // Control whether to expand all items on first load
+    private final       Set<Long>                    expandedTaskIds                     = new HashSet<>(); // Track expanded task IDs for state preservation
     private             String                       externalDragMode;     // Drag mode from external grid
     private             TaskGrid                     externalDragSource;   // Source grid for cross-grid drags
     private             Task                         externalDraggedTask;  // Task being dragged from another grid
-    private             boolean                      isCtrlKeyPressed            = false; // Track if Ctrl key is pressed during drop
+    private             boolean                      isCtrlKeyPressed                    = false; // Track if Ctrl key is pressed during drop
     @Getter
     @Setter
-    private             boolean                      isEditMode                  = false;// Edit mode state management
-    private             boolean                      isFirstLoad                 = true; // Track if this is the first data load for current sprint
+    private             boolean                      isEditMode                          = false;// Edit mode state management
+    private             boolean                      isFirstLoad                         = true; // Track if this is the first data load for current sprint
     private final       JsonMapper                   jsonMapper;
     private final       Locale                       locale;
     @Getter
-    private final       Set<Task>                    modifiedTasks               = new HashSet<>();
+    private final       Set<Task>                    modifiedTasks                       = new HashSet<>();
     @Setter
     private             Runnable                     onSaveAllChangesAndRefresh;
     @Getter
     private             Sprint                       sprint;
     @Getter
-    private             List<Task>                   taskOrder                   = new ArrayList<>(); // Track current order in memory
+    private             List<Task>                   taskOrder                           = new ArrayList<>(); // Track current order in memory
 
 
     public TaskGrid(Clock clock, Locale locale, JsonMapper jsonMapper) {
@@ -325,56 +321,57 @@ public class TaskGrid extends TreeGrid<Task> {
                 container.setPadding(false);
                 container.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
                 container.setWidthFull(); // Ensure full width for proper border display
+                container.setWidth("450px");
                 // Store task ID as element property for JavaScript access
                 container.getElement().setProperty("taskId", task.getId().toString());
 
 
                 // Add icon based on task type
-                if (task.isMilestone()) {
-                    // Diamond shape for milestone
-                    Div diamond = new Div();
-                    diamond.getElement().getStyle()
-                            .set("width", "12px")
-                            .set("height", "12px")
-                            .set("background-color", "#1976d2")
-                            .set("transform", "rotate(45deg)")
-                            .set("margin-right", "8px")
-                            .set("flex-shrink", "0");
-                    container.add(diamond);
-                } else if (task.isStory()) {
-                    // Downward triangle for story
-                    Div triangle = new Div();
-                    triangle.getElement().getStyle()
-                            .set("width", "0")
-                            .set("height", "0")
-                            .set("border-left", "6px solid transparent")
-                            .set("border-right", "6px solid transparent")
-                            .set("border-top", "10px solid #43a047")
-                            .set("margin-right", "8px")
-                            .set("flex-shrink", "0");
-                    container.add(triangle);
-                } else if (task.isTask()) {
-                    // Task gets no visible icon, but add spacing to match icon width
-                    // Triangle width is 12px (6px + 6px) + 8px margin = 20px total
-                    Div spacer = new Div();
-                    spacer.getElement().getStyle()
-                            .set("width", "20px")
-                            .set("height", "1px")
-                            .set("flex-shrink", "0");
-                    container.add(spacer);
-                }
+//                if (task.isMilestone()) {
+//                    // Diamond shape for milestone
+//                    Div diamond = new Div();
+//                    diamond.getElement().getStyle()
+//                            .set("width", "12px")
+//                            .set("height", "12px")
+//                            .set("background-color", "#1976d2")
+//                            .set("transform", "rotate(45deg)")
+//                            .set("margin-right", "8px")
+//                            .set("flex-shrink", "0");
+//                    container.add(diamond);
+//                } else if (task.isStory()) {
+//                    // Downward triangle for story
+//                    Div triangle = new Div();
+//                    triangle.getElement().getStyle()
+//                            .set("width", "0")
+//                            .set("height", "0")
+//                            .set("border-left", "6px solid transparent")
+//                            .set("border-right", "6px solid transparent")
+//                            .set("border-top", "10px solid #43a047")
+//                            .set("margin-right", "8px")
+//                            .set("flex-shrink", "0");
+//                    container.add(triangle);
+//                } else if (task.isTask()) {
+//                    // Task gets no visible icon, but add spacing to match icon width
+//                    // Triangle width is 12px (6px + 6px) + 8px margin = 20px total
+//                    Div spacer = new Div();
+//                    spacer.getElement().getStyle()
+//                            .set("width", "20px")
+//                            .set("height", "1px")
+//                            .set("flex-shrink", "0");
+//                    container.add(spacer);
+//                }
 
                 // Add task key (bold, small, gray) - similar to Backlog style
-                Span keySpan = new Span(task.getKey());
-                keySpan.setId(TASK_GRID_KEY_PREFIX + task.getName());
-                keySpan.getStyle()
-                        .set("font-weight", "bold")
-                        .set("font-size", "var(--lumo-font-size-xs)")
-                        .set("color", "#9E9E9E") // Match Backlog gray color
-                        .set("white-space", "nowrap")
-                        .set("margin-right", "var(--lumo-space-s)")
-                        .set("flex-shrink", "0");
-                container.add(keySpan);
+//                Span keySpan = new Span(task.getKey());
+//                keySpan.setId(TASK_GRID_KEY_PREFIX + task.getName());
+//                keySpan.getStyle()
+//                        .set("font-weight", "bold")
+//                        .set("font-size", "var(--lumo-font-size-xs)")
+//                        .set("color", "#9E9E9E") // Match Backlog gray color
+//                        .set("white-space", "nowrap")
+//                        .set("margin-right", "var(--lumo-space-s)")
+//                        .set("flex-shrink", "0");
+//                container.add(keySpan);
 
                 // Add name field or text
                 if (isEditMode) {
@@ -404,9 +401,9 @@ public class TaskGrid extends TreeGrid<Task> {
                 }
 
                 return container;
-            }).setHeader("Name").setAutoWidth(true).setFlexGrow(1);
+            }).setHeader("Name")/*.setAutoWidth(true)*/.setFlexGrow(1);
             nameColumn.setId("task-grid-name-column");
-            nameColumn.setWidth("255px");
+            nameColumn.setWidth("400px");
         }
 
         //ID
