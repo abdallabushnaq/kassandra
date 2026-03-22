@@ -82,7 +82,7 @@ jobs:
           mkdir -p test-results
 
       - name: Build with Maven (skipping tests)
-        run: mvn -B package --file pom.xml -DskipTests
+        run: mvn clean -B package --file pom.xml -DskipTests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}

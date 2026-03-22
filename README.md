@@ -28,29 +28,30 @@ tbd
 ## Phase 1
 
 1. ✅ Basic functionality
-2. ✅ Product, Version, project
-3. ✅ project list.
-4. ✅ every project has list of sprints.
-5. ✅ every sprint contains stories and tasks.
-6. ✅ every task has start, end, effort estimation, effort worked, dependency to other tasks or stories.
+2. ✅ Product crud
+3. ✅ Version crud
+4. ✅ Feature crud
+5. ✅Sprint crud
+6. ✅ User crud
 7. ✅ Authentication via oidc
 8. ✅ User availability time-frames
 9. ✅ User location time-frames
 10. ✅ User work week time-frames
 11. ✅ User Work hours time-frames
-12. ✅ Authorization, access control using user groups on project level.
-13. ✅ Gantt task only on working days.
-14. ✅ X-axis calendar make none working day gray.
-15. ✅ burn down chart for every sprint.
-16. ❌ Close project Release Date.
-17. ✅ National Holidays
-18. ❌ data scenario simulation generator
+12. ✅ National Holidays
+13. ✅ Authorization, access control using user groups on project level.
+14. ✅ Gantt task only on working days.
+15. ✅ X-axis calendar make none working day gray.
+16. ✅ burn down chart for every sprint.
+17. ❌ Close project Release Date.
+18. worklog crud
+19. ❌ data scenario simulation generator
     1. ✅ Simulator Write the use case as a Story in the project or product
     2. ❌ include closed and delayed sprints.
 
 ## Phase 2
 
-1. alpha release of minimum viable product.
+1. alpha release (0.1.0) of minimum viable product.
 2. docker container image.
 3. first initialization.
 4. server settings
