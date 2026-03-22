@@ -18,7 +18,10 @@
 package de.bushnaq.abdalla.kassandra.ui;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
+import de.bushnaq.abdalla.kassandra.dto.Availability;
+import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
+import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.dialog.*;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
@@ -78,30 +81,32 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
     private       String                     featureName;
     private final LocalDate                  firstDay        = LocalDate.of(2025, 6, 1);
     private final LocalDate                  firstDayRecord1 = LocalDate.of(2025, 8, 4);
-    private final LocalDate                  lastDay         = LocalDate.of(2025, 6, 1);
-    private final LocalDate                  lastDayRecord1  = LocalDate.of(2025, 8, 8);
+    Availability lastAvailability = null;
+    private final LocalDate lastDay        = LocalDate.of(2025, 6, 1);
+    private final LocalDate lastDayRecord1 = LocalDate.of(2025, 8, 8);
+    Location lastLocation = null;
     @Autowired
-    private       LocationListViewTester     locationListViewTester;
+    private       LocationListViewTester   locationListViewTester;
     @Autowired
-    private       OffDayListViewTester       offDayListViewTester;
+    private       OffDayListViewTester     offDayListViewTester;
     @Autowired
-    private       ProductListViewTester      productListViewTester;
-    private       String                     productName;
+    private       ProductListViewTester    productListViewTester;
+    private       String                   productName;
     @Autowired
-    private       HumanizedSeleniumHandler   seleniumHandler;
+    private       HumanizedSeleniumHandler seleniumHandler;
     @Autowired
-    private       SprintListViewTester       sprintListViewTester;
-    private       String                     sprintName;
+    private       SprintListViewTester     sprintListViewTester;
+    private       String                   sprintName;
     @Autowired
-    private       TaskListViewTester         taskListViewTester;
-    private       String                     taskName;
-    private final OffDayType                 typeRecord1     = OffDayType.VACATION;
+    private       TaskListViewTester       taskListViewTester;
+    private       String                   taskName;
+    private final OffDayType               typeRecord1 = OffDayType.VACATION;
     @Autowired
-    private       UserListViewTester         userListViewTester;
-    private       String                     userName;
+    private       UserListViewTester       userListViewTester;
+    private       String                   userName;
     @Autowired
-    private       VersionListViewTester      versionListViewTester;
-    private       String                     versionName;
+    private       VersionListViewTester    versionListViewTester;
+    private       String                   versionName;
 
     // Method to get the public-facing URL, fixing potential redirect issues
     private static String getPublicFacingUrl(KeycloakContainer container) {
@@ -137,6 +142,12 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         }
     }
 
+    private void read() {
+        User paul = userApi.getByEmail("christopher.paul@kassandra.org").get();
+        lastAvailability = paul.getAvailabilities().getLast();
+        lastLocation     = paul.getLocations().getLast();
+    }
+
     /**
      * Takes screenshots of Availability create, edit and delete dialogs
      */
@@ -152,7 +163,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         // Edit availability dialog
         // We'll use the current date as a reference to find a record to edit
         {
-            String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String dateStr = lastAvailability.getStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             seleniumHandler.click(AvailabilityListView.AVAILABILITY_GRID_EDIT_BUTTON_PREFIX + dateStr);
             seleniumHandler.waitForElementToBeClickable(AvailabilityDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(AvailabilityDialog.AVAILABILITY_DIALOG), AvailabilityDialog.AVAILABILITY_DIALOG, "../kassandra.wiki/screenshots/availability-edit-dialog.png");
@@ -209,7 +220,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         // Edit location dialog
         // We'll use the current date as a reference to find a record to edit
         {
-            String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String dateStr = lastLocation.getStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             seleniumHandler.click(LocationListView.LOCATION_GRID_EDIT_BUTTON_PREFIX + dateStr);
             seleniumHandler.waitForElementToBeClickable(LocationDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(LocationDialog.LOCATION_DIALOG), LocationDialog.LOCATION_DIALOG, "../kassandra.wiki/screenshots/location-edit-dialog.png");
@@ -299,6 +310,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
+        read();
         seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         userName    = "Christopher Paul";
         productName = nameGenerator.generateProductName(0);

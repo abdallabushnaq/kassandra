@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import de.bushnaq.abdalla.kassandra.dto.Availability;
+import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.AvailabilityListViewTester;
@@ -71,10 +73,12 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       AvailabilityListViewTester availabilityListViewTester;
     private final int                        availabilityPercent    = 80;
-    private final LocalDate                  initialDate            = LocalDate.now();
-    private final int                        initialPercent         = 100;
+    //    private final LocalDate                  initialDate            = LocalDate.now();
+//    private final int                        initialPercent         = 100;
     private final int                        invalidHighPercent     = 160; // Above 150% limit
     private final int                        invalidLowPercent      = -10; // Below 0% limit
+    private       Availability               lastAvailability;
+    //    private       Location                   lastLocation;
     private final int                        newAvailabilityPercent = 50;
     private final LocalDate                  newStartDate           = LocalDate.of(2025, 8, 1);
     private final int                        secondAvailPercent     = 75;
@@ -82,7 +86,15 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       HumanizedSeleniumHandler   seleniumHandler;
     private final LocalDate                  startDate              = LocalDate.of(2025, 6, 1);
-    private final String                     testUsername           = "availability-test-user";
+    private final String                     testUsername           = "christopher.paul@kassandra.org";
+
+    protected void read() {
+        User paul = userApi.getByEmail("christopher.paul@kassandra.org").get();
+        lastAvailability = paul.getAvailabilities().getLast();
+//        lastLocation     = paul.getLocations().getLast();
+
+    }
+
 
     @BeforeEach
     public void setupTest(TestInfo testInfo) throws Exception {
@@ -90,6 +102,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
                 testInfo.getTestClass().get().getSimpleName(),
                 generateTestCaseName(testInfo),
                 testUsername);
+        read();
     }
 
     /**
@@ -102,7 +115,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCannotDeleteOnlyAvailability() {
         // Verify user cannot delete their only availability record (the initial one)
-        availabilityListViewTester.verifyCannotDeleteOnlyAvailability(initialDate);
+        availabilityListViewTester.verifyCannotDeleteOnlyAvailability(lastAvailability.getStart());
     }
 
     /**
@@ -173,7 +186,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDuplicateStartDate() {
         // Try to create a duplicate with the same start date as the initial record
-        availabilityListViewTester.createDuplicateDateAvailability(initialDate, newAvailabilityPercent);
+        availabilityListViewTester.createDuplicateDateAvailability(lastAvailability.getStart(), newAvailabilityPercent);
     }
 
     /**
@@ -189,7 +202,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditCancel() {
         // Edit initial record but cancel
-        availabilityListViewTester.editAvailabilityCancel(initialDate, newStartDate, initialPercent, newAvailabilityPercent);
+        availabilityListViewTester.editAvailabilityCancel(lastAvailability.getStart(), newStartDate, Math.round(lastAvailability.getAvailability() * 100), newAvailabilityPercent);
     }
 
     /**
@@ -203,7 +216,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditConfirm() {
         // Edit initial record and confirm
-        availabilityListViewTester.editAvailabilityConfirm(initialDate, newStartDate, newAvailabilityPercent);
+        availabilityListViewTester.editAvailabilityConfirm(lastAvailability.getStart(), newStartDate, newAvailabilityPercent);
     }
 
     /**

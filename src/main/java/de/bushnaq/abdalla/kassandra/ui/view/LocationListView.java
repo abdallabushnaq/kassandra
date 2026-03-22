@@ -32,6 +32,7 @@ import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.LocationApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.OffDaysCalendarComponent;
@@ -42,8 +43,6 @@ import de.focus_shift.jollyday.core.HolidayManager;
 import de.focus_shift.jollyday.core.ManagerParameters;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -105,8 +104,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
         String          userEmailParam  = event.getRouteParameters().get("user-email").orElse(null);
         QueryParameters queryParameters = event.getLocation().getQueryParameters();
 
-        Authentication authentication   = SecurityContextHolder.getContext().getAuthentication();
-        String         currentUserEmail = authentication != null ? authentication.getName() : null;
+        final String currentUserEmail = SecurityUtils.getUserEmail();
 
         // If no username is provided, use the current authenticated user
         final String userEmail = (userEmailParam == null && currentUserEmail != null) ? currentUserEmail : userEmailParam;

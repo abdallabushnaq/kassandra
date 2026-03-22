@@ -91,7 +91,7 @@ public class OffDayListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       HumanizedSeleniumHandler seleniumHandler;
     // Test username
-    private final String                   testUsername     = "offday-test-user";
+    private final String                   testUsername     = "christopher.paul@kassandra.org";
     private final OffDayType               typeRecord1      = OffDayType.VACATION;
     private final OffDayType               typeRecord2      = OffDayType.SICK;
 

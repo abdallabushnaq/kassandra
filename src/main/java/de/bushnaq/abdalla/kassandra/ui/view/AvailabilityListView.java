@@ -33,6 +33,7 @@ import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.AvailabilityApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.AvailabilityCalendarComponent;
@@ -41,8 +42,6 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -104,12 +103,11 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
         // Get username from URL parameter or use the currently authenticated user
         String userEmailParam = event.getRouteParameters().get("user-email").orElse(null);
 
-        Authentication authentication  = SecurityContextHolder.getContext().getAuthentication();
-        String         currentUsername = authentication != null ? authentication.getName() : null;
+        final String currentUserEmail = SecurityUtils.getUserEmail();
 
         // If no username is provided, use the current authenticated user
         // Store in a final variable to use in lambda
-        final String userEmail = (userEmailParam == null && currentUsername != null) ? currentUsername : userEmailParam;
+        final String userEmail = (userEmailParam == null && currentUserEmail != null) ? currentUserEmail : userEmailParam;
 
         if (userEmail != null) {
             try {

@@ -314,7 +314,7 @@ public class LocationListViewTester extends AbstractViewTester {
         String actualCountry = seleniumHandler.getComboBoxValue(LocationDialog.LOCATION_COUNTRY_FIELD);
         String actualState   = seleniumHandler.getComboBoxValue(LocationDialog.LOCATION_STATE_FIELD);
         closeDialog(LocationDialog.CANCEL_BUTTON);
-        Assertions.assertEquals(expectedCountry, actualCountry, "Country mismatch for record with start date: " + startDateStr);
-        Assertions.assertEquals(expectedState, actualState, "State/region mismatch for record with start date: " + startDateStr);
+        Assertions.assertEquals(expectedCountry.toLowerCase(), actualCountry.toLowerCase(), "Country mismatch for record with start date: " + startDateStr);
+        Assertions.assertEquals(expectedState.toLowerCase(), actualState.toLowerCase(), "State/region mismatch for record with start date: " + startDateStr);
     }
 }

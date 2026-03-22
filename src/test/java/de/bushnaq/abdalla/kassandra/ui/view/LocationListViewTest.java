@@ -17,9 +17,12 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import de.bushnaq.abdalla.kassandra.dto.Location;
+import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
-import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.LocationListViewTester;
+import de.focus_shift.jollyday.core.HolidayManager;
+import de.focus_shift.jollyday.core.ManagerParameters;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -36,6 +39,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDate;
+import java.util.Locale;
 
 /**
  * Integration test for the LocationListView UI component.
@@ -70,21 +74,52 @@ import java.time.LocalDate;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
-    private final String                   country        = "United States (US)";  // United States
-    private final String                   initialCountry = "Germany (DE)";  // Germany
-    private final LocalDate                initialDate    = LocalDate.now();
-    private final String                   initialState   = "North Rhine-Westphalia (nw)";  // North Rhine-Westphalia
+    private final String                 country      = "United States (US)";  // United States
+    private       Location               lastLocation;
+    private       String                 lastLocationCountry;
+    private       String                 lastLocationState;
     @Autowired
-    private       LocationListViewTester   locationListViewTester;
-    private final String                   newCountry     = "United Kingdom (GB)";  // United Kingdom
-    private final LocalDate                newStartDate   = LocalDate.of(2025, 8, 1);
-    private final String                   newState       = "England (eng)"; // England
-    @Autowired
-    private       HumanizedSeleniumHandler seleniumHandler;
-    // Test data for the first new location record
-    private final LocalDate                startDate      = LocalDate.of(2025, 6, 1);
-    private final String                   state          = "California (ca)";  // California
-    private final String                   testUsername   = "location-test-user";
+    private       LocationListViewTester locationListViewTester;
+    private final String                 newCountry   = "United Kingdom (GB)";  // United Kingdom
+    private final LocalDate              newStartDate = LocalDate.of(2025, 8, 1);
+    private final String                 newState     = "England (eng)"; // England
+    private final LocalDate              startDate    = LocalDate.of(2025, 6, 1);
+    private final String                 state        = "California (ca)";  // California
+    private final String                 testUsername = "christopher.paul@kassandra.org";
+
+    private String getStateDescription(String countryCode, String stateCode) {
+        // If state code equals country code, it represents the whole country
+        if (stateCode.equals(countryCode)) {
+            return "All of " + new Locale("", countryCode).getDisplayCountry();
+        }
+
+        try {
+            // Try to get description from HolidayManager's calendar hierarchy
+            HolidayManager manager     = HolidayManager.getInstance(ManagerParameters.create(countryCode));
+            String         description = manager.getCalendarHierarchy().getChildren().get(stateCode).getDescription();
+
+            if (description != null && !description.isEmpty()) {
+                return description + " (" + stateCode + ")";
+            }
+        } catch (Exception e) {
+            // If we can't get the description from HolidayManager, just use the code
+        }
+
+        // Default fallback is to just return the state code
+        return stateCode;
+    }
+
+    protected void read() {
+        User paul = userApi.getByEmail("christopher.paul@kassandra.org").get();
+        lastLocation = paul.getLocations().getLast();
+        String countryCode = lastLocation.getCountry();
+        Locale locale      = new Locale("", countryCode);
+        lastLocationCountry = locale.getDisplayCountry() + " (" + countryCode + ")";
+//        String countryCode = location.getCountry();
+        String stateCode = lastLocation.getState();
+        lastLocationState = getStateDescription(countryCode, stateCode);
+
+    }
 
     @BeforeEach
     public void setupTest(TestInfo testInfo) throws Exception {
@@ -92,6 +127,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
                 testInfo.getTestClass().get().getSimpleName(),
                 generateTestCaseName(testInfo),
                 testUsername);
+        read();
     }
 
     /**
@@ -104,7 +140,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCannotDeleteOnlyLocation() {
         // Verify user cannot delete their only location record (the initial one)
-        locationListViewTester.verifyCannotDeleteOnlyLocation(initialDate);
+        locationListViewTester.verifyCannotDeleteOnlyLocation(lastLocation.getStart());
     }
 
     /**
@@ -175,7 +211,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDuplicateStartDate() {
         // Try to create a duplicate with the same start date as the initial record
-        locationListViewTester.createDuplicateDateLocation(initialDate, newCountry, newState);
+        locationListViewTester.createDuplicateDateLocation(lastLocation.getStart(), newCountry, newState);
     }
 
     /**
@@ -192,9 +228,9 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
     public void testEditCancel() {
         // Edit initial record but cancel
         locationListViewTester.editLocationCancel(
-                initialDate, newStartDate,
-                initialCountry, newCountry,
-                initialState, newState);
+                lastLocation.getStart(), newStartDate,
+                lastLocationCountry, newCountry,
+                lastLocationState, newState);
     }
 
     /**
@@ -208,6 +244,6 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditConfirm() {
         // Edit initial record and confirm
-        locationListViewTester.editLocationConfirm(initialDate, newStartDate, newCountry, newState);
+        locationListViewTester.editLocationConfirm(lastLocation.getStart(), newStartDate, newCountry, newState);
     }
 }

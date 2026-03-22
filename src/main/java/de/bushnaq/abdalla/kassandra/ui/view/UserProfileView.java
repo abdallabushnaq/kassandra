@@ -40,12 +40,11 @@ import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 import org.vaadin.addons.tatu.ColorPicker;
 
@@ -95,11 +94,10 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         // Get username from URL parameter or use the currently authenticated user
         String userEmailParam = event.getRouteParameters().get("user-email").orElse(null);
 
-        Authentication authentication  = SecurityContextHolder.getContext().getAuthentication();
-        String         currentUsername = authentication != null ? authentication.getName() : null;
+        final String currentUserEmail = SecurityUtils.getUserEmail();
 
         // If no username is provided, use the current authenticated user
-        final String userEmail = (userEmailParam == null && currentUsername != null) ? currentUsername : userEmailParam;
+        final String userEmail = (userEmailParam == null && currentUserEmail != null) ? currentUserEmail : userEmailParam;
 
         if (userEmail != null) {
             try {
@@ -161,7 +159,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             // Create or update preview
             if (avatarPreview == null) {
                 // Preserve any unsaved user edits before re-initializing the view
-                String pendingName  = nameField   != null ? nameField.getValue()   : null;
+                String pendingName  = nameField != null ? nameField.getValue() : null;
                 String pendingColor = colorPicker != null ? colorPicker.getValue() : null;
 
                 // Avatar preview was an Icon, we need to recreate the view with an Image

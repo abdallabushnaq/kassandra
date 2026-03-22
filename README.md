@@ -39,11 +39,9 @@ tbd
 10. ✅ User work week time-frames
 11. ✅ User Work hours time-frames
 12. ✅ Authorization, access control using user groups on project level.
-13. ❌ gantt chart generation with resource conflict visualization.
-    1. ✅ Gantt task only on working days.
-    2. ✅ X-axis calendar make none working day gray.
-14. ✅ burn down chart for every sprint.
-15. ❌ keep number of clicks to minimum for daily work of developer.
+13. ✅ Gantt task only on working days.
+14. ✅ X-axis calendar make none working day gray.
+15. ✅ burn down chart for every sprint.
 16. ❌ Close project Release Date.
 17. ✅ National Holidays
 18. ❌ data scenario simulation generator
@@ -52,21 +50,26 @@ tbd
 
 ## Phase 2
 
-1. ❌ Audit logs
-2. ❌ lock project.
-3. ❌ give project managers ways to control schedule.
+1. alpha release of minimum viable product.
+2. docker container image.
+3. first initialization.
+4. server settings
 
 ## Phase 3
 
-1. ❌ Admin hub
-
-## Phase 4
-
-1. ❌ Performance
-2. ❌ Live updates to your inputs
-3. ❌ Live response to your Input.
-4. ✅ product page.
-5. ❌ GDPR
+1. ❌ gantt chart generation with resource conflict visualization.
+2. ❌ keep number of clicks to minimum for daily work of developer.
+3. ❌ Audit logs
+4. ❌ lock project.
+5. ❌ give project managers ways to control schedule.
+6. ❌ Admin hub
+7. ❌ Performance
+8. ❌ Live updates to your inputs
+9. ❌ Live response to your Input.
+10. ✅ product page.
+11. ❌ GDPR
+12. undo
+13. history
 
 # Kassandra Introduction Videos
 

@@ -1,13 +1,13 @@
 # TODO
 
 1. rename all mcp tpo IDs
-1. GENERATOR. ensure some projects show delay, are not started or are finished closed.
-2. add better error handling in api.
-3. add ability to edit or delete a worklog.
-4. remove default test password from AbstractApi.
-5. make sure getAll will filter via alc in db, not in memory.
-6. need ability to delete a task/story.
-7. in case a user wants to remove himself from the ACL, we automatically add him back. you cannot remove yourself from
+2. GENERATOR. ensure some projects show delay, are not started or are finished closed.
+3. add better error handling in api.
+4. add ability to edit or delete a worklog.
+5. remove default test password from AbstractApi.
+6. make sure getAll will filter via alc in db, not in memory.
+7. need ability to delete a task/story.
+8. in case a user wants to remove himself from the ACL, we automatically add him back. you cannot remove yourself from
    ACL.
 
 ## Feature
@@ -16,42 +16,32 @@
 
 # Bugs
 
-1. Backlog milestone date and time are not persisted. fixed, but now legacyGanttTest and GanttTest fail partially.
-2. StoriesAndTasksIntroductionVideo setting Grace Martin as resource is very slow after first time.
-3. StoriesAndTasksIntroductionVideo, some exceptions happen
-5.
-1. add gantt buffer calculation.
-2. editing estimation will not change gantt chart task duration.
-3. new task at the end will not take over last user assignment.
-4. sometimes adding a story and two tasks will add additionally one task.
-5. changing assignment must also change hidden dependencies
-6. some tests fail with java.awt.HeadlessException.
-7. users are retired by their name instead of their email address.
-8. LocationDialog not showing errors in dialog.
-9. AvailabilityTest.userSecurity() generates several exceptions on server side that the test does not catch.
-10. gantt resource leveling fails sometimes with circular dependency error.
-11. fix resource leveling not handling dependency to later story.
-12. gantt calendar too light.
-13. gantt calendar should be using sprint calendar.
-14. some ai filter test fail all the time, as the tests are vague.
-15. fix none humanized version of setMultiSelectComboBoxValue.
-16. TaskGrid user colors are fake.
+1. StoriesAndTasksIntroductionVideo setting Grace Martin as resource is very slow after first time.
+2. StoriesAndTasksIntroductionVideo, some exceptions happen
+3.
+4. add gantt buffer calculation.
+5. editing estimation will not change gantt chart task duration.
+6. new task at the end will not take over last user assignment.
+7. sometimes adding a story and two tasks will add additionally one task.
+8. changing assignment must also change hidden dependencies
+9. some tests fail with java.awt.HeadlessException.
+10. users are retired by their name instead of their email address.
+11. LocationDialog not showing errors in dialog.
+12. AvailabilityTest.userSecurity() generates several exceptions on server side that the test does not catch.
+13. gantt resource leveling fails sometimes with circular dependency error.
+14. fix resource leveling not handling dependency to later story.
+15. gantt calendar too light.
+16. gantt calendar should be using sprint calendar.
+17. some ai filter test fail all the time, as the tests are vague.
+18. fix none humanized version of setMultiSelectComboBoxValue.
+19. TaskGrid user colors are fake.
 
 # Failing Tests
 
-1. GantTest
-2. AprintAclApiTest
-3. TaskAclApiTest
-4. LocationApiTest
-5. OffDayApiTest
-6. UserApiTets
-7. TaskApiTest
-8. SprintApiTest
-1. FeatureAiFilterTest.testFeaturesBelongingToVersion1
-2. OffDayAiFilterTest.testOffDaysLastingMoreThan5Days
-3. VersionAiFilterTest.testVersion1
-4. AvailabilityAiFilterTest.testAvailabilityStartingInJanuary2025
-5. AvailabilityAiFilterTest.testAvailabilityStartingInJuneJulyOrAugust2024
+1. LocationListViewTest.testCannotDeleteOnlyLocation
+2. LocationListViewTest.testDuplicateStartDate
+3. LocationListViewTest.testEditCancel
+4. LocationListViewTest.testEditConfirm
 
 # Next Tooling Ideas
 
