@@ -197,6 +197,11 @@
                     <groupId>xml-apis</groupId>
                     <artifactId>xml-apis</artifactId>
                 </exclusion>
+                <!-- Exclude this old JAR; Vaadin's prepare-frontend fails to extract it on Java 25 / Ubuntu -->
+                <exclusion>
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis-ext</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -208,6 +213,12 @@
             <groupId>net.sf.mpxj</groupId>
             <artifactId>mpxj</artifactId>
             <version>13.8.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis-ext</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
