@@ -35,13 +35,10 @@
 17. some ai filter test fail all the time, as the tests are vague.
 18. fix none humanized version of setMultiSelectComboBoxValue.
 19. TaskGrid user colors are fake.
+20. quick edit dependencies does nto work.
+21. adding a dependency from story to milestone will not move the story.
 
 # Failing Tests
-
-1. LocationListViewTest.testCannotDeleteOnlyLocation
-2. LocationListViewTest.testDuplicateStartDate
-3. LocationListViewTest.testEditCancel
-4. LocationListViewTest.testEditConfirm
 
 # Next Tooling Ideas
 

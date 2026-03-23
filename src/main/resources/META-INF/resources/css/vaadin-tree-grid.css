@@ -39,6 +39,33 @@ vaadin-grid::part(last-header-row) {
   padding-bottom: 2px;
 }
 
+/* Reduce default text size for all cell content */
+.task-grid {
+    font-size: var(--lumo-font-size-xs);
+}
+
+/* Remap Lumo font-size tokens locally so that input fields (which use
+   --lumo-font-size-m by default and --lumo-font-size-s with LUMO_SMALL)
+   also render at xs size inside the task-grid. */
+.task-grid vaadin-text-field,
+.task-grid vaadin-date-time-picker,
+.task-grid vaadin-combo-box {
+    --lumo-font-size-m: var(--lumo-font-size-xs);
+    --lumo-font-size-s: var(--lumo-font-size-xs);
+}
+
+/* Control the date and time sub-picker widths independently.
+   vaadin-date-time-picker renders both as light DOM children, so
+   regular child selectors work. Date needs more room (e.g. "Jan 15 2025")
+   than time (e.g. "10:30 AM"), so we give it a 2:1 flex ratio. */
+.task-grid vaadin-date-time-picker > vaadin-date-picker {
+    flex: 1 1 0;
+    min-width: 0;
+}
+.task-grid vaadin-date-time-picker > vaadin-time-picker {
+    flex: 1 1 0;
+    min-width: 0;
+}
 /* Body cells styling - match Backlog card appearance */
 .task-grid::part(body-cell) {
   /*background: var(--lumo-base-color);*/

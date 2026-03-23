@@ -20,6 +20,19 @@
     padding: 8px;
 }
 
+/* Reduce default text size for all cell content */
+vaadin-grid {
+    font-size: var(--lumo-font-size-xs);
+}
+/* Remap Lumo font-size tokens locally so that input fields (which use
+   --lumo-font-size-m by default and --lumo-font-size-s with LUMO_SMALL)
+   also render at xs size inside the vaadin-grid. */
+vaadin-grid vaadin-text-field,
+vaadin-grid vaadin-date-time-picker,
+vaadin-grid vaadin-combo-box {
+    --lumo-font-size-m: var(--lumo-font-size-xs);
+    --lumo-font-size-s: var(--lumo-font-size-xs);
+}
 vaadin-grid::part(body-cell) {
   background: var(--lumo-base-color);
   padding: 0; /* Remove default padding to control height precisely */

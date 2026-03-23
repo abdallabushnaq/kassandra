@@ -22,7 +22,9 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
+import com.vaadin.flow.component.datetimepicker.DateTimePickerVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.dnd.GridDropLocation;
@@ -33,6 +35,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -327,55 +330,56 @@ public class TaskGrid extends TreeGrid<Task> {
 
 
                 // Add icon based on task type
-//                if (task.isMilestone()) {
-//                    // Diamond shape for milestone
-//                    Div diamond = new Div();
-//                    diamond.getElement().getStyle()
-//                            .set("width", "12px")
-//                            .set("height", "12px")
-//                            .set("background-color", "#1976d2")
-//                            .set("transform", "rotate(45deg)")
-//                            .set("margin-right", "8px")
-//                            .set("flex-shrink", "0");
-//                    container.add(diamond);
-//                } else if (task.isStory()) {
-//                    // Downward triangle for story
-//                    Div triangle = new Div();
-//                    triangle.getElement().getStyle()
-//                            .set("width", "0")
-//                            .set("height", "0")
-//                            .set("border-left", "6px solid transparent")
-//                            .set("border-right", "6px solid transparent")
-//                            .set("border-top", "10px solid #43a047")
-//                            .set("margin-right", "8px")
-//                            .set("flex-shrink", "0");
-//                    container.add(triangle);
-//                } else if (task.isTask()) {
-//                    // Task gets no visible icon, but add spacing to match icon width
-//                    // Triangle width is 12px (6px + 6px) + 8px margin = 20px total
-//                    Div spacer = new Div();
-//                    spacer.getElement().getStyle()
-//                            .set("width", "20px")
-//                            .set("height", "1px")
-//                            .set("flex-shrink", "0");
-//                    container.add(spacer);
-//                }
+                if (task.isMilestone()) {
+                    // Diamond shape for milestone
+                    Div diamond = new Div();
+                    diamond.getElement().getStyle()
+                            .set("width", "12px")
+                            .set("height", "12px")
+                            .set("background-color", "#1976d2")
+                            .set("transform", "rotate(45deg)")
+                            .set("margin-right", "8px")
+                            .set("flex-shrink", "0");
+                    container.add(diamond);
+                } else if (task.isStory()) {
+                    // Downward triangle for story
+                    Div triangle = new Div();
+                    triangle.getElement().getStyle()
+                            .set("width", "0")
+                            .set("height", "0")
+                            .set("border-left", "6px solid transparent")
+                            .set("border-right", "6px solid transparent")
+                            .set("border-top", "10px solid #43a047")
+                            .set("margin-right", "8px")
+                            .set("flex-shrink", "0");
+                    container.add(triangle);
+                } else if (task.isTask()) {
+                    // Task gets no visible icon, but add spacing to match icon width
+                    // Triangle width is 12px (6px + 6px) + 8px margin = 20px total
+                    Div spacer = new Div();
+                    spacer.getElement().getStyle()
+                            .set("width", "20px")
+                            .set("height", "1px")
+                            .set("flex-shrink", "0");
+                    container.add(spacer);
+                }
 
                 // Add task key (bold, small, gray) - similar to Backlog style
-//                Span keySpan = new Span(task.getKey());
-//                keySpan.setId(TASK_GRID_KEY_PREFIX + task.getName());
-//                keySpan.getStyle()
-//                        .set("font-weight", "bold")
-//                        .set("font-size", "var(--lumo-font-size-xs)")
-//                        .set("color", "#9E9E9E") // Match Backlog gray color
-//                        .set("white-space", "nowrap")
-//                        .set("margin-right", "var(--lumo-space-s)")
-//                        .set("flex-shrink", "0");
-//                container.add(keySpan);
+                Span keySpan = new Span(task.getKey());
+                keySpan.setId(TASK_GRID_KEY_PREFIX + task.getName());
+                keySpan.getStyle()
+                        .set("font-weight", "bold")
+                        .set("font-size", "var(--lumo-font-size-xs)")
+                        .set("color", "#9E9E9E") // Match Backlog gray color
+                        .set("white-space", "nowrap")
+                        .set("margin-right", "var(--lumo-space-s)")
+                        .set("flex-shrink", "0");
+                container.add(keySpan);
 
                 // Add name field or text
                 if (isEditMode) {
                     TextField nameField = new TextField();
+                    nameField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
                     nameField.setId(TASK_GRID_NAME_PREFIX + task.getName());
                     nameField.setValue(task.getName() != null ? task.getName() : "");
                     nameField.setWidthFull();
@@ -510,7 +514,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 div.setText(task.getParentTask() != null ? "T-" + task.getParentTask().getOrderId() : "");
                 div.setId(TASK_GRID_PARENT_PREFIX + task.getName());
                 return div;
-            })).setHeader("Parent").setAutoWidth(true);
+            })).setHeader("Parent").setWidth("50px");
         }
         //Start - Editable only for Milestone tasks; date/time only active when manually scheduled
         {
@@ -525,9 +529,10 @@ public class TaskGrid extends TreeGrid<Task> {
                     manualCheckbox.setTooltipText("Manually scheduled – uncheck to let the scheduler compute the date");
 
                     DateTimePicker startField = new DateTimePicker();
+                    startField.addThemeVariants(DateTimePickerVariant.LUMO_SMALL);
                     startField.setValue(task.getStart() != null ? task.getStart() : LocalDateTime.now());
                     startField.setEnabled(manuallyScheduled);
-                    startField.setWidthFull();
+                    startField.setWidth("150px");
                     startField.setId(TASK_GRID_START_PREFIX + task.getName());
 
                     manualCheckbox.addValueChangeListener(e -> {
@@ -574,7 +579,7 @@ public class TaskGrid extends TreeGrid<Task> {
                         div.setText("");
                     return div;
                 }
-            })).setHeader("Start").setAutoWidth(true);
+            })).setHeader("Start").setWidth("200px")/*.setAutoWidth(true)*/;
         }
 
         //Min Estimate - Editable only for Task tasks
@@ -583,6 +588,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     TextField estimateField = new TextField();
+                    estimateField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
                     estimateField.setId(TASK_GRID_MIN_EST_PREFIX + task.getName());
                     estimateField.setValue(!task.getMinEstimate().equals(Duration.ZERO) ?
                             DateUtil.createWorkDayDurationString(task.getMinEstimate()) : "");
@@ -622,6 +628,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     TextField estimateField = new TextField();
+                    estimateField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
                     estimateField.setId(TASK_GRID_MAX_EST_PREFIX + task.getName());
                     estimateField.setValue(!task.getMaxEstimate().equals(Duration.ZERO) ?
                             DateUtil.createWorkDayDurationString(task.getMaxEstimate()) : "");
@@ -662,6 +669,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 if (isEditMode && task.isTask()) {
                     // Editable for Task tasks
                     ComboBox<User> userComboBox = new ComboBox<>();
+                    userComboBox.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
                     userComboBox.setId(TASK_GRID_ASSIGNED_PREFIX + task.getName());
                     userComboBox.setAllowCustomValue(false);
                     userComboBox.setClearButtonVisible(true);
