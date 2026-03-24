@@ -42,9 +42,9 @@ import java.util.stream.Stream;
  */
 @Tag("UnitTest")
 @Slf4j
-public class GanttTest extends AbstractGanttTester {
+public class CriticalTest extends AbstractGanttTester {
 
-    private static final String testFolder = "references/gantt";
+    private static final String testFolder = "references/critical";
 
     @BeforeEach
     public void beforeEach() {
@@ -67,5 +67,6 @@ public class GanttTest extends AbstractGanttTester {
     public void test(String name, TestInfo testInfo) throws Exception {
         executeTest(name, testInfo, testFolder);
     }
+
 
 }

@@ -200,7 +200,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
         }
 //        authors.calculateColors(graphicsTheme, true);
 //        authors.sort();
-        GanttUtil gu = new GanttUtil(context);
+        GanttUtil gu = new GanttUtil();
         //we only generate resource dependencies if it is not a genuin Gantt chart exported from MS Project online
         if (ganttFileName.toLowerCase().endsWith(".xml")) {
             gu.createResourceDependencies(sprint);

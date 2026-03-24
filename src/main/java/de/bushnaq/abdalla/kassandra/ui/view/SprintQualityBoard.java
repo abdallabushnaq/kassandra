@@ -129,7 +129,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
             this.sprintId = Long.parseLong(queryParameters.getParameters().get("sprint").getFirst());
         }
 
-        ganttUtil = new GanttUtil(context);
+        ganttUtil = new GanttUtil();
         loadData();
 
         pageTitle.setText(sprint.getName());

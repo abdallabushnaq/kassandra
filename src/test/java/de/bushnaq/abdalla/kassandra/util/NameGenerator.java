@@ -37,7 +37,7 @@ public class NameGenerator {
     private final        List<Name>   userNames;
     private final        List<String> versionNames;
 
-    NameGenerator() {
+    public NameGenerator() {
         NameGeneratorOptions options = new NameGeneratorOptions();
         options.setRandomSeed(123L);//Get deterministic results by setting a random seed.
         org.ajbrown.namemachine.NameGenerator generator = new org.ajbrown.namemachine.NameGenerator(options);

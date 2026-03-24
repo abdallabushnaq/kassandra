@@ -293,7 +293,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         // Remember this sprint for next time
         lastShownSprintId = this.sprintId;
 
-        ganttUtil = new GanttUtil(context);
+        ganttUtil = new GanttUtil();
         loadData();
 
         // Update sprint selector to show the current sprint (in case it was determined automatically)

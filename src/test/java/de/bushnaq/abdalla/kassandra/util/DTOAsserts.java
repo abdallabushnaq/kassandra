@@ -102,6 +102,7 @@ public class DTOAsserts {
     }
 
     protected static void assertSprintEquals(Sprint expected, Sprint actual) {
+
         assertSprintEquals(expected, actual, false);
     }
 

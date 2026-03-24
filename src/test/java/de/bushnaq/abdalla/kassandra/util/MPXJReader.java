@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,76 +15,52 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.report.gantt;
+package de.bushnaq.abdalla.kassandra.util;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
-import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.util.AbstractLegacyGanttTestUtil;
-import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import de.bushnaq.abdalla.util.MpxjUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import net.sf.mpxj.*;
 import net.sf.mpxj.reader.UniversalProjectReader;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 
-import java.io.*;
-import java.nio.file.Files;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.HashMap;
+import java.util.Map;
 
 import static de.bushnaq.abdalla.kassandra.util.NameGenerator.PROJECT_HUB_ORG;
 
-@Tag("UnitTest")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureTestRestTemplate
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-//@Transactional
-@TestMethodOrder(MethodOrderer.MethodName.class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
-    public static final String ANONYMOUS     = "anonymous";
-    private             int    testCaseIndex = 1;
+public class MPXJReader extends GanttGenerator {
+    public static final String                                             ANONYMOUS   = "anonymous";
+    private final       boolean                                            includeLevelingInfo;//leveling info like task start/finish and duration time
+    protected           Map<String, Task>                                  mpxjTaskMap = new HashMap<>();
+    protected           Map<String, net.sf.mpxj.Resource>                  resourceMap = new HashMap<>();
+    protected           Map<String, de.bushnaq.abdalla.kassandra.dto.Task> taskMap     = new HashMap<>();
+    protected           String                                             testFolder;
+    protected           Map<String, User>                                  userMap     = new HashMap<>();
 
-    /**
-     * Test method to read MPP files, clone all tasks, users and relations and then compare both after leveling the resources.
-     * ensures that our leveling aligns with mpp.
-     *
-     * @param mppFileName
-     * @param testInfo
-     * @throws Exception
-     */
-    @MethodSource("listFilesByExtension")
-    @ParameterizedTest
-    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
-    public void legacyTest(Path mppFileName, TestInfo testInfo) throws Exception {
-        TestInfoUtil.setTestCaseIndex(testInfo, testCaseIndex);
-        TestInfoUtil.setTestMethod(testInfo, mppFileName.getFileName().toString());
-//        TestInfoUtil.setTestMethod(testInfo, generateTestCaseName(testInfo));
-        TestInfoUtil.setDaysAfterStart(testInfo, random.nextInt(20) + 2);
-        setTestCaseName(this.getClass().getName(), mppFileName.getFileName().toString());
-        generateOneProduct(testInfo);
-        Sprint sprint = expectedSprints.getFirst();
-        testCaseIndex++;
+    public MPXJReader(String testFolder, boolean includeLevelingInfo) {
+        super();
+        this.testFolder          = testFolder;
+        this.includeLevelingInfo = includeLevelingInfo;
+    }
 
-        File file = new File(String.valueOf(mppFileName.toAbsolutePath()));
+    public static boolean isValidTask(net.sf.mpxj.Task task) {
+        //ignore task with ID 0
+        //ignore tasks that have no name
+        //ignore tasks that do not have a start date or finish date
+        return task.getID() != 0 && task.getUniqueID() != null && task.getName() != null && task.getStart() != null && task.getFinish() != null && (task.getID() != 1);
+    }
+
+    public Sprint load(Path mppFileName) throws Exception {
+        Sprint sprint = addSprint();
+        File   file   = new File(String.valueOf(mppFileName.toAbsolutePath()));
         try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
             UniversalProjectReader reader      = new UniversalProjectReader();
             ProjectFile            projectFile = reader.read(inputStream);
@@ -113,7 +89,7 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                                 if (emailAddress == null) {
                                     emailAddress = resourceName.replaceAll(" ", "_") + "@example.com";
                                 }
-                                User user = addUser(resourceName, emailAddress, "USER", "DE", "nw", date.toLocalDate(), generateUserColor(userIndex), (float) availability);
+                                User user = addUser(resourceName, (float) availability);
 
                                 userMap.put(resourceName, user);//store users
                             }
@@ -125,12 +101,21 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
             int anonymousUserIndex = 1;
             for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
                 if (isValidTask(mpxjTask)) {
-                    String                                    name     = mpxjTask.getName();
-                    LocalDateTime                             start    = null;
+                    String             name     = mpxjTask.getName();
+                    LocalDateTime      start    = null;
+                    LocalDateTime      finish   = null;
+                    java.time.Duration duration = null;
+                    boolean            critical = false;
+                    if (includeLevelingInfo) {
+                        start    = mpxjTask.getStart();
+                        finish   = mpxjTask.getFinish();
+                        duration = MpxjUtil.toJavaDuration(mpxjTask.getDuration());
+                        critical = mpxjTask.getCritical();
+                    }
                     de.bushnaq.abdalla.kassandra.dto.TaskMode taskMode = de.bushnaq.abdalla.kassandra.dto.TaskMode.AUTO_SCHEDULED;
                     if (mpxjTask.getTaskMode().equals(TaskMode.MANUALLY_SCHEDULED)) {
-                        start    = mpxjTask.getStart();
                         taskMode = de.bushnaq.abdalla.kassandra.dto.TaskMode.MANUALLY_SCHEDULED;
+                        start    = mpxjTask.getStart();
                     }
                     if (!mpxjTask.getResourceAssignments().isEmpty() && mpxjTask.getResourceAssignments().get(0).getResource() != null) {
                         //user assigned to this task
@@ -138,9 +123,18 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                         Resource           resource           = resourceAssignment.getResource();
                         String             resourceName       = resource.getName();
                         Duration           work               = resourceAssignment.getWork();
-                        net.sf.mpxj.Task   parent             = mpxjTaskMap.get(mpxjTask.getParentTask().getName());
-                        User               user               = userMap.get(resourceName);
-                        Task               task               = addTask(sprint, null, mpxjTask.getName(), start, MpxjUtil.toJavaDuration(work), null, user, null, taskMode, mpxjTask.getMilestone());
+                        if (work.getDuration() == 0) {
+                            java.time.Duration d = java.time.Duration.between(resourceAssignment.getStart(), resourceAssignment.getFinish());
+                            java.time.Duration w = java.time.Duration.ofSeconds((long) (d.getSeconds() * resourceAssignment.getResource().getCurrentAvailabilityTableEntry().getUnits().doubleValue() / 100));
+                            work = MpxjUtil.toMpjxDuration(w);
+                        }
+
+                        net.sf.mpxj.Task                      parent = mpxjTaskMap.get(mpxjTask.getParentTask().getName());
+                        User                                  user   = userMap.get(resourceName);
+                        de.bushnaq.abdalla.kassandra.dto.Task task   = addTask(sprint, null, mpxjTask.getName(), start, MpxjUtil.toJavaDuration(work), null, user, null, taskMode, mpxjTask.getMilestone());
+                        task.setFinish(finish);
+                        task.setDuration(duration);
+                        task.setCritical(critical);
                         taskMap.put(task.getName(), task);
                     } else if (!mpxjTask.hasChildTasks()) {
                         //no user assigned to this task
@@ -150,10 +144,13 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                         anonymousUserIndex++;
                         User user = userMap.get(resourceName);
                         if (user == null) {
-                            user = addUser(resourceName, emailAddress, "USER", "de", "nw", date.toLocalDate(), generateUserColor(userIndex), (float) 1);
+                            user = addUser(resourceName, (float) 1);
                             userMap.put(resourceName, user);//store anonymous user for reuse
                         }
-                        Task task = addTask(sprint, null, mpxjTask.getName(), start, MpxjUtil.toJavaDuration(work), null, user, null, taskMode, mpxjTask.getMilestone());//parent task
+                        de.bushnaq.abdalla.kassandra.dto.Task task = addTask(sprint, null, mpxjTask.getName(), start, MpxjUtil.toJavaDuration(work), null, user, null, taskMode, mpxjTask.getMilestone());//parent task
+                        task.setFinish(finish);
+                        task.setDuration(duration);
+                        task.setCritical(critical);
                         taskMap.put(task.getName(), task);
                     } else {
                         //story
@@ -162,10 +159,13 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                         anonymousUserIndex++;
                         User user = userMap.get(resourceName);
                         if (user == null) {
-                            user = addUser(resourceName, emailAddress, "USER", "de", "nw", date.toLocalDate(), generateUserColor(userIndex), (float) 1);
+                            user = addUser(resourceName, (float) 1);
                             userMap.put(resourceName, user);//store anonymous user for reuse
                         }
-                        Task task = addTask(sprint, null, mpxjTask.getName(), start, null, null, user, null, taskMode, mpxjTask.getMilestone());//parent task
+                        de.bushnaq.abdalla.kassandra.dto.Task task = addTask(sprint, null, mpxjTask.getName(), start, null, null, user, null, taskMode, mpxjTask.getMilestone());//parent task
+                        task.setFinish(finish);
+                        task.setDuration(duration);
+                        task.setCritical(critical);
                         taskMap.put(task.getName(), task);
                     }
                 }
@@ -173,15 +173,15 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
             //add parents and relations
             for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
                 if (isValidTask(mpxjTask)) {
-                    String name = mpxjTask.getName();
-                    Task   task = taskMap.get(name);
+                    String                                name = mpxjTask.getName();
+                    de.bushnaq.abdalla.kassandra.dto.Task task = taskMap.get(name);
                     //set parent
                     if (mpxjTask.getParentTask() != null) {
                         String           parentTaskName = mpxjTask.getParentTask().getName();
                         net.sf.mpxj.Task mpxjParent     = mpxjTaskMap.get(mpxjTask.getParentTask().getName());
                         if (mpxjParent != null) {
                             //probably not valid task
-                            Task parent = taskMap.get(mpxjParent.getName());
+                            de.bushnaq.abdalla.kassandra.dto.Task parent = taskMap.get(mpxjParent.getName());
                             task.setParentTaskId(parent.getId());
                             parent.addChildTask(task);
                         }
@@ -189,55 +189,42 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                     //set relations
                     for (Relation relation : mpxjTask.getPredecessors()) {
                         if (!relation.getLag().equals(Duration.getInstance(0, TimeUnit.MINUTES))) {
-                            net.sf.mpxj.Task mpxjPredecessor = relation.getPredecessorTask();
-                            Task             predecessor     = taskMap.get(mpxjPredecessor.getName());
+                            net.sf.mpxj.Task                      mpxjPredecessor = relation.getPredecessorTask();
+                            de.bushnaq.abdalla.kassandra.dto.Task predecessor     = taskMap.get(mpxjPredecessor.getName());
                             task.addPredecessor(predecessor, true);
                         }
                     }
                 }
             }
-            for (Task value : taskMap.values()) {
-                taskApi.persist(value);
-            }
-
-//            sprint.setUserId(userMap.values().stream().findFirst().get().getId());
-//            Sprint savedSprint = sprintApi.persist(sprint);
-            Sprint savedSprint = sprintApi.getById(expectedSprints.getFirst().getId());
-            {
-                Sprint readSprint = sprintApi.getById(savedSprint.getId());
-                readSprint.initialize();
-                readSprint.initUserMap(userApi.getAll(readSprint.getId()));
-                readSprint.initTaskMap(taskApi.getAll(readSprint.getId()), worklogApi.getAll(readSprint.getId()));
-                levelResources(testInfo, readSprint, projectFile);
-                ParameterOptions.setNow(ParameterOptions.getNow().plusDays(TestInfoUtil.getDaysAfterStart(testInfo)));
-                generateWorklogs(readSprint, ParameterOptions.getLocalNow());
-                initializeInstances();//reload from db for our test comparison
-                generateGanttChart(testInfo, readSprint.getId(), projectFile);
-                generateBurndownChart(testInfo, readSprint.getId());
-            }
         }
-    }
-
-    private static List<Path> listFilesByExtension() throws IOException {
-        return listFilesByExtension("legacy-references", ".mpp");
-    }
-
-    /**
-     * Lists files in the specified directory with an extension filter
-     *
-     * @param directoryPath The path to the directory
-     * @param extension     The file extension to filter by (e.g., ".java")
-     * @return List of matching file paths
-     * @throws IOException If an I/O error occurs
-     */
-    private static List<Path> listFilesByExtension(String directoryPath, String extension) throws IOException {
-        try (Stream<Path> stream = Files.list(Paths.get(directoryPath))) {
-            return stream
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(extension))
-                    .sorted()
-                    .collect(Collectors.toList());
+        sprint.initialize();
+        sprint.initUserMap(users);
+        sprint.initTaskMap(tasks, worklogs);
+        if (includeLevelingInfo) {
+            sprint.setEnd(sprint.getLatestFinishDate());
         }
+        return sprint;
     }
+
+//    private void store(String directory, TestInfo testInfo, Sprint sprint, boolean overwrite) throws IOException {
+//        Path filePath = Paths.get(directory, TestInfoUtil.getTestMethodName(testInfo) + ".json");
+//        if (overwrite || !Files.exists(filePath)) {
+//            Map<String, Object> container = new LinkedHashMap<>();
+//            container.put("users", sprint.getUserMap());
+//            container.put("sprint", sprint);
+//            container.put("tasks", sprint.getTasks());
+//
+//            String json = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(container);
+//            Files.writeString(filePath, json, StandardCharsets.UTF_8);
+//        }
+//    }
+//
+//    private void storeExpectedResult(TestInfo testCaseInfo, Sprint sprint) throws IOException {
+//        store(testFolder, testCaseInfo, sprint, true);
+//    }
+//
+//    private void storeResult(TestInfo testCaseInfo, Sprint sprint) throws IOException {
+//        store(testFolder, testCaseInfo, sprint, false);
+//    }
 
 }

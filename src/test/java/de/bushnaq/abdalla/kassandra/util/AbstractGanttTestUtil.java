@@ -455,7 +455,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
 
     protected void levelResources(TestInfo testInfo, Sprint sprint, ProjectFile projectFile) throws Exception {
         initializeInstances();
-        GanttUtil         ganttUtil = new GanttUtil(context);
+        GanttUtil         ganttUtil = new GanttUtil();
         GanttErrorHandler eh        = new GanttErrorHandler();
         ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
 

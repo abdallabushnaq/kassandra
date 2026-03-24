@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.report.gantt;
 
-import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
@@ -45,7 +44,7 @@ public class GanttUtil {
 
     private static final String    ERROR_103_TASK_IS_MANUALLY_SCHEDULED_AND_CANNOT_FULLFILL_ITS_DEPENDENCY = "Error #103: Task [%d]'%s' is manually scheduled and cannot fullfill its dependency to task [%d]'%s'.";
     private static final String    ERROR_104_TASK_CANNOT_FULLFILL_ITS_DEPENDENCY                           = "Error #104: Task [%d]'%s' start %s cannot fullfill its dependency to task [%d]'%s' finish %s.";
-    private final        Context   context;
+    //    private final        Context   context;
     @Getter
     private final        Task      deliveryBufferTask                                                      = null;
     private final        Set<Task> finishSet                                                               = new HashSet<>();
@@ -58,8 +57,8 @@ public class GanttUtil {
     private final Set<Task> startSet = new HashSet<>();
     int testCriticalCounter;
 
-    public GanttUtil(Context context) {
-        this.context = context;
+    public GanttUtil(/*Context context*/) {
+//        this.context = context;
     }
 
 //    private Duration calculateDeliveryBuffer(Sprint projectFile) throws ProjectsDashboardException {
@@ -401,6 +400,7 @@ public class GanttUtil {
     }
 
     public void levelResources(GanttErrorHandler eh, Sprint sprint, String projectRequestKey, LocalDateTime currentStartTime) {
+        prepareForLeveling(sprint);
         long time = System.currentTimeMillis();
         try {
             long checks     = 0;
@@ -576,12 +576,12 @@ public class GanttUtil {
                     iterations++;
 
                     //TODO debugging code
-                    {
-                        Duration days = Duration.between(sprint.getEarliestStartDate(), sprint.getLatestFinishDate());
-                        if (days.minus(Duration.ofDays(365)).isPositive()) {
-                            throw new LevelingResourcesException(String.format("Could not level resources after %d days, assuming dependency loop.", days.toDays()));
-                        }
-                    }
+//                    {
+//                        Duration days = Duration.between(sprint.getEarliestStartDate(), sprint.getLatestFinishDate());
+//                        if (days.minus(Duration.ofDays(365)).isPositive()) {
+//                            throw new LevelingResourcesException(String.format("Could not level resources after %d days, assuming dependency loop.", days.toDays()));
+//                        }
+//                    }
 
 
                     if (!eh.isTrue("Error #040. We have detected a dependency loop involving tasks and Categories. Please check the generated team planner chart and fix the dependency loop in your Excel sheet.", iterations < maxLoop)) {
@@ -659,6 +659,17 @@ public class GanttUtil {
             return overlapping;
         }
         return false;
+    }
+
+    private void prepareForLeveling(Sprint sprint) {
+        for (Task task : sprint.getTasks()) {
+            if (task.getTaskMode() != TaskMode.MANUALLY_SCHEDULED) {
+                task.setStart(null);
+                task.setFinish(null);
+                task.setDuration(null);
+            }
+        }
+
     }
 
     private void printCase(String caseName, String id, String taskName, String methodName, String start, String finish, String duration) {

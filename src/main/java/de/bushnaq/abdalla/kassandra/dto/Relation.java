@@ -22,7 +22,7 @@ import lombok.*;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(callSuper = true)
+@ToString
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Relation implements Comparable<Relation> {
 
