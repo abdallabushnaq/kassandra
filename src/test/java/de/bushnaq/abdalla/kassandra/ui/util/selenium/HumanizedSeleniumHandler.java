@@ -383,7 +383,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         windowPosition = new Point(Math.max(windowPosition.x, 0), Math.max(windowPosition.y, 0));//prevent negative coordinates
         int targetX = windowPosition.getX() + elementLocation.getX() + (elementSize.getWidth() / 2);
         int targetY = windowPosition.getY() + elementLocation.getY() + (elementSize.getHeight() / 2) + chromeHeight;
-        log.trace("Element {} center on screen calculated at ({}, {}, {}, {}, {}, {})", element.getTagName(), windowPosition, elementLocation, elementSize, chromeHeight, targetX, targetY);
+        log.trace("Element {} center on screen calculated at (windowPosition={}, elementLocation={}, elementSize={}, chromeHeight={}, targetX={}, targetY={})", element.getTagName(), windowPosition, elementLocation, elementSize, chromeHeight, targetX, targetY);
         return new java.awt.Point(targetX, targetY);
     }
 
@@ -844,41 +844,19 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             // Find and click the toggle button to open the dropdown
             // A human would just click the toggle button directly (no need to click input first)
             // Vaadin combobox uses shadow DOM, so we use expandRootElementAndFindElement to access it
-//            try {
-            // Try to find toggle button by ID first
             WebElement toggleButton = expandRootElementAndFindElement(comboBoxElement, "#toggleButton");
 
-//                if (toggleButton == null) {
-//                    // Fallback: try to find by part attribute
-//                    toggleButton = expandRootElementAndFindElement(comboBoxElement, "[part='toggle-button']");
-//                }
-
-//                toggleButton != null {
             moveMouseToElement(toggleButton);
             clickElement(toggleButton);
-//                    toggleButton.click();
             log.trace("Clicked combobox toggle button via shadow DOM");
-//                }
-//                else {
-//                    // Fallback: click on the input field if toggle button not found
-//                    log.trace("Toggle button not found in shadow DOM, clicking input field to open dropdown");
-//                    inputElement.click();
-//                }
-//            } catch (Exception ex) {
-//                 Fallback: click on the input field if shadow DOM access fails
-//                log.warn("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
-//                inputElement.click();
-//            }
 
             // Wait for the dropdown overlay to become visible
-            // The overlay element exists in the DOM even when closed
             // When opened, the 'opened' attribute is set to "true" (not an empty string)
             waitUntil(ExpectedConditions.attributeToBe(comboBoxElement, "opened", "true"));
 
             // Find dropdown items
-            // Items are in the light DOM as children of vaadin-combo-box-scroller
             // We can query them directly without accessing shadow DOM
-            List<WebElement> dropdownItems = getDriver().findElements(By.cssSelector("vaadin-combo-box-item"));
+            List<WebElement> dropdownItems = findElements(By.cssSelector("vaadin-combo-box-item"));
 
             log.trace("Found {} dropdown items", dropdownItems.size());
 
@@ -886,7 +864,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             WebElement matchingItem = null;
             for (WebElement item : dropdownItems) {
                 String itemText = item.getText();
-                if (itemText != null && itemText.trim().equals(text.trim())) {
+                if (itemText.trim().equals(text.trim())) {
                     matchingItem = item;
                     break;
                 }
@@ -1114,7 +1092,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         // Find dropdown items
         // Items are in the light DOM as children of vaadin-combo-box-scroller
         // We can query them directly without accessing shadow DOM
-        List<WebElement> dropdownItems = getDriver().findElements(By.cssSelector("vaadin-multi-select-combo-box-item"));
+        List<WebElement> dropdownItems = findElements(By.cssSelector("vaadin-multi-select-combo-box-item"));
 
         log.trace("Found {} dropdown items", dropdownItems.size());
 
@@ -1147,48 +1125,30 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     public void setTimePickerValue(WebElement comboBoxElement, String text) {
         if (!isEnabled())
             return;
-//        waitUntil(ExpectedConditions.elementToBeInteractable(By.id(id)));
-//        WebElement comboBoxElement = findElement(By.id(id));
         WebElement inputElement = comboBoxElement.findElement(By.tagName("input"));
         waitForElementToBeInteractable(inputElement.getAttribute("id"));
         try {
             // Find and click the toggle button to open the dropdown
-            // A human would just click the toggle button directly (no need to click input first)
             // Vaadin combobox uses shadow DOM, so we use expandRootElementAndFindElement to access it
-            try {
-                // Try to find toggle button by ID first
-                WebElement toggleButton = expandRootElementAndFindElement(comboBoxElement, "#toggleButton");
+            WebElement toggleButton = expandRootElementAndFindElement(comboBoxElement, "#toggleButton");
 
-                if (toggleButton == null) {
-                    // Fallback: try to find by part attribute
-                    toggleButton = expandRootElementAndFindElement(comboBoxElement, "[part='toggle-button']");
-                }
-
-                if (toggleButton != null) {
-                    moveMouseToElement(toggleButton);
-                    clickElement(toggleButton);
-//                    toggleButton.click();
-                    log.trace("Clicked time-picker toggle button via shadow DOM");
-                } else {
-                    // Fallback: click on the input field if toggle button not found
-                    log.warn("Toggle button not found in shadow DOM, clicking input field to open dropdown");
-                    inputElement.click();
-                }
-            } catch (Exception ex) {
-                // Fallback: click on the input field if shadow DOM access fails
-                log.warn("Failed to access toggle button via shadow DOM: {}, clicking input field to open dropdown", ex.getMessage());
-                inputElement.click();
+            if (toggleButton != null) {
+                moveMouseToElement(toggleButton);
+                clickElement(toggleButton);
+                log.trace("Clicked time-picker toggle button via shadow DOM");
+            } else {
+                log.warn("Toggle button not found in shadow DOM, clicking input field to open dropdown");
+                return;
             }
 
             // Wait for the dropdown overlay to become visible
-            // The overlay element exists in the DOM even when closed
-            // When opened, the 'opened' attribute is set to "true" (not an empty string)
-            waitUntil(ExpectedConditions.attributeToBe(By.cssSelector("vaadin-time-picker-overlay"), "opened", "true"));
+            // When opened, the 'opened' attribute is set to "true"
+            waitUntil(ExpectedConditions.attributeToBe(By.cssSelector("vaadin-time-picker"), "opened", "true"));
 
             // Find dropdown items
             // Items are in the light DOM as children of vaadin-combo-box-scroller
             // We can query them directly without accessing shadow DOM
-            List<WebElement> dropdownItems = getDriver().findElements(By.cssSelector("vaadin-time-picker-item"));
+            List<WebElement> dropdownItems = findElements(By.cssSelector("vaadin-time-picker-item"));
 
             log.trace("Found {} dropdown items", dropdownItems.size());
 
@@ -1196,8 +1156,9 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             WebElement matchingItem = null;
             for (WebElement item : dropdownItems) {
                 String itemText = item.getText();
-                if (itemText != null && itemText.trim().equals(text.trim())) {
+                if (itemText.trim().equals(text.trim())) {
                     matchingItem = item;
+                    log.info("found itemText " + itemText);
                     break;
                 }
             }
@@ -1208,10 +1169,6 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
                 wait(100);
                 matchingItem.click();
                 log.trace("Clicked on dropdown item: {}", text);
-            } else {
-                log.warn("Could not find dropdown item with text: {}. Falling back to keyboard method.", text);
-                // Fallback to typing method if item not found
-                setComboBoxValueByTyping(inputElement, text);
             }
 
             // Wait for dropdown to close

@@ -151,7 +151,7 @@ public class GanttUtil {
         for (Task task1 : sprint.getTasks()) {
             //find overlapping tasks with same resource assignment
             for (Task task2 : sprint.getTasks()) {
-                if (task1.getId() < task2.getId()) {
+                if (task1.getOrderId() < task2.getOrderId()) {
                     if (useSameAssignee(task1, task2)) {
                         if (overlap(task1, task2)) {
                             if (!hasDependency(task1, task2)) {
@@ -400,7 +400,10 @@ public class GanttUtil {
     }
 
     public void levelResources(GanttErrorHandler eh, Sprint sprint, String projectRequestKey, LocalDateTime currentStartTime) {
+//        logger.info("-------------------------------------------------------------------------------------------");
+        logger.info(String.format("Leveling resources for sprint %s.", sprint.getName()));
         prepareForLeveling(sprint);
+//        logger.info("-------------------------------------------------------------------------------------------");
         long time = System.currentTimeMillis();
         try {
             long checks     = 0;
@@ -662,9 +665,13 @@ public class GanttUtil {
     }
 
     private void prepareForLeveling(Sprint sprint) {
+        sanitizeTasks(sprint);
         for (Task task : sprint.getTasks()) {
             if (task.getTaskMode() != TaskMode.MANUALLY_SCHEDULED) {
                 task.setStart(null);
+                task.setFinish(null);
+                task.setDuration(null);
+            } else if (task.isMilestone()) {
                 task.setFinish(null);
                 task.setDuration(null);
             }
@@ -694,6 +701,13 @@ public class GanttUtil {
             count += queryNumberOfChildren(child);
         }
         return count;
+    }
+
+    private void sanitizeTasks(Sprint sprint) {
+        for (Task task : sprint.getTasks()) {
+            // Remove all predecessors that are not visible
+            task.getPredecessors().removeIf(relation -> !relation.isVisible());
+        }
     }
 
     private void setFinish(Task task, LocalDateTime finish) {
@@ -729,6 +743,7 @@ public class GanttUtil {
                 task.setFinish(finish);
             }
         }
+        logger.info(" task={} start={} finish={}", task.getName(), task.getStart(), task.getFinish());
     }
 
     /**

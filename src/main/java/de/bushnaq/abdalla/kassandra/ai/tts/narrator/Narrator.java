@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.ai.tts.SyncResult;
 import de.bushnaq.abdalla.kassandra.ai.tts.TtsEngine;
 import de.bushnaq.abdalla.kassandra.ai.tts.chatterbox.ChatterboxTTS;
 import de.bushnaq.abdalla.kassandra.ai.tts.indextts.IndexTTS;
+import de.bushnaq.abdalla.util.AnsiColorConstants;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -255,7 +256,7 @@ public class Narrator {
         } else {
 
             long t0 = System.nanoTime();
-            logger.info("⚡ TTS generate start: attrs={}, file={}, text=\"{}\"", eff, plan.path().getFileName(), text);
+            logger.info("{}⚡{} TTS generate start: attrs={}, file={}, text=\"{}\"", AnsiColorConstants.ANSI_RED, AnsiColorConstants.ANSI_RESET, eff, plan.path().getFileName(), text);
 
             byte[] audio = ttsEngine.synthesize(text, eff);
 

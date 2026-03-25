@@ -287,6 +287,23 @@ class SeleniumHandler {
         return getDriver().findElement(by);
     }
 
+    public List<WebElement> findElements(By by) {
+        List<WebElement> list = getDriver().findElements(by);
+        // Filter out elements that are not visible (width == 0), someone, vaadin, browser, driver? is generating these dummy items.
+        List<WebElement> filtered = new java.util.ArrayList<>();
+        for (WebElement element : list) {
+            try {
+                if (element.getSize().getWidth() > 0) {
+                    filtered.add(element);
+                }
+            } catch (org.openqa.selenium.StaleElementReferenceException e) {
+                // Ignore stale elements
+            }
+        }
+        return filtered;
+
+    }
+
     public void get(String url) {
         if (!isEnabled())
             return;

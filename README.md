@@ -25,38 +25,47 @@ tbd
 
 # Roadmap
 
-## Phase 1
+## Phase 1 (minimum viable specs)
 
-1. ✅ Basic functionality
+1. ✅ Authentication via oidc
 2. ✅ Product crud
 3. ✅ Version crud
 4. ✅ Feature crud
-5. ✅Sprint crud
+5. ✅ Sprint crud
 6. ✅ User crud
-7. ✅ Authentication via oidc
-8. ✅ User availability time-frames
-9. ✅ User location time-frames
-10. ✅ User work week time-frames
-11. ✅ User Work hours time-frames
+7. ✅ User groups crud
+8. ❌ Task crud
+   18.❌ worklog crud
+9. ✅ User availability time-frames
+10. ✅ User location time-frames
+11. ❌ User work week time-frames
 12. ✅ National Holidays
-13. ✅ Authorization, access control using user groups on project level.
-14. ✅ Gantt task only on working days.
-15. ✅ X-axis calendar make none working day gray.
-16. ✅ burn down chart for every sprint.
-17. ❌ Close project Release Date.
-18. worklog crud
-19. ❌ data scenario simulation generator
+13. ✅ vacations
+14. ✅ sick leaves
+15. ✅ Authorization, access control using user groups on project level.
+16. ✅ Gantt chart
+17. ❌ Automatic Gantt buffer calculation
+18. ✅ Burn down chart
+19. ❌ Close project Release Date.
+20. ❌ Dialog should set curser to edit box
+21. ❌ Dialog confirmation button should react to return
+22. ❌ add aura theme
+23. ❌ add dark avatar
+24. ❌ show product, versions, features, in sprint view
+25. ❌ show Versions, Features, Sprints pages in menu
+26. ❌ can we run browser in full screen mode?
+27. ❌ data scenario simulation generator
     1. ✅ Simulator Write the use case as a Story in the project or product
     2. ❌ include closed and delayed sprints.
 
-## Phase 2
+## Phase 2 (installable version)
 
-1. alpha release (0.1.0) of minimum viable product.
-2. docker container image.
-3. first initialization.
-4. server settings
+1. ❌ alpha release (0.1.0) of minimum viable product.
+2. ❌ docker container image.
+3. ❌ first initialization.
+4. ❌ server settings
 
-## Phase 3
+## Phase 3 (optimizations)
 
 1. ❌ gantt chart generation with resource conflict visualization.
 2. ❌ keep number of clicks to minimum for daily work of developer.
@@ -69,21 +78,21 @@ tbd
 9. ❌ Live response to your Input.
 10. ✅ product page.
 11. ❌ GDPR
-12. undo
-13. history
+12. ❌ undo
+13. ❌ history
 
 # Kassandra Introduction Videos
 
 https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 
-1. ✅Managing Users in Kassandra Introduction Video
-2. ✅Managing User Groups in Kassandra Introduction Video
-3. ✅User Profiles in Kassandra Introduction Video
-4. ✅User Off Days Introduction Video
-5. ✅User Locations Introduction Video
-6. ✅User Availability Introduction Video
-7. ✅Kassandra Products, Versions, Features and Sprints Introduction Video
-8. Stories and Tasks Introduction Video
+1. ✅ Managing Users in Kassandra Introduction Video
+2. ✅ Managing User Groups in Kassandra Introduction Video
+3. ✅ User Profiles in Kassandra Introduction Video
+4. ✅ User Off Days Introduction Video
+5. ✅ User Locations Introduction Video
+6. ✅ User Availability Introduction Video
+7. ✅ Kassandra Products, Versions, Features and Sprints Introduction Video
+8. ✅ Stories and Tasks Introduction Video
 9. Rearranging Stories and Tasks Introduction Video
 10. Story and Task Relations Introduction Video
 11. Logging Work Introduction Video

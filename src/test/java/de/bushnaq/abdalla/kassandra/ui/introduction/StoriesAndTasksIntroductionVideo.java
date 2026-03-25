@@ -126,9 +126,8 @@ public class StoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo 
         Sprint  sprint  = addSprint(feature, sprintName);
 
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setEnabled(false);
+        paul.setEnabled(true);
         Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
-//        seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
 
 
@@ -191,18 +190,18 @@ public class StoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo 
 
             //edit
             paul.narrate(NORMAL, "Select the edit button to change to whole table into edit mode...").pause();
-            paul.pauseIfDisabled(500);
+            paul.pauseIfDisabled(200);
             seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
 
             paul.narrate(NORMAL, "We can now edit all valid milestone, story or task cells.").pause();
             paul.narrate(NORMAL, "Lets give the milestone a name and fixed start date and time. We want our developers to start working first thing Monday morning.");
             paul.narrate(NORMAL, "Start is a short and descriptive name.");
             seleniumHandler.waitForPageLoaded();
-            paul.pauseIfDisabled(500);
+            paul.pauseIfDisabled(200);
             seleniumHandler.setTextField(TaskGrid.TASK_GRID_NAME_PREFIX + milestone1Name, "Start");
             paul.narrate(NORMAL, "Monday morning would be 8 AM.");
             seleniumHandler.setCheckCheckbox(TaskGrid.TASK_GRID_MANUALLY_SCHEDULED_PREFIX + milestone1Name, true);
-            final LocalDateTime startDateTime = LocalDateTime.of(2025, 5, 5, 8, 0);
+            final LocalDateTime startDateTime = LocalDateTime.of(2025, 8, 18, 8, 0);
             seleniumHandler.setDateTimePickerValue(TaskGrid.TASK_GRID_START_PREFIX + milestone1Name, startDateTime);
 
             paul.narrate(NORMAL, "Our first Story is all about the API.");

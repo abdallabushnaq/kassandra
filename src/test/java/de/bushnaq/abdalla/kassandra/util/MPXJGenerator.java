@@ -124,9 +124,9 @@ public class MPXJGenerator {
         if (maxWork != null && !maxWork.isZero()) {
             task.setMaxEstimate(maxWork);
         }
-//        if (minWork == null || minWork.equals(Duration.ZERO)) {
-//            task.setFinish(start);
-//        }
+        if (minWork == null || minWork.equals(Duration.ZERO)) {
+            task.setFinish(start);
+        }
         if (taskMode != null) {
             task.setTaskMode(taskMode);
         }
