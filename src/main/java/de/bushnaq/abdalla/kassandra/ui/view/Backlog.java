@@ -149,8 +149,8 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             // Apply tree-grid-wrapper styling to the main view
             setClassName("tree-grid-wrapper");
             addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
-            this.getStyle().set("padding-left", "var(--lumo-space-m)");
-            this.getStyle().set("padding-right", "var(--lumo-space-m)");
+            this.getStyle().set("padding-left", "var(--lumo-space-xs)");
+            this.getStyle().set("padding-right", "var(--lumo-space-xs)");
 
             headerLayout = createHeaderWithButtons();
 
@@ -182,7 +182,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             ganttChartContainer.getStyle()
                     .set("overflow-x", "auto")
                     .set("width", "100%")
-                    .set("margin-top", "var(--lumo-space-m)");
+                    .set("margin-top", "var(--lumo-space-xs)");
 
             // Create backlog grid (always shown at bottom)
             backlogGrid = createGrid(clock);
@@ -409,13 +409,13 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.END);
-        header.getStyle().set("padding", "var(--lumo-space-m)");
+        header.getStyle().set("padding", "var(--lumo-space-xs)");
         header.setSpacing(true);
 
         // 1. Search input box with magnifying glass icon
         searchField = new TextField();
         searchField.setId(SEARCH_FIELD_ID);
-        searchField.setLabel("Search");
+//        searchField.setLabel("Search");
         searchField.setPlaceholder("search tasks");
         searchField.setPrefixComponent(VaadinIcon.SEARCH.create());
         searchField.setValueChangeMode(ValueChangeMode.EAGER);
@@ -430,7 +430,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         // 2. User multi-select dropdown
         userSelector = new MultiSelectComboBox<>();
         userSelector.setId(USER_SELECTOR_ID);
-        userSelector.setLabel("User");
+//        userSelector.setLabel("User");
         userSelector.setItemLabelGenerator(User::getName);
         userSelector.setPlaceholder("Select users");
         userSelector.setWidth("200px");
@@ -444,7 +444,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         // 3. Sprint single-select dropdown (changed from multi-select)
         sprintSelector = new ComboBox<>();
         sprintSelector.setId(SPRINT_SELECTOR_ID);
-        sprintSelector.setLabel("Sprint");
+//        sprintSelector.setLabel("Sprint");
         sprintSelector.setItemLabelGenerator(Sprint::getName);
         sprintSelector.setPlaceholder("Select sprint");
         sprintSelector.setWidth("200px");
@@ -471,7 +471,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         HorizontalLayout expandToggleLayout = new HorizontalLayout();
         expandToggleLayout.setSpacing(true);
         expandToggleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        expandToggleLayout.getStyle().set("margin-left", "var(--lumo-space-m)");
+        expandToggleLayout.getStyle().set("margin-left", "var(--lumo-space-xs)");
 
         Span expandLabel = new Span("Expand All Stories");
         expandLabel.getStyle()
@@ -810,7 +810,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
         Span loadingText = new Span("Generating Gantt chart...");
         loadingText.getStyle()
-                .set("margin-right", "var(--lumo-space-m)")
+                .set("margin-right", "var(--lumo-space-xs)")
                 .set("font-style", "italic")
                 .set("color", "var(--lumo-secondary-text-color)");
 
@@ -856,7 +856,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
                     // Configure Gantt chart for proper scrolling display
                     svg.getStyle()
-                            .set("margin-top", "var(--lumo-space-m)")
+                            .set("margin-top", "var(--lumo-space-xs)")
                             .set("max-width", "100%")
                             .set("height", "auto")
                             .set("display", "block");

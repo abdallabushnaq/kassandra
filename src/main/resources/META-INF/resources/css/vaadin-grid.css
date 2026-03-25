@@ -17,7 +17,7 @@
 .grid-panel {
     background-color: var(--lumo-contrast-5pct);
     border-radius: var(--lumo-border-radius-l) var(--lumo-border-radius-l) var(--lumo-border-radius-l) var(--lumo-border-radius-l);
-    padding: 8px;
+    padding: 4px;
 }
 
 /* Reduce default text size for all cell content */

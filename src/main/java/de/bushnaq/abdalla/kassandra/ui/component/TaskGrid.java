@@ -1015,12 +1015,32 @@ public class TaskGrid extends TreeGrid<Task> {
     private void moveTaskAfter(Task task, Task after) {
         log.info("Moving task from index {} to after {}", task.getOrderId(), after.getOrderId());
 
-        // Remove task from old position
-        taskOrder.remove(task);
-
-        // Insert at new position
+        int oldIndex    = taskOrder.indexOf(task);
         int targetIndex = taskOrder.indexOf(after);
-        taskOrder.add(targetIndex + 1, task);
+        if (oldIndex > targetIndex) {
+            // Remove task from old position
+            taskOrder.remove(task);
+
+            // Insert at new position
+            taskOrder.add(1 + targetIndex++, task);
+            //if task is a story, we need to move its children as well to maintain hierarchy
+            for (Task child : task.getChildTasks()) {
+                taskOrder.remove(child);
+                taskOrder.add(1 + targetIndex++, child);
+            }
+        } else {
+            // Remove task from old position
+            taskOrder.remove(task);
+
+            // Insert at new position
+            taskOrder.add(targetIndex, task);
+            //if task is a story, we need to move its children as well to maintain hierarchy
+            for (Task child : task.getChildTasks()) {
+                taskOrder.remove(child);
+                taskOrder.add(targetIndex, child);
+            }
+        }
+
 
         // Recalculate orderIds for all tasks based on their new positions
         //TODO optimize - only update affected tasks
@@ -1035,13 +1055,31 @@ public class TaskGrid extends TreeGrid<Task> {
 
     private void moveTaskBefore(Task task, Task before) {
         log.info("Moving task from index {} to before {}", task.getOrderId(), before.getOrderId());
-
-        // Remove task from old position
-        taskOrder.remove(task);
-
-        // Insert at new position
+        int oldIndex    = taskOrder.indexOf(task);
         int targetIndex = taskOrder.indexOf(before);
-        taskOrder.add(targetIndex, task);
+        if (oldIndex > targetIndex) {
+            // Remove task from old position
+            taskOrder.remove(task);
+
+            // Insert at new position
+            taskOrder.add(targetIndex++, task);
+            //if task is a story, we need to move its children as well to maintain hierarchy
+            for (Task child : task.getChildTasks()) {
+                taskOrder.remove(child);
+                taskOrder.add(targetIndex++, child);
+            }
+        } else {
+            // Remove task from old position
+            taskOrder.remove(task);
+
+            // Insert at new position
+            taskOrder.add(targetIndex - 1, task);
+            //if task is a story, we need to move its children as well to maintain hierarchy
+            for (Task child : task.getChildTasks()) {
+                taskOrder.remove(child);
+                taskOrder.add(targetIndex - 1, child);
+            }
+        }
 
         // Recalculate orderIds for all tasks based on their new positions
         //TODO optimize - only update affected tasks

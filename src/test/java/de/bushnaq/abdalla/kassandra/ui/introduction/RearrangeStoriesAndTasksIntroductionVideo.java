@@ -96,7 +96,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractIntroduct
 
     @BeforeAll
     static void beforeAll() {
-        video.setTitle("Rearranging Stories and Tasks");
+        video.setTitle("Rearranging Stories and Tasks in Kassandra");
         video.setVersion(1);
     }
 
@@ -180,8 +180,7 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractIntroduct
 
         paul.narrate(NORMAL, "First, I'll select the first story, Config API implementation, by clicking on it.");
         paul.pauseIfDisabled(500);
-//        seleniumHandler.waitUntilBrowserClosed(0);
-        seleniumHandler.selectGridRow(TaskGrid.TASK_GRID_ID_PREFIX, Backlog.class, story1.getName());
+        seleniumHandler.selectGridRow(TaskGrid.TASK_GRID_DEPENDENCY_PREFIX, Backlog.class, story1.getName());
 
         paul.pause(500);
 

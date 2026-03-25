@@ -400,10 +400,16 @@ public class GanttUtil {
     }
 
     public void levelResources(GanttErrorHandler eh, Sprint sprint, String projectRequestKey, LocalDateTime currentStartTime) {
-//        logger.info("-------------------------------------------------------------------------------------------");
+        logger.info("-------------------------------------------------------------------------------------------");
         logger.info(String.format("Leveling resources for sprint %s.", sprint.getName()));
         prepareForLeveling(sprint);
-//        logger.info("-------------------------------------------------------------------------------------------");
+        for (Task task : sprint.getTasks()) {
+            logger.info(" task={} {} start={} finish={}", task.getName(), task.getKey(), task.getStart(), task.getFinish());
+            for (Relation predecessor : task.getPredecessors()) {
+                logger.info(String.format("  depends on %s", task.getSprint().getTaskById(predecessor.getPredecessorId()).getName()));
+            }
+        }
+        logger.info("-------------------------------------------------------------------------------------------");
         long time = System.currentTimeMillis();
         try {
             long checks     = 0;

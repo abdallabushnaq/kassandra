@@ -758,7 +758,17 @@ class SeleniumHandler {
                 WebElement row = findElement(By.id(gridRowBaseId + rowName));
                 try {
                     moveMouseToElement(row);
-                    row.click();
+                    if (row.getSize().getHeight() == 0) {
+                        // Row is empty – no interactable child element; click at the element's center instead
+                        new Actions(getDriver()).moveToElement(row).click().perform();
+                    } else {
+                        try {
+                            row.click();
+                        } catch (ElementNotInteractableException e) {
+                            // Row is empty – no interactable child element; click at the element's center instead
+                            new Actions(getDriver()).moveToElement(row).click().perform();
+                        }
+                    }
                     weClicked = true;
                     log.trace("Clicked row: " + gridRowBaseId + rowName);
                 } catch (StaleElementReferenceException e) {
@@ -807,7 +817,12 @@ class SeleniumHandler {
             WebElement row = findElement(By.id(gridRowBaseId + rowName));
             try {
                 moveMouseToElement(row);
-                row.click();
+                try {
+                    row.click();
+                } catch (ElementNotInteractableException e) {
+                    // Row is empty – no interactable child element; click at the element's centre instead
+                    new Actions(getDriver()).moveToElement(row).click().perform();
+                }
             } catch (StaleElementReferenceException e) {
                 //ignore and retry
             }

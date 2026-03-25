@@ -22,6 +22,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
@@ -98,12 +99,12 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         // Add the combined layout to the navbar area
         addToNavbar(true, navAndBreadcrumbs);
         // Remove margins from navbar layout and apply padding to the container instead
-        navAndBreadcrumbs.getStyle().set("padding-left", "var(--lumo-space-m)");
-        navAndBreadcrumbs.getStyle().set("padding-right", "var(--lumo-space-m)");
-        navAndBreadcrumbs.getStyle().set("padding-bottom", "var(--lumo-space-m)");
+        navAndBreadcrumbs.getStyle().set("padding-left", "var(--lumo-space-xs)");
+        navAndBreadcrumbs.getStyle().set("padding-right", "var(--lumo-space-xs)");
+        navAndBreadcrumbs.getStyle().set("padding-bottom", "var(--lumo-space-xs)");
         // Remove these lines that are causing the overflow
-        this.getStyle().set("padding-left", "var(--lumo-space-m)");
-        this.getStyle().set("padding-right", "var(--lumo-space-m)");
+        this.getStyle().set("padding-left", "var(--lumo-space-xs)");
+        this.getStyle().set("padding-right", "var(--lumo-space-xs)");
     }
 
     @Override
@@ -132,7 +133,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private Image createLogo() {
         // Create the logo image component
         logoImage = new Image("images/logo.svg", "Kassandra Logo");
-        logoImage.setHeight("32px");
+        logoImage.setHeight("24px");
         logoImage.setId(ID_LOGO);
 
         // Check initial theme and set appropriate logo
@@ -155,10 +156,11 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
         // Add navigation tabs to the center
         tabs = createTabs();
-        tabs.addClassNames(Margin.Horizontal.MEDIUM);
+        tabs.addClassNames(Margin.Horizontal.XSMALL);
 
         // Create theme toggle and register theme change listener
         ThemeToggle themeToggle = createThemeToggle();
+        themeToggle.addThemeVariants(ButtonVariant.LUMO_SMALL);
 
         // Add user menu to the right
         Component userMenu = createUserMenu();
@@ -173,9 +175,11 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
         if (menuEntry.icon() != null) {
             Icon icon = new Icon(menuEntry.icon());
-            icon.getStyle().setMarginRight("8px");
+            icon.setSize("var(--lumo-icon-size-xs)");
+            icon.getStyle().setMarginRight("4px");
 
             Span label = new Span(menuEntry.title());
+            label.getStyle().set("font-size", "var(--lumo-font-size-xs)");
 
             HorizontalLayout tabLayout = new HorizontalLayout(icon, label);
             tabLayout.setSpacing(false);
