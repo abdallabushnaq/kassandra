@@ -17,7 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.report;
 
-import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
 import de.bushnaq.abdalla.kassandra.report.html.dao.ReportLink;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
@@ -48,29 +48,29 @@ public abstract class AbstractCanvas extends ReportLink {
     @Getter
     private              int                chartWidth;
     protected            ExtendedGraphics2D graphics2D;
-    protected            GraphicsTheme      graphicsTheme;
     @Getter
     protected            String             imageName;
+    protected            KassandraTheme     kassandraTheme;
     //    private final        Logger             logger                 = LoggerFactory.getLogger(this.getClass());
     protected            SVGGraphics2D      svgGenerator;
 
-    public AbstractCanvas(String column, String imageName/*, String mapName*/, String link, String cssClass, GraphicsTheme graphicsTheme)
+    public AbstractCanvas(String column, String imageName/*, String mapName*/, String link, String cssClass, KassandraTheme kassandraTheme)
             throws IOException {
         super(column, generateCellText(cssClass/*, mapName*/, imageName), link);
-        this.imageName     = imageName;
-        this.graphicsTheme = graphicsTheme;
+        this.imageName      = imageName;
+        this.kassandraTheme = kassandraTheme;
     }
 
     protected abstract void createReport() throws Exception;
 
     protected void drawBackground() {
-        graphics2D.setColor(graphicsTheme.chartBackgroundColor);
+        graphics2D.setColor(kassandraTheme.chartBackgroundColor);
         graphics2D.fillRect(0, 0, getChartWidth(), getChartHeight());
     }
 
     private void drawBorder(ExtendedGraphics2D g2) {
         g2.setStroke(new BasicStroke(fine_LINE_STROKE_WIDTH));
-        g2.setColor(graphicsTheme.chartBorderColor);
+        g2.setColor(kassandraTheme.chartBorderColor);
         g2.drawRect(0, 0, getChartWidth() - 1, getChartHeight() - 1);
     }
 

@@ -21,7 +21,7 @@ import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.report.dao.WorklogRemaining;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -38,7 +38,7 @@ public class RenderDao {
     public Duration               estimatedBestWork;
     public Duration               estimatedWorstWork;
     public LocalDateTime          firstWorklog;
-    public GraphicsTheme          graphicsTheme;
+    public KassandraTheme         kassandraTheme;
     public LocalDateTime          lastWorklog;
     public String                 link;
     public Duration               maxWorked;

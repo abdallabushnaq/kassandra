@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.kassandra.report.dao.theme;
 
 @Deprecated
-public class BurnDownGraphicsTheme extends ScheduleGraphicsTheme {
+public class BurnDownKassandraTheme extends ScheduleKassandraTheme {
 
 
 //    public Color getHeatColor(int index) {

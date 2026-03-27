@@ -177,6 +177,40 @@ public class ColorUtil {
         return color;
     }
 
+    /**
+     * Converts a hex color string to a java.awt.Color.
+     * Accepts formats: "#RRGGBB", "#AARRGGBB", "RRGGBB", or "AARRGGBB" (with or without leading '#').
+     * If alpha is not specified, it defaults to 255 (opaque).
+     *
+     * @param hexString the hex color string (e.g., "#FF0000", "FF0000", "80FF0000")
+     * @return the corresponding Color object
+     * @throws IllegalArgumentException if the string is not a valid hex color
+     */
+    public static Color hexStringToColor(final String hexString) {
+        if (hexString == null) {
+            throw new IllegalArgumentException("hexString cannot be null");
+        }
+        String s = hexString.trim();
+        if (s.startsWith("#")) {
+            s = s.substring(1);
+        }
+        if (s.length() == 6) {
+            // RRGGBB
+            int rgb = Integer.parseInt(s, 16);
+            return new Color(rgb);
+        } else if (s.length() == 8) {
+            // AARRGGBB
+            int argb = (int) Long.parseLong(s, 16); // use long to avoid sign issues
+            int alpha = (argb >> 24) & 0xFF;
+            int red   = (argb >> 16) & 0xFF;
+            int green = (argb >> 8) & 0xFF;
+            int blue  = argb & 0xFF;
+            return new Color(red, green, blue, alpha);
+        } else {
+            throw new IllegalArgumentException("Invalid hex color string: '" + hexString + "'");
+        }
+    }
+
     public static Color selectMostContrastColor(Color backgroundColor, Color[] colors) {
         int   maxContrast   = 0;
         Color contrastColor = null;

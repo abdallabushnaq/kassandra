@@ -60,7 +60,7 @@ public class RenderUtil {
         dao.worklog            = sprint.getWorklogs();
         dao.worklogRemaining   = sprint.getWorklogRemaining();
         dao.cssClass           = "scheduleWithMargin";
-        dao.graphicsTheme      = context.parameters.getActiveGraphicsTheme();
+        dao.kassandraTheme     = context.parameters.getActiveGraphicsTheme();
         return dao;
     }
 

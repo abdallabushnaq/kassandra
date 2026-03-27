@@ -17,13 +17,20 @@
 
 package de.bushnaq.abdalla.kassandra;
 
+import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import org.apache.commons.cli.*;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+@Component
 public class KassandraParameterOptions extends ParameterOptions {
+    public KassandraParameterOptions(LightTheme lightTheme, DarkTheme darkTheme) {
+        super(lightTheme, darkTheme);
+    }
 
     @Override
     public void start(String[] args) throws Exception {
@@ -52,7 +59,7 @@ public class KassandraParameterOptions extends ParameterOptions {
 //            if (theme.equals("dark")) {
 //
 //            } else if (theme.equals("light")) {
-//                graphicsTheme = new GraphicsLightTheme();
+//                kassandraTheme = new LightTheme();
 //            }
 //        } else {
 //            //revert to default

@@ -25,6 +25,8 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.dom.ThemeList;
 import com.vaadin.flow.theme.lumo.Lumo;
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 
 public class ThemeToggle extends Button {
     private boolean darkTheme = false; // Default to light theme
@@ -47,10 +49,12 @@ public class ThemeToggle extends Button {
                         // Apply dark theme if preference is set to dark
                         themeList.add(Lumo.DARK);
                         darkTheme = true;
+                        ParameterOptions.setTheme(ETheme.dark);
                     } else {
                         // Default to light theme
                         themeList.remove(Lumo.DARK);
                         darkTheme = false;
+                        ParameterOptions.setTheme(ETheme.light);
                     }
                     updateTooltip();
                 });
@@ -61,9 +65,11 @@ public class ThemeToggle extends Button {
         if (themeList.contains(Lumo.DARK)) {
             themeList.remove(Lumo.DARK);
             darkTheme = false;
+            ParameterOptions.setTheme(ETheme.light);
         } else {
             themeList.add(Lumo.DARK);
             darkTheme = true;
+            ParameterOptions.setTheme(ETheme.dark);
         }
         updateTooltip();
 

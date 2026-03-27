@@ -21,7 +21,7 @@ import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.*;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsLightTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.profiler.Profiler;
@@ -635,8 +635,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
 
     protected Color generateUserColor(int userIndex) {
-        int index = userIndex % GraphicsLightTheme.KELLY_COLORS.length;
-        return GraphicsLightTheme.KELLY_COLORS[index];
+        int index = userIndex % LightTheme.KELLY_COLORS.length;
+        return LightTheme.KELLY_COLORS[index];
     }
 
     private static int generateUserYearSeed(User saved, int year) {

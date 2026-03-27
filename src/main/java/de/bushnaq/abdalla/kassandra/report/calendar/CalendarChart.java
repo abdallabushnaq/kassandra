@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.report.calendar;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.AbstractChart;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
 
 import java.time.LocalDateTime;
 
@@ -28,9 +28,9 @@ import java.time.LocalDateTime;
 public class CalendarChart extends AbstractChart {
 
     public CalendarChart(Context context, LocalDateTime now, User user, String cssClass,
-                         GraphicsTheme graphicsTheme) throws Exception {
-        super(createCaption(user), "", "", "", user.getName() + "." + user.getLocations().getLast().getCountry() + "." + user.getLocations().getLast().getState(), null, cssClass, graphicsTheme);
-        getRenderers().add(new CalendarRenderer(context, user, now, cssClass, graphicsTheme));
+                         KassandraTheme kassandraTheme) throws Exception {
+        super(createCaption(user), "", "", "", user.getName() + "." + user.getLocations().getLast().getCountry() + "." + user.getLocations().getLast().getState(), null, cssClass, kassandraTheme);
+        getRenderers().add(new CalendarRenderer(context, user, now, cssClass, kassandraTheme));
         this.setChartWidth(getRenderers().get(0).chartWidth);
         this.setChartHeight(getRenderers().get(0).chartHeight + captionElement.height + footerElement.height - 1);
         captionElement.width = 100;

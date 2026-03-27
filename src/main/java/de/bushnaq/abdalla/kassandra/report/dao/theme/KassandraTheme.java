@@ -21,7 +21,7 @@ import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 
 import java.awt.*;
 
-public class GraphicsTheme {
+public class KassandraTheme {
     public final BurndownTheme burndownTheme    = new BurndownTheme();
     public final CalendarTheme calendarTheme    = new CalendarTheme();
     //-------------------------------------------------------
@@ -35,7 +35,7 @@ public class GraphicsTheme {
     public final XAxesTheme    xAxesTheme       = new XAxesTheme();
     //-------------------------------------------------------
 
-    public GraphicsTheme() {
+    public KassandraTheme() {
     }
 
 }

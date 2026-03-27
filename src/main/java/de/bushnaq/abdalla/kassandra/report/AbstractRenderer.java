@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.report;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import org.slf4j.Logger;
@@ -53,7 +53,7 @@ public abstract class AbstractRenderer {
     public final           GraphSquare        diagram                    = new GraphSquare();
     protected              int                firstDayX                  = 0;
     public                 ExtendedGraphics2D graphics2D;
-    public                 GraphicsTheme      graphicsTheme;
+    public                 KassandraTheme     kassandraTheme;
     protected final        Logger             logger                     = LoggerFactory.getLogger(this.getClass());
     public                 Milestones         milestones;
 
@@ -63,17 +63,17 @@ public abstract class AbstractRenderer {
 
     public AbstractRenderer(RenderDao dao) throws IOException {
 //        this.bankHolidays  = dao.context.bankHolidays;
-        this.graphicsTheme = dao.graphicsTheme;
-        this.chartWidth    = dao.chartWidth;
-        this.chartHeight   = dao.chartHeight;
-        milestones         = new Milestones(dao.sprintName);
-        calendarXAxes      = new CalendarXAxes(this, dao.preRun, dao.postRun);
+        this.kassandraTheme = dao.kassandraTheme;
+        this.chartWidth     = dao.chartWidth;
+        this.chartHeight    = dao.chartHeight;
+        milestones          = new Milestones(dao.sprintName);
+        calendarXAxes       = new CalendarXAxes(this, dao.preRun, dao.postRun);
     }
 
     public AbstractRenderer(String sprintName/*, Map<LocalDate, String> bankHolidays*/, boolean completed/*, int chartWidth, int chartHeight*/, int preRun, int postRun,
-                            GraphicsTheme graphicsTheme) throws IOException {
+                            KassandraTheme kassandraTheme) throws IOException {
 //        this.bankHolidays  = bankHolidays;
-        this.graphicsTheme = graphicsTheme;
+        this.kassandraTheme = kassandraTheme;
 //        this.chartWidth    = chartWidth;
 //        this.chartHeight   = chartHeight;
         milestones    = new Milestones(sprintName);
@@ -159,7 +159,7 @@ public abstract class AbstractRenderer {
 //            if (primaryAuthorName == null) {
 //                primaryAuthorName = author.name;
 //            }
-            drawAuthor(x, ay, authorLegendWidth, author.getColor(), author.getName(), graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.milestone.font);
+            drawAuthor(x, ay, authorLegendWidth, author.getColor(), author.getName(), kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.milestone.font);
             ay -= lineHeight;
         }
     }
@@ -175,13 +175,13 @@ public abstract class AbstractRenderer {
     public void drawDayBars(LocalDate currentDay) {
         //        Calendar day = Calendar.getInstance();
         //        day.setTimeInMillis(currentDay);
-        Color color = GraphColorUtil.getDayOfWeekBgColor(graphicsTheme/*, bankHolidays*/, currentDay);
+        Color color = GraphColorUtil.getDayOfWeekBgColor(kassandraTheme/*, bankHolidays*/, currentDay);
         int   x     = calculateDayX(currentDay);
         graphics2D.setColor(color);
         //day vertical bar
         graphics2D.fillRect(x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1), diagram.y, calendarXAxes.dayOfWeek.getWidth() - 1, diagram.height);//left |
         //draw vertical lines
-        graphics2D.setColor(graphicsTheme.ganttTheme.ganttGridColor);
+        graphics2D.setColor(kassandraTheme.ganttTheme.ganttGridColor);
         //        graphics2D.setStroke(new BasicStroke(RELATION_LINE_STROKE_WIDTH));
         //        graphics2D.drawLine(x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y,x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y + diagram.height);
         //        graphics2D.draw(new Line2D.Double(x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y,x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y + diagram.height));
@@ -189,7 +189,7 @@ public abstract class AbstractRenderer {
         //TODO: draw bank holiday
 //        if (bankHolidays.get(currentDay) != null) {
 //            x += calendarXAxses.dayOfWeek.getWidth() / 2;
-//            graphics2D.setColor(graphicsTheme.bankHolidayColor);
+//            graphics2D.setColor(kassandraTheme.bankHolidayColor);
 //            graphics2D.setFont(bankHolidayFont);
 //            FontMetrics fm     = graphics2D.getFontMetrics();
 //            String      string = bankHolidays.get(currentDay);
@@ -208,7 +208,7 @@ public abstract class AbstractRenderer {
         graphics2D.setFont(font);
         FontMetrics fm    = graphics2D.getFontMetrics();
         int         width = fm.stringWidth(text);
-        graphics2D.setColor(graphicsTheme.graphTextBackgroundColor);
+        graphics2D.setColor(kassandraTheme.graphTextBackgroundColor);
         switch (aligned) {
             case left:
                 graphics2D.fillRect(x, y - 9 + 2, width, 12);
@@ -235,61 +235,61 @@ public abstract class AbstractRenderer {
         int milestoneY  = legendY - calendarXAxes.milestone.height / 2;
 
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
-        graphics2D.setColor(graphicsTheme.surroundingSquareColor);
+        graphics2D.setColor(kassandraTheme.surroundingSquareColor);
         graphics2D.drawLine(legendX1, legendY, legendX2, legendY);
-        drawGraphText(legendTextX, legendTextY, "Guideline", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        drawGraphText(legendTextX, legendTextY, "Guideline", kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
         graphics2D.setColor(interpolationColor);
         graphics2D.drawLine(legendX1, legendY, legendX2, legendY);
-        drawGraphText(legendTextX, legendTextY, "extrapolated release date", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(),
+        drawGraphText(legendTextX, legendTextY, "extrapolated release date", kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(),
                 TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH));
-        graphics2D.setColor(graphicsTheme.burndownTheme.burnDownBorderColor);
+        graphics2D.setColor(kassandraTheme.burndownTheme.burnDownBorderColor);
         graphics2D.drawLine(legendX1, legendY, legendX2, legendY);
-        drawGraphText(legendTextX, legendTextY, "Remaining work", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        drawGraphText(legendTextX, legendTextY, "Remaining work", kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.xAxesTheme.pastEventColor, "S", true, null, null, false, false);// start
-        drawGraphText(legendTextX, legendTextY, "Start date (sprint)", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, kassandraTheme.xAxesTheme.pastEventColor, "S", true, null, null, false, false);// start
+        drawGraphText(legendTextX, legendTextY, "Start date (sprint)", kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.xAxesTheme.nowEventColor, "N", true, null, null, false, false);// now
-        drawGraphText(legendTextX, legendTextY, "Now date", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, kassandraTheme.xAxesTheme.nowEventColor, "N", true, null, null, false, false);// now
+        drawGraphText(legendTextX, legendTextY, "Now date", kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.burndownTheme.delayEventColor, "R", true, null, null, false, false);// release
-        drawGraphText(legendTextX, legendTextY, "Release date", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, kassandraTheme.burndownTheme.delayEventColor, "R", true, null, null, false, false);// release
+        drawGraphText(legendTextX, legendTextY, "Release date", kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.xAxesTheme.futureEventColor, "E", true, null, null, false, false);// end
-        drawGraphText(legendTextX, legendTextY, "End date (sprint)", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, kassandraTheme.xAxesTheme.futureEventColor, "E", true, null, null, false, false);// end
+        drawGraphText(legendTextX, legendTextY, "End date (sprint)", kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.xAxesTheme.futureEventColor, "F", true, null, null, false, false);// first
-        drawGraphText(legendTextX, legendTextY, "First punch-in", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, kassandraTheme.xAxesTheme.futureEventColor, "F", true, null, null, false, false);// first
+        drawGraphText(legendTextX, legendTextY, "First punch-in", kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.xAxesTheme.futureEventColor, "L", true, null, null, false, false);// Last
-        drawGraphText(legendTextX, legendTextY, "Last punch-out", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, kassandraTheme.xAxesTheme.futureEventColor, "L", true, null, null, false, false);// Last
+        drawGraphText(legendTextX, legendTextY, "Last punch-out", kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
     }
 
     protected void drawMilestones() {

@@ -22,7 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.ErrorException;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -56,13 +56,13 @@ public class GanttRenderer extends AbstractGanttRenderer {
     private final        Sprint            sprint;
 
     public GanttRenderer(Context context, String sprintName, List<Throwable> exceptions, LocalDateTime now, boolean completed,
-                         Sprint sprint/*, int chartWidth, int chartHeight*/, String cssClass, GraphicsTheme graphicsTheme)
+                         Sprint sprint/*, int chartWidth, int chartHeight*/, String cssClass, KassandraTheme kassandraTheme)
             throws Exception {
-        super(context, sprintName/*, context.bankHolidays*/, completed/*, chartWidth, chartHeight*/, 1, 14, 14, graphicsTheme);
+        super(context, sprintName/*, context.bankHolidays*/, completed/*, chartWidth, chartHeight*/, 1, 14, 14, kassandraTheme);
 //        this.ganttFileName = ganttFileName;
         this.sprint = sprint;
 //        this.timeTracker   = context.timeTracker;
-        this.graphicsTheme = graphicsTheme;
+        this.kassandraTheme = kassandraTheme;
 //        geh.exceptions     = exceptions;
         milestones.add(now.toLocalDate(), "N", "Now (current date)", Color.blue);
         milestones.add(sprint.getEarliestStartDate().toLocalDate(), "S", "Start (Start of project)", Color.blue);
@@ -136,16 +136,16 @@ public class GanttRenderer extends AbstractGanttRenderer {
             int             x1   = x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1);
             {
                 //grid
-                graphics2D.setColor(graphicsTheme.ganttTheme.ganttGridColor);
+                graphics2D.setColor(kassandraTheme.ganttTheme.ganttGridColor);
                 graphics2D.fillRect(x1 - 1, y1 - 1, calendarXAxes.dayOfWeek.getWidth(), 1);//top --
                 graphics2D.fillRect(x1 - 1, y1, 1, getTaskHeight());//left |
             }
             {
                 //background
-                graphics2D.setColor(GraphColorUtil.getGanttDayStripeColor(graphicsTheme, pc, currentDay));
+                graphics2D.setColor(GraphColorUtil.getGanttDayStripeColor(kassandraTheme, pc, currentDay));
                 Shape s = new Rectangle(x1, y1, calendarXAxes.dayOfWeek.getWidth() - 1, getTaskHeight());
 
-                ProjectCalendarException exception = GraphColorUtil.getException(graphicsTheme, pc, currentDay);
+                ProjectCalendarException exception = GraphColorUtil.getException(kassandraTheme, pc, currentDay);
                 if (exception != null) {
                     String letter = GraphColorUtil.getOffDayLetter(exception);
                     if (letter != null) {
@@ -199,7 +199,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
                 authors.add(user);
             }
         }
-//        authors.calculateColors(graphicsTheme, true);
+//        authors.calculateColors(kassandraTheme, true);
 //        authors.sort();
         GanttUtil gu = new GanttUtil();
         //we only generate resource dependencies if it is not a genuin Gantt chart exported from MS Project online

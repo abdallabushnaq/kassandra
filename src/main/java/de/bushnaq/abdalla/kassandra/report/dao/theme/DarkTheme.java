@@ -17,11 +17,15 @@
 
 package de.bushnaq.abdalla.kassandra.report.dao.theme;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
+import de.bushnaq.abdalla.util.ColorUtil;
+import org.springframework.stereotype.Component;
 
 import java.awt.*;
 
-public class GraphicsLightTheme extends GraphicsTheme {
+@Component
+public class DarkTheme extends KassandraTheme {
     public static final Color[] KELLY_COLORS = {
 
             Color.red,//
@@ -39,7 +43,7 @@ public class GraphicsLightTheme extends GraphicsTheme {
 
     };
 
-    public GraphicsLightTheme() {
+    public DarkTheme(StableDiffusionConfig stableDiffusionConfig) {
 
         // gray
         Color basicTextColor = Color.WHITE;
@@ -47,7 +51,7 @@ public class GraphicsLightTheme extends GraphicsTheme {
 //        Color basicBorderColor     = Color.WHITE;
 
         cssTheme             = ETheme.light;
-        chartBackgroundColor = Color.white;
+        chartBackgroundColor = ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor());
 
 //        dayOfMonthTextColor       = basicTextColor;
 //        dayOfMonthBackgroundColor = basicBackgroundColor;

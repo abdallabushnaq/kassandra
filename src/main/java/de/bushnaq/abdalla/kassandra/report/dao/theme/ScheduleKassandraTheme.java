@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.kassandra.report.dao.theme;
 
 @Deprecated
-public class ScheduleGraphicsTheme extends GraphicsTheme {
+public class ScheduleKassandraTheme extends KassandraTheme {
     //-------------------------- Calendar Chart
 //    public Color dayBackgroundColor;
 //    public Color dayDiagramBorderColor;

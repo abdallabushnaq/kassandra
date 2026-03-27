@@ -25,7 +25,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.svg.util.ExtendedPolygon;
@@ -65,7 +65,7 @@ public class BurnDownRenderer extends AbstractRenderer {
     private              Color                  extrapolationColor;
     public               BurnDownGuide          ganttWorkWithBufferPerDayAccumulated                      = null;// max work per day, were every day has the amount of work planned at that day and all days before that
     public               BurnDownGuide          ganttWorkWithoutBufferPerDayAccumulated                   = null;// min work per day, were every day has the amount of work planned at that day and all days before that
-    protected            GraphicsTheme          graphicsTheme;
+    protected            KassandraTheme         kassandraTheme;
     protected            LocalDateTime          lastWorklog;
     private final        Duration               maxActualWorked;
     private              Duration               maxWorked;
@@ -283,10 +283,10 @@ public class BurnDownRenderer extends AbstractRenderer {
             }
             if (sprintClosed) {
                 drawWatermark(startX - calendarXAxes.dayOfWeek.getWidth() / 2 + 10,
-                        chartHeight - calendarXAxes.getHeight() - calendarXAxes.year.getHeight() - 10, "CLOSED", graphicsTheme.burndownTheme.watermarkColor);
+                        chartHeight - calendarXAxes.getHeight() - calendarXAxes.year.getHeight() - 10, "CLOSED", kassandraTheme.burndownTheme.watermarkColor);
             } else if (isAbandonedProject()) {
                 drawWatermark(startX - calendarXAxes.dayOfWeek.getWidth() / 2 + 10,
-                        chartHeight - calendarXAxes.getHeight() - calendarXAxes.year.getHeight() - 10, "ABANDONED", graphicsTheme.burndownTheme.watermarkColor);
+                        chartHeight - calendarXAxes.getHeight() - calendarXAxes.year.getHeight() - 10, "ABANDONED", kassandraTheme.burndownTheme.watermarkColor);
             }
             // Optimal burn down rate
 
@@ -365,7 +365,7 @@ public class BurnDownRenderer extends AbstractRenderer {
     }
 
     private void drawBorder(int x, int y, int lastX, int lastY) {
-        graphics2D.setColor(graphicsTheme.burndownTheme.burnDownBorderColor);
+        graphics2D.setColor(kassandraTheme.burndownTheme.burnDownBorderColor);
         graphics2D.drawLine(lastX - calendarXAxes.dayOfWeek.getWidth() / 2, lastY, x - calendarXAxes.dayOfWeek.getWidth() / 2, y);
     }
 
@@ -418,7 +418,7 @@ public class BurnDownRenderer extends AbstractRenderer {
                                     LocalDate calendarFromDayIndex = calendarFromDayIndex(dayIndex - 2);
                                     drawPolygon(yesterdayX, yesterdayY, yesterdayY2, lastX, lastY, lastY2,
                                             authorIndex == usersTotalContribution.getSortedKeyList().size() - 1, DateUtil.isWorkDay(calendarFromDayIndex),
-                                            graphicsTheme.burndownTheme.burnDownBorderColor, generateBurnDownColor(user.getColor()), transactions, user.getName());
+                                            kassandraTheme.burndownTheme.burnDownBorderColor, generateBurnDownColor(user.getColor()), transactions, user.getName());
                                 }
                                 yesterdayX  = lastX;
                                 yesterdayY  = lastY;
@@ -487,7 +487,7 @@ public class BurnDownRenderer extends AbstractRenderer {
         Duration  workPerWorkingDay = Duration.ofSeconds((long) (((double) estimatedWork.getSeconds()) / workingDays));
         Duration  work;
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
-        graphics2D.setColor(graphicsTheme.burndownTheme.optimaleGuideColor);
+        graphics2D.setColor(kassandraTheme.burndownTheme.optimaleGuideColor);
         int workingdays = 0;
         int y;
         int lastX       = firstDayX + calendarXAxes.dayOfWeek.getWidth() * DateUtil.calculateDays(firstDay, firstDay) - calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
@@ -524,7 +524,7 @@ public class BurnDownRenderer extends AbstractRenderer {
         }
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
-        graphics2D.setColor(graphicsTheme.burndownTheme.plannedGuideColor);
+        graphics2D.setColor(kassandraTheme.burndownTheme.plannedGuideColor);
         for (int i = 0; i < guide.getSize(); i++) {
             Duration r = guide.get(i);
             int      x = firstDayX + i * calendarXAxes.dayOfWeek.getWidth() - calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
@@ -597,16 +597,16 @@ public class BurnDownRenderer extends AbstractRenderer {
                 markUnit = "pd";
             }
             int lastMarkY = 99999;
-//            Color hLineColor = ColorUtil.setAlpha(graphicsTheme.ganttGridColor, 32);
+//            Color hLineColor = ColorUtil.setAlpha(kassandraTheme.ganttGridColor, 32);
             for (Duration timeMark = Duration.ZERO; timeMark.getSeconds() < estimatedWork.getSeconds(); timeMark = timeMark.plus(mark)) {
                 int markY = diagram.y + diagram.height - 1 - calculateGraphHight(timeMark);
                 if (lastMarkY - markY > 12) {
-                    graphics2D.setColor(graphicsTheme.burndownTheme.ticksColor);
+                    graphics2D.setColor(kassandraTheme.burndownTheme.ticksColor);
                     graphics2D.fillRect(startX - 4 - calendarXAxes.dayOfWeek.getWidth() / 2, markY, 4, 1);
-                    graphics2D.setColor(graphicsTheme.ganttTheme.ganttGridColor);
+                    graphics2D.setColor(kassandraTheme.ganttTheme.ganttGridColor);
                     graphics2D.fillRect(startX - 1, markY, diagram.width - startX, 1);//grid --
 
-                    drawGraphText(yAxis.x + yAxis.width - 5, markY, timeMark.getSeconds() / mark.getSeconds() + markUnit, graphicsTheme.burndownTheme.tickTextColor,
+                    drawGraphText(yAxis.x + yAxis.width - 5, markY, timeMark.getSeconds() / mark.getSeconds() + markUnit, kassandraTheme.burndownTheme.tickTextColor,
                             yAxis.lableFont, TextAlignment.right);
                     lastMarkY = markY;
                 }
@@ -622,9 +622,9 @@ public class BurnDownRenderer extends AbstractRenderer {
     public void init() throws IOException {
         initSize(Y_AXIS_WIDTH, 0, true);
         if (milestones.get("R") != null && milestones.get("R").time.isAfter(milestones.get("E").time)) {
-            extrapolationColor = graphicsTheme.burndownTheme.delayEventColor;
+            extrapolationColor = kassandraTheme.burndownTheme.delayEventColor;
         } else {
-            extrapolationColor = graphicsTheme.burndownTheme.inTimeColor;
+            extrapolationColor = kassandraTheme.burndownTheme.inTimeColor;
         }
 
         calculateAuthorContribution(worklog, worklogRemaining, usersTotalContribution);
@@ -710,7 +710,7 @@ public class BurnDownRenderer extends AbstractRenderer {
                 authors.add(user);
             }
         }
-//        authors.calculateColors(graphicsTheme, true);
+//        authors.calculateColors(kassandraTheme, true);
     }
 
     /**
@@ -796,7 +796,7 @@ public class BurnDownRenderer extends AbstractRenderer {
         this.eWorstWork       = dao.estimatedWorstWork;
         this.maxWorked        = dao.maxWorked;
         this.sprintClosed     = dao.sprint.isClosed();
-        this.graphicsTheme    = dao.graphicsTheme;
+        this.kassandraTheme   = dao.kassandraTheme;
         createMilestones(dao.start, dao.now, dao.end, dao.firstWorklog, dao.lastWorklog, dao.sprint.getReleaseDate(), dao.sprint.isClosed());
 
         init();

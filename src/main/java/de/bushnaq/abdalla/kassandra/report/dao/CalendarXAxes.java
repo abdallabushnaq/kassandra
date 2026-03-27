@@ -121,8 +121,8 @@ public class CalendarXAxes {
                         }
                         int x2 = calculateDayX(end) - dayOfWeek.getWidth() / 2;
                         drawTextBox(daysX - (dayOfWeek.getWidth() / 2 - 1), x2 + dayOfWeek.getWidth(), year.getY(), year.getHeight(),
-                                String.valueOf(startCal.getYear()), parent.graphicsTheme.xAxesTheme.XAxesYearTextColor, parent.graphicsTheme.xAxesTheme.XAxesYearBackgroundColor,
-                                parent.graphicsTheme.xAxesTheme.XAxesYearBoderColor, year.getFont(), false);
+                                String.valueOf(startCal.getYear()), parent.kassandraTheme.xAxesTheme.XAxesYearTextColor, parent.kassandraTheme.xAxesTheme.XAxesYearBackgroundColor,
+                                parent.kassandraTheme.xAxesTheme.XAxesYearBoderColor, year.getFont(), false);
                         yearWasDrawn = true;
                     }
                 } else if (phase == 3 && (startCal.getDayOfMonth() == 1 || !monthWasDrawn) && isMonthVisible()) {
@@ -133,10 +133,10 @@ public class CalendarXAxes {
                             end = lastDay;
                         }
                         int   x2              = calculateDayX(end) - dayOfWeek.getWidth() / 2;
-                        Color backgroundColor = parent.graphicsTheme.xAxesTheme.XAxesMonthBgColors[startCal.getMonth().getValue() - 1];
+                        Color backgroundColor = parent.kassandraTheme.xAxesTheme.XAxesMonthBgColors[startCal.getMonth().getValue() - 1];
                         drawTextBox(daysX - (dayOfWeek.getWidth() / 2 - 1), x2 + dayOfWeek.getWidth(), month.getY(), month.getHeight(),
-                                months[startCal.getMonth().getValue() - 1], parent.graphicsTheme.xAxesTheme.XAxesMonthTextColor, backgroundColor,
-                                parent.graphicsTheme.xAxesTheme.XAxesMonthBorderColor, month.getFont(), false);
+                                months[startCal.getMonth().getValue() - 1], parent.kassandraTheme.xAxesTheme.XAxesMonthTextColor, backgroundColor,
+                                parent.kassandraTheme.xAxesTheme.XAxesMonthBorderColor, month.getFont(), false);
                         monthWasDrawn = true;
                     }
                 } else if (phase == 2 && (startCal.getDayOfWeek() == DayOfWeek.MONDAY || !firstWeekWasDrawn) && isWeekVisible()) {
@@ -155,35 +155,35 @@ public class CalendarXAxes {
                             calendarWeek = DateUtil.createDateString(currentDay, sdf);
                         }
                         drawTextBox(daysX - (dayOfWeek.getWidth() / 2 - 1), x2 + dayOfWeek.getWidth(), week.getY(), week.getHeight() - 1, calendarWeek,
-                                parent.graphicsTheme.xAxesTheme.XAxesWeekTextColor, parent.graphicsTheme.xAxesTheme.XAxesWeekBgColor, parent.graphicsTheme.xAxesTheme.XAxesWeekBoderColor,
+                                parent.kassandraTheme.xAxesTheme.XAxesWeekTextColor, parent.kassandraTheme.xAxesTheme.XAxesWeekBgColor, parent.kassandraTheme.xAxesTheme.XAxesWeekBoderColor,
                                 week.getFont(), false);
                         firstWeekWasDrawn = true;
                     }
                 } else if (phase == 1 && isDayOfWeekVisible()) {
                     // --day of Month ( 1, 2, ..., 31)
                     {
-                        Color bgColor   = GraphColorUtil.getDayOfMonthBgColor(parent.graphicsTheme, startCal);
-                        Color textColor = GraphColorUtil.getDayOfMonthTextColor(parent.graphicsTheme, startCal);
+                        Color bgColor   = GraphColorUtil.getDayOfMonthBgColor(parent.kassandraTheme, startCal);
+                        Color textColor = GraphColorUtil.getDayOfMonthTextColor(parent.kassandraTheme, startCal);
                         drawTextBox(daysX - (dayOfMonth.getWidth() / 2 - 1), daysX - (dayOfMonth.getWidth() / 2 - 1) + (dayOfMonth.getWidth() - 1),
                                 dayOfMonth.getY(), dayOfMonth.getHeight(), "" + startCal.getDayOfMonth(), textColor, bgColor,
-                                parent.graphicsTheme.xAxesTheme.XAxesDayOfMonthBorderColor, dayOfMonth.getFont(), true);
+                                parent.kassandraTheme.xAxesTheme.XAxesDayOfMonthBorderColor, dayOfMonth.getFont(), true);
 //                        if (startCal.getDayOfWeek() == DayOfWeek.SATURDAY || startCal.getDayOfWeek() == DayOfWeek.SUNDAY) {
 //                            drawTextBox(daysX - (dayOfMonth.getWidth() / 2 - 1), daysX - (dayOfMonth.getWidth() / 2 - 1) + (dayOfMonth.getWidth() - 1),
 //                                    dayOfMonth.getY(), dayOfMonth.getHeight(), "" + startCal.getDayOfMonth(), textColor, bgColor,
-//                                    parent.graphicsTheme.XAxesDayOfMonthBorderColor, dayOfMonth.getFont(), true);
+//                                    parent.kassandraTheme.XAxesDayOfMonthBorderColor, dayOfMonth.getFont(), true);
 //                        } else {
 //                            drawTextBox(daysX - (dayOfMonth.getWidth() / 2 - 1), daysX - (dayOfMonth.getWidth() / 2 - 1) + (dayOfMonth.getWidth() - 1),
 //                                    dayOfMonth.getY(), dayOfMonth.getHeight(), "" + startCal.getDayOfMonth(), textColor, bgColor,
-//                                    parent.graphicsTheme.XAxesDayOfMonthBorderColor, dayOfMonth.getFont(), true);
+//                                    parent.kassandraTheme.XAxesDayOfMonthBorderColor, dayOfMonth.getFont(), true);
 //                        }
                     }
 
                     // --day of week (M, T, W, T, F, S, S)
                     {
-                        Color color = GraphColorUtil.getDayOfWeekBgColor(parent.graphicsTheme, startCal);
+                        Color color = GraphColorUtil.getDayOfWeekBgColor(parent.kassandraTheme, startCal);
                         drawTextBox(daysX - (dayOfWeek.getWidth() / 2 - 1), daysX - (dayOfWeek.getWidth() / 2 - 1) + (dayOfWeek.getWidth() - 1),
-                                dayOfWeek.getY(), dayOfWeek.getHeight(), weekDays[startCal.getDayOfWeek().getValue() - 1], parent.graphicsTheme.xAxesTheme.XAxesDayOfWeekTextColor,
-                                color, parent.graphicsTheme.xAxesTheme.XAxesDayOfWeekBorderColor, dayOfWeek.getFont(), true);
+                                dayOfWeek.getY(), dayOfWeek.getHeight(), weekDays[startCal.getDayOfWeek().getValue() - 1], parent.kassandraTheme.xAxesTheme.XAxesDayOfWeekTextColor,
+                                color, parent.kassandraTheme.xAxesTheme.XAxesDayOfWeekBorderColor, dayOfWeek.getFont(), true);
                     }
                 } else if (phase == 0) {
                     {
@@ -192,11 +192,11 @@ public class CalendarXAxes {
                         }
                     }
                     if (milestonesVisible()) {
-                        Color color = GraphColorUtil.getDayOfWeekBgColor(parent.graphicsTheme, startCal);
+                        Color color = GraphColorUtil.getDayOfWeekBgColor(parent.kassandraTheme, startCal);
                         parent.graphics2D.setColor(color);
                         drawTextBox(daysX - (dayOfWeek.getWidth() / 2 - 1), daysX - (dayOfWeek.getWidth() / 2 - 1) + (dayOfWeek.getWidth() - 1),
-                                milestone.flagY, milestone.flagHeight, null, parent.graphicsTheme.xAxesTheme.XAxesDayOfWeekTextColor,
-                                color, parent.graphicsTheme.xAxesTheme.XAxesDayOfWeekBorderColor, null, true);
+                                milestone.flagY, milestone.flagHeight, null, parent.kassandraTheme.xAxesTheme.XAxesDayOfWeekTextColor,
+                                color, parent.kassandraTheme.xAxesTheme.XAxesDayOfWeekBorderColor, null, true);
                     }
                 }
             }
@@ -239,7 +239,7 @@ public class CalendarXAxes {
             //                Shape s = new Rectangle(centerX - milestone.width / 2, centerY, milestone.width, milestone.height - 1);
             //                father.graphics2D.fill(s);
             //            }
-            parent.graphics2D.setColor(parent.graphicsTheme.xAxesTheme.milestoneTextColor);
+            parent.graphics2D.setColor(parent.kassandraTheme.xAxesTheme.milestoneTextColor);
             FontMetrics fm        = parent.graphics2D.getFontMetrics();
             int         maxAscent = fm.getMaxAscent();
             {
@@ -268,7 +268,7 @@ public class CalendarXAxes {
             String      lable = DateUtil.createDateString(time, sdfMMMdd);
             int         width = fm.stringWidth(lable);
             // flag background
-            parent.graphics2D.setColor(parent.graphicsTheme.xAxesTheme.milestoneFlagColor);
+            parent.graphics2D.setColor(parent.kassandraTheme.xAxesTheme.milestoneFlagColor);
             parent.graphics2D.fillRect(x - milestone.width / 2, flagY, width, milestone.flagHeight);
             if (calendarAtBottom) {
                 // flag pole
@@ -289,8 +289,8 @@ public class CalendarXAxes {
     public void drawMilestones() {
         for (Milestone milestone : milestones.getList()) {
             int x = calculateDayX(milestone.time);
-            drawMilestone(milestone, milestone.time, x, parent.graphicsTheme.ganttTheme.ganttRequestMilestoneColor, milestone.symbol, !milestone.hidden,
-                    parent.graphicsTheme.xAxesTheme.futureEventColor);// start
+            drawMilestone(milestone, milestone.time, x, parent.kassandraTheme.ganttTheme.ganttRequestMilestoneColor, milestone.symbol, !milestone.hidden,
+                    parent.kassandraTheme.xAxesTheme.futureEventColor);// start
         }
     }
 

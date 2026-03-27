@@ -23,7 +23,7 @@ import de.bushnaq.abdalla.kassandra.report.AbstractChart;
 public class BurnDownChart extends AbstractChart {
 
     public BurnDownChart(String relativeCssPath, RenderDao dao) throws Exception {
-        super("Work Burn Down Chart", dao.sprint.getName(), relativeCssPath, dao.column, dao.sprintName, dao.link, dao.cssClass, dao.graphicsTheme);
+        super("Work Burn Down Chart", dao.sprint.getName(), relativeCssPath, dao.column, dao.sprintName, dao.link, dao.cssClass, dao.kassandraTheme);
         getRenderers().add(new BurnDownRenderer(dao));
         this.setChartWidth(getRenderers().getFirst().chartWidth);
         this.setChartHeight(getRenderers().getFirst().chartHeight + captionElement.height + footerElement.height - 1);

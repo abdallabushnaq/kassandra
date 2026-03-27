@@ -19,7 +19,7 @@ package de.bushnaq.abdalla.kassandra.report;
 
 import de.bushnaq.abdalla.kassandra.report.dao.CaptionElement;
 import de.bushnaq.abdalla.kassandra.report.dao.FooterElement;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.Util;
 
@@ -34,8 +34,8 @@ public abstract class AbstractChart extends AbstractCanvas {
     //    private final String                 mapName;
     private final List<AbstractRenderer> renderers = new ArrayList<>();
 
-    public AbstractChart(String caption, String projectRequestKey, String relateCssPath, String column, String imageName/*, String mapName*/, String link, String cssClass, GraphicsTheme graphicsTheme) throws IOException {
-        super(column, imageName/*, mapName*/, link, cssClass, graphicsTheme);
+    public AbstractChart(String caption, String projectRequestKey, String relateCssPath, String column, String imageName/*, String mapName*/, String link, String cssClass, KassandraTheme kassandraTheme) throws IOException {
+        super(column, imageName/*, mapName*/, link, cssClass, kassandraTheme);
         captionElement = new CaptionElement(caption, relateCssPath);
         footerElement  = new FooterElement(Util.generateCopyrightString(LocalDateTime.now()), projectRequestKey);
 //        this.mapName   = mapName;
@@ -43,7 +43,7 @@ public abstract class AbstractChart extends AbstractCanvas {
 
     @Override
     protected void drawBackground() {
-        graphics2D.setColor(graphicsTheme.chartBackgroundColor);
+        graphics2D.setColor(kassandraTheme.chartBackgroundColor);
         graphics2D.fillRect(0, captionElement.height, getChartWidth() - 1, getChartHeight() - captionElement.height - 1);
     }
 

@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.kassandra.report.dao;
 
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
 
@@ -28,57 +28,57 @@ import java.time.LocalDate;
 
 public class GraphColorUtil {
 
-    public static Color getDayOfMonthBgColor(GraphicsTheme graphicsTheme, LocalDate startCal) {
+    public static Color getDayOfMonthBgColor(KassandraTheme kassandraTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> graphicsTheme.xAxesTheme.XAxesDayOfMonthBgColor;
-            case SATURDAY, SUNDAY -> graphicsTheme.xAxesTheme.XAxesDayOfMonthWeekendBgColor;
+            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthBgColor;
+            case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthWeekendBgColor;
             default -> null;
         };
 
     }
 
-    public static Color getDayOfMonthTextColor(GraphicsTheme graphicsTheme, LocalDate startCal) {
+    public static Color getDayOfMonthTextColor(KassandraTheme kassandraTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> graphicsTheme.xAxesTheme.XAxesDayOfMonthTextColor;
-            case SATURDAY, SUNDAY -> graphicsTheme.xAxesTheme.XAxesDayOfMonthWeekendTextColor;
+            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthTextColor;
+            case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthWeekendTextColor;
             default -> null;
         };
 
     }
 
-    public static Color getDayOfWeekBgColor(GraphicsTheme graphicsTheme, LocalDate startCal) {
+    public static Color getDayOfWeekBgColor(KassandraTheme kassandraTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, MONDAY, THURSDAY, TUESDAY, WEDNESDAY -> graphicsTheme.xAxesTheme.XAxesDayOfweekBgColor;
-            case SATURDAY, SUNDAY -> graphicsTheme.xAxesTheme.XAxesDayOfweekWeekendBgColor;
+            case FRIDAY, MONDAY, THURSDAY, TUESDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.XAxesDayOfweekBgColor;
+            case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.XAxesDayOfweekWeekendBgColor;
             default -> null;
         };
 
     }
 
-    public static ProjectCalendarException getException(GraphicsTheme graphicsTheme, ProjectCalendar pc, LocalDate currentDate) {
+    public static ProjectCalendarException getException(KassandraTheme kassandraTheme, ProjectCalendar pc, LocalDate currentDate) {
         if (!pc.isWorkingDate(currentDate)) {
             return pc.getException(currentDate);
         }
         return null;
     }
 
-    public static Color getGanttDayStripeColor(GraphicsTheme graphicsTheme, ProjectCalendar pc, LocalDate currentDate) {
+    public static Color getGanttDayStripeColor(KassandraTheme kassandraTheme, ProjectCalendar pc, LocalDate currentDate) {
         if (pc.isWorkingDate(currentDate)) {
-            return graphicsTheme.xAxesTheme.XAxesDayOfweekBgColor;
+            return kassandraTheme.xAxesTheme.XAxesDayOfweekBgColor;
         } else {
             ProjectCalendarException exception = pc.getException(currentDate);
             if (exception != null) {
                 if (exception.getName().equals(OffDayType.VACATION.name())) {
-                    return graphicsTheme.ganttTheme.ganttVacationBgColor;
+                    return kassandraTheme.ganttTheme.ganttVacationBgColor;
                 } else if (exception.getName().equals(OffDayType.TRIP.name())) {
-                    return graphicsTheme.ganttTheme.ganttTripBgColor;
+                    return kassandraTheme.ganttTheme.ganttTripBgColor;
                 } else if (exception.getName().equals(OffDayType.SICK.name())) {
-                    return graphicsTheme.ganttTheme.ganttSickBgColor;
+                    return kassandraTheme.ganttTheme.ganttSickBgColor;
                 } else {
-                    return graphicsTheme.ganttTheme.ganttHolidayBgColor;
+                    return kassandraTheme.ganttTheme.ganttHolidayBgColor;
                 }
             }
-            return graphicsTheme.xAxesTheme.XAxesDayOfMonthWeekendBgColor;
+            return kassandraTheme.xAxesTheme.XAxesDayOfMonthWeekendBgColor;
         }
     }
 
