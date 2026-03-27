@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.util;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
@@ -34,8 +35,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
-import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -94,6 +93,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     protected           StableDiffusionConfig  stableDiffusionConfig;
     @Autowired
     protected           StableDiffusionService stableDiffusionService;
+    @Autowired
+    protected           AvatarService          avatarService;
     protected           TaskApi                taskApi;
     @Autowired
     private             TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
@@ -124,35 +125,13 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         feature.setUpdated(ParameterOptions.getNow());
 
         Feature              saved     = null;
-        GeneratedImageResult image     = null;
         long                 startTime = System.currentTimeMillis();
-        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            try {
-                image = generateFeatureAvatar(name);
-            } catch (StableDiffusionException e) {
-                System.err.println("Failed to generate image for feature " + name + ": " + e.getMessage());
-                image = stableDiffusionService.generateDefaultAvatar("lightbulb");
-            }
-        } else {
-            log.warn("Stable Diffusion not available, using default avatar for feature: " + name);
-            image = stableDiffusionService.generateDefaultAvatar("lightbulb");
-        }
+        String               basePrompt = Feature.getDefaultAvatarPrompt(name);
+        GeneratedImageResult image      = avatarService.generateLightAvatarWithFallback(basePrompt, "lightbulb");
         feature.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = featureApi.persist(feature);
 
-        // Generate dark avatar using img2img from the light original, or a programmatic fallback.
-        String               basePrompt = Feature.getDefaultAvatarPrompt(name);
-        GeneratedImageResult darkImage;
-        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            try {
-                darkImage = stableDiffusionService.img2imgWithOriginal(image.getOriginalImage(), basePrompt + " with black background", image.getSeed());
-            } catch (StableDiffusionException e) {
-                System.err.println("Failed to generate dark avatar for feature " + name + ": " + e.getMessage());
-                darkImage = stableDiffusionService.generateDefaultDarkAvatar("lightbulb");
-            }
-        } else {
-            darkImage = stableDiffusionService.generateDefaultDarkAvatar("lightbulb");
-        }
+        GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(basePrompt, image, "lightbulb");
 
         featureApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
                 darkImage.getResizedImage(), darkImage.getOriginalImage());
@@ -297,35 +276,13 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         product.setUpdated(ParameterOptions.getNow());
 
         Product              saved     = null;
-        GeneratedImageResult image     = null;
         long                 startTime = System.currentTimeMillis();
-        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            try {
-                image = generateProductAvatar(name);
-            } catch (StableDiffusionException e) {
-                System.err.println("Failed to generate image for product " + name + ": " + e.getMessage());
-                image = stableDiffusionService.generateDefaultAvatar("cube");
-            }
-        } else {
-            log.warn("Stable Diffusion not available, using default avatar for product: " + name);
-            image = stableDiffusionService.generateDefaultAvatar("cube");
-        }
+        String               basePrompt = Product.getDefaultAvatarPrompt(name);
+        GeneratedImageResult image      = avatarService.generateLightAvatarWithFallback(basePrompt, "cube");
         product.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = productApi.persist(product);
 
-        // Generate dark avatar using img2img from the light original, or a programmatic fallback.
-        String               basePrompt = Product.getDefaultAvatarPrompt(name);
-        GeneratedImageResult darkImage;
-        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            try {
-                darkImage = stableDiffusionService.img2imgWithOriginal(image.getOriginalImage(), basePrompt + " with black background", image.getSeed());
-            } catch (StableDiffusionException e) {
-                System.err.println("Failed to generate dark avatar for product " + name + ": " + e.getMessage());
-                darkImage = stableDiffusionService.generateDefaultDarkAvatar("cube");
-            }
-        } else {
-            darkImage = stableDiffusionService.generateDefaultDarkAvatar("cube");
-        }
+        GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(basePrompt, image, "cube");
 
         productApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
                 darkImage.getResizedImage(), darkImage.getOriginalImage());
@@ -471,36 +428,15 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         sprint.setUpdated(ParameterOptions.getNow());
 
         Sprint               saved     = null;
-        GeneratedImageResult image     = null;
         long                 startTime = System.currentTimeMillis();
-        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            try {
-                image = generateSprintAvatar(name);
-            } catch (StableDiffusionException e) {
-                System.err.println("Failed to generate image for sprint " + name + ": " + e.getMessage());
-                image = stableDiffusionService.generateDefaultAvatar("exit");
-            }
-        } else {
-            image = stableDiffusionService.generateDefaultAvatar("exit");
-        }
+        String               basePrompt = Sprint.getDefaultAvatarPrompt(name);
+        GeneratedImageResult image      = avatarService.generateLightAvatarWithFallback(basePrompt, "exit");
         sprint.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = sprintApi.persist(sprint);
 
-        // Generate dark avatar using img2img from the light original, or a programmatic fallback.
-        String               basePrompt = Sprint.getDefaultAvatarPrompt(name);
-        GeneratedImageResult darkImage;
-        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            try {
-                darkImage = stableDiffusionService.img2imgWithOriginal(image.getOriginalImage(), basePrompt + " with black background", image.getSeed());
-            } catch (StableDiffusionException e) {
-                System.err.println("Failed to generate dark avatar for sprint " + name + ": " + e.getMessage());
-                darkImage = stableDiffusionService.generateDefaultDarkAvatar("exit");
-            }
-        } else {
-            darkImage = stableDiffusionService.generateDefaultDarkAvatar("exit");
-        }
+        GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(basePrompt, image, "exit");
 
-        sprintApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt(),
+        sprintApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
                 darkImage.getResizedImage(), darkImage.getOriginalImage());
         System.out.println("Generated image for sprint: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
@@ -595,39 +531,28 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         user.setCreated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
         user.setUpdated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
 
-        User                 saved     = null;
-        GeneratedImageResult image     = null;
-        long                 startTime = System.currentTimeMillis();
-        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            try {
-                image = generateUserAvatar(name);
-            } catch (StableDiffusionException e) {
-                System.err.println("Failed to generate avatar for user " + name + ": " + e.getMessage());
-                image = stableDiffusionService.generateDefaultAvatar("user");
-            }
-        } else {
-            image = stableDiffusionService.generateDefaultAvatar("user");
+        long                 startTime  = System.currentTimeMillis();
+        String               basePrompt = User.getDefaultAvatarPrompt(name);
+        GeneratedImageResult image;
+        try {
+            image = avatarService.generateLightAvatar(basePrompt);
+        } catch (StableDiffusionException e) {
+            log.warn("Failed to generate light avatar for user {}: {}", name, e.getMessage());
+            image = avatarService.generateDefaultLightAvatar("user");
         }
         user.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
 
-        saved = userApi.persist(user);
+        User saved = userApi.persist(user);
         log.info("Created user: " + saved.getName() + " with email: " + saved.getEmail());
         addLocation(saved, country, state, start);
         addAvailability(saved, availability, start);
 
-        // Generate dark avatar using img2img from the light original, or a programmatic fallback.
-        // Reuse the same seed so SD produces a visually consistent dark variant.
-        String               basePrompt = User.getDefaultAvatarPrompt(name);
         GeneratedImageResult darkImage;
-        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
-            try {
-                darkImage = stableDiffusionService.img2imgWithOriginal(image.getOriginalImage(), basePrompt + " with black background", image.getSeed());
-            } catch (StableDiffusionException e) {
-                System.err.println("Failed to generate dark avatar for user " + name + ": " + e.getMessage());
-                darkImage = stableDiffusionService.generateDefaultDarkAvatar("user");
-            }
-        } else {
-            darkImage = stableDiffusionService.generateDefaultDarkAvatar("user");
+        try {
+            darkImage = avatarService.generateDarkAvatar(basePrompt, image);
+        } catch (StableDiffusionException e) {
+            log.warn("Failed to generate dark avatar for user {}: {}", name, e.getMessage());
+            darkImage = avatarService.generateDefaultDarkAvatar("user");
         }
 
         userApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
@@ -679,19 +604,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         nameGenerator.resetStoryPool(); // Reset story pool for each test
     }
 
-    private GeneratedImageResult generateFeatureAvatar(String name) throws StableDiffusionException {
-        String prompt = Feature.getDefaultAvatarPrompt(name);
-        System.out.println("Generating image for feature: " + name + " with prompt: " + prompt);
-        GeneratedImageResult image = stableDiffusionService.generateImageWithOriginal(prompt);
-        return image;
-    }
-
-    private @NonNull GeneratedImageResult generateProductAvatar(String name) throws StableDiffusionException {
-        String prompt = Product.getDefaultAvatarPrompt(name);
-        log.trace("Generating image for product: " + name + " with prompt: " + prompt);
-        GeneratedImageResult image = stableDiffusionService.generateImageWithOriginal(prompt);
-        return image;
-    }
 
     protected void generateRandomOffDays(User saved, LocalDate employmentDate) {
         try (Profiler pc = new Profiler(SampleType.CPU)) {
@@ -725,18 +637,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         }
     }
 
-    private GeneratedImageResult generateSprintAvatar(String name) throws StableDiffusionException {
-        String prompt = Sprint.getDefaultAvatarPrompt(name);
-        System.out.println("Generating image for sprint: " + name + " with prompt: " + prompt);
-        GeneratedImageResult image = stableDiffusionService.generateImageWithOriginal(prompt);
-        return image;
-    }
-
-    private @NotNull GeneratedImageResult generateUserAvatar(String name) throws StableDiffusionException {
-        String basePrompt = User.getDefaultAvatarPrompt(name);
-        System.out.println("Generating avatar for user: " + name + " with prompt: " + basePrompt);
-        return stableDiffusionService.generateImageWithOriginal(basePrompt + " with white background");
-    }
 
     protected Color generateUserColor(int userIndex) {
         int index = userIndex % GraphicsLightTheme.KELLY_COLORS.length;

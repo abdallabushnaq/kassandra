@@ -34,6 +34,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
@@ -75,10 +76,12 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
     private             com.vaadin.flow.component.textfield.TextField nameField;
     private             com.vaadin.flow.component.html.Image          nameFieldAvatarImage;
     private final       StableDiffusionService                        stableDiffusionService;
+    private final       AvatarService                                 avatarService;
     private final       UserApi                                       userApi;
 
-    public UserProfileView(UserApi userApi, StableDiffusionService stableDiffusionService) {
+    public UserProfileView(UserApi userApi, AvatarService avatarService, StableDiffusionService stableDiffusionService) {
         this.userApi                = userApi;
+        this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
 
         setSizeFull();
@@ -374,6 +377,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         byte[] initialImage     = avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         byte[] initialDarkImage = avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
+                avatarService,
                 stableDiffusionService,
                 defaultPrompt,
                 true,

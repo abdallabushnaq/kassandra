@@ -34,12 +34,11 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.server.StreamResource;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -75,38 +74,40 @@ public class ImagePromptDialog extends Dialog {
     private             byte[]         initialImage;
     private final       Div            previewContainer;
     private final       TextArea       promptField;
-    @Autowired
-    StableDiffusionConfig stableDiffusionConfig;
+    private final       AvatarService  avatarService;
     private final StableDiffusionService stableDiffusionService;
     private final Button                 updateButton;
 
     /**
      * Creates a dialog for generating AI images (no dark-avatar section).
      *
+     * @param avatarService          The avatar generation service
      * @param stableDiffusionService The Stable Diffusion service
      * @param defaultPrompt          Default prompt text (can be null)
      * @param acceptCallback         Callback that receives the generated image bytes
      */
-    public ImagePromptDialog(StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback) {
-        this(stableDiffusionService, defaultPrompt, false, null, acceptCallback, null, null);
+    public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback) {
+        this(avatarService, stableDiffusionService, defaultPrompt, false, null, acceptCallback, null, null);
     }
 
     /**
      * Creates a dialog for generating AI images with an initial image for img2img "Update" mode.
      * No dark-avatar section is shown.
      *
+     * @param avatarService          The avatar generation service
      * @param stableDiffusionService The Stable Diffusion service
      * @param defaultPrompt          Default prompt text (can be null)
      * @param acceptCallback         Callback that receives the generated image bytes
      * @param initialImage           Existing light original for img2img mode (can be null)
      */
-    public ImagePromptDialog(StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback, byte[] initialImage) {
-        this(stableDiffusionService, defaultPrompt, false, null, acceptCallback, initialImage, null);
+    public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback, byte[] initialImage) {
+        this(avatarService, stableDiffusionService, defaultPrompt, false, null, acceptCallback, initialImage, null);
     }
 
     /**
      * Full constructor. Pass a non-null {@code darkPrompt} to enable the side-by-side dark-avatar preview panel.
      *
+     * @param avatarService          The avatar generation service
      * @param stableDiffusionService The Stable Diffusion service
      * @param defaultPrompt          Default prompt text for the light avatar (can be null)
      * @param enableDark             {@code true} to show the side-by-side dark-avatar preview panel
@@ -115,8 +116,9 @@ public class ImagePromptDialog extends Dialog {
      * @param initialImage           Existing light original for img2img "Update" mode; can be null
      * @param initialDarkImage       Existing dark original to pre-populate the dark preview; can be null
      */
-    public ImagePromptDialog(StableDiffusionService stableDiffusionService, String defaultPrompt, boolean enableDark,
+    public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt, boolean enableDark,
                              String darkIconName, AcceptCallback acceptCallback, byte[] initialImage, byte[] initialDarkImage) {
+        this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.acceptCallback         = acceptCallback;
         this.initialImage           = initialImage;
@@ -140,7 +142,7 @@ public class ImagePromptDialog extends Dialog {
                     .set("border-radius", "var(--lumo-border-radius)")
                     .set("margin-bottom", "var(--lumo-space-m)");
             warningDiv.add(new Icon(VaadinIcon.WARNING));
-            warningDiv.add(" Stable Diffusion API is not available. Please ensure it's running at " + stableDiffusionConfig.getApiUrl());
+            warningDiv.add(" Stable Diffusion API is not available. Please ensure it's running at " + avatarService.getConfig().getApiUrl());
             dialogLayout.add(warningDiv);
         }
 
@@ -429,13 +431,14 @@ public class ImagePromptDialog extends Dialog {
         long lightSeed = generatedImageSeed; // volatile read — safe
 
         getUI().ifPresent(ui -> ui.access(() -> {
-            // Read the current prompt while holding the session lock
-            String darkSdPrompt = promptField.getValue().trim() + ", background is totally night black, no gradients, no textures";
+            // Read the current base prompt while holding the session lock
+            String              basePrompt  = promptField.getValue().trim();
+            GeneratedImageResult lightResult = new GeneratedImageResult(lightOriginal, basePrompt, null, lightSeed);
 
             darkPreviewContainer.removeAll();
 
             if (stableDiffusionService.isAvailable()) {
-                // ── Loading layout (same style as the light-preview progress bar) ──
+                // ── Loading layout ──────────────────────────────────────────
                 VerticalLayout loadingLayout = new VerticalLayout();
                 loadingLayout.setAlignItems(FlexComponent.Alignment.CENTER);
                 loadingLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
@@ -464,42 +467,24 @@ public class ImagePromptDialog extends Dialog {
                 loadingLayout.add(hourglassIcon, loadingText, progressText, progressBar);
                 darkPreviewContainer.add(loadingLayout);
 
-                // ── SD img2img in background thread ──
+                // ── SD img2img in background thread ──────────────────────────
                 new Thread(() -> {
                     try {
-                        // Build a solid-black input image so SD generates the dark variant from scratch
-                        // rather than being influenced by the light-theme colours.
-                        byte[] blackImageBytes;
-                        try {
-                            BufferedImage lightBi   = ImageIO.read(new ByteArrayInputStream(lightOriginal));
-                            int           imgWidth  = lightBi != null ? lightBi.getWidth() : 512;
-                            int           imgHeight = lightBi != null ? lightBi.getHeight() : 512;
-                            BufferedImage blackBi   = new BufferedImage(imgWidth, imgHeight, BufferedImage.TYPE_INT_RGB);
-                            // TYPE_INT_RGB pixels default to 0 (black) — no explicit fill needed
-                            ByteArrayOutputStream blackBaos = new ByteArrayOutputStream();
-                            ImageIO.write(blackBi, "png", blackBaos);
-                            blackImageBytes = blackBaos.toByteArray();
-                        } catch (Exception ex) {
-                            // Fallback: use the light original if black-image creation fails
-                            blackImageBytes = lightOriginal;
-                        }
-                        GeneratedImageResult result = stableDiffusionService.img2imgWithOriginal(
-                                blackImageBytes, darkSdPrompt, 256,
+                        GeneratedImageResult result = avatarService.generateDarkAvatar(
+                                basePrompt, lightResult,
                                 (progress, step, totalSteps) -> ui.access(() -> {
                                     progressBar.setValue(progress);
                                     progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
                                     ui.push();
-                                }),
-                                lightSeed, 1f);
+                                }));
                         generatedDarkImage         = result.getResizedImage();
                         generatedDarkImageOriginal = result.getOriginalImage();
                         ui.access(() -> {
-                            // Display the full SD output (512 px) so the preview is sharp
                             displayInContainer(darkPreviewContainer, result.getOriginalImage());
                             ui.push();
                         });
                     } catch (StableDiffusionException e) {
-                        GeneratedImageResult fallback = stableDiffusionService.generateDefaultDarkAvatar(darkIconName);
+                        GeneratedImageResult fallback = avatarService.generateDefaultDarkAvatar(darkIconName);
                         generatedDarkImage         = fallback.getResizedImage();
                         generatedDarkImageOriginal = fallback.getOriginalImage();
                         ui.access(() -> {
@@ -510,7 +495,7 @@ public class ImagePromptDialog extends Dialog {
                 }).start();
             } else {
                 // Programmatic fallback — fast, run inline while holding the lock
-                GeneratedImageResult fallback = stableDiffusionService.generateDefaultDarkAvatar(darkIconName);
+                GeneratedImageResult fallback = avatarService.generateDefaultDarkAvatar(darkIconName);
                 generatedDarkImage         = fallback.getResizedImage();
                 generatedDarkImageOriginal = fallback.getOriginalImage();
                 displayInContainer(darkPreviewContainer, fallback.getOriginalImage());
@@ -569,44 +554,14 @@ public class ImagePromptDialog extends Dialog {
         getUI().ifPresent(ui -> {
             new Thread(() -> {
                 try {
-                    // Append background modifier for SD; the base prompt is preserved in promptField
-                    String lightSdPrompt = prompt /*+ ", background is totally white, no shadows, no gradients, no textures"*/;
-
-                    // Build a solid-white input image so SD generates the light variant from a white canvas
-                    // rather than from random noise, which helps produce cleaner white backgrounds.
-                    byte[] whiteImageBytes;
-                    try {
-                        BufferedImage whiteBi = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
-                        Graphics2D    g2d     = whiteBi.createGraphics();
-                        g2d.setColor(Color.WHITE);
-                        g2d.fillRect(0, 0, 512, 512);
-                        g2d.dispose();
-                        ByteArrayOutputStream whiteBaos = new ByteArrayOutputStream();
-                        ImageIO.write(whiteBi, "png", whiteBaos);
-                        whiteImageBytes = whiteBaos.toByteArray();
-                    } catch (Exception ex) {
-                        whiteImageBytes = null;
-                    }
-
-                    de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result;
-                    if (whiteImageBytes != null) {
-                        result = stableDiffusionService.img2imgWithOriginal(whiteImageBytes, lightSdPrompt, 256, (progress, step, totalSteps) -> {
-                            ui.access(() -> {
-                                progressBar.setValue(progress);
-                                progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
-                                ui.push();
+                    de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
+                            avatarService.generateLightAvatar(prompt, (progress, step, totalSteps) -> {
+                                ui.access(() -> {
+                                    progressBar.setValue(progress);
+                                    progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
+                                    ui.push();
+                                });
                             });
-                        }, -1, 1f);
-                    } else {
-                        // Fallback to txt2img if white-image creation failed
-                        result = stableDiffusionService.generateImageWithOriginal(lightSdPrompt, 256, (progress, step, totalSteps) -> {
-                            ui.access(() -> {
-                                progressBar.setValue(progress);
-                                progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
-                                ui.push();
-                            });
-                        });
-                    }
 
                     generatedImage         = result.getResizedImage();
                     generatedImageOriginal = result.getOriginalImage();

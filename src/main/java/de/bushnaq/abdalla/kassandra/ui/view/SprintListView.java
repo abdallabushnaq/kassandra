@@ -35,6 +35,7 @@ import com.vaadin.flow.router.Location;
 import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -95,6 +96,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     private              Set<Feature>                 selectedFeatures                 = new HashSet<>();
     private final        ChatPanelSessionState        sessionState;
     private final        SprintApi                    sprintApi;
+    private final        AvatarService                avatarService;
     private final        StableDiffusionService       stableDiffusionService;
     private final        UserApi                      userApi;
     private final        VersionApi                   versionApi;
@@ -103,6 +105,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
 
     public SprintListView(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi,
                           UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
+                          AvatarService avatarService,
                           StableDiffusionService stableDiffusionService,
                           AiAssistantService aiAssistantService,
                           ChatPanelSessionState chatPanelSessionState) {
@@ -113,6 +116,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         this.featureApi             = featureApi;
         this.userApi                = userApi;
         this.clock                  = clock;
+        this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.sessionState           = chatPanelSessionState;
 
@@ -466,7 +470,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     }
 
     private void openSprintDialog(Sprint sprint) {
-        SprintDialog dialog = new SprintDialog(sprint, stableDiffusionService, sprintApi, featureId);
+        SprintDialog dialog = new SprintDialog(sprint, avatarService, stableDiffusionService, sprintApi, featureId);
         dialog.addOpenedChangeListener(event -> {
             if (!event.isOpened()) {
                 // Dialog was closed, refresh the grid

@@ -36,6 +36,7 @@ import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -89,22 +90,25 @@ public class ProductDialog extends Dialog {
     private final       ProductAclApi                  productAclApi;
     private final       ProductApi                     productApi;
     private final       StableDiffusionService         stableDiffusionService;
+    private final       AvatarService                  avatarService;
 
     /**
      * Creates a dialog for creating or editing a product.
      *
      * @param product                The product to edit, or null for creating a new product
+     * @param avatarService          The avatar generation service
      * @param stableDiffusionService The AI image generation service (optional, can be null)
      * @param productApi             The product API for saving product data
      * @param productAclApi          The product ACL API for managing access control
      * @param userApi                The user API for loading available users
      * @param userGroupApi           The user group API for loading available groups
      */
-    public ProductDialog(Product product, StableDiffusionService stableDiffusionService, ProductApi productApi,
+    public ProductDialog(Product product, AvatarService avatarService, StableDiffusionService stableDiffusionService, ProductApi productApi,
                          ProductAclApi productAclApi, UserApi userApi, UserGroupApi userGroupApi) {
         this.product                = product;
         this.productApi             = productApi;
         this.productAclApi          = productAclApi;
+        this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         isEditMode                  = product != null;
         this.binder                 = new Binder<>(Product.class);
@@ -425,6 +429,7 @@ public class ProductDialog extends Dialog {
         byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
+                avatarService,
                 stableDiffusionService,
                 defaultPrompt,
                 true,

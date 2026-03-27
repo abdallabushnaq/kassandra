@@ -33,6 +33,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
@@ -71,6 +72,7 @@ public class FeatureDialog extends Dialog {
     private final       TextField              nameField;
     private final       Image                  nameFieldImage;
     private final       StableDiffusionService stableDiffusionService;
+    private final       AvatarService          avatarService;
     private final       Long                   versionId;
 
     /**
@@ -81,9 +83,10 @@ public class FeatureDialog extends Dialog {
      * @param featureApi             The feature API for saving feature data
      * @param versionId              The version ID for new features (ignored for edit mode)
      */
-    public FeatureDialog(Feature feature, StableDiffusionService stableDiffusionService, FeatureApi featureApi, Long versionId) {
+    public FeatureDialog(Feature feature, AvatarService avatarService, StableDiffusionService stableDiffusionService, FeatureApi featureApi, Long versionId) {
         this.feature                = feature;
         this.featureApi             = featureApi;
+        this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.versionId              = versionId;
         isEditMode                  = feature != null;
@@ -282,6 +285,7 @@ public class FeatureDialog extends Dialog {
         byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
+                avatarService,
                 stableDiffusionService,
                 defaultPrompt,
                 true,

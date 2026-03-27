@@ -31,6 +31,7 @@ import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.Product;
@@ -89,6 +90,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     private              String                       requestedVersionIds;
     private              Set<Version>                 selectedVersions                  = new HashSet<>();
     private final        ChatPanelSessionState        sessionState;
+    private final        AvatarService                avatarService;
     private final        StableDiffusionService       stableDiffusionService;
     private final        UserApi                      userApi;
     private final        VersionApi                   versionApi;
@@ -98,6 +100,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
 
     public FeatureListView(FeatureApi featureApi, ProductApi productApi, VersionApi versionApi, UserApi userApi,
                            Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
+                           AvatarService avatarService,
                            StableDiffusionService stableDiffusionService,
                            AiAssistantService aiAssistantService,
                            ChatPanelSessionState chatPanelSessionState) {
@@ -106,6 +109,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         this.productApi             = productApi;
         this.versionApi             = versionApi;
         this.userApi                = userApi;
+        this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.sessionState           = chatPanelSessionState;
 
@@ -361,7 +365,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     }
 
     private void openFeatureDialog(Feature feature) {
-        FeatureDialog dialog = new FeatureDialog(feature, stableDiffusionService, featureApi, versionId);
+        FeatureDialog dialog = new FeatureDialog(feature, avatarService, stableDiffusionService, featureApi, versionId);
         dialog.addOpenedChangeListener(event -> {
             if (!event.isOpened()) {
                 // Dialog was closed, refresh the grid

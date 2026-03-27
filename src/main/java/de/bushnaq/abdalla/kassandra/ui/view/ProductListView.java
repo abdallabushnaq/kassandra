@@ -32,6 +32,7 @@ import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.Product;
@@ -85,12 +86,15 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     private final        ProductAclApi          productAclApi;
     private final        ProductApi             productApi;
     private final        ChatPanelSessionState  sessionState;
+    private final        AvatarService          avatarService;
     private final        StableDiffusionService stableDiffusionService;
     private final        UserApi                userApi;
     private final        UserGroupApi           userGroupApi;
 
     public ProductListView(ProductApi productApi, ProductAclApi productAclApi, UserApi userApi, UserGroupApi userGroupApi,
-                           Clock clock, AiFilterService aiFilterService, JsonMapper mapper, StableDiffusionService stableDiffusionService,
+                           Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
+                           AvatarService avatarService,
+                           StableDiffusionService stableDiffusionService,
                            AiAssistantService aiAssistantService,
                            ChatPanelSessionState chatPanelSessionState) {
         super(clock);
@@ -98,6 +102,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         this.productAclApi          = productAclApi;
         this.userApi                = userApi;
         this.userGroupApi           = userGroupApi;
+        this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.sessionState           = chatPanelSessionState;
 
@@ -371,7 +376,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     }
 
     private void openProductDialog(Product product) {
-        ProductDialog dialog = new ProductDialog(product, stableDiffusionService, productApi, productAclApi, userApi, userGroupApi);
+        ProductDialog dialog = new ProductDialog(product, avatarService, stableDiffusionService, productApi, productAclApi, userApi, userGroupApi);
         dialog.addOpenedChangeListener(event -> {
             if (!event.isOpened()) {
                 refreshGrid();

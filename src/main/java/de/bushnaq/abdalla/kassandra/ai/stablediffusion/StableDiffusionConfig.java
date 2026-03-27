@@ -52,12 +52,17 @@ public class StableDiffusionConfig {
     /**
      * Size to generate images at (before resizing)
      */
-    private int    generationSize = 512;
-    private String modelName = "realisticVisionV60B1_v51HyperVAE.safetensors";
+    private int    generationSize    = 512;
+    private String modelName         = "realisticVisionV60B1_v51HyperVAE.safetensors";
+    /**
+     * Final output size for AI-generated avatars (light and dark variants).
+     * Defaults to 256 to preserve detail; differs from the generic {@code outputSize}.
+     */
+    private int    avatarOutputSize   = 256;
     /**
      * Final output size for avatars/icons
      */
-    private int    outputSize     = 64;
+    private int    outputSize        = 64;
     /**
      * Timeout in seconds for API requests
      */

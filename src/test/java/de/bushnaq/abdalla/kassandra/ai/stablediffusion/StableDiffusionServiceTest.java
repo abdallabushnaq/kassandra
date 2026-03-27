@@ -17,6 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
+import de.bushnaq.abdalla.kassandra.dto.Feature;
+import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,10 +31,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,6 +49,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 public class StableDiffusionServiceTest {
 
+    @Autowired
+    private AvatarService           avatarService;
     @Autowired
     private StableDiffusionConfig   config;
     private Path                    outputDir;
@@ -170,46 +174,27 @@ public class StableDiffusionServiceTest {
 
     @Test
     public void testGenerateImage_UserAvatarAbdalla() throws Exception {
-        // Mirror the exact flow used by ImagePromptDialog / generateImage() + generateDarkVariant()
-        // for a user named "Abdalla".
+        // Mirror the exact flow used by ImagePromptDialog for a user named "Abdalla",
+        // delegated through AvatarService.
         String userName        = "Abdalla";
         String lightBasePrompt = User.getDefaultAvatarPrompt(userName);
-        String lightSdPrompt   = lightBasePrompt + ", background is totally white, no shadows, no gradients, no textures";
-        String darkSdPrompt    = lightBasePrompt + ", background is totally night black, no gradients, no textures";
+        String darkBasePrompt  = lightBasePrompt; // AvatarService appends the dark suffix internally
 
-        // ── Light avatar: img2img from a solid-white canvas (same as generateImage()) ──
-        BufferedImage whiteBi = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
-        Graphics2D    g2d     = whiteBi.createGraphics();
-        g2d.setColor(Color.WHITE);
-        g2d.fillRect(0, 0, 512, 512);
-        g2d.dispose();
-        ByteArrayOutputStream whiteBaos = new ByteArrayOutputStream();
-        ImageIO.write(whiteBi, "png", whiteBaos);
-        byte[] whiteImageBytes = whiteBaos.toByteArray();
-
-        GeneratedImageResult lightResult = stableDiffusionService.img2imgWithOriginal(whiteImageBytes, lightSdPrompt, 256, null, -1, 1f);
+        // ── Light avatar via AvatarService ────────────────────────────────────
+        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt);
 
         assertNotNull(lightResult.getResizedImage(), "Light avatar should not be null");
         assertTrue(lightResult.getResizedImage().length > 0, "Light avatar should have content");
         saveTestImage(lightResult.getResizedImage(), "test-avatar-abdalla.png");
-        log.info("Generated light avatar for '{}' with seed {} and prompt: '{}'", userName, lightResult.getSeed(), lightSdPrompt);
+        log.info("Generated light avatar for '{}' with seed {} and prompt: '{}'", userName, lightResult.getSeed(), lightResult.getPrompt());
 
-        // ── Dark avatar: img2img from a solid-black canvas, pinned to the same seed (same as generateDarkVariant()) ──
-        BufferedImage lightOriginalBi = ImageIO.read(new ByteArrayInputStream(lightResult.getOriginalImage()));
-        int           imgWidth        = lightOriginalBi != null ? lightOriginalBi.getWidth() : 512;
-        int           imgHeight       = lightOriginalBi != null ? lightOriginalBi.getHeight() : 512;
-        // TYPE_INT_RGB pixels default to 0 (black) — no fill needed
-        BufferedImage         blackBi   = new BufferedImage(imgWidth, imgHeight, BufferedImage.TYPE_INT_RGB);
-        ByteArrayOutputStream blackBaos = new ByteArrayOutputStream();
-        ImageIO.write(blackBi, "png", blackBaos);
-        byte[] blackImageBytes = blackBaos.toByteArray();
-
-        GeneratedImageResult darkResult = stableDiffusionService.img2imgWithOriginal(blackImageBytes, darkSdPrompt, 256, null, lightResult.getSeed(), 1f);
+        // ── Dark avatar via AvatarService, pinned to the light seed ───────────
+        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, lightResult);
 
         assertNotNull(darkResult.getResizedImage(), "Dark avatar should not be null");
         assertTrue(darkResult.getResizedImage().length > 0, "Dark avatar should have content");
         saveTestImage(darkResult.getResizedImage(), "test-dark-avatar-abdalla.png");
-        log.info("Generated dark avatar for '{}' with seed {} and prompt: '{}'", userName, darkResult.getSeed(), darkSdPrompt);
+        log.info("Generated dark avatar for '{}' with seed {} and prompt: '{}'", userName, darkResult.getSeed(), darkResult.getPrompt());
     }
 
     @Test

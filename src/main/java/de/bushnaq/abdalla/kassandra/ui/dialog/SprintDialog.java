@@ -33,6 +33,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
@@ -71,19 +72,22 @@ public class SprintDialog extends Dialog {
     private final       Image                  nameFieldImage;
     private final       Sprint                 sprint;
     private final       SprintApi              sprintApi;
+    private final       AvatarService          avatarService;
     private final       StableDiffusionService stableDiffusionService;
 
     /**
      * Creates a dialog for creating or editing a sprint.
      *
      * @param sprint                 The sprint to edit, or null for creating a new sprint
+     * @param avatarService          The avatar generation service
      * @param stableDiffusionService The AI image generation service (optional, can be null)
      * @param sprintApi              The sprint API for saving sprint data
      * @param featureId              The feature ID for new sprints (ignored for edit mode)
      */
-    public SprintDialog(Sprint sprint, StableDiffusionService stableDiffusionService, SprintApi sprintApi, Long featureId) {
+    public SprintDialog(Sprint sprint, AvatarService avatarService, StableDiffusionService stableDiffusionService, SprintApi sprintApi, Long featureId) {
         this.sprint                 = sprint;
         this.sprintApi              = sprintApi;
+        this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.featureId              = featureId;
         isEditMode                  = sprint != null;
@@ -282,6 +286,7 @@ public class SprintDialog extends Dialog {
         byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
+                avatarService,
                 stableDiffusionService,
                 defaultPrompt,
                 true,

@@ -33,6 +33,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
@@ -75,16 +76,19 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
     private final        Div                    chatPane;
     private final        Clock                  clock;
     private final        ChatPanelSessionState  sessionState;
+    private final        AvatarService          avatarService;
     private final        StableDiffusionService stableDiffusionService;
     private final        UserApi                userApi;
 
     public UserListView(UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
+                        AvatarService avatarService,
                         StableDiffusionService stableDiffusionService,
                         AiAssistantService aiAssistantService,
                         ChatPanelSessionState chatPanelSessionState) {
         super(clock);
         this.userApi                = userApi;
         this.clock                  = clock;
+        this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.sessionState           = chatPanelSessionState;
 
@@ -295,7 +299,7 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
     }
 
     private void openUserDialog(User user) {
-        UserDialog dialog = new UserDialog(user, stableDiffusionService, userApi);
+        UserDialog dialog = new UserDialog(user, avatarService, stableDiffusionService, userApi);
         dialog.addOpenedChangeListener(event -> {
             if (!event.isOpened()) {
                 // Dialog was closed, refresh the grid
