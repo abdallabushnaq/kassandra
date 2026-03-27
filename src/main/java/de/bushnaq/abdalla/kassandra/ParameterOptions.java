@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsLightTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
 import de.bushnaq.abdalla.util.date.DateUtil;
+import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@Getter
 public abstract class ParameterOptions {
     protected static final String          CLI_OPTION_CAPTURE_COST                     = "capturecost";
     protected static final String          CLI_OPTION_CAPTURE_OUT_OF_OFFICE_FROM_GANTT = "captureoutofofficefromgantt";
@@ -43,7 +44,7 @@ public abstract class ParameterOptions {
     protected static final String          CLI_OPTION_QUICK_MODE                       = "quick";
     protected static final String          CLI_OPTION_REPORT_FOLDER                    = "reportfolder";
     protected static final String          CLI_OPTION_RESOURCE_MAP                     = "resourcemap";
-    protected static final String          CLI_OPTION_THEME                            = "theme";
+    //    protected static final String          CLI_OPTION_THEME                            = "theme";
     protected static final String          CLI_OPTION_VERBOSE                          = "verbose";
     protected static final String          CLI_OPTION_XLSX_FILE                        = "xlsxfile";
     public                 boolean         activeRequests                              = true;//for test purposes
@@ -55,7 +56,7 @@ public abstract class ParameterOptions {
     public                 boolean         detailed                                    = true;//should always be true, otherwise resources will not be shown in burn down chart
     public                 List<Throwable> exceptions                                  = new ArrayList<>();
     public                 String[]        files                                       = {};
-    public                 GraphicsTheme   graphicsTheme                               = new GraphicsLightTheme();
+    private final          GraphicsTheme   graphicsTheme                               = new GraphicsLightTheme();
     public                 boolean         individualLog                               = false;//resource individual log visible as drill down list of work burn down chart. Legacy!
     public                 Integer         limitProjectOverview                        = null;// 6 * 30;
     public                 Integer         limitResourceUtilization                    = null;// 1 * 30;
@@ -70,6 +71,10 @@ public abstract class ParameterOptions {
     public                 boolean         resourceUtilizationPane                     = false;//only used in tests to cover code, currently cannot be enabled in production mode
     public                 boolean         verbose                                     = false;//in verbose mode, temporary <filename>-tp.xml file will not be deleted.
     public                 String          xlsxFile                                    = null;//used only by Xlsx2mppMain
+
+    public GraphicsTheme getActiveGraphicsTheme() {
+        return graphicsTheme;
+    }
 
     public static LocalDateTime getLocalNow() {
         return DateUtil.offsetDateTimeToLocalDateTime(now);

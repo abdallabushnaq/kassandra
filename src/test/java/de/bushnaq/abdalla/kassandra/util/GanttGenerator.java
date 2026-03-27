@@ -42,7 +42,7 @@ public class GanttGenerator extends MPXJGenerator {
         } else {
             sprintName = testInfo.getDisplayName() + "-gant-chart";
         }
-        GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.graphicsTheme);
+        GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
 //        String     description = testCaseInfo.getDisplayName().replace("_", "-");
         String description = TestInfoUtil.getTestMethodName(testInfo);
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);

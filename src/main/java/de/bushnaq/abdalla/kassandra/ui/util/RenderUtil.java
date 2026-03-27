@@ -60,7 +60,7 @@ public class RenderUtil {
         dao.worklog            = sprint.getWorklogs();
         dao.worklogRemaining   = sprint.getWorklogRemaining();
         dao.cssClass           = "scheduleWithMargin";
-        dao.graphicsTheme      = context.parameters.graphicsTheme;
+        dao.graphicsTheme      = context.parameters.getActiveGraphicsTheme();
         return dao;
     }
 
@@ -90,7 +90,7 @@ public class RenderUtil {
      */
     public static GanttChart generateGanttChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
         List<Throwable> exceptions = new ArrayList<>();
-        GanttChart      chart      = new GanttChart(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.graphicsTheme);
+        GanttChart      chart      = new GanttChart(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
         RenderUtil.renderSvg(chart, svg);
         svg.setId(GANTT_CHART);
         return chart;

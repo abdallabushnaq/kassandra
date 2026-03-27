@@ -175,7 +175,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         dao.worklog            = sprint.getWorklogs();
         dao.worklogRemaining   = sprint.getWorklogRemaining();
         dao.cssClass           = "scheduleWithMargin";
-        dao.graphicsTheme      = context.parameters.graphicsTheme;
+        dao.graphicsTheme      = context.parameters.getActiveGraphicsTheme();
         return dao;
     }
 
@@ -206,7 +206,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         sprint.initUserMap(userApi.getAll(sprintId));
         sprint.initTaskMap(taskApi.getAll(sprintId), worklogApi.getAll(sprintId));
         sprint.recalculate(ParameterOptions.getLocalNow());
-        GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", TestInfoUtil.getTestMethodName(testInfo) + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.graphicsTheme);
+        GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", TestInfoUtil.getTestMethodName(testInfo) + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
 //        String     description = testCaseInfo.getDisplayName().replace("_", "-");
         String description = TestInfoUtil.getTestMethodName(testInfo);
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testResultFolder);

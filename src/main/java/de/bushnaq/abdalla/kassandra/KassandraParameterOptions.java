@@ -17,20 +17,19 @@
 
 package de.bushnaq.abdalla.kassandra;
 
-import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsLightTheme;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import org.apache.commons.cli.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class ProjectHubParameterOptions extends ParameterOptions {
+public class KassandraParameterOptions extends ParameterOptions {
 
     @Override
     public void start(String[] args) throws Exception {
         Options options = new Options();
         options.addOption(Option.builder(CLI_OPTION_ENV).hasArgs().desc("Jira connection configuration file list. This parameter is not optional.").build());
-        options.addOption(Option.builder(CLI_OPTION_THEME).hasArg().desc("Graphic theme. possible options are dark/light. Default is dark.").build());
+//        options.addOption(Option.builder(CLI_OPTION_THEME).hasArg().desc("Graphic theme. possible options are dark/light. Default is dark.").build());
         options.addOption(
                 Option.builder(CLI_OPTION_DATE).hasArg().desc("Creates a report back in time for a specific date. Format should be 'yyyy.MM.dd'.").build());
         options.addOption(Option.builder(CLI_OPTION_DETAILED).desc("Detailed author speration in burn down chart. This parameter is optional.").build());
@@ -48,16 +47,16 @@ public class ProjectHubParameterOptions extends ParameterOptions {
         CommandLineParser parser = new DefaultParser();
         // parse the command line arguments
         CommandLine line = parser.parse(options, args);
-        if (line.hasOption(CLI_OPTION_THEME)) {
-            String theme = line.getOptionValue(CLI_OPTION_THEME);
-            if (theme.equals("dark")) {
-
-            } else if (theme.equals("light")) {
-                graphicsTheme = new GraphicsLightTheme();
-            }
-        } else {
-            //revert to default
-        }
+//        if (line.hasOption(CLI_OPTION_THEME)) {
+//            String theme = line.getOptionValue(CLI_OPTION_THEME);
+//            if (theme.equals("dark")) {
+//
+//            } else if (theme.equals("light")) {
+//                graphicsTheme = new GraphicsLightTheme();
+//            }
+//        } else {
+//            //revert to default
+//        }
         if (line.hasOption(CLI_OPTION_DATE)) {
             String            dateString    = line.getOptionValue(CLI_OPTION_DATE);
             DateTimeFormatter dtf           = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");

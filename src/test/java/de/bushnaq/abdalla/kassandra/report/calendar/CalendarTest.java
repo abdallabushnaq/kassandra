@@ -77,7 +77,7 @@ public class CalendarTest extends AbstractGanttTestUtil {
         gc.initialize();
 
         for (User user : gc.allUsers) {
-            CalendarChart chart = new CalendarChart(context, ParameterOptions.getLocalNow(), user, "scheduleWithMargin", context.parameters.graphicsTheme);
+            CalendarChart chart = new CalendarChart(context, ParameterOptions.getLocalNow(), user, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
             chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), "", testResultFolder);
         }
     }

@@ -36,7 +36,7 @@ public class Context {
 //    private JiraClientFactory jiraClientFactory;
 //    public Logs logs = new Logs();
 //    public ArrayList<JiraSprint> orphanSprintList = new ArrayList<>();
-    public ParameterOptions parameters = new ProjectHubParameterOptions();
+    public ParameterOptions parameters = new KassandraParameterOptions();
 
     //    public ResourceUtilization resourceUtilization = new ResourceUtilization();
 //    public List<SfpsTicket> spfsList;
