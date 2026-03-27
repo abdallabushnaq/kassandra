@@ -38,6 +38,10 @@ public class StableDiffusionConfig {
      */
     private double cfgScale       = 7.0;
     /**
+     * Default denoising strength for image-to-image requests (0.0 = no change, 1.0 = fully new image)
+     */
+    private double defaultDenoisingStrength = 0.75;
+    /**
      * Default sampler algorithm (optimized for SD3 Medium)
      */
     private String defaultSampler = "DPM++ 2M Karras";

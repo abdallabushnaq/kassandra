@@ -52,6 +52,11 @@ public class ImageToImageRequest {
     @JsonProperty("negative_prompt")
     private String   negativePrompt;
     /**
+     * Denoising strength: 0.0 = no change, 1.0 = completely new image
+     */
+    @JsonProperty("denoising_strength")
+    private Double   denoisingStrength;
+    /**
      * The positive prompt describing what to generate
      */
     private String   prompt;

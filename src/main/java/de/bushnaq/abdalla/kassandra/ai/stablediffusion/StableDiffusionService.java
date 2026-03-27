@@ -387,7 +387,23 @@ public class StableDiffusionService {
      * @throws StableDiffusionException if generation fails
      */
     public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback, long seed) throws StableDiffusionException {
-        log.info("Generating image-to-image with prompt: '{}', seed: {}, output: {}x{}", prompt, seed, outputSize, outputSize);
+        return img2imgWithOriginal(initImage, prompt, outputSize, progressCallback, seed, config.getDefaultDenoisingStrength());
+    }
+
+    /**
+     * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
+     *
+     * @param initImage          The initial image bytes (PNG or JPG)
+     * @param prompt             The text description of the image to generate
+     * @param outputSize         The desired output size (square image)
+     * @param progressCallback   Callback for progress updates (can be null)
+     * @param seed               Seed to use; pass {@code -1} for a random seed
+     * @param denoisingStrength  How much to alter the init image: 0.0 = no change, 1.0 = completely new image
+     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback, long seed, double denoisingStrength) throws StableDiffusionException {
+        log.info("Generating image-to-image with prompt: '{}', seed: {}, output: {}x{}, denoising: {}", prompt, seed, outputSize, outputSize, denoisingStrength);
         try {
             String base64Init = java.util.Base64.getEncoder().encodeToString(initImage);
             ImageToImageRequest request = ImageToImageRequest.builder()
@@ -400,6 +416,7 @@ public class StableDiffusionService {
                     .height(config.getGenerationSize())
                     .batchSize(1)
                     .seed(seed)
+                    .denoisingStrength(denoisingStrength)
                     .initImages(new String[]{base64Init})
                     .build();
 

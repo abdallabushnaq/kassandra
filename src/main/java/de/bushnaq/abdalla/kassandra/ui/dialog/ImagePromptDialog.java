@@ -467,14 +467,39 @@ public class ImagePromptDialog extends Dialog {
                 // ── SD img2img in background thread ──
                 new Thread(() -> {
                     try {
+                        // Build a solid-black input image so SD generates the dark variant from scratch
+                        // rather than being influenced by the light-theme colours.
+                        byte[] blackImageBytes;
+                        try {
+                            BufferedImage lightBi   = ImageIO.read(new ByteArrayInputStream(lightOriginal));
+                            int           imgWidth  = lightBi != null ? lightBi.getWidth() : 512;
+                            int           imgHeight = lightBi != null ? lightBi.getHeight() : 512;
+                            BufferedImage blackBi   = new BufferedImage(imgWidth, imgHeight, BufferedImage.TYPE_INT_RGB);
+                            // TYPE_INT_RGB pixels default to 0 (black) — no explicit fill needed
+                            ByteArrayOutputStream blackBaos = new ByteArrayOutputStream();
+                            ImageIO.write(blackBi, "png", blackBaos);
+                            blackImageBytes = blackBaos.toByteArray();
+                        } catch (Exception ex) {
+                            // Fallback: use the light original if black-image creation fails
+                            blackImageBytes = lightOriginal;
+                        }
                         GeneratedImageResult result = stableDiffusionService.img2imgWithOriginal(
-                                lightOriginal, darkSdPrompt, 256,
+                                blackImageBytes, darkSdPrompt, 256,
                                 (progress, step, totalSteps) -> ui.access(() -> {
                                     progressBar.setValue(progress);
                                     progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
                                     ui.push();
                                 }),
-                                lightSeed);
+                                lightSeed, 1f);
+                        // Old approach: pass the light original to img2img (kept for reference)
+                        // GeneratedImageResult result = stableDiffusionService.img2imgWithOriginal(
+                        //         lightOriginal, darkSdPrompt, 256,
+                        //         (progress, step, totalSteps) -> ui.access(() -> {
+                        //             progressBar.setValue(progress);
+                        //             progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
+                        //             ui.push();
+                        //         }),
+                        //         lightSeed);
                         generatedDarkImage         = result.getResizedImage();
                         generatedDarkImageOriginal = result.getOriginalImage();
                         ui.access(() -> {
@@ -555,16 +580,51 @@ public class ImagePromptDialog extends Dialog {
                 try {
                     // Append background modifier for SD; the base prompt is preserved in promptField
                     String lightSdPrompt = prompt + ", background is totally white, no shadows, no gradients, no textures";
-                    // Generate with progress callback
-                    de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
-                            stableDiffusionService.generateImageWithOriginal(lightSdPrompt, 256, (progress, step, totalSteps) -> {
-                                // Update UI with progress
-                                ui.access(() -> {
-                                    progressBar.setValue(progress);
-                                    progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
-                                    ui.push();
-                                });
+
+                    // Build a solid-white input image so SD generates the light variant from a white canvas
+                    // rather than from random noise, which helps produce cleaner white backgrounds.
+                    byte[] whiteImageBytes;
+                    try {
+                        BufferedImage whiteBi = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
+                        Graphics2D    g2d     = whiteBi.createGraphics();
+                        g2d.setColor(Color.WHITE);
+                        g2d.fillRect(0, 0, 512, 512);
+                        g2d.dispose();
+                        ByteArrayOutputStream whiteBaos = new ByteArrayOutputStream();
+                        ImageIO.write(whiteBi, "png", whiteBaos);
+                        whiteImageBytes = whiteBaos.toByteArray();
+                    } catch (Exception ex) {
+                        whiteImageBytes = null;
+                    }
+
+                    de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result;
+                    if (whiteImageBytes != null) {
+                        result = stableDiffusionService.img2imgWithOriginal(whiteImageBytes, lightSdPrompt, 256, (progress, step, totalSteps) -> {
+                            ui.access(() -> {
+                                progressBar.setValue(progress);
+                                progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
+                                ui.push();
                             });
+                        }, -1, 1f);
+                    } else {
+                        // Fallback to txt2img if white-image creation failed
+                        result = stableDiffusionService.generateImageWithOriginal(lightSdPrompt, 256, (progress, step, totalSteps) -> {
+                            ui.access(() -> {
+                                progressBar.setValue(progress);
+                                progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
+                                ui.push();
+                            });
+                        });
+                    }
+                    // Old approach: pure txt2img (kept for reference)
+                    // de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
+                    //         stableDiffusionService.generateImageWithOriginal(lightSdPrompt, 256, (progress, step, totalSteps) -> {
+                    //             ui.access(() -> {
+                    //                 progressBar.setValue(progress);
+                    //                 progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
+                    //                 ui.push();
+                    //             });
+                    //         });
 
                     generatedImage         = result.getResizedImage();
                     generatedImageOriginal = result.getOriginalImage();
