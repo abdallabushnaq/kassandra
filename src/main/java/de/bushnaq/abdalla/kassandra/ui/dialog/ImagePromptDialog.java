@@ -200,7 +200,7 @@ public class ImagePromptDialog extends Dialog {
         generateButton.setId(ID_GENERATE_BUTTON);
         generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         generateButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
-        generateButton.addClickListener(e -> generateImage());
+        generateButton.addClickListener(e -> generateLightVariant());
 
         updateButton = new Button("Update", new Icon(VaadinIcon.REFRESH));
         updateButton.setId(ID_UPDATE_BUTTON);
@@ -491,15 +491,6 @@ public class ImagePromptDialog extends Dialog {
                                     ui.push();
                                 }),
                                 lightSeed, 1f);
-                        // Old approach: pass the light original to img2img (kept for reference)
-                        // GeneratedImageResult result = stableDiffusionService.img2imgWithOriginal(
-                        //         lightOriginal, darkSdPrompt, 256,
-                        //         (progress, step, totalSteps) -> ui.access(() -> {
-                        //             progressBar.setValue(progress);
-                        //             progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
-                        //             ui.push();
-                        //         }),
-                        //         lightSeed);
                         generatedDarkImage         = result.getResizedImage();
                         generatedDarkImageOriginal = result.getOriginalImage();
                         ui.access(() -> {
@@ -528,7 +519,7 @@ public class ImagePromptDialog extends Dialog {
         }));
     }
 
-    private void generateImage() {
+    private void generateLightVariant() {
         String prompt = promptField.getValue().trim();
         if (prompt.isEmpty()) {
             Notification.show("Please enter a description", 3000, Notification.Position.MIDDLE);
@@ -579,7 +570,7 @@ public class ImagePromptDialog extends Dialog {
             new Thread(() -> {
                 try {
                     // Append background modifier for SD; the base prompt is preserved in promptField
-                    String lightSdPrompt = prompt + ", background is totally white, no shadows, no gradients, no textures";
+                    String lightSdPrompt = prompt /*+ ", background is totally white, no shadows, no gradients, no textures"*/;
 
                     // Build a solid-white input image so SD generates the light variant from a white canvas
                     // rather than from random noise, which helps produce cleaner white backgrounds.
@@ -616,15 +607,6 @@ public class ImagePromptDialog extends Dialog {
                             });
                         });
                     }
-                    // Old approach: pure txt2img (kept for reference)
-                    // de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
-                    //         stableDiffusionService.generateImageWithOriginal(lightSdPrompt, 256, (progress, step, totalSteps) -> {
-                    //             ui.access(() -> {
-                    //                 progressBar.setValue(progress);
-                    //                 progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
-                    //                 ui.push();
-                    //             });
-                    //         });
 
                     generatedImage         = result.getResizedImage();
                     generatedImageOriginal = result.getOriginalImage();

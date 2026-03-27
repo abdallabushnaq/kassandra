@@ -392,6 +392,7 @@ public class StableDiffusionService {
 
     /**
      * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
+     * Uses the configured CFG scale.
      *
      * @param initImage          The initial image bytes (PNG or JPG)
      * @param prompt             The text description of the image to generate
@@ -403,7 +404,24 @@ public class StableDiffusionService {
      * @throws StableDiffusionException if generation fails
      */
     public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback, long seed, double denoisingStrength) throws StableDiffusionException {
-        log.info("Generating image-to-image with prompt: '{}', seed: {}, output: {}x{}, denoising: {}", prompt, seed, outputSize, outputSize, denoisingStrength);
+        return img2imgWithOriginal(initImage, prompt, outputSize, progressCallback, seed, denoisingStrength, config.getCfgScale());
+    }
+
+    /**
+     * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
+     *
+     * @param initImage          The initial image bytes (PNG or JPG)
+     * @param prompt             The text description of the image to generate
+     * @param outputSize         The desired output size (square image)
+     * @param progressCallback   Callback for progress updates (can be null)
+     * @param seed               Seed to use; pass {@code -1} for a random seed
+     * @param denoisingStrength  How much to alter the init image: 0.0 = no change, 1.0 = completely new image
+     * @param cfgScale           Classifier Free Guidance scale; higher values follow the prompt more strictly
+     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback, long seed, double denoisingStrength, double cfgScale) throws StableDiffusionException {
+        log.info("Generating image-to-image with prompt: '{}', seed: {}, output: {}x{}, denoising: {}, cfgScale: {}", prompt, seed, outputSize, outputSize, denoisingStrength, cfgScale);
         try {
             String base64Init = java.util.Base64.getEncoder().encodeToString(initImage);
             ImageToImageRequest request = ImageToImageRequest.builder()
@@ -411,7 +429,7 @@ public class StableDiffusionService {
                     .negativePrompt("blurry, distorted, low quality, ugly, deformed, bad anatomy")
                     .steps(config.getDefaultSteps())
                     .samplerName(config.getDefaultSampler())
-                    .cfgScale(config.getCfgScale())
+                    .cfgScale(cfgScale)
                     .width(config.getGenerationSize())
                     .height(config.getGenerationSize())
                     .batchSize(1)

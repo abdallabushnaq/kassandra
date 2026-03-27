@@ -77,6 +77,8 @@ public class ProductDialog extends Dialog {
     private             byte[]                         generatedImageBytes;
     private             byte[]                         generatedImageBytesOriginal;
     private             String                         generatedImagePrompt;
+    private volatile    byte[]                         generatedDarkImageBytes;
+    private volatile    byte[]                         generatedDarkImageBytesOriginal;
     private final       Image                          headerIcon;
     private final       Set<Long>                      initialGroupIds;
     private final       Set<Long>                      initialUserIds;
@@ -386,15 +388,10 @@ public class ProductDialog extends Dialog {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();
-
-        // Compute hash from the resized image
-//        String newHash = AvatarUtil.computeHash(generatedImageBytes);
-
-        // For edit mode: Update hash in product DTO and save avatar to database immediately
-//        if (isEditMode && product != null) {
-//            product.setAvatarHash(newHash);
-//            productApi.updateAvatarFull(product.getId(), generatedImageBytes, generatedImageBytesOriginal, generatedImagePrompt);
-//        }
+        if (darkResult != null) {
+            generatedDarkImageBytes         = darkResult.getResizedImage();
+            generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
+        }
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -425,12 +422,16 @@ public class ProductDialog extends Dialog {
             defaultPrompt = Product.getDefaultAvatarPrompt(nameField.getValue());
         }
 
-        byte[] initialImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 stableDiffusionService,
                 defaultPrompt,
+                true,
+                "cube",
                 this::handleGeneratedImage,
-                initialImage
+                initialImage,
+                initialDarkImage
         );
         imageDialog.open();
     }
@@ -453,9 +454,11 @@ public class ProductDialog extends Dialog {
         }
 
         // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
-        byte[] avatarImage         = generatedImageBytes;
-        byte[] avatarImageOriginal = generatedImageBytesOriginal;
-        String avatarPrompt        = generatedImagePrompt;
+        byte[] avatarImage             = generatedImageBytes;
+        byte[] avatarImageOriginal     = generatedImageBytesOriginal;
+        String avatarPrompt            = generatedImagePrompt;
+        byte[] darkAvatarImage         = generatedDarkImageBytes;
+        byte[] darkAvatarImageOriginal = generatedDarkImageBytesOriginal;
 
         if (avatarImage != null) {
             String newHash = AvatarUtil.computeHash(avatarImage);
@@ -468,6 +471,10 @@ public class ProductDialog extends Dialog {
             avatarPrompt        = image.getPrompt();
             String newHash = AvatarUtil.computeHash(image.getResizedImage());
             productToSave.setAvatarHash(newHash);
+            // Also generate a dark default programmatically
+            GeneratedImageResult darkImage = stableDiffusionService.generateDefaultDarkAvatar("cube");
+            darkAvatarImage         = darkImage.getResizedImage();
+            darkAvatarImageOriginal = darkImage.getOriginalImage();
         }
         try {
             if (isEditMode) {
@@ -475,7 +482,8 @@ public class ProductDialog extends Dialog {
                 productApi.update(productToSave);
 
                 if (avatarImage != null && avatarImageOriginal != null) {
-                    productApi.updateAvatarFull(productToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
+                    productApi.updateAvatarFull(productToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
+                            darkAvatarImage, darkAvatarImageOriginal);
                 }
 
                 // Update ACL entries if in edit mode
@@ -487,7 +495,8 @@ public class ProductDialog extends Dialog {
                 Product createdProduct = productApi.persist(productToSave);
 
                 if (avatarImage != null && avatarImageOriginal != null && createdProduct != null) {
-                    productApi.updateAvatarFull(createdProduct.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
+                    productApi.updateAvatarFull(createdProduct.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
+                            darkAvatarImage, darkAvatarImageOriginal);
                 }
 
                 // Apply ACL entries for newly created product

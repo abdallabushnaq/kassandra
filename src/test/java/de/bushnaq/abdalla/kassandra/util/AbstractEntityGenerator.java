@@ -296,7 +296,23 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         }
         product.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = productApi.persist(product);
-        productApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
+
+        // Generate dark avatar using img2img from the light original, or a programmatic fallback.
+        String               basePrompt = Product.getDefaultAvatarPrompt(name);
+        GeneratedImageResult darkImage;
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            try {
+                darkImage = stableDiffusionService.img2imgWithOriginal(image.getOriginalImage(), basePrompt + " with black background", image.getSeed());
+            } catch (StableDiffusionException e) {
+                System.err.println("Failed to generate dark avatar for product " + name + ": " + e.getMessage());
+                darkImage = stableDiffusionService.generateDefaultDarkAvatar("cube");
+            }
+        } else {
+            darkImage = stableDiffusionService.generateDefaultDarkAvatar("cube");
+        }
+
+        productApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
+                darkImage.getResizedImage(), darkImage.getOriginalImage());
         System.out.println("Generated image for product: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
         expectedProducts.add(saved);
