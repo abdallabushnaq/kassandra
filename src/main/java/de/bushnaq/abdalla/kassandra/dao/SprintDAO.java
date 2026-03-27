@@ -47,6 +47,8 @@ import java.time.LocalDateTime;
 public class SprintDAO extends AbstractTimeAwareDAO {
     @Column(name = "avatar_hash", length = 16)
     private String        avatarHash;
+    @Column(name = "dark_avatar_hash", length = 16)
+    private String        darkAvatarHash;
     @Column(name = "end_date", nullable = true)  // renamed from 'end' as it is reserved in H2 databases
     private LocalDateTime end;
     @Column(nullable = false)

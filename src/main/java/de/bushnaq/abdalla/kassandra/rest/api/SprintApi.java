@@ -126,6 +126,29 @@ public class SprintApi extends AbstractApi {
     }
 
     /**
+     * Get the dark-mode avatar image bytes for a sprint.
+     * The server falls back to the light image automatically if no dark variant has been stored yet.
+     *
+     * @param sprintId The sprint ID
+     * @return The dark avatar image (or light fallback), or null if not found
+     */
+    public AvatarWrapper getDarkAvatarImage(Long sprintId) {
+        try {
+            ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/sprint/{id}/dark-avatar",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    AvatarWrapper.class,
+                    sprintId
+            ));
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Error fetching dark avatar image for sprint ID {}: {}", sprintId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Get the global Backlog sprint.
      *
      * @return The Backlog sprint
@@ -190,14 +213,31 @@ public class SprintApi extends AbstractApi {
     }
 
     /**
-     * Update sprint avatar with all fields (resized, original, and prompt).
+     * Update sprint avatar with light-theme fields only (resized, original, and prompt).
+     * Delegates to {@link #updateAvatarFull(Long, byte[], byte[], String, byte[], byte[])} with null dark images.
      *
      * @param sprintId      The sprint ID
-     * @param resizedImage  The resized avatar image bytes (e.g., 64x64)
-     * @param originalImage The original avatar image bytes (e.g., 512x512)
-     * @param prompt        The prompt used to generate the avatar
+     * @param resizedImage  The resized light avatar image bytes (e.g., 64x64)
+     * @param originalImage The original light avatar image bytes (e.g., 512x512)
+     * @param prompt        The prompt used to generate the light avatar
      */
     public void updateAvatarFull(Long sprintId, byte[] resizedImage, byte[] originalImage, String prompt) {
+        updateAvatarFull(sprintId, resizedImage, originalImage, prompt, null, null);
+    }
+
+    /**
+     * Update sprint avatar with both light and dark theme fields in a single request.
+     * Dark fields are optional — pass {@code null} to leave the stored dark avatar unchanged.
+     *
+     * @param sprintId           The sprint ID
+     * @param resizedImage       Resized light avatar image bytes (e.g., 64x64), or null to skip
+     * @param originalImage      Original light avatar image bytes (e.g., 512x512), or null to skip
+     * @param prompt             Prompt used to generate the light avatar, or null to skip
+     * @param darkResizedImage   Resized dark avatar image bytes (e.g., 64x64), or null to skip
+     * @param darkOriginalImage  Original dark avatar image bytes (e.g., 512x512), or null to skip
+     */
+    public void updateAvatarFull(Long sprintId, byte[] resizedImage, byte[] originalImage, String prompt,
+            byte[] darkResizedImage, byte[] darkOriginalImage) {
         AvatarUpdateRequest request = new AvatarUpdateRequest();
 
         if (resizedImage != null) {
@@ -209,6 +249,14 @@ public class SprintApi extends AbstractApi {
         }
 
         request.setAvatarPrompt(prompt);
+
+        if (darkResizedImage != null) {
+            request.setDarkAvatarImage(darkResizedImage);
+        }
+
+        if (darkOriginalImage != null) {
+            request.setDarkAvatarImageOriginal(darkOriginalImage);
+        }
 
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/sprint/{id}/avatar/full",

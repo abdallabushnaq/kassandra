@@ -50,6 +50,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     private       String          avatarHash;
     @JsonIgnore
     private       ProjectCalendar calendar;
+    private       String          darkAvatarHash;
     private       LocalDateTime   end;
     @JsonIgnore
     public        List<Throwable> exceptions  = new ArrayList<>();
@@ -147,17 +148,35 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
 
     /**
      * Get the avatar URL with hash parameter for proper caching.
-     * The hash ensures that when the avatar changes, the URL changes, forcing the browser to fetch the new image.
+     * When {@code dark} is {@code true} and a dark avatar has been generated, the dark variant URL is
+     * returned. If no dark avatar is available yet, falls back transparently to the light variant URL.
      *
-     * @return The avatar URL with hash parameter if hash is available, otherwise just the base URL
+     * @param dark {@code true} to request the dark-background avatar variant
+     * @return The avatar URL with hash parameter for cache-busting; falls back to the light URL when
+     * no dark avatar has been stored yet
      */
     @JsonIgnore
-    public String getAvatarUrl() {
+    public String getAvatarUrl(boolean dark) {
+        if (dark && darkAvatarHash != null && !darkAvatarHash.isEmpty()) {
+            return "/frontend/dark-avatar-proxy/sprint/" + id + "?h=" + darkAvatarHash;
+        }
+        // Light variant (or dark fallback when dark avatar not yet available)
         String url = "/frontend/avatar-proxy/sprint/" + id;
         if (avatarHash != null && !avatarHash.isEmpty()) {
             url += "?h=" + avatarHash;
         }
         return url;
+    }
+
+    /**
+     * Get the light avatar URL with hash parameter for proper caching.
+     * Delegates to {@link #getAvatarUrl(boolean)} with {@code dark = false}.
+     *
+     * @return The light avatar URL with hash parameter if hash is available, otherwise just the base URL
+     */
+    @JsonIgnore
+    public String getAvatarUrl() {
+        return getAvatarUrl(false);
     }
 
     /**
@@ -179,7 +198,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
      * @return A default prompt string for generating sprint avatar images
      */
     public static String getDefaultAvatarPrompt(String sprintName) {
-        return "Icon representing the city '" + sprintName + "', minimalist, flat design, vector graphics, simple shapes, clean lines, modern style, centered composition, white background";
+        return "Icon representing the development sprint '" + sprintName + "', minimalist, flat design, vector graphics, simple shapes, clean lines, modern style, centered composition";
     }
 
     @JsonIgnore

@@ -63,6 +63,8 @@ public class SprintDialog extends Dialog {
     private             byte[]                 generatedImageBytes;
     private             byte[]                 generatedImageBytesOriginal;
     private             String                 generatedImagePrompt;
+    private volatile    byte[]                 generatedDarkImageBytes;
+    private volatile    byte[]                 generatedDarkImageBytesOriginal;
     private final       Image                  headerIcon;
     private final       boolean                isEditMode;
     private final       TextField              nameField;
@@ -243,6 +245,10 @@ public class SprintDialog extends Dialog {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();
+        if (darkResult != null) {
+            this.generatedDarkImageBytes         = darkResult.getResizedImage();
+            this.generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
+        }
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -273,12 +279,16 @@ public class SprintDialog extends Dialog {
             defaultPrompt = Sprint.getDefaultAvatarPrompt(nameField.getValue());
         }
 
-        byte[] initialImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 stableDiffusionService,
                 defaultPrompt,
+                true,
+                "exit",
                 this::handleGeneratedImage,
-                initialImage
+                initialImage,
+                initialDarkImage
         );
         imageDialog.open();
     }
@@ -298,9 +308,11 @@ public class SprintDialog extends Dialog {
         }
 
         // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
-        byte[] avatarImage         = generatedImageBytes;
-        byte[] avatarImageOriginal = generatedImageBytesOriginal;
-        String avatarPrompt        = generatedImagePrompt;
+        byte[] avatarImage             = generatedImageBytes;
+        byte[] avatarImageOriginal     = generatedImageBytesOriginal;
+        String avatarPrompt            = generatedImagePrompt;
+        byte[] darkAvatarImage         = generatedDarkImageBytes;
+        byte[] darkAvatarImageOriginal = generatedDarkImageBytesOriginal;
 
         if (avatarImage != null) {
             String newHash = AvatarUtil.computeHash(avatarImage);
@@ -313,6 +325,10 @@ public class SprintDialog extends Dialog {
             avatarPrompt        = image.getPrompt();
             String newHash = AvatarUtil.computeHash(image.getResizedImage());
             sprintToSave.setAvatarHash(newHash);
+            // Also generate a dark default programmatically
+            GeneratedImageResult darkImage = stableDiffusionService.generateDefaultDarkAvatar("exit");
+            darkAvatarImage         = darkImage.getResizedImage();
+            darkAvatarImageOriginal = darkImage.getOriginalImage();
         }
         try {
             if (isEditMode) {
@@ -320,7 +336,8 @@ public class SprintDialog extends Dialog {
                 sprintApi.update(sprintToSave);
 
                 if (avatarImage != null && avatarImageOriginal != null) {
-                    sprintApi.updateAvatarFull(sprintToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
+                    sprintApi.updateAvatarFull(sprintToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
+                            darkAvatarImage, darkAvatarImageOriginal);
                 }
 
                 Notification.show("Sprint updated", 3000, Notification.Position.BOTTOM_START);
@@ -329,7 +346,8 @@ public class SprintDialog extends Dialog {
                 Sprint createdSprint = sprintApi.persist(sprintToSave);
 
                 if (avatarImage != null && avatarImageOriginal != null && createdSprint != null) {
-                    sprintApi.updateAvatarFull(createdSprint.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
+                    sprintApi.updateAvatarFull(createdSprint.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
+                            darkAvatarImage, darkAvatarImageOriginal);
                 }
 
                 Notification.show("Sprint created", 3000, Notification.Position.BOTTOM_START);

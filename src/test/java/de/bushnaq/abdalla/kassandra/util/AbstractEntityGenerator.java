@@ -485,7 +485,23 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         }
         sprint.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = sprintApi.persist(sprint);
-        sprintApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
+
+        // Generate dark avatar using img2img from the light original, or a programmatic fallback.
+        String               basePrompt = Sprint.getDefaultAvatarPrompt(name);
+        GeneratedImageResult darkImage;
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            try {
+                darkImage = stableDiffusionService.img2imgWithOriginal(image.getOriginalImage(), basePrompt + " with black background", image.getSeed());
+            } catch (StableDiffusionException e) {
+                System.err.println("Failed to generate dark avatar for sprint " + name + ": " + e.getMessage());
+                darkImage = stableDiffusionService.generateDefaultDarkAvatar("exit");
+            }
+        } else {
+            darkImage = stableDiffusionService.generateDefaultDarkAvatar("exit");
+        }
+
+        sprintApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt(),
+                darkImage.getResizedImage(), darkImage.getOriginalImage());
         System.out.println("Generated image for sprint: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
 

@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.rest.controller;
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
 import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
+import de.bushnaq.abdalla.kassandra.rest.api.SprintApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,7 @@ public class DarkAvatarProxyController {
 
     private final FeatureApi featureApi;
     private final ProductApi productApi;
+    private final SprintApi  sprintApi;
     private final UserApi    userApi;
 
     /**
@@ -50,12 +52,14 @@ public class DarkAvatarProxyController {
      *
      * @param featureApi REST client used to fetch dark avatar images from the feature service
      * @param productApi REST client used to fetch dark avatar images from the product service
+     * @param sprintApi  REST client used to fetch dark avatar images from the sprint service
      * @param userApi    REST client used to fetch dark avatar images from the user service
      */
     @Autowired
-    public DarkAvatarProxyController(FeatureApi featureApi, ProductApi productApi, UserApi userApi) {
+    public DarkAvatarProxyController(FeatureApi featureApi, ProductApi productApi, SprintApi sprintApi, UserApi userApi) {
         this.featureApi = featureApi;
         this.productApi = productApi;
+        this.sprintApi  = sprintApi;
         this.userApi    = userApi;
     }
 
@@ -118,5 +122,24 @@ public class DarkAvatarProxyController {
         headers.setCacheControl("public, max-age=31536000, immutable");
         return ResponseEntity.ok().headers(headers).body(avatarImage.getAvatar());
     }
-}
 
+    /**
+     * Serve the dark-background avatar variant for a sprint.
+     * Falls back to the light avatar transparently when no dark variant has been stored yet
+     * (the server-side {@code GET /api/sprint/{id}/dark-avatar} handles the fallback).
+     *
+     * @param sprintId The sprint ID
+     * @return PNG image bytes for the dark avatar, or 404 if no avatar exists at all
+     */
+    @GetMapping("/sprint/{sprintId}")
+    public ResponseEntity<byte[]> proxySprintDarkAvatar(@PathVariable("sprintId") Long sprintId) {
+        AvatarWrapper avatarImage = sprintApi.getDarkAvatarImage(sprintId);
+        if (avatarImage == null || avatarImage.getAvatar() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+        headers.setCacheControl("public, max-age=31536000, immutable");
+        return ResponseEntity.ok().headers(headers).body(avatarImage.getAvatar());
+    }
+}
