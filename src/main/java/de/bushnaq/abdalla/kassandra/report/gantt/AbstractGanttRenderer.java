@@ -133,9 +133,9 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     private void drawCriticalMarker(Task task, int x1, int x2, int y) {
         if (task.getCritical()) {
-            graphics2D.setColor(graphicsTheme.ganttCriticalTaskBorderColor);
+            graphics2D.setColor(graphicsTheme.ganttTheme.ganttCriticalTaskBorderColor);
         } else {
-            graphics2D.setColor(graphicsTheme.ganttTaskBorderColor);
+            graphics2D.setColor(graphicsTheme.ganttTheme.ganttTaskBorderColor);
         }
         ProjectCalendar pc;
         User            user = task.getAssignedUser();
@@ -189,12 +189,12 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     private void drawId(Task task, int y) {
         int      x1        = firstDayX;
         int      x2        = x1 + calendarXAxes.dayOfWeek.getWidth();
-        Color    fillColor = graphicsTheme.ganttIdColor;
-        Color    textColor = graphicsTheme.ganttIdTextColor;
+        Color    fillColor = graphicsTheme.ganttTheme.ganttIdColor;
+        Color    textColor = graphicsTheme.ganttTheme.ganttIdTextColor;
         MetaData md        = TaskUtil.getTaskMetaData(task);
         graphics2D.setFont(idFont);
-        fillColor = graphicsTheme.ganttIdColor;
-        textColor = graphicsTheme.ganttIdTextColor;
+        fillColor = graphicsTheme.ganttTheme.ganttIdColor;
+        textColor = graphicsTheme.ganttTheme.ganttIdTextColor;
         graphics2D.setColor(fillColor);
         graphics2D.fillRect(x1 + 1, y - getTaskHeight() / 2, x2 - x1 - 1, getTaskHeight());
         {
@@ -343,10 +343,10 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
         int x2 = RELATION_CORNER_LENGTH + calculateX(sourceTask.getStart(), sourceTask.getStart().truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2 - RESOURCE_NAME_TO_TASK_GAP;
         graphics2D.setStroke(new BasicStroke(RELATION_LINE_STROKE_WIDTH));
         if (sourceTask.getCritical() && targetTask.getCritical()) {
-            graphics2D.setColor(graphicsTheme.ganttCriticalRelationColor);
+            graphics2D.setColor(graphicsTheme.ganttTheme.ganttCriticalRelationColor);
 
         } else {
-            graphics2D.setColor(graphicsTheme.ganttRelationColor);
+            graphics2D.setColor(graphicsTheme.ganttTheme.ganttRelationColor);
         }
 //        graphics2D.drawLine(x1, y1, x2, y1);
         graphics2D.fillRect(x1 + 1, y1, x2 - x1, 1);// -
@@ -360,7 +360,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
             int   d       = 5;
             int[] xPoints = {x2 - d, x2 + d, x2};
             int[] yPoints = {y2 - d + signum, y2 - d + signum, y2 + signum};
-            graphics2D.setColor(graphicsTheme.ganttRelationColor);
+            graphics2D.setColor(graphicsTheme.ganttTheme.ganttRelationColor);
             graphics2D.fillPolygon(xPoints, yPoints, xPoints.length);
         } else {
             //arrow head up
@@ -370,7 +370,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
             int   d       = 5;
             int[] xPoints = {x2 + d, x2 - d, x2};
             int[] yPoints = {y2 + d + signum, y2 + d + signum, y2 + signum};
-            graphics2D.setColor(graphicsTheme.ganttRelationColor);
+            graphics2D.setColor(graphicsTheme.ganttTheme.ganttRelationColor);
             graphics2D.fillPolygon(xPoints, yPoints, xPoints.length);
         }
 
@@ -464,8 +464,8 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     private void drawTask(Task task, int x1, int x2, int y, boolean labelInside, boolean alien, String marker, List<Conflict> conflict) throws Exception {
         Color  fillColor           = graphicsTheme.getAuthorColor(28);
-        Color  textColor           = graphicsTheme.ganttTaskTextColor;
-        Color  textInfoColor       = graphicsTheme.ganttTaskTextColor;
+        Color  textColor           = graphicsTheme.ganttTheme.ganttTaskTextColor;
+        Color  textInfoColor       = graphicsTheme.ganttTheme.ganttTaskTextColor;
         String resourceName        = null;
         String resourceUtilization = null;
         Number units               = null;
@@ -481,15 +481,15 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
         }
         if (task.isMilestone() && task.getChildTasks().size() == 0) {
             // ---Milestone, but not a story (MS Project marks stories with 0 duration as milestones
-            fillColor = graphicsTheme.ganttMilestoneColor;
-            textColor = graphicsTheme.ganttMilestoneTextColor;
+            fillColor = graphicsTheme.ganttTheme.ganttMilestoneColor;
+            textColor = graphicsTheme.ganttTheme.ganttMilestoneTextColor;
         } else if (task.getChildTasks().size() != 0) {
             // ---Story
-            fillColor = graphicsTheme.ganttStoryColor;
-            textColor = graphicsTheme.ganttStoryTextColor;
+            fillColor = graphicsTheme.ganttTheme.ganttStoryColor;
+            textColor = graphicsTheme.ganttTheme.ganttStoryTextColor;
         } else if (resourceName != null && units != null) {
             //task
-            textColor = graphicsTheme.ganttTaskTextColor;
+            textColor = graphicsTheme.ganttTheme.ganttTaskTextColor;
 //            int authorIndex = authorsContribution.getSortedKeyList().indexOf(resourceName);
 //            if (authorIndex != -1) {
 //                fillColor = authors.getNameMap().get(resourceName).getColor();

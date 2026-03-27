@@ -30,8 +30,8 @@ public class GraphColorUtil {
 
     public static Color getDayOfMonthBgColor(BurnDownGraphicsTheme graphicsTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> graphicsTheme.XAxesDayOfMonthBgColor;
-            case SATURDAY, SUNDAY -> graphicsTheme.XAxesDayOfMonthWeekendBgColor;
+            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> graphicsTheme.XAxesTheme.XAxesDayOfMonthBgColor;
+            case SATURDAY, SUNDAY -> graphicsTheme.XAxesTheme.XAxesDayOfMonthWeekendBgColor;
             default -> null;
         };
 
@@ -39,8 +39,8 @@ public class GraphColorUtil {
 
     public static Color getDayOfMonthTextColor(BurnDownGraphicsTheme graphicsTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> graphicsTheme.XAxesDayOfMonthTextColor;
-            case SATURDAY, SUNDAY -> graphicsTheme.XAxesDayOfMonthWeekendTextColor;
+            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> graphicsTheme.XAxesTheme.XAxesDayOfMonthTextColor;
+            case SATURDAY, SUNDAY -> graphicsTheme.XAxesTheme.XAxesDayOfMonthWeekendTextColor;
             default -> null;
         };
 
@@ -48,8 +48,8 @@ public class GraphColorUtil {
 
     public static Color getDayOfWeekBgColor(BurnDownGraphicsTheme graphicsTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, MONDAY, THURSDAY, TUESDAY, WEDNESDAY -> graphicsTheme.XAxesDayOfweekBgColor;
-            case SATURDAY, SUNDAY -> graphicsTheme.XAxesDayOfweekWeekendBgColor;
+            case FRIDAY, MONDAY, THURSDAY, TUESDAY, WEDNESDAY -> graphicsTheme.XAxesTheme.XAxesDayOfweekBgColor;
+            case SATURDAY, SUNDAY -> graphicsTheme.XAxesTheme.XAxesDayOfweekWeekendBgColor;
             default -> null;
         };
 
@@ -64,7 +64,7 @@ public class GraphColorUtil {
 
     public static Color getGanttDayStripeColor(BurnDownGraphicsTheme graphicsTheme, ProjectCalendar pc, LocalDate currentDate) {
         if (pc.isWorkingDate(currentDate)) {
-            return graphicsTheme.XAxesDayOfweekBgColor;
+            return graphicsTheme.XAxesTheme.XAxesDayOfweekBgColor;
         } else {
             ProjectCalendarException exception = pc.getException(currentDate);
             if (exception != null) {
@@ -78,7 +78,7 @@ public class GraphColorUtil {
                     return graphicsTheme.ganttHolidayBgColor;
                 }
             }
-            return graphicsTheme.XAxesDayOfMonthWeekendBgColor;
+            return graphicsTheme.XAxesTheme.XAxesDayOfMonthWeekendBgColor;
         }
     }
 

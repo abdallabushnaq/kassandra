@@ -142,7 +142,7 @@ public class CalendarRenderer extends AbstractRenderer {
                     int dayCenterY = dayY + (DAY_SIZE / 2) - 6;
 
                     // Draw with filling text color
-                    graphics2D.setColor(graphicsTheme.calendarFillingDayTextColor);
+                    graphics2D.setColor(graphicsTheme.calendarTheme.calendarFillingDayTextColor);
                     drawDayOfMonth(graphics2D, dayCenterX, dayCenterY, prevDay);
                 }
             }
@@ -164,30 +164,30 @@ public class CalendarRenderer extends AbstractRenderer {
 
                 // Check off days
                 Color bgColor   = null;
-                Color textColor = graphicsTheme.calendarNormalDayTextColor;
+                Color textColor = graphicsTheme.calendarTheme.calendarNormalDayTextColor;
 
                 if (isWeekend) {
-                    bgColor   = graphicsTheme.calendarWeekendBgColor;
-                    textColor = graphicsTheme.calendarWeekendTextColor;
+                    bgColor   = graphicsTheme.calendarTheme.calendarWeekendBgColor;
+                    textColor = graphicsTheme.calendarTheme.calendarWeekendTextColor;
                 } else {
                     ProjectCalendarException exception = pc.getException(currentDate);
                     if (exception != null) {
                         String name = exception.getName();
                         if (name.equals(OffDayType.VACATION.name())) {
-                            bgColor   = graphicsTheme.calendarVacationBgColor;
-                            textColor = graphicsTheme.calendarVacationTextColor;
+                            bgColor   = graphicsTheme.calendarTheme.calendarVacationBgColor;
+                            textColor = graphicsTheme.calendarTheme.calendarVacationTextColor;
                             vacationDays++;
                         } else if (name.equals(OffDayType.SICK.name())) {
-                            bgColor   = graphicsTheme.calendarSickBgColor;
-                            textColor = graphicsTheme.calendarSickTextColor;
+                            bgColor   = graphicsTheme.calendarTheme.calendarSickBgColor;
+                            textColor = graphicsTheme.calendarTheme.calendarSickTextColor;
                             sickDays++;
                         } else if (name.equals(OffDayType.TRIP.name())) {
-                            bgColor   = graphicsTheme.calendarTripBgColor;
-                            textColor = graphicsTheme.calendarTripTextColor;
+                            bgColor   = graphicsTheme.calendarTheme.calendarTripBgColor;
+                            textColor = graphicsTheme.calendarTheme.calendarTripTextColor;
                             tripDays++;
                         } else {
-                            bgColor   = graphicsTheme.calendarHolidayBgColor;
-                            textColor = graphicsTheme.calendarHolidayTextColor;
+                            bgColor   = graphicsTheme.calendarTheme.calendarHolidayBgColor;
+                            textColor = graphicsTheme.calendarTheme.calendarHolidayTextColor;
                             this.holidays++;
                         }
                     }
@@ -220,7 +220,7 @@ public class CalendarRenderer extends AbstractRenderer {
                     int dayCenterY = dayY + (DAY_SIZE / 2) - 6;
 
                     // Draw with filling text color
-                    graphics2D.setColor(graphicsTheme.calendarFillingDayTextColor);
+                    graphics2D.setColor(graphicsTheme.calendarTheme.calendarFillingDayTextColor);
                     drawDayOfMonth(graphics2D, dayCenterX, dayCenterY, i);
                 }
             }
@@ -279,10 +279,10 @@ public class CalendarRenderer extends AbstractRenderer {
 
         // Create legend items
         List<LegendItem> legendItems = Arrays.asList(
-                new LegendItem(graphicsTheme.calendarVacationBgColor, graphicsTheme.calendarVacationTextColor, "Vacation", "" + vacationDays),
-                new LegendItem(graphicsTheme.calendarSickBgColor, graphicsTheme.calendarSickTextColor, "Sick Leave", "" + sickDays),
-                new LegendItem(graphicsTheme.calendarHolidayBgColor, graphicsTheme.calendarHolidayTextColor, "Holiday", "" + holidays),
-                new LegendItem(graphicsTheme.calendarTripBgColor, graphicsTheme.calendarTripTextColor, "Business Trip", "" + tripDays)
+                new LegendItem(graphicsTheme.calendarTheme.calendarVacationBgColor, graphicsTheme.calendarTheme.calendarVacationTextColor, "Vacation", "" + vacationDays),
+                new LegendItem(graphicsTheme.calendarTheme.calendarSickBgColor, graphicsTheme.calendarTheme.calendarSickTextColor, "Sick Leave", "" + sickDays),
+                new LegendItem(graphicsTheme.calendarTheme.calendarHolidayBgColor, graphicsTheme.calendarTheme.calendarHolidayTextColor, "Holiday", "" + holidays),
+                new LegendItem(graphicsTheme.calendarTheme.calendarTripBgColor, graphicsTheme.calendarTheme.calendarTripTextColor, "Business Trip", "" + tripDays)
         );
 
         // Draw each legend item
@@ -313,16 +313,16 @@ public class CalendarRenderer extends AbstractRenderer {
         // Draw month name
         Font monthFont = new Font(Font.SANS_SERIF, Font.PLAIN, 14);
         graphics2D.setFont(monthFont);
-        graphics2D.setColor(graphicsTheme.calendarMonthNameColor);
+        graphics2D.setColor(graphicsTheme.calendarTheme.calendarMonthNameColor);
         FontMetrics monthMetrics = graphics2D.getFontMetrics();
         int         monthAscent  = monthMetrics.getAscent();
         graphics2D.drawString(monthName, monthStartX + 10 + DAY_SIZE / 2 - 5, monthStartY + monthAscent);
     }
 
     private void drawToday(Graphics2D graphics2D, int dayCenterX, int dayCenterY) {
-        graphics2D.setColor(graphicsTheme.calendarTodayBgColor);
+        graphics2D.setColor(graphicsTheme.calendarTheme.calendarTodayBgColor);
         graphics2D.fillOval(dayCenterX - (DAY_SIZE / 2) + 1, dayCenterY - (DAY_SIZE / 2) + 1, DAY_SIZE - 1, DAY_SIZE - 1);
-        graphics2D.setColor(graphicsTheme.calendarTodayTextColor);
+        graphics2D.setColor(graphicsTheme.calendarTheme.calendarTodayTextColor);
     }
 
     private void drawWeekDays(Graphics2D graphics2D, int monthStartX, int monthStartY, LocalDate firstOfMonth) {
@@ -340,7 +340,7 @@ public class CalendarRenderer extends AbstractRenderer {
             // Get the calendar day type from the user's calendar
             ProjectCalendar pc      = user.getCalendar();
             LocalDate       dayDate = firstOfMonth.withDayOfMonth(1).plusDays(i);
-            graphics2D.setColor(graphicsTheme.calendarWeekDayTextColor);
+            graphics2D.setColor(graphicsTheme.calendarTheme.calendarWeekDayTextColor);
             graphics2D.drawString(weekdays[i], weekdayX + DAY_SIZE / 2 - 5, weekdayY);
         }
     }
@@ -349,7 +349,7 @@ public class CalendarRenderer extends AbstractRenderer {
         Font yearFont = new Font(Font.SANS_SERIF, Font.PLAIN, 24);
 //        Font yearFont = loadFont("Inter[opsz,wght].ttf", 24f);
         graphics2D.setFont(yearFont);
-        graphics2D.setColor(graphicsTheme.calendarYearTextColor);
+        graphics2D.setColor(graphicsTheme.calendarTheme.calendarYearTextColor);
         String yearText = String.valueOf(year);
 
         // Calculate year text dimensions

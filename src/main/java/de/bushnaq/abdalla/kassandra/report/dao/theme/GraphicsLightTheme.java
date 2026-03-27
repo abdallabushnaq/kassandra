@@ -23,28 +23,6 @@ import java.awt.*;
 
 public class GraphicsLightTheme extends BurnDownGraphicsTheme {
     public static final Color[] KELLY_COLORS = {
-            //                        Color.decode("0xFFB300"),    // Vivid Yellow
-            //                        Color.decode("0x803E75"),    // Strong Purple
-            //                        Color.decode("0xA6BDD7"),    // Very Light Blue
-            //                        Color.decode("0xC10020"),    // Vivid Red
-            //                        Color.decode("0x007D34"),    // Vivid Green
-            //                        Color.decode("0x00538A"),    // Strong Blue
-            //
-            //                        Color.decode("0xCEA262"),    // Grayish Yellow
-            //                        Color.decode("0x817066"),    // Medium Gray
-            //
-            //                        Color.decode("0xF6768E"),    // Strong Purplish Pink
-            //                        Color.decode("0xFF7A5C"),    // Strong Yellowish Pink
-            //                        Color.decode("0x53377A"),    // Strong Violet
-            //                        Color.decode("0xFF8E00"),    // Vivid Orange Yellow
-            //                        Color.decode("0xB32851"),    // Strong Purplish Red
-            //                        Color.decode("0xF4C800"),    // Vivid Greenish Yellow
-            //                        Color.decode("0x7F180D"),    // Strong Reddish Brown
-            //                        Color.decode("0x93AA00"),    // Vivid Yellowish Green
-            //                        Color.decode("0x593315"),    // Deep Yellowish Brown
-            //                        Color.decode("0xF13A13"),    // Vivid Reddish Orange
-            //                        Color.decode("0x232C16"),    // Dark Olive Green
-            //                        Color.decode("0xFF6800"),    // Vivid Orange
 
             Color.red,//
             new Color(0, 0xff, 0),//light green
@@ -93,21 +71,21 @@ public class GraphicsLightTheme extends BurnDownGraphicsTheme {
         weekBackgroundColor = basicBackgroundColor;
         weekTextColor       = basicTextColor;
 
-        ganttRelationColor           = new Color(0x34, 0x66, 0xed, 0x7f);
-        ganttCriticalRelationColor   = new Color(0xff, 0, 0, 0x7f);
-        ganttMilestoneColor          = new Color(0x4f, 0xbb, 0xc2, 0xff);
-        ganttMilestoneTextColor      = new Color(0x50, 0x50, 0x50, 0xff);
-        ganttStoryColor              = Color.black;//new Color(64, 64, 64, 0xa0);
-        ganttStoryTextColor          = Color.darkGray;
-        ganttTaskTextColor           = new Color(0x30, 0x30, 0x30, 0xff);
-        ganttTaskBorderColor         = new Color(0x30, 0x30, 0x30, 0x7F);
-        burnDownBorderColor          = new Color(0xff, 0xcc, 0x00, 0x77);
-        ganttIdColor                 = new Color(0xff, 0xff, 0xff, 0xff);
-        ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);
-        ganttIdTextColor             = new Color(0xaa, 0xaa, 0xaa, 0xff);
-        ganttIdTextErrorColor        = new Color(0xff, 0xff, 0xff, 0xff);
-        ganttCriticalTaskBorderColor = new Color(0xff, 0x0, 0x0, 0xC0);
-        ganttOutOfOfficeColor        = new Color(0xff, 0x33, 0x33, 0x33);
+        ganttTheme.ganttRelationColor           = new Color(0x34, 0x66, 0xed, 0x7f);
+        ganttTheme.ganttCriticalRelationColor   = new Color(0xff, 0, 0, 0x7f);
+        ganttTheme.ganttMilestoneColor          = new Color(0x4f, 0xbb, 0xc2, 0xff);
+        ganttTheme.ganttMilestoneTextColor      = new Color(0x50, 0x50, 0x50, 0xff);
+        ganttTheme.ganttStoryColor              = Color.black;//new Color(64, 64, 64, 0xa0);
+        ganttTheme.ganttStoryTextColor          = Color.darkGray;
+        ganttTheme.ganttTaskTextColor           = new Color(0x30, 0x30, 0x30, 0xff);
+        ganttTheme.ganttTaskBorderColor         = new Color(0x30, 0x30, 0x30, 0x7F);
+        burnDownBorderColor                     = new Color(0xff, 0xcc, 0x00, 0x77);
+        ganttTheme.ganttIdColor                 = new Color(0xff, 0xff, 0xff, 0xff);
+        ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);
+        ganttTheme.ganttIdTextColor             = new Color(0xaa, 0xaa, 0xaa, 0xff);
+        ganttTheme.ganttIdTextErrorColor        = new Color(0xff, 0xff, 0xff, 0xff);
+        ganttTheme.ganttCriticalTaskBorderColor = new Color(0xff, 0x0, 0x0, 0xC0);
+        ganttTheme.ganttOutOfOfficeColor        = new Color(0xff, 0x33, 0x33, 0x33);
 
         int ps;//primary color
         int pg;//primary color green
@@ -134,7 +112,7 @@ public class GraphicsLightTheme extends BurnDownGraphicsTheme {
         optimaleGuideColor       = new Color(0xa0a0a0);
         plannedGuideColor        = new Color(0x7f7f7f);
         ticksColor               = new Color(0xc9c9c9);
-        inTimeColor              = COLOR_DARK_GREEN;
+        inTimeColor              = ColorConstants.COLOR_DARK_GREEN;
         watermarkColor           = new Color(0x10, 0x10, 0x10, 0x10);
 
         pastWorkDayRequestColor    = new Color(0x60, 0x00, 0xff, 0x40);
