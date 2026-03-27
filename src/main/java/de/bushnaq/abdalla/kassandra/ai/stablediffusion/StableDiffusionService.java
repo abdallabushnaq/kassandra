@@ -112,6 +112,50 @@ public class StableDiffusionService {
     }
 
     /**
+     * Generate a default avatar image with a custom background color and dotted light gray border.
+     * This is used when Stable Diffusion is not available or when the user doesn't want to use AI image generation.
+     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
+     *
+     * @param iconName Optional icon name (without .png extension) to render in the center of the image.
+     *                 Icons are loaded from META-INF/resources/ui/icons/ directory.
+     * @param backgroundColor CSS hex string (e.g., "#FFFFFF") for the avatar background. If null or invalid, falls back to default.
+     * @return GeneratedImageResult containing original and resized images
+     */
+    public GeneratedImageResult generateDefaultAvatar(String iconName, String backgroundColor) {
+        log.warn("Stable Diffusion not available, using default avatar{} with custom background color {}", iconName != null ? " with icon: " + iconName : "", backgroundColor);
+        byte[] pngImageBytes = null;
+        if (iconName != null && !iconName.trim().isEmpty()) {
+            pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
+            if (pngImageBytes == null) {
+                log.warn("Failed to load icon '{}', generating avatar without icon", iconName);
+            }
+        }
+        return generateDefaultAvatarInternal(pngImageBytes, false, backgroundColor);
+    }
+
+    /**
+     * Generate a default dark-background avatar image with a custom background color and dotted mid-gray border.
+     * Used as a fallback when Stable Diffusion is not available for dark-mode avatar generation.
+     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
+     *
+     * @param iconName Optional icon name (without .png extension) to render in the center of the image.
+     *                 Icons are loaded from META-INF/resources/ui/icons/ directory.
+     * @param backgroundColor CSS hex string (e.g., "#000000") for the avatar background. If null or invalid, falls back to default.
+     * @return GeneratedImageResult containing original and resized images
+     */
+    public GeneratedImageResult generateDefaultDarkAvatar(String iconName, String backgroundColor) {
+        log.warn("Stable Diffusion not available, using default dark avatar{} with custom background color {}", iconName != null ? " with icon: " + iconName : "", backgroundColor);
+        byte[] pngImageBytes = null;
+        if (iconName != null && !iconName.trim().isEmpty()) {
+            pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
+            if (pngImageBytes == null) {
+                log.warn("Failed to load icon '{}', generating dark avatar without icon", iconName);
+            }
+        }
+        return generateDefaultAvatarInternal(pngImageBytes, true, backgroundColor);
+    }
+
+    /**
      * Internal method to generate a default avatar image.
      *
      * @param pngImageBytes Optional PNG image bytes to render in the center of the image
@@ -123,7 +167,6 @@ public class StableDiffusionService {
         log.warn("Stable Diffusion not available, using default {} avatar", dark ? "dark" : "light");
         try {
             int originalSize = config.getGenerationSize();
-            int resizedSize  = config.getOutputSize();
 
             int   targetDisplaySize                = 24;
             float scalingRatioToSmallest           = (float) targetDisplaySize / (float) originalSize;
@@ -154,9 +197,8 @@ public class StableDiffusionService {
                 try {
                     BufferedImage pngImage = ImageIO.read(new ByteArrayInputStream(pngImageBytes));
                     if (pngImage != null) {
-                        int    targetSize    = originalSize;
-                        double widthRatio    = (double) targetSize / pngImage.getWidth();
-                        double heightRatio   = (double) targetSize / pngImage.getHeight();
+                        double widthRatio    = (double) originalSize / pngImage.getWidth();
+                        double heightRatio   = (double) originalSize / pngImage.getHeight();
                         double scalingRatio  = Math.min(widthRatio, heightRatio);
                         int    scaledWidth   = (int) (pngImage.getWidth() * scalingRatio);
                         int    scaledHeight  = (int) (pngImage.getHeight() * scalingRatio);
@@ -178,12 +220,104 @@ public class StableDiffusionService {
             ImageIO.write(originalImage, "PNG", originalOutputStream);
             byte[] originalBytes = originalOutputStream.toByteArray();
 
-            BufferedImage resizedImage    = new BufferedImage(resizedSize, resizedSize, BufferedImage.TYPE_INT_ARGB);
+            BufferedImage resizedImage    = new BufferedImage(config.getOutputSize(), config.getOutputSize(), BufferedImage.TYPE_INT_ARGB);
             Graphics2D    resizedGraphics = resizedImage.createGraphics();
             resizedGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
             resizedGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             resizedGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            resizedGraphics.drawImage(originalImage, 0, 0, resizedSize, resizedSize, null);
+            resizedGraphics.drawImage(originalImage, 0, 0, config.getOutputSize(), config.getOutputSize(), null);
+            resizedGraphics.dispose();
+
+            ByteArrayOutputStream resizedOutputStream = new ByteArrayOutputStream();
+            ImageIO.write(resizedImage, "PNG", resizedOutputStream);
+            byte[] resizedBytes = resizedOutputStream.toByteArray();
+
+            return new GeneratedImageResult(originalBytes, dark ? "Default Dark Avatar" : "Default Avatar", resizedBytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate default avatar: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Internal method to generate a default avatar image with optional custom background color.
+     *
+     * @param pngImageBytes Optional PNG image bytes to render in the center of the image
+     * @param dark          {@code true} to use a dark background (near-black) and mid-gray border;
+     *                      {@code false} for the classic white background and light-gray border
+     * @param backgroundColor CSS hex string for the background, or null to use default
+     * @return GeneratedImageResult containing original and resized images
+     */
+    private GeneratedImageResult generateDefaultAvatarInternal(byte[] pngImageBytes, boolean dark, String backgroundColor) {
+        log.warn("Stable Diffusion not available, using default {} avatar (custom background: {})", dark ? "dark" : "light", backgroundColor);
+        try {
+            int originalSize = config.getGenerationSize();
+
+            int   targetDisplaySize                = 24;
+            float scalingRatioToSmallest           = (float) targetDisplaySize / (float) originalSize;
+            float minBorderThicknessInSmallestSize = 1.0f;
+            float borderThickness                  = Math.max(2.0f, minBorderThicknessInSmallestSize / scalingRatioToSmallest);
+            float dashLength                       = 5.0f / scalingRatioToSmallest;
+
+            BufferedImage originalImage = new BufferedImage(originalSize, originalSize, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D    graphics      = originalImage.createGraphics();
+
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+            // Background: use provided color if valid, else fallback to default
+            Color bgColor = dark ? new Color(30, 30, 30) : Color.WHITE;
+            if (backgroundColor != null) {
+                try {
+                    bgColor = Color.decode(backgroundColor);
+                } catch (Exception e) {
+                    log.debug("Could not parse custom background color '{}', using default", backgroundColor);
+                }
+            }
+            graphics.setColor(bgColor);
+            graphics.fillRect(0, 0, originalSize, originalSize);
+
+            // Border: mid-gray for dark mode, light gray for light mode
+            graphics.setColor(dark ? new Color(120, 120, 120) : new Color(211, 211, 211));
+            float[] dashPattern = {dashLength, dashLength};
+            graphics.setStroke(new BasicStroke(borderThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, dashPattern, 0.0f));
+
+            float halfStroke  = borderThickness / 2.0f;
+            int   borderInset = (int) Math.ceil(halfStroke) + 2;
+            graphics.drawRect(borderInset, borderInset, originalSize - (2 * borderInset), originalSize - (2 * borderInset));
+
+            if (pngImageBytes != null && pngImageBytes.length > 0) {
+                try {
+                    BufferedImage pngImage = ImageIO.read(new ByteArrayInputStream(pngImageBytes));
+                    if (pngImage != null) {
+                        double widthRatio    = (double) originalSize / pngImage.getWidth();
+                        double heightRatio   = (double) originalSize / pngImage.getHeight();
+                        double scalingRatio  = Math.min(widthRatio, heightRatio);
+                        int    scaledWidth   = (int) (pngImage.getWidth() * scalingRatio);
+                        int    scaledHeight  = (int) (pngImage.getHeight() * scalingRatio);
+                        int    imageX        = (originalSize - scaledWidth) / 2;
+                        int    imageY        = (originalSize - scaledHeight) / 2;
+                        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                        graphics.drawImage(pngImage, imageX, imageY, scaledWidth, scaledHeight, null);
+                    } else {
+                        log.warn("Failed to read PNG image from provided bytes");
+                    }
+                } catch (IOException e) {
+                    log.error("Failed to load PNG image: {}", e.getMessage(), e);
+                }
+            }
+
+            graphics.dispose();
+
+            ByteArrayOutputStream originalOutputStream = new ByteArrayOutputStream();
+            ImageIO.write(originalImage, "PNG", originalOutputStream);
+            byte[] originalBytes = originalOutputStream.toByteArray();
+
+            BufferedImage resizedImage    = new BufferedImage(config.getOutputSize(), config.getOutputSize(), BufferedImage.TYPE_INT_ARGB);
+            Graphics2D    resizedGraphics = resizedImage.createGraphics();
+            resizedGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            resizedGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            resizedGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            resizedGraphics.drawImage(originalImage, 0, 0, config.getOutputSize(), config.getOutputSize(), null);
             resizedGraphics.dispose();
 
             ByteArrayOutputStream resizedOutputStream = new ByteArrayOutputStream();

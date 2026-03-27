@@ -197,6 +197,87 @@ public class StableDiffusionServiceTest {
         log.info("Generated dark avatar for '{}' with seed {} and prompt: '{}'", userName, darkResult.getSeed(), darkResult.getPrompt());
     }
 
+    /**
+     * Test avatar generation for a Product entity using the default prompt.
+     * Mirrors the flow used by ImagePromptDialog for products.
+     *
+     * @throws Exception if image generation fails
+     */
+    @Test
+    public void testGenerateImage_ProductAvatar() throws Exception {
+        String productName = "Kassandra";
+        String lightBasePrompt = Product.getDefaultAvatarPrompt(productName);
+        String darkBasePrompt = lightBasePrompt;
+
+        // Light avatar via AvatarService
+        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt);
+        assertNotNull(lightResult.getResizedImage(), "Light product avatar should not be null");
+        assertTrue(lightResult.getResizedImage().length > 0, "Light product avatar should have content");
+        saveTestImage(lightResult.getResizedImage(), "test-avatar-product.png");
+        log.info("Generated light product avatar for '{}' with seed {} and prompt: '{}'", productName, lightResult.getSeed(), lightResult.getPrompt());
+
+        // Dark avatar via AvatarService, pinned to the light seed
+        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, lightResult);
+        assertNotNull(darkResult.getResizedImage(), "Dark product avatar should not be null");
+        assertTrue(darkResult.getResizedImage().length > 0, "Dark product avatar should have content");
+        saveTestImage(darkResult.getResizedImage(), "test-dark-avatar-product.png");
+        log.info("Generated dark product avatar for '{}' with seed {} and prompt: '{}'", productName, darkResult.getSeed(), darkResult.getPrompt());
+    }
+
+    /**
+     * Test avatar generation for a Feature entity using the default prompt.
+     * Mirrors the flow used by ImagePromptDialog for features.
+     *
+     * @throws Exception if image generation fails
+     */
+    @Test
+    public void testGenerateImage_FeatureAvatar() throws Exception {
+        String featureName = "AI Assistant";
+        String lightBasePrompt = Feature.getDefaultAvatarPrompt(featureName);
+        String darkBasePrompt = lightBasePrompt;
+
+        // Light avatar via AvatarService
+        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt);
+        assertNotNull(lightResult.getResizedImage(), "Light feature avatar should not be null");
+        assertTrue(lightResult.getResizedImage().length > 0, "Light feature avatar should have content");
+        saveTestImage(lightResult.getResizedImage(), "test-avatar-feature.png");
+        log.info("Generated light feature avatar for '{}' with seed {} and prompt: '{}'", featureName, lightResult.getSeed(), lightResult.getPrompt());
+
+        // Dark avatar via AvatarService, pinned to the light seed
+        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, lightResult);
+        assertNotNull(darkResult.getResizedImage(), "Dark feature avatar should not be null");
+        assertTrue(darkResult.getResizedImage().length > 0, "Dark feature avatar should have content");
+        saveTestImage(darkResult.getResizedImage(), "test-dark-avatar-feature.png");
+        log.info("Generated dark feature avatar for '{}' with seed {} and prompt: '{}'", featureName, darkResult.getSeed(), darkResult.getPrompt());
+    }
+
+    /**
+     * Test avatar generation for a Sprint entity using the default prompt.
+     * Mirrors the flow used by ImagePromptDialog for sprints.
+     *
+     * @throws Exception if image generation fails
+     */
+    @Test
+    public void testGenerateImage_SprintAvatar() throws Exception {
+        String sprintName = "Sprint 1";
+        String lightBasePrompt = Sprint.getDefaultAvatarPrompt(sprintName);
+        String darkBasePrompt = lightBasePrompt;
+
+        // Light avatar via AvatarService
+        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt);
+        assertNotNull(lightResult.getResizedImage(), "Light sprint avatar should not be null");
+        assertTrue(lightResult.getResizedImage().length > 0, "Light sprint avatar should have content");
+        saveTestImage(lightResult.getResizedImage(), "test-avatar-sprint.png");
+        log.info("Generated light sprint avatar for '{}' with seed {} and prompt: '{}'", sprintName, lightResult.getSeed(), lightResult.getPrompt());
+
+        // Dark avatar via AvatarService, pinned to the light seed
+        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, lightResult);
+        assertNotNull(darkResult.getResizedImage(), "Dark sprint avatar should not be null");
+        assertTrue(darkResult.getResizedImage().length > 0, "Dark sprint avatar should have content");
+        saveTestImage(darkResult.getResizedImage(), "test-dark-avatar-sprint.png");
+        log.info("Generated dark sprint avatar for '{}' with seed {} and prompt: '{}'", sprintName, darkResult.getSeed(), darkResult.getPrompt());
+    }
+
     @Test
     public void testIsAvailable() {
         assertTrue(stableDiffusionService.isAvailable(), "Stable Diffusion API should be available");

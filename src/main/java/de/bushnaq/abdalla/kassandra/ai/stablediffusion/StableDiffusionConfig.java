@@ -67,5 +67,19 @@ public class StableDiffusionConfig {
      * Timeout in seconds for API requests
      */
     private int    timeoutSeconds = 120;
+
+    /**
+     * Background color for light-theme avatars, as a CSS hex string (e.g., "#FFFFFF").
+     * Used by AvatarService to generate light avatars with a matching background.
+     * Configurable via 'stable-diffusion.avatar-light-background-color'.
+     */
+    private String avatarLightBackgroundColor = "#FFFFFF";
+
+    /**
+     * Background color for dark-theme avatars, as a CSS hex string (e.g., "#000000").
+     * Used by AvatarService to generate dark avatars with a matching background.
+     * Configurable via 'stable-diffusion.avatar-dark-background-color'.
+     */
+    private String avatarDarkBackgroundColor = "#000000";
 }
 

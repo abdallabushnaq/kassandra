@@ -57,8 +57,8 @@ public class AvatarService {
      * Exposes the Stable Diffusion configuration so non-Spring callers (e.g. UI dialogs)
      * can read values such as the API URL without a direct
      * dependency.
-     *
-     * @return the current {@link StableDiffusionConfig} instance.
+     * <p>
+     * Returns the current {@link StableDiffusionConfig} instance.
      */
     @Getter
     @Autowired
@@ -91,8 +91,14 @@ public class AvatarService {
                 log.warn("Could not read light-avatar original to determine canvas size, using generationSize={}", size);
             }
         }
+        Color bgColor = Color.BLACK;
         try {
-            return createSolidCanvas(size, Color.BLACK);
+            bgColor = Color.decode(config.getAvatarDarkBackgroundColor());
+        } catch (Exception e) {
+            log.debug("Could not parse configured dark avatar background color '{}', using black", config.getAvatarDarkBackgroundColor());
+        }
+        try {
+            return createSolidCanvas(size, bgColor);
         } catch (IOException e) {
             throw new StableDiffusionException("Failed to create black canvas: " + e.getMessage(), e);
         }
@@ -158,61 +164,6 @@ public class AvatarService {
     }
 
     /**
-     * Generates a programmatic dark-background placeholder avatar without using Stable Diffusion.
-     * Use this as the fallback when {@link #generateDarkAvatar} throws.
-     *
-     * @param iconName Optional icon resource name (e.g. {@code "user"}, {@code "cube"}); may be {@code null}.
-     * @return {@link GeneratedImageResult} containing the dark placeholder images.
-     */
-    public GeneratedImageResult generateDefaultDarkAvatar(String iconName) {
-        return stableDiffusionService.generateDefaultDarkAvatar(iconName);
-    }
-
-    /**
-     * Generates a programmatic light-background placeholder avatar without using Stable Diffusion.
-     * Use this as the fallback when {@link #generateLightAvatar} throws.
-     *
-     * @param iconName Optional icon resource name (e.g. {@code "user"}, {@code "cube"}); may be {@code null}.
-     * @return {@link GeneratedImageResult} containing the placeholder images.
-     */
-    public GeneratedImageResult generateDefaultLightAvatar(String iconName) {
-        return stableDiffusionService.generateDefaultAvatar(iconName);
-    }
-
-    /**
-     * Generates a light-background AI avatar using a solid-white img2img canvas.
-     * The {@link StableDiffusionConfig#getAvatarOutputSize()} value is used for the output dimensions.
-     * Intended for test / data-gen callers that do not need progress reporting.
-     *
-     * @param basePrompt Core prompt; the light-background suffix is appended internally.
-     * @return {@link GeneratedImageResult} containing the original (generation-size) and the
-     * resized (avatar-output-size) images, plus the actual SD seed.
-     * @throws StableDiffusionException if Stable Diffusion is unavailable or generation fails.
-     */
-    public GeneratedImageResult generateLightAvatar(String basePrompt) throws StableDiffusionException {
-        return generateLightAvatar(basePrompt, null);
-    }
-
-    /**
-     * Generates a light-background AI avatar, falling back to a programmatic placeholder if
-     * Stable Diffusion is unavailable or generation fails.
-     * Intended for batch / data-gen callers that always need a result regardless of SD availability.
-     *
-     * @param basePrompt       Core prompt passed to {@link #generateLightAvatar(String)}.
-     * @param fallbackIconName Icon name forwarded to {@link #generateDefaultLightAvatar(String)}
-     *                         when the AI generation fails; may be {@code null}.
-     * @return {@link GeneratedImageResult} — either AI-generated or the programmatic default.
-     */
-    public GeneratedImageResult generateLightAvatarWithFallback(String basePrompt, String fallbackIconName) {
-        try {
-            return generateLightAvatar(basePrompt);
-        } catch (StableDiffusionException e) {
-            log.warn("Failed to generate light avatar (icon={}): {}", fallbackIconName, e.getMessage());
-            return generateDefaultLightAvatar(fallbackIconName);
-        }
-    }
-
-    /**
      * Generates a dark-background AI avatar, falling back to a programmatic placeholder if
      * Stable Diffusion is unavailable or generation fails.
      * Intended for batch / data-gen callers that always need a result regardless of SD availability.
@@ -233,9 +184,43 @@ public class AvatarService {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Private helpers
-    // ─────────────────────────────────────────────────────────────────────────
+    /**
+     * Generates a programmatic dark-background placeholder avatar without using Stable Diffusion.
+     * Use this as the fallback when {@link #generateDarkAvatar} throws.
+     *
+     * @param iconName Optional icon resource name (e.g. {@code "user"}, {@code "cube"}); may be {@code null}.
+     * @return {@link GeneratedImageResult} containing the dark placeholder images.
+     */
+    public GeneratedImageResult generateDefaultDarkAvatar(String iconName) {
+        // Uses configured dark background color for avatar generation.
+        return stableDiffusionService.generateDefaultDarkAvatar(iconName, config.getAvatarDarkBackgroundColor());
+    }
+
+    /**
+     * Generates a programmatic light-background placeholder avatar without using Stable Diffusion.
+     * Use this as the fallback when {@link #generateLightAvatar} throws.
+     *
+     * @param iconName Optional icon resource name (e.g. {@code "user"}, {@code "cube"}); may be {@code null}.
+     * @return {@link GeneratedImageResult} containing the placeholder images.
+     */
+    public GeneratedImageResult generateDefaultLightAvatar(String iconName) {
+        // Uses configured light background color for avatar generation.
+        return stableDiffusionService.generateDefaultAvatar(iconName, config.getAvatarLightBackgroundColor());
+    }
+
+    /**
+     * Generates a light-background AI avatar using a solid-white img2img canvas.
+     * The {@link StableDiffusionConfig#getAvatarOutputSize()} value is used for the output dimensions.
+     * Intended for test / data-gen callers that do not need progress reporting.
+     *
+     * @param basePrompt Core prompt; the light-background suffix is appended internally.
+     * @return {@link GeneratedImageResult} containing the original (generation-size) and the
+     * resized (avatar-output-size) images, plus the actual SD seed.
+     * @throws StableDiffusionException if Stable Diffusion is unavailable or generation fails.
+     */
+    public GeneratedImageResult generateLightAvatar(String basePrompt) throws StableDiffusionException {
+        return generateLightAvatar(basePrompt, null);
+    }
 
     /**
      * Generates a light-background AI avatar using a solid-white img2img canvas.
@@ -253,16 +238,45 @@ public class AvatarService {
             throw new StableDiffusionException("Stable Diffusion is not available");
         }
         String sdPrompt    = basePrompt + LIGHT_PROMPT_SUFFIX;
-        byte[] whiteCanvas = null;
+        byte[] lightCanvas = null;
+        Color  bgColor     = Color.WHITE;
         try {
-            whiteCanvas = createSolidCanvas(config.getGenerationSize(), Color.WHITE);
-        } catch (IOException e) {
-            log.warn("Failed to create white canvas, falling back to txt2img: {}", e.getMessage());
+            bgColor = Color.decode(config.getAvatarLightBackgroundColor());
+        } catch (Exception e) {
+            log.debug("Could not parse configured light avatar background color '{}', using white", config.getAvatarLightBackgroundColor());
         }
-        if (whiteCanvas != null) {
-            return stableDiffusionService.img2imgWithOriginal(whiteCanvas, sdPrompt, config.getAvatarOutputSize(), progress, -1L, 1.0);
+        try {
+            lightCanvas = createSolidCanvas(config.getGenerationSize(), bgColor);
+        } catch (IOException e) {
+            log.warn("Failed to create light canvas, falling back to txt2img: {}", e.getMessage());
+        }
+        if (lightCanvas != null) {
+            return stableDiffusionService.img2imgWithOriginal(lightCanvas, sdPrompt, config.getAvatarOutputSize(), progress, -1L, 1.0);
         } else {
             return stableDiffusionService.generateImageWithOriginal(sdPrompt, config.getAvatarOutputSize(), progress);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Private helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Generates a light-background AI avatar, falling back to a programmatic placeholder if
+     * Stable Diffusion is unavailable or generation fails.
+     * Intended for batch / data-gen callers that always need a result regardless of SD availability.
+     *
+     * @param basePrompt       Core prompt passed to {@link #generateLightAvatar(String)}.
+     * @param fallbackIconName Icon name forwarded to {@link #generateDefaultLightAvatar(String)}
+     *                         when the AI generation fails; may be {@code null}.
+     * @return {@link GeneratedImageResult} — either AI-generated or the programmatic default.
+     */
+    public GeneratedImageResult generateLightAvatarWithFallback(String basePrompt, String fallbackIconName) {
+        try {
+            return generateLightAvatar(basePrompt);
+        } catch (StableDiffusionException e) {
+            log.warn("Failed to generate light avatar (icon={}): {}", fallbackIconName, e.getMessage());
+            return generateDefaultLightAvatar(fallbackIconName);
         }
     }
 
