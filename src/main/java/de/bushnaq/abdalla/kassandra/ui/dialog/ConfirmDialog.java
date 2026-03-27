@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -69,5 +71,8 @@ public class ConfirmDialog extends Dialog {
 
         dialogLayout.add(buttonLayout);
         add(dialogLayout);
+
+        // Allow confirming by pressing Enter (equivalent to clicking the confirm button)
+        Shortcuts.addShortcutListener(this, e -> { action.run(); close(); }, Key.ENTER);
     }
 }

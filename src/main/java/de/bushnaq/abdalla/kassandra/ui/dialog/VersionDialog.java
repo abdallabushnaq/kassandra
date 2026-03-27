@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -109,6 +111,16 @@ public class VersionDialog extends Dialog {
         if (!isEditMode) {
             binder.validate();
         }
+
+        // Focus the name field automatically when the dialog opens
+        addOpenedChangeListener(event -> {
+            if (event.isOpened()) {
+                nameField.focus();
+            }
+        });
+
+        // Allow submitting the form by pressing Enter from any field in the dialog
+        Shortcuts.addShortcutListener(this, e -> save(), Key.ENTER);
     }
 
     private void save() {

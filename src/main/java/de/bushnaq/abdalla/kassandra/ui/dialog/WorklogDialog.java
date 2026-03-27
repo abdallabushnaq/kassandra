@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Span;
@@ -54,6 +56,7 @@ public class WorklogDialog extends Dialog {
     public static final String            CANCEL_BUTTON        = "cancel-worklog-button";
     public static final String            COMMENT_FIELD        = "worklog-comment-field";
     public static final String            DATETIME_PICKER      = "worklog-datetime-picker";
+    public static final String            ID_THEME_TOGGLE      = "main-layout-theme-toggle";
     public static final String            SAVE_BUTTON          = "save-worklog-button";
     public static final String            TIME_REMAINING_FIELD = "worklog-time-remaining-field";
     public static final String            TIME_SPENT_FIELD     = "worklog-time-spent-field";
@@ -227,6 +230,16 @@ public class WorklogDialog extends Dialog {
         ));
 
         add(dialogLayout);
+
+        // Focus the time spent field automatically when the dialog opens
+        addOpenedChangeListener(event -> {
+            if (event.isOpened()) {
+                timeSpentField.focus();
+            }
+        });
+
+        // Allow submitting the form by pressing Enter from any field in the dialog
+        Shortcuts.addShortcutListener(this, e -> save(), Key.ENTER);
     }
 
     /**

@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -71,6 +73,9 @@ public class AvailabilityDialog extends Dialog {
         // Setup form and actions
         add(createForm(), VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
         configureFormBinder();
+
+        // Allow submitting the form by pressing Enter from any field in the dialog
+        Shortcuts.addShortcutListener(this, e -> save(), Key.ENTER);
     }
 
 

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -234,6 +235,16 @@ public class DependencyDialog extends Dialog {
         getFooter().add(cancelButton, saveButton);
 
         add(layout);
+
+        // Focus the quick edit field automatically when the dialog opens
+        addOpenedChangeListener(event -> {
+            if (event.isOpened()) {
+                quickEditField.focus();
+            }
+        });
+
+        // Allow submitting the form by pressing Enter in the quick edit field
+        quickEditField.addKeyDownListener(Key.ENTER, e -> save());
     }
 
     /**

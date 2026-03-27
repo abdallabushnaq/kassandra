@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -78,6 +80,9 @@ public class LocationDialog extends Dialog {
 
         configureFormBinder();
         initFormValues();
+
+        // Allow submitting the form by pressing Enter from any field in the dialog
+        Shortcuts.addShortcutListener(this, e -> save(), Key.ENTER);
     }
 
     private void configureFormBinder() {
