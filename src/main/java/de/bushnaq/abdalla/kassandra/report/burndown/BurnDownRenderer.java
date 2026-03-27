@@ -25,6 +25,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.BurnDownGraphicsTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.svg.util.ExtendedPolygon;

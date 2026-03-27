@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.report;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.BurnDownGraphicsTheme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import org.slf4j.Logger;

@@ -19,7 +19,7 @@ package de.bushnaq.abdalla.kassandra.report;
 
 import de.bushnaq.abdalla.kassandra.report.dao.CaptionElement;
 import de.bushnaq.abdalla.kassandra.report.dao.FooterElement;
-import de.bushnaq.abdalla.kassandra.report.dao.GraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.Util;
 

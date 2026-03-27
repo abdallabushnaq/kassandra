@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,11 +15,12 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.report.dao;
+package de.bushnaq.abdalla.kassandra.report.dao.theme;
 
 import java.awt.*;
 
 public class ScheduleGraphicsTheme extends GraphicsTheme {
+    //-------------------------- Calendar Chart
     public Color dayBackgroundColor;
     public Color dayDiagramBorderColor;
     public Color dayOfMonthBackgroundColor;

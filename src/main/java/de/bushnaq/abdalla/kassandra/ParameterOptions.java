@@ -17,8 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra;
 
-import de.bushnaq.abdalla.kassandra.report.dao.BurnDownGraphicsTheme;
-import de.bushnaq.abdalla.kassandra.report.dao.GraphicsLightTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.BurnDownGraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsLightTheme;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.Setter;
 import org.slf4j.Logger;

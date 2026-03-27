@@ -17,7 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra;
 
-import de.bushnaq.abdalla.kassandra.report.dao.GraphicsLightTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsLightTheme;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import org.apache.commons.cli.*;
 

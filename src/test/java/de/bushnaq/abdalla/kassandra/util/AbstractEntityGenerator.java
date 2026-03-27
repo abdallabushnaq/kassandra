@@ -18,14 +18,10 @@
 package de.bushnaq.abdalla.kassandra.util;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.*;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
-import de.bushnaq.abdalla.kassandra.report.dao.GraphicsLightTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsLightTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.profiler.Profiler;
@@ -61,6 +57,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     public static final String                 FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
     public static final String                 FIRST_OFF_DAY_START_DATE  = "2024-04-01";
     protected           AvailabilityApi        availabilityApi;
+    @Autowired
+    protected           AvatarService          avatarService;
     protected final     TreeSet<Availability>  expectedAvailabilities    = new TreeSet<>();
     protected           List<Feature>          expectedFeatures          = new ArrayList<>();
     protected final     TreeSet<Location>      expectedLocations         = new TreeSet<>();
@@ -93,8 +91,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     protected           StableDiffusionConfig  stableDiffusionConfig;
     @Autowired
     protected           StableDiffusionService stableDiffusionService;
-    @Autowired
-    protected           AvatarService          avatarService;
     protected           TaskApi                taskApi;
     @Autowired
     private             TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
@@ -124,8 +120,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         feature.setCreated(ParameterOptions.getNow());
         feature.setUpdated(ParameterOptions.getNow());
 
-        Feature              saved     = null;
-        long                 startTime = System.currentTimeMillis();
+        Feature              saved      = null;
+        long                 startTime  = System.currentTimeMillis();
         String               basePrompt = Feature.getDefaultAvatarPrompt(name);
         GeneratedImageResult image      = avatarService.generateLightAvatarWithFallback(basePrompt, "lightbulb");
         feature.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
@@ -275,8 +271,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         product.setCreated(ParameterOptions.getNow());
         product.setUpdated(ParameterOptions.getNow());
 
-        Product              saved     = null;
-        long                 startTime = System.currentTimeMillis();
+        Product              saved      = null;
+        long                 startTime  = System.currentTimeMillis();
         String               basePrompt = Product.getDefaultAvatarPrompt(name);
         GeneratedImageResult image      = avatarService.generateLightAvatarWithFallback(basePrompt, "cube");
         product.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
@@ -427,8 +423,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         sprint.setCreated(ParameterOptions.getNow());
         sprint.setUpdated(ParameterOptions.getNow());
 
-        Sprint               saved     = null;
-        long                 startTime = System.currentTimeMillis();
+        Sprint               saved      = null;
+        long                 startTime  = System.currentTimeMillis();
         String               basePrompt = Sprint.getDefaultAvatarPrompt(name);
         GeneratedImageResult image      = avatarService.generateLightAvatarWithFallback(basePrompt, "exit");
         sprint.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));

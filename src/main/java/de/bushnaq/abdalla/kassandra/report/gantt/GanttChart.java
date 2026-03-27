@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.report.gantt;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.report.AbstractChart;
-import de.bushnaq.abdalla.kassandra.report.dao.BurnDownGraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.BurnDownGraphicsTheme;
 
 import java.time.LocalDateTime;
 import java.util.List;

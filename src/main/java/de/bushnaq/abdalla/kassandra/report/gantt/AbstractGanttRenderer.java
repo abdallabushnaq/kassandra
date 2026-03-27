@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.BurnDownGraphicsTheme;
 import de.bushnaq.abdalla.svg.util.ExtendedRectangle;
 import de.bushnaq.abdalla.svg.util.RectangleWithToolTip;
 import de.bushnaq.abdalla.util.ColorUtil;

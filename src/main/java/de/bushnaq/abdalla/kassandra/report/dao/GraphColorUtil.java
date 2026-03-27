@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.report.dao;
 
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.BurnDownGraphicsTheme;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
 

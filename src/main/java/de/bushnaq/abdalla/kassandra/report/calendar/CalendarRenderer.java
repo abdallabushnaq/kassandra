@@ -21,7 +21,7 @@ import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
-import de.bushnaq.abdalla.kassandra.report.dao.BurnDownGraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.BurnDownGraphicsTheme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
@@ -375,18 +375,7 @@ public class CalendarRenderer extends AbstractRenderer {
         }
     }
 
-    private static class LegendItem {
-        private final Color  bgColor;
-        private final String exampleNumber;
-        private final String label;
-        private final Color  textColor;
-
-        public LegendItem(Color bgColor, Color textColor, String label, String exampleNumber) {
-            this.bgColor       = bgColor;
-            this.textColor     = textColor;
-            this.label         = label;
-            this.exampleNumber = exampleNumber;
-        }
+    private record LegendItem(Color bgColor, Color textColor, String label, String exampleNumber) {
     }
 }
 

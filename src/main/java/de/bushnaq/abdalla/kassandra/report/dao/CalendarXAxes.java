@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.report.dao;
 
 import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.Getter;
