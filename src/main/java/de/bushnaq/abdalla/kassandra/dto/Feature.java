@@ -32,6 +32,7 @@ import java.util.Objects;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Feature extends AbstractTimeAware implements Comparable<Feature> {
     private String avatarHash;
+    private String darkAvatarHash;
     private Long   id;
     private String name;
 
@@ -56,18 +57,34 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
     }
 
     /**
-     * Get the avatar URL with hash parameter for proper caching.
-     * The hash ensures that when the avatar changes, the URL changes, forcing the browser to fetch the new image.
+     * Get the avatar URL for the given theme variant.
+     * When {@code dark} is {@code true} and a dark avatar has been generated, the dark variant URL is
+     * returned. Falls back to the light variant URL when no dark avatar is available yet.
      *
-     * @return The avatar URL with hash parameter if hash is available, otherwise just the base URL
+     * @param dark {@code true} to request the dark-background avatar variant
+     * @return The avatar URL with hash parameter for cache-busting
      */
     @JsonIgnore
-    public String getAvatarUrl() {
+    public String getAvatarUrl(boolean dark) {
+        if (dark && darkAvatarHash != null && !darkAvatarHash.isEmpty()) {
+            return "/frontend/dark-avatar-proxy/feature/" + id + "?h=" + darkAvatarHash;
+        }
         String url = "/frontend/avatar-proxy/feature/" + id;
         if (avatarHash != null && !avatarHash.isEmpty()) {
             url += "?h=" + avatarHash;
         }
         return url;
+    }
+
+    /**
+     * Get the light avatar URL with hash parameter for proper caching.
+     * Delegates to {@link #getAvatarUrl(boolean)} with {@code dark = false}.
+     *
+     * @return The avatar URL with hash parameter if hash is available, otherwise just the base URL
+     */
+    @JsonIgnore
+    public String getAvatarUrl() {
+        return getAvatarUrl(false);
     }
 
     /**
@@ -89,7 +106,7 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
      * @return A default prompt string for generating feature avatar images
      */
     public static String getDefaultAvatarPrompt(String featureName) {
-        return "Icon representing the feature '" + featureName + "', minimalist, 3D design, white background";
+        return "Icon representing the feature '" + featureName + "', minimalist, 3D design";
     }
 
     @JsonIgnore

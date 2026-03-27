@@ -64,6 +64,8 @@ public class FeatureDialog extends Dialog {
     private             byte[]                 generatedImageBytes;
     private             byte[]                 generatedImageBytesOriginal;
     private             String                 generatedImagePrompt;
+    private volatile    byte[]                 generatedDarkImageBytes;
+    private volatile    byte[]                 generatedDarkImageBytesOriginal;
     private final       Image                  headerIcon;
     private final       boolean                isEditMode;
     private final       TextField              nameField;
@@ -243,6 +245,10 @@ public class FeatureDialog extends Dialog {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();
+        if (darkResult != null) {
+            this.generatedDarkImageBytes         = darkResult.getResizedImage();
+            this.generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
+        }
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -273,12 +279,16 @@ public class FeatureDialog extends Dialog {
             defaultPrompt = Feature.getDefaultAvatarPrompt(nameField.getValue());
         }
 
-        byte[] initialImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 stableDiffusionService,
                 defaultPrompt,
+                true,
+                "lightbulb",
                 this::handleGeneratedImage,
-                initialImage
+                initialImage,
+                initialDarkImage
         );
         imageDialog.open();
     }
@@ -298,9 +308,11 @@ public class FeatureDialog extends Dialog {
         }
 
         // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
-        byte[] avatarImage         = generatedImageBytes;
-        byte[] avatarImageOriginal = generatedImageBytesOriginal;
-        String avatarPrompt        = generatedImagePrompt;
+        byte[] avatarImage             = generatedImageBytes;
+        byte[] avatarImageOriginal     = generatedImageBytesOriginal;
+        String avatarPrompt            = generatedImagePrompt;
+        byte[] darkAvatarImage         = generatedDarkImageBytes;
+        byte[] darkAvatarImageOriginal = generatedDarkImageBytesOriginal;
 
         if (avatarImage != null) {
             String newHash = AvatarUtil.computeHash(avatarImage);
@@ -313,6 +325,10 @@ public class FeatureDialog extends Dialog {
             avatarPrompt        = image.getPrompt();
             String newHash = AvatarUtil.computeHash(image.getResizedImage());
             featureToSave.setAvatarHash(newHash);
+            // Also generate a dark default programmatically
+            GeneratedImageResult darkImage = stableDiffusionService.generateDefaultDarkAvatar("lightbulb");
+            darkAvatarImage         = darkImage.getResizedImage();
+            darkAvatarImageOriginal = darkImage.getOriginalImage();
         }
         try {
             if (isEditMode) {
@@ -320,7 +336,8 @@ public class FeatureDialog extends Dialog {
                 featureApi.update(featureToSave);
 
                 if (avatarImage != null && avatarImageOriginal != null) {
-                    featureApi.updateAvatarFull(featureToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
+                    featureApi.updateAvatarFull(featureToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
+                            darkAvatarImage, darkAvatarImageOriginal);
                 }
 
                 Notification.show("Feature updated", 3000, Notification.Position.BOTTOM_START);
@@ -329,7 +346,8 @@ public class FeatureDialog extends Dialog {
                 Feature createdFeature = featureApi.persist(featureToSave);
 
                 if (avatarImage != null && avatarImageOriginal != null && createdFeature != null) {
-                    featureApi.updateAvatarFull(createdFeature.getId(), avatarImage, avatarImageOriginal, avatarPrompt);
+                    featureApi.updateAvatarFull(createdFeature.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
+                            darkAvatarImage, darkAvatarImageOriginal);
                 }
 
                 Notification.show("Feature created", 3000, Notification.Position.BOTTOM_START);

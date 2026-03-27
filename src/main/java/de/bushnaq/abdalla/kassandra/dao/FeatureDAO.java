@@ -36,6 +36,8 @@ public class FeatureDAO extends AbstractTimeAwareDAO {
 
     @Column(name = "avatar_hash", length = 16)
     private String avatarHash;
+    @Column(name = "dark_avatar_hash", length = 16)
+    private String darkAvatarHash;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

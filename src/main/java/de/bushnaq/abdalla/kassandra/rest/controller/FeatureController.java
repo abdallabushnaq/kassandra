@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.dao.FeatureAvatarGenerationDataDAO;
 import de.bushnaq.abdalla.kassandra.dao.FeatureDAO;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.repository.FeatureAvatarGenerationDataRepository;
 import de.bushnaq.abdalla.kassandra.repository.FeatureAvatarRepository;
 import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
@@ -112,19 +113,48 @@ public class FeatureController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    /**
+     * Return the dark-mode avatar for the given feature.
+     * Falls back to the light avatar when no dark variant has been stored yet.
+     *
+     * @param id The feature ID
+     * @return The dark avatar image, or the light avatar as fallback, or 404 if no avatar exists
+     */
+    @GetMapping("/{id}/dark-avatar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable Long id) {
+        return featureAvatarRepository.findByFeatureId(id)
+                .map(avatar -> {
+                    byte[] imageBytes = avatar.getDarkAvatarImage();
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        // Fall back to light image when dark variant not yet generated
+                        imageBytes = avatar.getAvatarImage();
+                    }
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
+                    }
+                    return ResponseEntity.ok(new AvatarWrapper(imageBytes));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
     @GetMapping("/{id}/avatar/full")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable Long id) {
         AvatarUpdateRequest response = new AvatarUpdateRequest();
 
-        // Get avatar image
+        // Get avatar images (light + dark)
         featureAvatarRepository.findByFeatureId(id)
-                .ifPresent(avatar -> response.setAvatarImage(avatar.getAvatarImage()));
+                .ifPresent(avatar -> {
+                    response.setAvatarImage(avatar.getAvatarImage());
+                    response.setDarkAvatarImage(avatar.getDarkAvatarImage());
+                });
 
-        // Get generation data
+        // Get generation data (originals + prompt)
         featureAvatarGenerationDataRepository.findByFeatureId(id)
                 .ifPresent(genData -> {
                     response.setAvatarImageOriginal(genData.getAvatarImageOriginal());
+                    response.setDarkAvatarImageOriginal(genData.getDarkAvatarImageOriginal());
                     response.setAvatarPrompt(genData.getAvatarPrompt());
                 });
 
@@ -176,7 +206,9 @@ public class FeatureController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        // Update or create avatar image
+        FeatureDAO feature = featureOpt.get();
+
+        // Update or create light avatar image
         if (request.getAvatarImage() != null && request.getAvatarImage().length != 0) {
             FeatureAvatarDAO avatar = featureAvatarRepository.findByFeatureId(id)
                     .orElse(new FeatureAvatarDAO());
@@ -185,14 +217,30 @@ public class FeatureController {
             featureAvatarRepository.save(avatar);
         }
 
-        // Update or create generation data
-        if (request.getAvatarImageOriginal() != null || request.getAvatarPrompt() != null) {
+        // Update or create dark avatar image; compute and persist darkAvatarHash automatically
+        if (request.getDarkAvatarImage() != null && request.getDarkAvatarImage().length != 0) {
+            FeatureAvatarDAO avatar = featureAvatarRepository.findByFeatureId(id)
+                    .orElse(new FeatureAvatarDAO());
+            avatar.setFeatureId(id);
+            avatar.setDarkAvatarImage(request.getDarkAvatarImage());
+            featureAvatarRepository.save(avatar);
+
+            feature.setDarkAvatarHash(AvatarUtil.computeHash(request.getDarkAvatarImage()));
+            featureRepository.save(feature);
+        }
+
+        // Update or create generation data (light + dark originals + prompt)
+        if (request.getAvatarImageOriginal() != null || request.getDarkAvatarImageOriginal() != null || request.getAvatarPrompt() != null) {
             FeatureAvatarGenerationDataDAO genData = featureAvatarGenerationDataRepository.findByFeatureId(id)
                     .orElse(new FeatureAvatarGenerationDataDAO());
             genData.setFeatureId(id);
 
             if (request.getAvatarImageOriginal() != null && request.getAvatarImageOriginal().length != 0) {
                 genData.setAvatarImageOriginal(request.getAvatarImageOriginal());
+            }
+
+            if (request.getDarkAvatarImageOriginal() != null && request.getDarkAvatarImageOriginal().length != 0) {
+                genData.setDarkAvatarImageOriginal(request.getDarkAvatarImageOriginal());
             }
 
             if (request.getAvatarPrompt() != null) {

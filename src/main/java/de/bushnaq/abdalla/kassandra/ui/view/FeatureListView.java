@@ -28,6 +28,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
@@ -314,8 +315,9 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                         .set("margin", "0")
                         .set("padding", "0");
 
-                // Use hash-based URL for proper caching
-                avatar.setSrc(feature.getAvatarUrl());
+                // Use hash-based URL for proper caching; theme-aware
+                boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                avatar.setSrc(feature.getAvatarUrl(isDark));
                 avatar.setAlt(feature.getName());
                 return avatar;
             }));

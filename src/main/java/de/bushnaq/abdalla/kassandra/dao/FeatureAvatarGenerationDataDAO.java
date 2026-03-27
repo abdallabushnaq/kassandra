@@ -35,6 +35,9 @@ public class FeatureAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
     private byte[] avatarImageOriginal;
     @Column(name = "avatar_prompt", length = 1000)
     private String avatarPrompt;
+    @Lob
+    @Column(name = "dark_avatar_image_original")
+    private byte[] darkAvatarImageOriginal;
     @Column(name = "feature_id", unique = true, nullable = false)
     private Long   featureId;
     @Id

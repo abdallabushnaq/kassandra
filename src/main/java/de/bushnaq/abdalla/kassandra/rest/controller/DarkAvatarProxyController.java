@@ -18,6 +18,8 @@
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
+import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
+import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,16 +41,62 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class DarkAvatarProxyController {
 
-    private final UserApi userApi;
+    private final FeatureApi featureApi;
+    private final ProductApi productApi;
+    private final UserApi    userApi;
 
     /**
-     * Construct the controller with a {@link UserApi} delegate.
+     * Construct the controller with the API delegates.
      *
-     * @param userApi REST client used to fetch dark avatar images from the user service
+     * @param featureApi REST client used to fetch dark avatar images from the feature service
+     * @param productApi REST client used to fetch dark avatar images from the product service
+     * @param userApi    REST client used to fetch dark avatar images from the user service
      */
     @Autowired
-    public DarkAvatarProxyController(UserApi userApi) {
-        this.userApi = userApi;
+    public DarkAvatarProxyController(FeatureApi featureApi, ProductApi productApi, UserApi userApi) {
+        this.featureApi = featureApi;
+        this.productApi = productApi;
+        this.userApi    = userApi;
+    }
+
+    /**
+     * Serve the dark-background avatar variant for a feature.
+     * Falls back to the light avatar transparently when no dark variant has been stored yet
+     * (the server-side {@code GET /api/feature/{id}/dark-avatar} handles the fallback).
+     *
+     * @param featureId The feature ID
+     * @return PNG image bytes for the dark avatar, or 404 if no avatar exists at all
+     */
+    @GetMapping("/feature/{featureId}")
+    public ResponseEntity<byte[]> proxyFeatureDarkAvatar(@PathVariable("featureId") Long featureId) {
+        AvatarWrapper avatarImage = featureApi.getDarkAvatarImage(featureId);
+        if (avatarImage == null || avatarImage.getAvatar() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+        headers.setCacheControl("public, max-age=31536000, immutable");
+        return ResponseEntity.ok().headers(headers).body(avatarImage.getAvatar());
+    }
+
+    /**
+     * Serve the dark-background avatar variant for a product.
+     * Falls back to the light avatar transparently when no dark variant has been stored yet
+     * (the server-side {@code GET /api/product/{id}/dark-avatar} handles the fallback).
+     *
+     * @param productId The product ID
+     * @return PNG image bytes for the dark avatar, or 404 if no avatar exists at all
+     */
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<byte[]> proxyProductDarkAvatar(@PathVariable("productId") Long productId) {
+        AvatarWrapper avatarImage = productApi.getDarkAvatarImage(productId);
+        if (avatarImage == null || avatarImage.getAvatar() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+        headers.setCacheControl("public, max-age=31536000, immutable");
+        return ResponseEntity.ok().headers(headers).body(avatarImage.getAvatar());
     }
 
     /**

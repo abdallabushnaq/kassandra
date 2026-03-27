@@ -29,6 +29,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
@@ -274,7 +275,8 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                         .set("display", "block")
                         .set("margin", "0")
                         .set("padding", "0");
-                avatar.setSrc(product.getAvatarUrl());
+                boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                avatar.setSrc(product.getAvatarUrl(isDark));
                 avatar.setAlt(product.getName());
                 return avatar;
             }));
