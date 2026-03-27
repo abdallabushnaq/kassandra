@@ -22,7 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.BurnDownGraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.ErrorException;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -56,7 +56,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
     private final        Sprint            sprint;
 
     public GanttRenderer(Context context, String sprintName, List<Throwable> exceptions, LocalDateTime now, boolean completed,
-                         Sprint sprint/*, int chartWidth, int chartHeight*/, String cssClass, BurnDownGraphicsTheme graphicsTheme)
+                         Sprint sprint/*, int chartWidth, int chartHeight*/, String cssClass, GraphicsTheme graphicsTheme)
             throws Exception {
         super(context, sprintName/*, context.bankHolidays*/, completed/*, chartWidth, chartHeight*/, 1, 14, 14, graphicsTheme);
 //        this.ganttFileName = ganttFileName;

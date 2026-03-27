@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.kassandra.report.dao.theme;
 
 @Deprecated
 public class BurnDownGraphicsTheme extends ScheduleGraphicsTheme {
-    public final BurndownTheme burndownTheme = new BurndownTheme();
 
 
 //    public Color getHeatColor(int index) {

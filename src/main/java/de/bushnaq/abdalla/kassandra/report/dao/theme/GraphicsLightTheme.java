@@ -21,7 +21,7 @@ import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 
 import java.awt.*;
 
-public class GraphicsLightTheme extends BurnDownGraphicsTheme {
+public class GraphicsLightTheme extends GraphicsTheme {
     public static final Color[] KELLY_COLORS = {
 
             Color.red,//

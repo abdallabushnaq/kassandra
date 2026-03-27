@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.report;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.BurnDownGraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import org.slf4j.Logger;
@@ -39,23 +39,23 @@ import java.time.LocalDateTime;
  * @author abdalla.bushnaq
  */
 public abstract class AbstractRenderer {
-    public static final    int                   MAX_DAY_WIDTH              = 20;
-    protected static final float                 STANDARD_LINE_STROKE_WIDTH = 3.1f;
-    protected final        Font                  authorFont                 = new Font(Font.SANS_SERIF, Font.BOLD, 12);
-    protected              Users                 authors                    = new Users();
-    protected              Font                  bankHolidayFont            = null;
+    public static final    int                MAX_DAY_WIDTH              = 20;
+    protected static final float              STANDARD_LINE_STROKE_WIDTH = 3.1f;
+    protected final        Font               authorFont                 = new Font(Font.SANS_SERIF, Font.BOLD, 12);
+    protected              Users              authors                    = new Users();
+    protected              Font               bankHolidayFont            = null;
     //    private                Map<LocalDate, String> bankHolidays;
-    private                boolean               calendarAtBottom;
-    public                 CalendarXAxes         calendarXAxes;
-    public                 int                   chartHeight;
-    public                 int                   chartWidth;
-    public                 int                   days                       = 3;
-    public final           GraphSquare           diagram                    = new GraphSquare();
-    protected              int                   firstDayX                  = 0;
-    public                 ExtendedGraphics2D    graphics2D;
-    public                 BurnDownGraphicsTheme graphicsTheme;
-    protected final        Logger                logger                     = LoggerFactory.getLogger(this.getClass());
-    public                 Milestones            milestones;
+    private                boolean            calendarAtBottom;
+    public                 CalendarXAxes      calendarXAxes;
+    public                 int                chartHeight;
+    public                 int                chartWidth;
+    public                 int                days                       = 3;
+    public final           GraphSquare        diagram                    = new GraphSquare();
+    protected              int                firstDayX                  = 0;
+    public                 ExtendedGraphics2D graphics2D;
+    public                 GraphicsTheme      graphicsTheme;
+    protected final        Logger             logger                     = LoggerFactory.getLogger(this.getClass());
+    public                 Milestones         milestones;
 
     public AbstractRenderer() {
 
@@ -71,7 +71,7 @@ public abstract class AbstractRenderer {
     }
 
     public AbstractRenderer(String sprintName/*, Map<LocalDate, String> bankHolidays*/, boolean completed/*, int chartWidth, int chartHeight*/, int preRun, int postRun,
-                            BurnDownGraphicsTheme graphicsTheme) throws IOException {
+                            GraphicsTheme graphicsTheme) throws IOException {
 //        this.bankHolidays  = bankHolidays;
         this.graphicsTheme = graphicsTheme;
 //        this.chartWidth    = chartWidth;

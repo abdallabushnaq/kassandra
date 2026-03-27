@@ -25,7 +25,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.BurnDownGraphicsTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.GraphicsTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.svg.util.ExtendedPolygon;
@@ -65,7 +65,7 @@ public class BurnDownRenderer extends AbstractRenderer {
     private              Color                  extrapolationColor;
     public               BurnDownGuide          ganttWorkWithBufferPerDayAccumulated                      = null;// max work per day, were every day has the amount of work planned at that day and all days before that
     public               BurnDownGuide          ganttWorkWithoutBufferPerDayAccumulated                   = null;// min work per day, were every day has the amount of work planned at that day and all days before that
-    protected            BurnDownGraphicsTheme  graphicsTheme;
+    protected            GraphicsTheme          graphicsTheme;
     protected            LocalDateTime          lastWorklog;
     private final        Duration               maxActualWorked;
     private              Duration               maxWorked;
