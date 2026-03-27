@@ -41,6 +41,7 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import lombok.extern.slf4j.Slf4j;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -56,6 +57,7 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
 /**
  * A reusable dialog for creating and editing users.
  */
+@Slf4j
 public class UserDialog extends Dialog {
 
     public static final String                 CANCEL_BUTTON                 = "cancel-user-button";
@@ -75,6 +77,8 @@ public class UserDialog extends Dialog {
     private             byte[]                 generatedImageBytes;
     private             byte[]                 generatedImageBytesOriginal;
     private             String                 generatedImagePrompt;
+    private volatile    byte[]                 generatedDarkImageBytes;
+    private volatile    byte[]                 generatedDarkImageBytesOriginal;
     private final       Image                  headerAvatar;
     private final       boolean                isEditMode;
     private final       DatePicker             lastWorkingDayPicker;
@@ -325,25 +329,20 @@ public class UserDialog extends Dialog {
         Shortcuts.addShortcutListener(this, e -> save(), Key.ENTER);
     }
 
-    private void handleGeneratedImage(GeneratedImageResult result) {
-        generatedImageBytes         = result.getResizedImage();
-        generatedImageBytesOriginal = result.getOriginalImage();
-        generatedImagePrompt        = result.getPrompt();
-
-        // Compute hash from the resized image
-//        String newHash = AvatarUtil.computeHash(generatedImageBytes);
-
-        // For edit mode: Update hash in user DTO and save avatar to database immediately
-//        if (isEditMode && user != null) {
-//            user.setAvatarHash(newHash);
-//            userApi.updateAvatarFull(user.getId(), generatedImageBytes, generatedImageBytesOriginal, generatedImagePrompt);
-//        }
+    private void handleGeneratedImage(GeneratedImageResult lightResult, GeneratedImageResult darkResult) {
+        generatedImageBytes         = lightResult.getResizedImage();
+        generatedImageBytesOriginal = lightResult.getOriginalImage();
+        generatedImagePrompt        = lightResult.getPrompt();
+        if (darkResult != null) {
+            generatedDarkImageBytes         = darkResult.getResizedImage();
+            generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
+        }
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
             // Create StreamResource for the generated image
             StreamResource resource = new StreamResource("user-avatar.png",
-                    () -> new ByteArrayInputStream(result.getResizedImage()));
+                    () -> new ByteArrayInputStream(lightResult.getResizedImage()));
 
             // Show preview
             avatarPreview.setSrc(resource);
@@ -369,12 +368,16 @@ public class UserDialog extends Dialog {
             defaultPrompt = User.getDefaultAvatarPrompt(nameField.getValue());
         }
 
-        byte[] initialImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 stableDiffusionService,
                 defaultPrompt,
+                true,
+                "user",
                 this::handleGeneratedImage,
-                initialImage
+                initialImage,
+                initialDarkImage
         );
         imageDialog.open();
     }
@@ -413,6 +416,8 @@ public class UserDialog extends Dialog {
         byte[] avatarImage         = generatedImageBytes;
         byte[] avatarImageOriginal = generatedImageBytesOriginal;
         String avatarPrompt        = generatedImagePrompt;
+        byte[] darkAvatarImage     = generatedDarkImageBytes;
+        byte[] darkAvatarImageOriginal = generatedDarkImageBytesOriginal;
 
         if (avatarImage != null) {
             String newHash = AvatarUtil.computeHash(avatarImage);
@@ -425,6 +430,10 @@ public class UserDialog extends Dialog {
             avatarPrompt        = image.getPrompt();
             String newHash = AvatarUtil.computeHash(image.getResizedImage());
             userToSave.setAvatarHash(newHash);
+            // Also generate a dark default programmatically
+            GeneratedImageResult darkImage = stableDiffusionService.generateDefaultDarkAvatar("user");
+            darkAvatarImage         = darkImage.getResizedImage();
+            darkAvatarImageOriginal = darkImage.getOriginalImage();
         }
 
         try {
@@ -436,7 +445,9 @@ public class UserDialog extends Dialog {
                             userToSave.getId(),
                             avatarImage,
                             avatarImageOriginal,
-                            avatarPrompt
+                            avatarPrompt,
+                            darkAvatarImage,
+                            darkAvatarImageOriginal
                     );
                 }
             } else {
@@ -448,7 +459,9 @@ public class UserDialog extends Dialog {
                             saved.getId(),
                             avatarImage,
                             avatarImageOriginal,
-                            avatarPrompt
+                            avatarPrompt,
+                            darkAvatarImage,
+                            darkAvatarImageOriginal
                     );
                 }
             }

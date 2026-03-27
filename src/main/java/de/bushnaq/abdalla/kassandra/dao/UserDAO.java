@@ -47,6 +47,8 @@ public class UserDAO extends AbstractTimeAwareDAO {
     private List<AvailabilityDAO> availabilities = new ArrayList<>();
     @Column(name = "avatar_hash", length = 16)
     private String                avatarHash;
+    @Column(name = "dark_avatar_hash", length = 16)
+    private String                darkAvatarHash;
     @Column(nullable = false)
     private Color                 color;
     @Column(nullable = false, unique = true)

@@ -79,8 +79,6 @@ public class StableDiffusionService {
      */
     public GeneratedImageResult generateDefaultAvatar(String iconName) {
         log.warn("Stable Diffusion not available, using default avatar" + (iconName != null ? " with icon: " + iconName : ""));
-
-        // Load PNG resource if icon name is provided
         byte[] pngImageBytes = null;
         if (iconName != null && !iconName.trim().isEmpty()) {
             pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
@@ -88,82 +86,82 @@ public class StableDiffusionService {
                 log.warn("Failed to load icon '{}', generating avatar without icon", iconName);
             }
         }
-
-        return generateDefaultAvatarInternal(pngImageBytes);
+        return generateDefaultAvatarInternal(pngImageBytes, false);
     }
 
     /**
-     * Internal method to generate a default avatar image with white background and dotted light gray border.
+     * Generate a default dark-background avatar image with dark background and dotted mid-gray border.
+     * Used as a fallback when Stable Diffusion is not available for dark-mode avatar generation.
+     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
      *
-     * @param pngImageBytes Optional PNG image bytes to render in the center of the image
+     * @param iconName Optional icon name (without .png extension) to render in the center of the image.
+     *                 Icons are loaded from META-INF/resources/ui/icons/ directory.
+     *                 Pass null for no icon. Examples: "user", "cube", "lightbulb", "exit"
      * @return GeneratedImageResult containing original and resized images
      */
-    private GeneratedImageResult generateDefaultAvatarInternal(byte[] pngImageBytes) {
-        log.warn("Stable Diffusion not available, using default avatar");
+    public GeneratedImageResult generateDefaultDarkAvatar(String iconName) {
+        log.warn("Stable Diffusion not available, using default dark avatar" + (iconName != null ? " with icon: " + iconName : ""));
+        byte[] pngImageBytes = null;
+        if (iconName != null && !iconName.trim().isEmpty()) {
+            pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
+            if (pngImageBytes == null) {
+                log.warn("Failed to load icon '{}', generating dark avatar without icon", iconName);
+            }
+        }
+        return generateDefaultAvatarInternal(pngImageBytes, true);
+    }
+
+    /**
+     * Internal method to generate a default avatar image.
+     *
+     * @param pngImageBytes Optional PNG image bytes to render in the center of the image
+     * @param dark          {@code true} to use a dark background (near-black) and mid-gray border;
+     *                      {@code false} for the classic white background and light-gray border
+     * @return GeneratedImageResult containing original and resized images
+     */
+    private GeneratedImageResult generateDefaultAvatarInternal(byte[] pngImageBytes, boolean dark) {
+        log.warn("Stable Diffusion not available, using default {} avatar", dark ? "dark" : "light");
         try {
-            // Get sizes from config
             int originalSize = config.getGenerationSize();
             int resizedSize  = config.getOutputSize();
 
-            // Calculate scaling ratio to ensure border visibility after resize
-            // We need to consider that images are often displayed at smaller sizes (e.g., 24x24)
-            // So we calculate based on a 24x24 target to ensure visibility at that size
-            int   targetDisplaySize                = 24; // Typical small icon size
+            int   targetDisplaySize                = 24;
             float scalingRatioToSmallest           = (float) targetDisplaySize / (float) originalSize;
-            float minBorderThicknessInSmallestSize = 1.0f; // Want at least 1px in 24x24 display
+            float minBorderThicknessInSmallestSize = 1.0f;
             float borderThickness                  = Math.max(2.0f, minBorderThicknessInSmallestSize / scalingRatioToSmallest);
+            float dashLength                       = 5.0f / scalingRatioToSmallest;
 
-            // Scale dash pattern proportionally to maintain visibility
-            float dashLength = 5.0f / scalingRatioToSmallest;
-
-            // Create original size image
             BufferedImage originalImage = new BufferedImage(originalSize, originalSize, BufferedImage.TYPE_INT_ARGB);
             Graphics2D    graphics      = originalImage.createGraphics();
 
-            // Enable high-quality rendering
             graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
-            // Fill with white background
-            graphics.setColor(Color.WHITE);
+            // Background: near-black for dark mode, white for light mode
+            graphics.setColor(dark ? new Color(30, 30, 30) : Color.WHITE);
             graphics.fillRect(0, 0, originalSize, originalSize);
 
-            // Draw dotted light gray border with calculated thickness
-            graphics.setColor(new Color(211, 211, 211)); // Light gray
-            float[] dashPattern = {dashLength, dashLength}; // Scaled dash pattern
+            // Border: mid-gray for dark mode, light gray for light mode
+            graphics.setColor(dark ? new Color(120, 120, 120) : new Color(211, 211, 211));
+            float[] dashPattern = {dashLength, dashLength};
             graphics.setStroke(new BasicStroke(borderThickness, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, dashPattern, 0.0f));
 
-            // The stroke is centered on the path, so half extends inward and half outward
-            // To keep the entire stroke visible, we need to inset by at least half the stroke width
-            // Add a bit more margin (2px) to ensure the border is fully visible
             float halfStroke  = borderThickness / 2.0f;
             int   borderInset = (int) Math.ceil(halfStroke) + 2;
-
             graphics.drawRect(borderInset, borderInset, originalSize - (2 * borderInset), originalSize - (2 * borderInset));
 
-            // Render PNG image if provided
             if (pngImageBytes != null && pngImageBytes.length > 0) {
                 try {
-                    // Read the PNG image from bytes
                     BufferedImage pngImage = ImageIO.read(new ByteArrayInputStream(pngImageBytes));
-
                     if (pngImage != null) {
-                        // Calculate size to fit 60% of the image size for good visual balance
-                        int targetSize = originalSize;
-
-                        // Calculate scaling to fit within target size while maintaining aspect ratio
-                        double widthRatio   = (double) targetSize / pngImage.getWidth();
-                        double heightRatio  = (double) targetSize / pngImage.getHeight();
-                        double scalingRatio = Math.min(widthRatio, heightRatio);
-
-                        int scaledWidth  = (int) (pngImage.getWidth() * scalingRatio);
-                        int scaledHeight = (int) (pngImage.getHeight() * scalingRatio);
-
-                        // Center the image
-                        int imageX = (originalSize - scaledWidth) / 2;
-                        int imageY = (originalSize - scaledHeight) / 2;
-
-                        // Draw the scaled image with high quality
+                        int    targetSize    = originalSize;
+                        double widthRatio    = (double) targetSize / pngImage.getWidth();
+                        double heightRatio   = (double) targetSize / pngImage.getHeight();
+                        double scalingRatio  = Math.min(widthRatio, heightRatio);
+                        int    scaledWidth   = (int) (pngImage.getWidth() * scalingRatio);
+                        int    scaledHeight  = (int) (pngImage.getHeight() * scalingRatio);
+                        int    imageX        = (originalSize - scaledWidth) / 2;
+                        int    imageY        = (originalSize - scaledHeight) / 2;
                         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                         graphics.drawImage(pngImage, imageX, imageY, scaledWidth, scaledHeight, null);
                     } else {
@@ -176,30 +174,23 @@ public class StableDiffusionService {
 
             graphics.dispose();
 
-            // Convert original image to byte array
             ByteArrayOutputStream originalOutputStream = new ByteArrayOutputStream();
             ImageIO.write(originalImage, "PNG", originalOutputStream);
             byte[] originalBytes = originalOutputStream.toByteArray();
 
-            // Create resized image
             BufferedImage resizedImage    = new BufferedImage(resizedSize, resizedSize, BufferedImage.TYPE_INT_ARGB);
             Graphics2D    resizedGraphics = resizedImage.createGraphics();
-
-            // Enable high-quality rendering for resizing
             resizedGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
             resizedGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             resizedGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            // Draw scaled image
             resizedGraphics.drawImage(originalImage, 0, 0, resizedSize, resizedSize, null);
             resizedGraphics.dispose();
 
-            // Convert resized image to byte array
             ByteArrayOutputStream resizedOutputStream = new ByteArrayOutputStream();
             ImageIO.write(resizedImage, "PNG", resizedOutputStream);
             byte[] resizedBytes = resizedOutputStream.toByteArray();
 
-            return new GeneratedImageResult(originalBytes, "Default Avatar", resizedBytes);
+            return new GeneratedImageResult(originalBytes, dark ? "Default Dark Avatar" : "Default Avatar", resizedBytes);
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate default avatar: " + e.getMessage(), e);
         }
@@ -272,10 +263,11 @@ public class StableDiffusionService {
                 // Resize image to desired output size
                 byte[] resizedImage = resizeImage(originalImage, outputSize);
 
-                log.info("Successfully generated original ({}x{}) and resized ({}x{}) images",
-                        config.getGenerationSize(), config.getGenerationSize(), outputSize, outputSize);
+                long seed = parseSeedFromInfo(response.getInfo());
+                log.info("Successfully generated original ({}x{}) and resized ({}x{}) images with seed {}",
+                        config.getGenerationSize(), config.getGenerationSize(), outputSize, outputSize, seed);
 
-                return new GeneratedImageResult(originalImage, prompt, resizedImage);
+                return new GeneratedImageResult(originalImage, prompt, resizedImage, seed);
             } finally {
                 // Stop progress polling
                 if (progressThread != null) {
@@ -342,17 +334,60 @@ public class StableDiffusionService {
     }
 
     /**
+     * Generate an image from an initial image and a text prompt (img2img) using the configured output size.
+     * Convenience overload — seed defaults to {@code -1} (random).
+     *
+     * @param initImage The initial image bytes (PNG or JPG)
+     * @param prompt    The text description guiding the transformation
+     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt) throws StableDiffusionException {
+        return img2imgWithOriginal(initImage, prompt, config.getOutputSize(), null, -1L);
+    }
+
+    /**
+     * Generate an image from an initial image and a text prompt (img2img) with a specific seed.
+     * Uses the configured output size and no progress callback.
+     *
+     * @param initImage The initial image bytes (PNG or JPG)
+     * @param prompt    The text description guiding the transformation
+     * @param seed      Seed to use; pass {@code -1} for a random seed
+     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, long seed) throws StableDiffusionException {
+        return img2imgWithOriginal(initImage, prompt, config.getOutputSize(), null, seed);
+    }
+
+    /**
+     * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
+     * Seed defaults to {@code -1} (random).
+     *
+     * @param initImage        The initial image bytes (PNG or JPG)
+     * @param prompt           The text description of the image to generate
+     * @param outputSize       The desired output size (square image)
+     * @param progressCallback Callback for progress updates (can be null)
+     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
+        return img2imgWithOriginal(initImage, prompt, outputSize, progressCallback, -1L);
+    }
+
+    /**
      * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
      *
      * @param initImage        The initial image bytes (PNG or JPG)
      * @param prompt           The text description of the image to generate
      * @param outputSize       The desired output size (square image)
      * @param progressCallback Callback for progress updates (can be null)
-     * @return GeneratedImageResult containing original, resized images, and the prompt
+     * @param seed             Seed to use; pass {@code -1} for a random seed
+     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
      * @throws StableDiffusionException if generation fails
      */
-    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
-        log.info("Generating image-to-image with prompt: '{}' at size {}x{}", prompt, outputSize, outputSize);
+    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback, long seed) throws StableDiffusionException {
+        log.info("Generating image-to-image with prompt: '{}', seed: {}, output: {}x{}", prompt, seed, outputSize, outputSize);
         try {
             String base64Init = java.util.Base64.getEncoder().encodeToString(initImage);
             ImageToImageRequest request = ImageToImageRequest.builder()
@@ -364,7 +399,7 @@ public class StableDiffusionService {
                     .width(config.getGenerationSize())
                     .height(config.getGenerationSize())
                     .batchSize(1)
-                    .seed(-1L)
+                    .seed(seed)
                     .initImages(new String[]{base64Init})
                     .build();
 
@@ -391,8 +426,9 @@ public class StableDiffusionService {
                 String base64Image   = response.getImages().getFirst();
                 byte[] originalImage = java.util.Base64.getDecoder().decode(base64Image);
                 byte[] resizedImage  = resizeImage(originalImage, outputSize);
-                log.info("Successfully generated and resized image-to-image to {}x{}", outputSize, outputSize);
-                return new GeneratedImageResult(originalImage, prompt, resizedImage);
+                long   actualSeed    = parseSeedFromInfo(response.getInfo());
+                log.info("Successfully generated and resized image-to-image to {}x{} with seed {}", outputSize, outputSize, actualSeed);
+                return new GeneratedImageResult(originalImage, prompt, resizedImage, actualSeed);
             } finally {
                 if (progressThread != null) {
                     progressThread.interrupt();
@@ -446,6 +482,39 @@ public class StableDiffusionService {
         } catch (Exception e) {
             log.error("Failed to load PNG resource '{}': {}", resourcePath, e.getMessage(), e);
             return null;
+        }
+    }
+
+    /**
+     * Parse the {@code seed} value from the JSON string returned in {@code ImageGenerationResponse.info}.
+     * The info field contains a JSON object such as {@code {"seed": 1234567890, ...}}.
+     *
+     * @param info The raw info JSON string from the SD API response
+     * @return The parsed seed, or {@code -1} if parsing fails or info is null
+     */
+    private long parseSeedFromInfo(String info) {
+        if (info == null || info.isEmpty()) {
+            return -1L;
+        }
+        try {
+            int idx = info.indexOf("\"seed\":");
+            if (idx < 0) {
+                return -1L;
+            }
+            // Skip past "seed": and any whitespace
+            String rest = info.substring(idx + 7).stripLeading();
+            StringBuilder sb = new StringBuilder();
+            for (char c : rest.toCharArray()) {
+                if (Character.isDigit(c) || (sb.isEmpty() && c == '-')) {
+                    sb.append(c);
+                } else if (!sb.isEmpty()) {
+                    break;
+                }
+            }
+            return sb.isEmpty() ? -1L : Long.parseLong(sb.toString());
+        } catch (Exception e) {
+            log.debug("Failed to parse seed from SD info: {}", e.getMessage());
+            return -1L;
         }
     }
 

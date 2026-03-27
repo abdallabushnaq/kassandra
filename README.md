@@ -35,26 +35,26 @@ tbd
 6. ✅ User crud
 7. ✅ User groups crud
 8. ❌ Task crud
-   18.❌ worklog crud
-9. ✅ User availability time-frames
-10. ✅ User location time-frames
-11. ❌ User work week time-frames
-12. ✅ National Holidays
-13. ✅ vacations
-14. ✅ sick leaves
-15. ✅ Authorization, access control using user groups on project level.
-16. ✅ Gantt chart
-17. ❌ Automatic Gantt buffer calculation
-18. ✅ Burn down chart
-19. ❌ Close project Release Date.
-20. ❌ Dialog should set curser to edit box
-21. ❌ Dialog confirmation button should react to return
-22. ❌ add aura theme
-23. ❌ add dark avatar
-24. ❌ show product, versions, features, in sprint view
-25. ❌ show Versions, Features, Sprints pages in menu
-26. ❌ can we run browser in full screen mode?
-27. ❌ data scenario simulation generator
+9. ❌ worklog crud
+10. ✅ User availability time-frames
+11. ✅ User location time-frames
+12. ❌ User work week time-frames
+13. ✅ National Holidays
+14. ✅ vacations
+15. ✅ sick leaves
+16. ✅ Authorization, access control using user groups on project level.
+17. ✅ Gantt chart
+18. ❌ Automatic Gantt buffer calculation
+19. ✅ Burn down chart
+20. ❌ Close project Release Date.
+21. ✅ Dialog should set curser to edit box
+22. ✅ Dialog confirmation button should react to return
+23. ❌ add aura theme
+24. ❌ add dark avatar
+25. ❌ show product, versions, features, in sprint view
+26. ❌ show Versions, Features, Sprints pages in menu
+27. ❌ can we run browser in full screen mode?
+28. ❌ data scenario simulation generator
     1. ✅ Simulator Write the use case as a Story in the project or product
     2. ❌ include closed and delayed sprints.
 

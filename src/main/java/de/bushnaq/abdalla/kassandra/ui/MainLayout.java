@@ -46,6 +46,7 @@ import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
 import jakarta.annotation.security.PermitAll;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 
@@ -56,6 +57,7 @@ import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 
 @PermitAll // Only authenticated users can access views using this layout
 //@JsModule("/tooltips.js")
+@Slf4j
 public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     public static final String           ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
@@ -75,6 +77,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     @Getter
     private final       Breadcrumbs      breadcrumbs                     = new Breadcrumbs();
     private             Image            logoImage;   // Store reference to logo image
+    private             com.vaadin.flow.component.html.Image userAvatarImage; // updated on theme toggle
     private final       Map<Tab, String> tabToPathMap                    = new HashMap<>();
     private             Tabs             tabs;
     private final       UserApi          userApi;
@@ -228,11 +231,12 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         ThemeToggle themeToggle = new ThemeToggle();
         themeToggle.setId(ID_THEME_TOGGLE);
 
-        // Add click listener to update logo when theme is toggled
+        // Add click listener to update logo and user avatar when theme is toggled
         themeToggle.addClickListener(event -> {
             UI      ui          = UI.getCurrent();
             boolean isDarkTheme = ui.getElement().getThemeList().contains(Lumo.DARK);
             updateLogoBasedOnTheme(isDarkTheme);
+            updateUserAvatarBasedOnTheme(isDarkTheme);
         });
 
         return themeToggle;
@@ -257,17 +261,19 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         Component avatarComponent;
         if (user != null) {
             // User has a custom avatar image - use URL-based loading
-            com.vaadin.flow.component.html.Image avatarImage = new com.vaadin.flow.component.html.Image();
-            avatarImage.setWidth("24px");
-            avatarImage.setHeight("24px");
-            avatarImage.getStyle()
+            userAvatarImage = new com.vaadin.flow.component.html.Image();
+            userAvatarImage.setWidth("24px");
+            userAvatarImage.setHeight("24px");
+            userAvatarImage.getStyle()
                     .set("border-radius", "4px")
                     .set("object-fit", "cover");
 
-            // Use REST API endpoint for avatar with hash-based caching
-            avatarImage.setSrc(user.getAvatarUrl());
-            avatarComponent = avatarImage;
+            // Use REST API endpoint for avatar with hash-based caching; theme-aware
+            boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+            userAvatarImage.setSrc(user.getAvatarUrl(isDark));
+            avatarComponent = userAvatarImage;
         } else {
+            userAvatarImage = null;
             // Use default avatar
             var avatar = new Avatar(userEmail);
             avatar.addThemeVariants(AvatarVariant.LUMO_XSMALL);
@@ -368,6 +374,27 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             } else {
                 logoImage.setSrc("images/logo.svg");
             }
+        }
+    }
+
+    /**
+     * Updates the user-menu avatar source to the light or dark variant after a theme toggle.
+     * No-op when no user is logged in or the user has no custom avatar.
+     *
+     * @param isDarkTheme true if dark theme is now active, false otherwise
+     */
+    private void updateUserAvatarBasedOnTheme(boolean isDarkTheme) {
+        if (userAvatarImage == null) {
+            return;
+        }
+        final String userEmail = SecurityUtils.getUserEmail();
+        if (userEmail.equals(SecurityUtils.GUEST)) {
+            return;
+        }
+        try {
+            userApi.getByEmail(userEmail).ifPresent(u -> userAvatarImage.setSrc(u.getAvatarUrl(isDarkTheme)));
+        } catch (Exception e) {
+            log.debug("Could not refresh user avatar after theme toggle: {}", e.getMessage());
         }
     }
 }

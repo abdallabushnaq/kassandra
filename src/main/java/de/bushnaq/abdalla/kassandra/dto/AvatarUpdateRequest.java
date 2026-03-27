@@ -24,24 +24,35 @@ import lombok.NoArgsConstructor;
 /**
  * DTO for updating avatar images and prompt.
  * Used to send avatar data to REST API endpoints since avatar fields are @JsonIgnore.
+ * Carries both the light and dark variants in a single request.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class AvatarUpdateRequest {
     /**
-     * Resized avatar image (e.g., 64x64) as base64 encoded string
+     * Resized avatar image (e.g., 64x64) for the light theme.
      */
     private byte[] avatarImage;
 
     /**
-     * Original avatar image (e.g., 512x512) as base64 encoded string
+     * Original avatar image (e.g., 512x512) for the light theme.
      */
     private byte[] avatarImageOriginal;
 
     /**
-     * The prompt used to generate the avatar
+     * The prompt used to generate the light avatar.
      */
     private String avatarPrompt;
+
+    /**
+     * Resized dark-mode avatar image (e.g., 64x64).
+     */
+    private byte[] darkAvatarImage;
+
+    /**
+     * Original dark-mode avatar image (e.g., 512x512).
+     */
+    private byte[] darkAvatarImageOriginal;
 }
 

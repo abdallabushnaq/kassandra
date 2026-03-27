@@ -110,13 +110,29 @@ public class UserApi extends AbstractApi {
      * Get avatar image bytes for a user.
      *
      * @param userId The user ID
-     * @return The avatar image as byte array, or null if not found
+     * @return The light avatar image, or null if not found
      */
     public AvatarWrapper getAvatarImage(Long userId) {
-        // Log message converters
-//        restTemplate.getMessageConverters().forEach(c -> System.out.println("Converter: " + c.getClass()));
         ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user/{id}/avatar",
+                HttpMethod.GET,
+                createHttpEntity(),
+                AvatarWrapper.class,
+                userId
+        ));
+        return response.getBody();
+    }
+
+    /**
+     * Get the dark-mode avatar image bytes for a user.
+     * The server falls back to the light image automatically if no dark variant has been stored yet.
+     *
+     * @param userId The user ID
+     * @return The dark avatar image (or light fallback), or null if not found
+     */
+    public AvatarWrapper getDarkAvatarImage(Long userId) {
+        ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/user/{id}/dark-avatar",
                 HttpMethod.GET,
                 createHttpEntity(),
                 AvatarWrapper.class,
@@ -203,25 +219,37 @@ public class UserApi extends AbstractApi {
     }
 
     /**
-     * Update user avatar with all fields (resized, original, and prompt).
+     * Update user avatar with light-theme fields only (resized, original, and prompt).
+     * Delegates to {@link #updateAvatarFull(Long, byte[], byte[], String, byte[], byte[])} with null dark images.
      *
      * @param userId        The user ID
-     * @param resizedImage  The resized avatar image bytes (e.g., 64x64)
-     * @param originalImage The original avatar image bytes (e.g., 512x512)
-     * @param prompt        The prompt used to generate the avatar
+     * @param resizedImage  The resized light avatar image bytes (e.g., 64x64)
+     * @param originalImage The original light avatar image bytes (e.g., 512x512)
+     * @param prompt        The prompt used to generate the light avatar
      */
     public void updateAvatarFull(Long userId, byte[] resizedImage, byte[] originalImage, String prompt) {
+        updateAvatarFull(userId, resizedImage, originalImage, prompt, null, null);
+    }
+
+    /**
+     * Update user avatar with both light and dark theme fields in a single request.
+     * Dark fields are optional — pass {@code null} to leave the stored dark avatar unchanged.
+     *
+     * @param userId             The user ID
+     * @param resizedImage       Resized light avatar image bytes (e.g., 64x64), or null to skip
+     * @param originalImage      Original light avatar image bytes (e.g., 512x512), or null to skip
+     * @param prompt             Prompt used to generate the light avatar, or null to skip
+     * @param darkResizedImage   Resized dark avatar image bytes (e.g., 64x64), or null to skip
+     * @param darkOriginalImage  Original dark avatar image bytes (e.g., 512x512), or null to skip
+     */
+    public void updateAvatarFull(Long userId, byte[] resizedImage, byte[] originalImage, String prompt,
+            byte[] darkResizedImage, byte[] darkOriginalImage) {
         AvatarUpdateRequest request = new AvatarUpdateRequest();
-
-        if (resizedImage != null) {
-            request.setAvatarImage(resizedImage);
-        }
-
-        if (originalImage != null) {
-            request.setAvatarImageOriginal(originalImage);
-        }
-
+        request.setAvatarImage(resizedImage);
+        request.setAvatarImageOriginal(originalImage);
         request.setAvatarPrompt(prompt);
+        request.setDarkAvatarImage(darkResizedImage);
+        request.setDarkAvatarImageOriginal(darkOriginalImage);
 
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user/{id}/avatar/full",

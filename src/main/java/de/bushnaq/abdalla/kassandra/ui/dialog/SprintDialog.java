@@ -238,7 +238,8 @@ public class SprintDialog extends Dialog {
         Shortcuts.addShortcutListener(this, e -> save(), Key.ENTER);
     }
 
-    private void handleGeneratedImage(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result) {
+    private void handleGeneratedImage(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result,
+            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult) {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();

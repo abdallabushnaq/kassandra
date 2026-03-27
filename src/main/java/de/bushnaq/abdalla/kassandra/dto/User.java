@@ -53,6 +53,7 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     @JsonIgnore
     private ProjectCalendar    calendar;
     private Color              color;
+    private String             darkAvatarHash;
     private String             email;
     private LocalDate          firstWorkingDay;
     private Long               id;
@@ -103,17 +104,41 @@ public class User extends AbstractTimeAware implements Comparable<User> {
 
     /**
      * Get the avatar URL with hash parameter for proper caching.
-     * The hash ensures that when the avatar changes, the URL changes, forcing the browser to fetch the new image.
+     * When {@code dark} is {@code true} and a dark avatar has been generated, the dark variant URL is
+     * returned. If no dark avatar is available yet, falls back transparently to the light variant URL.
+     * <p>
+     * Typical Vaadin call-site pattern:
+     * <pre>
+     *     boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+     *     avatarImage.setSrc(user.getAvatarUrl(isDark));
+     * </pre>
      *
-     * @return The avatar URL with hash parameter if hash is available, otherwise just the base URL
+     * @param dark {@code true} to request the dark-background avatar variant
+     * @return The avatar URL with hash parameter for cache-busting; falls back to the light URL when
+     * no dark avatar has been stored yet
      */
     @JsonIgnore
-    public String getAvatarUrl() {
+    public String getAvatarUrl(boolean dark) {
+        if (dark && darkAvatarHash != null && !darkAvatarHash.isEmpty()) {
+            return "/frontend/dark-avatar-proxy/user/" + id + "?h=" + darkAvatarHash;
+        }
+        // Light variant (or dark fallback when dark avatar not yet available)
         String url = "/frontend/avatar-proxy/user/" + id;
         if (avatarHash != null && !avatarHash.isEmpty()) {
             url += "?h=" + avatarHash;
         }
         return url;
+    }
+
+    /**
+     * Get the light avatar URL with hash parameter for proper caching.
+     * Delegates to {@link #getAvatarUrl(boolean)} with {@code dark = false}.
+     *
+     * @return The light avatar URL with hash parameter if hash is available, otherwise just the base URL
+     */
+    @JsonIgnore
+    public String getAvatarUrl() {
+        return getAvatarUrl(false);
     }
 
     /**
@@ -135,8 +160,9 @@ public class User extends AbstractTimeAware implements Comparable<User> {
      * @return A default prompt string for generating user avatar images
      */
     public static String getDefaultAvatarPrompt(String userName) {
-        return "Professional avatar portrait of '" + userName + "', business style, 3D, neutral background";
+        return "Avatar portrait of '" + userName + "', business style, photo quality";
     }
+
 
     @JsonIgnore
     public String getKey() {

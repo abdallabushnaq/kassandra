@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
@@ -29,6 +30,7 @@ import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
@@ -193,8 +195,9 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
                             .set("margin", "0")
                             .set("padding", "0");
 
-                    // Use hash-based URL for proper caching
-                    avatar.setSrc(user.getAvatarUrl());
+                    // Use hash-based URL for proper caching; theme-aware
+                    boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                    avatar.setSrc(user.getAvatarUrl(isDark));
                     avatar.setAlt(user.getName());
                     return avatar;
                 }

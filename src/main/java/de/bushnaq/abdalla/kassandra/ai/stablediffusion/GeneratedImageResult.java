@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -26,7 +25,6 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class GeneratedImageResult {
     /**
      * Original image at generation size (e.g., 512x512)
@@ -40,5 +38,34 @@ public class GeneratedImageResult {
      * Resized image at output size (e.g., 64x64)
      */
     private byte[] resizedImage;
-}
+    /**
+     * The seed used by Stable Diffusion; {@code -1} means unknown (e.g., uploaded image or programmatic fallback).
+     */
+    private long   seed = -1L;
 
+    /**
+     * Backward-compatible 3-arg constructor. Seed defaults to {@code -1} (unknown).
+     *
+     * @param originalImage Original-size image bytes
+     * @param prompt        Prompt used to generate the image
+     * @param resizedImage  Resized image bytes
+     */
+    public GeneratedImageResult(byte[] originalImage, String prompt, byte[] resizedImage) {
+        this(originalImage, prompt, resizedImage, -1L);
+    }
+
+    /**
+     * Full constructor.
+     *
+     * @param originalImage Original-size image bytes
+     * @param prompt        Prompt used to generate the image
+     * @param resizedImage  Resized image bytes
+     * @param seed          The SD seed; {@code -1} if not available
+     */
+    public GeneratedImageResult(byte[] originalImage, String prompt, byte[] resizedImage, long seed) {
+        this.originalImage = originalImage;
+        this.prompt        = prompt;
+        this.resizedImage  = resizedImage;
+        this.seed          = seed;
+    }
+}

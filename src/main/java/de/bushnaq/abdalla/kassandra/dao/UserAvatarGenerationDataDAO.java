@@ -33,6 +33,9 @@ public class UserAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
     @Lob
     @Column(name = "avatar_image_original")
     private byte[] avatarImageOriginal;
+    @Lob
+    @Column(name = "dark_avatar_image_original")
+    private byte[] darkAvatarImageOriginal;
     @Column(name = "avatar_prompt", length = 1000)
     private String avatarPrompt;
     @Id

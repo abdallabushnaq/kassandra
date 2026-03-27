@@ -31,6 +31,9 @@ public class UserAvatarDAO extends AbstractTimeAwareDAO {
     @Lob
     @Column(name = "avatar_image")
     private byte[] avatarImage;
+    @Lob
+    @Column(name = "dark_avatar_image")
+    private byte[] darkAvatarImage;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

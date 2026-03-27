@@ -566,7 +566,24 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         log.info("Created user: " + saved.getName() + " with email: " + saved.getEmail());
         addLocation(saved, country, state, start);
         addAvailability(saved, availability, start);
-        userApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
+
+        // Generate dark avatar using img2img from the light original, or a programmatic fallback.
+        // Reuse the same seed so SD produces a visually consistent dark variant.
+        String               basePrompt = User.getDefaultAvatarPrompt(name);
+        GeneratedImageResult darkImage;
+        if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
+            try {
+                darkImage = stableDiffusionService.img2imgWithOriginal(image.getOriginalImage(), basePrompt + " with black background", image.getSeed());
+            } catch (StableDiffusionException e) {
+                System.err.println("Failed to generate dark avatar for user " + name + ": " + e.getMessage());
+                darkImage = stableDiffusionService.generateDefaultDarkAvatar("user");
+            }
+        } else {
+            darkImage = stableDiffusionService.generateDefaultDarkAvatar("user");
+        }
+
+        userApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
+                darkImage.getResizedImage(), darkImage.getOriginalImage());
         System.out.println("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
         userIndex++;
@@ -668,9 +685,9 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     }
 
     private @NotNull GeneratedImageResult generateUserAvatar(String name) throws StableDiffusionException {
-        String prompt = User.getDefaultAvatarPrompt(name);
-        System.out.println("Generating avatar for user: " + name + " with prompt: " + prompt);
-        return stableDiffusionService.generateImageWithOriginal(prompt);
+        String basePrompt = User.getDefaultAvatarPrompt(name);
+        System.out.println("Generating avatar for user: " + name + " with prompt: " + basePrompt);
+        return stableDiffusionService.generateImageWithOriginal(basePrompt + " with white background");
     }
 
     protected Color generateUserColor(int userIndex) {

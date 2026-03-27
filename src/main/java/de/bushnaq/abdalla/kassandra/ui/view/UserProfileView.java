@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H2;
@@ -31,6 +32,7 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
@@ -149,10 +151,15 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         return user;
     }
 
-    private void handleGeneratedAvatar(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result) {
+    private void handleGeneratedAvatar(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result,
+            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult) {
         avatarUpdateRequest.setAvatarImage(result.getResizedImage());
         avatarUpdateRequest.setAvatarImageOriginal(result.getOriginalImage());
         avatarUpdateRequest.setAvatarPrompt(result.getPrompt());
+        if (darkResult != null) {
+            avatarUpdateRequest.setDarkAvatarImage(darkResult.getResizedImage());
+            avatarUpdateRequest.setDarkAvatarImageOriginal(darkResult.getOriginalImage());
+        }
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -240,7 +247,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
 //            resource.setContentType("image/png");
 //            resource.setCacheTime(0);
 //            headerAvatarImage.setSrc(resource);
-            headerAvatarImage.setSrc(currentUser.getAvatarUrl());
+            headerAvatarImage.setSrc(currentUser.getAvatarUrl(UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK)));
             titleIcon = headerAvatarImage;
         }
 //        else {
@@ -278,8 +285,8 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             nameFieldAvatarImage.getStyle()
                     .set("border-radius", "4px")
                     .set("object-fit", "cover");
-            // Use REST API endpoint for avatar with hash-based caching
-            nameFieldAvatarImage.setSrc(currentUser.getAvatarUrl());
+            // Use REST API endpoint for avatar with hash-based caching; theme-aware
+            nameFieldAvatarImage.setSrc(currentUser.getAvatarUrl(UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK)));
             nameField.setPrefixComponent(nameFieldAvatarImage);
         }
 //        else {
@@ -364,12 +371,16 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         }
 
         // Fetch avatar image if it exists (needed for img2img)
-        byte[] initialImage = avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialImage     = avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialDarkImage = avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 stableDiffusionService,
                 defaultPrompt,
+                true,
+                "user",
                 this::handleGeneratedAvatar,
-                initialImage
+                initialImage,
+                initialDarkImage
         );
         imageDialog.open();
     }
@@ -393,9 +404,11 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             }
 
             // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
-            byte[] avatarImage         = avatarUpdateRequest.getAvatarImage();
-            byte[] avatarImageOriginal = avatarUpdateRequest.getAvatarImageOriginal();
-            String avatarPrompt        = avatarUpdateRequest.getAvatarPrompt();
+            byte[] avatarImage             = avatarUpdateRequest.getAvatarImage();
+            byte[] avatarImageOriginal     = avatarUpdateRequest.getAvatarImageOriginal();
+            String avatarPrompt            = avatarUpdateRequest.getAvatarPrompt();
+            byte[] darkAvatarImage         = avatarUpdateRequest.getDarkAvatarImage();
+            byte[] darkAvatarImageOriginal = avatarUpdateRequest.getDarkAvatarImageOriginal();
 
             if (avatarImage != null) {
                 String newHash = AvatarUtil.computeHash(avatarImage);
@@ -418,7 +431,9 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                         currentUser.getId(),
                         avatarImage,
                         avatarImageOriginal,
-                        avatarPrompt
+                        avatarPrompt,
+                        darkAvatarImage,
+                        darkAvatarImageOriginal
                 );
             }
 

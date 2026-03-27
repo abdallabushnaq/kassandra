@@ -63,9 +63,15 @@ public class ImagePromptDialog extends Dialog {
     private final       Button         acceptButton;
     private final       AcceptCallback acceptCallback;
     private final       Button         cancelButton;
+    private final       String         darkIconName;
+    private             Div            darkPreviewContainer; // null when no dark section is shown
+    private final       boolean        enableDark;
     private final       Button         generateButton;
+    private volatile    byte[]         generatedDarkImage;
+    private volatile    byte[]         generatedDarkImageOriginal;
     private             byte[]         generatedImage;
     private             byte[]         generatedImageOriginal;
+    private volatile    long           generatedImageSeed    = -1L;
     private             byte[]         initialImage;
     private final       Div            previewContainer;
     private final       TextArea       promptField;
@@ -75,20 +81,47 @@ public class ImagePromptDialog extends Dialog {
     private final Button                 updateButton;
 
     /**
-     * Creates a dialog for generating AI images.
+     * Creates a dialog for generating AI images (no dark-avatar section).
      *
      * @param stableDiffusionService The Stable Diffusion service
      * @param defaultPrompt          Default prompt text (can be null)
      * @param acceptCallback         Callback that receives the generated image bytes
      */
     public ImagePromptDialog(StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback) {
-        this(stableDiffusionService, defaultPrompt, acceptCallback, null);
+        this(stableDiffusionService, defaultPrompt, false, null, acceptCallback, null, null);
     }
 
+    /**
+     * Creates a dialog for generating AI images with an initial image for img2img "Update" mode.
+     * No dark-avatar section is shown.
+     *
+     * @param stableDiffusionService The Stable Diffusion service
+     * @param defaultPrompt          Default prompt text (can be null)
+     * @param acceptCallback         Callback that receives the generated image bytes
+     * @param initialImage           Existing light original for img2img mode (can be null)
+     */
     public ImagePromptDialog(StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback, byte[] initialImage) {
+        this(stableDiffusionService, defaultPrompt, false, null, acceptCallback, initialImage, null);
+    }
+
+    /**
+     * Full constructor. Pass a non-null {@code darkPrompt} to enable the side-by-side dark-avatar preview panel.
+     *
+     * @param stableDiffusionService The Stable Diffusion service
+     * @param defaultPrompt          Default prompt text for the light avatar (can be null)
+     * @param enableDark             {@code true} to show the side-by-side dark-avatar preview panel
+     * @param darkIconName           Icon name for the programmatic dark fallback (e.g., {@code "user"}); can be null
+     * @param acceptCallback         Callback that receives both light and dark results
+     * @param initialImage           Existing light original for img2img "Update" mode; can be null
+     * @param initialDarkImage       Existing dark original to pre-populate the dark preview; can be null
+     */
+    public ImagePromptDialog(StableDiffusionService stableDiffusionService, String defaultPrompt, boolean enableDark,
+                             String darkIconName, AcceptCallback acceptCallback, byte[] initialImage, byte[] initialDarkImage) {
         this.stableDiffusionService = stableDiffusionService;
         this.acceptCallback         = acceptCallback;
         this.initialImage           = initialImage;
+        this.enableDark             = enableDark;
+        this.darkIconName           = darkIconName;
 
         setId("image-prompt-dialog");
         getHeader().add(VaadinUtil.createDialogHeader("Generate AI Image", VaadinIcon.MAGIC));
@@ -213,6 +246,7 @@ public class ImagePromptDialog extends Dialog {
                 acceptButton.setEnabled(true);
                 updateButton.setEnabled(true);
                 Notification.show("Image uploaded and resized.", 2000, Notification.Position.BOTTOM_END);
+                generateDarkVariant();
             } catch (Exception ex) {
                 Notification.show("Failed to process image: " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
             }
@@ -243,7 +277,57 @@ public class ImagePromptDialog extends Dialog {
         uploadDownloadCol.setAlignItems(FlexComponent.Alignment.STRETCH);
         uploadDownloadCol.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 
-        HorizontalLayout previewRow = new HorizontalLayout(previewContainer, uploadDownloadCol);
+        HorizontalLayout previewRow;
+        if (enableDark) {
+            // ── Light column ──────────────────────────────────────────────────
+            com.vaadin.flow.component.html.Span lightLabel = new com.vaadin.flow.component.html.Span("Light");
+            lightLabel.getStyle().set("font-weight", "600").set("color", "var(--lumo-secondary-text-color)");
+            VerticalLayout lightColumn = new VerticalLayout(lightLabel, previewContainer);
+            lightColumn.setPadding(false);
+            lightColumn.setSpacing(true);
+            lightColumn.setAlignItems(FlexComponent.Alignment.CENTER);
+
+            // ── Dark column ───────────────────────────────────────────────────
+            darkPreviewContainer = new Div();
+            darkPreviewContainer.getStyle()
+                    .set("border", "1px dashed var(--lumo-contrast-30pct)")
+                    .set("border-radius", "var(--lumo-border-radius)")
+                    .set("padding", "var(--lumo-space-m)")
+                    .set("width", "256px")
+                    .set("height", "256px")
+                    .set("min-width", "256px")
+                    .set("min-height", "256px")
+                    .set("max-width", "256px")
+                    .set("max-height", "256px")
+                    .set("display", "flex")
+                    .set("align-items", "center")
+                    .set("justify-content", "center")
+                    .set("background-color", "#1e1e1e")
+                    .set("overflow", "hidden");
+
+            if (initialDarkImage != null && initialDarkImage.length > 0) {
+                displayInContainer(darkPreviewContainer, initialDarkImage);
+                generatedDarkImage         = initialDarkImage;
+                generatedDarkImageOriginal = initialDarkImage;
+            } else {
+                Div darkPlaceholder = new Div();
+                darkPlaceholder.setText("Dark variant will appear here");
+                darkPlaceholder.getStyle().set("color", "#888").set("text-align", "center");
+                darkPreviewContainer.add(darkPlaceholder);
+            }
+
+            com.vaadin.flow.component.html.Span darkLabel = new com.vaadin.flow.component.html.Span("Dark");
+            darkLabel.getStyle().set("font-weight", "600").set("color", "var(--lumo-secondary-text-color)");
+
+            VerticalLayout darkColumn = new VerticalLayout(darkLabel, darkPreviewContainer);
+            darkColumn.setPadding(false);
+            darkColumn.setSpacing(true);
+            darkColumn.setAlignItems(FlexComponent.Alignment.CENTER);
+
+            previewRow = new HorizontalLayout(lightColumn, darkColumn, uploadDownloadCol);
+        } else {
+            previewRow = new HorizontalLayout(previewContainer, uploadDownloadCol);
+        }
         previewRow.setAlignItems(FlexComponent.Alignment.CENTER);
         previewRow.setSpacing(true);
         previewRow.setWidthFull();
@@ -263,13 +347,20 @@ public class ImagePromptDialog extends Dialog {
     private void acceptImage() {
         if (generatedImage != null) {
             String prompt = promptField.getValue().trim();
-            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
+            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult lightResult =
                     new de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult(
                             generatedImageOriginal != null ? generatedImageOriginal : generatedImage,
                             prompt,
                             generatedImage
                     );
-            acceptCallback.accept(result);
+            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult =
+                    (generatedDarkImage != null)
+                            ? new de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult(
+                            generatedDarkImageOriginal != null ? generatedDarkImageOriginal : generatedDarkImage,
+                            prompt + " with black background",
+                            generatedDarkImage)
+                            : null;
+            acceptCallback.accept(lightResult, darkResult);
             close();
         }
     }
@@ -299,6 +390,117 @@ public class ImagePromptDialog extends Dialog {
                 .set("display", "block");
 
         previewContainer.add(image);
+    }
+
+    /**
+     * Renders {@code imageBytes} inside the given container, replacing any existing content.
+     *
+     * @param container  The target {@link Div} container
+     * @param imageBytes The PNG image bytes to display
+     */
+    private void displayInContainer(Div container, byte[] imageBytes) {
+        container.removeAll();
+        String         resourceName = "image-" + System.currentTimeMillis() + ".png";
+        StreamResource resource     = new StreamResource(resourceName, () -> new ByteArrayInputStream(imageBytes));
+        resource.setContentType("image/png");
+        resource.setCacheTime(0);
+        Image img = new Image(resource, "Preview");
+        img.setWidth("256px");
+        img.setHeight("256px");
+        img.getStyle().set("object-fit", "contain").set("display", "block");
+        container.add(img);
+    }
+
+    /**
+     * Generates the dark-avatar variant from the current light image.
+     * Safe to call from any thread (UI thread or background thread):
+     * all Vaadin state access is protected by a single {@code ui.access()} call.
+     * Does nothing when the dark panel is disabled ({@code enableDark == false}).
+     */
+    private void generateDarkVariant() {
+        if (!enableDark || darkPreviewContainer == null) {
+            return;
+        }
+        // volatile fields — safe to read without session lock
+        byte[] lightOriginal = generatedImageOriginal != null ? generatedImageOriginal : generatedImage;
+        if (lightOriginal == null || lightOriginal.length == 0) {
+            return;
+        }
+        long lightSeed = generatedImageSeed; // volatile read — safe
+
+        getUI().ifPresent(ui -> ui.access(() -> {
+            // Read the current prompt while holding the session lock
+            String darkSdPrompt = promptField.getValue().trim() + ", background is totally night black, no gradients, no textures";
+
+            darkPreviewContainer.removeAll();
+
+            if (stableDiffusionService.isAvailable()) {
+                // ── Loading layout (same style as the light-preview progress bar) ──
+                VerticalLayout loadingLayout = new VerticalLayout();
+                loadingLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+                loadingLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+                loadingLayout.setPadding(false);
+                loadingLayout.setSpacing(true);
+
+                Icon hourglassIcon = new Icon(VaadinIcon.HOURGLASS);
+                hourglassIcon.setSize("32px");
+                hourglassIcon.getStyle().set("color", "var(--lumo-primary-color)");
+
+                Div loadingText = new Div();
+                loadingText.setText("Generating dark variant...");
+                loadingText.getStyle().set("color", "#aaa").set("font-weight", "500");
+
+                Div progressText = new Div();
+                progressText.setText("Initializing...");
+                progressText.getStyle().set("color", "#888").set("font-size", "var(--lumo-font-size-s)");
+
+                com.vaadin.flow.component.progressbar.ProgressBar progressBar =
+                        new com.vaadin.flow.component.progressbar.ProgressBar();
+                progressBar.setMin(0);
+                progressBar.setMax(1);
+                progressBar.setValue(0);
+                progressBar.setWidth("80%");
+
+                loadingLayout.add(hourglassIcon, loadingText, progressText, progressBar);
+                darkPreviewContainer.add(loadingLayout);
+
+                // ── SD img2img in background thread ──
+                new Thread(() -> {
+                    try {
+                        GeneratedImageResult result = stableDiffusionService.img2imgWithOriginal(
+                                lightOriginal, darkSdPrompt, 256,
+                                (progress, step, totalSteps) -> ui.access(() -> {
+                                    progressBar.setValue(progress);
+                                    progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
+                                    ui.push();
+                                }),
+                                lightSeed);
+                        generatedDarkImage         = result.getResizedImage();
+                        generatedDarkImageOriginal = result.getOriginalImage();
+                        ui.access(() -> {
+                            // Display the full SD output (512 px) so the preview is sharp
+                            displayInContainer(darkPreviewContainer, result.getOriginalImage());
+                            ui.push();
+                        });
+                    } catch (StableDiffusionException e) {
+                        GeneratedImageResult fallback = stableDiffusionService.generateDefaultDarkAvatar(darkIconName);
+                        generatedDarkImage         = fallback.getResizedImage();
+                        generatedDarkImageOriginal = fallback.getOriginalImage();
+                        ui.access(() -> {
+                            displayInContainer(darkPreviewContainer, fallback.getOriginalImage());
+                            ui.push();
+                        });
+                    }
+                }).start();
+            } else {
+                // Programmatic fallback — fast, run inline while holding the lock
+                GeneratedImageResult fallback = stableDiffusionService.generateDefaultDarkAvatar(darkIconName);
+                generatedDarkImage         = fallback.getResizedImage();
+                generatedDarkImageOriginal = fallback.getOriginalImage();
+                displayInContainer(darkPreviewContainer, fallback.getOriginalImage());
+                ui.push();
+            }
+        }));
     }
 
     private void generateImage() {
@@ -351,9 +553,11 @@ public class ImagePromptDialog extends Dialog {
         getUI().ifPresent(ui -> {
             new Thread(() -> {
                 try {
+                    // Append background modifier for SD; the base prompt is preserved in promptField
+                    String lightSdPrompt = prompt + ", background is totally white, no shadows, no gradients, no textures";
                     // Generate with progress callback
                     de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
-                            stableDiffusionService.generateImageWithOriginal(prompt, 256, (progress, step, totalSteps) -> {
+                            stableDiffusionService.generateImageWithOriginal(lightSdPrompt, 256, (progress, step, totalSteps) -> {
                                 // Update UI with progress
                                 ui.access(() -> {
                                     progressBar.setValue(progress);
@@ -364,6 +568,7 @@ public class ImagePromptDialog extends Dialog {
 
                     generatedImage         = result.getResizedImage();
                     generatedImageOriginal = result.getOriginalImage();
+                    generatedImageSeed     = result.getSeed();
                     initialImage           = result.getResizedImage();
 
                     ui.access(() -> {
@@ -379,6 +584,7 @@ public class ImagePromptDialog extends Dialog {
                         // Push UI updates
                         ui.push();
                     });
+                    generateDarkVariant();
                 } catch (StableDiffusionException ex) {
                     ui.access(() -> {
                         generateButton.setEnabled(true);
@@ -440,8 +646,10 @@ public class ImagePromptDialog extends Dialog {
         getUI().ifPresent(ui -> {
             new Thread(() -> {
                 try {
+                    // Append background modifier for SD; the base prompt is preserved in promptField
+                    String lightSdPrompt = prompt + " with white background";
                     de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
-                            stableDiffusionService.img2imgWithOriginal(initialImage, prompt, 256, (progress, step, totalSteps) -> {
+                            stableDiffusionService.img2imgWithOriginal(initialImage, lightSdPrompt, 256, (progress, step, totalSteps) -> {
                                 ui.access(() -> {
                                     progressBar.setValue(progress);
                                     progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
@@ -450,6 +658,7 @@ public class ImagePromptDialog extends Dialog {
                             });
                     generatedImage         = result.getResizedImage();
                     generatedImageOriginal = result.getOriginalImage();
+                    generatedImageSeed     = result.getSeed();
                     ui.access(() -> {
                         displayGeneratedImage(result.getResizedImage());
                         generateButton.setEnabled(true);
@@ -459,6 +668,7 @@ public class ImagePromptDialog extends Dialog {
                         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                         ui.push();
                     });
+                    generateDarkVariant();
                 } catch (StableDiffusionException ex) {
                     ui.access(() -> {
                         generateButton.setEnabled(true);
@@ -478,11 +688,18 @@ public class ImagePromptDialog extends Dialog {
     }
 
     /**
-     * Functional interface for the accept callback
+     * Functional interface for the accept callback.
+     * {@code darkResult} is {@code null} when the dialog was opened without dark-avatar support.
      */
     @FunctionalInterface
     public interface AcceptCallback {
-        void accept(GeneratedImageResult result);
+        /**
+         * Called when the user accepts the generated image.
+         *
+         * @param lightResult The light-theme image result (never null)
+         * @param darkResult  The dark-theme image result, or {@code null} if not generated
+         */
+        void accept(GeneratedImageResult lightResult, GeneratedImageResult darkResult);
     }
 }
 

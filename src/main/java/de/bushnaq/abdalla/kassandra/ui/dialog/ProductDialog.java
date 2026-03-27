@@ -381,7 +381,8 @@ public class ProductDialog extends Dialog {
         }
     }
 
-    private void handleGeneratedImage(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result) {
+    private void handleGeneratedImage(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result,
+            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult) {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();
