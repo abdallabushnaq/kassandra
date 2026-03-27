@@ -463,7 +463,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     }
 
     private void drawTask(Task task, int x1, int x2, int y, boolean labelInside, boolean alien, String marker, List<Conflict> conflict) throws Exception {
-        Color  fillColor           = graphicsTheme.getAuthorColor(28);
+        Color  fillColor           = graphicsTheme.burndownTheme.getAuthorColor(28);
         Color  textColor           = graphicsTheme.ganttTheme.ganttTaskTextColor;
         Color  textInfoColor       = graphicsTheme.ganttTheme.ganttTaskTextColor;
         String resourceName        = null;
@@ -691,10 +691,10 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     private void drawTick(LocalDateTime time, int x, int y, TextAlignment alignment) {
         DateTimeFormatter formatter  = DateTimeFormatter.ofPattern("HH:mm");
         String            timeString = time.format(formatter);
-        graphics2D.setColor(graphicsTheme.ganttTaskTickLineColor);
+        graphics2D.setColor(graphicsTheme.ganttTheme.ganttTaskTickLineColor);
         graphics2D.fillRect(x, y - getTaskHeight() / 2 + TASK_BODY_BORDER - 2, 1, 2);
         graphics2D.setFont(taskTickFont);
-        graphics2D.setColor(graphicsTheme.ganttTaskTickTextColor);
+        graphics2D.setColor(graphicsTheme.ganttTheme.ganttTaskTickTextColor);
         FontMetrics fm    = graphics2D.getFontMetrics();
         int         width = fm.stringWidth(timeString);
         int         testX;

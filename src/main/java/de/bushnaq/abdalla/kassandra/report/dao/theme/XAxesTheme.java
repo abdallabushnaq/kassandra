@@ -43,6 +43,11 @@ public class XAxesTheme {
     public Color   XAxesYearBackgroundColor        = new Color(0xababab);
     public Color   XAxesYearBoderColor             = Color.white;
     public Color   XAxesYearTextColor              = Color.WHITE;
+    public Color   futureEventColor;
+    public Color   milestoneFlagColor;
+    public Color   milestoneTextColor;
+    public Color   nowEventColor;
+    public Color   pastEventColor;
 
     public XAxesTheme() {
         int ma = 0xff;

@@ -159,7 +159,7 @@ public abstract class AbstractRenderer {
 //            if (primaryAuthorName == null) {
 //                primaryAuthorName = author.name;
 //            }
-            drawAuthor(x, ay, authorLegendWidth, author.getColor(), author.getName(), graphicsTheme.tickTextColor, calendarXAxes.milestone.font);
+            drawAuthor(x, ay, authorLegendWidth, author.getColor(), author.getName(), graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.milestone.font);
             ay -= lineHeight;
         }
     }
@@ -181,7 +181,7 @@ public abstract class AbstractRenderer {
         //day vertical bar
         graphics2D.fillRect(x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1), diagram.y, calendarXAxes.dayOfWeek.getWidth() - 1, diagram.height);//left |
         //draw vertical lines
-        graphics2D.setColor(graphicsTheme.ganttGridColor);
+        graphics2D.setColor(graphicsTheme.ganttTheme.ganttGridColor);
         //        graphics2D.setStroke(new BasicStroke(RELATION_LINE_STROKE_WIDTH));
         //        graphics2D.drawLine(x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y,x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y + diagram.height);
         //        graphics2D.draw(new Line2D.Double(x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y,x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y + diagram.height));
@@ -237,59 +237,59 @@ public abstract class AbstractRenderer {
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
         graphics2D.setColor(graphicsTheme.surroundingSquareColor);
         graphics2D.drawLine(legendX1, legendY, legendX2, legendY);
-        drawGraphText(legendTextX, legendTextY, "Guideline", graphicsTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        drawGraphText(legendTextX, legendTextY, "Guideline", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
         graphics2D.setColor(interpolationColor);
         graphics2D.drawLine(legendX1, legendY, legendX2, legendY);
-        drawGraphText(legendTextX, legendTextY, "extrapolated release date", graphicsTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(),
+        drawGraphText(legendTextX, legendTextY, "extrapolated release date", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(),
                 TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH));
-        graphics2D.setColor(graphicsTheme.burnDownBorderColor);
+        graphics2D.setColor(graphicsTheme.burndownTheme.burnDownBorderColor);
         graphics2D.drawLine(legendX1, legendY, legendX2, legendY);
-        drawGraphText(legendTextX, legendTextY, "Remaining work", graphicsTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        drawGraphText(legendTextX, legendTextY, "Remaining work", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.pastEventColor, "S", true, null, null, false, false);// start
-        drawGraphText(legendTextX, legendTextY, "Start date (sprint)", graphicsTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.xAxesTheme.pastEventColor, "S", true, null, null, false, false);// start
+        drawGraphText(legendTextX, legendTextY, "Start date (sprint)", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.nowEventColor, "N", true, null, null, false, false);// now
-        drawGraphText(legendTextX, legendTextY, "Now date", graphicsTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.xAxesTheme.nowEventColor, "N", true, null, null, false, false);// now
+        drawGraphText(legendTextX, legendTextY, "Now date", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.delayEventColor, "R", true, null, null, false, false);// release
-        drawGraphText(legendTextX, legendTextY, "Release date", graphicsTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.burndownTheme.delayEventColor, "R", true, null, null, false, false);// release
+        drawGraphText(legendTextX, legendTextY, "Release date", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.futureEventColor, "E", true, null, null, false, false);// end
-        drawGraphText(legendTextX, legendTextY, "End date (sprint)", graphicsTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.xAxesTheme.futureEventColor, "E", true, null, null, false, false);// end
+        drawGraphText(legendTextX, legendTextY, "End date (sprint)", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.futureEventColor, "F", true, null, null, false, false);// first
-        drawGraphText(legendTextX, legendTextY, "First punch-in", graphicsTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.xAxesTheme.futureEventColor, "F", true, null, null, false, false);// first
+        drawGraphText(legendTextX, legendTextY, "First punch-in", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.futureEventColor, "L", true, null, null, false, false);// Last
-        drawGraphText(legendTextX, legendTextY, "Last punch-out", graphicsTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, graphicsTheme.xAxesTheme.futureEventColor, "L", true, null, null, false, false);// Last
+        drawGraphText(legendTextX, legendTextY, "Last punch-out", graphicsTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
     }
 
     protected void drawMilestones() {

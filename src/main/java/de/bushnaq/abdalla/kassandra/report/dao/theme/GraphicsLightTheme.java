@@ -42,34 +42,34 @@ public class GraphicsLightTheme extends BurnDownGraphicsTheme {
     public GraphicsLightTheme() {
 
         // gray
-        Color basicTextColor       = Color.WHITE;
-        Color basicBackgroundColor = new Color(0x7a7a7a);
-        Color basicBorderColor     = Color.WHITE;
+        Color basicTextColor = Color.WHITE;
+//        Color basicBackgroundColor = new Color(0x7a7a7a);
+//        Color basicBorderColor     = Color.WHITE;
 
         cssTheme             = ETheme.light;
         chartBackgroundColor = Color.white;
 
-        dayOfMonthTextColor       = basicTextColor;
-        dayOfMonthBackgroundColor = basicBackgroundColor;
+//        dayOfMonthTextColor       = basicTextColor;
+//        dayOfMonthBackgroundColor = basicBackgroundColor;
 
-        dayTextColor          = Color.BLACK;
-        dayBackgroundColor    = Color.WHITE;
-        dayDiagramBorderColor = new Color(0xf6f8ff);
+//        dayTextColor          = Color.BLACK;
+//        dayBackgroundColor    = Color.WHITE;
+//        dayDiagramBorderColor = new Color(0xf6f8ff);
 
-        delayClosedEventColor = new Color(255, 184, 184);
-        delayEventColor       = Color.red;
-        futureEventColor      = Color.blue;
+//        delayClosedEventColor = new Color(255, 184, 184);
+        burndownTheme.delayEventColor = Color.red;
+        xAxesTheme.futureEventColor   = Color.blue;
 
-        milestoneFlagColor = chartBackgroundColor;
-        milestoneTextColor = basicTextColor;
+        xAxesTheme.milestoneFlagColor = chartBackgroundColor;
+        xAxesTheme.milestoneTextColor = basicTextColor;
 
 
-        nowEventColor        = Color.gray;
-        pastEventColor       = Color.lightGray;
-        ticksBackgroundColor = chartBackgroundColor;
+        xAxesTheme.nowEventColor  = Color.gray;
+        xAxesTheme.pastEventColor = Color.lightGray;
+//        ticksBackgroundColor = chartBackgroundColor;
 
-        weekBackgroundColor = basicBackgroundColor;
-        weekTextColor       = basicTextColor;
+//        weekBackgroundColor = basicBackgroundColor;
+//        weekTextColor       = basicTextColor;
 
         ganttTheme.ganttRelationColor           = new Color(0x34, 0x66, 0xed, 0x7f);
         ganttTheme.ganttCriticalRelationColor   = new Color(0xff, 0, 0, 0x7f);
@@ -79,7 +79,7 @@ public class GraphicsLightTheme extends BurnDownGraphicsTheme {
         ganttTheme.ganttStoryTextColor          = Color.darkGray;
         ganttTheme.ganttTaskTextColor           = new Color(0x30, 0x30, 0x30, 0xff);
         ganttTheme.ganttTaskBorderColor         = new Color(0x30, 0x30, 0x30, 0x7F);
-        burnDownBorderColor                     = new Color(0xff, 0xcc, 0x00, 0x77);
+        burndownTheme.burnDownBorderColor       = new Color(0xff, 0xcc, 0x00, 0x77);
         ganttTheme.ganttIdColor                 = new Color(0xff, 0xff, 0xff, 0xff);
         ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);
         ganttTheme.ganttIdTextColor             = new Color(0xaa, 0xaa, 0xaa, 0xff);
@@ -98,7 +98,7 @@ public class GraphicsLightTheme extends BurnDownGraphicsTheme {
         int[] alpha = {0x7f/*, 0x30*/};
 
         for (i = 0; i < KELLY_COLORS.length; i++) {
-            burnDownColor[i] = new Color(KELLY_COLORS[i].getRed(), KELLY_COLORS[i].getGreen(), KELLY_COLORS[i].getBlue(), alpha[0]);
+            burndownTheme.burnDownColor[i] = new Color(KELLY_COLORS[i].getRed(), KELLY_COLORS[i].getGreen(), KELLY_COLORS[i].getBlue(), alpha[0]);
         }
 
         //gray
@@ -106,30 +106,30 @@ public class GraphicsLightTheme extends BurnDownGraphicsTheme {
         //        burnDownColor[i++] = new Color(0x0, 0x0, 0x0, 0x51);
         //        burnDownColor[i++] = new Color(0x0, 0x0, 0x0, 0x21);
 
-        graphTextBackgroundColor = chartBackgroundColor;
-        tickTextColor            = Color.darkGray;
-        surroundingSquareColor   = new Color(0xaaaaaa);
-        optimaleGuideColor       = new Color(0xa0a0a0);
-        plannedGuideColor        = new Color(0x7f7f7f);
-        ticksColor               = new Color(0xc9c9c9);
-        inTimeColor              = ColorConstants.COLOR_DARK_GREEN;
-        watermarkColor           = new Color(0x10, 0x10, 0x10, 0x10);
+        graphTextBackgroundColor         = chartBackgroundColor;
+        burndownTheme.tickTextColor      = Color.darkGray;
+        surroundingSquareColor           = new Color(0xaaaaaa);
+        burndownTheme.optimaleGuideColor = new Color(0xa0a0a0);
+        burndownTheme.plannedGuideColor  = new Color(0x7f7f7f);
+        burndownTheme.ticksColor         = new Color(0xc9c9c9);
+        burndownTheme.inTimeColor        = ColorConstants.COLOR_DARK_GREEN;
+        burndownTheme.watermarkColor     = new Color(0x10, 0x10, 0x10, 0x10);
 
-        pastWorkDayRequestColor    = new Color(0x60, 0x00, 0xff, 0x40);
-        pastWeekendRequestColor    = new Color(0x60, 0x60, 0x60, 0x40);
-        futureWorkDayRequestColor  = new Color(0x00, 0x60, 0xff, 0x40);
-        futureWeekendRequestColor  = new Color(0x60, 0x60, 0x60, 0x40);
-        ganttRequestMilestoneColor = Color.RED/*new Color(0xa7, 0x00, 0x00)*/;
+//        pastWorkDayRequestColor               = new Color(0x60, 0x00, 0xff, 0x40);
+//        pastWeekendRequestColor               = new Color(0x60, 0x60, 0x60, 0x40);
+//        futureWorkDayRequestColor             = new Color(0x00, 0x60, 0xff, 0x40);
+//        futureWeekendRequestColor             = new Color(0x60, 0x60, 0x60, 0x40);
+        ganttTheme.ganttRequestMilestoneColor = Color.RED/*new Color(0xa7, 0x00, 0x00)*/;
 
-        linkColor = new Color(0x23, 0x6a, 0x97);
+//        linkColor = new Color(0x23, 0x6a, 0x97);
 
-        bankHolidayColor = new Color(0xff, 0, 0, 0x80);
+//        bankHolidayColor = new Color(0xff, 0, 0, 0x80);
     }
 
     private int generateColors(int ps, int pg, int ss, int sg, int ts, int tg, int i, int a) {
-        burnDownColor[i++] = new Color(ps, sg, ts, a);
-        burnDownColor[i++] = new Color(ts, pg, ss, a);
-        burnDownColor[i++] = new Color(ss, tg, ps, a);
+        burndownTheme.burnDownColor[i++] = new Color(ps, sg, ts, a);
+        burndownTheme.burnDownColor[i++] = new Color(ts, pg, ss, a);
+        burndownTheme.burnDownColor[i++] = new Color(ss, tg, ps, a);
         return i;
     }
 }

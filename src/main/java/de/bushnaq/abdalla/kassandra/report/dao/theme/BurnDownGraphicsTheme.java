@@ -17,29 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.report.dao.theme;
 
-import java.awt.*;
-
+@Deprecated
 public class BurnDownGraphicsTheme extends ScheduleGraphicsTheme {
-    public static final int     MAX_AUTHOR_COLOR = 12/*(9-4) * 3*//*+ 3*//*+1*/;
-    public              Color   bankHolidayColor;
-    public              Color   burnDownBorderColor;
-    protected           Color[] burnDownColor    = new Color[MAX_AUTHOR_COLOR];
-    public              Color   ganttRequestMilestoneColor;
-    public              Color   graphTextBackgroundColor;
-    public              Color   optimaleGuideColor;
-    public              Color   plannedGuideColor;
-    public              Color   surroundingSquareColor;
-    public              Color   tickTextColor;
-    public              Color   ticksColor;
-    public              Color   watermarkColor;
+    public final BurndownTheme burndownTheme = new BurndownTheme();
 
-    public Color getAuthorColor(int index) {
-        if (index < 0) {
-            index = -index;
-        }
-        int colorIndex = index % MAX_AUTHOR_COLOR;
-        return burnDownColor[colorIndex];
-    }
 
 //    public Color getHeatColor(int index) {
 //        if (index < 0) {

@@ -30,8 +30,8 @@ public class GraphColorUtil {
 
     public static Color getDayOfMonthBgColor(BurnDownGraphicsTheme graphicsTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> graphicsTheme.XAxesTheme.XAxesDayOfMonthBgColor;
-            case SATURDAY, SUNDAY -> graphicsTheme.XAxesTheme.XAxesDayOfMonthWeekendBgColor;
+            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> graphicsTheme.xAxesTheme.XAxesDayOfMonthBgColor;
+            case SATURDAY, SUNDAY -> graphicsTheme.xAxesTheme.XAxesDayOfMonthWeekendBgColor;
             default -> null;
         };
 
@@ -39,8 +39,8 @@ public class GraphColorUtil {
 
     public static Color getDayOfMonthTextColor(BurnDownGraphicsTheme graphicsTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> graphicsTheme.XAxesTheme.XAxesDayOfMonthTextColor;
-            case SATURDAY, SUNDAY -> graphicsTheme.XAxesTheme.XAxesDayOfMonthWeekendTextColor;
+            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> graphicsTheme.xAxesTheme.XAxesDayOfMonthTextColor;
+            case SATURDAY, SUNDAY -> graphicsTheme.xAxesTheme.XAxesDayOfMonthWeekendTextColor;
             default -> null;
         };
 
@@ -48,8 +48,8 @@ public class GraphColorUtil {
 
     public static Color getDayOfWeekBgColor(BurnDownGraphicsTheme graphicsTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, MONDAY, THURSDAY, TUESDAY, WEDNESDAY -> graphicsTheme.XAxesTheme.XAxesDayOfweekBgColor;
-            case SATURDAY, SUNDAY -> graphicsTheme.XAxesTheme.XAxesDayOfweekWeekendBgColor;
+            case FRIDAY, MONDAY, THURSDAY, TUESDAY, WEDNESDAY -> graphicsTheme.xAxesTheme.XAxesDayOfweekBgColor;
+            case SATURDAY, SUNDAY -> graphicsTheme.xAxesTheme.XAxesDayOfweekWeekendBgColor;
             default -> null;
         };
 
@@ -64,21 +64,21 @@ public class GraphColorUtil {
 
     public static Color getGanttDayStripeColor(BurnDownGraphicsTheme graphicsTheme, ProjectCalendar pc, LocalDate currentDate) {
         if (pc.isWorkingDate(currentDate)) {
-            return graphicsTheme.XAxesTheme.XAxesDayOfweekBgColor;
+            return graphicsTheme.xAxesTheme.XAxesDayOfweekBgColor;
         } else {
             ProjectCalendarException exception = pc.getException(currentDate);
             if (exception != null) {
                 if (exception.getName().equals(OffDayType.VACATION.name())) {
-                    return graphicsTheme.ganttVacationBgColor;
+                    return graphicsTheme.ganttTheme.ganttVacationBgColor;
                 } else if (exception.getName().equals(OffDayType.TRIP.name())) {
-                    return graphicsTheme.ganttTripBgColor;
+                    return graphicsTheme.ganttTheme.ganttTripBgColor;
                 } else if (exception.getName().equals(OffDayType.SICK.name())) {
-                    return graphicsTheme.ganttSickBgColor;
+                    return graphicsTheme.ganttTheme.ganttSickBgColor;
                 } else {
-                    return graphicsTheme.ganttHolidayBgColor;
+                    return graphicsTheme.ganttTheme.ganttHolidayBgColor;
                 }
             }
-            return graphicsTheme.XAxesTheme.XAxesDayOfMonthWeekendBgColor;
+            return graphicsTheme.xAxesTheme.XAxesDayOfMonthWeekendBgColor;
         }
     }
 

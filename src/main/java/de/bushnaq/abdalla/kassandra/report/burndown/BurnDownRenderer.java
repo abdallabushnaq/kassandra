@@ -283,10 +283,10 @@ public class BurnDownRenderer extends AbstractRenderer {
             }
             if (sprintClosed) {
                 drawWatermark(startX - calendarXAxes.dayOfWeek.getWidth() / 2 + 10,
-                        chartHeight - calendarXAxes.getHeight() - calendarXAxes.year.getHeight() - 10, "CLOSED", graphicsTheme.watermarkColor);
+                        chartHeight - calendarXAxes.getHeight() - calendarXAxes.year.getHeight() - 10, "CLOSED", graphicsTheme.burndownTheme.watermarkColor);
             } else if (isAbandonedProject()) {
                 drawWatermark(startX - calendarXAxes.dayOfWeek.getWidth() / 2 + 10,
-                        chartHeight - calendarXAxes.getHeight() - calendarXAxes.year.getHeight() - 10, "ABANDONED", graphicsTheme.watermarkColor);
+                        chartHeight - calendarXAxes.getHeight() - calendarXAxes.year.getHeight() - 10, "ABANDONED", graphicsTheme.burndownTheme.watermarkColor);
             }
             // Optimal burn down rate
 
@@ -365,7 +365,7 @@ public class BurnDownRenderer extends AbstractRenderer {
     }
 
     private void drawBorder(int x, int y, int lastX, int lastY) {
-        graphics2D.setColor(graphicsTheme.burnDownBorderColor);
+        graphics2D.setColor(graphicsTheme.burndownTheme.burnDownBorderColor);
         graphics2D.drawLine(lastX - calendarXAxes.dayOfWeek.getWidth() / 2, lastY, x - calendarXAxes.dayOfWeek.getWidth() / 2, y);
     }
 
@@ -418,7 +418,7 @@ public class BurnDownRenderer extends AbstractRenderer {
                                     LocalDate calendarFromDayIndex = calendarFromDayIndex(dayIndex - 2);
                                     drawPolygon(yesterdayX, yesterdayY, yesterdayY2, lastX, lastY, lastY2,
                                             authorIndex == usersTotalContribution.getSortedKeyList().size() - 1, DateUtil.isWorkDay(calendarFromDayIndex),
-                                            graphicsTheme.burnDownBorderColor, generateBurnDownColor(user.getColor()), transactions, user.getName());
+                                            graphicsTheme.burndownTheme.burnDownBorderColor, generateBurnDownColor(user.getColor()), transactions, user.getName());
                                 }
                                 yesterdayX  = lastX;
                                 yesterdayY  = lastY;
@@ -487,7 +487,7 @@ public class BurnDownRenderer extends AbstractRenderer {
         Duration  workPerWorkingDay = Duration.ofSeconds((long) (((double) estimatedWork.getSeconds()) / workingDays));
         Duration  work;
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
-        graphics2D.setColor(graphicsTheme.optimaleGuideColor);
+        graphics2D.setColor(graphicsTheme.burndownTheme.optimaleGuideColor);
         int workingdays = 0;
         int y;
         int lastX       = firstDayX + calendarXAxes.dayOfWeek.getWidth() * DateUtil.calculateDays(firstDay, firstDay) - calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
@@ -524,7 +524,7 @@ public class BurnDownRenderer extends AbstractRenderer {
         }
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
-        graphics2D.setColor(graphicsTheme.plannedGuideColor);
+        graphics2D.setColor(graphicsTheme.burndownTheme.plannedGuideColor);
         for (int i = 0; i < guide.getSize(); i++) {
             Duration r = guide.get(i);
             int      x = firstDayX + i * calendarXAxes.dayOfWeek.getWidth() - calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
@@ -601,12 +601,12 @@ public class BurnDownRenderer extends AbstractRenderer {
             for (Duration timeMark = Duration.ZERO; timeMark.getSeconds() < estimatedWork.getSeconds(); timeMark = timeMark.plus(mark)) {
                 int markY = diagram.y + diagram.height - 1 - calculateGraphHight(timeMark);
                 if (lastMarkY - markY > 12) {
-                    graphics2D.setColor(graphicsTheme.ticksColor);
+                    graphics2D.setColor(graphicsTheme.burndownTheme.ticksColor);
                     graphics2D.fillRect(startX - 4 - calendarXAxes.dayOfWeek.getWidth() / 2, markY, 4, 1);
-                    graphics2D.setColor(graphicsTheme.ganttGridColor);
+                    graphics2D.setColor(graphicsTheme.ganttTheme.ganttGridColor);
                     graphics2D.fillRect(startX - 1, markY, diagram.width - startX, 1);//grid --
 
-                    drawGraphText(yAxis.x + yAxis.width - 5, markY, timeMark.getSeconds() / mark.getSeconds() + markUnit, graphicsTheme.tickTextColor,
+                    drawGraphText(yAxis.x + yAxis.width - 5, markY, timeMark.getSeconds() / mark.getSeconds() + markUnit, graphicsTheme.burndownTheme.tickTextColor,
                             yAxis.lableFont, TextAlignment.right);
                     lastMarkY = markY;
                 }
@@ -622,9 +622,9 @@ public class BurnDownRenderer extends AbstractRenderer {
     public void init() throws IOException {
         initSize(Y_AXIS_WIDTH, 0, true);
         if (milestones.get("R") != null && milestones.get("R").time.isAfter(milestones.get("E").time)) {
-            extrapolationColor = graphicsTheme.delayEventColor;
+            extrapolationColor = graphicsTheme.burndownTheme.delayEventColor;
         } else {
-            extrapolationColor = graphicsTheme.inTimeColor;
+            extrapolationColor = graphicsTheme.burndownTheme.inTimeColor;
         }
 
         calculateAuthorContribution(worklog, worklogRemaining, usersTotalContribution);

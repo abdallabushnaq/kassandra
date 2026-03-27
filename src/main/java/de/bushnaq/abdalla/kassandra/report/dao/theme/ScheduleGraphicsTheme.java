@@ -17,31 +17,22 @@
 
 package de.bushnaq.abdalla.kassandra.report.dao.theme;
 
-import java.awt.*;
-
+@Deprecated
 public class ScheduleGraphicsTheme extends GraphicsTheme {
     //-------------------------- Calendar Chart
-    public       Color      dayBackgroundColor;
-    public       Color      dayDiagramBorderColor;
-    public       Color      dayOfMonthBackgroundColor;
-    public       Color      dayOfMonthTextColor;
-    public       Color      dayTextColor;
-    public       Color      delayClosedEventColor;
-    public       Color      delayEventColor;
-    public       Color      futureEventColor;
-    public       Color      futureWeekendRequestColor;
-    public       Color      futureWorkDayRequestColor;
-    public final GanttTheme ganttTheme = new GanttTheme();
-    public       Color      inTimeColor;
-    public       Color      linkColor;
-    public       Color      milestoneFlagColor;
-    public       Color      milestoneTextColor;
-    public       Color      nowEventColor;
-    public       Color      pastEventColor;
-    public       Color      pastWeekendRequestColor;
-    public       Color      pastWorkDayRequestColor;
-    public       Color      ticksBackgroundColor;
-    public       Color      weekBackgroundColor;
-    public       Color      weekTextColor;
+//    public Color dayBackgroundColor;
+//    public Color dayDiagramBorderColor;
+//    public Color dayOfMonthBackgroundColor;
+//    public Color dayOfMonthTextColor;
+//    public Color dayTextColor;
+//    public Color delayClosedEventColor;
+    //    public Color futureWeekendRequestColor;
+//    public Color futureWorkDayRequestColor;
+    //    public Color linkColor;
+//    public Color pastWeekendRequestColor;
+//    public Color pastWorkDayRequestColor;
+//    public Color ticksBackgroundColor;
+//    public Color weekBackgroundColor;
+//    public Color weekTextColor;
 
 }
