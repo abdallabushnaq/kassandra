@@ -119,16 +119,17 @@ public class DarkTheme extends Theme {
         //---------------------------------------------------------------------
         //-- GanttTheme
         //---------------------------------------------------------------------
-        ganttTheme.relationColor         = new Color(0x34, 0x66, 0xed, 0x7f);
-        ganttTheme.criticalRelationColor = new Color(0xff, 0, 0, 0x7f);
-        ganttTheme.milestoneBgColor      = new Color(0x4f, 0xbb, 0xc2, 0xff);
-        ganttTheme.milestoneTextColor    = new Color(0x50, 0x50, 0x50, 0xff);
-        ganttTheme.storyColor            = Color.black;//new Color(64, 64, 64, 0xa0);
-        ganttTheme.storyTextColor        = basicTextColor;
-        ganttTheme.taskTextColor         = basicTextColor;
-        ganttTheme.taskBorderColor       = Color.lightGray;
-        ganttTheme.taskTransparency      = 128 + 64;
-        ganttTheme.idBgColor             = baseBgColor;
+        ganttTheme.relationColor           = new Color(0x34, 0x66, 0xed, 0x7f);
+        ganttTheme.criticalRelationColor   = new Color(0xff, 0, 0, 0x7f);
+        ganttTheme.milestoneBgColor        = new Color(0x4f, 0xbb, 0xc2, 0xff);
+        ganttTheme.milestoneTextColor      = new Color(0x50, 0x50, 0x50, 0xff);
+        ganttTheme.storyColor              = Color.black;//new Color(64, 64, 64, 0xa0);
+        ganttTheme.storyTextColor          = basicTextColor;
+        ganttTheme.taskTextColor           = basicTextColor;
+        ganttTheme.taskBorderColor         = Color.lightGray;
+        ganttTheme.taskTransparency        = 128 + 64;
+        ganttTheme.taskWeekEndTransparency = 128;
+        ganttTheme.idBgColor               = baseBgColor;
 //        ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);
         ganttTheme.idTextColor = new Color(0xaa, 0xaa, 0xaa, 0xff);
 //        ganttTheme.ganttIdTextErrorColor        = new Color(0xff, 0xff, 0xff, 0xff);

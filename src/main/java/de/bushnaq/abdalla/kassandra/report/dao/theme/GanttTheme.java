@@ -41,6 +41,7 @@ public class GanttTheme {
     public Color taskTickLineColor;
     public Color taskTickTextColor;
     public int   taskTransparency;
+    public int   taskWeekEndTransparency;
     public Color tripBgColor;
     public Color vacationBgColor;
 
