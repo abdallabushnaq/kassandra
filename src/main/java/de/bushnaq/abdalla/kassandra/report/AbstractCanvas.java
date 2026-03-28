@@ -64,7 +64,7 @@ public abstract class AbstractCanvas extends ReportLink {
     protected abstract void createReport() throws Exception;
 
     protected void drawBackground() {
-        graphics2D.setColor(kassandraTheme.chartTheme.chartBackgroundColor);
+        graphics2D.setColor(kassandraTheme.chartTheme.backgroundColor);
         graphics2D.fillRect(0, 0, getChartWidth(), getChartHeight());
     }
 

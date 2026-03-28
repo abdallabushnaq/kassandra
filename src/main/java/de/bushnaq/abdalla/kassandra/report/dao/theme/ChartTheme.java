@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.report.dao.theme;
 import java.awt.*;
 
 public class ChartTheme {
-    public Color chartBackgroundColor;
+    public Color backgroundColor;
     public Color chartBorderColor = new Color(0xaaaaaa);
     public Color graphTextBackgroundColor;
     public Color surroundingSquareColor;

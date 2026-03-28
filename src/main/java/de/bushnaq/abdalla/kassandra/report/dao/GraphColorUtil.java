@@ -69,13 +69,13 @@ public class GraphColorUtil {
             ProjectCalendarException exception = pc.getException(currentDate);
             if (exception != null) {
                 if (exception.getName().equals(OffDayType.VACATION.name())) {
-                    return kassandraTheme.ganttTheme.ganttVacationBgColor;
+                    return kassandraTheme.ganttTheme.vacationBgColor;
                 } else if (exception.getName().equals(OffDayType.TRIP.name())) {
-                    return kassandraTheme.ganttTheme.ganttTripBgColor;
+                    return kassandraTheme.ganttTheme.tripBgColor;
                 } else if (exception.getName().equals(OffDayType.SICK.name())) {
-                    return kassandraTheme.ganttTheme.ganttSickBgColor;
+                    return kassandraTheme.ganttTheme.sickBgColor;
                 } else {
-                    return kassandraTheme.ganttTheme.ganttHolidayBgColor;
+                    return kassandraTheme.ganttTheme.holidayBgColor;
                 }
             }
             return kassandraTheme.xAxesTheme.XAxesDayOfMonthWeekendBgColor;

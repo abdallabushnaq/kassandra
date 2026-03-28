@@ -289,7 +289,7 @@ public class CalendarXAxes {
     public void drawMilestones() {
         for (Milestone milestone : milestones.getList()) {
             int x = calculateDayX(milestone.time);
-            drawMilestone(milestone, milestone.time, x, parent.kassandraTheme.ganttTheme.ganttRequestMilestoneColor, milestone.symbol, !milestone.hidden,
+            drawMilestone(milestone, milestone.time, x, parent.kassandraTheme.ganttTheme.requestMilestoneColor, milestone.symbol, !milestone.hidden,
                     parent.kassandraTheme.xAxesTheme.futureEventColor);// start
         }
     }

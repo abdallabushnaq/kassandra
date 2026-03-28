@@ -365,7 +365,7 @@ public class BurnDownRenderer extends AbstractRenderer {
     }
 
     private void drawBorder(int x, int y, int lastX, int lastY) {
-        graphics2D.setColor(kassandraTheme.burndownTheme.burnDownBorderColor);
+        graphics2D.setColor(kassandraTheme.burndownTheme.borderColor);
         graphics2D.drawLine(lastX - calendarXAxes.dayOfWeek.getWidth() / 2, lastY, x - calendarXAxes.dayOfWeek.getWidth() / 2, y);
     }
 
@@ -418,7 +418,7 @@ public class BurnDownRenderer extends AbstractRenderer {
                                     LocalDate calendarFromDayIndex = calendarFromDayIndex(dayIndex - 2);
                                     drawPolygon(yesterdayX, yesterdayY, yesterdayY2, lastX, lastY, lastY2,
                                             authorIndex == usersTotalContribution.getSortedKeyList().size() - 1, DateUtil.isWorkDay(calendarFromDayIndex),
-                                            kassandraTheme.burndownTheme.burnDownBorderColor, generateBurnDownColor(user.getColor()), transactions, user.getName());
+                                            kassandraTheme.burndownTheme.borderColor, generateBurnDownColor(user.getColor()), transactions, user.getName());
                                 }
                                 yesterdayX  = lastX;
                                 yesterdayY  = lastY;
@@ -603,7 +603,7 @@ public class BurnDownRenderer extends AbstractRenderer {
                 if (lastMarkY - markY > 12) {
                     graphics2D.setColor(kassandraTheme.burndownTheme.ticksColor);
                     graphics2D.fillRect(startX - 4 - calendarXAxes.dayOfWeek.getWidth() / 2, markY, 4, 1);
-                    graphics2D.setColor(kassandraTheme.ganttTheme.ganttGridColor);
+                    graphics2D.setColor(kassandraTheme.ganttTheme.gridColor);
                     graphics2D.fillRect(startX - 1, markY, diagram.width - startX, 1);//grid --
 
                     drawGraphText(yAxis.x + yAxis.width - 5, markY, timeMark.getSeconds() / mark.getSeconds() + markUnit, kassandraTheme.burndownTheme.tickTextColor,

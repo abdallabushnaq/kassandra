@@ -136,7 +136,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
             int             x1   = x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1);
             {
                 //grid
-                graphics2D.setColor(kassandraTheme.ganttTheme.ganttGridColor);
+                graphics2D.setColor(kassandraTheme.ganttTheme.gridColor);
                 graphics2D.fillRect(x1 - 1, y1 - 1, calendarXAxes.dayOfWeek.getWidth(), 1);//top --
                 graphics2D.fillRect(x1 - 1, y1, 1, getTaskHeight());//left |
             }
@@ -150,7 +150,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
                     String letter = GraphColorUtil.getOffDayLetter(exception);
                     if (letter != null) {
                         graphics2D.fill(s);
-                        graphics2D.setColor(kassandraTheme.ganttTheme.ganttOutOfOfficeColor);
+                        graphics2D.setColor(kassandraTheme.ganttTheme.outOfOfficeColor);
                         graphics2D.setFont(NoneWorkingDayFont);
                         FontMetrics fm      = graphics2D.getFontMetrics();
                         int         yShift  = fm.getAscent() - fm.getHeight() / 2 - 1;

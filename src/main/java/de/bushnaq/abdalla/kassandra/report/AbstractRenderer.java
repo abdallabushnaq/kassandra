@@ -181,7 +181,7 @@ public abstract class AbstractRenderer {
         //day vertical bar
         graphics2D.fillRect(x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1), diagram.y, calendarXAxes.dayOfWeek.getWidth() - 1, diagram.height);//left |
         //draw vertical lines
-        graphics2D.setColor(kassandraTheme.ganttTheme.ganttGridColor);
+        graphics2D.setColor(kassandraTheme.ganttTheme.gridColor);
         //        graphics2D.setStroke(new BasicStroke(RELATION_LINE_STROKE_WIDTH));
         //        graphics2D.drawLine(x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y,x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y + diagram.height);
         //        graphics2D.draw(new Line2D.Double(x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y,x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y + diagram.height));
@@ -251,7 +251,7 @@ public abstract class AbstractRenderer {
         legendTextY += lineHeight;
         milestoneY += lineHeight;
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH));
-        graphics2D.setColor(kassandraTheme.burndownTheme.burnDownBorderColor);
+        graphics2D.setColor(kassandraTheme.burndownTheme.borderColor);
         graphics2D.drawLine(legendX1, legendY, legendX2, legendY);
         drawGraphText(legendTextX, legendTextY, "Remaining work", kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 

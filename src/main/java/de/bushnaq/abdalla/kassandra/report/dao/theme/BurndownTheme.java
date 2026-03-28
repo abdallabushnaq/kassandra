@@ -22,7 +22,7 @@ import java.awt.*;
 public class BurndownTheme {
     public static final int     MAX_AUTHOR_COLOR = 12/*(9-4) * 3*//*+ 3*//*+1*/;
     //    public              Color   bankHolidayColor;
-    public              Color   burnDownBorderColor;
+    public              Color   borderColor;
     public              Color[] burnDownColor;
     public              Color   delayEventColor;
     public              Color   inTimeColor;

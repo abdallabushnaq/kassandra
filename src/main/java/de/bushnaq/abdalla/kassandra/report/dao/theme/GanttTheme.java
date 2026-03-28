@@ -20,28 +20,28 @@ package de.bushnaq.abdalla.kassandra.report.dao.theme;
 import java.awt.*;
 
 public class GanttTheme {
-    public Color ganttCriticalRelationColor;
-    public Color ganttCriticalTaskBorderColor;
-    public Color ganttGridColor;
-    public Color ganttHolidayBgColor;
-    public Color ganttIdColor;
+    public Color criticalRelationColor;
+    public Color criticalTaskBorderColor;
+    public Color gridColor;
+    public Color holidayBgColor;
+    public Color idColor;
     //    public Color ganttIdErrorColor;
-    public Color ganttIdTextColor;
+    public Color idTextColor;
     //    public Color ganttIdTextErrorColor;
-    public Color ganttMilestoneColor;
-    public Color ganttMilestoneTextColor;
-    public Color ganttOutOfOfficeColor;
-    public Color ganttRelationColor;
-    public Color ganttRequestMilestoneColor;
-    public Color ganttSickBgColor;
-    public Color ganttStoryColor;
-    public Color ganttStoryTextColor;
-    public Color ganttTaskBorderColor;
-    public Color ganttTaskTextColor;
-    public Color ganttTaskTickLineColor;
-    public Color ganttTaskTickTextColor;
-    public Color ganttTripBgColor;
-    public Color ganttVacationBgColor;
+    public Color milestoneColor;
+    public Color milestoneTextColor;
+    public Color outOfOfficeColor;
+    public Color relationColor;
+    public Color requestMilestoneColor;
+    public Color sickBgColor;
+    public Color storyColor;
+    public Color storyTextColor;
+    public Color taskBorderColor;
+    public Color taskTextColor;
+    public Color taskTickLineColor;
+    public Color taskTickTextColor;
+    public Color tripBgColor;
+    public Color vacationBgColor;
 
     public GanttTheme() {
     }

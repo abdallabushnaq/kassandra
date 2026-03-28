@@ -133,9 +133,9 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     private void drawCriticalMarker(Task task, int x1, int x2, int y) {
         if (task.getCritical()) {
-            graphics2D.setColor(kassandraTheme.ganttTheme.ganttCriticalTaskBorderColor);
+            graphics2D.setColor(kassandraTheme.ganttTheme.criticalTaskBorderColor);
         } else {
-            graphics2D.setColor(kassandraTheme.ganttTheme.ganttTaskBorderColor);
+            graphics2D.setColor(kassandraTheme.ganttTheme.taskBorderColor);
         }
         ProjectCalendar pc;
         User            user = task.getAssignedUser();
@@ -189,12 +189,12 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     private void drawId(Task task, int y) {
         int      x1        = firstDayX;
         int      x2        = x1 + calendarXAxes.dayOfWeek.getWidth();
-        Color    fillColor = kassandraTheme.ganttTheme.ganttIdColor;
-        Color    textColor = kassandraTheme.ganttTheme.ganttIdTextColor;
+        Color    fillColor = kassandraTheme.ganttTheme.idColor;
+        Color    textColor = kassandraTheme.ganttTheme.idTextColor;
         MetaData md        = TaskUtil.getTaskMetaData(task);
         graphics2D.setFont(idFont);
-        fillColor = kassandraTheme.ganttTheme.ganttIdColor;
-        textColor = kassandraTheme.ganttTheme.ganttIdTextColor;
+        fillColor = kassandraTheme.ganttTheme.idColor;
+        textColor = kassandraTheme.ganttTheme.idTextColor;
         graphics2D.setColor(fillColor);
         graphics2D.fillRect(x1 + 1, y - getTaskHeight() / 2, x2 - x1 - 1, getTaskHeight());
         {
@@ -343,10 +343,10 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
         int x2 = RELATION_CORNER_LENGTH + calculateX(sourceTask.getStart(), sourceTask.getStart().truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2 - RESOURCE_NAME_TO_TASK_GAP;
         graphics2D.setStroke(new BasicStroke(RELATION_LINE_STROKE_WIDTH));
         if (sourceTask.getCritical() && targetTask.getCritical()) {
-            graphics2D.setColor(kassandraTheme.ganttTheme.ganttCriticalRelationColor);
+            graphics2D.setColor(kassandraTheme.ganttTheme.criticalRelationColor);
 
         } else {
-            graphics2D.setColor(kassandraTheme.ganttTheme.ganttRelationColor);
+            graphics2D.setColor(kassandraTheme.ganttTheme.relationColor);
         }
 //        graphics2D.drawLine(x1, y1, x2, y1);
         graphics2D.fillRect(x1 + 1, y1, x2 - x1, 1);// -
@@ -360,7 +360,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
             int   d       = 5;
             int[] xPoints = {x2 - d, x2 + d, x2};
             int[] yPoints = {y2 - d + signum, y2 - d + signum, y2 + signum};
-            graphics2D.setColor(kassandraTheme.ganttTheme.ganttRelationColor);
+            graphics2D.setColor(kassandraTheme.ganttTheme.relationColor);
             graphics2D.fillPolygon(xPoints, yPoints, xPoints.length);
         } else {
             //arrow head up
@@ -370,7 +370,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
             int   d       = 5;
             int[] xPoints = {x2 + d, x2 - d, x2};
             int[] yPoints = {y2 + d + signum, y2 + d + signum, y2 + signum};
-            graphics2D.setColor(kassandraTheme.ganttTheme.ganttRelationColor);
+            graphics2D.setColor(kassandraTheme.ganttTheme.relationColor);
             graphics2D.fillPolygon(xPoints, yPoints, xPoints.length);
         }
 
@@ -464,8 +464,8 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     private void drawTask(Task task, int x1, int x2, int y, boolean labelInside, boolean alien, String marker, List<Conflict> conflict) throws Exception {
         Color  fillColor           = kassandraTheme.burndownTheme.getAuthorColor(28);
-        Color  textColor           = kassandraTheme.ganttTheme.ganttTaskTextColor;
-        Color  textInfoColor       = kassandraTheme.ganttTheme.ganttTaskTextColor;
+        Color  textColor           = kassandraTheme.ganttTheme.taskTextColor;
+        Color  textInfoColor       = kassandraTheme.ganttTheme.taskTextColor;
         String resourceName        = null;
         String resourceUtilization = null;
         Number units               = null;
@@ -481,15 +481,15 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
         }
         if (task.isMilestone() && task.getChildTasks().size() == 0) {
             // ---Milestone, but not a story (MS Project marks stories with 0 duration as milestones
-            fillColor = kassandraTheme.ganttTheme.ganttMilestoneColor;
-            textColor = kassandraTheme.ganttTheme.ganttMilestoneTextColor;
+            fillColor = kassandraTheme.ganttTheme.milestoneColor;
+            textColor = kassandraTheme.ganttTheme.milestoneTextColor;
         } else if (task.getChildTasks().size() != 0) {
             // ---Story
-            fillColor = kassandraTheme.ganttTheme.ganttStoryColor;
-            textColor = kassandraTheme.ganttTheme.ganttStoryTextColor;
+            fillColor = kassandraTheme.ganttTheme.storyColor;
+            textColor = kassandraTheme.ganttTheme.storyTextColor;
         } else if (resourceName != null && units != null) {
             //task
-            textColor = kassandraTheme.ganttTheme.ganttTaskTextColor;
+            textColor = kassandraTheme.ganttTheme.taskTextColor;
 //            int authorIndex = authorsContribution.getSortedKeyList().indexOf(resourceName);
 //            if (authorIndex != -1) {
 //                fillColor = authors.getNameMap().get(resourceName).getColor();
@@ -691,10 +691,10 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     private void drawTick(LocalDateTime time, int x, int y, TextAlignment alignment) {
         DateTimeFormatter formatter  = DateTimeFormatter.ofPattern("HH:mm");
         String            timeString = time.format(formatter);
-        graphics2D.setColor(kassandraTheme.ganttTheme.ganttTaskTickLineColor);
+        graphics2D.setColor(kassandraTheme.ganttTheme.taskTickLineColor);
         graphics2D.fillRect(x, y - getTaskHeight() / 2 + TASK_BODY_BORDER - 2, 1, 2);
         graphics2D.setFont(taskTickFont);
-        graphics2D.setColor(kassandraTheme.ganttTheme.ganttTaskTickTextColor);
+        graphics2D.setColor(kassandraTheme.ganttTheme.taskTickTextColor);
         FontMetrics fm    = graphics2D.getFontMetrics();
         int         width = fm.stringWidth(timeString);
         int         testX;

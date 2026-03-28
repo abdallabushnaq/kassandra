@@ -20,21 +20,21 @@ package de.bushnaq.abdalla.kassandra.report.dao.theme;
 import java.awt.*;
 
 public class CalendarTheme {
-    public Color calendarFillingDayTextColor; // very Light gray for filling days before and after the days we are interested in
-    public Color calendarHolidayBgColor;  // Light blue
-    public Color calendarHolidayTextColor;  // Light blue
-    public Color calendarMonthNameColor;  // Red for month names
-    public Color calendarNormalDayTextColor;  // almost black
-    public Color calendarSickBgColor; // Light red
-    public Color calendarSickTextColor; // Light red
-    public Color calendarTodayBgColor;  // Red circle for today
-    public Color calendarTodayTextColor;  // White text for today
-    public Color calendarTripBgColor;// new Color(0xfffcea);  // Light yellow
-    public Color calendarTripTextColor;//new Color(0xff931e);  // Light yellow
-    public Color calendarVacationBgColor;  // Light green
-    public Color calendarVacationTextColor;  // Light green
-    public Color calendarWeekDayTextColor;  // Light gray for weekends
-    public Color calendarWeekendBgColor;
-    public Color calendarWeekendTextColor;  // Light gray for weekends
-    public Color calendarYearTextColor;  // Dark gray for year display
+    public Color fillingDayTextColor; // very Light gray for filling days before and after the days we are interested in
+    public Color holidayBgColor;  // Light blue
+    public Color holidayTextColor;  // Light blue
+    public Color monthNameColor;  // Red for month names
+    public Color normalDayTextColor;  // almost black
+    public Color sickBgColor; // Light red
+    public Color sickTextColor; // Light red
+    public Color todayBgColor;  // Red circle for today
+    public Color todayTextColor;  // White text for today
+    public Color tripBgColor;// new Color(0xfffcea);  // Light yellow
+    public Color tripTextColor;//new Color(0xff931e);  // Light yellow
+    public Color vacationBgColor;  // Light green
+    public Color vacationTextColor;  // Light green
+    public Color weekDayTextColor;  // Light gray for weekends
+    public Color weekendBgColor;
+    public Color weekendTextColor;  // Light gray for weekends
+    public Color yearTextColor;  // Dark gray for year display
 }

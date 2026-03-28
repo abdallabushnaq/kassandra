@@ -43,7 +43,7 @@ public abstract class AbstractChart extends AbstractCanvas {
 
     @Override
     protected void drawBackground() {
-        graphics2D.setColor(kassandraTheme.chartTheme.chartBackgroundColor);
+        graphics2D.setColor(kassandraTheme.chartTheme.backgroundColor);
         graphics2D.fillRect(0, captionElement.height, getChartWidth() - 1, getChartHeight() - captionElement.height - 1);
     }
 
