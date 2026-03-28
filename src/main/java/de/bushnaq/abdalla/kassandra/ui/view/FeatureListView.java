@@ -33,6 +33,7 @@ import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -62,6 +63,7 @@ import java.util.stream.Collectors;
 
 @Route(value = "feature-list", layout = MainLayout.class)
 @PageTitle("Feature List Page")
+@Menu(order = 3, icon = "vaadin:puzzle-piece", title = "Features")
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Restrict access to users with specific roles
 @Slf4j
@@ -174,6 +176,25 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         if (queryParameters.getParameters().containsKey("version")) {
             this.versionId = Long.parseLong(queryParameters.getParameters().get("version").getFirst());
         }
+        // Resolve defaults when navigated directly from the menu (no URL params)
+        if (productId == null) {
+            productId = productApi.getAll().stream()
+                    .filter(p -> !DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
+                    .map(Product::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (versionId == null && productId != null) {
+            final Long pid = productId;
+            versionId = versionApi.getAll().stream()
+                    .filter(v -> pid.equals(v.getProductId()))
+                    .map(Version::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (productId == null || versionId == null) {
+            log.warn("No products/versions available; FeatureListView will show empty state");
+        }
         // Capture requested versions from URL for initial ComboBox preselection.
         // Cleared here so each navigation cycle starts fresh.
         requestedVersionIds = null;
@@ -187,6 +208,10 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
+                        if (productId == null || versionId == null) {
+                            log.warn("No products/versions available; skipping FeatureListView breadcrumb setup");
+                            return;
+                        }
                         mainLayout.getBreadcrumbs().clear();
                         Product product = productApi.getById(productId);
                         Version version = versionApi.getById(versionId);

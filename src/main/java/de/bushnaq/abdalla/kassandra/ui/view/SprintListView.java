@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 
 @Route(value = "sprint-list", layout = MainLayout.class)
 @PageTitle("Sprint List Page")
-//@Menu(order = 1, icon = "vaadin:factory", title = "project List")
+@Menu(order = 4, icon = "vaadin:time-forward", title = "Sprints")
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
 public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
@@ -190,6 +190,33 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         if (queryParameters.getParameters().containsKey("feature")) {
             this.featureId = Long.parseLong(queryParameters.getParameters().get("feature").getFirst());
         }
+        // Resolve defaults when navigated directly from the menu (no URL params)
+        if (productId == null) {
+            productId = productApi.getAll().stream()
+                    .filter(p -> !DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
+                    .map(Product::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (versionId == null && productId != null) {
+            final Long pid = productId;
+            versionId = versionApi.getAll().stream()
+                    .filter(v -> pid.equals(v.getProductId()))
+                    .map(Version::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (featureId == null && versionId != null) {
+            final Long vid = versionId;
+            featureId = featureApi.getAll().stream()
+                    .filter(f -> vid.equals(f.getVersionId()))
+                    .map(Feature::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (productId == null || versionId == null || featureId == null) {
+            log.warn("No products/versions/features available; SprintListView will show empty state");
+        }
         // Capture requested features from URL for initial ComboBox preselection.
         // Cleared here so each navigation cycle starts fresh.
         requestedFeatureIds = null;
@@ -203,6 +230,10 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
+                        if (productId == null || versionId == null || featureId == null) {
+                            log.warn("No products/versions/features available; skipping SprintListView breadcrumb setup");
+                            return;
+                        }
                         mainLayout.getBreadcrumbs().clear();
                         Product product = productApi.getById(productId);
                         Version version = versionApi.getById(versionId);

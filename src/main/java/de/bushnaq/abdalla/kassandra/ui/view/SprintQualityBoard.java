@@ -37,6 +37,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.HtmlColor;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -64,6 +65,7 @@ import java.util.stream.Collectors;
 
 @Route(value = "sprint-quality-board", layout = MainLayout.class)
 @PageTitle("Sprint Quality Board")
+@Menu(order = 5, icon = "vaadin:chart-3d", title = "Quality Board")
 @PermitAll // When security is enabled, allow all authenticated users
 public class SprintQualityBoard extends Main implements AfterNavigationObserver {
     public static final String                  SPRINT_GRID_NAME_PREFIX = "sprint-grid-name-";
@@ -185,6 +187,42 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         }
         if (queryParameters.getParameters().containsKey("sprint")) {
             this.sprintId = Long.parseLong(queryParameters.getParameters().get("sprint").getFirst());
+        }
+        // Resolve defaults when navigated directly from the menu (no URL params)
+        if (productId == null) {
+            productId = productApi.getAll().stream()
+                    .filter(p -> !DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
+                    .map(Product::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (versionId == null && productId != null) {
+            final Long pid = productId;
+            versionId = versionApi.getAll().stream()
+                    .filter(v -> pid.equals(v.getProductId()))
+                    .map(Version::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (featureId == null && versionId != null) {
+            final Long vid = versionId;
+            featureId = featureApi.getAll().stream()
+                    .filter(f -> vid.equals(f.getVersionId()))
+                    .map(Feature::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (sprintId == null && featureId != null) {
+            final Long fid = featureId;
+            sprintId = sprintApi.getAll().stream()
+                    .filter(s -> fid.equals(s.getFeatureId())
+                                 && !DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s.getName()))
+                    .map(Sprint::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (sprintId == null) {
+            logger.warn("No sprint found to display in SprintQualityBoard");
         }
 
         populateSprintSelector();
@@ -450,6 +488,10 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     }
 
     private void loadData() {
+        if (sprintId == null) {
+            sprint = null;
+            return;
+        }
         //- populate grid with tasks of the sprint
         long time = System.currentTimeMillis();
 

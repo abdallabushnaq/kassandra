@@ -32,6 +32,7 @@ import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Version;
@@ -58,6 +59,7 @@ import java.util.stream.Collectors;
 
 @Route(value = "version-list", layout = MainLayout.class)
 @PageTitle("Version List Page")
+@Menu(order = 2, icon = "vaadin:tag", title = "Versions")
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
 public class VersionListView extends AbstractMainGrid<Version> implements AfterNavigationObserver {
@@ -139,6 +141,17 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         if (queryParameters.getParameters().containsKey("product")) {
             this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
         }
+        // Resolve default product when navigated directly from the menu (no URL params)
+        if (productId == null) {
+            productId = productApi.getAll().stream()
+                    .filter(p -> !DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
+                    .map(Product::getId)
+                    .findFirst()
+                    .orElse(null);
+            if (productId == null) {
+                log.warn("No non-default product found; VersionListView will show empty state");
+            }
+        }
         // Capture requested products from URL for initial ComboBox preselection.
         // Cleared here so each navigation cycle starts fresh.
         requestedProductIds = null;
@@ -151,6 +164,10 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
+                        if (productId == null) {
+                            log.warn("No products available; skipping VersionListView header setup");
+                            return;
+                        }
                         mainLayout.getBreadcrumbs().clear();
                         Product product = productApi.getById(productId);
                         mainLayout.getBreadcrumbs().addItem("Products (" + product.getName() + ")", ProductListView.class);

@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 @Route(value = "active-sprints", layout = MainLayout.class)
 @PageTitle("Active Sprints")
-@Menu(order = 4, icon = "vaadin:tasks", title = "Active Sprints")
+@Menu(order = 7, icon = "vaadin:tasks", title = "Active Sprints")
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
 @Log4j2

@@ -67,7 +67,7 @@ import java.util.concurrent.ExecutionException;
 
 @Route(value = "backlog", layout = MainLayout.class)
 @PageTitle("Backlog")
-@Menu(order = 3, icon = "vaadin:grid-v", title = "Backlog")
+@Menu(order = 6, icon = "vaadin:grid-v", title = "Backlog")
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
 @Log4j2
