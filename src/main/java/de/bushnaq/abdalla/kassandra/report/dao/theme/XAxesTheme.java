@@ -21,47 +21,50 @@ import java.awt.*;
 
 public class XAxesTheme {
     //-------------------------- Day of Month
-    public Color   XAxesDayOfMonthBgColor          = new Color(0xababab);
-    public Color   XAxesDayOfMonthBorderColor      = Color.WHITE;
-    public Color   XAxesDayOfMonthTextColor        = Color.WHITE;
-    public Color   XAxesDayOfMonthWeekendBgColor   = new Color(247, 247, 247);
-    public Color   XAxesDayOfMonthWeekendTextColor = Color.BLACK;
+    public Color   dayOfMonthBgColor;
+    public Color   dayOfMonthBorderColor;
+    public Color   dayOfMonthTextColor;
+    public Color   dayOfMonthWeekendBgColor;
+    public Color   dayOfMonthWeekendTextColor;
     //-------------------------- Day of Week
-    public Color   XAxesDayOfWeekBorderColor       = Color.WHITE;
-    public Color   XAxesDayOfWeekTextColor         = Color.BLACK;
-    public Color   XAxesDayOfweekBgColor           = Color.WHITE;
-    public Color   XAxesDayOfweekWeekendBgColor    = new Color(247, 247, 247);
-    //-------------------------- Month
-    public Color[] XAxesMonthBgColors              = new Color[12];
-    public Color   XAxesMonthBorderColor           = Color.WHITE;
-    public Color   XAxesMonthTextColor             = Color.WHITE;
-    //-------------------------- Week
-    public Color   XAxesWeekBgColor                = new Color(0xababab);
-    public Color   XAxesWeekBoderColor             = Color.WHITE;
-    public Color   XAxesWeekTextColor              = Color.WHITE;
-    //-------------------------- Year
-    public Color   XAxesYearBackgroundColor        = new Color(0xababab);
-    public Color   XAxesYearBoderColor             = Color.white;
-    public Color   XAxesYearTextColor              = Color.WHITE;
+    public Color   dayOfWeekBorderColor;
+    public Color   dayOfWeekTextColor;
+    public Color   dayOfWeekWeekendTextColor;
+    public Color   dayOfweekBgColor;
+    public Color   dayOfweekWeekendBgColor;
+    //-------------------------------
     public Color   futureEventColor;
     public Color   milestoneFlagColor;
     public Color   milestoneTextColor;
+    //-------------------------- Month
+    public Color[] monthBgColors = new Color[12];
+    public Color   monthBorderColor;
+    public Color   monthTextColor;
+    //---------------------------------
     public Color   nowEventColor;
     public Color   pastEventColor;
+    //-------------------------- Week
+    public Color   weekBgColor;
+    public Color   weekBoderColor;
+    public Color   weekTextColor;
+    //-------------------------- Year
+    public Color   yearBgColor;
+    public Color   yearBoderColor;
+    public Color   yearTextColor;
 
     public XAxesTheme() {
         int ma = 0xff;
-        XAxesMonthBgColors[0]  = new Color(0x18, 0x7d, 0xc3, ma);
-        XAxesMonthBgColors[1]  = new Color(0x24, 0xae, 0xef, ma);
-        XAxesMonthBgColors[2]  = new Color(0x27, 0x9e, 0x68, ma);
-        XAxesMonthBgColors[3]  = new Color(0x62, 0xb7, 0x42, ma);
-        XAxesMonthBgColors[4]  = new Color(0xac, 0xc2, 0x31, ma);
-        XAxesMonthBgColors[5]  = new Color(0xf9, 0xb7, 0x1b, ma);
-        XAxesMonthBgColors[6]  = new Color(0xf1, 0x75, 0x1d, ma);
-        XAxesMonthBgColors[7]  = new Color(0xe5, 0x46, 0x29, ma);
-        XAxesMonthBgColors[8]  = new Color(0xe7, 0x16, 0x57, ma);
-        XAxesMonthBgColors[9]  = new Color(0xad, 0x34, 0x83, ma);
-        XAxesMonthBgColors[10] = new Color(0x65, 0x41, 0x98, ma);
-        XAxesMonthBgColors[11] = new Color(0x08, 0x55, 0xa3, ma);
+        monthBgColors[0]  = new Color(0x18, 0x7d, 0xc3, ma);
+        monthBgColors[1]  = new Color(0x24, 0xae, 0xef, ma);
+        monthBgColors[2]  = new Color(0x27, 0x9e, 0x68, ma);
+        monthBgColors[3]  = new Color(0x62, 0xb7, 0x42, ma);
+        monthBgColors[4]  = new Color(0xac, 0xc2, 0x31, ma);
+        monthBgColors[5]  = new Color(0xf9, 0xb7, 0x1b, ma);
+        monthBgColors[6]  = new Color(0xf1, 0x75, 0x1d, ma);
+        monthBgColors[7]  = new Color(0xe5, 0x46, 0x29, ma);
+        monthBgColors[8]  = new Color(0xe7, 0x16, 0x57, ma);
+        monthBgColors[9]  = new Color(0xad, 0x34, 0x83, ma);
+        monthBgColors[10] = new Color(0x65, 0x41, 0x98, ma);
+        monthBgColors[11] = new Color(0x08, 0x55, 0xa3, ma);
     }
 }

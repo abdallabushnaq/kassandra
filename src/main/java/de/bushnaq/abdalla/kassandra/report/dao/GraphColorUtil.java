@@ -30,8 +30,8 @@ public class GraphColorUtil {
 
     public static Color getDayOfMonthBgColor(Theme kassandraTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthBgColor;
-            case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthWeekendBgColor;
+            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.dayOfMonthBgColor;
+            case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.dayOfMonthWeekendBgColor;
             default -> null;
         };
 
@@ -39,8 +39,8 @@ public class GraphColorUtil {
 
     public static Color getDayOfMonthTextColor(Theme kassandraTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthTextColor;
-            case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthWeekendTextColor;
+            case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.dayOfMonthTextColor;
+            case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.dayOfMonthWeekendTextColor;
             default -> null;
         };
 
@@ -48,8 +48,17 @@ public class GraphColorUtil {
 
     public static Color getDayOfWeekBgColor(Theme kassandraTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
-            case FRIDAY, MONDAY, THURSDAY, TUESDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.XAxesDayOfweekBgColor;
-            case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.XAxesDayOfweekWeekendBgColor;
+            case FRIDAY, MONDAY, THURSDAY, TUESDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.dayOfweekBgColor;
+            case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.dayOfweekWeekendBgColor;
+            default -> null;
+        };
+
+    }
+
+    public static Color getDayOfWeekTextColor(Theme kassandraTheme, LocalDate startCal) {
+        return switch (startCal.getDayOfWeek()) {
+            case FRIDAY, MONDAY, THURSDAY, TUESDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.dayOfWeekTextColor;
+            case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.dayOfWeekWeekendTextColor;
             default -> null;
         };
 
@@ -64,7 +73,7 @@ public class GraphColorUtil {
 
     public static Color getGanttDayStripeColor(Theme kassandraTheme, ProjectCalendar pc, LocalDate currentDate) {
         if (pc.isWorkingDate(currentDate)) {
-            return kassandraTheme.xAxesTheme.XAxesDayOfweekBgColor;
+            return kassandraTheme.xAxesTheme.dayOfweekBgColor;
         } else {
             ProjectCalendarException exception = pc.getException(currentDate);
             if (exception != null) {
@@ -78,7 +87,7 @@ public class GraphColorUtil {
                     return kassandraTheme.ganttTheme.holidayBgColor;
                 }
             }
-            return kassandraTheme.xAxesTheme.XAxesDayOfMonthWeekendBgColor;
+            return kassandraTheme.xAxesTheme.dayOfMonthWeekendBgColor;
         }
     }
 

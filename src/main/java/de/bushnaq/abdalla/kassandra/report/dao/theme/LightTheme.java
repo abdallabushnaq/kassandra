@@ -46,12 +46,13 @@ public class LightTheme extends Theme {
     public LightTheme(StableDiffusionConfig stableDiffusionConfig) {
         super(ETheme.light);
         Color basicTextColor = Color.WHITE;
+        Color baseBgColor    = ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarLightBackgroundColor());
 
 
         //---------------------------------------------------------------------
         //-- ChartTheme
         //---------------------------------------------------------------------
-        chartTheme.backgroundColor          = ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarLightBackgroundColor());
+        chartTheme.backgroundColor          = baseBgColor;
         chartTheme.graphTextBackgroundColor = chartTheme.backgroundColor;
         chartTheme.surroundingSquareColor   = new Color(0xaaaaaa);
         ganttTheme.requestMilestoneColor    = Color.RED/*new Color(0xa7, 0x00, 0x00)*/;
@@ -83,6 +84,30 @@ public class LightTheme extends Theme {
         //---------------------------------------------------------------------
         //-- XAxesTheme
         //---------------------------------------------------------------------
+        //-------------------------- Day of Month
+        xAxesTheme.dayOfMonthBgColor          = new Color(0xababab);
+        xAxesTheme.dayOfMonthBorderColor      = Color.WHITE;
+        xAxesTheme.dayOfMonthTextColor        = Color.WHITE;
+        xAxesTheme.dayOfMonthWeekendBgColor   = new Color(247, 247, 247);
+        xAxesTheme.dayOfMonthWeekendTextColor = Color.BLACK;
+        //------------------------- Day of Week
+        xAxesTheme.dayOfweekBgColor          = Color.WHITE;
+        xAxesTheme.dayOfWeekBorderColor      = Color.WHITE;
+        xAxesTheme.dayOfWeekTextColor        = Color.BLACK;
+        xAxesTheme.dayOfweekWeekendBgColor   = new Color(247, 247, 247);
+        xAxesTheme.dayOfWeekWeekendTextColor = Color.white;
+        //------------------------- Month
+        xAxesTheme.monthBorderColor = Color.WHITE;
+        xAxesTheme.monthTextColor   = Color.WHITE;
+        //------------------------- Week
+        xAxesTheme.weekBgColor    = new Color(0xababab);
+        xAxesTheme.weekBoderColor = Color.WHITE;
+        xAxesTheme.weekTextColor  = Color.WHITE;
+        //------------------------- Year
+        xAxesTheme.yearBgColor    = new Color(0xababab);
+        xAxesTheme.yearBoderColor = Color.white;
+        xAxesTheme.yearTextColor  = Color.WHITE;
+        //-------------------------
         xAxesTheme.futureEventColor   = Color.blue;
         xAxesTheme.milestoneFlagColor = chartTheme.backgroundColor;
         xAxesTheme.milestoneTextColor = basicTextColor;

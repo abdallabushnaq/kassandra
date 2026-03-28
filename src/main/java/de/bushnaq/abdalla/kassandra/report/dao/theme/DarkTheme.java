@@ -47,11 +47,12 @@ public class DarkTheme extends Theme {
         super(ETheme.dark);
 
         Color basicTextColor = Color.WHITE;
+        Color baseBgColor    = ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor());
 
         //---------------------------------------------------------------------
         //-- ChartTheme
         //---------------------------------------------------------------------
-        chartTheme.backgroundColor          = ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor());
+        chartTheme.backgroundColor          = baseBgColor;
         chartTheme.graphTextBackgroundColor = chartTheme.backgroundColor;
         chartTheme.surroundingSquareColor   = new Color(0xaaaaaa);
         ganttTheme.requestMilestoneColor    = Color.RED/*new Color(0xa7, 0x00, 0x00)*/;
@@ -82,8 +83,31 @@ public class DarkTheme extends Theme {
         //---------------------------------------------------------------------
         //-- XAxesTheme
         //---------------------------------------------------------------------
+        xAxesTheme.dayOfMonthBgColor          = baseBgColor;
+        xAxesTheme.dayOfMonthBorderColor      = Color.black;
+        xAxesTheme.dayOfMonthTextColor        = Color.WHITE;
+        xAxesTheme.dayOfMonthWeekendBgColor   = ColorUtil.colorFraction(baseBgColor, 2);
+        xAxesTheme.dayOfMonthWeekendTextColor = Color.WHITE;
+        //------------------------- Day of Week
+        xAxesTheme.dayOfweekBgColor          = ColorUtil.colorFraction(baseBgColor, 1.5);
+        xAxesTheme.dayOfWeekBorderColor      = Color.black;
+        xAxesTheme.dayOfWeekTextColor        = Color.white;
+        xAxesTheme.dayOfweekWeekendBgColor   = ColorUtil.colorFraction(baseBgColor, 2);
+        xAxesTheme.dayOfWeekWeekendTextColor = Color.white;
+        //------------------------- Month
+        xAxesTheme.monthBorderColor = Color.black;
+        xAxesTheme.monthTextColor   = Color.WHITE;
+        //------------------------- Week
+        xAxesTheme.weekBgColor    = baseBgColor;
+        xAxesTheme.weekBoderColor = Color.black;
+        xAxesTheme.weekTextColor  = Color.WHITE;
+        //------------------------- Year
+        xAxesTheme.yearBgColor    = baseBgColor;
+        xAxesTheme.yearBoderColor = Color.black;
+        xAxesTheme.yearTextColor  = Color.WHITE;
+        //-------------------------
         xAxesTheme.futureEventColor   = Color.blue;
-        xAxesTheme.milestoneFlagColor = chartTheme.backgroundColor;
+        xAxesTheme.milestoneFlagColor = Color.black;
         xAxesTheme.milestoneTextColor = basicTextColor;
         xAxesTheme.nowEventColor      = Color.gray;
         xAxesTheme.pastEventColor     = Color.lightGray;
@@ -98,7 +122,7 @@ public class DarkTheme extends Theme {
         ganttTheme.milestoneTextColor    = new Color(0x50, 0x50, 0x50, 0xff);
         ganttTheme.storyColor            = Color.black;//new Color(64, 64, 64, 0xa0);
         ganttTheme.storyTextColor        = Color.lightGray;
-        ganttTheme.taskTextColor         = new Color(0x90, 0x90, 0x90, 0xff);//done
+        ganttTheme.taskTextColor         = Color.lightGray;
         ganttTheme.taskBorderColor       = new Color(0x90, 0x90, 0x90, 0x7F);
         ganttTheme.idColor               = new Color(0xff, 0xff, 0xff, 0xff);
 //        ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);

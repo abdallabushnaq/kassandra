@@ -32,54 +32,52 @@ public class StableDiffusionConfig {
     /**
      * Base URL of the Stable Diffusion WebUI API
      */
-    private String apiUrl         = "http://localhost:7861";
+    private String apiUrl                     = "http://localhost:7861";
     /**
-     * CFG Scale (Classifier Free Guidance)
+     * Background color for dark-theme avatars, as a CSS hex string (e.g., "#000000").
+     * Used by AvatarService to generate dark avatars with a matching background.
+     * Configurable via 'stable-diffusion.avatar-dark-background-color'.
      */
-    private double cfgScale       = 7.0;
-    /**
-     * Default denoising strength for image-to-image requests (0.0 = no change, 1.0 = fully new image)
-     */
-    private double defaultDenoisingStrength = 0.75;
-    /**
-     * Default sampler algorithm (optimized for SD3 Medium)
-     */
-    private String defaultSampler = "DPM++ 2M Karras";
-    /**
-     * Default number of sampling steps
-     */
-    private int    defaultSteps   = 20;
-    /**
-     * Size to generate images at (before resizing)
-     */
-    private int    generationSize    = 512;
-    private String modelName         = "realisticVisionV60B1_v51HyperVAE.safetensors";
-    /**
-     * Final output size for AI-generated avatars (light and dark variants).
-     * Defaults to 256 to preserve detail; differs from the generic {@code outputSize}.
-     */
-    private int    avatarOutputSize   = 256;
-    /**
-     * Final output size for avatars/icons
-     */
-    private int    outputSize        = 64;
-    /**
-     * Timeout in seconds for API requests
-     */
-    private int    timeoutSeconds = 120;
-
+    private String avatarDarkBackgroundColor  = "#333333";
     /**
      * Background color for light-theme avatars, as a CSS hex string (e.g., "#FFFFFF").
      * Used by AvatarService to generate light avatars with a matching background.
      * Configurable via 'stable-diffusion.avatar-light-background-color'.
      */
     private String avatarLightBackgroundColor = "#FFFFFF";
-
     /**
-     * Background color for dark-theme avatars, as a CSS hex string (e.g., "#000000").
-     * Used by AvatarService to generate dark avatars with a matching background.
-     * Configurable via 'stable-diffusion.avatar-dark-background-color'.
+     * Final output size for AI-generated avatars (light and dark variants).
+     * Defaults to 256 to preserve detail; differs from the generic {@code outputSize}.
      */
-    private String avatarDarkBackgroundColor = "#000000";
+    private int    avatarOutputSize           = 256;
+    /**
+     * CFG Scale (Classifier Free Guidance)
+     */
+    private double cfgScale                   = 7.0;
+    /**
+     * Default denoising strength for image-to-image requests (0.0 = no change, 1.0 = fully new image)
+     */
+    private double defaultDenoisingStrength   = 0.75;
+    /**
+     * Default sampler algorithm (optimized for SD3 Medium)
+     */
+    private String defaultSampler             = "DPM++ 2M Karras";
+    /**
+     * Default number of sampling steps
+     */
+    private int    defaultSteps               = 20;
+    /**
+     * Size to generate images at (before resizing)
+     */
+    private int    generationSize             = 512;
+    private String modelName                  = "realisticVisionV60B1_v51HyperVAE.safetensors";
+    /**
+     * Final output size for avatars/icons
+     */
+    private int    outputSize                 = 64;
+    /**
+     * Timeout in seconds for API requests
+     */
+    private int    timeoutSeconds             = 120;
 }
 
