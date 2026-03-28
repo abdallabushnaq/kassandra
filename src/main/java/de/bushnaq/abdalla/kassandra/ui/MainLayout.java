@@ -43,6 +43,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
 import jakarta.annotation.security.PermitAll;
 import lombok.Getter;
@@ -77,13 +78,15 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     @Getter
     private final       Breadcrumbs      breadcrumbs                     = new Breadcrumbs();
     private             Image            logoImage;   // Store reference to logo image
+    private final       ThemeSessionState themeSessionState;
     private             com.vaadin.flow.component.html.Image userAvatarImage; // updated on theme toggle
     private final       Map<Tab, String> tabToPathMap                    = new HashMap<>();
     private             Tabs             tabs;
     private final       UserApi          userApi;
 
-    MainLayout(UserApi userApi) {
-        this.userApi = userApi;
+    MainLayout(UserApi userApi, ThemeSessionState themeSessionState) {
+        this.userApi           = userApi;
+        this.themeSessionState = themeSessionState;
         UI.getCurrent().getPage().addJavaScript("/js/tooltips.js");
         setPrimarySection(Section.NAVBAR);
         addClassName("main-layout"); // scope CSS to this layout
@@ -228,7 +231,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
      * @return the theme toggle button
      */
     private ThemeToggle createThemeToggle() {
-        ThemeToggle themeToggle = new ThemeToggle();
+        ThemeToggle themeToggle = new ThemeToggle(themeSessionState);
         themeToggle.setId(ID_THEME_TOGGLE);
 
         // Add click listener to update logo and user avatar when theme is toggled

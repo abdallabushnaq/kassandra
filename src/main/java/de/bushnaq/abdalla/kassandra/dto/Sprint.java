@@ -169,17 +169,6 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     }
 
     /**
-     * Get the light avatar URL with hash parameter for proper caching.
-     * Delegates to {@link #getAvatarUrl(boolean)} with {@code dark = false}.
-     *
-     * @return The light avatar URL with hash parameter if hash is available, otherwise just the base URL
-     */
-    @JsonIgnore
-    public String getAvatarUrl() {
-        return getAvatarUrl(false);
-    }
-
-    /**
      * Generate a default avatar prompt for AI image generation.
      * This provides a consistent prompt format for sprint avatars.
      *

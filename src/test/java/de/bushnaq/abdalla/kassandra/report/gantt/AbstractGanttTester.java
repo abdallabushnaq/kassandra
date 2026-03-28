@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.report.gantt;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
+import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.util.DTOAsserts;
 import de.bushnaq.abdalla.kassandra.util.MPXJReader;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -47,6 +48,14 @@ import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 @Slf4j
 public class AbstractGanttTester extends DTOAsserts {
     private final DateTimeFormatter dtfymdhmss = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm:ss.SSS");
+
+    /**
+     * Theme used when generating Gantt charts in {@link #evaluate}.
+     * Defaults to {@link ETheme#dark} to preserve pre-existing test reference images.
+     * Sub-classes (e.g. {@code CriticalTest}) may set this field before calling
+     * {@link #executeTest} to switch the rendering theme.
+     */
+    protected ETheme testTheme = ETheme.dark;
 
     /**
      * Compares two Lombok {@code toString()} outputs field by field and returns the actual
@@ -89,7 +98,7 @@ public class AbstractGanttTester extends DTOAsserts {
         MPXJReader project = new MPXJReader(testFolder, false);
         Sprint     sprint  = project.load(Path.of(fileName));
         project.levelResources(testInfo, sprint, null);
-
+        project.testTheme = testTheme;
 
         project.generateGanttChart(testInfo, sprint.getId(), testFolder);
 

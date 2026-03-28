@@ -20,7 +20,6 @@ package de.bushnaq.abdalla.kassandra.report.gantt;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import de.bushnaq.abdalla.kassandra.KassandraParameterOptions;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,9 +66,9 @@ public class CriticalTest extends AbstractGanttTester {
     @ParameterizedTest
     @MethodSource("mppFileNamesProvider")
     public void test(String name, TestInfo testInfo) throws Exception {
-        KassandraParameterOptions.setTheme(ETheme.dark);
+        testTheme = ETheme.dark;
         executeTest(name, testInfo, testFolder);
-        KassandraParameterOptions.setTheme(ETheme.light);
+        testTheme = ETheme.light;
         executeTest(name, testInfo, testFolder);
     }
 

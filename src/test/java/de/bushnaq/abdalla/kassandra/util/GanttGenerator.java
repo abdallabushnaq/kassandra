@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.util;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -29,6 +30,13 @@ import org.junit.jupiter.api.TestInfo;
 
 public class GanttGenerator extends MPXJGenerator {
 
+    /**
+     * Theme used for Gantt chart generation in tests.
+     * Defaults to {@link ETheme#dark} to preserve pre-existing test reference images.
+     * Tests that need to switch theme (e.g. {@code CriticalTest}) set this field directly.
+     */
+    public ETheme testTheme = ETheme.dark;
+
     public void generateGanttChart(TestInfo testInfo, long sprintId, String testFolder) throws Exception {
         Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         sprint.initialize();
@@ -36,6 +44,7 @@ public class GanttGenerator extends MPXJGenerator {
         sprint.initTaskMap(tasks, worklogs);
         sprint.recalculate(ParameterOptions.getLocalNow());
         Context context = new Context(null);
+        context.parameters.setTheme(testTheme);
         String  sprintName;
         if (testInfo.getDisplayName().indexOf('=') != -1) {
             sprintName = testInfo.getDisplayName().substring(testInfo.getDisplayName().indexOf('"') + 1, testInfo.getDisplayName().lastIndexOf('"')) + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";

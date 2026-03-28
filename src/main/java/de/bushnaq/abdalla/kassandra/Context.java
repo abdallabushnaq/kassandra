@@ -17,7 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra;
 
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
+import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.util.Debug;
@@ -49,6 +52,25 @@ public class Context {
             this.parameters = new KassandraParameterOptions(new LightTheme(stableDiffusionConfig), new DarkTheme(stableDiffusionConfig));
         }
 
+    }
+
+    /**
+     * Synchronises {@link ParameterOptions#setTheme(ETheme) parameters.theme} from the active
+     * Vaadin {@link UI} theme list.
+     *
+     * <p>Must be called on the Vaadin UI thread, <strong>before</strong> launching any
+     * {@link java.util.concurrent.CompletableFuture} that reads
+     * {@link ParameterOptions#getActiveGraphicsTheme()}, because the Vaadin UI is not accessible
+     * from background threads.</p>
+     *
+     * <p>No-op when no UI is currently attached (e.g. during unit tests).</p>
+     */
+    public void syncTheme() {
+        UI ui = UI.getCurrent();
+        if (ui != null) {
+            boolean isDark = ui.getElement().getThemeList().contains(Lumo.DARK);
+            parameters.setTheme(isDark ? ETheme.dark : ETheme.light);
+        }
     }
 
 

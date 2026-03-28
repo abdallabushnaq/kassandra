@@ -17,6 +17,9 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -32,6 +35,7 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
@@ -45,6 +49,7 @@ import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.http.HttpStatus;
@@ -69,12 +74,10 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
     private             AvatarUpdateRequest                           avatarUpdateRequest;
     private             ColorPicker                                   colorPicker;
     private             User                                          currentUser;
-    //    private             byte[]                                        generatedAvatarBytes;
-//    private             byte[]                                        generatedAvatarBytesOriginal;
-//    private             String                                        generatedAvatarPrompt;
     private             com.vaadin.flow.component.html.Image          headerAvatarImage;
     private             com.vaadin.flow.component.textfield.TextField nameField;
     private             com.vaadin.flow.component.html.Image          nameFieldAvatarImage;
+    private             Registration                                  themeChangedRegistration;
     private final       StableDiffusionService                        stableDiffusionService;
     private final       AvatarService                                 avatarService;
     private final       UserApi                                       userApi;
@@ -92,6 +95,39 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         );
         getStyle().set("padding-left", "var(--lumo-space-m)");
         getStyle().set("padding-right", "var(--lumo-space-m)");
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> refreshAvatarSources());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
+    }
+
+    /**
+     * Re-applies the theme-aware avatar URL to both avatar image components after a theme toggle.
+     * No-op if the current user has not been loaded yet.
+     */
+    private void refreshAvatarSources() {
+        if (currentUser == null) {
+            return;
+        }
+        boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        if (headerAvatarImage != null) {
+            headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
+        }
+        if (nameFieldAvatarImage != null) {
+            nameFieldAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
+        }
     }
 
     @Override

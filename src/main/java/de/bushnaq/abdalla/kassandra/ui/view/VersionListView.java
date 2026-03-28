@@ -29,6 +29,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.dto.Product;
@@ -52,12 +53,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Route(value = "version-list", layout = MainLayout.class)
@@ -65,37 +61,37 @@ import java.util.stream.Collectors;
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
 public class VersionListView extends AbstractMainGrid<Version> implements AfterNavigationObserver {
-    public static final  String                      CREATE_VERSION_BUTTON             = "create-version-button";
-    public static final  String                      ROUTE                             = "version-list";
-    private static final String                      ROUTE_KEY_PREFIX                  = "version-list:";
-    public static final  String                      VERSION_AI_PANEL_BUTTON           = "version-ai-panel-button";
-    public static final  String                      VERSION_GLOBAL_FILTER             = "version-global-filter";
-    public static final  String                      VERSION_GRID                      = "version-grid";
-    public static final  String                      VERSION_GRID_DELETE_BUTTON_PREFIX = "version-grid-delete-button-prefix-";
-    public static final  String                      VERSION_GRID_EDIT_BUTTON_PREFIX   = "version-grid-edit-button-prefix-";
-    public static final  String                      VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
-    public static final  String                      VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
-    public static final  String                      VERSION_ROW_COUNTER               = "version-row-counter";
-    public static final  String                      PRODUCT_SELECTOR                  = "product-selector";
-    private              List<Version>               allVersions                       = new ArrayList<>();
-    private final        AiAssistantService          aiAssistantService;
-    private final        AiFilterService             aiFilterService;
-    private final        Button                      aiToggleButton;
-    private final        SplitLayout                 bodySplit;
-    private final        ChatAgentPanel              chatAgentPanel;
-    private final        Div                         chatPane;
+    public static final  String                              CREATE_VERSION_BUTTON             = "create-version-button";
+    public static final  String                              PRODUCT_SELECTOR                  = "product-selector";
+    public static final  String                              ROUTE                             = "version-list";
+    private static final String                              ROUTE_KEY_PREFIX                  = "version-list:";
+    public static final  String                              VERSION_AI_PANEL_BUTTON           = "version-ai-panel-button";
+    public static final  String                              VERSION_GLOBAL_FILTER             = "version-global-filter";
+    public static final  String                              VERSION_GRID                      = "version-grid";
+    public static final  String                              VERSION_GRID_DELETE_BUTTON_PREFIX = "version-grid-delete-button-prefix-";
+    public static final  String                              VERSION_GRID_EDIT_BUTTON_PREFIX   = "version-grid-edit-button-prefix-";
+    public static final  String                              VERSION_GRID_NAME_PREFIX          = "version-grid-name-";
+    public static final  String                              VERSION_LIST_PAGE_TITLE           = "version-list-page-title";
+    public static final  String                              VERSION_ROW_COUNTER               = "version-row-counter";
+    private final        AiAssistantService                  aiAssistantService;
+    private final        AiFilterService                     aiFilterService;
+    private final        Button                              aiToggleButton;
+    private              List<Version>                       allVersions                       = new ArrayList<>();
+    private final        SplitLayout                         bodySplit;
+    private final        ChatAgentPanel                      chatAgentPanel;
+    private final        Div                                 chatPane;
     private              com.vaadin.flow.component.Component headerComponent;
-    private              boolean                     isRestoringFromUrl                = false;
-    private final        JsonMapper                  mapper;
-    private final        ProductApi                  productApi;
-    private              Long                        productId;
-    private final        Map<Long, Product>          productMap                        = new HashMap<>();
-    private              String                      requestedProductIds;
-    private              Set<Product>                selectedProducts                  = new HashSet<>();
-    private final        ChatPanelSessionState       sessionState;
-    private final        UserApi                     userApi;
-    private final        VersionApi                  versionApi;
-    private              MultiSelectComboBox<Product> productSelector;
+    private              boolean                             isRestoringFromUrl                = false;
+    private final        JsonMapper                          mapper;
+    private final        ProductApi                          productApi;
+    private              Long                                productId;
+    private final        Map<Long, Product>                  productMap                        = new HashMap<>();
+    private              MultiSelectComboBox<Product>        productSelector;
+    private              String                              requestedProductIds;
+    private              Set<Product>                        selectedProducts                  = new HashSet<>();
+    private final        ChatPanelSessionState               sessionState;
+    private final        UserApi                             userApi;
+    private final        VersionApi                          versionApi;
 
     public VersionListView(VersionApi versionApi, ProductApi productApi, UserApi userApi, Clock clock,
                            AiFilterService aiFilterService, JsonMapper mapper,
@@ -175,7 +171,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                                 .set("display", "inline-block")
                                 .set("margin-right", "12px");
                         if (product.getAvatarHash() != null && !product.getAvatarHash().isEmpty()) {
-                            avatar.setSrc(product.getAvatarUrl());
+                            boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                            avatar.setSrc(product.getAvatarUrl(isDark));
                         }
                         headerComponent = createSmartHeader(
                                 product.getName(), VERSION_LIST_PAGE_TITLE, avatar,
@@ -240,6 +237,19 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         }
     }
 
+    /**
+     * Applies a data-provider filter so the grid shows only versions whose product is
+     * selected in the MultiSelectComboBox.  When the selection is empty the filter is
+     * cleared and all versions are shown.
+     */
+    private void applyVersionFilter() {
+        if (!selectedProducts.isEmpty()) {
+            Set<Long> productIds = selectedProducts.stream().map(Product::getId).collect(Collectors.toSet());
+            getDataProvider().setFilter(v -> productIds.contains(v.getProductId()));
+        } else {
+            getDataProvider().setFilter(null);
+        }
+    }
 
     private void confirmDelete(Version version) {
         String message = "Are you sure you want to delete version \"" + version.getName() + "\"?";
@@ -297,8 +307,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
 
         // Add click listener to navigate to FeatureListView with the selected version ID
         getGrid().addItemClickListener(event -> {
-            Version selectedVersion = event.getItem();
-            Map<String, String> params = new HashMap<>();
+            Version             selectedVersion = event.getItem();
+            Map<String, String> params          = new HashMap<>();
             params.put("product", String.valueOf(productId));
             params.put("version", String.valueOf(selectedVersion.getId()));
             UI.getCurrent().navigate(FeatureListView.class, QueryParameters.simple(params));
@@ -369,20 +379,6 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
             }
         });
         dialog.open();
-    }
-
-    /**
-     * Applies a data-provider filter so the grid shows only versions whose product is
-     * selected in the MultiSelectComboBox.  When the selection is empty the filter is
-     * cleared and all versions are shown.
-     */
-    private void applyVersionFilter() {
-        if (!selectedProducts.isEmpty()) {
-            Set<Long> productIds = selectedProducts.stream().map(Product::getId).collect(Collectors.toSet());
-            getDataProvider().setFilter(v -> productIds.contains(v.getProductId()));
-        } else {
-            getDataProvider().setFilter(null);
-        }
     }
 
     private void refreshGrid() {

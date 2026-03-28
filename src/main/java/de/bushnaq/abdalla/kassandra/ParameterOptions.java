@@ -73,7 +73,7 @@ public abstract class ParameterOptions {
     public                 boolean         resourceMap                                 = false;
     public                 boolean         resourceUtilizationPane                     = false;//only used in tests to cover code, currently cannot be enabled in production mode
     @Setter
-    private static         ETheme          theme                                       = ETheme.dark;
+    private                ETheme          theme                                       = ETheme.dark;
     public                 boolean         verbose                                     = false;//in verbose mode, temporary <filename>-tp.xml file will not be deleted.
     public                 String          xlsxFile                                    = null;//used only by Xlsx2mppMain
 

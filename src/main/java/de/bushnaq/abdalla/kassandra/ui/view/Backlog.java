@@ -17,6 +17,9 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Svg;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -36,6 +39,7 @@ import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
@@ -45,6 +49,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.CrossGridDragDropCoordinator;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import jakarta.annotation.security.PermitAll;
@@ -122,6 +127,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private             Long                         sprintId;
     private             ComboBox<Sprint>             sprintSelector;
     private final       TaskApi                      taskApi;
+    private             Registration                 themeChangedRegistration;
     private final       UserApi                      userApi;
     private             MultiSelectComboBox<User>    userSelector;
     private             List<User>                   users                      = new ArrayList<>();
@@ -794,7 +800,40 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         return null;
     }
 
+    /**
+     * Subscribes to {@link ThemeChangedEvent} so the Gantt chart is re-generated in the new theme.
+     *
+     * @param attachEvent the attach event
+     */
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> {
+                    if (sprint != null && !"Backlog".equals(sprint.getName())) {
+                        generateGanttChart();
+                    }
+                });
+    }
+
+    /**
+     * Removes the {@link ThemeChangedEvent} subscription to prevent memory leaks.
+     *
+     * @param detachEvent the detach event
+     */
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
+    }
+
     private void generateGanttChart() {
+        // Capture theme on UI thread before launching background work
+        context.syncTheme();
+
         // Cancel any previous generation in progress
         if (ganttGenerationFuture != null && !ganttGenerationFuture.isDone()) {
             ganttGenerationFuture.cancel(true);

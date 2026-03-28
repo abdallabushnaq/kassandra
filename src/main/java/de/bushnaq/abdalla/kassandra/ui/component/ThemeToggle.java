@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.component;
 
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -25,13 +26,28 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.dom.ThemeList;
 import com.vaadin.flow.theme.lumo.Lumo;
-import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 
+/**
+ * A toggle button that switches the Vaadin UI between the Lumo light and dark themes.
+ *
+ * <p>On attach the stored preference is loaded from browser {@code localStorage}.
+ * On every toggle click the new theme is persisted back to {@code localStorage},
+ * stored in the session via {@link ThemeSessionState}, and broadcast to all
+ * interested views by firing a {@link ThemeChangedEvent} on the current {@link UI}.</p>
+ */
 public class ThemeToggle extends Button {
-    private boolean darkTheme = false; // Default to light theme
 
-    public ThemeToggle() {
+    private       boolean            darkTheme          = false; // Default to light theme
+    private final ThemeSessionState  themeSessionState;
+
+    /**
+     * Creates a new theme-toggle button.
+     *
+     * @param themeSessionState the session-scoped bean that holds the per-user theme preference
+     */
+    public ThemeToggle(ThemeSessionState themeSessionState) {
+        this.themeSessionState = themeSessionState;
         setIcon(new Icon(VaadinIcon.ADJUST));
         addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_TERTIARY_INLINE);
         addClickListener(e -> toggleTheme());
@@ -41,21 +57,20 @@ public class ThemeToggle extends Button {
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
 
-        // Load saved preference
+        // Load saved preference from browser localStorage
         UI.getCurrent().getPage().executeJs("return localStorage.getItem('theme')")
                 .then(String.class, theme -> {
                     ThemeList themeList = UI.getCurrent().getElement().getThemeList();
                     if ("dark".equals(theme)) {
-                        // Apply dark theme if preference is set to dark
                         themeList.add(Lumo.DARK);
                         darkTheme = true;
-                        ParameterOptions.setTheme(ETheme.dark);
                     } else {
-                        // Default to light theme
                         themeList.remove(Lumo.DARK);
                         darkTheme = false;
-                        ParameterOptions.setTheme(ETheme.light);
                     }
+                    ETheme newTheme = darkTheme ? ETheme.dark : ETheme.light;
+                    themeSessionState.setTheme(newTheme);
+                    ComponentUtil.fireEvent(UI.getCurrent(), new ThemeChangedEvent(UI.getCurrent(), newTheme));
                     updateTooltip();
                 });
     }
@@ -65,15 +80,16 @@ public class ThemeToggle extends Button {
         if (themeList.contains(Lumo.DARK)) {
             themeList.remove(Lumo.DARK);
             darkTheme = false;
-            ParameterOptions.setTheme(ETheme.light);
         } else {
             themeList.add(Lumo.DARK);
             darkTheme = true;
-            ParameterOptions.setTheme(ETheme.dark);
         }
+        ETheme newTheme = darkTheme ? ETheme.dark : ETheme.light;
+        themeSessionState.setTheme(newTheme);
+        ComponentUtil.fireEvent(UI.getCurrent(), new ThemeChangedEvent(UI.getCurrent(), newTheme));
         updateTooltip();
 
-        // Store preference in localStorage
+        // Persist preference in localStorage
         UI.getCurrent().getPage().executeJs(
                 "localStorage.setItem('theme', $0)",
                 darkTheme ? "dark" : "light");

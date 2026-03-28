@@ -18,6 +18,9 @@
 package de.bushnaq.abdalla.kassandra.ui.component;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
@@ -35,6 +38,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -55,6 +59,8 @@ public abstract class AbstractMainGrid<T> extends Main {
      * callers can append extra buttons after construction.
      */
     private       HorizontalLayout    lastHeaderRightLayout;
+    /** Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}. */
+    private       Registration        themeChangedRegistration;
 
     public AbstractMainGrid(Clock clock) {
         setClassName("grid-wrapper");
@@ -530,6 +536,34 @@ public abstract class AbstractMainGrid<T> extends Main {
     }
 
     protected abstract void initGrid(Clock clock);
+
+    /**
+     * Subscribes to {@link ThemeChangedEvent} so that the grid's component renderers
+     * are re-evaluated with the new theme (e.g. to swap light/dark avatar URLs).
+     *
+     * @param attachEvent the attach event
+     */
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class,
+                e -> getDataProvider().refreshAll());
+    }
+
+    /**
+     * Removes the {@link ThemeChangedEvent} subscription to prevent memory leaks.
+     *
+     * @param detachEvent the detach event
+     */
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
+    }
 
     /**
      * Updates a row counter component with the current visible row count vs total rows

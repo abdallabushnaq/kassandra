@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.dialog;
 
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Shortcuts;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -33,6 +34,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
@@ -57,22 +59,22 @@ public class SprintDialog extends Dialog {
     public static final String                 SPRINT_DIALOG         = "sprint-dialog";
     public static final String                 SPRINT_NAME_FIELD     = "sprint-name-field";
     private final       Image                  avatarPreview;
+    private final       AvatarService          avatarService;
     private final       AvatarUpdateRequest    avatarUpdateRequest;
     private final       Binder<Sprint>         binder;
     private final       Span                   errorMessage;
     private final       Long                   featureId;
+    private volatile    byte[]                 generatedDarkImageBytes;
+    private volatile    byte[]                 generatedDarkImageBytesOriginal;
     private             byte[]                 generatedImageBytes;
     private             byte[]                 generatedImageBytesOriginal;
     private             String                 generatedImagePrompt;
-    private volatile    byte[]                 generatedDarkImageBytes;
-    private volatile    byte[]                 generatedDarkImageBytesOriginal;
     private final       Image                  headerIcon;
     private final       boolean                isEditMode;
     private final       TextField              nameField;
     private final       Image                  nameFieldImage;
     private final       Sprint                 sprint;
     private final       SprintApi              sprintApi;
-    private final       AvatarService          avatarService;
     private final       StableDiffusionService stableDiffusionService;
 
     /**
@@ -110,7 +112,8 @@ public class SprintDialog extends Dialog {
                 .set("border-radius", "4px")
                 .set("object-fit", "cover");
         if (isEditMode) {
-            headerIcon.setSrc(sprint.getAvatarUrl());
+            boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+            headerIcon.setSrc(sprint.getAvatarUrl(isDark));
         }
         // For create mode, leave image src empty
         getHeader().add(VaadinUtil.createDialogHeader(title, headerIcon));
@@ -147,7 +150,8 @@ public class SprintDialog extends Dialog {
                     .set("border-radius", "4px")
                     .set("object-fit", "cover");
             if (isEditMode) {
-                nameFieldImage.setSrc(sprint.getAvatarUrl());
+                boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                nameFieldImage.setSrc(sprint.getAvatarUrl(isDark));
             }
             // For create mode, leave image src empty
             nameField.setPrefixComponent(nameFieldImage);
@@ -245,7 +249,7 @@ public class SprintDialog extends Dialog {
     }
 
     private void handleGeneratedImage(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result,
-            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult) {
+                                      de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult) {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();

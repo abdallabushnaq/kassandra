@@ -17,11 +17,16 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Svg;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
+import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
@@ -32,6 +37,7 @@ import de.bushnaq.abdalla.kassandra.report.html.util.HtmlUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.HtmlColor;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -63,6 +69,8 @@ import java.util.function.Function;
 @PermitAll // When security is enabled, allow all authenticated users
 public class SprintQualityBoard extends Main implements AfterNavigationObserver {
     public static final String            SPRINT_GRID_NAME_PREFIX = "sprint-grid-name-";
+    /** Container for the burndown SVG (the spanning column in the stats grid). */
+    private             Div               burnDownContainer;
     private final       Clock             clock;
     @Autowired
     protected           Context           context;
@@ -70,6 +78,12 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     private final       GanttErrorHandler eh                      = new GanttErrorHandler();
     private final       FeatureApi        featureApi;
     private             Long              featureId;
+    /** Container for the Gantt chart SVG. */
+    private             Div               ganttChartContainer;
+    /** In-flight async Gantt generation; cancelled before a new run starts. */
+    private             CompletableFuture<Void> ganttGenerationFuture;
+    /** In-flight async burndown generation; cancelled before a new run starts. */
+    private             CompletableFuture<Void> burndownGenerationFuture;
     private             GanttUtil         ganttUtil;
     private final       HtmlUtil          htmlUtil                = new HtmlUtil();
     final               Logger            logger                  = LoggerFactory.getLogger(this.getClass());
@@ -82,6 +96,8 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     private             Long              sprintId;
     private             SprintStatistics  sprintStatistics;
     private final       TaskApi           taskApi;
+    /** Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}. */
+    private             Registration      themeChangedRegistration;
     private final       UserApi           userApi;
     private final       VersionApi        versionApi;
     private             Long              versionId;
@@ -196,11 +212,38 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
             logTime();
             return;
         } else {
-//        renderBurnDownChart();
             createSprintDetailsLayout();
             createGanttChart();
+            refreshCharts();
         }
         logTime();
+    }
+
+    /**
+     * Subscribes to {@link ThemeChangedEvent} so the Gantt and burndown charts are re-generated
+     * in the new theme whenever the user toggles the theme.
+     *
+     * @param attachEvent the attach event
+     */
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> refreshCharts());
+    }
+
+    /**
+     * Removes the {@link ThemeChangedEvent} subscription to prevent memory leaks.
+     *
+     * @param detachEvent the detach event
+     */
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
     }
 
     private Div createFieldDisplay(String label, String value, String status) {
@@ -247,22 +290,62 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     }
 
     private void createGanttChart() {
-        try {
-            long       time  = System.currentTimeMillis();
-            Div        div   = new Div();
-            Svg        svg   = new Svg();
-            GanttChart chart = RenderUtil.generateGanttChartSvg(context, sprint, svg);
-            svg.getStyle()//.set("object-fit", "contain") // Maintain aspect ratio
-                    .set("margin-top", "var(--lumo-space-m)");
-            svg.setClassName("qtip-shadow");
-            div.setWidth(chart.getChartWidth() + "px");
-            div.add(svg);
-            add(div);
-            logger.info("Gantt chart generated in {} ms", System.currentTimeMillis() - time);
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            add(new Paragraph("Error generating gantt chart: " + e.getMessage()));
+        ganttChartContainer = new Div();
+        add(ganttChartContainer);
+        generateGanttChartAsync();
+    }
+
+    /**
+     * Generates the Gantt chart SVG asynchronously, then updates {@link #ganttChartContainer}
+     * on the UI thread via {@link UI#access(com.vaadin.flow.server.Command)}.
+     * Cancels any in-flight previous generation before starting a new one.
+     */
+    private void generateGanttChartAsync() {
+        if (sprint == null) {
+            return;
         }
+        if (ganttGenerationFuture != null && !ganttGenerationFuture.isDone()) {
+            ganttGenerationFuture.cancel(true);
+        }
+        ganttChartContainer.removeAll();
+
+        UI             ui             = UI.getCurrent();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Sprint         sprintSnapshot = sprint;
+
+        ganttGenerationFuture = CompletableFuture.supplyAsync(() -> {
+            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
+            ctx.setAuthentication(authentication);
+            SecurityContextHolder.setContext(ctx);
+            try {
+                Svg        svg   = new Svg();
+                GanttChart chart = RenderUtil.generateGanttChartSvg(context, sprintSnapshot, svg);
+                return new Object[]{svg, chart};
+            } catch (Exception e) {
+                throw new RuntimeException("Error generating Gantt chart", e);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        }).thenAccept(result -> {
+            Svg        svg   = (Svg) result[0];
+            GanttChart chart = (GanttChart) result[1];
+            ui.access(() -> {
+                ganttChartContainer.removeAll();
+                svg.getStyle().set("margin-top", "var(--lumo-space-m)");
+                svg.setClassName("qtip-shadow");
+                ganttChartContainer.setWidth(chart.getChartWidth() + "px");
+                ganttChartContainer.add(svg);
+                ui.push();
+            });
+        }).exceptionally(ex -> {
+            logger.error("Error generating Gantt chart", ex);
+            ui.access(() -> {
+                ganttChartContainer.removeAll();
+                ganttChartContainer.add(new Paragraph("Error generating gantt chart: " + ex.getMessage()));
+                ui.push();
+            });
+            return null;
+        });
     }
 
     private void createSprintDetailsLayout() {
@@ -336,22 +419,75 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
                 .set("padding", "var(--lumo-space-m)")
                 .set("background-color", "var(--lumo-base-color)");
 
-        try {
-            long time = System.currentTimeMillis();
-            Svg  svg  = new Svg();
-            RenderUtil.generateBurnDownChartSvg(context, sprint, svg);
-            svg.getStyle().set("object-fit", "contain") // Maintain aspect ratio
-                    .set("margin-top", "var(--lumo-space-m)");
-            svg.setClassName("qtip-shadow");
-            spanningColumn.add(svg);
-            logger.info("Burndown chart generated in {} ms", System.currentTimeMillis() - time);
-        } catch (Exception e) {
-            spanningColumn.add(new Paragraph("Error loading burndown chart: " + e.getMessage()));
-        }
+        // Store reference for async generation and later theme-refresh
+        burnDownContainer = spanningColumn;
         gridContainer.add(spanningColumn);
 
         add(gridContainer);
+    }
 
+    /**
+     * Generates the burndown chart SVG asynchronously, then updates {@link #burnDownContainer}
+     * on the UI thread.  Cancels any in-flight previous generation before starting a new one.
+     */
+    private void generateBurnDownChartAsync() {
+        if (sprint == null || burnDownContainer == null) {
+            return;
+        }
+        if (burndownGenerationFuture != null && !burndownGenerationFuture.isDone()) {
+            burndownGenerationFuture.cancel(true);
+        }
+        burnDownContainer.removeAll();
+
+        UI             ui             = UI.getCurrent();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Sprint         sprintSnapshot = sprint;
+
+        burndownGenerationFuture = CompletableFuture.supplyAsync(() -> {
+            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
+            ctx.setAuthentication(authentication);
+            SecurityContextHolder.setContext(ctx);
+            try {
+                Svg svg = new Svg();
+                RenderUtil.generateBurnDownChartSvg(context, sprintSnapshot, svg);
+                return svg;
+            } catch (Exception e) {
+                throw new RuntimeException("Error generating burndown chart", e);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        }).thenAccept(svg -> {
+            ui.access(() -> {
+                burnDownContainer.removeAll();
+                svg.getStyle().set("object-fit", "contain")
+                        .set("margin-top", "var(--lumo-space-m)");
+                svg.setClassName("qtip-shadow");
+                burnDownContainer.add(svg);
+                ui.push();
+            });
+        }).exceptionally(ex -> {
+            logger.error("Error generating burndown chart", ex);
+            ui.access(() -> {
+                burnDownContainer.removeAll();
+                burnDownContainer.add(new Paragraph("Error loading burndown chart: " + ex.getMessage()));
+                ui.push();
+            });
+            return null;
+        });
+    }
+
+    /**
+     * Re-generates both SVG charts using the current theme.
+     * Syncs the theme on the UI thread first, then launches two independent async tasks.
+     * No-op when sprint data has not been loaded yet.
+     */
+    private void refreshCharts() {
+        if (sprint == null) {
+            return;
+        }
+        context.syncTheme();
+        generateBurnDownChartAsync();
+        generateGanttChartAsync();
     }
 
     private ComponentRenderer<Div, Sprint> createTwoPartRenderer(
