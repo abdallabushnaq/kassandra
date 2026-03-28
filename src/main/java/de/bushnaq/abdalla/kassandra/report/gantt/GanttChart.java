@@ -30,9 +30,9 @@ public class GanttChart extends AbstractChart {
 
     public GanttChart(Context context, String projectRequestKey, String relateCssPath, String column, String sprintName, List<Throwable> exception,
                       LocalDateTime now, boolean completed, Sprint sprint, String cssClass,
-                      Theme kassandraTheme) throws Exception {
-        super("Gantt Chart", projectRequestKey, relateCssPath, column, sprintName, null, cssClass, kassandraTheme);
-        getRenderers().add(new GanttRenderer(context, sprintName, exception, now, completed, sprint, cssClass, kassandraTheme));
+                      Theme theme) throws Exception {
+        super("Gantt Chart", projectRequestKey, relateCssPath, column, sprintName, null, cssClass, theme);
+        getRenderers().add(new GanttRenderer(context, sprintName, exception, now, completed, sprint, cssClass, theme));
         this.setChartWidth(getRenderers().getFirst().chartWidth);
         this.setChartHeight(getRenderers().getFirst().chartHeight + captionElement.height + footerElement.height - 1);
         captionElement.width = getChartWidth();

@@ -49,7 +49,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
 
     private static final int               GANTT_TASK_POST_SPACE = 0;
     private static final int               GANTT_TASK_PRI_SPACE  = 0;
-    private final static Font              NoneWorkingDayFont    = new Font(Font.SANS_SERIF, Font.BOLD, 26);
+    private final static Font              NoneWorkingDayFont    = new Font(Font.SANS_SERIF, Font.BOLD, 25);
     private static final int               ONE_WEEK              = 7;
     public final         DateTimeFormatter dtfymd                = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private final        Logger            logger                = LoggerFactory.getLogger(this.getClass());
@@ -62,7 +62,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
 //        this.ganttFileName = ganttFileName;
         this.sprint = sprint;
 //        this.timeTracker   = context.timeTracker;
-        this.kassandraTheme = kassandraTheme;
+        this.theme = kassandraTheme;
 //        geh.exceptions     = exceptions;
         milestones.add(now.toLocalDate(), "N", "Now (current date)", Color.blue);
         milestones.add(sprint.getEarliestStartDate().toLocalDate(), "S", "Start (Start of project)", Color.blue);
@@ -136,21 +136,21 @@ public class GanttRenderer extends AbstractGanttRenderer {
             int             x1   = x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1);
             {
                 //grid
-                graphics2D.setColor(kassandraTheme.ganttTheme.gridColor);
+                graphics2D.setColor(theme.ganttTheme.gridColor);
                 graphics2D.fillRect(x1 - 1, y1 - 1, calendarXAxes.dayOfWeek.getWidth(), 1);//top --
                 graphics2D.fillRect(x1 - 1, y1, 1, getTaskHeight());//left |
             }
             {
                 //background
-                graphics2D.setColor(GraphColorUtil.getGanttDayStripeColor(kassandraTheme, pc, currentDay));
+                graphics2D.setColor(GraphColorUtil.getGanttDayStripeColor(theme, pc, currentDay));
                 Shape s = new Rectangle(x1, y1, calendarXAxes.dayOfWeek.getWidth() - 1, getTaskHeight());
 
-                ProjectCalendarException exception = GraphColorUtil.getException(kassandraTheme, pc, currentDay);
+                ProjectCalendarException exception = GraphColorUtil.getException(theme, pc, currentDay);
                 if (exception != null) {
                     String letter = GraphColorUtil.getOffDayLetter(exception);
                     if (letter != null) {
                         graphics2D.fill(s);
-                        graphics2D.setColor(kassandraTheme.ganttTheme.outOfOfficeColor);
+                        graphics2D.setColor(theme.ganttTheme.outOfOfficeColor);
                         graphics2D.setFont(NoneWorkingDayFont);
                         FontMetrics fm      = graphics2D.getFontMetrics();
                         int         yShift  = fm.getAscent() - fm.getHeight() / 2 - 1;

@@ -24,11 +24,11 @@ public class GanttTheme {
     public Color criticalTaskBorderColor;
     public Color gridColor;
     public Color holidayBgColor;
-    public Color idColor;
+    public Color idBgColor;
     //    public Color ganttIdErrorColor;
     public Color idTextColor;
     //    public Color ganttIdTextErrorColor;
-    public Color milestoneColor;
+    public Color milestoneBgColor;
     public Color milestoneTextColor;
     public Color outOfOfficeColor;
     public Color relationColor;
@@ -40,9 +40,8 @@ public class GanttTheme {
     public Color taskTextColor;
     public Color taskTickLineColor;
     public Color taskTickTextColor;
+    public int   taskTransparency;
     public Color tripBgColor;
     public Color vacationBgColor;
 
-    public GanttTheme() {
-    }
 }

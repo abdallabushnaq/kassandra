@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.report.dao.FooterElement;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.Util;
+import lombok.Getter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -32,20 +33,21 @@ public abstract class AbstractChart extends AbstractCanvas {
     public        CaptionElement         captionElement;
     public        FooterElement          footerElement;
     //    private final String                 mapName;
+    @Getter
     private final List<AbstractRenderer> renderers = new ArrayList<>();
 
-    public AbstractChart(String caption, String projectRequestKey, String relateCssPath, String column, String imageName/*, String mapName*/, String link, String cssClass, Theme kassandraTheme) throws IOException {
-        super(column, imageName/*, mapName*/, link, cssClass, kassandraTheme);
-        captionElement = new CaptionElement(caption, relateCssPath);
-        footerElement  = new FooterElement(Util.generateCopyrightString(LocalDateTime.now()), projectRequestKey);
+    public AbstractChart(String caption, String projectRequestKey, String relateCssPath, String column, String imageName/*, String mapName*/, String link, String cssClass, Theme theme) throws IOException {
+        super(column, imageName/*, mapName*/, link, cssClass, theme);
+        captionElement = new CaptionElement(caption, relateCssPath, theme);
+        footerElement  = new FooterElement(Util.generateCopyrightString(LocalDateTime.now()), projectRequestKey, theme);
 //        this.mapName   = mapName;
     }
 
-    @Override
-    protected void drawBackground() {
-        graphics2D.setColor(kassandraTheme.chartTheme.backgroundColor);
-        graphics2D.fillRect(0, captionElement.height, getChartWidth() - 1, getChartHeight() - captionElement.height - 1);
-    }
+//    @Override
+//    protected void drawBackground() {
+//        graphics2D.setColor(theme.chartTheme.backgroundColor);
+//        graphics2D.fillRect(0, captionElement.height, getChartWidth() - 1, getChartHeight() - captionElement.height - 1);
+//    }
 
     @Override
     protected void drawCaption(ExtendedGraphics2D graphics2d2) {
@@ -55,10 +57,6 @@ public abstract class AbstractChart extends AbstractCanvas {
     @Override
     protected void drawFooter(ExtendedGraphics2D graphics2d2) {
         footerElement.draw(graphics2d2);
-    }
-
-    public List<AbstractRenderer> getRenderers() {
-        return renderers;
     }
 
     @Override

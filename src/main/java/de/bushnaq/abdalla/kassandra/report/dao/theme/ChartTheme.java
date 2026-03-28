@@ -21,7 +21,8 @@ import java.awt.*;
 
 public class ChartTheme {
     public Color backgroundColor;
-    public Color chartBorderColor = new Color(0xaaaaaa);
+    public Color chartBorderColor;
+    public Color footerTextColor;
     public Color graphTextBackgroundColor;
     public Color surroundingSquareColor;
 

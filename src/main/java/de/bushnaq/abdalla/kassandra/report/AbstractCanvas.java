@@ -50,27 +50,26 @@ public abstract class AbstractCanvas extends ReportLink {
     protected            ExtendedGraphics2D graphics2D;
     @Getter
     protected            String             imageName;
-    protected            Theme              kassandraTheme;
-    //    private final        Logger             logger                 = LoggerFactory.getLogger(this.getClass());
     protected            SVGGraphics2D      svgGenerator;
+    protected            Theme              theme;
 
-    public AbstractCanvas(String column, String imageName/*, String mapName*/, String link, String cssClass, Theme kassandraTheme)
+    public AbstractCanvas(String column, String imageName/*, String mapName*/, String link, String cssClass, Theme theme)
             throws IOException {
         super(column, generateCellText(cssClass/*, mapName*/, imageName), link);
-        this.imageName      = imageName;
-        this.kassandraTheme = kassandraTheme;
+        this.imageName = imageName;
+        this.theme     = theme;
     }
 
     protected abstract void createReport() throws Exception;
 
     protected void drawBackground() {
-        graphics2D.setColor(kassandraTheme.chartTheme.backgroundColor);
+        graphics2D.setColor(theme.chartTheme.backgroundColor);
         graphics2D.fillRect(0, 0, getChartWidth(), getChartHeight());
     }
 
     private void drawBorder(ExtendedGraphics2D g2) {
         g2.setStroke(new BasicStroke(fine_LINE_STROKE_WIDTH));
-        g2.setColor(kassandraTheme.chartTheme.chartBorderColor);
+        g2.setColor(theme.chartTheme.chartBorderColor);
         g2.drawRect(0, 0, getChartWidth() - 1, getChartHeight() - 1);
     }
 
