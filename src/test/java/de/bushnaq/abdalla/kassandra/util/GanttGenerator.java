@@ -35,12 +35,12 @@ public class GanttGenerator extends MPXJGenerator {
         sprint.initUserMap(users);
         sprint.initTaskMap(tasks, worklogs);
         sprint.recalculate(ParameterOptions.getLocalNow());
-        Context context = new Context();
+        Context context = new Context(null);
         String  sprintName;
         if (testInfo.getDisplayName().indexOf('=') != -1) {
-            sprintName = testInfo.getDisplayName().substring(testInfo.getDisplayName().indexOf('"') + 1, testInfo.getDisplayName().lastIndexOf('"')) + "-gant-chart";
+            sprintName = testInfo.getDisplayName().substring(testInfo.getDisplayName().indexOf('"') + 1, testInfo.getDisplayName().lastIndexOf('"')) + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
         } else {
-            sprintName = testInfo.getDisplayName() + "-gant-chart";
+            sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
         }
         GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
 //        String     description = testCaseInfo.getDisplayName().replace("_", "-");

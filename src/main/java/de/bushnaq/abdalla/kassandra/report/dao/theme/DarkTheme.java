@@ -44,7 +44,7 @@ public class DarkTheme extends Theme {
     };
 
     public DarkTheme(StableDiffusionConfig stableDiffusionConfig) {
-        super(ETheme.light);
+        super(ETheme.dark);
 
         Color basicTextColor = Color.WHITE;
 

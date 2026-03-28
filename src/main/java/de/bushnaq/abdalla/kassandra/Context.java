@@ -17,8 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.util.Debug;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -37,8 +39,18 @@ public class Context {
 //    private JiraClientFactory jiraClientFactory;
 //    public Logs logs = new Logs();
 //    public ArrayList<JiraSprint> orphanSprintList = new ArrayList<>();
-    @Autowired
     public ParameterOptions parameters;
+
+    public Context(ParameterOptions parameters) {
+        this.parameters = parameters;
+        if (this.parameters == null) {
+            //not running in spring boot context
+            StableDiffusionConfig stableDiffusionConfig = new StableDiffusionConfig();
+            this.parameters = new KassandraParameterOptions(new LightTheme(stableDiffusionConfig), new DarkTheme(stableDiffusionConfig));
+        }
+
+    }
+
 
     //    public ResourceUtilization resourceUtilization = new ResourceUtilization();
 //    public List<SfpsTicket> spfsList;
