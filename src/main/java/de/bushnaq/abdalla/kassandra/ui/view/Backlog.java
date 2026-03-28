@@ -17,11 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.Svg;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -65,10 +61,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Clock;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -112,16 +105,18 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private             GanttUtil                    ganttUtil;
     private final       TaskGrid                     grid;
     private final       HorizontalLayout             headerLayout;
+    private             boolean                      isRestoringFromUrl         = false;
     private final       JsonMapper                   jsonMapper;
     private static      Long                         lastShownSprintId          = null;  // Static to persist across navigation
     private             User                         loggedInUser               = null;
     private final       ProductApi                   productApi;
     private             Long                         productId;
+    private             String                       requestedUserIds           = null;
     private             Button                       saveButton;
     private             TextField                    searchField;
     private             String                       searchText                 = "";
     private             Sprint                       selectedSprint             = null;  // The sprint selected in dropdown (not Backlog)
-    private             java.util.Set<User>          selectedUsers              = new java.util.HashSet<>();
+    private             Set<User>                    selectedUsers              = new HashSet<>();
     private             Sprint                       sprint;                             // Current sprint being displayed in grid
     private final       SprintApi                    sprintApi;
     private             Long                         sprintId;
@@ -264,6 +259,12 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         if (queryParameters.getParameters().containsKey("sprint")) {
             this.sprintId = Long.parseLong(queryParameters.getParameters().get("sprint").getFirst());
         }
+        // Capture requested users from URL for initial user-selector preselection.
+        // Cleared here so each navigation cycle starts fresh.
+        requestedUserIds = null;
+        if (queryParameters.getParameters().containsKey("users")) {
+            requestedUserIds = queryParameters.getParameters().get("users").getFirst();
+        }
 
         // If no sprint ID provided, use last shown sprint or find first non-Backlog sprint
         if (this.sprintId == null) {
@@ -352,6 +353,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
         //- populate grid with selected sprint + Backlog sprint
         refreshGrid();
+        updateUrlParameters();
     }
 
     /**
@@ -444,6 +446,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             if (e.isFromClient()) {
                 selectedUsers = new java.util.HashSet<>(e.getValue());
                 applyFilters();
+                updateUrlParameters();
             }
         });
 
@@ -458,6 +461,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             if (e.isFromClient()) {
                 selectedSprint = e.getValue();
                 loadDataForSelectedSprint();
+                updateUrlParameters();
             }
         });
 
@@ -798,36 +802,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             }
         }
         return null;
-    }
-
-    /**
-     * Subscribes to {@link ThemeChangedEvent} so the Gantt chart is re-generated in the new theme.
-     *
-     * @param attachEvent the attach event
-     */
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        themeChangedRegistration = ComponentUtil.addListener(
-                attachEvent.getUI(), ThemeChangedEvent.class, e -> {
-                    if (sprint != null && !"Backlog".equals(sprint.getName())) {
-                        generateGanttChart();
-                    }
-                });
-    }
-
-    /**
-     * Removes the {@link ThemeChangedEvent} subscription to prevent memory leaks.
-     *
-     * @param detachEvent the detach event
-     */
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        if (themeChangedRegistration != null) {
-            themeChangedRegistration.remove();
-            themeChangedRegistration = null;
-        }
-        super.onDetach(detachEvent);
     }
 
     private void generateGanttChart() {
@@ -1209,9 +1183,40 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                 backlogSprint = null;
             }
 
-            // Populate user selector with users from this sprint
+            // Populate user selector with users from this sprint and restore selection
             if (userSelector != null) {
+                isRestoringFromUrl = true;
                 userSelector.setItems(users);
+                if (!selectedUsers.isEmpty()) {
+                    // Preserve the previously selected users (match by ID, since object instances may differ)
+                    java.util.Set<Long> selectedIds = selectedUsers.stream().map(User::getId).collect(java.util.stream.Collectors.toSet());
+                    java.util.Set<User> toRestore = users.stream()
+                            .filter(u -> selectedIds.contains(u.getId()))
+                            .collect(java.util.stream.Collectors.toSet());
+                    if (!toRestore.isEmpty()) {
+                        selectedUsers = new java.util.HashSet<>(toRestore);
+                        userSelector.setValue(toRestore);
+                    }
+                } else if (requestedUserIds != null) {
+                    // URL contained a 'users' key — restore those IDs; empty string means no selection.
+                    if (!requestedUserIds.isEmpty()) {
+                        java.util.Set<User> toSelect = new java.util.HashSet<>();
+                        for (String idStr : requestedUserIds.split(",")) {
+                            try {
+                                Long id = Long.parseLong(idStr.trim());
+                                users.stream().filter(u -> u.getId().equals(id)).findFirst().ifPresent(toSelect::add);
+                            } catch (NumberFormatException nfe) {
+                                log.warn("Invalid user ID in URL: {}", idStr);
+                            }
+                        }
+                        if (!toSelect.isEmpty()) {
+                            selectedUsers = new java.util.HashSet<>(toSelect);
+                            userSelector.setValue(toSelect);
+                        }
+                    }
+                    requestedUserIds = null; // Consumed; subsequent loadData() calls use selectedUsers
+                }
+                isRestoringFromUrl = false;
             }
         } catch (InterruptedException | ExecutionException e) {
             log.error("Error loading sprint data", e);
@@ -1236,6 +1241,36 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         loadData();
         applyFilters();
         refreshGrid();
+    }
+
+    /**
+     * Subscribes to {@link ThemeChangedEvent} so the Gantt chart is re-generated in the new theme.
+     *
+     * @param attachEvent the attach event
+     */
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> {
+                    if (sprint != null && !"Backlog".equals(sprint.getName())) {
+                        generateGanttChart();
+                    }
+                });
+    }
+
+    /**
+     * Removes the {@link ThemeChangedEvent} subscription to prevent memory leaks.
+     *
+     * @param detachEvent the detach event
+     */
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
     }
 
     /**
@@ -1487,5 +1522,39 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                 });
     }
 
+    /**
+     * Pushes the current {@code sprint} and selected {@code users} into the browser URL so that
+     * the filter state survives a page refresh (F5) and can be bookmarked.
+     * <p>
+     * Uses {@link com.vaadin.flow.component.page.History#replaceState} to update the address
+     * bar without triggering a full Vaadin navigation cycle (and the expensive
+     * {@link #loadData()} it entails).  No-op while restoring state from a URL to prevent
+     * feedback loops.
+     */
+    private void updateUrlParameters() {
+        if (isRestoringFromUrl) {
+            return;
+        }
+        java.util.List<String> parts = new ArrayList<>();
+        if (productId != null) {
+            parts.add("product=" + productId);
+        }
+        if (versionId != null) {
+            parts.add("version=" + versionId);
+        }
+        if (featureId != null) {
+            parts.add("feature=" + featureId);
+        }
+        if (sprintId != null) {
+            parts.add("sprint=" + sprintId);
+        }
+        // Always write the 'users' key — empty string signals "user intentionally cleared".
+        String userIds = selectedUsers.stream()
+                .map(u -> String.valueOf(u.getId()))
+                .collect(java.util.stream.Collectors.joining(","));
+        parts.add("users=" + userIds);
+        String url = "backlog" + (parts.isEmpty() ? "" : "?" + String.join("&", parts));
+        getUI().ifPresent(ui -> ui.getPage().getHistory().replaceState(null, url));
+    }
 
 }
