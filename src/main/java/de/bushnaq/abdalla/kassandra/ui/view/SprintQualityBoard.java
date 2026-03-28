@@ -17,12 +17,11 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.Svg;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
@@ -54,12 +53,11 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 // Create a utility method for generating two-part cells
 
@@ -68,40 +66,66 @@ import java.util.function.Function;
 @PageTitle("Sprint Quality Board")
 @PermitAll // When security is enabled, allow all authenticated users
 public class SprintQualityBoard extends Main implements AfterNavigationObserver {
-    public static final String            SPRINT_GRID_NAME_PREFIX = "sprint-grid-name-";
-    /** Container for the burndown SVG (the spanning column in the stats grid). */
-    private             Div               burnDownContainer;
-    private final       Clock             clock;
-    @Autowired
-    protected           Context           context;
-    private final       LocalDateTime     created;
-    private final       GanttErrorHandler eh                      = new GanttErrorHandler();
-    private final       FeatureApi        featureApi;
-    private             Long              featureId;
-    /** Container for the Gantt chart SVG. */
-    private             Div               ganttChartContainer;
-    /** In-flight async Gantt generation; cancelled before a new run starts. */
-    private             CompletableFuture<Void> ganttGenerationFuture;
-    /** In-flight async burndown generation; cancelled before a new run starts. */
+    public static final String                  SPRINT_GRID_NAME_PREFIX = "sprint-grid-name-";
+    /**
+     * All non-Backlog sprints belonging to the current feature, used to populate the sprint selector.
+     */
+    private             List<Sprint>            allFeatureSprints       = new ArrayList<>();
+    /**
+     * Container for the burndown SVG (the spanning column in the stats grid).
+     */
+    private             Div                     burnDownContainer;
+    /**
+     * In-flight async burndown generation; cancelled before a new run starts.
+     */
     private             CompletableFuture<Void> burndownGenerationFuture;
-    private             GanttUtil         ganttUtil;
-    private final       HtmlUtil          htmlUtil                = new HtmlUtil();
-    final               Logger            logger                  = LoggerFactory.getLogger(this.getClass());
-    private final       LocalDateTime     now;
-    private final       H2                pageTitle;
-    private final       ProductApi        productApi;
-    private             Long              productId;
-    private             Sprint            sprint;
-    private final       SprintApi         sprintApi;
-    private             Long              sprintId;
-    private             SprintStatistics  sprintStatistics;
-    private final       TaskApi           taskApi;
-    /** Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}. */
-    private             Registration      themeChangedRegistration;
-    private final       UserApi           userApi;
-    private final       VersionApi        versionApi;
-    private             Long              versionId;
-    private final       WorklogApi        worklogApi;
+    private final       Clock                   clock;
+    @Autowired
+    protected           Context                 context;
+    private final       LocalDateTime           created;
+    private final       GanttErrorHandler       eh                      = new GanttErrorHandler();
+    private final       FeatureApi              featureApi;
+    private             Long                    featureId;
+    /**
+     * Container for the Gantt chart SVG.
+     */
+    private             Div                     ganttChartContainer;
+    /**
+     * In-flight async Gantt generation; cancelled before a new run starts.
+     */
+    private             CompletableFuture<Void> ganttGenerationFuture;
+    private             GanttUtil               ganttUtil;
+    /**
+     * Persistent header layout (sprint selector + page title) — survives content reloads.
+     */
+    private final       HorizontalLayout        headerLayout;
+    private final       HtmlUtil                htmlUtil                = new HtmlUtil();
+    /**
+     * Guard flag: prevents {@link #updateUrlParameters()} from firing during programmatic selector restores.
+     */
+    private             boolean                 isRestoringFromUrl      = false;
+    final               Logger                  logger                  = LoggerFactory.getLogger(this.getClass());
+    private final       LocalDateTime           now;
+    private final       H2                      pageTitle;
+    private final       ProductApi              productApi;
+    private             Long                    productId;
+    private             Sprint                  sprint;
+    private final       SprintApi               sprintApi;
+    private             Long                    sprintId;
+    /**
+     * Sprint selector ComboBox — lets the user switch sprints without leaving the page.
+     */
+    private final       ComboBox<Sprint>        sprintSelector;
+    private             SprintStatistics        sprintStatistics;
+    private final       TaskApi                 taskApi;
+    /**
+     * Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}.
+     */
+    private             Registration            themeChangedRegistration;
+    private final       UserApi                 userApi;
+    private final       VersionApi              versionApi;
+    private             Long                    versionId;
+    private final       WorklogApi              worklogApi;
 
     public SprintQualityBoard(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock) {
         created         = LocalDateTime.now(clock);
@@ -125,6 +149,24 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         this.getStyle().set("padding-left", "var(--lumo-space-m)");
         this.getStyle().set("padding-right", "var(--lumo-space-m)");
 
+        // Sprint selector — persists across content reloads triggered by sprint switching
+        sprintSelector = new ComboBox<>();
+        sprintSelector.setItemLabelGenerator(Sprint::getName);
+        sprintSelector.setPlaceholder("Select sprint");
+        sprintSelector.setWidth("250px");
+        sprintSelector.addValueChangeListener(e -> {
+            if (e.isFromClient() && e.getValue() != null) {
+                sprintId = e.getValue().getId();
+                reloadContent();
+                updateUrlParameters();
+            }
+        });
+
+        // Persistent header: page title on the left, sprint selector next to it
+        headerLayout = new HorizontalLayout(pageTitle, sprintSelector);
+        headerLayout.setAlignItems(FlexComponent.Alignment.BASELINE);
+        headerLayout.setWidthFull();
+        add(headerLayout);
     }
 
     @Override
@@ -145,105 +187,10 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
             this.sprintId = Long.parseLong(queryParameters.getParameters().get("sprint").getFirst());
         }
 
-        ganttUtil = new GanttUtil();
-        loadData();
-
-        pageTitle.setText(sprint.getName());
-        //- update breadcrumbs
-        getElement().getParent().getComponent()
-                .ifPresent(component -> {
-                    if (component instanceof MainLayout mainLayout) {
-                        mainLayout.getBreadcrumbs().clear();
-                        Product product = productApi.getById(productId);
-                        mainLayout.getBreadcrumbs().addItem("Products (" + product.getName() + ")", ProductListView.class);
-//                        mainLayout.getBreadcrumbs().addItem("Products", ProductListView.class);
-                        {
-                            Map<String, String> params = new HashMap<>();
-                            params.put("product", String.valueOf(productId));
-                            Version version = versionApi.getById(versionId);
-                            mainLayout.getBreadcrumbs().addItem("Versions (" + version.getName() + ")", VersionListView.class, params);
-//                            mainLayout.getBreadcrumbs().addItem("Versions", VersionListView.class, params);
-                        }
-                        {
-                            Map<String, String> params = new HashMap<>();
-                            params.put("product", String.valueOf(productId));
-                            params.put("version", String.valueOf(versionId));
-                            Feature feature = featureApi.getById(featureId);
-                            mainLayout.getBreadcrumbs().addItem("Features (" + feature.getName() + ")", FeatureListView.class, params);
-                            mainLayout.getBreadcrumbs().addItem("Features", FeatureListView.class, params);
-                        }
-                        {
-                            Map<String, String> params = new HashMap<>();
-                            params.put("product", String.valueOf(productId));
-                            params.put("version", String.valueOf(versionId));
-                            params.put("feature", String.valueOf(featureId));
-                            Sprint sprint = sprintApi.getById(sprintId);
-                            mainLayout.getBreadcrumbs().addItem("Sprints (" + sprint.getName() + ")", SprintListView.class, params);
-//                            mainLayout.getBreadcrumbs().addItem("Sprints", SprintListView.class, params);
-                        }
-                        {
-                            Map<String, String> params = new HashMap<>();
-                            params.put("product", String.valueOf(productId));
-                            params.put("version", String.valueOf(versionId));
-                            params.put("feature", String.valueOf(featureId));
-                            params.put("sprint", String.valueOf(sprintId));
-                            mainLayout.getBreadcrumbs().addItem("Backlog", Backlog.class, params);
-                        }
-                    }
-                });
-
-        // Check if sprint has start date
-        if (sprint.getStart() == null) {
-            // Display message in the center of the page
-            Div messageContainer = new Div();
-            messageContainer.getStyle()
-                    .set("display", "flex")
-                    .set("justify-content", "center")
-                    .set("align-items", "center")
-                    .set("height", "50vh")
-                    .set("width", "100%");
-
-            H3 message = new H3("No Sprint Data to Show");
-            message.getStyle()
-                    .set("color", "var(--lumo-secondary-text-color)");
-
-            messageContainer.add(message);
-            add(messageContainer);
-            logTime();
-            return;
-        } else {
-            createSprintDetailsLayout();
-            createGanttChart();
-            refreshCharts();
-        }
+        populateSprintSelector();
+        reloadContent();
+        updateUrlParameters();
         logTime();
-    }
-
-    /**
-     * Subscribes to {@link ThemeChangedEvent} so the Gantt and burndown charts are re-generated
-     * in the new theme whenever the user toggles the theme.
-     *
-     * @param attachEvent the attach event
-     */
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        themeChangedRegistration = ComponentUtil.addListener(
-                attachEvent.getUI(), ThemeChangedEvent.class, e -> refreshCharts());
-    }
-
-    /**
-     * Removes the {@link ThemeChangedEvent} subscription to prevent memory leaks.
-     *
-     * @param detachEvent the detach event
-     */
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        if (themeChangedRegistration != null) {
-            themeChangedRegistration.remove();
-            themeChangedRegistration = null;
-        }
-        super.onDetach(detachEvent);
     }
 
     private Div createFieldDisplay(String label, String value, String status) {
@@ -293,59 +240,6 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         ganttChartContainer = new Div();
         add(ganttChartContainer);
         generateGanttChartAsync();
-    }
-
-    /**
-     * Generates the Gantt chart SVG asynchronously, then updates {@link #ganttChartContainer}
-     * on the UI thread via {@link UI#access(com.vaadin.flow.server.Command)}.
-     * Cancels any in-flight previous generation before starting a new one.
-     */
-    private void generateGanttChartAsync() {
-        if (sprint == null) {
-            return;
-        }
-        if (ganttGenerationFuture != null && !ganttGenerationFuture.isDone()) {
-            ganttGenerationFuture.cancel(true);
-        }
-        ganttChartContainer.removeAll();
-
-        UI             ui             = UI.getCurrent();
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Sprint         sprintSnapshot = sprint;
-
-        ganttGenerationFuture = CompletableFuture.supplyAsync(() -> {
-            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
-            ctx.setAuthentication(authentication);
-            SecurityContextHolder.setContext(ctx);
-            try {
-                Svg        svg   = new Svg();
-                GanttChart chart = RenderUtil.generateGanttChartSvg(context, sprintSnapshot, svg);
-                return new Object[]{svg, chart};
-            } catch (Exception e) {
-                throw new RuntimeException("Error generating Gantt chart", e);
-            } finally {
-                SecurityContextHolder.clearContext();
-            }
-        }).thenAccept(result -> {
-            Svg        svg   = (Svg) result[0];
-            GanttChart chart = (GanttChart) result[1];
-            ui.access(() -> {
-                ganttChartContainer.removeAll();
-                svg.getStyle().set("margin-top", "var(--lumo-space-m)");
-                svg.setClassName("qtip-shadow");
-                ganttChartContainer.setWidth(chart.getChartWidth() + "px");
-                ganttChartContainer.add(svg);
-                ui.push();
-            });
-        }).exceptionally(ex -> {
-            logger.error("Error generating Gantt chart", ex);
-            ui.access(() -> {
-                ganttChartContainer.removeAll();
-                ganttChartContainer.add(new Paragraph("Error generating gantt chart: " + ex.getMessage()));
-                ui.push();
-            });
-            return null;
-        });
     }
 
     private void createSprintDetailsLayout() {
@@ -426,6 +320,32 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         add(gridContainer);
     }
 
+    private ComponentRenderer<Div, Sprint> createTwoPartRenderer(
+            Function<Sprint, String> valueProvider,
+            Function<Sprint, String> nameProvider) {
+
+        return new ComponentRenderer<>(item -> {
+            Div container = new Div();
+            container.getStyle()
+                    .set("display", "flex")
+                    .set("flex-direction", "column");
+
+            // Value part (top)
+            Span value = new Span(valueProvider.apply(item));
+            value.getStyle()
+                    .set("font-weight", "normal");
+
+            // Name part (bottom, smaller)
+            Span name = new Span(nameProvider.apply(item));
+            name.getStyle()
+                    .set("font-size", "var(--lumo-font-size-xs)")
+                    .set("color", "var(--lumo-secondary-text-color)");
+
+            container.add(value, name);
+            return container;
+        });
+    }
+
     /**
      * Generates the burndown chart SVG asynchronously, then updates {@link #burnDownContainer}
      * on the UI thread.  Cancels any in-flight previous generation before starting a new one.
@@ -477,42 +397,55 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     }
 
     /**
-     * Re-generates both SVG charts using the current theme.
-     * Syncs the theme on the UI thread first, then launches two independent async tasks.
-     * No-op when sprint data has not been loaded yet.
+     * Generates the Gantt chart SVG asynchronously, then updates {@link #ganttChartContainer}
+     * on the UI thread via {@link UI#access(com.vaadin.flow.server.Command)}.
+     * Cancels any in-flight previous generation before starting a new one.
      */
-    private void refreshCharts() {
+    private void generateGanttChartAsync() {
         if (sprint == null) {
             return;
         }
-        context.syncTheme();
-        generateBurnDownChartAsync();
-        generateGanttChartAsync();
-    }
+        if (ganttGenerationFuture != null && !ganttGenerationFuture.isDone()) {
+            ganttGenerationFuture.cancel(true);
+        }
+        ganttChartContainer.removeAll();
 
-    private ComponentRenderer<Div, Sprint> createTwoPartRenderer(
-            Function<Sprint, String> valueProvider,
-            Function<Sprint, String> nameProvider) {
+        UI             ui             = UI.getCurrent();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Sprint         sprintSnapshot = sprint;
 
-        return new ComponentRenderer<>(item -> {
-            Div container = new Div();
-            container.getStyle()
-                    .set("display", "flex")
-                    .set("flex-direction", "column");
-
-            // Value part (top)
-            Span value = new Span(valueProvider.apply(item));
-            value.getStyle()
-                    .set("font-weight", "normal");
-
-            // Name part (bottom, smaller)
-            Span name = new Span(nameProvider.apply(item));
-            name.getStyle()
-                    .set("font-size", "var(--lumo-font-size-xs)")
-                    .set("color", "var(--lumo-secondary-text-color)");
-
-            container.add(value, name);
-            return container;
+        ganttGenerationFuture = CompletableFuture.supplyAsync(() -> {
+            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
+            ctx.setAuthentication(authentication);
+            SecurityContextHolder.setContext(ctx);
+            try {
+                Svg        svg   = new Svg();
+                GanttChart chart = RenderUtil.generateGanttChartSvg(context, sprintSnapshot, svg);
+                return new Object[]{svg, chart};
+            } catch (Exception e) {
+                throw new RuntimeException("Error generating Gantt chart", e);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        }).thenAccept(result -> {
+            Svg        svg   = (Svg) result[0];
+            GanttChart chart = (GanttChart) result[1];
+            ui.access(() -> {
+                ganttChartContainer.removeAll();
+                svg.getStyle().set("margin-top", "var(--lumo-space-m)");
+                svg.setClassName("qtip-shadow");
+                ganttChartContainer.setWidth(chart.getChartWidth() + "px");
+                ganttChartContainer.add(svg);
+                ui.push();
+            });
+        }).exceptionally(ex -> {
+            logger.error("Error generating Gantt chart", ex);
+            ui.access(() -> {
+                ganttChartContainer.removeAll();
+                ganttChartContainer.add(new Paragraph("Error generating gantt chart: " + ex.getMessage()));
+                ui.push();
+            });
+            return null;
         });
     }
 
@@ -599,5 +532,192 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         logger.info("generated page in {}", DateUtil.create24hDurationString(Duration.between(created, LocalDateTime.now()), true, true, true, false));
     }
 
+    /**
+     * Subscribes to {@link ThemeChangedEvent} so the Gantt and burndown charts are re-generated
+     * in the new theme whenever the user toggles the theme.
+     *
+     * @param attachEvent the attach event
+     */
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> refreshCharts());
+    }
+
+    /**
+     * Removes the {@link ThemeChangedEvent} subscription to prevent memory leaks.
+     *
+     * @param detachEvent the detach event
+     */
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
+    }
+
+    /**
+     * Populates the sprint selector with all non-Backlog sprints that belong to the current
+     * feature, then selects the sprint identified by {@link #sprintId}.
+     * The {@link #isRestoringFromUrl} guard prevents the value-change listener from echoing
+     * a spurious {@link #updateUrlParameters()} call during programmatic selection.
+     */
+    private void populateSprintSelector() {
+        if (sprintSelector == null) {
+            return;
+        }
+        try {
+            if (featureId != null) {
+                allFeatureSprints = sprintApi.getAll().stream()
+                        .filter(s -> !"Backlog".equals(s.getName()))
+                        .sorted(Comparator.comparing(Sprint::getStart, Comparator.nullsLast(Comparator.naturalOrder())))
+                        .collect(Collectors.toCollection(ArrayList::new));
+            } else {
+                allFeatureSprints = new ArrayList<>();
+            }
+            isRestoringFromUrl = true;
+            sprintSelector.setItems(allFeatureSprints);
+            if (sprintId != null) {
+                allFeatureSprints.stream()
+                        .filter(s -> s.getId().equals(sprintId))
+                        .findFirst()
+                        .ifPresent(sprintSelector::setValue);
+            }
+        } catch (Exception e) {
+            logger.error("Error loading sprints for selector", e);
+        } finally {
+            isRestoringFromUrl = false;
+        }
+    }
+
+    /**
+     * Re-generates both SVG charts using the current theme.
+     * Syncs the theme on the UI thread first, then launches two independent async tasks.
+     * No-op when sprint data has not been loaded yet.
+     */
+    private void refreshCharts() {
+        if (sprint == null) {
+            return;
+        }
+        context.syncTheme();
+        generateBurnDownChartAsync();
+        generateGanttChartAsync();
+    }
+
+    /**
+     * (Re-)builds the content area for the currently selected sprint.
+     * Removes any children added by a previous cycle (keeping the persistent
+     * {@link #headerLayout}), then loads data and recreates the detail grid and charts.
+     * Called both from {@link #afterNavigation} on first load and from the sprint
+     * selector listener when the user picks a different sprint.
+     */
+    private void reloadContent() {
+        // Remove children from a previous render cycle, keeping the persistent header.
+        getChildren()
+                .filter(c -> c != headerLayout)
+                .collect(Collectors.toList())
+                .forEach(this::remove);
+
+        ganttUtil = new GanttUtil();
+        loadData();
+
+        if (sprint == null) {
+            return;
+        }
+
+        pageTitle.setText(sprint.getName());
+
+        //- update breadcrumbs
+        getElement().getParent().getComponent()
+                .ifPresent(component -> {
+                    if (component instanceof MainLayout mainLayout) {
+                        mainLayout.getBreadcrumbs().clear();
+                        Product product = productApi.getById(productId);
+                        mainLayout.getBreadcrumbs().addItem("Products (" + product.getName() + ")", ProductListView.class);
+                        {
+                            Map<String, String> params = new HashMap<>();
+                            params.put("product", String.valueOf(productId));
+                            Version version = versionApi.getById(versionId);
+                            mainLayout.getBreadcrumbs().addItem("Versions (" + version.getName() + ")", VersionListView.class, params);
+                        }
+                        {
+                            Map<String, String> params = new HashMap<>();
+                            params.put("product", String.valueOf(productId));
+                            params.put("version", String.valueOf(versionId));
+                            Feature feature = featureApi.getById(featureId);
+                            mainLayout.getBreadcrumbs().addItem("Features (" + feature.getName() + ")", FeatureListView.class, params);
+                        }
+                        {
+                            Map<String, String> params = new HashMap<>();
+                            params.put("product", String.valueOf(productId));
+                            params.put("version", String.valueOf(versionId));
+                            params.put("feature", String.valueOf(featureId));
+                            Sprint s = sprintApi.getById(sprintId);
+                            mainLayout.getBreadcrumbs().addItem("Sprints (" + s.getName() + ")", SprintListView.class, params);
+                        }
+                        {
+                            Map<String, String> params = new HashMap<>();
+                            params.put("product", String.valueOf(productId));
+                            params.put("version", String.valueOf(versionId));
+                            params.put("feature", String.valueOf(featureId));
+                            params.put("sprint", String.valueOf(sprintId));
+                            mainLayout.getBreadcrumbs().addItem("Backlog", Backlog.class, params);
+                        }
+                    }
+                });
+
+        // Check if sprint has start date
+        if (sprint.getStart() == null) {
+            Div messageContainer = new Div();
+            messageContainer.getStyle()
+                    .set("display", "flex")
+                    .set("justify-content", "center")
+                    .set("align-items", "center")
+                    .set("height", "50vh")
+                    .set("width", "100%");
+
+            H3 message = new H3("No Sprint Data to Show");
+            message.getStyle()
+                    .set("color", "var(--lumo-secondary-text-color)");
+
+            messageContainer.add(message);
+            add(messageContainer);
+        } else {
+            createSprintDetailsLayout();
+            createGanttChart();
+            refreshCharts();
+        }
+    }
+
+    /**
+     * Pushes the current {@code product}, {@code version}, {@code feature}, and {@code sprint}
+     * into the browser URL so that pressing F5 restores the view to the same sprint.
+     * Uses {@link com.vaadin.flow.component.page.History#replaceState} to update the address bar
+     * without triggering a full Vaadin navigation cycle.  No-op while restoring state from a URL
+     * to prevent feedback loops.
+     */
+    private void updateUrlParameters() {
+        if (isRestoringFromUrl) {
+            return;
+        }
+        List<String> parts = new ArrayList<>();
+        if (productId != null) {
+            parts.add("product=" + productId);
+        }
+        if (versionId != null) {
+            parts.add("version=" + versionId);
+        }
+        if (featureId != null) {
+            parts.add("feature=" + featureId);
+        }
+        if (sprintId != null) {
+            parts.add("sprint=" + sprintId);
+        }
+        String url = "sprint-quality-board" + (parts.isEmpty() ? "" : "?" + String.join("&", parts));
+        getUI().ifPresent(ui -> ui.getPage().getHistory().replaceState(null, url));
+    }
 
 }
