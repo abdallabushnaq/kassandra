@@ -21,7 +21,7 @@ import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
@@ -43,28 +43,28 @@ import java.util.Map;
  * @author abdalla.bushnaq
  */
 public class CalendarRenderer extends AbstractRenderer {
-    private final int            DAY_SIZE              = 24;
-    private final int            HEADER_HEIGHT         = 25;
-    private final int            LEGEND_HEIGHT         = 24 * 2;
-    private final int            MONTHS_PER_COL        = 3;
-    private final int            MONTHS_PER_ROW        = 4;
-    private final int            MONTH_GAP             = 20;
-    private final int            MONTH_HEIGHT          = 180;
-    private final int            MONTH_WIDTH           = 200;
-    private final int            WEEKDAY_HEADER_HEIGHT = 20;
-    private final int            YEAR_HEIGHT           = 20;
-    private final int            cellHeight            = 16;
-    private final int            cellWidth             = 16;
-    private       int            holidays;
+    private final int           DAY_SIZE              = 24;
+    private final int           HEADER_HEIGHT         = 25;
+    private final int           LEGEND_HEIGHT         = 24 * 2;
+    private final int           MONTHS_PER_COL        = 3;
+    private final int           MONTHS_PER_ROW        = 4;
+    private final int           MONTH_GAP             = 20;
+    private final int           MONTH_HEIGHT          = 180;
+    private final int           MONTH_WIDTH           = 200;
+    private final int           WEEKDAY_HEADER_HEIGHT = 20;
+    private final int           YEAR_HEIGHT           = 20;
+    private final int           cellHeight            = 16;
+    private final int           cellWidth             = 16;
+    private       int           holidays;
     //    private       ExtendedGraphics2D    graphics2D;
-    private final KassandraTheme kassandraTheme;
-    private final LocalDateTime  now;
-    private       int            sickDays;
-    private       int            tripDays;
-    private final User           user;
-    private       int            vacationDays          = 0;
+    private final Theme         kassandraTheme;
+    private final LocalDateTime now;
+    private       int           sickDays;
+    private       int           tripDays;
+    private final User          user;
+    private       int           vacationDays          = 0;
 
-    public CalendarRenderer(Context context, User user, LocalDateTime now, String cssClass, KassandraTheme kassandraTheme) throws Exception {
+    public CalendarRenderer(Context context, User user, LocalDateTime now, String cssClass, Theme kassandraTheme) throws Exception {
         this.user           = user;
         this.now            = now;
         this.kassandraTheme = kassandraTheme;

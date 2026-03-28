@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 import java.awt.*;
 
 @Component
-public class DarkTheme extends KassandraTheme {
+public class DarkTheme extends Theme {
     public static final Color[] KELLY_COLORS = {
 
             Color.red,//
@@ -44,14 +44,101 @@ public class DarkTheme extends KassandraTheme {
     };
 
     public DarkTheme(StableDiffusionConfig stableDiffusionConfig) {
+        super(ETheme.light);
+
+        Color basicTextColor = Color.WHITE;
+
+        //---------------------------------------------------------------------
+        //-- ChartTheme
+        //---------------------------------------------------------------------
+        chartTheme.chartBackgroundColor       = ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor());
+        chartTheme.graphTextBackgroundColor   = chartTheme.chartBackgroundColor;
+        chartTheme.surroundingSquareColor     = new Color(0xaaaaaa);
+        ganttTheme.ganttRequestMilestoneColor = Color.RED/*new Color(0xa7, 0x00, 0x00)*/;
+        //---------------------------------------------------------------------
+
+        //---------------------------------------------------------------------
+        //-- CalendarTheme
+        //---------------------------------------------------------------------
+        calendarTheme.calendarFillingDayTextColor = new Color(0xe2dbdb); // very Light gray for filling days before and after the days we are interested in
+        calendarTheme.calendarHolidayBgColor      = new Color(183, 216, 240);  // Light blue
+        calendarTheme.calendarHolidayTextColor    = new Color(123, 180, 200);  // Light blue
+        calendarTheme.calendarMonthNameColor      = new Color(0xff6336);  // Red for month names
+        calendarTheme.calendarNormalDayTextColor  = new Color(0x323232);  // almost black
+        calendarTheme.calendarSickBgColor         = new Color(0xfff2e8); // Light red
+        calendarTheme.calendarSickTextColor       = new Color(0xff6d5b); // Light red
+        calendarTheme.calendarTodayBgColor        = new Color(0xff3a30);  // Red circle for today
+        calendarTheme.calendarTodayTextColor      = Color.white;  // White text for today
+        calendarTheme.calendarTripBgColor         = new Color(183, 183, 183);// new Color(0xfffcea);  // Light yellow
+        calendarTheme.calendarTripTextColor       = new Color(64, 64, 64);//new Color(0xff931e);  // Light yellow
+        calendarTheme.calendarVacationBgColor     = new Color(183, 240, 216);  // Light green
+        calendarTheme.calendarVacationTextColor   = new Color(123, 200, 180);  // Light green
+        calendarTheme.calendarWeekDayTextColor    = new Color(180, 180, 180);  // Light gray for weekends
+        calendarTheme.calendarWeekendBgColor      = Color.WHITE;
+        calendarTheme.calendarWeekendTextColor    = new Color(180, 180, 180);  // Light gray for weekends
+        calendarTheme.calendarYearTextColor       = new Color(80, 80, 80);  // Dark gray for year display
+        //---------------------------------------------------------------------
+
+        //---------------------------------------------------------------------
+        //-- XAxesTheme
+        //---------------------------------------------------------------------
+        xAxesTheme.futureEventColor   = Color.blue;
+        xAxesTheme.milestoneFlagColor = chartTheme.chartBackgroundColor;
+        xAxesTheme.milestoneTextColor = basicTextColor;
+        xAxesTheme.nowEventColor      = Color.gray;
+        xAxesTheme.pastEventColor     = Color.lightGray;
+        //---------------------------------------------------------------------
+
+        //---------------------------------------------------------------------
+        //-- GanttTheme
+        //---------------------------------------------------------------------
+        ganttTheme.ganttRelationColor         = new Color(0x34, 0x66, 0xed, 0x7f);
+        ganttTheme.ganttCriticalRelationColor = new Color(0xff, 0, 0, 0x7f);
+        ganttTheme.ganttMilestoneColor        = new Color(0x4f, 0xbb, 0xc2, 0xff);
+        ganttTheme.ganttMilestoneTextColor    = new Color(0x50, 0x50, 0x50, 0xff);
+        ganttTheme.ganttStoryColor            = Color.black;//new Color(64, 64, 64, 0xa0);
+        ganttTheme.ganttStoryTextColor        = Color.lightGray;
+        ganttTheme.ganttTaskTextColor         = new Color(0x90, 0x90, 0x90, 0xff);//done
+        ganttTheme.ganttTaskBorderColor       = new Color(0x90, 0x90, 0x90, 0x7F);
+        ganttTheme.ganttIdColor               = new Color(0xff, 0xff, 0xff, 0xff);
+//        ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);
+        ganttTheme.ganttIdTextColor = new Color(0xaa, 0xaa, 0xaa, 0xff);
+//        ganttTheme.ganttIdTextErrorColor        = new Color(0xff, 0xff, 0xff, 0xff);
+        ganttTheme.ganttCriticalTaskBorderColor = new Color(0xff, 0x0, 0x0, 0xC0);
+        ganttTheme.ganttGridColor               = ColorUtil.colorFraction(new Color(0xe5f2ff, false), 0.1);//done
+        //--DayStripeColors
+        ganttTheme.ganttOutOfOfficeColor  = new Color(0x33, 0x33, 0x33, 0xff);
+        ganttTheme.ganttSickBgColor       = new Color(0xffe6e633);
+        ganttTheme.ganttTripBgColor       = new Color(0xffe6e633);
+        ganttTheme.ganttVacationBgColor   = new Color(0xffe6e633);
+        ganttTheme.ganttTaskTickLineColor = new Color(183, 216, 240);
+        ganttTheme.ganttTaskTickTextColor = new Color(0, 0, 0, 127);
+        //---------------------------------------------------------------------
+
+        //---------------------------------------------------------------------
+        //-- BurndownTheme
+        //---------------------------------------------------------------------
+        burndownTheme.delayEventColor = Color.red;
+        int   i     = 0;
+        int[] alpha = {0x7f/*, 0x30*/};
+
+        for (i = 0; i < KELLY_COLORS.length; i++) {
+            burndownTheme.burnDownColor[i] = new Color(KELLY_COLORS[i].getRed(), KELLY_COLORS[i].getGreen(), KELLY_COLORS[i].getBlue(), alpha[0]);
+        }
+        burndownTheme.tickTextColor       = Color.darkGray;
+        burndownTheme.burnDownBorderColor = new Color(0xff, 0xcc, 0x00, 0x77);
+        burndownTheme.optimaleGuideColor  = new Color(0xa0a0a0);
+        burndownTheme.plannedGuideColor   = new Color(0x7f7f7f);
+        burndownTheme.ticksColor          = new Color(0xc9c9c9);
+        burndownTheme.inTimeColor         = ColorConstants.COLOR_DARK_GREEN;
+        burndownTheme.watermarkColor      = new Color(0x10, 0x10, 0x10, 0x10);
+        //---------------------------------------------------------------------
+
 
         // gray
-        Color basicTextColor = Color.WHITE;
 //        Color basicBackgroundColor = new Color(0x7a7a7a);
 //        Color basicBorderColor     = Color.WHITE;
 
-        cssTheme             = ETheme.light;
-        chartBackgroundColor = ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor());
 
 //        dayOfMonthTextColor       = basicTextColor;
 //        dayOfMonthBackgroundColor = basicBackgroundColor;
@@ -61,79 +148,39 @@ public class DarkTheme extends KassandraTheme {
 //        dayDiagramBorderColor = new Color(0xf6f8ff);
 
 //        delayClosedEventColor = new Color(255, 184, 184);
-        burndownTheme.delayEventColor = Color.red;
-        xAxesTheme.futureEventColor   = Color.blue;
-
-        xAxesTheme.milestoneFlagColor = chartBackgroundColor;
-        xAxesTheme.milestoneTextColor = basicTextColor;
-
-
-        xAxesTheme.nowEventColor  = Color.gray;
-        xAxesTheme.pastEventColor = Color.lightGray;
 //        ticksBackgroundColor = chartBackgroundColor;
 
 //        weekBackgroundColor = basicBackgroundColor;
 //        weekTextColor       = basicTextColor;
 
-        ganttTheme.ganttRelationColor           = new Color(0x34, 0x66, 0xed, 0x7f);
-        ganttTheme.ganttCriticalRelationColor   = new Color(0xff, 0, 0, 0x7f);
-        ganttTheme.ganttMilestoneColor          = new Color(0x4f, 0xbb, 0xc2, 0xff);
-        ganttTheme.ganttMilestoneTextColor      = new Color(0x50, 0x50, 0x50, 0xff);
-        ganttTheme.ganttStoryColor              = Color.black;//new Color(64, 64, 64, 0xa0);
-        ganttTheme.ganttStoryTextColor          = Color.darkGray;
-        ganttTheme.ganttTaskTextColor           = new Color(0x30, 0x30, 0x30, 0xff);
-        ganttTheme.ganttTaskBorderColor         = new Color(0x30, 0x30, 0x30, 0x7F);
-        burndownTheme.burnDownBorderColor       = new Color(0xff, 0xcc, 0x00, 0x77);
-        ganttTheme.ganttIdColor                 = new Color(0xff, 0xff, 0xff, 0xff);
-        ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);
-        ganttTheme.ganttIdTextColor             = new Color(0xaa, 0xaa, 0xaa, 0xff);
-        ganttTheme.ganttIdTextErrorColor        = new Color(0xff, 0xff, 0xff, 0xff);
-        ganttTheme.ganttCriticalTaskBorderColor = new Color(0xff, 0x0, 0x0, 0xC0);
-        ganttTheme.ganttOutOfOfficeColor        = new Color(0xff, 0x33, 0x33, 0x33);
 
-        int ps;//primary color
-        int pg;//primary color green
-        int ss;//secondary color
-        int sg;//secondary color green
-        int ts;//trinary color
-        int tg;//trinary color green
-
-        int   i     = 0;
-        int[] alpha = {0x7f/*, 0x30*/};
-
-        for (i = 0; i < KELLY_COLORS.length; i++) {
-            burndownTheme.burnDownColor[i] = new Color(KELLY_COLORS[i].getRed(), KELLY_COLORS[i].getGreen(), KELLY_COLORS[i].getBlue(), alpha[0]);
-        }
+//        int ps;//primary color
+//        int pg;//primary color green
+//        int ss;//secondary color
+//        int sg;//secondary color green
+//        int ts;//trinary color
+//        int tg;//trinary color green
 
         //gray
         //        burnDownColor[i++] = new Color(0x0, 0x0, 0x0, 0xa1);
         //        burnDownColor[i++] = new Color(0x0, 0x0, 0x0, 0x51);
         //        burnDownColor[i++] = new Color(0x0, 0x0, 0x0, 0x21);
 
-        graphTextBackgroundColor         = chartBackgroundColor;
-        burndownTheme.tickTextColor      = Color.darkGray;
-        surroundingSquareColor           = new Color(0xaaaaaa);
-        burndownTheme.optimaleGuideColor = new Color(0xa0a0a0);
-        burndownTheme.plannedGuideColor  = new Color(0x7f7f7f);
-        burndownTheme.ticksColor         = new Color(0xc9c9c9);
-        burndownTheme.inTimeColor        = ColorConstants.COLOR_DARK_GREEN;
-        burndownTheme.watermarkColor     = new Color(0x10, 0x10, 0x10, 0x10);
 
 //        pastWorkDayRequestColor               = new Color(0x60, 0x00, 0xff, 0x40);
 //        pastWeekendRequestColor               = new Color(0x60, 0x60, 0x60, 0x40);
 //        futureWorkDayRequestColor             = new Color(0x00, 0x60, 0xff, 0x40);
 //        futureWeekendRequestColor             = new Color(0x60, 0x60, 0x60, 0x40);
-        ganttTheme.ganttRequestMilestoneColor = Color.RED/*new Color(0xa7, 0x00, 0x00)*/;
 
 //        linkColor = new Color(0x23, 0x6a, 0x97);
 
 //        bankHolidayColor = new Color(0xff, 0, 0, 0x80);
     }
 
-    private int generateColors(int ps, int pg, int ss, int sg, int ts, int tg, int i, int a) {
-        burndownTheme.burnDownColor[i++] = new Color(ps, sg, ts, a);
-        burndownTheme.burnDownColor[i++] = new Color(ts, pg, ss, a);
-        burndownTheme.burnDownColor[i++] = new Color(ss, tg, ps, a);
-        return i;
-    }
+//    private int generateColors(int ps, int pg, int ss, int sg, int ts, int tg, int i, int a) {
+//        burndownTheme.burnDownColor[i++] = new Color(ps, sg, ts, a);
+//        burndownTheme.burnDownColor[i++] = new Color(ts, pg, ss, a);
+//        burndownTheme.burnDownColor[i++] = new Color(ss, tg, ps, a);
+//        return i;
+//    }
 }

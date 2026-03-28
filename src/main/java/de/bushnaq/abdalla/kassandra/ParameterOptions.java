@@ -19,8 +19,8 @@ package de.bushnaq.abdalla.kassandra;
 
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -73,7 +73,7 @@ public abstract class ParameterOptions {
     public                 boolean         resourceMap                                 = false;
     public                 boolean         resourceUtilizationPane                     = false;//only used in tests to cover code, currently cannot be enabled in production mode
     @Setter
-    private static         ETheme          theme;
+    private static         ETheme          theme                                       = ETheme.dark;
     public                 boolean         verbose                                     = false;//in verbose mode, temporary <filename>-tp.xml file will not be deleted.
     public                 String          xlsxFile                                    = null;//used only by Xlsx2mppMain
 
@@ -82,7 +82,7 @@ public abstract class ParameterOptions {
         this.darkTheme  = darkTheme;
     }
 
-    public KassandraTheme getActiveGraphicsTheme() {
+    public Theme getActiveGraphicsTheme() {
         return switch (theme) {
             case dark -> darkTheme;
             case light -> lightTheme;

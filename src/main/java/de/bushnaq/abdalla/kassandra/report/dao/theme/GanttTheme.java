@@ -22,26 +22,26 @@ import java.awt.*;
 public class GanttTheme {
     public Color ganttCriticalRelationColor;
     public Color ganttCriticalTaskBorderColor;
-    public Color ganttGridColor         = new Color(0xe5f2ff, false);
-    public Color ganttHolidayBgColor    = new Color(0xffe6e6);
+    public Color ganttGridColor;
+    public Color ganttHolidayBgColor;
     public Color ganttIdColor;
-    public Color ganttIdErrorColor;
+    //    public Color ganttIdErrorColor;
     public Color ganttIdTextColor;
-    public Color ganttIdTextErrorColor;
+    //    public Color ganttIdTextErrorColor;
     public Color ganttMilestoneColor;
     public Color ganttMilestoneTextColor;
     public Color ganttOutOfOfficeColor;
     public Color ganttRelationColor;
     public Color ganttRequestMilestoneColor;
-    public Color ganttSickBgColor       = new Color(0xffe6e6);
+    public Color ganttSickBgColor;
     public Color ganttStoryColor;
     public Color ganttStoryTextColor;
     public Color ganttTaskBorderColor;
     public Color ganttTaskTextColor;
-    public Color ganttTaskTickLineColor = new Color(183, 216, 240);
-    public Color ganttTaskTickTextColor = new Color(0, 0, 0, 127);
-    public Color ganttTripBgColor       = new Color(0xffe6e6);
-    public Color ganttVacationBgColor   = new Color(0xffe6e6);
+    public Color ganttTaskTickLineColor;
+    public Color ganttTaskTickTextColor;
+    public Color ganttTripBgColor;
+    public Color ganttVacationBgColor;
 
     public GanttTheme() {
     }

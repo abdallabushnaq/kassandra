@@ -22,7 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.ErrorException;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -56,7 +56,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
     private final        Sprint            sprint;
 
     public GanttRenderer(Context context, String sprintName, List<Throwable> exceptions, LocalDateTime now, boolean completed,
-                         Sprint sprint/*, int chartWidth, int chartHeight*/, String cssClass, KassandraTheme kassandraTheme)
+                         Sprint sprint/*, int chartWidth, int chartHeight*/, String cssClass, Theme kassandraTheme)
             throws Exception {
         super(context, sprintName/*, context.bankHolidays*/, completed/*, chartWidth, chartHeight*/, 1, 14, 14, kassandraTheme);
 //        this.ganttFileName = ganttFileName;
@@ -150,7 +150,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
                     String letter = GraphColorUtil.getOffDayLetter(exception);
                     if (letter != null) {
                         graphics2D.fill(s);
-                        graphics2D.setColor(Color.white);
+                        graphics2D.setColor(kassandraTheme.ganttTheme.ganttOutOfOfficeColor);
                         graphics2D.setFont(NoneWorkingDayFont);
                         FontMetrics fm      = graphics2D.getFontMetrics();
                         int         yShift  = fm.getAscent() - fm.getHeight() / 2 - 1;

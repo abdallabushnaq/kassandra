@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.kassandra.report.dao;
 
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
 
@@ -28,7 +28,7 @@ import java.time.LocalDate;
 
 public class GraphColorUtil {
 
-    public static Color getDayOfMonthBgColor(KassandraTheme kassandraTheme, LocalDate startCal) {
+    public static Color getDayOfMonthBgColor(Theme kassandraTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
             case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthBgColor;
             case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthWeekendBgColor;
@@ -37,7 +37,7 @@ public class GraphColorUtil {
 
     }
 
-    public static Color getDayOfMonthTextColor(KassandraTheme kassandraTheme, LocalDate startCal) {
+    public static Color getDayOfMonthTextColor(Theme kassandraTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
             case FRIDAY, TUESDAY, MONDAY, THURSDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthTextColor;
             case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.XAxesDayOfMonthWeekendTextColor;
@@ -46,7 +46,7 @@ public class GraphColorUtil {
 
     }
 
-    public static Color getDayOfWeekBgColor(KassandraTheme kassandraTheme, LocalDate startCal) {
+    public static Color getDayOfWeekBgColor(Theme kassandraTheme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
             case FRIDAY, MONDAY, THURSDAY, TUESDAY, WEDNESDAY -> kassandraTheme.xAxesTheme.XAxesDayOfweekBgColor;
             case SATURDAY, SUNDAY -> kassandraTheme.xAxesTheme.XAxesDayOfweekWeekendBgColor;
@@ -55,14 +55,14 @@ public class GraphColorUtil {
 
     }
 
-    public static ProjectCalendarException getException(KassandraTheme kassandraTheme, ProjectCalendar pc, LocalDate currentDate) {
+    public static ProjectCalendarException getException(Theme kassandraTheme, ProjectCalendar pc, LocalDate currentDate) {
         if (!pc.isWorkingDate(currentDate)) {
             return pc.getException(currentDate);
         }
         return null;
     }
 
-    public static Color getGanttDayStripeColor(KassandraTheme kassandraTheme, ProjectCalendar pc, LocalDate currentDate) {
+    public static Color getGanttDayStripeColor(Theme kassandraTheme, ProjectCalendar pc, LocalDate currentDate) {
         if (pc.isWorkingDate(currentDate)) {
             return kassandraTheme.xAxesTheme.XAxesDayOfweekBgColor;
         } else {

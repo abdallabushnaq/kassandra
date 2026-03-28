@@ -17,16 +17,18 @@
 
 package de.bushnaq.abdalla.kassandra.report.dao.theme;
 
-@Deprecated
-public class BurnDownKassandraTheme extends ScheduleKassandraTheme {
+import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 
+public class Theme {
+    public final BurndownTheme burndownTheme = new BurndownTheme();
+    public final CalendarTheme calendarTheme = new CalendarTheme();
+    public final ChartTheme    chartTheme    = new ChartTheme();
+    public final GanttTheme    ganttTheme    = new GanttTheme();
+    public final ETheme        themeVariance;
+    public final XAxesTheme    xAxesTheme    = new XAxesTheme();
 
-//    public Color getHeatColor(int index) {
-//        if (index < 0) {
-//            index = -index;
-//        }
-//        int colorIndex = index % MAX_HEAT_COLOR;
-//        return heatColor[colorIndex];
-//    }
+    public Theme(ETheme themeVariance) {
+        this.themeVariance = themeVariance;
+    }
 
 }

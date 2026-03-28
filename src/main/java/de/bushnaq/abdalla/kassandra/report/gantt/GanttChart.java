@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.report.gantt;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.report.AbstractChart;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,7 +30,7 @@ public class GanttChart extends AbstractChart {
 
     public GanttChart(Context context, String projectRequestKey, String relateCssPath, String column, String sprintName, List<Throwable> exception,
                       LocalDateTime now, boolean completed, Sprint sprint, String cssClass,
-                      KassandraTheme kassandraTheme) throws Exception {
+                      Theme kassandraTheme) throws Exception {
         super("Gantt Chart", projectRequestKey, relateCssPath, column, sprintName, null, cssClass, kassandraTheme);
         getRenderers().add(new GanttRenderer(context, sprintName, exception, now, completed, sprint, cssClass, kassandraTheme));
         this.setChartWidth(getRenderers().getFirst().chartWidth);

@@ -24,7 +24,7 @@ import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.svg.util.ExtendedRectangle;
 import de.bushnaq.abdalla.svg.util.RectangleWithToolTip;
 import de.bushnaq.abdalla.util.ColorUtil;
@@ -79,7 +79,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     protected              ResourcesUtilization resourcesUtilization       = new ResourcesUtilization();// only used for out of office
     protected              Map<Long, Integer>   taskHeight                 = new HashMap<>();
 
-    public AbstractGanttRenderer(Context context, String sprintName/*, Map<LocalDate, String> bankHolidays*/, boolean completed/*, int chartWidth, int chartHeight*/, int numberOfLinesPerTask, int preRun, int postRun, KassandraTheme kassandraTheme) throws IOException {
+    public AbstractGanttRenderer(Context context, String sprintName/*, Map<LocalDate, String> bankHolidays*/, boolean completed/*, int chartWidth, int chartHeight*/, int numberOfLinesPerTask, int preRun, int postRun, Theme kassandraTheme) throws IOException {
         super(sprintName/*, bankHolidays*/, completed/*, chartWidth, chartHeight*/, preRun, postRun, kassandraTheme);
         this.context              = context;
         this.numberOfLinesPerTask = numberOfLinesPerTask;

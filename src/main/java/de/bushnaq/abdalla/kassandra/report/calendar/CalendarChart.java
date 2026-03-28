@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.report.calendar;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.AbstractChart;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 
 import java.time.LocalDateTime;
 
@@ -28,7 +28,7 @@ import java.time.LocalDateTime;
 public class CalendarChart extends AbstractChart {
 
     public CalendarChart(Context context, LocalDateTime now, User user, String cssClass,
-                         KassandraTheme kassandraTheme) throws Exception {
+                         Theme kassandraTheme) throws Exception {
         super(createCaption(user), "", "", "", user.getName() + "." + user.getLocations().getLast().getCountry() + "." + user.getLocations().getLast().getState(), null, cssClass, kassandraTheme);
         getRenderers().add(new CalendarRenderer(context, user, now, cssClass, kassandraTheme));
         this.setChartWidth(getRenderers().get(0).chartWidth);

@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.report;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.KassandraTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import org.slf4j.Logger;
@@ -53,7 +53,7 @@ public abstract class AbstractRenderer {
     public final           GraphSquare        diagram                    = new GraphSquare();
     protected              int                firstDayX                  = 0;
     public                 ExtendedGraphics2D graphics2D;
-    public                 KassandraTheme     kassandraTheme;
+    public                 Theme              kassandraTheme;
     protected final        Logger             logger                     = LoggerFactory.getLogger(this.getClass());
     public                 Milestones         milestones;
 
@@ -71,7 +71,7 @@ public abstract class AbstractRenderer {
     }
 
     public AbstractRenderer(String sprintName/*, Map<LocalDate, String> bankHolidays*/, boolean completed/*, int chartWidth, int chartHeight*/, int preRun, int postRun,
-                            KassandraTheme kassandraTheme) throws IOException {
+                            Theme kassandraTheme) throws IOException {
 //        this.bankHolidays  = bankHolidays;
         this.kassandraTheme = kassandraTheme;
 //        this.chartWidth    = chartWidth;
@@ -208,7 +208,7 @@ public abstract class AbstractRenderer {
         graphics2D.setFont(font);
         FontMetrics fm    = graphics2D.getFontMetrics();
         int         width = fm.stringWidth(text);
-        graphics2D.setColor(kassandraTheme.graphTextBackgroundColor);
+        graphics2D.setColor(kassandraTheme.chartTheme.graphTextBackgroundColor);
         switch (aligned) {
             case left:
                 graphics2D.fillRect(x, y - 9 + 2, width, 12);
@@ -235,7 +235,7 @@ public abstract class AbstractRenderer {
         int milestoneY  = legendY - calendarXAxes.milestone.height / 2;
 
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
-        graphics2D.setColor(kassandraTheme.surroundingSquareColor);
+        graphics2D.setColor(kassandraTheme.chartTheme.surroundingSquareColor);
         graphics2D.drawLine(legendX1, legendY, legendX2, legendY);
         drawGraphText(legendTextX, legendTextY, "Guideline", kassandraTheme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
