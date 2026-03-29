@@ -431,7 +431,6 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                 avatarService,
                 stableDiffusionService,
                 defaultPrompt,
-                true,
                 "user",
                 this::handleGeneratedAvatar,
                 initialImage,

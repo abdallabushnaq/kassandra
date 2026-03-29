@@ -311,7 +311,6 @@ public class SprintDialog extends Dialog {
                 avatarService,
                 stableDiffusionService,
                 defaultPrompt,
-                true,
                 "exit",
                 this::handleGeneratedImage,
                 initialImage,

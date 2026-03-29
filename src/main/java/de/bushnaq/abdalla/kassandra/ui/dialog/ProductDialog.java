@@ -450,7 +450,6 @@ public class ProductDialog extends Dialog {
                 avatarService,
                 stableDiffusionService,
                 defaultPrompt,
-                true,
                 "cube",
                 this::handleGeneratedImage,
                 initialImage,

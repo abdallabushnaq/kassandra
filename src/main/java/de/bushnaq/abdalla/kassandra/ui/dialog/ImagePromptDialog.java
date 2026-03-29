@@ -56,6 +56,7 @@ public class ImagePromptDialog extends Dialog {
     public static final String                 ID_CANCEL_BUTTON              = "cancel-image-button";
     public static final String                 ID_DARK_NEGATIVE_PROMPT_FIELD = "dark-negative-prompt-field";
     public static final String                 ID_DARK_PROMPT_FIELD          = "dark-prompt-field";
+    public static final String                 ID_DARK_UPDATE_BUTTON         = "dark-update-image-button";
     public static final String                 ID_DOWNLOAD_BUTTON            = "download-image-button";
     public static final String                 ID_GENERATE_BUTTON            = "generate-image-button";
     public static final String                 ID_IMAGE_PROMPT_FIELD         = "image-prompt-field";
@@ -67,10 +68,10 @@ public class ImagePromptDialog extends Dialog {
     private final       AvatarService          avatarService;
     private final       Button                 cancelButton;
     private final       String                 darkIconName;
-    private             TextArea               darkNegativePromptField; // null when no dark section is shown
-    private             Div                    darkPreviewContainer;    // null when no dark section is shown
-    private             TextArea               darkPromptField;         // null when no dark section is shown
-    private final       boolean                enableDark;
+    private final       TextArea               darkNegativePromptField;
+    private final       Div                    darkPreviewContainer;
+    private final       TextArea               darkPromptField;
+    private             Button                 darkUpdateButton;
     private final       Button                 generateButton;
     private volatile    byte[]                 generatedDarkImage;
     private volatile    byte[]                 generatedDarkImageOriginal;
@@ -82,41 +83,14 @@ public class ImagePromptDialog extends Dialog {
     private final       Div                    previewContainer;
     private final       TextArea               promptField;
     private final       StableDiffusionService stableDiffusionService;
-    private final       Button                 updateButton;
+    private final       Button                 lightUpdateButton;
 
     /**
-     * Creates a dialog for generating AI images (no dark-avatar section).
-     *
-     * @param avatarService          The avatar generation service
-     * @param stableDiffusionService The Stable Diffusion service
-     * @param defaultPrompt          Default prompt text (can be null)
-     * @param acceptCallback         Callback that receives the generated image bytes
-     */
-    public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback) {
-        this(avatarService, stableDiffusionService, defaultPrompt, false, null, acceptCallback, null, null, null, null, null);
-    }
-
-    /**
-     * Creates a dialog for generating AI images with an initial image for img2img "Update" mode.
-     * No dark-avatar section is shown.
-     *
-     * @param avatarService          The avatar generation service
-     * @param stableDiffusionService The Stable Diffusion service
-     * @param defaultPrompt          Default prompt text (can be null)
-     * @param acceptCallback         Callback that receives the generated image bytes
-     * @param initialImage           Existing light original for img2img mode (can be null)
-     */
-    public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback, byte[] initialImage) {
-        this(avatarService, stableDiffusionService, defaultPrompt, false, null, acceptCallback, initialImage, null, null, null, null);
-    }
-
-    /**
-     * Full constructor. Pass {@code enableDark = true} to enable the side-by-side dark-avatar preview panel.
+     * Full constructor for the side-by-side light/dark avatar preview dialog.
      *
      * @param avatarService             The avatar generation service
      * @param stableDiffusionService    The Stable Diffusion service
      * @param defaultPrompt             Default prompt text for the light avatar (can be null)
-     * @param enableDark                {@code true} to show the side-by-side dark-avatar preview panel
      * @param darkIconName              Icon name for the programmatic dark fallback (e.g., {@code "user"}); can be null
      * @param acceptCallback            Callback that receives both light and dark results plus negative prompts
      * @param initialImage              Existing light original for img2img "Update" mode; can be null
@@ -125,14 +99,13 @@ public class ImagePromptDialog extends Dialog {
      * @param defaultNegativePrompt     Default negative prompt for the light avatar; null → {@link StableDiffusionService#NEGATIVE_PROMPT}
      * @param defaultDarkNegativePrompt Default negative prompt for the dark avatar; null → same as defaultNegativePrompt
      */
-    public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt, boolean enableDark,
+    public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt,
                              String darkIconName, AcceptCallback acceptCallback, byte[] initialImage, byte[] initialDarkImage,
                              String defaultDarkPrompt, String defaultNegativePrompt, String defaultDarkNegativePrompt) {
         this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.acceptCallback         = acceptCallback;
         this.initialImage           = initialImage;
-        this.enableDark             = enableDark;
         this.darkIconName           = darkIconName;
 
         // Resolve default values for the new prompt fields
@@ -182,24 +155,22 @@ public class ImagePromptDialog extends Dialog {
         negativePromptField.setValue(resolvedNegativePrompt);
         dialogLayout.add(negativePromptField);
 
-        // Dark prompt / dark negative prompt (only when dark section is enabled)
-        if (enableDark) {
-            darkPromptField = new TextArea("Dark Avatar Prompt");
-            darkPromptField.setId(ID_DARK_PROMPT_FIELD);
-            darkPromptField.setWidthFull();
-            darkPromptField.setHelperText("Full prompt for the dark-background variant (base prompt + dark suffix)");
-            darkPromptField.setMinHeight("80px");
-            darkPromptField.setValue(resolvedDarkPrompt);
-            dialogLayout.add(darkPromptField);
+        // Dark prompt / dark negative prompt
+        darkPromptField = new TextArea("Dark Avatar Prompt");
+        darkPromptField.setId(ID_DARK_PROMPT_FIELD);
+        darkPromptField.setWidthFull();
+        darkPromptField.setHelperText("Full prompt for the dark-background variant (base prompt + dark suffix)");
+        darkPromptField.setMinHeight("80px");
+        darkPromptField.setValue(resolvedDarkPrompt);
+        dialogLayout.add(darkPromptField);
 
-            darkNegativePromptField = new TextArea("Dark Avatar Negative Prompt");
-            darkNegativePromptField.setId(ID_DARK_NEGATIVE_PROMPT_FIELD);
-            darkNegativePromptField.setWidthFull();
-            darkNegativePromptField.setHelperText("Things to avoid in the dark avatar");
-            darkNegativePromptField.setMinHeight("80px");
-            darkNegativePromptField.setValue(resolvedDarkNegativePrompt);
-            dialogLayout.add(darkNegativePromptField);
-        }
+        darkNegativePromptField = new TextArea("Dark Avatar Negative Prompt");
+        darkNegativePromptField.setId(ID_DARK_NEGATIVE_PROMPT_FIELD);
+        darkNegativePromptField.setWidthFull();
+        darkNegativePromptField.setHelperText("Things to avoid in the dark avatar");
+        darkNegativePromptField.setMinHeight("80px");
+        darkNegativePromptField.setValue(resolvedDarkNegativePrompt);
+        dialogLayout.add(darkNegativePromptField);
 
         // Preview container
         previewContainer = new Div();
@@ -247,10 +218,10 @@ public class ImagePromptDialog extends Dialog {
         generateButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
         generateButton.addClickListener(e -> generateLightVariant());
 
-        updateButton = new Button("Update", new Icon(VaadinIcon.REFRESH));
-        updateButton.setId(ID_UPDATE_BUTTON);
-        updateButton.setEnabled(initialImage != null && initialImage.length > 0);
-        updateButton.addClickListener(e -> updateImage());
+        lightUpdateButton = new Button("Update", new Icon(VaadinIcon.REFRESH));
+        lightUpdateButton.setId(ID_UPDATE_BUTTON);
+        lightUpdateButton.setEnabled(initialImage != null && initialImage.length > 0);
+        lightUpdateButton.addClickListener(e -> updateImage());
 
         acceptButton = new Button("Accept", new Icon(VaadinIcon.CHECK));
         acceptButton.setId(ID_ACCEPT_BUTTON);
@@ -289,7 +260,7 @@ public class ImagePromptDialog extends Dialog {
                 generatedImage = imageBytes;
                 displayGeneratedImage(imageBytes);
                 acceptButton.setEnabled(true);
-                updateButton.setEnabled(true);
+                lightUpdateButton.setEnabled(true);
                 Notification.show("Image uploaded and resized.", 2000, Notification.Position.BOTTOM_END);
                 generateDarkVariant();
             } catch (Exception ex) {
@@ -322,64 +293,64 @@ public class ImagePromptDialog extends Dialog {
         uploadDownloadCol.setAlignItems(FlexComponent.Alignment.STRETCH);
         uploadDownloadCol.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 
-        HorizontalLayout previewRow;
-        if (enableDark) {
-            // ── Light column ──────────────────────────────────────────────────
-            com.vaadin.flow.component.html.Span lightLabel = new com.vaadin.flow.component.html.Span("Light");
-            lightLabel.getStyle().set("font-weight", "600").set("color", "var(--lumo-secondary-text-color)");
-            VerticalLayout lightColumn = new VerticalLayout(lightLabel, previewContainer);
-            lightColumn.setPadding(false);
-            lightColumn.setSpacing(true);
-            lightColumn.setAlignItems(FlexComponent.Alignment.CENTER);
+        // ── Light column ──────────────────────────────────────────────────
+        com.vaadin.flow.component.html.Span lightLabel = new com.vaadin.flow.component.html.Span("Light");
+        lightLabel.getStyle().set("font-weight", "600").set("color", "var(--lumo-secondary-text-color)");
+        VerticalLayout lightColumn = new VerticalLayout(lightLabel, previewContainer, lightUpdateButton);
+        lightColumn.setPadding(false);
+        lightColumn.setSpacing(true);
+        lightColumn.setAlignItems(FlexComponent.Alignment.CENTER);
 
-            // ── Dark column ───────────────────────────────────────────────────
-            darkPreviewContainer = new Div();
-            darkPreviewContainer.getStyle()
-                    .set("border", "1px dashed var(--lumo-contrast-30pct)")
-                    .set("border-radius", "var(--lumo-border-radius)")
-                    .set("padding", "var(--lumo-space-m)")
-                    .set("width", "256px")
-                    .set("height", "256px")
-                    .set("min-width", "256px")
-                    .set("min-height", "256px")
-                    .set("max-width", "256px")
-                    .set("max-height", "256px")
-                    .set("display", "flex")
-                    .set("align-items", "center")
-                    .set("justify-content", "center")
-                    .set("background-color", "#1e1e1e")
-                    .set("overflow", "hidden");
+        // ── Dark column ───────────────────────────────────────────────────
+        darkPreviewContainer = new Div();
+        darkPreviewContainer.getStyle()
+                .set("border", "1px dashed var(--lumo-contrast-30pct)")
+                .set("border-radius", "var(--lumo-border-radius)")
+                .set("padding", "var(--lumo-space-m)")
+                .set("width", "256px")
+                .set("height", "256px")
+                .set("min-width", "256px")
+                .set("min-height", "256px")
+                .set("max-width", "256px")
+                .set("max-height", "256px")
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("justify-content", "center")
+                .set("background-color", "#1e1e1e")
+                .set("overflow", "hidden");
 
-            if (initialDarkImage != null && initialDarkImage.length > 0) {
-                displayInContainer(darkPreviewContainer, initialDarkImage);
-                generatedDarkImage         = initialDarkImage;
-                generatedDarkImageOriginal = initialDarkImage;
-            } else {
-                Div darkPlaceholder = new Div();
-                darkPlaceholder.setText("Dark variant will appear here");
-                darkPlaceholder.getStyle().set("color", "#888").set("text-align", "center");
-                darkPreviewContainer.add(darkPlaceholder);
-            }
-
-            com.vaadin.flow.component.html.Span darkLabel = new com.vaadin.flow.component.html.Span("Dark");
-            darkLabel.getStyle().set("font-weight", "600").set("color", "var(--lumo-secondary-text-color)");
-
-            VerticalLayout darkColumn = new VerticalLayout(darkLabel, darkPreviewContainer);
-            darkColumn.setPadding(false);
-            darkColumn.setSpacing(true);
-            darkColumn.setAlignItems(FlexComponent.Alignment.CENTER);
-
-            previewRow = new HorizontalLayout(lightColumn, darkColumn, uploadDownloadCol);
+        if (initialDarkImage != null && initialDarkImage.length > 0) {
+            displayInContainer(darkPreviewContainer, initialDarkImage);
+            generatedDarkImage         = initialDarkImage;
+            generatedDarkImageOriginal = initialDarkImage;
         } else {
-            previewRow = new HorizontalLayout(previewContainer, uploadDownloadCol);
+            Div darkPlaceholder = new Div();
+            darkPlaceholder.setText("Dark variant will appear here");
+            darkPlaceholder.getStyle().set("color", "#888").set("text-align", "center");
+            darkPreviewContainer.add(darkPlaceholder);
         }
+
+        com.vaadin.flow.component.html.Span darkLabel = new com.vaadin.flow.component.html.Span("Dark");
+        darkLabel.getStyle().set("font-weight", "600").set("color", "var(--lumo-secondary-text-color)");
+
+        darkUpdateButton = new Button("Update", new Icon(VaadinIcon.REFRESH));
+        darkUpdateButton.setId(ID_DARK_UPDATE_BUTTON);
+        darkUpdateButton.setEnabled(initialDarkImage != null && initialDarkImage.length > 0);
+        darkUpdateButton.addClickListener(e -> generateDarkVariant());
+
+        VerticalLayout darkColumn = new VerticalLayout(darkLabel, darkPreviewContainer, darkUpdateButton);
+        darkColumn.setPadding(false);
+        darkColumn.setSpacing(true);
+        darkColumn.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        HorizontalLayout previewRow = new HorizontalLayout(lightColumn, darkColumn, uploadDownloadCol);
         previewRow.setAlignItems(FlexComponent.Alignment.CENTER);
         previewRow.setSpacing(true);
         previewRow.setWidthFull();
         dialogLayout.add(previewRow);
 
-        // Buttons (no upload/download here)
-        HorizontalLayout buttonLayout = new HorizontalLayout(generateButton, updateButton, acceptButton, cancelButton);
+        // Buttons
+        HorizontalLayout buttonLayout = new HorizontalLayout(generateButton, acceptButton, cancelButton);
         buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         buttonLayout.setWidthFull();
         buttonLayout.setPadding(true);
@@ -393,8 +364,8 @@ public class ImagePromptDialog extends Dialog {
         if (generatedImage != null) {
             String prompt             = promptField.getValue().trim();
             String negativePrompt     = negativePromptField.getValue().trim();
-            String darkPrompt         = darkPromptField != null ? darkPromptField.getValue().trim() : prompt + AvatarService.DARK_PROMPT_SUFFIX;
-            String darkNegativePrompt = darkNegativePromptField != null ? darkNegativePromptField.getValue().trim() : negativePrompt;
+            String darkPrompt         = darkPromptField.getValue().trim();
+            String darkNegativePrompt = darkNegativePromptField.getValue().trim();
 
             GeneratedImageResult lightResult = new GeneratedImageResult(
                     generatedImageOriginal != null ? generatedImageOriginal : generatedImage,
@@ -470,7 +441,7 @@ public class ImagePromptDialog extends Dialog {
      * Does nothing when the dark panel is disabled ({@code enableDark == false}).
      */
     private void generateDarkVariant() {
-        if (!enableDark || darkPreviewContainer == null) {
+        if (darkPreviewContainer == null) {
             return;
         }
         // volatile fields — safe to read without session lock
@@ -482,15 +453,14 @@ public class ImagePromptDialog extends Dialog {
 
         getUI().ifPresent(ui -> ui.access(() -> {
             // Read prompts from their respective fields while holding the session lock
-            String               darkPrompt         = darkPromptField != null
-                    ? darkPromptField.getValue().trim()
-                    : promptField.getValue().trim() + AvatarService.DARK_PROMPT_SUFFIX;
-            String               darkNegativePrompt = darkNegativePromptField != null
-                    ? darkNegativePromptField.getValue().trim()
-                    : negativePromptField.getValue().trim();
+            String               darkPrompt         = darkPromptField.getValue().trim();
+            String               darkNegativePrompt = darkNegativePromptField.getValue().trim();
             GeneratedImageResult lightResult = new GeneratedImageResult(lightOriginal, promptField.getValue().trim(), null, lightSeed);
 
             darkPreviewContainer.removeAll();
+            if (darkUpdateButton != null) {
+                darkUpdateButton.setEnabled(false);
+            }
 
             if (stableDiffusionService.isAvailable()) {
                 // ── Loading layout ──────────────────────────────────────────
@@ -536,6 +506,9 @@ public class ImagePromptDialog extends Dialog {
                         generatedDarkImageOriginal = result.getOriginalImage();
                         ui.access(() -> {
                             displayInContainer(darkPreviewContainer, result.getOriginalImage());
+                            if (darkUpdateButton != null) {
+                                darkUpdateButton.setEnabled(true);
+                            }
                             ui.push();
                         });
                     } catch (StableDiffusionException e) {
@@ -544,6 +517,9 @@ public class ImagePromptDialog extends Dialog {
                         generatedDarkImageOriginal = fallback.getOriginalImage();
                         ui.access(() -> {
                             displayInContainer(darkPreviewContainer, fallback.getOriginalImage());
+                            if (darkUpdateButton != null) {
+                                darkUpdateButton.setEnabled(true);
+                            }
                             ui.push();
                         });
                     }
@@ -554,6 +530,9 @@ public class ImagePromptDialog extends Dialog {
                 generatedDarkImage         = fallback.getResizedImage();
                 generatedDarkImageOriginal = fallback.getOriginalImage();
                 displayInContainer(darkPreviewContainer, fallback.getOriginalImage());
+                if (darkUpdateButton != null) {
+                    darkUpdateButton.setEnabled(true);
+                }
                 ui.push();
             }
         }));
@@ -568,7 +547,7 @@ public class ImagePromptDialog extends Dialog {
 
         // Disable button and show loading state
         generateButton.setEnabled(false);
-        updateButton.setEnabled(false);
+        lightUpdateButton.setEnabled(false);
         acceptButton.setEnabled(false);
 
         // Clear preview and show progress bar
@@ -627,7 +606,7 @@ public class ImagePromptDialog extends Dialog {
                     ui.access(() -> {
                         displayGeneratedImage(result.getResizedImage());
                         generateButton.setEnabled(true);
-                        updateButton.setEnabled(true);
+                        lightUpdateButton.setEnabled(true);
 //                        generateButton.setText("Generate");
                         acceptButton.setEnabled(true);
 
@@ -641,7 +620,7 @@ public class ImagePromptDialog extends Dialog {
                 } catch (StableDiffusionException ex) {
                     ui.access(() -> {
                         generateButton.setEnabled(true);
-                        updateButton.setEnabled(true);
+                        lightUpdateButton.setEnabled(true);
 //                        generateButton.setText("Generate");
 
                         previewContainer.removeAll();
@@ -672,7 +651,7 @@ public class ImagePromptDialog extends Dialog {
             return;
         }
         generateButton.setEnabled(false);
-        updateButton.setEnabled(false);
+        lightUpdateButton.setEnabled(false);
         acceptButton.setEnabled(false);
         previewContainer.removeAll();
         VerticalLayout loadingLayout = new VerticalLayout();
@@ -716,17 +695,16 @@ public class ImagePromptDialog extends Dialog {
                     ui.access(() -> {
                         displayGeneratedImage(result.getResizedImage());
                         generateButton.setEnabled(true);
-                        updateButton.setEnabled(true);
+                        lightUpdateButton.setEnabled(true);
                         acceptButton.setEnabled(true);
                         Notification notification = Notification.show("Image updated successfully!", 3000, Notification.Position.BOTTOM_END);
                         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                         ui.push();
                     });
-                    generateDarkVariant();
                 } catch (StableDiffusionException ex) {
                     ui.access(() -> {
                         generateButton.setEnabled(true);
-                        updateButton.setEnabled(true);
+                        lightUpdateButton.setEnabled(true);
                         previewContainer.removeAll();
                         Div errorText = new Div();
                         errorText.setText("Failed to update image: " + ex.getMessage());

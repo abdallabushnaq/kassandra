@@ -306,7 +306,6 @@ public class FeatureDialog extends Dialog {
                 avatarService,
                 stableDiffusionService,
                 defaultPrompt,
-                true,
                 "lightbulb",
                 this::handleGeneratedImage,
                 initialImage,

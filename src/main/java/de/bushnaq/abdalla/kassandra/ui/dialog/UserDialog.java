@@ -396,7 +396,6 @@ public class UserDialog extends Dialog {
                 avatarService,
                 stableDiffusionService,
                 defaultPrompt,
-                true,
                 "user",
                 this::handleGeneratedImage,
                 initialImage,
