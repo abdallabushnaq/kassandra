@@ -179,6 +179,9 @@ public class ProductController {
                     response.setAvatarImageOriginal(genData.getAvatarImageOriginal());
                     response.setDarkAvatarImageOriginal(genData.getDarkAvatarImageOriginal());
                     response.setAvatarPrompt(genData.getAvatarPrompt());
+                    response.setDarkAvatarPrompt(genData.getDarkAvatarPrompt());
+                    response.setAvatarNegativePrompt(genData.getAvatarNegativePrompt());
+                    response.setDarkAvatarNegativePrompt(genData.getDarkAvatarNegativePrompt());
                 });
 
         return ResponseEntity.ok(response);
@@ -292,8 +295,10 @@ public class ProductController {
             productRepository.save(product);
         }
 
-        // Update or create generation data (light + dark originals + prompt)
-        if (request.getAvatarImageOriginal() != null || request.getDarkAvatarImageOriginal() != null || request.getAvatarPrompt() != null) {
+        // Update or create generation data (light + dark originals + prompts)
+        if (request.getAvatarImageOriginal() != null || request.getDarkAvatarImageOriginal() != null
+                || request.getAvatarPrompt() != null || request.getDarkAvatarPrompt() != null
+                || request.getAvatarNegativePrompt() != null || request.getDarkAvatarNegativePrompt() != null) {
             ProductAvatarGenerationDataDAO genData = productAvatarGenerationDataRepository.findByProductId(id)
                     .orElse(new ProductAvatarGenerationDataDAO());
             genData.setProductId(id);
@@ -308,6 +313,18 @@ public class ProductController {
 
             if (request.getAvatarPrompt() != null) {
                 genData.setAvatarPrompt(request.getAvatarPrompt());
+            }
+
+            if (request.getDarkAvatarPrompt() != null) {
+                genData.setDarkAvatarPrompt(request.getDarkAvatarPrompt());
+            }
+
+            if (request.getAvatarNegativePrompt() != null) {
+                genData.setAvatarNegativePrompt(request.getAvatarNegativePrompt());
+            }
+
+            if (request.getDarkAvatarNegativePrompt() != null) {
+                genData.setDarkAvatarNegativePrompt(request.getDarkAvatarNegativePrompt());
             }
 
             productAvatarGenerationDataRepository.save(genData);

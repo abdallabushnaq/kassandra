@@ -18,6 +18,8 @@
 package de.bushnaq.abdalla.kassandra.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import lombok.*;
 
@@ -88,6 +90,15 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
     }
 
     /**
+     * Return the default negative prompt used when generating light-background avatars.
+     *
+     * @return The default negative prompt string
+     */
+    public static String getDefaultAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT;
+    }
+
+    /**
      * Generate a default avatar prompt for AI image generation.
      * This provides a consistent prompt format for feature avatars.
      *
@@ -106,7 +117,37 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
      * @return A default prompt string for generating feature avatar images
      */
     public static String getDefaultAvatarPrompt(String featureName) {
-        return "Icon representing the feature '" + featureName + "', minimalist, 3D design";
+        return "Icon representing the feature '" + featureName + "', studio lighting, macro photography, sharp focus, high resolution, 4K" + AvatarService.LIGHT_PROMPT_SUFFIX;
+    }
+
+    /**
+     * Return the default negative prompt used when generating dark-background avatars.
+     *
+     * @return The default dark negative prompt string
+     */
+    public static String getDefaultDarkAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT;
+    }
+
+    /**
+     * Generate a default dark-background avatar prompt by appending the dark suffix to the base prompt.
+     *
+     * @return A default dark avatar prompt string
+     */
+    @JsonIgnore
+    public String getDefaultDarkAvatarPrompt() {
+        return getDefaultDarkAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default dark-background avatar prompt for a given feature name.
+     *
+     * @param featureName The name of the feature
+     * @return A default dark avatar prompt string
+     */
+    @JsonIgnore
+    public static String getDefaultDarkAvatarPrompt(String featureName) {
+        return getDefaultAvatarPrompt(featureName) + AvatarService.DARK_PROMPT_SUFFIX;
     }
 
     @JsonIgnore

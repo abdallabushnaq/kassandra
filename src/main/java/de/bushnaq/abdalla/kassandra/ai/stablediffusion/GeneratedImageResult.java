@@ -31,6 +31,10 @@ public class GeneratedImageResult {
      */
     private byte[] originalImage;
     /**
+     * The negative prompt used during generation; {@code null} when not applicable (e.g., programmatic fallback).
+     */
+    private String negativePrompt;
+    /**
      * The prompt used to generate the image
      */
     private String prompt;

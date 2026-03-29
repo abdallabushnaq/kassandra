@@ -196,7 +196,7 @@ public class ProductApi extends AbstractApi {
 
     /**
      * Update product avatar with light-theme fields only (resized, original, and prompt).
-     * Delegates to {@link #updateAvatarFull(Long, byte[], byte[], String, byte[], byte[])} with null dark images.
+     * Delegates to the full overload with null dark and negative-prompt fields.
      *
      * @param productId     The product ID
      * @param resizedImage  The resized avatar image bytes (e.g., 64x64)
@@ -204,12 +204,12 @@ public class ProductApi extends AbstractApi {
      * @param prompt        The prompt used to generate the avatar
      */
     public void updateAvatarFull(Long productId, byte[] resizedImage, byte[] originalImage, String prompt) {
-        updateAvatarFull(productId, resizedImage, originalImage, prompt, null, null);
+        updateAvatarFull(productId, resizedImage, originalImage, prompt, null, null, null, null, null);
     }
 
     /**
      * Update product avatar with both light and dark theme fields in a single request.
-     * Dark fields are optional — pass {@code null} to leave the stored dark avatar unchanged.
+     * Delegates to the full overload with null negative-prompt fields.
      *
      * @param productId          The product ID
      * @param resizedImage       Resized light avatar image bytes (e.g., 64x64), or null to skip
@@ -220,25 +220,44 @@ public class ProductApi extends AbstractApi {
      */
     public void updateAvatarFull(Long productId, byte[] resizedImage, byte[] originalImage, String prompt,
             byte[] darkResizedImage, byte[] darkOriginalImage) {
+        updateAvatarFull(productId, resizedImage, originalImage, prompt, darkResizedImage, darkOriginalImage, null, null, null);
+    }
+
+    /**
+     * Update product avatar with all light, dark, and prompt fields in a single request.
+     * All fields are optional — pass {@code null} to leave the stored value unchanged.
+     *
+     * @param productId               The product ID
+     * @param resizedImage            Resized light avatar image bytes (e.g., 64x64), or null to skip
+     * @param originalImage           Original light avatar image bytes (e.g., 512x512), or null to skip
+     * @param prompt                  Prompt used to generate the light avatar, or null to skip
+     * @param darkResizedImage        Resized dark avatar image bytes (e.g., 64x64), or null to skip
+     * @param darkOriginalImage       Original dark avatar image bytes (e.g., 512x512), or null to skip
+     * @param darkPrompt              Prompt used to generate the dark avatar (includes dark suffix), or null to skip
+     * @param negativePrompt          Negative prompt for the light avatar, or null to skip
+     * @param darkNegativePrompt      Negative prompt for the dark avatar, or null to skip
+     */
+    public void updateAvatarFull(Long productId, byte[] resizedImage, byte[] originalImage, String prompt,
+            byte[] darkResizedImage, byte[] darkOriginalImage,
+            String darkPrompt, String negativePrompt, String darkNegativePrompt) {
         AvatarUpdateRequest request = new AvatarUpdateRequest();
 
         if (resizedImage != null) {
             request.setAvatarImage(resizedImage);
         }
-
         if (originalImage != null) {
             request.setAvatarImageOriginal(originalImage);
         }
-
         request.setAvatarPrompt(prompt);
-
         if (darkResizedImage != null) {
             request.setDarkAvatarImage(darkResizedImage);
         }
-
         if (darkOriginalImage != null) {
             request.setDarkAvatarImageOriginal(darkOriginalImage);
         }
+        request.setDarkAvatarPrompt(darkPrompt);
+        request.setAvatarNegativePrompt(negativePrompt);
+        request.setDarkAvatarNegativePrompt(darkNegativePrompt);
 
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/product/{id}/avatar/full",

@@ -41,6 +41,11 @@ public class AvatarUpdateRequest {
     private byte[] avatarImageOriginal;
 
     /**
+     * The negative prompt used when generating the light avatar.
+     */
+    private String avatarNegativePrompt;
+
+    /**
      * The prompt used to generate the light avatar.
      */
     private String avatarPrompt;
@@ -54,5 +59,15 @@ public class AvatarUpdateRequest {
      * Original dark-mode avatar image (e.g., 512x512).
      */
     private byte[] darkAvatarImageOriginal;
+
+    /**
+     * The negative prompt used when generating the dark avatar.
+     */
+    private String darkAvatarNegativePrompt;
+
+    /**
+     * The prompt used to generate the dark avatar (includes dark-background suffix).
+     */
+    private String darkAvatarPrompt;
 }
 

@@ -20,6 +20,8 @@ package de.bushnaq.abdalla.kassandra.dto;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import lombok.*;
 
@@ -88,6 +90,16 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
     }
 
     /**
+     * Return the default negative prompt used when generating light-background avatars.
+     *
+     * @return The default negative prompt string
+     */
+    @JsonIgnore
+    public static String getDefaultAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT;
+    }
+
+    /**
      * Generate a default avatar prompt for AI image generation.
      * This provides a consistent prompt format for product avatars.
      *
@@ -106,7 +118,36 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
      * @return A default prompt string for generating product avatar images
      */
     public static String getDefaultAvatarPrompt(String productName) {
-        return "Icon representing the product '" + productName + "', minimalist, 3D design";
+        return "Icon representing the product '" + productName + "', studio lighting, macro photography, sharp focus, high resolution, 4K" + AvatarService.LIGHT_PROMPT_SUFFIX;
+    }
+
+    /**
+     * Return the default negative prompt used when generating dark-background avatars.
+     *
+     * @return The default dark negative prompt string
+     */
+    public static String getDefaultDarkAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT;
+    }
+
+    /**
+     * Generate a default dark-background avatar prompt by appending the dark suffix to the base prompt.
+     *
+     * @return A default dark avatar prompt string
+     */
+    @JsonIgnore
+    public String getDefaultDarkAvatarPrompt() {
+        return getDefaultDarkAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default dark-background avatar prompt for a given product name.
+     *
+     * @param productName The name of the product
+     * @return A default dark avatar prompt string
+     */
+    public static String getDefaultDarkAvatarPrompt(String productName) {
+        return getDefaultAvatarPrompt(productName) + AvatarService.DARK_PROMPT_SUFFIX;
     }
 
     @JsonIgnore

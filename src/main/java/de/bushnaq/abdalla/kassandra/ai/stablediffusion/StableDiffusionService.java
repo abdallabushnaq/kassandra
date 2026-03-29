@@ -41,9 +41,10 @@ import java.util.Base64;
 @Slf4j
 public class StableDiffusionService {
 
-    private final StableDiffusionConfig   config;
-    private final ResourcePatternResolver resourcePatternResolver;
-    private final WebClient               webClient;
+    public static final String                  NEGATIVE_PROMPT = "blurry, (nsfw), distorted, low quality, ugly, deformed, bad anatomy, (worst quality, low quality:2), cartoon, painting, illustration";
+    private final       StableDiffusionConfig   config;
+    private final       ResourcePatternResolver resourcePatternResolver;
+    private final       WebClient               webClient;
 
     public StableDiffusionService(StableDiffusionConfig config, ResourcePatternResolver resourcePatternResolver) {
         this.config                  = config;
@@ -61,8 +62,12 @@ public class StableDiffusionService {
                 .build();
 
         String currentModel = getCurrentModel();
-        if (currentModel != null && !currentModel.startsWith(config.getModelName())) {
-            selectModel(config.getModelName());
+        if (currentModel != null) {
+            if (!currentModel.startsWith(config.getModelName())) {
+                selectModel(config.getModelName());
+            } else {
+                log.info("Stable Diffusion model '{}' is already loaded", currentModel);
+            }
         }
         getOptions();
     }
@@ -90,34 +95,12 @@ public class StableDiffusionService {
     }
 
     /**
-     * Generate a default dark-background avatar image with dark background and dotted mid-gray border.
-     * Used as a fallback when Stable Diffusion is not available for dark-mode avatar generation.
-     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
-     *
-     * @param iconName Optional icon name (without .png extension) to render in the center of the image.
-     *                 Icons are loaded from META-INF/resources/ui/icons/ directory.
-     *                 Pass null for no icon. Examples: "user", "cube", "lightbulb", "exit"
-     * @return GeneratedImageResult containing original and resized images
-     */
-    public GeneratedImageResult generateDefaultDarkAvatar(String iconName) {
-        log.warn("Stable Diffusion not available, using default dark avatar" + (iconName != null ? " with icon: " + iconName : ""));
-        byte[] pngImageBytes = null;
-        if (iconName != null && !iconName.trim().isEmpty()) {
-            pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
-            if (pngImageBytes == null) {
-                log.warn("Failed to load icon '{}', generating dark avatar without icon", iconName);
-            }
-        }
-        return generateDefaultAvatarInternal(pngImageBytes, true);
-    }
-
-    /**
      * Generate a default avatar image with a custom background color and dotted light gray border.
      * This is used when Stable Diffusion is not available or when the user doesn't want to use AI image generation.
      * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
      *
-     * @param iconName Optional icon name (without .png extension) to render in the center of the image.
-     *                 Icons are loaded from META-INF/resources/ui/icons/ directory.
+     * @param iconName        Optional icon name (without .png extension) to render in the center of the image.
+     *                        Icons are loaded from META-INF/resources/ui/icons/ directory.
      * @param backgroundColor CSS hex string (e.g., "#FFFFFF") for the avatar background. If null or invalid, falls back to default.
      * @return GeneratedImageResult containing original and resized images
      */
@@ -131,28 +114,6 @@ public class StableDiffusionService {
             }
         }
         return generateDefaultAvatarInternal(pngImageBytes, false, backgroundColor);
-    }
-
-    /**
-     * Generate a default dark-background avatar image with a custom background color and dotted mid-gray border.
-     * Used as a fallback when Stable Diffusion is not available for dark-mode avatar generation.
-     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
-     *
-     * @param iconName Optional icon name (without .png extension) to render in the center of the image.
-     *                 Icons are loaded from META-INF/resources/ui/icons/ directory.
-     * @param backgroundColor CSS hex string (e.g., "#000000") for the avatar background. If null or invalid, falls back to default.
-     * @return GeneratedImageResult containing original and resized images
-     */
-    public GeneratedImageResult generateDefaultDarkAvatar(String iconName, String backgroundColor) {
-        log.warn("Stable Diffusion not available, using default dark avatar{} with custom background color {}", iconName != null ? " with icon: " + iconName : "", backgroundColor);
-        byte[] pngImageBytes = null;
-        if (iconName != null && !iconName.trim().isEmpty()) {
-            pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
-            if (pngImageBytes == null) {
-                log.warn("Failed to load icon '{}', generating dark avatar without icon", iconName);
-            }
-        }
-        return generateDefaultAvatarInternal(pngImageBytes, true, backgroundColor);
     }
 
     /**
@@ -197,13 +158,13 @@ public class StableDiffusionService {
                 try {
                     BufferedImage pngImage = ImageIO.read(new ByteArrayInputStream(pngImageBytes));
                     if (pngImage != null) {
-                        double widthRatio    = (double) originalSize / pngImage.getWidth();
-                        double heightRatio   = (double) originalSize / pngImage.getHeight();
-                        double scalingRatio  = Math.min(widthRatio, heightRatio);
-                        int    scaledWidth   = (int) (pngImage.getWidth() * scalingRatio);
-                        int    scaledHeight  = (int) (pngImage.getHeight() * scalingRatio);
-                        int    imageX        = (originalSize - scaledWidth) / 2;
-                        int    imageY        = (originalSize - scaledHeight) / 2;
+                        double widthRatio   = (double) originalSize / pngImage.getWidth();
+                        double heightRatio  = (double) originalSize / pngImage.getHeight();
+                        double scalingRatio = Math.min(widthRatio, heightRatio);
+                        int    scaledWidth  = (int) (pngImage.getWidth() * scalingRatio);
+                        int    scaledHeight = (int) (pngImage.getHeight() * scalingRatio);
+                        int    imageX       = (originalSize - scaledWidth) / 2;
+                        int    imageY       = (originalSize - scaledHeight) / 2;
                         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                         graphics.drawImage(pngImage, imageX, imageY, scaledWidth, scaledHeight, null);
                     } else {
@@ -241,9 +202,9 @@ public class StableDiffusionService {
     /**
      * Internal method to generate a default avatar image with optional custom background color.
      *
-     * @param pngImageBytes Optional PNG image bytes to render in the center of the image
-     * @param dark          {@code true} to use a dark background (near-black) and mid-gray border;
-     *                      {@code false} for the classic white background and light-gray border
+     * @param pngImageBytes   Optional PNG image bytes to render in the center of the image
+     * @param dark            {@code true} to use a dark background (near-black) and mid-gray border;
+     *                        {@code false} for the classic white background and light-gray border
      * @param backgroundColor CSS hex string for the background, or null to use default
      * @return GeneratedImageResult containing original and resized images
      */
@@ -289,13 +250,13 @@ public class StableDiffusionService {
                 try {
                     BufferedImage pngImage = ImageIO.read(new ByteArrayInputStream(pngImageBytes));
                     if (pngImage != null) {
-                        double widthRatio    = (double) originalSize / pngImage.getWidth();
-                        double heightRatio   = (double) originalSize / pngImage.getHeight();
-                        double scalingRatio  = Math.min(widthRatio, heightRatio);
-                        int    scaledWidth   = (int) (pngImage.getWidth() * scalingRatio);
-                        int    scaledHeight  = (int) (pngImage.getHeight() * scalingRatio);
-                        int    imageX        = (originalSize - scaledWidth) / 2;
-                        int    imageY        = (originalSize - scaledHeight) / 2;
+                        double widthRatio   = (double) originalSize / pngImage.getWidth();
+                        double heightRatio  = (double) originalSize / pngImage.getHeight();
+                        double scalingRatio = Math.min(widthRatio, heightRatio);
+                        int    scaledWidth  = (int) (pngImage.getWidth() * scalingRatio);
+                        int    scaledHeight = (int) (pngImage.getHeight() * scalingRatio);
+                        int    imageX       = (originalSize - scaledWidth) / 2;
+                        int    imageY       = (originalSize - scaledHeight) / 2;
                         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                         graphics.drawImage(pngImage, imageX, imageY, scaledWidth, scaledHeight, null);
                     } else {
@@ -331,88 +292,47 @@ public class StableDiffusionService {
     }
 
     /**
-     * Generate an image from a text prompt with both original and resized versions.
+     * Generate a default dark-background avatar image with dark background and dotted mid-gray border.
+     * Used as a fallback when Stable Diffusion is not available for dark-mode avatar generation.
+     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
      *
-     * @param prompt The text description of the image to generate
-     * @return GeneratedImageResult containing original, resized images, and the prompt
-     * @throws StableDiffusionException if generation fails
+     * @param iconName Optional icon name (without .png extension) to render in the center of the image.
+     *                 Icons are loaded from META-INF/resources/ui/icons/ directory.
+     *                 Pass null for no icon. Examples: "user", "cube", "lightbulb", "exit"
+     * @return GeneratedImageResult containing original and resized images
      */
-    public GeneratedImageResult generateImageWithOriginal(String prompt) throws StableDiffusionException {
-        return generateImageWithOriginal(prompt, config.getOutputSize(), null);
+    public GeneratedImageResult generateDefaultDarkAvatar(String iconName) {
+        log.warn("Stable Diffusion not available, using default dark avatar" + (iconName != null ? " with icon: " + iconName : ""));
+        byte[] pngImageBytes = null;
+        if (iconName != null && !iconName.trim().isEmpty()) {
+            pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
+            if (pngImageBytes == null) {
+                log.warn("Failed to load icon '{}', generating dark avatar without icon", iconName);
+            }
+        }
+        return generateDefaultAvatarInternal(pngImageBytes, true);
     }
 
     /**
-     * Generate an image from a text prompt with both original and resized versions.
+     * Generate a default dark-background avatar image with a custom background color and dotted mid-gray border.
+     * Used as a fallback when Stable Diffusion is not available for dark-mode avatar generation.
+     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
      *
-     * @param prompt           The text description of the image to generate
-     * @param outputSize       The desired output size for the resized image (square image)
-     * @param progressCallback Callback for progress updates (can be null)
-     * @return GeneratedImageResult containing original, resized images, and the prompt
-     * @throws StableDiffusionException if generation fails
+     * @param iconName        Optional icon name (without .png extension) to render in the center of the image.
+     *                        Icons are loaded from META-INF/resources/ui/icons/ directory.
+     * @param backgroundColor CSS hex string (e.g., "#000000") for the avatar background. If null or invalid, falls back to default.
+     * @return GeneratedImageResult containing original and resized images
      */
-    public GeneratedImageResult generateImageWithOriginal(String prompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
-        log.info("Generating image with original at size {}x{} and resized to {}x{}",
-                config.getGenerationSize(), config.getGenerationSize(), outputSize, outputSize);
-
-        try {
-            // Build request
-            ImageGenerationRequest request = ImageGenerationRequest.builder()
-                    .prompt(prompt)
-                    .negativePrompt("blurry, distorted, low quality, ugly, deformed, bad anatomy")
-                    .steps(config.getDefaultSteps())
-                    .samplerName(config.getDefaultSampler())
-                    .cfgScale(config.getCfgScale())
-                    .width(config.getGenerationSize())
-                    .height(config.getGenerationSize())
-                    .batchSize(1)
-                    .seed(-1L) // Random seed
-                    .build();
-
-            // Start progress polling if callback provided
-            Thread progressThread = null;
-            if (progressCallback != null) {
-                progressThread = new Thread(() -> pollProgress(progressCallback));
-                progressThread.setDaemon(true);
-                progressThread.start();
+    public GeneratedImageResult generateDefaultDarkAvatar(String iconName, String backgroundColor) {
+        log.warn("Stable Diffusion not available, using default dark avatar{} with custom background color {}", iconName != null ? " with icon: " + iconName : "", backgroundColor);
+        byte[] pngImageBytes = null;
+        if (iconName != null && !iconName.trim().isEmpty()) {
+            pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
+            if (pngImageBytes == null) {
+                log.warn("Failed to load icon '{}', generating dark avatar without icon", iconName);
             }
-
-            try {
-                // Call Stable Diffusion API
-                ImageGenerationResponse response = webClient.post()
-                        .uri("/sdapi/v1/txt2img")
-                        .bodyValue(request)
-                        .retrieve()
-                        .bodyToMono(ImageGenerationResponse.class)
-                        .timeout(Duration.ofSeconds(config.getTimeoutSeconds()))
-                        .block();
-
-                if (response == null || response.getImages() == null || response.getImages().isEmpty()) {
-                    throw new StableDiffusionException("No image returned from Stable Diffusion API");
-                }
-
-                // Decode base64 image (original size)
-                String base64Image   = response.getImages().getFirst();
-                byte[] originalImage = Base64.getDecoder().decode(base64Image);
-
-                // Resize image to desired output size
-                byte[] resizedImage = resizeImage(originalImage, outputSize);
-
-                long seed = parseSeedFromInfo(response.getInfo());
-                log.info("Successfully generated original ({}x{}) and resized ({}x{}) images with seed {}",
-                        config.getGenerationSize(), config.getGenerationSize(), outputSize, outputSize, seed);
-
-                return new GeneratedImageResult(originalImage, prompt, resizedImage, seed);
-            } finally {
-                // Stop progress polling
-                if (progressThread != null) {
-                    progressThread.interrupt();
-                }
-            }
-
-        } catch (Exception e) {
-            log.error("Error generating image with Stable Diffusion", e);
-            throw new StableDiffusionException("Failed to generate image: " + e.getMessage(), e);
         }
+        return generateDefaultAvatarInternal(pngImageBytes, true, backgroundColor);
     }
 
     /**
@@ -510,6 +430,22 @@ public class StableDiffusionService {
     }
 
     /**
+     * Generate an image from an initial image and a text prompt (img2img) using a custom negative prompt.
+     * Seed defaults to {@code -1} (random).
+     *
+     * @param initImage        The initial image bytes (PNG or JPG)
+     * @param prompt           The text description of the image to generate
+     * @param negativePrompt   Negative prompt; falls back to {@link #NEGATIVE_PROMPT} when null or blank
+     * @param outputSize       The desired output size (square image)
+     * @param progressCallback Callback for progress updates (can be null)
+     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, String negativePrompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
+        return img2imgWithOriginal(initImage, prompt, negativePrompt, outputSize, progressCallback, -1L, config.getDefaultDenoisingStrength(), config.getCfgScale());
+    }
+
+    /**
      * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
      *
      * @param initImage        The initial image bytes (PNG or JPG)
@@ -528,12 +464,12 @@ public class StableDiffusionService {
      * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
      * Uses the configured CFG scale.
      *
-     * @param initImage          The initial image bytes (PNG or JPG)
-     * @param prompt             The text description of the image to generate
-     * @param outputSize         The desired output size (square image)
-     * @param progressCallback   Callback for progress updates (can be null)
-     * @param seed               Seed to use; pass {@code -1} for a random seed
-     * @param denoisingStrength  How much to alter the init image: 0.0 = no change, 1.0 = completely new image
+     * @param initImage         The initial image bytes (PNG or JPG)
+     * @param prompt            The text description of the image to generate
+     * @param outputSize        The desired output size (square image)
+     * @param progressCallback  Callback for progress updates (can be null)
+     * @param seed              Seed to use; pass {@code -1} for a random seed
+     * @param denoisingStrength How much to alter the init image: 0.0 = no change, 1.0 = completely new image
      * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
      * @throws StableDiffusionException if generation fails
      */
@@ -544,23 +480,42 @@ public class StableDiffusionService {
     /**
      * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
      *
-     * @param initImage          The initial image bytes (PNG or JPG)
-     * @param prompt             The text description of the image to generate
-     * @param outputSize         The desired output size (square image)
-     * @param progressCallback   Callback for progress updates (can be null)
-     * @param seed               Seed to use; pass {@code -1} for a random seed
-     * @param denoisingStrength  How much to alter the init image: 0.0 = no change, 1.0 = completely new image
-     * @param cfgScale           Classifier Free Guidance scale; higher values follow the prompt more strictly
+     * @param initImage         The initial image bytes (PNG or JPG)
+     * @param prompt            The text description of the image to generate
+     * @param outputSize        The desired output size (square image)
+     * @param progressCallback  Callback for progress updates (can be null)
+     * @param seed              Seed to use; pass {@code -1} for a random seed
+     * @param denoisingStrength How much to alter the init image: 0.0 = no change, 1.0 = completely new image
+     * @param cfgScale          Classifier Free Guidance scale; higher values follow the prompt more strictly
      * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
      * @throws StableDiffusionException if generation fails
      */
     public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback, long seed, double denoisingStrength, double cfgScale) throws StableDiffusionException {
+        return img2imgWithOriginal(initImage, prompt, NEGATIVE_PROMPT, outputSize, progressCallback, seed, denoisingStrength, cfgScale);
+    }
+
+    /**
+     * Generate an image from an initial image and a text prompt (img2img) using a custom negative prompt.
+     *
+     * @param initImage         The initial image bytes (PNG or JPG)
+     * @param prompt            The text description of the image to generate
+     * @param negativePrompt    Negative prompt guiding what to avoid; falls back to {@link #NEGATIVE_PROMPT} when null or blank
+     * @param outputSize        The desired output size (square image)
+     * @param progressCallback  Callback for progress updates (can be null)
+     * @param seed              Seed to use; pass {@code -1} for a random seed
+     * @param denoisingStrength How much to alter the init image: 0.0 = no change, 1.0 = completely new image
+     * @param cfgScale          Classifier Free Guidance scale; higher values follow the prompt more strictly
+     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, String negativePrompt, int outputSize, ProgressCallback progressCallback, long seed, double denoisingStrength, double cfgScale) throws StableDiffusionException {
         log.info("Generating image-to-image with prompt: '{}', seed: {}, output: {}x{}, denoising: {}, cfgScale: {}", prompt, seed, outputSize, outputSize, denoisingStrength, cfgScale);
         try {
+            String resolvedNegativePrompt = (negativePrompt != null && !negativePrompt.isBlank()) ? negativePrompt : NEGATIVE_PROMPT;
             String base64Init = java.util.Base64.getEncoder().encodeToString(initImage);
             ImageToImageRequest request = ImageToImageRequest.builder()
                     .prompt(prompt)
-                    .negativePrompt("blurry, distorted, low quality, ugly, deformed, bad anatomy")
+                    .negativePrompt(resolvedNegativePrompt)
                     .steps(config.getDefaultSteps())
                     .samplerName(config.getDefaultSampler())
                     .cfgScale(cfgScale)
@@ -597,7 +552,9 @@ public class StableDiffusionService {
                 byte[] resizedImage  = resizeImage(originalImage, outputSize);
                 long   actualSeed    = parseSeedFromInfo(response.getInfo());
                 log.info("Successfully generated and resized image-to-image to {}x{} with seed {}", outputSize, outputSize, actualSeed);
-                return new GeneratedImageResult(originalImage, prompt, resizedImage, actualSeed);
+                GeneratedImageResult result = new GeneratedImageResult(originalImage, prompt, resizedImage, actualSeed);
+                result.setNegativePrompt(resolvedNegativePrompt);
+                return result;
             } finally {
                 if (progressThread != null) {
                     progressThread.interrupt();
@@ -671,8 +628,8 @@ public class StableDiffusionService {
                 return -1L;
             }
             // Skip past "seed": and any whitespace
-            String rest = info.substring(idx + 7).stripLeading();
-            StringBuilder sb = new StringBuilder();
+            String        rest = info.substring(idx + 7).stripLeading();
+            StringBuilder sb   = new StringBuilder();
             for (char c : rest.toCharArray()) {
                 if (Character.isDigit(c) || (sb.isEmpty() && c == '-')) {
                     sb.append(c);
@@ -710,7 +667,6 @@ public class StableDiffusionService {
             }
         }
     }
-
 
     /**
      * Resize an image to the specified size (square).
@@ -757,19 +713,124 @@ public class StableDiffusionService {
      */
     public boolean selectModel(String modelName) {
         try {
+            log.info("Loading Stable Diffusion model '{}' (timeout: {}s) …", modelName, config.getModelLoadTimeoutSeconds());
             var requestBody = java.util.Map.of("sd_model_checkpoint", modelName);
             webClient.post()
                     .uri("/sdapi/v1/options")
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(Void.class)
-                    .timeout(Duration.ofSeconds(5))
+                    .timeout(Duration.ofSeconds(config.getModelLoadTimeoutSeconds()))
                     .block();
-            log.info("Requested model switch to: {}", modelName);
+            log.info("Model '{}' loaded successfully.", modelName);
             return true;
         } catch (Exception e) {
-            log.error("Failed to select model '{}': {}", modelName, e.getMessage());
+            log.error("Failed to select model '{}': {}", modelName, e.getMessage(), e);
             return false;
+        }
+    }
+
+    /**
+     * Generate an image from a text prompt with both original and resized versions.
+     *
+     * @param prompt The text description of the image to generate
+     * @return GeneratedImageResult containing original, resized images, and the prompt
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult text2ImgWithOriginal(String prompt) throws StableDiffusionException {
+        return text2ImgWithOriginal(prompt, config.getOutputSize(), null, -1, config.getCfgScale());
+    }
+
+    /**
+     * Generate an image from a text prompt with both original and resized versions.
+     *
+     * @param prompt           The text description of the image to generate
+     * @param outputSize       The desired output size for the resized image (square image)
+     * @param progressCallback Callback for progress updates (can be null)
+     * @return GeneratedImageResult containing original, resized images, and the prompt
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult text2ImgWithOriginal(String prompt, int outputSize, ProgressCallback progressCallback, long seed, double cfgScale) throws StableDiffusionException {
+        return text2ImgWithOriginal(prompt, NEGATIVE_PROMPT, outputSize, progressCallback, seed, cfgScale);
+    }
+
+    /**
+     * Generate an image from a text prompt with both original and resized versions using a custom negative prompt.
+     *
+     * @param prompt           The text description of the image to generate
+     * @param negativePrompt   Negative prompt guiding what to avoid; falls back to {@link #NEGATIVE_PROMPT} when null or blank
+     * @param outputSize       The desired output size for the resized image (square image)
+     * @param progressCallback Callback for progress updates (can be null)
+     * @param seed             Seed to use; pass {@code -1} for a random seed
+     * @param cfgScale         Classifier Free Guidance scale
+     * @return GeneratedImageResult containing original, resized images, and the prompt
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult text2ImgWithOriginal(String prompt, String negativePrompt, int outputSize, ProgressCallback progressCallback, long seed, double cfgScale) throws StableDiffusionException {
+        log.info("Generating image with original at size {}x{} and resized to {}x{}",
+                config.getGenerationSize(), config.getGenerationSize(), outputSize, outputSize);
+
+        try {
+            // Build request
+            String resolvedNegativePrompt = (negativePrompt != null && !negativePrompt.isBlank()) ? negativePrompt : NEGATIVE_PROMPT;
+            ImageGenerationRequest request = ImageGenerationRequest.builder()
+                    .prompt(prompt)
+                    .negativePrompt(resolvedNegativePrompt)
+                    .steps(config.getDefaultSteps())
+                    .samplerName(config.getDefaultSampler())
+                    .cfgScale(cfgScale)
+                    .width(config.getGenerationSize())
+                    .height(config.getGenerationSize())
+                    .batchSize(1)
+                    .seed(seed) // Random seed
+                    .build();
+
+            // Start progress polling if callback provided
+            Thread progressThread = null;
+            if (progressCallback != null) {
+                progressThread = new Thread(() -> pollProgress(progressCallback));
+                progressThread.setDaemon(true);
+                progressThread.start();
+            }
+
+            try {
+                // Call Stable Diffusion API
+                ImageGenerationResponse response = webClient.post()
+                        .uri("/sdapi/v1/txt2img")
+                        .bodyValue(request)
+                        .retrieve()
+                        .bodyToMono(ImageGenerationResponse.class)
+                        .timeout(Duration.ofSeconds(config.getTimeoutSeconds()))
+                        .block();
+
+                if (response == null || response.getImages() == null || response.getImages().isEmpty()) {
+                    throw new StableDiffusionException("No image returned from Stable Diffusion API");
+                }
+
+                // Decode base64 image (original size)
+                String base64Image   = response.getImages().getFirst();
+                byte[] originalImage = Base64.getDecoder().decode(base64Image);
+
+                // Resize image to desired output size
+                byte[] resizedImage = resizeImage(originalImage, outputSize);
+
+                long responseSeed = parseSeedFromInfo(response.getInfo());
+                log.info("Successfully generated original ({}x{}) and resized ({}x{}) images with seed {}",
+                        config.getGenerationSize(), config.getGenerationSize(), outputSize, outputSize, responseSeed);
+
+                GeneratedImageResult result = new GeneratedImageResult(originalImage, prompt, resizedImage, responseSeed);
+                result.setNegativePrompt(resolvedNegativePrompt);
+                return result;
+            } finally {
+                // Stop progress polling
+                if (progressThread != null) {
+                    progressThread.interrupt();
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Error generating image with Stable Diffusion", e);
+            throw new StableDiffusionException("Failed to generate image: " + e.getMessage(), e);
         }
     }
 

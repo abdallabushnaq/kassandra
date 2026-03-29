@@ -52,31 +52,37 @@ import java.io.ByteArrayOutputStream;
 public class ImagePromptDialog extends Dialog {
 
     // Button ID constants for Selenium tests
-    public static final String         ID_ACCEPT_BUTTON      = "accept-image-button";
-    public static final String         ID_CANCEL_BUTTON      = "cancel-image-button";
-    public static final String         ID_DOWNLOAD_BUTTON    = "download-image-button";
-    public static final String         ID_GENERATE_BUTTON    = "generate-image-button";
-    public static final String         ID_IMAGE_PROMPT_FIELD = "image-prompt-field";
-    public static final String         ID_UPDATE_BUTTON      = "update-image-button";
-    public static final String         ID_UPLOAD_BUTTON      = "upload-image-button";
-    private final       Button         acceptButton;
-    private final       AcceptCallback acceptCallback;
-    private final       Button         cancelButton;
-    private final       String         darkIconName;
-    private             Div            darkPreviewContainer; // null when no dark section is shown
-    private final       boolean        enableDark;
-    private final       Button         generateButton;
-    private volatile    byte[]         generatedDarkImage;
-    private volatile    byte[]         generatedDarkImageOriginal;
-    private             byte[]         generatedImage;
-    private             byte[]         generatedImageOriginal;
-    private volatile    long           generatedImageSeed    = -1L;
-    private             byte[]         initialImage;
-    private final       Div            previewContainer;
-    private final       TextArea       promptField;
-    private final       AvatarService  avatarService;
-    private final StableDiffusionService stableDiffusionService;
-    private final Button                 updateButton;
+    public static final String                 ID_ACCEPT_BUTTON              = "accept-image-button";
+    public static final String                 ID_CANCEL_BUTTON              = "cancel-image-button";
+    public static final String                 ID_DARK_NEGATIVE_PROMPT_FIELD = "dark-negative-prompt-field";
+    public static final String                 ID_DARK_PROMPT_FIELD          = "dark-prompt-field";
+    public static final String                 ID_DOWNLOAD_BUTTON            = "download-image-button";
+    public static final String                 ID_GENERATE_BUTTON            = "generate-image-button";
+    public static final String                 ID_IMAGE_PROMPT_FIELD         = "image-prompt-field";
+    public static final String                 ID_NEGATIVE_PROMPT_FIELD      = "negative-prompt-field";
+    public static final String                 ID_UPDATE_BUTTON              = "update-image-button";
+    public static final String                 ID_UPLOAD_BUTTON              = "upload-image-button";
+    private final       Button                 acceptButton;
+    private final       AcceptCallback         acceptCallback;
+    private final       AvatarService          avatarService;
+    private final       Button                 cancelButton;
+    private final       String                 darkIconName;
+    private             TextArea               darkNegativePromptField; // null when no dark section is shown
+    private             Div                    darkPreviewContainer;    // null when no dark section is shown
+    private             TextArea               darkPromptField;         // null when no dark section is shown
+    private final       boolean                enableDark;
+    private final       Button                 generateButton;
+    private volatile    byte[]                 generatedDarkImage;
+    private volatile    byte[]                 generatedDarkImageOriginal;
+    private             byte[]                 generatedImage;
+    private             byte[]                 generatedImageOriginal;
+    private volatile    long                   generatedImageSeed            = -1L;
+    private             byte[]                 initialImage;
+    private final       TextArea               negativePromptField;
+    private final       Div                    previewContainer;
+    private final       TextArea               promptField;
+    private final       StableDiffusionService stableDiffusionService;
+    private final       Button                 updateButton;
 
     /**
      * Creates a dialog for generating AI images (no dark-avatar section).
@@ -87,7 +93,7 @@ public class ImagePromptDialog extends Dialog {
      * @param acceptCallback         Callback that receives the generated image bytes
      */
     public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback) {
-        this(avatarService, stableDiffusionService, defaultPrompt, false, null, acceptCallback, null, null);
+        this(avatarService, stableDiffusionService, defaultPrompt, false, null, acceptCallback, null, null, null, null, null);
     }
 
     /**
@@ -101,29 +107,38 @@ public class ImagePromptDialog extends Dialog {
      * @param initialImage           Existing light original for img2img mode (can be null)
      */
     public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt, AcceptCallback acceptCallback, byte[] initialImage) {
-        this(avatarService, stableDiffusionService, defaultPrompt, false, null, acceptCallback, initialImage, null);
+        this(avatarService, stableDiffusionService, defaultPrompt, false, null, acceptCallback, initialImage, null, null, null, null);
     }
 
     /**
-     * Full constructor. Pass a non-null {@code darkPrompt} to enable the side-by-side dark-avatar preview panel.
+     * Full constructor. Pass {@code enableDark = true} to enable the side-by-side dark-avatar preview panel.
      *
-     * @param avatarService          The avatar generation service
-     * @param stableDiffusionService The Stable Diffusion service
-     * @param defaultPrompt          Default prompt text for the light avatar (can be null)
-     * @param enableDark             {@code true} to show the side-by-side dark-avatar preview panel
-     * @param darkIconName           Icon name for the programmatic dark fallback (e.g., {@code "user"}); can be null
-     * @param acceptCallback         Callback that receives both light and dark results
-     * @param initialImage           Existing light original for img2img "Update" mode; can be null
-     * @param initialDarkImage       Existing dark original to pre-populate the dark preview; can be null
+     * @param avatarService             The avatar generation service
+     * @param stableDiffusionService    The Stable Diffusion service
+     * @param defaultPrompt             Default prompt text for the light avatar (can be null)
+     * @param enableDark                {@code true} to show the side-by-side dark-avatar preview panel
+     * @param darkIconName              Icon name for the programmatic dark fallback (e.g., {@code "user"}); can be null
+     * @param acceptCallback            Callback that receives both light and dark results plus negative prompts
+     * @param initialImage              Existing light original for img2img "Update" mode; can be null
+     * @param initialDarkImage          Existing dark original to pre-populate the dark preview; can be null
+     * @param defaultDarkPrompt         Default dark prompt (base + dark suffix); null → computed from defaultPrompt
+     * @param defaultNegativePrompt     Default negative prompt for the light avatar; null → {@link StableDiffusionService#NEGATIVE_PROMPT}
+     * @param defaultDarkNegativePrompt Default negative prompt for the dark avatar; null → same as defaultNegativePrompt
      */
     public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt, boolean enableDark,
-                             String darkIconName, AcceptCallback acceptCallback, byte[] initialImage, byte[] initialDarkImage) {
+                             String darkIconName, AcceptCallback acceptCallback, byte[] initialImage, byte[] initialDarkImage,
+                             String defaultDarkPrompt, String defaultNegativePrompt, String defaultDarkNegativePrompt) {
         this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.acceptCallback         = acceptCallback;
         this.initialImage           = initialImage;
         this.enableDark             = enableDark;
         this.darkIconName           = darkIconName;
+
+        // Resolve default values for the new prompt fields
+        String resolvedNegativePrompt     = defaultNegativePrompt != null ? defaultNegativePrompt : StableDiffusionService.NEGATIVE_PROMPT;
+        String resolvedDarkPrompt         = defaultDarkPrompt != null ? defaultDarkPrompt : (defaultPrompt != null ? defaultPrompt + AvatarService.DARK_PROMPT_SUFFIX : AvatarService.DARK_PROMPT_SUFFIX);
+        String resolvedDarkNegativePrompt = defaultDarkNegativePrompt != null ? defaultDarkNegativePrompt : resolvedNegativePrompt;
 
         setId("image-prompt-dialog");
         getHeader().add(VaadinUtil.createDialogHeader("Generate AI Image", VaadinIcon.MAGIC));
@@ -146,7 +161,7 @@ public class ImagePromptDialog extends Dialog {
             dialogLayout.add(warningDiv);
         }
 
-        // Prompt text area
+        // Prompt text area (light avatar base prompt)
         promptField = new TextArea("Image Description");
         promptField.setId(ID_IMAGE_PROMPT_FIELD);
         promptField.setWidthFull();
@@ -157,6 +172,34 @@ public class ImagePromptDialog extends Dialog {
             promptField.setValue(defaultPrompt);
         }
         dialogLayout.add(promptField);
+
+        // Negative prompt text area (shared / light)
+        negativePromptField = new TextArea("Negative Prompt");
+        negativePromptField.setId(ID_NEGATIVE_PROMPT_FIELD);
+        negativePromptField.setWidthFull();
+        negativePromptField.setHelperText("Things to avoid in the generated image");
+        negativePromptField.setMinHeight("80px");
+        negativePromptField.setValue(resolvedNegativePrompt);
+        dialogLayout.add(negativePromptField);
+
+        // Dark prompt / dark negative prompt (only when dark section is enabled)
+        if (enableDark) {
+            darkPromptField = new TextArea("Dark Avatar Prompt");
+            darkPromptField.setId(ID_DARK_PROMPT_FIELD);
+            darkPromptField.setWidthFull();
+            darkPromptField.setHelperText("Full prompt for the dark-background variant (base prompt + dark suffix)");
+            darkPromptField.setMinHeight("80px");
+            darkPromptField.setValue(resolvedDarkPrompt);
+            dialogLayout.add(darkPromptField);
+
+            darkNegativePromptField = new TextArea("Dark Avatar Negative Prompt");
+            darkNegativePromptField.setId(ID_DARK_NEGATIVE_PROMPT_FIELD);
+            darkNegativePromptField.setWidthFull();
+            darkNegativePromptField.setHelperText("Things to avoid in the dark avatar");
+            darkNegativePromptField.setMinHeight("80px");
+            darkNegativePromptField.setValue(resolvedDarkNegativePrompt);
+            dialogLayout.add(darkNegativePromptField);
+        }
 
         // Preview container
         previewContainer = new Div();
@@ -348,20 +391,27 @@ public class ImagePromptDialog extends Dialog {
     // Update methods to use these refs
     private void acceptImage() {
         if (generatedImage != null) {
-            String prompt = promptField.getValue().trim();
-            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult lightResult =
-                    new de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult(
-                            generatedImageOriginal != null ? generatedImageOriginal : generatedImage,
-                            prompt,
-                            generatedImage
-                    );
-            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult =
-                    (generatedDarkImage != null)
-                            ? new de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult(
-                            generatedDarkImageOriginal != null ? generatedDarkImageOriginal : generatedDarkImage,
-                            prompt + " with black background",
-                            generatedDarkImage)
-                            : null;
+            String prompt             = promptField.getValue().trim();
+            String negativePrompt     = negativePromptField.getValue().trim();
+            String darkPrompt         = darkPromptField != null ? darkPromptField.getValue().trim() : prompt + AvatarService.DARK_PROMPT_SUFFIX;
+            String darkNegativePrompt = darkNegativePromptField != null ? darkNegativePromptField.getValue().trim() : negativePrompt;
+
+            GeneratedImageResult lightResult = new GeneratedImageResult(
+                    generatedImageOriginal != null ? generatedImageOriginal : generatedImage,
+                    prompt,
+                    generatedImage
+            );
+            lightResult.setNegativePrompt(negativePrompt);
+
+            GeneratedImageResult darkResult = (generatedDarkImage != null) ? new GeneratedImageResult(
+                    generatedDarkImageOriginal != null ? generatedDarkImageOriginal : generatedDarkImage,
+                    darkPrompt,
+                    generatedDarkImage)
+                    : null;
+            if (darkResult != null) {
+                darkResult.setNegativePrompt(darkNegativePrompt);
+            }
+
             acceptCallback.accept(lightResult, darkResult);
             close();
         }
@@ -431,9 +481,14 @@ public class ImagePromptDialog extends Dialog {
         long lightSeed = generatedImageSeed; // volatile read — safe
 
         getUI().ifPresent(ui -> ui.access(() -> {
-            // Read the current base prompt while holding the session lock
-            String              basePrompt  = promptField.getValue().trim();
-            GeneratedImageResult lightResult = new GeneratedImageResult(lightOriginal, basePrompt, null, lightSeed);
+            // Read prompts from their respective fields while holding the session lock
+            String               darkPrompt         = darkPromptField != null
+                    ? darkPromptField.getValue().trim()
+                    : promptField.getValue().trim() + AvatarService.DARK_PROMPT_SUFFIX;
+            String               darkNegativePrompt = darkNegativePromptField != null
+                    ? darkNegativePromptField.getValue().trim()
+                    : negativePromptField.getValue().trim();
+            GeneratedImageResult lightResult = new GeneratedImageResult(lightOriginal, promptField.getValue().trim(), null, lightSeed);
 
             darkPreviewContainer.removeAll();
 
@@ -471,7 +526,7 @@ public class ImagePromptDialog extends Dialog {
                 new Thread(() -> {
                     try {
                         GeneratedImageResult result = avatarService.generateDarkAvatar(
-                                basePrompt, lightResult,
+                                darkPrompt, darkNegativePrompt, lightResult,
                                 (progress, step, totalSteps) -> ui.access(() -> {
                                     progressBar.setValue(progress);
                                     progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
@@ -554,8 +609,9 @@ public class ImagePromptDialog extends Dialog {
         getUI().ifPresent(ui -> {
             new Thread(() -> {
                 try {
+                    String negativePrompt = negativePromptField.getValue().trim();
                     de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
-                            avatarService.generateLightAvatar(prompt, (progress, step, totalSteps) -> {
+                            avatarService.generateLightAvatar(prompt, negativePrompt, (progress, step, totalSteps) -> {
                                 ui.access(() -> {
                                     progressBar.setValue(progress);
                                     progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
@@ -644,9 +700,10 @@ public class ImagePromptDialog extends Dialog {
             new Thread(() -> {
                 try {
                     // Append background modifier for SD; the base prompt is preserved in promptField
-                    String lightSdPrompt = prompt + " with white background";
+                    String lightSdPrompt  = prompt + " with white background";
+                    String negativePrompt = negativePromptField.getValue().trim();
                     de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
-                            stableDiffusionService.img2imgWithOriginal(initialImage, lightSdPrompt, 256, (progress, step, totalSteps) -> {
+                            stableDiffusionService.img2imgWithOriginal(initialImage, lightSdPrompt, negativePrompt, 256, (progress, step, totalSteps) -> {
                                 ui.access(() -> {
                                     progressBar.setValue(progress);
                                     progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
@@ -687,14 +744,15 @@ public class ImagePromptDialog extends Dialog {
     /**
      * Functional interface for the accept callback.
      * {@code darkResult} is {@code null} when the dialog was opened without dark-avatar support.
+     * The negative prompts are available via {@link GeneratedImageResult#getNegativePrompt()} on each result.
      */
     @FunctionalInterface
     public interface AcceptCallback {
         /**
          * Called when the user accepts the generated image.
          *
-         * @param lightResult The light-theme image result (never null)
-         * @param darkResult  The dark-theme image result, or {@code null} if not generated
+         * @param lightResult The light-theme image result (never null); carries {@code negativePrompt}
+         * @param darkResult  The dark-theme image result, or {@code null} if not generated; carries {@code negativePrompt}
          */
         void accept(GeneratedImageResult lightResult, GeneratedImageResult darkResult);
     }

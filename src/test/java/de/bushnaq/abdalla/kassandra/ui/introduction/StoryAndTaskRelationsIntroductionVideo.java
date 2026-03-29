@@ -64,13 +64,12 @@ import java.util.List;
 )
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
-//@Transactional
 public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroductionVideo {
-    public static final NarratorAttribute        EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                   NEW_MILESTONE = "New Milestone-";
-    public static final String                   NEW_STORY     = "New Story-";
-    public static final String                   NEW_TASK      = "New Task-";
-    public static final NarratorAttribute        NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute        EXCITED = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    //    public static final String                   NEW_MILESTONE = "New Milestone-";
+//    public static final String                   NEW_STORY     = "New Story-";
+//    public static final String                   NEW_TASK      = "New Task-";
+    public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
     private             FeatureListViewTester    featureListViewTester;
     private             String                   featureName;
@@ -100,8 +99,9 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
 
     @BeforeAll
     static void beforeAll() {
-        video.setTitle("Story and Task Relations");
         video.setVersion(1);
+        video.setTitle("Story and Task Relations in Kassandra");
+        video.setDescription("Today we're going to learn about task and story dependencies. Dependencies let you define relationships between tasks and stories, ensuring that one task can only start after another task is finished. This is crucial for managing complex workflows and project schedules.");
     }
 
     @ParameterizedTest

@@ -49,12 +49,11 @@ tbd
 20. ❌ Close project Release Date.
 21. ✅ Dialog should set curser to edit box
 22. ✅ Dialog confirmation button should react to return
-23. ❌ add aura theme
-24. ❌ add dark avatar
-25. ❌ show product, versions, features, in sprint view
-26. ❌ show Versions, Features, Sprints pages in menu
-27. ❌ can we run browser in full screen mode?
-28. ❌ data scenario simulation generator
+23. ✅ add dark avatar
+24. ❌ show product, versions, features, in sprint view
+25. ✅ show Versions, Features, Sprints pages in menu
+26. ❌ can we run browser in full screen mode?
+27. ❌ data scenario simulation generator
     1. ✅ Simulator Write the use case as a Story in the project or product
     2. ❌ include closed and delayed sprints.
 
@@ -80,6 +79,7 @@ tbd
 11. ❌ GDPR
 12. ❌ undo
 13. ❌ history
+14. ❌ add aura theme
 
 # Kassandra Introduction Videos
 

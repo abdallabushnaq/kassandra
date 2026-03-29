@@ -16,7 +16,7 @@ services:
       #- COMMANDLINE_ARGS=--api --xformers --no-half --no-half-vae --listen --port 8080 --skip-torch-cuda-test
       - COMMANDLINE_ARGS=--api --xformers
       # Set default model to SD 3 Medium
-      - SD_MODEL=realisticVisionV60B1_v51HyperVAE.safetensors
+      - SD_MODEL=protovisionXLHighFidelity3D_beta0520Bakedvae.safetensors
     deploy:
       resources:
         reservations:

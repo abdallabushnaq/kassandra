@@ -70,6 +70,12 @@ public class StableDiffusionConfig {
      * Size to generate images at (before resizing)
      */
     private int    generationSize             = 512;
+    /**
+     * Timeout in seconds for model-loading requests ({@code POST /sdapi/v1/options}).
+     * Loading a new checkpoint can take several minutes; this timeout must be large enough
+     * to cover the full load time. Configurable via {@code stable-diffusion.model-load-timeout-seconds}.
+     */
+    private int    modelLoadTimeoutSeconds    = 400;
     private String modelName                  = "realisticVisionV60B1_v51HyperVAE.safetensors";
     /**
      * Final output size for avatars/icons

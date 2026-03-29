@@ -80,6 +80,9 @@ public class UserDialog extends Dialog {
     private             String                 generatedImagePrompt;
     private volatile    byte[]                 generatedDarkImageBytes;
     private volatile    byte[]                 generatedDarkImageBytesOriginal;
+    private             String                 generatedDarkImagePrompt;
+    private             String                 generatedNegativePrompt;
+    private             String                 generatedDarkNegativePrompt;
     private final       Image                  headerAvatar;
     private final       boolean                isEditMode;
     private final       DatePicker             lastWorkingDayPicker;
@@ -337,9 +340,12 @@ public class UserDialog extends Dialog {
         generatedImageBytes         = lightResult.getResizedImage();
         generatedImageBytesOriginal = lightResult.getOriginalImage();
         generatedImagePrompt        = lightResult.getPrompt();
+        generatedNegativePrompt     = lightResult.getNegativePrompt();
+        generatedDarkNegativePrompt = darkResult != null ? darkResult.getNegativePrompt() : null;
         if (darkResult != null) {
             generatedDarkImageBytes         = darkResult.getResizedImage();
             generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
+            generatedDarkImagePrompt        = darkResult.getPrompt();
         }
 
         // Update UI from callback (might be from async thread)
@@ -372,6 +378,18 @@ public class UserDialog extends Dialog {
             defaultPrompt = User.getDefaultAvatarPrompt(nameField.getValue());
         }
 
+        String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
+                ? avatarUpdateRequest.getDarkAvatarPrompt()
+                : User.getDefaultDarkAvatarPrompt(nameField.getValue());
+
+        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarNegativePrompt() != null && !avatarUpdateRequest.getAvatarNegativePrompt().isEmpty())
+                ? avatarUpdateRequest.getAvatarNegativePrompt()
+                : User.getDefaultAvatarNegativePrompt();
+
+        String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
+                ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
+                : User.getDefaultDarkAvatarNegativePrompt();
+
         byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
@@ -382,7 +400,10 @@ public class UserDialog extends Dialog {
                 "user",
                 this::handleGeneratedImage,
                 initialImage,
-                initialDarkImage
+                initialDarkImage,
+                defaultDarkPrompt,
+                defaultNegativePrompt,
+                defaultDarkNegativePrompt
         );
         imageDialog.open();
     }
@@ -418,11 +439,14 @@ public class UserDialog extends Dialog {
         userToSave.setLastWorkingDay(lastWorkingDayPicker.getValue());
 
         // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
-        byte[] avatarImage         = generatedImageBytes;
-        byte[] avatarImageOriginal = generatedImageBytesOriginal;
-        String avatarPrompt        = generatedImagePrompt;
-        byte[] darkAvatarImage     = generatedDarkImageBytes;
+        byte[] avatarImage             = generatedImageBytes;
+        byte[] avatarImageOriginal     = generatedImageBytesOriginal;
+        String avatarPrompt            = generatedImagePrompt;
+        byte[] darkAvatarImage         = generatedDarkImageBytes;
         byte[] darkAvatarImageOriginal = generatedDarkImageBytesOriginal;
+        String darkAvatarPrompt        = generatedDarkImagePrompt;
+        String negativePrompt          = generatedNegativePrompt;
+        String darkNegativePrompt      = generatedDarkNegativePrompt;
 
         if (avatarImage != null) {
             String newHash = AvatarUtil.computeHash(avatarImage);
@@ -452,7 +476,10 @@ public class UserDialog extends Dialog {
                             avatarImageOriginal,
                             avatarPrompt,
                             darkAvatarImage,
-                            darkAvatarImageOriginal
+                            darkAvatarImageOriginal,
+                            darkAvatarPrompt,
+                            negativePrompt,
+                            darkNegativePrompt
                     );
                 }
             } else {
@@ -466,7 +493,10 @@ public class UserDialog extends Dialog {
                             avatarImageOriginal,
                             avatarPrompt,
                             darkAvatarImage,
-                            darkAvatarImageOriginal
+                            darkAvatarImageOriginal,
+                            darkAvatarPrompt,
+                            negativePrompt,
+                            darkNegativePrompt
                     );
                 }
             }

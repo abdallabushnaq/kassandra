@@ -105,7 +105,7 @@ public class FeatureTools {
     private @NonNull GeneratedImageResult generateFeatureAvatar(String name) throws StableDiffusionException {
         String prompt = Feature.getDefaultAvatarPrompt(name);
         log.trace("Generating image for feature: {} with prompt: {}", name, prompt);
-        return stableDiffusionService.generateImageWithOriginal(prompt);
+        return stableDiffusionService.text2ImgWithOriginal(prompt);
     }
 
     @Tool(description = "Get all features accessible to the current user.", resultConverter = KassandraToolCallResultConverter.class)

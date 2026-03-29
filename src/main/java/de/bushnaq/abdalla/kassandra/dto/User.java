@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.report.calendar.CalendarUtil;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
@@ -142,6 +144,15 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     }
 
     /**
+     * Return the default negative prompt used when generating light-background avatars.
+     *
+     * @return The default negative prompt string
+     */
+    public static String getDefaultAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT;
+    }
+
+    /**
      * Generate a default avatar prompt for AI image generation.
      * This provides a consistent prompt format for user avatars.
      *
@@ -160,9 +171,38 @@ public class User extends AbstractTimeAware implements Comparable<User> {
      * @return A default prompt string for generating user avatar images
      */
     public static String getDefaultAvatarPrompt(String userName) {
-        return "Avatar headshot portrait of '" + userName + "', business style, photo quality";
+        return "close-up portrait of '" + userName + "' for a profile picture, photo quality, sharp focus, high resolution, 4K" + AvatarService.LIGHT_PROMPT_SUFFIX;
     }
 
+    /**
+     * Return the default negative prompt used when generating dark-background avatars.
+     *
+     * @return The default dark negative prompt string
+     */
+    public static String getDefaultDarkAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT;
+    }
+
+    /**
+     * Generate a default dark-background avatar prompt by appending the dark suffix to the base prompt.
+     *
+     * @return A default dark avatar prompt string
+     */
+    @JsonIgnore
+    public String getDefaultDarkAvatarPrompt() {
+        return getDefaultDarkAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default dark-background avatar prompt for a given user name.
+     *
+     * @param userName The name of the user
+     * @return A default dark avatar prompt string
+     */
+    @JsonIgnore
+    public static String getDefaultDarkAvatarPrompt(String userName) {
+        return getDefaultAvatarPrompt(userName) + AvatarService.DARK_PROMPT_SUFFIX;
+    }
 
     @JsonIgnore
     public String getKey() {

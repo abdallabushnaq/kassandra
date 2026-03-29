@@ -20,6 +20,8 @@ package de.bushnaq.abdalla.kassandra.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.report.dao.WorklogRemaining;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.bushnaq.abdalla.util.DurationDeserializer;
@@ -169,6 +171,15 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     }
 
     /**
+     * Return the default negative prompt used when generating light-background avatars.
+     *
+     * @return The default negative prompt string
+     */
+    public static String getDefaultAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT;
+    }
+
+    /**
      * Generate a default avatar prompt for AI image generation.
      * This provides a consistent prompt format for sprint avatars.
      *
@@ -187,7 +198,36 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
      * @return A default prompt string for generating sprint avatar images
      */
     public static String getDefaultAvatarPrompt(String sprintName) {
-        return "Icon representing the development sprint '" + sprintName + "', minimalist, flat design, vector graphics, simple shapes, clean lines, modern style, centered composition";
+        return "Icon representing the development sprint '" + sprintName + "', studio lighting, macro photography, sharp focus, high resolution, 4K" + AvatarService.LIGHT_PROMPT_SUFFIX;
+    }
+
+    /**
+     * Return the default negative prompt used when generating dark-background avatars.
+     *
+     * @return The default dark negative prompt string
+     */
+    public static String getDefaultDarkAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT;
+    }
+
+    /**
+     * Generate a default dark-background avatar prompt by appending the dark suffix to the base prompt.
+     *
+     * @return A default dark avatar prompt string
+     */
+    @JsonIgnore
+    public String getDefaultDarkAvatarPrompt() {
+        return getDefaultDarkAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default dark-background avatar prompt for a given sprint name.
+     *
+     * @param sprintName The name of the sprint
+     * @return A default dark avatar prompt string
+     */
+    public static String getDefaultDarkAvatarPrompt(String sprintName) {
+        return getDefaultAvatarPrompt(sprintName) + AvatarService.DARK_PROMPT_SUFFIX;
     }
 
     @JsonIgnore

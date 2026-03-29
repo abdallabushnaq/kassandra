@@ -195,9 +195,12 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         avatarUpdateRequest.setAvatarImage(result.getResizedImage());
         avatarUpdateRequest.setAvatarImageOriginal(result.getOriginalImage());
         avatarUpdateRequest.setAvatarPrompt(result.getPrompt());
+        avatarUpdateRequest.setAvatarNegativePrompt(result.getNegativePrompt());
+        avatarUpdateRequest.setDarkAvatarNegativePrompt(darkResult != null ? darkResult.getNegativePrompt() : null);
         if (darkResult != null) {
             avatarUpdateRequest.setDarkAvatarImage(darkResult.getResizedImage());
             avatarUpdateRequest.setDarkAvatarImageOriginal(darkResult.getOriginalImage());
+            avatarUpdateRequest.setDarkAvatarPrompt(darkResult.getPrompt());
         }
 
         // Update UI from callback (might be from async thread)
@@ -409,6 +412,18 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             defaultPrompt = User.getDefaultAvatarPrompt(nameField.getValue());
         }
 
+        String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
+                ? avatarUpdateRequest.getDarkAvatarPrompt()
+                : User.getDefaultDarkAvatarPrompt(nameField.getValue());
+
+        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarNegativePrompt() != null && !avatarUpdateRequest.getAvatarNegativePrompt().isEmpty())
+                ? avatarUpdateRequest.getAvatarNegativePrompt()
+                : User.getDefaultAvatarNegativePrompt();
+
+        String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
+                ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
+                : User.getDefaultDarkAvatarNegativePrompt();
+
         // Fetch avatar image if it exists (needed for img2img)
         byte[] initialImage     = avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         byte[] initialDarkImage = avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
@@ -420,7 +435,10 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                 "user",
                 this::handleGeneratedAvatar,
                 initialImage,
-                initialDarkImage
+                initialDarkImage,
+                defaultDarkPrompt,
+                defaultNegativePrompt,
+                defaultDarkNegativePrompt
         );
         imageDialog.open();
     }
@@ -449,6 +467,9 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             String avatarPrompt            = avatarUpdateRequest.getAvatarPrompt();
             byte[] darkAvatarImage         = avatarUpdateRequest.getDarkAvatarImage();
             byte[] darkAvatarImageOriginal = avatarUpdateRequest.getDarkAvatarImageOriginal();
+            String darkAvatarPrompt        = avatarUpdateRequest.getDarkAvatarPrompt();
+            String negativePrompt          = avatarUpdateRequest.getAvatarNegativePrompt();
+            String darkNegativePrompt      = avatarUpdateRequest.getDarkAvatarNegativePrompt();
 
             if (avatarImage != null) {
                 String newHash = AvatarUtil.computeHash(avatarImage);
@@ -473,7 +494,10 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                         avatarImageOriginal,
                         avatarPrompt,
                         darkAvatarImage,
-                        darkAvatarImageOriginal
+                        darkAvatarImageOriginal,
+                        darkAvatarPrompt,
+                        negativePrompt,
+                        darkNegativePrompt
                 );
             }
 

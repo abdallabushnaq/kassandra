@@ -80,6 +80,9 @@ public class ProductDialog extends Dialog {
     private             String                         generatedImagePrompt;
     private volatile    byte[]                         generatedDarkImageBytes;
     private volatile    byte[]                         generatedDarkImageBytesOriginal;
+    private             String                         generatedDarkImagePrompt;
+    private             String                         generatedNegativePrompt;
+    private             String                         generatedDarkNegativePrompt;
     private final       Image                          headerIcon;
     private final       Set<Long>                      initialGroupIds;
     private final       Set<Long>                      initialUserIds;
@@ -392,9 +395,12 @@ public class ProductDialog extends Dialog {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();
+        this.generatedNegativePrompt     = result.getNegativePrompt();
+        this.generatedDarkNegativePrompt = darkResult != null ? darkResult.getNegativePrompt() : null;
         if (darkResult != null) {
             generatedDarkImageBytes         = darkResult.getResizedImage();
             generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
+            generatedDarkImagePrompt        = darkResult.getPrompt();
         }
 
         // Update UI from callback (might be from async thread)
@@ -426,6 +432,18 @@ public class ProductDialog extends Dialog {
             defaultPrompt = Product.getDefaultAvatarPrompt(nameField.getValue());
         }
 
+        String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
+                ? avatarUpdateRequest.getDarkAvatarPrompt()
+                : Product.getDefaultDarkAvatarPrompt(nameField.getValue());
+
+        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarNegativePrompt() != null && !avatarUpdateRequest.getAvatarNegativePrompt().isEmpty())
+                ? avatarUpdateRequest.getAvatarNegativePrompt()
+                : Product.getDefaultAvatarNegativePrompt();
+
+        String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
+                ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
+                : Product.getDefaultDarkAvatarNegativePrompt();
+
         byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
         byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
@@ -436,7 +454,10 @@ public class ProductDialog extends Dialog {
                 "cube",
                 this::handleGeneratedImage,
                 initialImage,
-                initialDarkImage
+                initialDarkImage,
+                defaultDarkPrompt,
+                defaultNegativePrompt,
+                defaultDarkNegativePrompt
         );
         imageDialog.open();
     }
@@ -464,6 +485,9 @@ public class ProductDialog extends Dialog {
         String avatarPrompt            = generatedImagePrompt;
         byte[] darkAvatarImage         = generatedDarkImageBytes;
         byte[] darkAvatarImageOriginal = generatedDarkImageBytesOriginal;
+        String darkAvatarPrompt        = generatedDarkImagePrompt;
+        String negativePrompt          = generatedNegativePrompt;
+        String darkNegativePrompt      = generatedDarkNegativePrompt;
 
         if (avatarImage != null) {
             String newHash = AvatarUtil.computeHash(avatarImage);
@@ -488,7 +512,7 @@ public class ProductDialog extends Dialog {
 
                 if (avatarImage != null && avatarImageOriginal != null) {
                     productApi.updateAvatarFull(productToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
-                            darkAvatarImage, darkAvatarImageOriginal);
+                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt);
                 }
 
                 // Update ACL entries if in edit mode
@@ -501,7 +525,7 @@ public class ProductDialog extends Dialog {
 
                 if (avatarImage != null && avatarImageOriginal != null && createdProduct != null) {
                     productApi.updateAvatarFull(createdProduct.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
-                            darkAvatarImage, darkAvatarImageOriginal);
+                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt);
                 }
 
                 // Apply ACL entries for newly created product

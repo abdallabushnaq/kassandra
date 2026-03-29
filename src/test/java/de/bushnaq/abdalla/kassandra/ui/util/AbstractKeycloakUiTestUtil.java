@@ -70,11 +70,10 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         }
         //start container
         if (keycloakInstance == null) {
-            keycloakInstance = new KeycloakContainer("quay.io/keycloak/keycloak:24.0.1")
-                    .withRealmImportFile("keycloak/project-hub-realm.json")
+            keycloakInstance = new KeycloakContainer("quay.io/keycloak/keycloak:26.5.6")
+                    .withRealmImportFile("keycloak/project-hub-realm-realm.json")
                     .withAdminUsername("admin")
                     .withAdminPassword("admin")
-                    .withExposedPorts(8080, 8443)
                     .withLogConsumer(outputFrame -> System.out.println("Keycloak: " + outputFrame.getUtf8String()))
                     .withEnv("KC_HOSTNAME_STRICT", "false")
                     .withEnv("KC_HOSTNAME_STRICT_HTTPS", "false")
@@ -120,7 +119,6 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         System.out.println("  Auth Server URL: " + keycloak.getAuthServerUrl());
         System.out.println("  Container IP: " + keycloak.getHost());
         System.out.println("  HTTP Port Mapping: " + keycloak.getMappedPort(8080));
-        System.out.println("  HTTPS Port Mapping: " + keycloak.getMappedPort(8443));
 
         // Override the authServerUrl with our public-facing URL
         String publicAuthServerUrl = externalUrl + "/";

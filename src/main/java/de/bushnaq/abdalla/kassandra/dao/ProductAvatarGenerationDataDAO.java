@@ -33,11 +33,17 @@ public class ProductAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
     @Lob
     @Column(name = "avatar_image_original")
     private byte[] avatarImageOriginal;
+    @Column(name = "avatar_negative_prompt", length = 1000)
+    private String avatarNegativePrompt;
+    @Column(name = "avatar_prompt", length = 1000)
+    private String avatarPrompt;
     @Lob
     @Column(name = "dark_avatar_image_original")
     private byte[] darkAvatarImageOriginal;
-    @Column(name = "avatar_prompt", length = 1000)
-    private String avatarPrompt;
+    @Column(name = "dark_avatar_negative_prompt", length = 1000)
+    private String darkAvatarNegativePrompt;
+    @Column(name = "dark_avatar_prompt", length = 1000)
+    private String darkAvatarPrompt;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

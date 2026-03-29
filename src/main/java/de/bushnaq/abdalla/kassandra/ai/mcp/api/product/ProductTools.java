@@ -110,7 +110,7 @@ public class ProductTools {
     private @NonNull GeneratedImageResult generateProductAvatar(String name) throws StableDiffusionException {
         String prompt = Product.getDefaultAvatarPrompt(name);
         log.trace("Generating image for product: {} with prompt: {}", name, prompt);
-        return stableDiffusionService.generateImageWithOriginal(prompt);
+        return stableDiffusionService.text2ImgWithOriginal(prompt);
     }
 
     @Tool(description = "Get all products accessible to the current user.", resultConverter = KassandraToolCallResultConverter.class)
