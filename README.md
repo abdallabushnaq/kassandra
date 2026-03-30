@@ -93,7 +93,7 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 6. ✅ User Availability Introduction Video
 7. ✅ Kassandra Products, Versions, Features and Sprints Introduction Video
 8. ✅ Stories and Tasks Introduction Video
-9. Rearranging Stories and Tasks Introduction Video
+9. ✅ Rearranging Stories and Tasks Introduction Video
 10. Story and Task Relations Introduction Video
 11. Logging Work Introduction Video
 12. Kassandra Agent Introduction Video

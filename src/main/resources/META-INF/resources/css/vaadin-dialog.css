@@ -1,0 +1,69 @@
+/* Custom styling for dialog overlay */
+[part='backdrop']
+{
+  background: rgba(25, 25, 25, 0.3);
+
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+}
+
+/* ============================================================
+   Dialog compact density – match grid font size and spacing
+   ============================================================ */
+
+/* Base font size for all dialog body content (labels, helper text, etc.).
+   vaadin-dialog-content is the actual light-DOM wrapper that Vaadin renders
+   for the body slot of every dialog. */
+vaadin-dialog-content{
+    font-size: var(--lumo-font-size-xs);
+    /* Shift larger space tokens down so layout gaps and margins are tighter.
+       Only --lumo-space-xs and --lumo-space-s are used on the right-hand side
+       because they are NOT remapped here, preventing cascading cycles. */
+    --lumo-space-xl: var(--lumo-space-s);
+    --lumo-space-l:  var(--lumo-space-s);
+    --lumo-space-m:  var(--lumo-space-xs);
+}
+
+/* Remap Lumo font-size tokens so Vaadin input components (which internally
+   use --lumo-font-size-m / -s) also render at xs size – same technique as
+   vaadin-grid.css. */
+vaadin-dialog-content vaadin-text-field,
+vaadin-dialog-content vaadin-text-area,
+vaadin-dialog-content vaadin-email-field,
+vaadin-dialog-content vaadin-date-picker,
+vaadin-dialog-content vaadin-date-time-picker,
+vaadin-dialog-content vaadin-combo-box,
+vaadin-dialog-content vaadin-multi-select-combo-box,
+vaadin-dialog-content vaadin-checkbox-group,
+vaadin-dialog-content vaadin-checkbox,
+vaadin-dialog-content vaadin-upload,
+vaadin-dialog-content vaadin-button {
+    --lumo-font-size-m: var(--lumo-font-size-xs);
+    --lumo-font-size-s: var(--lumo-font-size-xs);
+}
+
+/* Reduce component height tokens so inputs and buttons render at compact
+   "small" height.  --lumo-size-s and --lumo-size-xs are NOT remapped here
+   so right-hand references always resolve to original Lumo values. */
+vaadin-dialog-content vaadin-text-field,
+vaadin-dialog-content vaadin-text-area,
+vaadin-dialog-content vaadin-email-field,
+vaadin-dialog-content vaadin-date-picker,
+vaadin-dialog-content vaadin-date-time-picker,
+vaadin-dialog-content vaadin-combo-box,
+vaadin-dialog-content vaadin-multi-select-combo-box,
+vaadin-dialog-content vaadin-button {
+    --lumo-size-m: var(--lumo-size-s);
+}
+
+/* Compact border radii to match the denser look */
+vaadin-dialog-content vaadin-text-field,
+vaadin-dialog-content vaadin-text-area,
+vaadin-dialog-content vaadin-email-field,
+vaadin-dialog-content vaadin-date-picker,
+vaadin-dialog-content vaadin-date-time-picker,
+vaadin-dialog-content vaadin-combo-box,
+vaadin-dialog-content vaadin-multi-select-combo-box,
+vaadin-dialog-content vaadin-button {
+    --lumo-border-radius-m: var(--lumo-border-radius-s);
+}

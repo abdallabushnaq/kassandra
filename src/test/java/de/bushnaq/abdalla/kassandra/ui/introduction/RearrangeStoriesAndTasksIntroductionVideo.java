@@ -96,8 +96,9 @@ public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractIntroduct
 
     @BeforeAll
     static void beforeAll() {
-        video.setTitle("Rearranging Stories and Tasks in Kassandra");
         video.setVersion(1);
+        video.setTitle("Rearranging Stories and Tasks in Kassandra");
+        video.setDescription("Today we're going to learn how to rearrange and copy stories and tasks. By rearranging we mean changing the order in the list to change the priority of a story or task, or moving a task from a story to another story. We'll also see how to quickly duplicate stories with all their child tasks using copy and paste.");
     }
 
     @ParameterizedTest
