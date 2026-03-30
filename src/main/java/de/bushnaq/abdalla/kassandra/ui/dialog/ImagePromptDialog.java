@@ -218,9 +218,11 @@ public class ImagePromptDialog extends Dialog {
         generateButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
         generateButton.addClickListener(e -> generateLightVariant());
 
-        lightUpdateButton = new Button("Update", new Icon(VaadinIcon.REFRESH));
+        lightUpdateButton = new Button(new Icon(VaadinIcon.REFRESH));
         lightUpdateButton.setId(ID_UPDATE_BUTTON);
-        lightUpdateButton.setEnabled(initialImage != null && initialImage.length > 0);
+        lightUpdateButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        lightUpdateButton.getElement().setAttribute("title", "Regenerate light avatar");
+        lightUpdateButton.setEnabled(true);
         lightUpdateButton.addClickListener(e -> updateImage());
 
         acceptButton = new Button("Accept", new Icon(VaadinIcon.CHECK));
@@ -296,7 +298,11 @@ public class ImagePromptDialog extends Dialog {
         // ── Light column ──────────────────────────────────────────────────
         com.vaadin.flow.component.html.Span lightLabel = new com.vaadin.flow.component.html.Span("Light");
         lightLabel.getStyle().set("font-weight", "600").set("color", "var(--lumo-secondary-text-color)");
-        VerticalLayout lightColumn = new VerticalLayout(lightLabel, previewContainer, lightUpdateButton);
+        HorizontalLayout lightTitleRow = new HorizontalLayout(lightLabel, lightUpdateButton);
+        lightTitleRow.setAlignItems(FlexComponent.Alignment.CENTER);
+        lightTitleRow.setWidthFull();
+        lightTitleRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        VerticalLayout lightColumn = new VerticalLayout(lightTitleRow, previewContainer);
         lightColumn.setPadding(false);
         lightColumn.setSpacing(true);
         lightColumn.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -333,12 +339,18 @@ public class ImagePromptDialog extends Dialog {
         com.vaadin.flow.component.html.Span darkLabel = new com.vaadin.flow.component.html.Span("Dark");
         darkLabel.getStyle().set("font-weight", "600").set("color", "var(--lumo-secondary-text-color)");
 
-        darkUpdateButton = new Button("Update", new Icon(VaadinIcon.REFRESH));
+        darkUpdateButton = new Button(new Icon(VaadinIcon.REFRESH));
         darkUpdateButton.setId(ID_DARK_UPDATE_BUTTON);
+        darkUpdateButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        darkUpdateButton.getElement().setAttribute("title", "Regenerate dark avatar");
         darkUpdateButton.setEnabled(initialDarkImage != null && initialDarkImage.length > 0);
         darkUpdateButton.addClickListener(e -> generateDarkVariant());
 
-        VerticalLayout darkColumn = new VerticalLayout(darkLabel, darkPreviewContainer, darkUpdateButton);
+        HorizontalLayout darkTitleRow = new HorizontalLayout(darkLabel, darkUpdateButton);
+        darkTitleRow.setAlignItems(FlexComponent.Alignment.CENTER);
+        darkTitleRow.setWidthFull();
+        darkTitleRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        VerticalLayout darkColumn = new VerticalLayout(darkTitleRow, darkPreviewContainer);
         darkColumn.setPadding(false);
         darkColumn.setSpacing(true);
         darkColumn.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -641,10 +653,6 @@ public class ImagePromptDialog extends Dialog {
     }
 
     private void updateImage() {
-        if (initialImage == null || initialImage.length == 0) {
-            Notification.show("No image to update.", 3000, Notification.Position.MIDDLE);
-            return;
-        }
         String prompt = promptField.getValue().trim();
         if (prompt.isEmpty()) {
             Notification.show("Please enter a description", 3000, Notification.Position.MIDDLE);
@@ -663,7 +671,7 @@ public class ImagePromptDialog extends Dialog {
         hourglassIcon.setSize("32px");
         hourglassIcon.getStyle().set("color", "var(--lumo-primary-color)");
         Div loadingText = new Div();
-        loadingText.setText("Updating image...");
+        loadingText.setText("Generating light avatar...");
         loadingText.getStyle().set("color", "var(--lumo-contrast-60pct)").set("font-weight", "500");
         Div progressText = new Div();
         progressText.setText("Initializing...");
@@ -678,11 +686,9 @@ public class ImagePromptDialog extends Dialog {
         getUI().ifPresent(ui -> {
             new Thread(() -> {
                 try {
-                    // Append background modifier for SD; the base prompt is preserved in promptField
-                    String lightSdPrompt  = prompt + " with white background";
-                    String negativePrompt = negativePromptField.getValue().trim();
-                    de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result =
-                            stableDiffusionService.img2imgWithOriginal(initialImage, lightSdPrompt, negativePrompt, 256, (progress, step, totalSteps) -> {
+                    String               negativePrompt = negativePromptField.getValue().trim();
+                    GeneratedImageResult result         =
+                            avatarService.generateLightAvatar(prompt, negativePrompt, (progress, step, totalSteps) -> {
                                 ui.access(() -> {
                                     progressBar.setValue(progress);
                                     progressText.setText(String.format("Step %d / %d (%.0f%%)", step, totalSteps, progress * 100));
@@ -692,12 +698,13 @@ public class ImagePromptDialog extends Dialog {
                     generatedImage         = result.getResizedImage();
                     generatedImageOriginal = result.getOriginalImage();
                     generatedImageSeed     = result.getSeed();
+                    initialImage           = result.getResizedImage();
                     ui.access(() -> {
                         displayGeneratedImage(result.getResizedImage());
                         generateButton.setEnabled(true);
                         lightUpdateButton.setEnabled(true);
                         acceptButton.setEnabled(true);
-                        Notification notification = Notification.show("Image updated successfully!", 3000, Notification.Position.BOTTOM_END);
+                        Notification notification = Notification.show("Light avatar regenerated!", 3000, Notification.Position.BOTTOM_END);
                         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                         ui.push();
                     });
@@ -707,10 +714,10 @@ public class ImagePromptDialog extends Dialog {
                         lightUpdateButton.setEnabled(true);
                         previewContainer.removeAll();
                         Div errorText = new Div();
-                        errorText.setText("Failed to update image: " + ex.getMessage());
+                        errorText.setText("Failed to regenerate light avatar: " + ex.getMessage());
                         errorText.getStyle().set("color", "var(--lumo-error-text-color)");
                         previewContainer.add(new Icon(VaadinIcon.WARNING), errorText);
-                        Notification notification = Notification.show("Update failed: " + ex.getMessage(), 5000, Notification.Position.MIDDLE);
+                        Notification notification = Notification.show("Regeneration failed: " + ex.getMessage(), 5000, Notification.Position.MIDDLE);
                         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
                         ui.push();
                     });

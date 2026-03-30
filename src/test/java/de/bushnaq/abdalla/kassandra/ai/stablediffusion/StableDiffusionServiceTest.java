@@ -206,7 +206,7 @@ public class StableDiffusionServiceTest {
      */
     @Test
     public void testGenerateImage_ProductAvatar() throws Exception {
-        String productName        = "Kassandra";
+        String productName        = "Mars";
         String lightBasePrompt    = Product.getDefaultAvatarPrompt(productName);
         String darkBasePrompt     = Product.getDefaultDarkAvatarPrompt(productName);
         String negativePrompt     = Product.getDefaultAvatarNegativePrompt();

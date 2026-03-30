@@ -118,9 +118,9 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
         Sprint sprint = generateData();
 
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setEnabled(true);
+        paul.setEnabled(false);
         Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
-        grace.setEnabled(true);
+        grace.setEnabled(false);
         //seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
 
