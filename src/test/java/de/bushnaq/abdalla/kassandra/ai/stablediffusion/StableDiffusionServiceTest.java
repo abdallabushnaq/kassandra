@@ -178,9 +178,9 @@ public class StableDiffusionServiceTest {
     @Test
     public void testGenerateImage_FeatureAvatar() throws Exception {
         String featureName        = "AI Assistant";
-        String lightBasePrompt    = Feature.getDefaultAvatarPrompt(featureName);
+        String lightBasePrompt    = Feature.getDefaultLightAvatarPrompt(featureName);
         String darkBasePrompt     = Feature.getDefaultDarkAvatarPrompt(featureName);
-        String negativePrompt     = Feature.getDefaultAvatarNegativePrompt();
+        String negativePrompt     = Feature.getDefaultLightAvatarNegativePrompt();
         String darkNegativePrompt = Feature.getDefaultDarkAvatarNegativePrompt();
 
         // Light avatar via AvatarService
@@ -207,9 +207,9 @@ public class StableDiffusionServiceTest {
     @Test
     public void testGenerateImage_ProductAvatar() throws Exception {
         String productName        = "Mars";
-        String lightBasePrompt    = Product.getDefaultAvatarPrompt(productName);
+        String lightBasePrompt    = Product.getDefaultLightAvatarPrompt(productName);
         String darkBasePrompt     = Product.getDefaultDarkAvatarPrompt(productName);
-        String negativePrompt     = Product.getDefaultAvatarNegativePrompt();
+        String negativePrompt     = Product.getDefaultLightAvatarNegativePrompt();
         String darkNegativePrompt = Product.getDefaultDarkAvatarNegativePrompt();
 
         // Light avatar via AvatarService
@@ -236,9 +236,9 @@ public class StableDiffusionServiceTest {
     @Test
     public void testGenerateImage_SprintAvatar() throws Exception {
         String sprintName         = "frankfurt 4";
-        String lightBasePrompt    = Sprint.getDefaultAvatarPrompt(sprintName);
+        String lightBasePrompt    = Sprint.getDefaultLightAvatarPrompt(sprintName);
         String darkBasePrompt     = Sprint.getDefaultDarkAvatarPrompt(sprintName);
-        String negativePrompt     = Sprint.getDefaultAvatarNegativePrompt();
+        String negativePrompt     = Sprint.getDefaultLightAvatarNegativePrompt();
         String darkNegativePrompt = Sprint.getDefaultDarkAvatarNegativePrompt();
 
         // Light avatar via AvatarService
@@ -261,9 +261,9 @@ public class StableDiffusionServiceTest {
         // Mirror the exact flow used by ImagePromptDialog for a user named "Abdalla",
         // delegated through AvatarService.
         String userName           = "Abdalla";
-        String lightPrompt        = User.getDefaultAvatarPrompt(userName);
+        String lightPrompt        = User.getDefaultLightAvatarPrompt(userName);
         String darkPrompt         = User.getDefaultDarkAvatarPrompt(userName);
-        String negativePrompt     = User.getDefaultAvatarNegativePrompt();
+        String negativePrompt     = User.getDefaultLightAvatarNegativePrompt();
         String darkNegativePrompt = User.getDefaultDarkAvatarNegativePrompt();
 
         // ── Light avatar via AvatarService ────────────────────────────────────

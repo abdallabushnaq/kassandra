@@ -69,7 +69,7 @@ public class FeatureTools {
         feature.setName(name);
         feature.setVersionId(versionId);
         if (avatarPrompt == null || avatarPrompt.isEmpty()) {
-            avatarPrompt = feature.getDefaultAvatarPrompt();
+            avatarPrompt = feature.getDefaultLightAvatarPrompt();
         }
         GeneratedImageResult image;
         if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
@@ -83,7 +83,7 @@ public class FeatureTools {
             log.warn("Stable Diffusion not available, using default avatar for feature: {}", name);
             image = stableDiffusionService.generateDefaultAvatar("lightbulb");
         }
-        feature.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+        feature.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         Feature savedFeature = featureApi.persist(feature);
         featureApi.updateAvatarFull(savedFeature.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
         ToolActivityContextHolder.reportActivity("created feature '" + savedFeature.getName() + "' with ID: " + savedFeature.getId());
@@ -103,7 +103,7 @@ public class FeatureTools {
     }
 
     private @NonNull GeneratedImageResult generateFeatureAvatar(String name) throws StableDiffusionException {
-        String prompt = Feature.getDefaultAvatarPrompt(name);
+        String prompt = Feature.getDefaultLightAvatarPrompt(name);
         log.trace("Generating image for feature: {} with prompt: {}", name, prompt);
         return stableDiffusionService.text2ImgWithOriginal(prompt);
     }

@@ -287,25 +287,25 @@ public class SprintDialog extends Dialog {
     private void openImagePromptDialog() {
         // Use stored prompt if available, otherwise generate default prompt
         String defaultPrompt;
-        if (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarPrompt() != null && !avatarUpdateRequest.getAvatarPrompt().isEmpty()) {
-            defaultPrompt = avatarUpdateRequest.getAvatarPrompt();
+        if (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarPrompt() != null && !avatarUpdateRequest.getLightAvatarPrompt().isEmpty()) {
+            defaultPrompt = avatarUpdateRequest.getLightAvatarPrompt();
         } else {
-            defaultPrompt = Sprint.getDefaultAvatarPrompt(nameField.getValue());
+            defaultPrompt = Sprint.getDefaultLightAvatarPrompt(nameField.getValue());
         }
 
         String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarPrompt()
                 : Sprint.getDefaultDarkAvatarPrompt(nameField.getValue());
 
-        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarNegativePrompt() != null && !avatarUpdateRequest.getAvatarNegativePrompt().isEmpty())
-                ? avatarUpdateRequest.getAvatarNegativePrompt()
-                : Sprint.getDefaultAvatarNegativePrompt();
+        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarNegativePrompt() != null && !avatarUpdateRequest.getLightAvatarNegativePrompt().isEmpty())
+                ? avatarUpdateRequest.getLightAvatarNegativePrompt()
+                : Sprint.getDefaultLightAvatarNegativePrompt();
 
         String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
                 : Sprint.getDefaultDarkAvatarNegativePrompt();
 
-        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarImageOriginal() != null && avatarUpdateRequest.getLightAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getLightAvatarImageOriginal() : null;
         byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 avatarService,
@@ -348,7 +348,7 @@ public class SprintDialog extends Dialog {
 
         if (avatarImage != null) {
             String newHash = AvatarUtil.computeHash(avatarImage);
-            sprintToSave.setAvatarHash(newHash);
+            sprintToSave.setLightAvatarHash(newHash);
         } else if (avatarUpdateRequest == null) {
             //generate default avatar if none exists
             GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("exit");
@@ -356,7 +356,7 @@ public class SprintDialog extends Dialog {
             avatarImageOriginal = image.getOriginalImage();
             avatarPrompt        = image.getPrompt();
             String newHash = AvatarUtil.computeHash(image.getResizedImage());
-            sprintToSave.setAvatarHash(newHash);
+            sprintToSave.setLightAvatarHash(newHash);
             // Also generate a dark default programmatically
             GeneratedImageResult darkImage = stableDiffusionService.generateDefaultDarkAvatar("exit");
             darkAvatarImage         = darkImage.getResizedImage();

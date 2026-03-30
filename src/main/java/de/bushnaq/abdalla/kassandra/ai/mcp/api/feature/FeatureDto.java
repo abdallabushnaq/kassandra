@@ -68,7 +68,7 @@ public class FeatureDto {
                 feature.getVersionId(),
                 feature.getCreated(),
                 feature.getUpdated(),
-                feature.getDefaultAvatarPrompt()
+                feature.getDefaultLightAvatarPrompt()
         );
     }
 

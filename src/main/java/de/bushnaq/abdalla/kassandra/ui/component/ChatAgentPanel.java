@@ -298,7 +298,7 @@ public class ChatAgentPanel extends VerticalLayout {
         switch (type) {
             case "user":
                 messageDiv.addClassNames(LumoUtility.Background.PRIMARY_10);
-                if (currentUser != null && currentUser.getAvatarHash() != null && !currentUser.getAvatarHash().isEmpty()) {
+                if (currentUser != null && currentUser.getLightAvatarHash() != null && !currentUser.getLightAvatarHash().isEmpty()) {
                     com.vaadin.flow.component.html.Image avatarImage = new com.vaadin.flow.component.html.Image();
                     avatarImage.setWidth("16px");
                     avatarImage.setHeight("16px");

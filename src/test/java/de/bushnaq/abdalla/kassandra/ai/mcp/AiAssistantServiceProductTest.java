@@ -66,7 +66,7 @@ public class AiAssistantServiceProductTest extends AbstractMcpTest {
             processQuery("You mistyped the product name, it should be Andromsda.");
         }
         assertTrue(productApi.getByName("Andromsda").isPresent(), "Product should be created");
-        assertFalse(productApi.getByName("Andromsda").get().getAvatarHash().isEmpty(), "Product avatar URL should not be empty");
+        assertFalse(productApi.getByName("Andromsda").get().getLightAvatarHash().isEmpty(), "Product avatar URL should not be empty");
     }
 
     @ParameterizedTest

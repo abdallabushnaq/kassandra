@@ -28,7 +28,7 @@ import java.time.OffsetDateTime;
 
 /**
  * Simplified Product DTO for AI tools.
- * Contains only fields relevant for AI interactions, excluding internal fields like avatarHash.
+ * Contains only fields relevant for AI interactions, excluding internal fields like lightAvatarHash.
  */
 @Data
 @NoArgsConstructor
@@ -65,7 +65,7 @@ public class ProductDto {
                 product.getName(),
                 product.getCreated(),
                 product.getUpdated(),
-                product.getDefaultAvatarPrompt()
+                product.getDefaultLightAvatarPrompt()
         );
     }
 

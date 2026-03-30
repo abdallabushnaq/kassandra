@@ -33,22 +33,22 @@ public class AvatarUpdateRequest {
     /**
      * Resized avatar image (e.g., 64x64) for the light theme.
      */
-    private byte[] avatarImage;
+    private byte[] lightAvatarImage;
 
     /**
      * Original avatar image (e.g., 512x512) for the light theme.
      */
-    private byte[] avatarImageOriginal;
+    private byte[] lightAvatarImageOriginal;
 
     /**
      * The negative prompt used when generating the light avatar.
      */
-    private String avatarNegativePrompt;
+    private String lightAvatarNegativePrompt;
 
     /**
      * The prompt used to generate the light avatar.
      */
-    private String avatarPrompt;
+    private String lightAvatarPrompt;
 
     /**
      * Resized dark-mode avatar image (e.g., 64x64).
@@ -70,4 +70,3 @@ public class AvatarUpdateRequest {
      */
     private String darkAvatarPrompt;
 }
-

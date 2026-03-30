@@ -31,8 +31,8 @@ import org.hibernate.annotations.BatchSize;
 @BatchSize(size = 10)
 public class ProductDAO extends AbstractTimeAwareDAO {
 
-    @Column(name = "avatar_hash", length = 16)
-    private String avatarHash;
+    @Column(name = "light_avatar_hash", length = 16)
+    private String lightAvatarHash;
     @Column(name = "dark_avatar_hash", length = 16)
     private String darkAvatarHash;
     @Id

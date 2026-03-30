@@ -32,11 +32,11 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
-@JsonPropertyOrder({"sprintId", "name", "featureId", "userId", "start", "end", "releaseDate", "originalEstimation", "remaining", "worked", "status", "avatarHash"})
+@JsonPropertyOrder({"sprintId", "name", "featureId", "userId", "start", "end", "releaseDate", "originalEstimation", "remaining", "worked", "status", "lightAvatarHash"})
 @Schema(description = "A sprint belonging to a feature")
 public class SprintDto {
     @Schema(description = "Avatar hash for cache-busting")
-    private String        avatarHash;
+    private String        lightAvatarHash;
     @Schema(description = "Sprint end datetime (ISO 8601)")
     private LocalDateTime end;
     @Schema(description = "Feature this sprint belongs to")
@@ -60,7 +60,7 @@ public class SprintDto {
     @Schema(description = "Effort already worked (ISO 8601 duration)")
     private Duration      worked;
 
-    public SprintDto(Long sprintId, String name, Long featureId, LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate, Duration originalEstimation, Duration remaining, Duration worked, String avatarHash, Status status, Long userId) {
+    public SprintDto(Long sprintId, String name, Long featureId, LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate, Duration originalEstimation, Duration remaining, Duration worked, String lightAvatarHash, Status status, Long userId) {
         this.sprintId           = sprintId;
         this.name               = name;
         this.featureId          = featureId;
@@ -70,7 +70,7 @@ public class SprintDto {
         this.originalEstimation = originalEstimation;
         this.remaining          = remaining;
         this.worked             = worked;
-        this.avatarHash         = avatarHash;
+        this.lightAvatarHash    = lightAvatarHash;
         this.status             = status;
         this.userId             = userId;
     }
@@ -87,7 +87,7 @@ public class SprintDto {
                 sprint.getOriginalEstimation(),
                 sprint.getRemaining(),
                 sprint.getWorked(),
-                sprint.getAvatarHash(),
+                sprint.getLightAvatarHash(),
                 sprint.getStatus(),
                 sprint.getUserId()
         );

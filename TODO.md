@@ -37,6 +37,8 @@
 19. TaskGrid user colors are fake.
 20. quick edit dependencies does nto work.
 21. adding a dependency from story to milestone will not move the story.
+22. SPrintDialog save will only save light avatar hash
+23. many place only reference lightAvatar, but not dark.
 
 # Failing Tests
 

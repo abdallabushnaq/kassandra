@@ -33,9 +33,9 @@ import java.util.Objects;
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Feature extends AbstractTimeAware implements Comparable<Feature> {
-    private String avatarHash;
     private String darkAvatarHash;
     private Long   id;
+    private String lightAvatarHash;
     private String name;
 
     @JsonIgnore
@@ -72,8 +72,8 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
             return "/frontend/dark-avatar-proxy/feature/" + id + "?h=" + darkAvatarHash;
         }
         String url = "/frontend/avatar-proxy/feature/" + id;
-        if (avatarHash != null && !avatarHash.isEmpty()) {
-            url += "?h=" + avatarHash;
+        if (lightAvatarHash != null && !lightAvatarHash.isEmpty()) {
+            url += "?h=" + lightAvatarHash;
         }
         return url;
     }
@@ -89,35 +89,8 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
         return getAvatarUrl(false);
     }
 
-    /**
-     * Return the default negative prompt used when generating light-background avatars.
-     *
-     * @return The default negative prompt string
-     */
-    public static String getDefaultAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT;
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This provides a consistent prompt format for feature avatars.
-     *
-     * @return A default prompt string for generating feature avatar images
-     */
-    @JsonIgnore
-    public String getDefaultAvatarPrompt() {
-        return getDefaultAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This static method provides a consistent prompt format for feature avatars.
-     *
-     * @param featureName The name of the feature
-     * @return A default prompt string for generating feature avatar images
-     */
-    public static String getDefaultAvatarPrompt(String featureName) {
-        return "Icon representing the feature '" + featureName + "', studio lighting, macro photography, sharp focus, high resolution, 4K" + AvatarService.LIGHT_PROMPT_SUFFIX;
+    private static String getDefaultAvatarPrompt(String featureName) {
+        return "Detailed representation of  '" + featureName + "', studio lighting, reflective highlights, high detail, 8k resolution, 50mm lens";
     }
 
     /**
@@ -148,6 +121,37 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
     @JsonIgnore
     public static String getDefaultDarkAvatarPrompt(String featureName) {
         return getDefaultAvatarPrompt(featureName) + AvatarService.DARK_PROMPT_SUFFIX;
+    }
+
+    /**
+     * Return the default negative prompt used when generating light-background avatars.
+     *
+     * @return The default negative prompt string
+     */
+    public static String getDefaultLightAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT;
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This provides a consistent prompt format for feature avatars.
+     *
+     * @return A default prompt string for generating feature avatar images
+     */
+    @JsonIgnore
+    public String getDefaultLightAvatarPrompt() {
+        return getDefaultLightAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This static method provides a consistent prompt format for feature avatars.
+     *
+     * @param featureName The name of the feature
+     * @return A default prompt string for generating feature avatar images
+     */
+    public static String getDefaultLightAvatarPrompt(String featureName) {
+        return getDefaultAvatarPrompt(featureName) + AvatarService.LIGHT_PROMPT_SUFFIX;
     }
 
     @JsonIgnore

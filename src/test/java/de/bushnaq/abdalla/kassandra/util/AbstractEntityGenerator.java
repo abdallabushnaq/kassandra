@@ -122,12 +122,12 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
         Feature              saved      = null;
         long                 startTime  = System.currentTimeMillis();
-        String               basePrompt         = Feature.getDefaultAvatarPrompt(name);
+        String               basePrompt         = Feature.getDefaultLightAvatarPrompt(name);
         String               darkBasePrompt     = Feature.getDefaultDarkAvatarPrompt(name);
-        String               negativePrompt     = Feature.getDefaultAvatarNegativePrompt();
+        String               negativePrompt     = Feature.getDefaultLightAvatarNegativePrompt();
         String               darkNegativePrompt = Feature.getDefaultDarkAvatarNegativePrompt();
         GeneratedImageResult image              = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "lightbulb");
-        feature.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+        feature.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = featureApi.persist(feature);
 
         GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "lightbulb");
@@ -277,12 +277,12 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
         Product              saved      = null;
         long                 startTime  = System.currentTimeMillis();
-        String               basePrompt         = Product.getDefaultAvatarPrompt(name);
+        String               basePrompt         = Product.getDefaultLightAvatarPrompt(name);
         String               darkBasePrompt     = Product.getDefaultDarkAvatarPrompt(name);
-        String               negativePrompt     = Product.getDefaultAvatarNegativePrompt();
+        String               negativePrompt     = Product.getDefaultLightAvatarNegativePrompt();
         String               darkNegativePrompt = Product.getDefaultDarkAvatarNegativePrompt();
         GeneratedImageResult image              = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "cube");
-        product.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+        product.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = productApi.persist(product);
 
         GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "cube");
@@ -433,12 +433,12 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
         Sprint               saved      = null;
         long                 startTime  = System.currentTimeMillis();
-        String               basePrompt         = Sprint.getDefaultAvatarPrompt(name);
+        String               basePrompt         = Sprint.getDefaultLightAvatarPrompt(name);
         String               darkBasePrompt     = Sprint.getDefaultDarkAvatarPrompt(name);
-        String               negativePrompt     = Sprint.getDefaultAvatarNegativePrompt();
+        String               negativePrompt     = Sprint.getDefaultLightAvatarNegativePrompt();
         String               darkNegativePrompt = Sprint.getDefaultDarkAvatarNegativePrompt();
         GeneratedImageResult image              = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "exit");
-        sprint.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+        sprint.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         saved = sprintApi.persist(sprint);
 
         GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "exit");
@@ -540,9 +540,9 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         user.setUpdated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
 
         long                 startTime      = System.currentTimeMillis();
-        String               basePrompt         = User.getDefaultAvatarPrompt(name);
+        String               basePrompt         = User.getDefaultLightAvatarPrompt(name);
         String               darkBasePrompt     = User.getDefaultDarkAvatarPrompt(name);
-        String               negativePrompt     = User.getDefaultAvatarNegativePrompt();
+        String               negativePrompt     = User.getDefaultLightAvatarNegativePrompt();
         String               darkNegativePrompt = User.getDefaultDarkAvatarNegativePrompt();
         GeneratedImageResult image;
         try {
@@ -551,7 +551,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             log.warn("Failed to generate light avatar for user {}: {}", name, e.getMessage());
             image = avatarService.generateDefaultLightAvatar("user");
         }
-        user.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+        user.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
 
         User saved = userApi.persist(user);
         log.info("Created user: " + saved.getName() + " with email: " + saved.getEmail());

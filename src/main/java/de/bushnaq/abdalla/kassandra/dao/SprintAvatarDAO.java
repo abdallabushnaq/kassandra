@@ -31,8 +31,8 @@ import lombok.*;
 public class SprintAvatarDAO extends AbstractTimeAwareDAO {
 
     @Lob
-    @Column(name = "avatar_image")
-    private byte[] avatarImage;
+    @Column(name = "light_avatar_image")
+    private byte[] lightAvatarImage;
     @Lob
     @Column(name = "dark_avatar_image")
     private byte[] darkAvatarImage;

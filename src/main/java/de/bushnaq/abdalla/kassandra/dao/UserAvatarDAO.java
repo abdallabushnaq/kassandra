@@ -29,8 +29,8 @@ import lombok.*;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class UserAvatarDAO extends AbstractTimeAwareDAO {
     @Lob
-    @Column(name = "avatar_image")
-    private byte[] avatarImage;
+    @Column(name = "light_avatar_image")
+    private byte[] lightAvatarImage;
     @Lob
     @Column(name = "dark_avatar_image")
     private byte[] darkAvatarImage;

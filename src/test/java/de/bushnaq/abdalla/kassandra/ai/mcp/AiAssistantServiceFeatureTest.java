@@ -73,7 +73,7 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
             List<Feature>     features = featureApi.getAll(firstVersion.getId());
             Optional<Feature> feature  = features.stream().filter(f -> f.getName().equals("Galaxxy")).findFirst();
             assertTrue(feature.isPresent(), "Feature should be created");
-            assertFalse(feature.get().getAvatarHash().isEmpty(), "Feature avatar hash should not be empty");
+            assertFalse(feature.get().getLightAvatarHash().isEmpty(), "Feature avatar hash should not be empty");
         }
     }
 

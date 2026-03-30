@@ -265,13 +265,13 @@ public class UserApi extends AbstractApi {
             byte[] darkResizedImage, byte[] darkOriginalImage,
             String darkPrompt, String negativePrompt, String darkNegativePrompt) {
         AvatarUpdateRequest request = new AvatarUpdateRequest();
-        request.setAvatarImage(resizedImage);
-        request.setAvatarImageOriginal(originalImage);
-        request.setAvatarPrompt(prompt);
+        request.setLightAvatarImage(resizedImage);
+        request.setLightAvatarImageOriginal(originalImage);
+        request.setLightAvatarPrompt(prompt);
         request.setDarkAvatarImage(darkResizedImage);
         request.setDarkAvatarImageOriginal(darkOriginalImage);
         request.setDarkAvatarPrompt(darkPrompt);
-        request.setAvatarNegativePrompt(negativePrompt);
+        request.setLightAvatarNegativePrompt(negativePrompt);
         request.setDarkAvatarNegativePrompt(darkNegativePrompt);
 
         executeWithErrorHandling(() -> restTemplate.exchange(

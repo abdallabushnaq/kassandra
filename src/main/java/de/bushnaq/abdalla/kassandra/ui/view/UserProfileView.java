@@ -155,7 +155,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                     byte[]               avatarImageOriginal = image.getOriginalImage();
                     String               avatarPrompt        = image.getPrompt();
                     String               newHash             = AvatarUtil.computeHash(image.getResizedImage());
-                    newUser.setAvatarHash(newHash);
+                    newUser.setLightAvatarHash(newHash);
                     currentUser = userApi.persist(newUser);
                     initializeView();
                     Notification notification = Notification.show("Created new user: " + userEmail, 3000, Notification.Position.MIDDLE);
@@ -192,10 +192,10 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
 
     private void handleGeneratedAvatar(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result,
             de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult) {
-        avatarUpdateRequest.setAvatarImage(result.getResizedImage());
-        avatarUpdateRequest.setAvatarImageOriginal(result.getOriginalImage());
-        avatarUpdateRequest.setAvatarPrompt(result.getPrompt());
-        avatarUpdateRequest.setAvatarNegativePrompt(result.getNegativePrompt());
+        avatarUpdateRequest.setLightAvatarImage(result.getResizedImage());
+        avatarUpdateRequest.setLightAvatarImageOriginal(result.getOriginalImage());
+        avatarUpdateRequest.setLightAvatarPrompt(result.getPrompt());
+        avatarUpdateRequest.setLightAvatarNegativePrompt(result.getNegativePrompt());
         avatarUpdateRequest.setDarkAvatarNegativePrompt(darkResult != null ? darkResult.getNegativePrompt() : null);
         if (darkResult != null) {
             avatarUpdateRequest.setDarkAvatarImage(darkResult.getResizedImage());
@@ -406,26 +406,26 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
     private void openAvatarPromptDialogWithInitialImage() {
         // Use stored prompt if available, otherwise generate default prompt
         String defaultPrompt;
-        if (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarPrompt() != null && !avatarUpdateRequest.getAvatarPrompt().isEmpty()) {
-            defaultPrompt = avatarUpdateRequest.getAvatarPrompt();
+        if (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarPrompt() != null && !avatarUpdateRequest.getLightAvatarPrompt().isEmpty()) {
+            defaultPrompt = avatarUpdateRequest.getLightAvatarPrompt();
         } else {
-            defaultPrompt = User.getDefaultAvatarPrompt(nameField.getValue());
+            defaultPrompt = User.getDefaultLightAvatarPrompt(nameField.getValue());
         }
 
         String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarPrompt()
                 : User.getDefaultDarkAvatarPrompt(nameField.getValue());
 
-        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarNegativePrompt() != null && !avatarUpdateRequest.getAvatarNegativePrompt().isEmpty())
-                ? avatarUpdateRequest.getAvatarNegativePrompt()
-                : User.getDefaultAvatarNegativePrompt();
+        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarNegativePrompt() != null && !avatarUpdateRequest.getLightAvatarNegativePrompt().isEmpty())
+                ? avatarUpdateRequest.getLightAvatarNegativePrompt()
+                : User.getDefaultLightAvatarNegativePrompt();
 
         String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
                 : User.getDefaultDarkAvatarNegativePrompt();
 
         // Fetch avatar image if it exists (needed for img2img)
-        byte[] initialImage     = avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialImage     = avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarImageOriginal() != null && avatarUpdateRequest.getLightAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getLightAvatarImageOriginal() : null;
         byte[] initialDarkImage = avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 avatarService,
@@ -461,18 +461,18 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             }
 
             // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
-            byte[] avatarImage             = avatarUpdateRequest.getAvatarImage();
-            byte[] avatarImageOriginal     = avatarUpdateRequest.getAvatarImageOriginal();
-            String avatarPrompt            = avatarUpdateRequest.getAvatarPrompt();
+            byte[] avatarImage             = avatarUpdateRequest.getLightAvatarImage();
+            byte[] avatarImageOriginal     = avatarUpdateRequest.getLightAvatarImageOriginal();
+            String avatarPrompt            = avatarUpdateRequest.getLightAvatarPrompt();
             byte[] darkAvatarImage         = avatarUpdateRequest.getDarkAvatarImage();
             byte[] darkAvatarImageOriginal = avatarUpdateRequest.getDarkAvatarImageOriginal();
             String darkAvatarPrompt        = avatarUpdateRequest.getDarkAvatarPrompt();
-            String negativePrompt          = avatarUpdateRequest.getAvatarNegativePrompt();
+            String negativePrompt          = avatarUpdateRequest.getLightAvatarNegativePrompt();
             String darkNegativePrompt      = avatarUpdateRequest.getDarkAvatarNegativePrompt();
 
             if (avatarImage != null) {
                 String newHash = AvatarUtil.computeHash(avatarImage);
-                currentUser.setAvatarHash(newHash);
+                currentUser.setLightAvatarHash(newHash);
             } else if (avatarUpdateRequest == null) {
                 //generate default avatar if none exists
                 GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("user");
@@ -480,7 +480,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                 avatarImageOriginal = image.getOriginalImage();
                 avatarPrompt        = image.getPrompt();
                 String newHash = AvatarUtil.computeHash(image.getResizedImage());
-                currentUser.setAvatarHash(newHash);
+                currentUser.setLightAvatarHash(newHash);
             }
 
 

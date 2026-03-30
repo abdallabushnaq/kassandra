@@ -187,7 +187,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                                 .set("object-fit", "cover")
                                 .set("display", "inline-block")
                                 .set("margin-right", "12px");
-                        if (product.getAvatarHash() != null && !product.getAvatarHash().isEmpty()) {
+                        if (product.getLightAvatarHash() != null && !product.getLightAvatarHash().isEmpty()) {
                             boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
                             avatar.setSrc(product.getAvatarUrl(isDark));
                         }

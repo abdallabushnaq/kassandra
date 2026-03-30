@@ -40,9 +40,9 @@ import java.util.Objects;
         property = "id")
 public class Product extends AbstractTimeAware implements Comparable<Product> {
 
-    private String        avatarHash;
     private String        darkAvatarHash;
     private Long          id;
+    private String        lightAvatarHash;
     private String        name;
     @JsonIgnore
     @ToString.Exclude//help intellij debugger not to go into a loop
@@ -72,8 +72,8 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
             return "/frontend/dark-avatar-proxy/product/" + id + "?h=" + darkAvatarHash;
         }
         String url = "/frontend/avatar-proxy/product/" + id;
-        if (avatarHash != null && !avatarHash.isEmpty()) {
-            url += "?h=" + avatarHash;
+        if (lightAvatarHash != null && !lightAvatarHash.isEmpty()) {
+            url += "?h=" + lightAvatarHash;
         }
         return url;
     }
@@ -89,36 +89,8 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
         return getAvatarUrl(false);
     }
 
-    /**
-     * Return the default negative prompt used when generating light-background avatars.
-     *
-     * @return The default negative prompt string
-     */
-    @JsonIgnore
-    public static String getDefaultAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT;
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This provides a consistent prompt format for product avatars.
-     *
-     * @return A default prompt string for generating product avatar images
-     */
-    @JsonIgnore
-    public String getDefaultAvatarPrompt() {
-        return getDefaultAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This static method provides a consistent prompt format for product avatars.
-     *
-     * @param productName The name of the product
-     * @return A default prompt string for generating product avatar images
-     */
-    public static String getDefaultAvatarPrompt(String productName) {
-        return "Icon representing the product '" + productName + "', studio lighting, macro photography, sharp focus, high resolution, 4K" + AvatarService.LIGHT_PROMPT_SUFFIX;
+    private static String getDefaultAvatarPrompt(String productName) {
+        return "Detailed representation of '" + productName + "', studio lighting, reflective highlights, high detail, 8k resolution, 50mm lens";
     }
 
     /**
@@ -127,7 +99,7 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
      * @return The default dark negative prompt string
      */
     public static String getDefaultDarkAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT;
+        return StableDiffusionService.NEGATIVE_PROMPT + ", person";
     }
 
     /**
@@ -148,6 +120,38 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
      */
     public static String getDefaultDarkAvatarPrompt(String productName) {
         return getDefaultAvatarPrompt(productName) + AvatarService.DARK_PROMPT_SUFFIX;
+    }
+
+    /**
+     * Return the default negative prompt used when generating light-background avatars.
+     *
+     * @return The default negative prompt string
+     */
+    @JsonIgnore
+    public static String getDefaultLightAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT + ", person";
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This provides a consistent prompt format for product avatars.
+     *
+     * @return A default prompt string for generating product avatar images
+     */
+    @JsonIgnore
+    public String getDefaultLightAvatarPrompt() {
+        return getDefaultLightAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This static method provides a consistent prompt format for product avatars.
+     *
+     * @param productName The name of the product
+     * @return A default prompt string for generating product avatar images
+     */
+    public static String getDefaultLightAvatarPrompt(String productName) {
+        return getDefaultAvatarPrompt(productName) + AvatarService.LIGHT_PROMPT_SUFFIX;
     }
 
     @JsonIgnore

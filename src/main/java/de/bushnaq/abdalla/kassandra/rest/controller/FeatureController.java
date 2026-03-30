@@ -105,10 +105,10 @@ public class FeatureController {
     public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable Long id) {
         return featureAvatarRepository.findByFeatureId(id)
                 .map(avatar -> {
-                    if (avatar.getAvatarImage() == null || avatar.getAvatarImage().length == 0) {
+                    if (avatar.getLightAvatarImage() == null || avatar.getLightAvatarImage().length == 0) {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
                     }
-                    return ResponseEntity.ok(new AvatarWrapper(avatar.getAvatarImage()));
+                    return ResponseEntity.ok(new AvatarWrapper(avatar.getLightAvatarImage()));
                 })
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
@@ -128,7 +128,7 @@ public class FeatureController {
                     byte[] imageBytes = avatar.getDarkAvatarImage();
                     if (imageBytes == null || imageBytes.length == 0) {
                         // Fall back to light image when dark variant not yet generated
-                        imageBytes = avatar.getAvatarImage();
+                        imageBytes = avatar.getLightAvatarImage();
                     }
                     if (imageBytes == null || imageBytes.length == 0) {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
@@ -146,18 +146,18 @@ public class FeatureController {
         // Get avatar images (light + dark)
         featureAvatarRepository.findByFeatureId(id)
                 .ifPresent(avatar -> {
-                    response.setAvatarImage(avatar.getAvatarImage());
+                    response.setLightAvatarImage(avatar.getLightAvatarImage());
                     response.setDarkAvatarImage(avatar.getDarkAvatarImage());
                 });
 
         // Get generation data (originals + prompt)
         featureAvatarGenerationDataRepository.findByFeatureId(id)
                 .ifPresent(genData -> {
-                    response.setAvatarImageOriginal(genData.getAvatarImageOriginal());
+                    response.setLightAvatarImageOriginal(genData.getLightAvatarImageOriginal());
                     response.setDarkAvatarImageOriginal(genData.getDarkAvatarImageOriginal());
-                    response.setAvatarPrompt(genData.getAvatarPrompt());
+                    response.setLightAvatarPrompt(genData.getLightAvatarPrompt());
                     response.setDarkAvatarPrompt(genData.getDarkAvatarPrompt());
-                    response.setAvatarNegativePrompt(genData.getAvatarNegativePrompt());
+                    response.setLightAvatarNegativePrompt(genData.getLightAvatarNegativePrompt());
                     response.setDarkAvatarNegativePrompt(genData.getDarkAvatarNegativePrompt());
                 });
 
@@ -212,11 +212,11 @@ public class FeatureController {
         FeatureDAO feature = featureOpt.get();
 
         // Update or create light avatar image
-        if (request.getAvatarImage() != null && request.getAvatarImage().length != 0) {
+        if (request.getLightAvatarImage() != null && request.getLightAvatarImage().length != 0) {
             FeatureAvatarDAO avatar = featureAvatarRepository.findByFeatureId(id)
                     .orElse(new FeatureAvatarDAO());
             avatar.setFeatureId(id);
-            avatar.setAvatarImage(request.getAvatarImage());
+            avatar.setLightAvatarImage(request.getLightAvatarImage());
             featureAvatarRepository.save(avatar);
         }
 
@@ -233,31 +233,31 @@ public class FeatureController {
         }
 
         // Update or create generation data (light + dark originals + prompts)
-        if (request.getAvatarImageOriginal() != null || request.getDarkAvatarImageOriginal() != null
-                || request.getAvatarPrompt() != null || request.getDarkAvatarPrompt() != null
-                || request.getAvatarNegativePrompt() != null || request.getDarkAvatarNegativePrompt() != null) {
+        if (request.getLightAvatarImageOriginal() != null || request.getDarkAvatarImageOriginal() != null
+                || request.getLightAvatarPrompt() != null || request.getDarkAvatarPrompt() != null
+                || request.getLightAvatarNegativePrompt() != null || request.getDarkAvatarNegativePrompt() != null) {
             FeatureAvatarGenerationDataDAO genData = featureAvatarGenerationDataRepository.findByFeatureId(id)
                     .orElse(new FeatureAvatarGenerationDataDAO());
             genData.setFeatureId(id);
 
-            if (request.getAvatarImageOriginal() != null && request.getAvatarImageOriginal().length != 0) {
-                genData.setAvatarImageOriginal(request.getAvatarImageOriginal());
+            if (request.getLightAvatarImageOriginal() != null && request.getLightAvatarImageOriginal().length != 0) {
+                genData.setLightAvatarImageOriginal(request.getLightAvatarImageOriginal());
             }
 
             if (request.getDarkAvatarImageOriginal() != null && request.getDarkAvatarImageOriginal().length != 0) {
                 genData.setDarkAvatarImageOriginal(request.getDarkAvatarImageOriginal());
             }
 
-            if (request.getAvatarPrompt() != null) {
-                genData.setAvatarPrompt(request.getAvatarPrompt());
+            if (request.getLightAvatarPrompt() != null) {
+                genData.setLightAvatarPrompt(request.getLightAvatarPrompt());
             }
 
             if (request.getDarkAvatarPrompt() != null) {
                 genData.setDarkAvatarPrompt(request.getDarkAvatarPrompt());
             }
 
-            if (request.getAvatarNegativePrompt() != null) {
-                genData.setAvatarNegativePrompt(request.getAvatarNegativePrompt());
+            if (request.getLightAvatarNegativePrompt() != null) {
+                genData.setLightAvatarNegativePrompt(request.getLightAvatarNegativePrompt());
             }
 
             if (request.getDarkAvatarNegativePrompt() != null) {

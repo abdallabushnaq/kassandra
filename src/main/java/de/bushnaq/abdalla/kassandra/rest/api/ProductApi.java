@@ -243,12 +243,12 @@ public class ProductApi extends AbstractApi {
         AvatarUpdateRequest request = new AvatarUpdateRequest();
 
         if (resizedImage != null) {
-            request.setAvatarImage(resizedImage);
+            request.setLightAvatarImage(resizedImage);
         }
         if (originalImage != null) {
-            request.setAvatarImageOriginal(originalImage);
+            request.setLightAvatarImageOriginal(originalImage);
         }
-        request.setAvatarPrompt(prompt);
+        request.setLightAvatarPrompt(prompt);
         if (darkResizedImage != null) {
             request.setDarkAvatarImage(darkResizedImage);
         }
@@ -256,7 +256,7 @@ public class ProductApi extends AbstractApi {
             request.setDarkAvatarImageOriginal(darkOriginalImage);
         }
         request.setDarkAvatarPrompt(darkPrompt);
-        request.setAvatarNegativePrompt(negativePrompt);
+        request.setLightAvatarNegativePrompt(negativePrompt);
         request.setDarkAvatarNegativePrompt(darkNegativePrompt);
 
         executeWithErrorHandling(() -> restTemplate.exchange(

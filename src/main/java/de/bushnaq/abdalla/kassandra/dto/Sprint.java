@@ -49,7 +49,6 @@ import java.util.Map;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
 
-    private       String          avatarHash;
     @JsonIgnore
     private       ProjectCalendar calendar;
     private       String          darkAvatarHash;
@@ -61,6 +60,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     private       Feature         feature;
     private       Long            featureId;
     private       Long            id;
+    private       String          lightAvatarHash;
     private       String          name;
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
@@ -164,41 +164,14 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
         }
         // Light variant (or dark fallback when dark avatar not yet available)
         String url = "/frontend/avatar-proxy/sprint/" + id;
-        if (avatarHash != null && !avatarHash.isEmpty()) {
-            url += "?h=" + avatarHash;
+        if (lightAvatarHash != null && !lightAvatarHash.isEmpty()) {
+            url += "?h=" + lightAvatarHash;
         }
         return url;
     }
 
-    /**
-     * Return the default negative prompt used when generating light-background avatars.
-     *
-     * @return The default negative prompt string
-     */
-    public static String getDefaultAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT;
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This provides a consistent prompt format for sprint avatars.
-     *
-     * @return A default prompt string for generating sprint avatar images
-     */
-    @JsonIgnore
-    public String getDefaultAvatarPrompt() {
-        return getDefaultAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This static method provides a consistent prompt format for sprint avatars.
-     *
-     * @param sprintName The name of the sprint
-     * @return A default prompt string for generating sprint avatar images
-     */
-    public static String getDefaultAvatarPrompt(String sprintName) {
-        return "Icon representing the development sprint '" + sprintName + "', studio lighting, macro photography, sharp focus, high resolution, 4K" + AvatarService.LIGHT_PROMPT_SUFFIX;
+    private static String getDefaultAvatarPrompt(String sprintName) {
+        return "Icon representing the development sprint '" + sprintName + "', studio lighting, macro photography, sharp focus, high resolution, 4K";
     }
 
     /**
@@ -228,6 +201,37 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
      */
     public static String getDefaultDarkAvatarPrompt(String sprintName) {
         return getDefaultAvatarPrompt(sprintName) + AvatarService.DARK_PROMPT_SUFFIX;
+    }
+
+    /**
+     * Return the default negative prompt used when generating light-background avatars.
+     *
+     * @return The default negative prompt string
+     */
+    public static String getDefaultLightAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT;
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This provides a consistent prompt format for sprint avatars.
+     *
+     * @return A default prompt string for generating sprint avatar images
+     */
+    @JsonIgnore
+    public String getDefaultLightAvatarPrompt() {
+        return getDefaultLightAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This static method provides a consistent prompt format for sprint avatars.
+     *
+     * @param sprintName The name of the sprint
+     * @return A default prompt string for generating sprint avatar images
+     */
+    public static String getDefaultLightAvatarPrompt(String sprintName) {
+        return getDefaultAvatarPrompt(sprintName) + AvatarService.LIGHT_PROMPT_SUFFIX;
     }
 
     @JsonIgnore

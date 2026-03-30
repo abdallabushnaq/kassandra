@@ -51,7 +51,6 @@ import java.util.stream.Collectors;
 public class User extends AbstractTimeAware implements Comparable<User> {
     @JsonManagedReference
     private List<Availability> availabilities = new ArrayList<>();
-    private String             avatarHash;
     @JsonIgnore
     private ProjectCalendar    calendar;
     private Color              color;
@@ -60,6 +59,7 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     private LocalDate          firstWorkingDay;
     private Long               id;
     private LocalDate          lastWorkingDay;
+    private String             lightAvatarHash;
     @JsonManagedReference
     private List<Location>     locations      = new ArrayList<>();
     private String             name;
@@ -126,8 +126,8 @@ public class User extends AbstractTimeAware implements Comparable<User> {
         }
         // Light variant (or dark fallback when dark avatar not yet available)
         String url = "/frontend/avatar-proxy/user/" + id;
-        if (avatarHash != null && !avatarHash.isEmpty()) {
-            url += "?h=" + avatarHash;
+        if (lightAvatarHash != null && !lightAvatarHash.isEmpty()) {
+            url += "?h=" + lightAvatarHash;
         }
         return url;
     }
@@ -143,35 +143,8 @@ public class User extends AbstractTimeAware implements Comparable<User> {
         return getAvatarUrl(false);
     }
 
-    /**
-     * Return the default negative prompt used when generating light-background avatars.
-     *
-     * @return The default negative prompt string
-     */
-    public static String getDefaultAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT;
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This provides a consistent prompt format for user avatars.
-     *
-     * @return A default prompt string for generating user avatar images
-     */
-    @JsonIgnore
-    public String getDefaultAvatarPrompt() {
-        return getDefaultAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This static method provides a consistent prompt format for user avatars.
-     *
-     * @param userName The name of the user
-     * @return A default prompt string for generating user avatar images
-     */
-    public static String getDefaultAvatarPrompt(String userName) {
-        return "close-up portrait of '" + userName + "' for a profile picture, photo quality, sharp focus, high resolution, 4K" + AvatarService.LIGHT_PROMPT_SUFFIX;
+    private static String getDefaultAvatarPrompt(String userName) {
+        return "close-up portrait of '" + userName + "' for a profile picture, photo quality, sharp focus, high resolution, 8k resolution, 50mm lens";
     }
 
     /**
@@ -202,6 +175,37 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     @JsonIgnore
     public static String getDefaultDarkAvatarPrompt(String userName) {
         return getDefaultAvatarPrompt(userName) + AvatarService.DARK_PROMPT_SUFFIX;
+    }
+
+    /**
+     * Return the default negative prompt used when generating light-background avatars.
+     *
+     * @return The default negative prompt string
+     */
+    public static String getDefaultLightAvatarNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT;
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This provides a consistent prompt format for user avatars.
+     *
+     * @return A default prompt string for generating user avatar images
+     */
+    @JsonIgnore
+    public String getDefaultLightAvatarPrompt() {
+        return getDefaultLightAvatarPrompt(name);
+    }
+
+    /**
+     * Generate a default avatar prompt for AI image generation.
+     * This static method provides a consistent prompt format for user avatars.
+     *
+     * @param userName The name of the user
+     * @return A default prompt string for generating user avatar images
+     */
+    public static String getDefaultLightAvatarPrompt(String userName) {
+        return getDefaultAvatarPrompt(userName) + AvatarService.LIGHT_PROMPT_SUFFIX;
     }
 
     @JsonIgnore

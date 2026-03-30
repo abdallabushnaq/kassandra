@@ -426,25 +426,25 @@ public class ProductDialog extends Dialog {
     private void openImagePromptDialog() {
         // Use stored prompt if available, otherwise generate default prompt
         String defaultPrompt;
-        if (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarPrompt() != null && !avatarUpdateRequest.getAvatarPrompt().isEmpty()) {
-            defaultPrompt = avatarUpdateRequest.getAvatarPrompt();
+        if (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarPrompt() != null && !avatarUpdateRequest.getLightAvatarPrompt().isEmpty()) {
+            defaultPrompt = avatarUpdateRequest.getLightAvatarPrompt();
         } else {
-            defaultPrompt = Product.getDefaultAvatarPrompt(nameField.getValue());
+            defaultPrompt = Product.getDefaultLightAvatarPrompt(nameField.getValue());
         }
 
         String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarPrompt()
                 : Product.getDefaultDarkAvatarPrompt(nameField.getValue());
 
-        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getAvatarNegativePrompt() != null && !avatarUpdateRequest.getAvatarNegativePrompt().isEmpty())
-                ? avatarUpdateRequest.getAvatarNegativePrompt()
-                : Product.getDefaultAvatarNegativePrompt();
+        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarNegativePrompt() != null && !avatarUpdateRequest.getLightAvatarNegativePrompt().isEmpty())
+                ? avatarUpdateRequest.getLightAvatarNegativePrompt()
+                : Product.getDefaultLightAvatarNegativePrompt();
 
         String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
                 : Product.getDefaultDarkAvatarNegativePrompt();
 
-        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getAvatarImageOriginal() != null && avatarUpdateRequest.getAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getAvatarImageOriginal() : null;
+        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarImageOriginal() != null && avatarUpdateRequest.getLightAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getLightAvatarImageOriginal() : null;
         byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
                 avatarService,
@@ -490,7 +490,7 @@ public class ProductDialog extends Dialog {
 
         if (avatarImage != null) {
             String newHash = AvatarUtil.computeHash(avatarImage);
-            productToSave.setAvatarHash(newHash);
+            productToSave.setLightAvatarHash(newHash);
         } else if (avatarUpdateRequest == null) {
             //generate default avatar if none exists
             GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("cube");
@@ -498,7 +498,7 @@ public class ProductDialog extends Dialog {
             avatarImageOriginal = image.getOriginalImage();
             avatarPrompt        = image.getPrompt();
             String newHash = AvatarUtil.computeHash(image.getResizedImage());
-            productToSave.setAvatarHash(newHash);
+            productToSave.setLightAvatarHash(newHash);
             // Also generate a dark default programmatically
             GeneratedImageResult darkImage = stableDiffusionService.generateDefaultDarkAvatar("cube");
             darkAvatarImage         = darkImage.getResizedImage();

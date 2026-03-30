@@ -66,7 +66,7 @@ public class ProductTools {
         Product product = new Product();
         product.setName(name);
         if (avatarPrompt == null || avatarPrompt.isEmpty()) {
-            avatarPrompt = product.getDefaultAvatarPrompt();
+            avatarPrompt = product.getDefaultLightAvatarPrompt();
         }
         GeneratedImageResult image;
         if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
@@ -80,7 +80,7 @@ public class ProductTools {
             log.warn("Stable Diffusion not available, using default avatar for product: {}", name);
             image = stableDiffusionService.generateDefaultAvatar("cube");
         }
-        product.setAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+        product.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         Product savedProduct = productApi.persist(product);
         ToolActivityContextHolder.reportActivity("created product '" + savedProduct.getName() + "' with ID: " + savedProduct.getId());
         return ProductDto.from(savedProduct);
@@ -108,7 +108,7 @@ public class ProductTools {
     }
 
     private @NonNull GeneratedImageResult generateProductAvatar(String name) throws StableDiffusionException {
-        String prompt = Product.getDefaultAvatarPrompt(name);
+        String prompt = Product.getDefaultLightAvatarPrompt(name);
         log.trace("Generating image for product: {} with prompt: {}", name, prompt);
         return stableDiffusionService.text2ImgWithOriginal(prompt);
     }
