@@ -79,7 +79,7 @@ public class GlobalAiFilter<T> extends HorizontalLayout {
         this.filterMapper = mapper;
 
         setAlignItems(FlexComponent.Alignment.CENTER);
-        setSpacing(true);
+        setSpacing(false);
 
         // Create search field
         searchField = new TextField();

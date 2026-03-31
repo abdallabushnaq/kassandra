@@ -17,18 +17,15 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Main;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -59,7 +56,9 @@ public abstract class AbstractMainGrid<T> extends Main {
      * callers can append extra buttons after construction.
      */
     private       HorizontalLayout    lastHeaderRightLayout;
-    /** Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}. */
+    /**
+     * Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}.
+     */
     private       Registration        themeChangedRegistration;
 
     public AbstractMainGrid(Clock clock) {
@@ -415,28 +414,27 @@ public abstract class AbstractMainGrid<T> extends Main {
             String entityType) {
 
         HorizontalLayout headerLayout = new HorizontalLayout();
+        headerLayout.setId("page-layout");
         headerLayout.setWidthFull();
         headerLayout.setPadding(false);
+        headerLayout.setSpacing(false);
         headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         headerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         // Create page title with icon
         HorizontalLayout titleLayout = new HorizontalLayout();
-        titleLayout.setSpacing(true);
+        titleLayout.setSpacing(false);
         titleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        H2 pageTitle = new H2(title);
+        H3 pageTitle = new H3(title);
         pageTitle.setId(titleId);
-        pageTitle.addClassNames(
-                LumoUtility.Margin.Top.MEDIUM,
-                LumoUtility.Margin.Bottom.SMALL
-        );
+        pageTitle.addClassNames(LumoUtility.Margin.NONE);
 
         titleLayout.add(titleIcon, pageTitle);
 
         // Right side with smart global filter, row counter (if grid provided) and create button
         HorizontalLayout rightLayout = new HorizontalLayout();
-        rightLayout.setSpacing(true);
+        rightLayout.setSpacing(false);
         rightLayout.setAlignItems(FlexComponent.Alignment.CENTER);
 
         // Add smart global filter if provided
@@ -480,7 +478,7 @@ public abstract class AbstractMainGrid<T> extends Main {
 
         rightLayout.add(createButton);
         headerLayout.add(titleLayout, rightLayout);
-        headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
+//        headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
         // Store for addHeaderButton() callers
         lastHeaderRightLayout = rightLayout;
         return headerLayout;

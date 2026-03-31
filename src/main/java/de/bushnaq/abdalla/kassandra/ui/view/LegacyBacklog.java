@@ -60,7 +60,7 @@ import java.util.Set;
 
 @Route(value = "legacy-backlog", layout = MainLayout.class)
 @PageTitle("Legacy Backlog")
-@Menu(order = 13, icon = "vaadin:grid-v", title = "Legacy Backlog")
+//@Menu(order = 13, icon = "vaadin:grid-v", title = "Legacy Backlog")
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
 @Log4j2
