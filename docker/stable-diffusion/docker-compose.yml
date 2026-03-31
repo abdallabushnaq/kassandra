@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   stable-diffusion:
     image: johnguan/stable-diffusion-webui
@@ -7,8 +5,8 @@ services:
     ports:
       - "7861:7860"
     volumes:
-      - ./models/Stable-diffusion:/data/models/Stable-diffusion
-      - ./models/Lora:/data/models/Lora
+      - sd-models-stable-diffusion:/data/models/Stable-diffusion
+      - sd-models-lora:/data/models/Lora
       #- sd-outputs:/app/stable-diffusion-webui/outputs
     environment:
       # CLI arguments for the WebUI
@@ -27,3 +25,10 @@ services:
               capabilities: [ gpu ]
     restart: unless-stopped
 
+volumes:
+  sd-models-stable-diffusion:
+    external: true
+    name: sd-models-stable-diffusion
+  sd-models-lora:
+    external: true
+    name: sd-models-lora
