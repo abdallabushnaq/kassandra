@@ -111,7 +111,7 @@ public class OidcSecurityConfig {
             // Configure OAuth2 login with custom OIDC user service
             http.oauth2Login(oauth2Config -> {
                 oauth2Config.loginPage("/" + LoginView.ROUTE)
-                        .defaultSuccessUrl("/ui/product-list", true) // Redirects to ProductListView after successful OIDC login
+                        .defaultSuccessUrl("/ui/", true) // Redirects to AboutView after successful OIDC login
                         .userInfoEndpoint(userInfo -> userInfo
                                 .oidcUserService(customOidcUserService)); // Load roles ONCE during authentication
             });

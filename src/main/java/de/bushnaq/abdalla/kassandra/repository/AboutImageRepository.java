@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,23 +15,15 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ui.view;
+package de.bushnaq.abdalla.kassandra.repository;
 
-import com.vaadin.flow.component.UI;
+import de.bushnaq.abdalla.kassandra.dao.AboutImageDAO;
+import org.springframework.data.repository.ListCrudRepository;
 
 /**
- * Kept for backwards compatibility.
- * The default landing page is now {@link AboutView}.
+ * Spring Data repository for {@link AboutImageDAO}.
+ * The table holds a single row ({@code id = 1}); only {@code findById} and {@code save} are needed.
  */
-public final class MainView {
-
-    private MainView() {
-    }
-
-    /**
-     * Navigates to the default landing page ({@link AboutView}).
-     */
-    public static void showMainView() {
-        UI.getCurrent().navigate(AboutView.class);
-    }
+public interface AboutImageRepository extends ListCrudRepository<AboutImageDAO, Long> {
 }
+

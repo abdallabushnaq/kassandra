@@ -54,7 +54,10 @@ tbd
 25. ❌ show product, versions, features, in quality view
 26. ✅ show Versions, Features, Sprints pages in menu
 27. ❌ can we run browser in full screen mode?
-28. ❌ data scenario simulation generator
+28. ❌ add about box.
+29. ❌ test should nto create one user with avatar.
+30. ❌ optimaze AbstractEntityGenrator avatar generation code.
+31. ❌ data scenario simulation generator
     1. ✅ Simulator Write the use case as a Story in the project or product
     2. ❌ include closed and delayed sprints.
 

@@ -3,11 +3,9 @@
 1. rename all mcp tpo IDs
 2. GENERATOR. ensure some projects show delay, are not started or are finished closed.
 3. add better error handling in api.
-4. add ability to edit or delete a worklog.
-5. remove default test password from AbstractApi.
-6. make sure getAll will filter via alc in db, not in memory.
-7. need ability to delete a task/story.
-8. in case a user wants to remove himself from the ACL, we automatically add him back. you cannot remove yourself from
+4. remove default test password from AbstractApi.
+5. make sure getAll will filter via alc in db, not in memory.
+6. in case a user wants to remove himself from the ACL, we automatically add him back. you cannot remove yourself from
    ACL.
 
 ## Feature
@@ -16,29 +14,16 @@
 
 # Bugs
 
-1. StoriesAndTasksIntroductionVideo setting Grace Martin as resource is very slow after first time.
-2. StoriesAndTasksIntroductionVideo, some exceptions happen
-3.
-4. add gantt buffer calculation.
-5. editing estimation will not change gantt chart task duration.
-6. new task at the end will not take over last user assignment.
-7. sometimes adding a story and two tasks will add additionally one task.
-8. changing assignment must also change hidden dependencies
-9. some tests fail with java.awt.HeadlessException.
-10. users are retired by their name instead of their email address.
-11. LocationDialog not showing errors in dialog.
-12. AvailabilityTest.userSecurity() generates several exceptions on server side that the test does not catch.
-13. gantt resource leveling fails sometimes with circular dependency error.
-14. fix resource leveling not handling dependency to later story.
-15. gantt calendar too light.
-16. gantt calendar should be using sprint calendar.
-17. some ai filter test fail all the time, as the tests are vague.
-18. fix none humanized version of setMultiSelectComboBoxValue.
-19. TaskGrid user colors are fake.
-20. quick edit dependencies does nto work.
-21. adding a dependency from story to milestone will not move the story.
-22. SPrintDialog save will only save light avatar hash
-23. many place only reference lightAvatar, but not dark.
+1. new task at the end will not take over last user assignment.
+2. users are retired by their name instead of their email address.
+3. LocationDialog not showing errors in dialog.
+4. AvailabilityTest.userSecurity() generates several exceptions on server side that the test does not catch.
+5. fix resource leveling not handling dependency to later story.
+6. gantt calendar should be using sprint calendar.
+7. TaskGrid user colors are fake.
+8. adding a dependency from story to milestone will not move the story.
+9. SprintDialog save will only save light avatar hash
+10. many places only reference lightAvatar, but not dark.
 
 # Failing Tests
 

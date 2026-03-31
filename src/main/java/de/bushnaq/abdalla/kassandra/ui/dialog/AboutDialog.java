@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,23 +15,16 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.ui.view;
-
-import com.vaadin.flow.component.UI;
+package de.bushnaq.abdalla.kassandra.ui.dialog;
 
 /**
- * Kept for backwards compatibility.
- * The default landing page is now {@link AboutView}.
+ * Removed. The About page is now {@link de.bushnaq.abdalla.kassandra.ui.view.AboutView}.
+ *
+ * @deprecated replaced by {@code AboutView}
  */
-public final class MainView {
+@Deprecated
+public final class AboutDialog {
 
-    private MainView() {
-    }
-
-    /**
-     * Navigates to the default landing page ({@link AboutView}).
-     */
-    public static void showMainView() {
-        UI.getCurrent().navigate(AboutView.class);
+    private AboutDialog() {
     }
 }

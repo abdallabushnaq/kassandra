@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.view.util;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
 import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
@@ -364,7 +365,7 @@ public class ProductListViewTester extends AbstractViewTester {
 
                     // Wait for redirect back
 //                    System.out.println("OIDC Login: Waiting for redirect back to application");
-                    seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+                    seleniumHandler.waitForElementToBeClickable(AboutView.ABOUT_PAGE_TITLE);
 //                    System.out.println("OIDC Login: Successfully logged in with OIDC");
                 } catch (Exception e) {
                     log.error("OIDC Login: Error during Keycloak login: " + e.getMessage());

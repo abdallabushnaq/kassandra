@@ -209,7 +209,7 @@ public class SecurityConfig {
         // Configure form login for test users
         http.formLogin(form -> form
                 .loginPage("/" + LoginView.ROUTE)
-                .defaultSuccessUrl("/ui/product-list", true)
+                .defaultSuccessUrl("/ui/", true)
                 .permitAll()
         );
 

@@ -45,6 +45,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
+import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
 import jakarta.annotation.security.PermitAll;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -73,14 +74,16 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public static final String           ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
     public static final String           ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
     public static final String           ID_USER_MENU_MANAGE_USER_GROUPS = "main-layout-user-menu-manage-user-groups";
+    public static final String           ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
     public static final String           ID_USER_MENU_OFF_DAYS           = "main-layout-user-menu-off-days";
     public static final String           ID_USER_MENU_VIEW_PROFILE       = "main-layout-user-menu-view-profile";
     @Getter
-    private final       Breadcrumbs      breadcrumbs                     = new Breadcrumbs();
-    private             Image            logoImage;   // Store reference to logo image
+    private final       Breadcrumbs      breadcrumbs  = new Breadcrumbs();
+    private             Div              breadcrumbContainer;
+    private             Image            logoImage;
     private final       ThemeSessionState themeSessionState;
-    private             com.vaadin.flow.component.html.Image userAvatarImage; // updated on theme toggle
-    private final       Map<Tab, String> tabToPathMap                    = new HashMap<>();
+    private             com.vaadin.flow.component.html.Image userAvatarImage;
+    private final       Map<Tab, String> tabToPathMap = new HashMap<>();
     private             Tabs             tabs;
     private final       UserApi          userApi;
 
@@ -92,8 +95,8 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         addClassName("main-layout"); // scope CSS to this layout
 
         // Create main navigation bar components
-        HorizontalLayout navbarLayout        = createNavBar();
-        Div              breadcrumbContainer = createBreadcrumbs();
+        HorizontalLayout navbarLayout = createNavBar();
+        breadcrumbContainer = createBreadcrumbs();
 
         var navAndBreadcrumbs = new VerticalLayout();
         navAndBreadcrumbs.setPadding(false);
@@ -115,12 +118,34 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
+        // Restore breadcrumbs visibility for every navigation; individual views can hide it via setBreadcrumbsVisible(false)
+        setBreadcrumbsVisible(true);
         final String pathToMatch = event.getLocation().getPath();
         tabToPathMap.forEach((tab, path) -> {
             if (("/" + pathToMatch).equals(path)) {
                 tabs.setSelectedTab(tab);
             }
         });
+    }
+
+    /**
+     * Shows or hides the breadcrumb bar below the main navigation.
+     * Called by views that do not need breadcrumb context (e.g. {@link de.bushnaq.abdalla.kassandra.ui.view.AboutView}).
+     *
+     * @param visible {@code true} to show the bar, {@code false} to hide it
+     */
+    public void setBreadcrumbsVisible(boolean visible) {
+        if (breadcrumbContainer != null) {
+            breadcrumbContainer.setVisible(visible);
+        }
+    }
+
+    /**
+     * Deselects all navigation tabs.
+     * Called by views that do not correspond to a top-level menu entry (e.g. {@link de.bushnaq.abdalla.kassandra.ui.view.AboutView}).
+     */
+    public void clearTabSelection() {
+        tabs.setSelectedTab(null);
     }
 
     private Div createBreadcrumbs() {
@@ -317,6 +342,9 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         var manageSettingsItem = userMenuItem.getSubMenu().addItem("Manage Settings");
         manageSettingsItem.setEnabled(false);
         manageSettingsItem.setId(ID_USER_MENU_MANAGE_SETTINGS);
+
+        var aboutItem = userMenuItem.getSubMenu().addItem("About", e -> UI.getCurrent().navigate(AboutView.class));
+        aboutItem.setId(ID_USER_MENU_ABOUT);
 
         var logoutItem = userMenuItem.getSubMenu().addItem("Logout", e -> logout());
         logoutItem.setId(ID_USER_MENU_LOGOUT);
