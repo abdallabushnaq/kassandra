@@ -70,14 +70,6 @@ public class StableDiffusionService {
                 .build();
 
         String currentModel = getCurrentModel();
-        if (currentModel != null) {
-//            if (!currentModel.startsWith(config.getModelName()))
-//            {
-            selectModel(config.getModelName());
-//            } else {
-//                log.info("Stable Diffusion model '{}' is already loaded", currentModel);
-//            }
-        }
         getOptions();
     }
 
@@ -520,6 +512,7 @@ public class StableDiffusionService {
     public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, String negativePrompt, int outputSize, ProgressCallback progressCallback, long seed, double denoisingStrength, double cfgScale) throws StableDiffusionException {
         log.info("Generating image-to-image with prompt: '{}', seed: {}, output: {}x{}, denoising: {}, cfgScale: {}", prompt, seed, outputSize, outputSize, denoisingStrength, cfgScale);
         try {
+            selectModel(config.getModelName());
             String resolvedNegativePrompt = (negativePrompt != null && !negativePrompt.isBlank()) ? negativePrompt : NEGATIVE_PROMPT;
             String base64Init             = java.util.Base64.getEncoder().encodeToString(initImage);
             ImageToImageRequest request = ImageToImageRequest.builder()
@@ -780,6 +773,7 @@ public class StableDiffusionService {
                 config.getGenerationSize(), config.getGenerationSize(), outputSize, outputSize);
 
         try {
+            selectModel(config.getModelName());
             // Build request
             String resolvedNegativePrompt = (negativePrompt != null && !negativePrompt.isBlank()) ? negativePrompt : NEGATIVE_PROMPT;
             ImageGenerationRequest request = ImageGenerationRequest.builder()
