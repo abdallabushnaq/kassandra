@@ -178,6 +178,177 @@ public class TaskApiTest extends AbstractUiTestUtil {
         testAllAndPrintTables();
     }
 
+    /**
+     * Verifies that deleting a leaf task (no children, no predecessor relations) removes it from the server and
+     * leaves all other data intact.
+     *
+     * @throws Exception if the REST call fails unexpectedly
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void deleteLeafTask() throws Exception {
+        Product product = addProduct("Product");
+        Version version = addVersion(product, "1.0.0");
+        Feature feature = addRandomFeature(version);
+        Sprint  sprint  = addRandomSprint(feature);
+        Task    leaf    = addTask(sprint, null, "Leaf Task", LocalDateTime.now(), Duration.ofDays(3), null, null, null);
+
+        long leafId = leaf.getId();
+
+        taskApi.deleteById(leafId);
+
+        List<Long> remainingIds = taskApi.getAll().stream().map(Task::getId).toList();
+        Assertions.assertThat(remainingIds).doesNotContain(leafId);
+
+        // Sync local state so @AfterEach validation passes
+        expectedTasks.remove(leaf);
+        sprint.getTasks().remove(leaf);
+    }
+
+    /**
+     * Verifies that deleting a parent task cascades to all descendants (children and grandchildren).
+     * After deleting the root, none of the descendant IDs should appear in {@code taskApi.getAll()}.
+     *
+     * @throws Exception if the REST call fails unexpectedly
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void deleteParentTaskDeletesDescendants() throws Exception {
+        Product product    = addProduct("Product");
+        Version version    = addVersion(product, "1.0.0");
+        Feature feature    = addRandomFeature(version);
+        Sprint  sprint     = addRandomSprint(feature);
+        Task    parent     = addTask(sprint, null, "Parent", LocalDateTime.now(), Duration.ofDays(10), null, null, null);
+        Task    child1     = addTask(sprint, parent, "Child 1", LocalDateTime.now(), Duration.ofDays(4), null, null, null);
+        Task    child2     = addTask(sprint, parent, "Child 2", LocalDateTime.now(), Duration.ofDays(3), null, null, null);
+        Task    grandchild = addTask(sprint, child1, "Grandchild", LocalDateTime.now(), Duration.ofDays(2), null, null, null);
+
+        long parentId     = parent.getId();
+        long child1Id     = child1.getId();
+        long child2Id     = child2.getId();
+        long grandchildId = grandchild.getId();
+
+        taskApi.deleteById(parentId);
+
+        List<Long> remainingIds = taskApi.getAll().stream().map(Task::getId).toList();
+        Assertions.assertThat(remainingIds).doesNotContain(parentId, child1Id, child2Id, grandchildId);
+
+        // Sync local state so @AfterEach validation passes
+        expectedTasks.removeIf(t -> {
+            long id = t.getId();
+            return id == parentId || id == child1Id || id == child2Id || id == grandchildId;
+        });
+        sprint.getTasks().removeIf(t -> {
+            long id = t.getId();
+            return id == parentId || id == child1Id || id == child2Id || id == grandchildId;
+        });
+    }
+
+    /**
+     * Verifies that deleting a task also removes inbound predecessor relations from surviving tasks.
+     * <p>
+     * Setup: taskA is a predecessor of taskB (taskB → taskA). After deleting taskA:
+     * <ul>
+     *   <li>taskA must be gone from the server.</li>
+     *   <li>taskB must still exist.</li>
+     *   <li>taskB's predecessor list must no longer reference taskA.</li>
+     * </ul>
+     *
+     * @throws Exception if the REST call fails unexpectedly
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void deleteTaskCleansInboundRelations() throws Exception {
+        Product product = addProduct("Product");
+        Version version = addVersion(product, "1.0.0");
+        Feature feature = addRandomFeature(version);
+        Sprint  sprint  = addRandomSprint(feature);
+
+        // taskB depends on taskA (taskA is a predecessor of taskB)
+        Task taskA = addTask(sprint, null, "Task A", LocalDateTime.now(), Duration.ofDays(3), null, null, null);
+        Task taskB = addTask(sprint, null, "Task B", LocalDateTime.now().plusDays(3), Duration.ofDays(3), null, null, taskA);
+
+        long aId = taskA.getId();
+        long bId = taskB.getId();
+
+        // Verify the relation exists before deletion
+        Assertions.assertThat(taskB.getPredecessors()).anyMatch(r -> r.getPredecessorId().equals(aId));
+
+        taskApi.deleteById(aId);
+
+        List<Task> remaining = taskApi.getAll();
+
+        // taskA must be gone
+        Assertions.assertThat(remaining.stream().map(Task::getId).toList()).doesNotContain(aId);
+
+        // taskB must still exist and no longer reference taskA in its predecessors
+        Task survivingB = remaining.stream()
+                .filter(t -> t.getId().equals(bId))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("taskB should still exist after deleting taskA"));
+        Assertions.assertThat(survivingB.getPredecessors()).noneMatch(r -> r.getPredecessorId().equals(aId));
+
+        // Sync local state so @AfterEach validation passes
+        expectedTasks.remove(taskA);
+        sprint.getTasks().remove(taskA);
+        // Remove the now-stale predecessor reference from the local taskB so assertTaskEquals passes
+        taskB.getPredecessors().removeIf(r -> r.getPredecessorId().equals(aId));
+    }
+
+    /**
+     * Verifies that deleting a task that owns outbound predecessor relations (taskB → taskA) leaves the
+     * referenced task (taskA) completely intact, and that the relation rows owned by taskB are
+     * removed as part of the cascade.
+     * <p>
+     * Setup: taskA has no predecessors; taskB lists taskA as its predecessor.
+     * After deleting taskB:
+     * <ul>
+     *   <li>taskB must be gone from the server.</li>
+     *   <li>taskA must still exist, unchanged.</li>
+     *   <li>No orphan relation rows should remain (verified implicitly via the {@code @AfterEach}
+     *       deep-equality check that compares expected vs. actual task state).</li>
+     * </ul>
+     *
+     * @throws Exception if the REST call fails unexpectedly
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void deleteTaskCleansOutboundRelations() throws Exception {
+        Product product = addProduct("Product");
+        Version version = addVersion(product, "1.0.0");
+        Feature feature = addRandomFeature(version);
+        Sprint  sprint  = addRandomSprint(feature);
+
+        // taskB owns the relation: taskB → taskA
+        Task taskA = addTask(sprint, null, "Task A", LocalDateTime.now(), Duration.ofDays(3), null, null, null);
+        Task taskB = addTask(sprint, null, "Task B", LocalDateTime.now().plusDays(3), Duration.ofDays(3), null, null, taskA);
+
+        long aId = taskA.getId();
+        long bId = taskB.getId();
+
+        // Verify the relation exists on taskB before deletion
+        Assertions.assertThat(taskB.getPredecessors()).anyMatch(r -> r.getPredecessorId().equals(aId));
+
+        // Delete the task that OWNS the relation (taskB), not the predecessor itself
+        taskApi.deleteById(bId);
+
+        List<Task> remaining = taskApi.getAll();
+
+        // taskB must be gone
+        Assertions.assertThat(remaining.stream().map(Task::getId).toList()).doesNotContain(bId);
+
+        // taskA must still exist and be unmodified
+        Task survivingA = remaining.stream()
+                .filter(t -> t.getId().equals(aId))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("taskA should still exist after deleting taskB"));
+        Assertions.assertThat(survivingA.getPredecessors()).isEmpty();
+
+        // Sync local state so @AfterEach validation passes
+        expectedTasks.remove(taskB);
+        sprint.getTasks().remove(taskB);
+    }
+
     @ParameterizedTest
     @MethodSource("listRandomCases")
     public void userSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {
