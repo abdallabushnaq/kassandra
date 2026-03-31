@@ -171,7 +171,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     }
 
     private static String getDefaultAvatarPrompt(String sprintName) {
-        return "Icon representing the development sprint '" + sprintName + "', studio lighting, macro photography, sharp focus, high resolution, 4K";
+        return "app icon '" + sprintName + "'" + StableDiffusionService.LORA;
     }
 
     /**

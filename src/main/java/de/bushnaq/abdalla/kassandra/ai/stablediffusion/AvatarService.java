@@ -44,7 +44,7 @@ public class AvatarService {
     /**
      * Prompt suffix appended to every light-avatar SD call.
      */
-    public static final String                LIGHT_PROMPT_SUFFIX = ", (background is totally white:3), no shadows, no gradients, no textures";
+    public static final String                LIGHT_PROMPT_SUFFIX = ", (background is white), no shadows, no gradients, no textures";
     /**
      * -- GETTER --
      * Exposes the Stable Diffusion configuration so non-Spring callers (e.g. UI dialogs)

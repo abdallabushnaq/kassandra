@@ -177,7 +177,7 @@ public class StableDiffusionServiceTest {
      */
     @Test
     public void testGenerateImage_FeatureAvatar() throws Exception {
-        String featureName        = "AI Assistant";
+        String featureName        = "Analytics";
         String lightBasePrompt    = Feature.getDefaultLightAvatarPrompt(featureName);
         String darkBasePrompt     = Feature.getDefaultDarkAvatarPrompt(featureName);
         String negativePrompt     = Feature.getDefaultLightAvatarNegativePrompt();
@@ -196,6 +196,29 @@ public class StableDiffusionServiceTest {
         assertTrue(darkResult.getResizedImage().length > 0, "Dark feature avatar should have content");
         saveTestImage(darkResult.getResizedImage(), "feature-" + featureName + "-dark.png");
         log.info("Generated dark feature avatar for '{}' with seed {} and prompt: '{}'", featureName, darkResult.getSeed(), darkResult.getPrompt());
+    }
+
+    @Test
+    public void testGenerateImage_KassandraAvatar() throws Exception {
+        String productName        = "Kassandra project management server";
+        String lightBasePrompt    = Product.getDefaultLightAvatarPrompt(productName);
+        String darkBasePrompt     = Product.getDefaultDarkAvatarPrompt(productName);
+        String negativePrompt     = Product.getDefaultLightAvatarNegativePrompt();
+        String darkNegativePrompt = Product.getDefaultDarkAvatarNegativePrompt();
+
+        // Light avatar via AvatarService
+        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt);
+        assertNotNull(lightResult.getResizedImage(), "Light product avatar should not be null");
+        assertTrue(lightResult.getResizedImage().length > 0, "Light product avatar should have content");
+        saveTestImage(lightResult.getResizedImage(), "product-" + productName + ".png");
+        log.info("Generated light product avatar for '{}' with seed {} and prompt: '{}'", productName, lightResult.getSeed(), lightResult.getPrompt());
+
+        // Dark avatar via AvatarService, pinned to the light seed
+        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, lightResult);
+        assertNotNull(darkResult.getResizedImage(), "Dark product avatar should not be null");
+        assertTrue(darkResult.getResizedImage().length > 0, "Dark product avatar should have content");
+        saveTestImage(darkResult.getResizedImage(), "product-" + productName + "-dark.png");
+        log.info("Generated dark product avatar for '{}' with seed {} and prompt: '{}'", productName, darkResult.getSeed(), darkResult.getPrompt());
     }
 
     /**

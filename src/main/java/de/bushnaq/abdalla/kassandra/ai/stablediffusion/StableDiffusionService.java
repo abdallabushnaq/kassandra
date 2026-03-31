@@ -41,7 +41,15 @@ import java.util.Base64;
 @Slf4j
 public class StableDiffusionService {
 
-    public static final String                  NEGATIVE_PROMPT = "blurry, (nsfw), distorted, low quality, ugly, deformed, bad anatomy, (worst quality, low quality:2), cartoon, painting, illustration";
+    //    public static final String LORA = ",<lora:appicons:1>";
+//    public static final String LORA = ",<lora:F2D:1>";
+    //    public static final String LORA = ",<lora:SDXL_icon_V2:1>";
+//    public static final String LORA = ", <lora:IconsRedmond:1>";
+//    public static final String LORA = ", <lora:IconsRedmondV2-Icons:1>";
+    public static final String LORA = ", <lora:vector_game_icons:1>";
+
+    //    public static final String                  NEGATIVE_PROMPT = "blurry, (nsfw), distorted, low quality, ugly, deformed, bad anatomy, (worst quality, low quality:2), cartoon, painting, illustration";
+    public static final String                  NEGATIVE_PROMPT = "";
     private final       StableDiffusionConfig   config;
     private final       ResourcePatternResolver resourcePatternResolver;
     private final       WebClient               webClient;
@@ -63,11 +71,12 @@ public class StableDiffusionService {
 
         String currentModel = getCurrentModel();
         if (currentModel != null) {
-            if (!currentModel.startsWith(config.getModelName())) {
-                selectModel(config.getModelName());
-            } else {
-                log.info("Stable Diffusion model '{}' is already loaded", currentModel);
-            }
+//            if (!currentModel.startsWith(config.getModelName()))
+//            {
+            selectModel(config.getModelName());
+//            } else {
+//                log.info("Stable Diffusion model '{}' is already loaded", currentModel);
+//            }
         }
         getOptions();
     }
@@ -512,7 +521,7 @@ public class StableDiffusionService {
         log.info("Generating image-to-image with prompt: '{}', seed: {}, output: {}x{}, denoising: {}, cfgScale: {}", prompt, seed, outputSize, outputSize, denoisingStrength, cfgScale);
         try {
             String resolvedNegativePrompt = (negativePrompt != null && !negativePrompt.isBlank()) ? negativePrompt : NEGATIVE_PROMPT;
-            String base64Init = java.util.Base64.getEncoder().encodeToString(initImage);
+            String base64Init             = java.util.Base64.getEncoder().encodeToString(initImage);
             ImageToImageRequest request = ImageToImageRequest.builder()
                     .prompt(prompt)
                     .negativePrompt(resolvedNegativePrompt)

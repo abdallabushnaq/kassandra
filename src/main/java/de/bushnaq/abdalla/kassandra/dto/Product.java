@@ -90,7 +90,7 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
     }
 
     private static String getDefaultAvatarPrompt(String productName) {
-        return "Detailed representation of '" + productName + "', studio lighting, reflective highlights, high detail, 8k resolution, 50mm lens";
+        return "In the style of TOK, App Icon '" + productName + "'" + StableDiffusionService.LORA;
     }
 
     /**

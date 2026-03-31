@@ -90,7 +90,7 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
     }
 
     private static String getDefaultAvatarPrompt(String featureName) {
-        return "Detailed representation of  '" + featureName + "', studio lighting, reflective highlights, high detail, 8k resolution, 50mm lens";
+        return "app icon '" + featureName + "'" + StableDiffusionService.LORA;
     }
 
     /**
