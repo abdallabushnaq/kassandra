@@ -34,12 +34,14 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.DependencyDialog;
 import de.bushnaq.abdalla.util.ColorUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -58,24 +60,25 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class TaskGrid extends TreeGrid<Task> {
-    public static final String                       TASK_GRID_ASSIGNED_PREFIX           = "task-grid-assigned-";
-    public static final String                       TASK_GRID_DEPENDENCY_PREFIX         = "task-grid-dependency-";
-    public static final String                       TASK_GRID_ID_PREFIX                 = "task-grid-id-";
-    public static final String                       TASK_GRID_KEY_PREFIX                = "task-grid-key-";
-    public static final String                       TASK_GRID_MANUALLY_SCHEDULED_PREFIX = "task-grid-manually-scheduled-";
-    public static final String                       TASK_GRID_MAX_EST_PREFIX            = "task-grid-max-est-";
-    public static final String                       TASK_GRID_MIN_EST_PREFIX            = "task-grid-min-est-";
-    public static final String                       TASK_GRID_NAME_PREFIX               = "task-grid-name-";
-    public static final String                       TASK_GRID_PARENT_PREFIX             = "task-grid-parent-";
-    public static final String                       TASK_GRID_START_PREFIX              = "task-grid-start-";
-    private final       List<User>                   allUsers                            = new ArrayList<>();
-    private final       TaskClipboardHandler         clipboardHandler;
-    private final       Clock                        clock;
+    public static final String                            TASK_GRID_ASSIGNED_PREFIX           = "task-grid-assigned-";
+    public static final String                            TASK_GRID_DELETE_BUTTON_PREFIX      = "task-grid-delete-button-prefix-";
+    public static final String                            TASK_GRID_DEPENDENCY_PREFIX         = "task-grid-dependency-";
+    public static final String                            TASK_GRID_ID_PREFIX                 = "task-grid-id-";
+    public static final String                            TASK_GRID_KEY_PREFIX                = "task-grid-key-";
+    public static final String                            TASK_GRID_MANUALLY_SCHEDULED_PREFIX = "task-grid-manually-scheduled-";
+    public static final String                            TASK_GRID_MAX_EST_PREFIX            = "task-grid-max-est-";
+    public static final String                            TASK_GRID_MIN_EST_PREFIX            = "task-grid-min-est-";
+    public static final String                            TASK_GRID_NAME_PREFIX               = "task-grid-name-";
+    public static final String                            TASK_GRID_PARENT_PREFIX             = "task-grid-parent-";
+    public static final String                            TASK_GRID_START_PREFIX              = "task-grid-start-";
+    private final       List<User>                        allUsers                            = new ArrayList<>();
+    private final       TaskClipboardHandler              clipboardHandler;
+    private final       Clock                             clock;
     @Setter
-    private             CrossGridDragDropCoordinator dragDropCoordinator; // Coordinator for cross-grid drag & drop
-    private             String                       dragMode;
-    private             Task                         draggedTask;          // Track the currently dragged task
-    private final       DateTimeFormatter            dtfymdhm                            = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
+    private             CrossGridDragDropCoordinator      dragDropCoordinator; // Coordinator for cross-grid drag & drop
+    private             String                            dragMode;
+    private             Task                              draggedTask;          // Track the currently dragged task
+    private final       DateTimeFormatter                 dtfymdhm                            = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm");
     /**
      * -- SETTER --
      * Set whether items should be expanded initially when data is loaded.
@@ -84,26 +87,28 @@ public class TaskGrid extends TreeGrid<Task> {
      * @param expandInitially true to expand all items initially, false to keep them collapsed
      */
     @Setter
-    private             boolean                      expandInitially                     = true; // Control whether to expand all items on first load
-    private final       Set<Long>                    expandedTaskIds                     = new HashSet<>(); // Track expanded task IDs for state preservation
-    private             String                       externalDragMode;     // Drag mode from external grid
-    private             TaskGrid                     externalDragSource;   // Source grid for cross-grid drags
-    private             Task                         externalDraggedTask;  // Task being dragged from another grid
-    private             boolean                      isCtrlKeyPressed                    = false; // Track if Ctrl key is pressed during drop
+    private             boolean                           expandInitially                     = true; // Control whether to expand all items on first load
+    private final       Set<Long>                         expandedTaskIds                     = new HashSet<>(); // Track expanded task IDs for state preservation
+    private             String                            externalDragMode;     // Drag mode from external grid
+    private             TaskGrid                          externalDragSource;   // Source grid for cross-grid drags
+    private             Task                              externalDraggedTask;  // Task being dragged from another grid
+    private             boolean                           isCtrlKeyPressed                    = false; // Track if Ctrl key is pressed during drop
     @Getter
     @Setter
-    private             boolean                      isEditMode                          = false;// Edit mode state management
-    private             boolean                      isFirstLoad                         = true; // Track if this is the first data load for current sprint
-    private final       JsonMapper                   jsonMapper;
-    private final       Locale                       locale;
+    private             boolean                           isEditMode                          = false;// Edit mode state management
+    private             boolean                           isFirstLoad                         = true; // Track if this is the first data load for current sprint
+    private final       JsonMapper                        jsonMapper;
+    private final       Locale                            locale;
     @Getter
-    private final       Set<Task>                    modifiedTasks                       = new HashSet<>();
+    private final       Set<Task>                         modifiedTasks                       = new HashSet<>();
     @Setter
-    private             Runnable                     onSaveAllChangesAndRefresh;
+    private             java.util.function.Consumer<Task> onDeleteTask;
+    @Setter
+    private             Runnable                          onSaveAllChangesAndRefresh;
     @Getter
-    private             Sprint                       sprint;
+    private             Sprint                            sprint;
     @Getter
-    private             List<Task>                   taskOrder                           = new ArrayList<>(); // Track current order in memory
+    private             List<Task>                        taskOrder                           = new ArrayList<>(); // Track current order in memory
 
 
     public TaskGrid(Clock clock, Locale locale, JsonMapper jsonMapper) {
@@ -212,6 +217,69 @@ public class TaskGrid extends TreeGrid<Task> {
             addTaskAndChildren(flatList, root);
         }
         return flatList;
+    }
+
+    /**
+     * Shows a confirmation dialog before permanently deleting a task.
+     * The message is rendered as Markdown (Vaadin 25+) and lists every
+     * child task by key, plus the number of relations that will be removed.
+     * Deletion is only triggered outside of edit mode.
+     *
+     * @param task the task to delete
+     */
+    private void confirmDeleteTask(Task task) {
+        List<Task> descendants    = new ArrayList<>();
+        collectDescendants(task, descendants);
+
+        long outboundRelCount = task.getPredecessors().stream().filter(Relation::isVisible).count();
+        long inboundRelCount  = taskOrder.stream()
+                .filter(t -> !t.equals(task))
+                .flatMap(t -> t.getPredecessors().stream())
+                .filter(r -> r.isVisible() && r.getPredecessorId().equals(task.getId()))
+                .count();
+        long totalRelations = outboundRelCount + inboundRelCount;
+
+        StringBuilder md = new StringBuilder();
+        md.append("Are you sure you want to permanently delete **").append(task.getName()).append("**?\n\n");
+
+        if (!descendants.isEmpty()) {
+            md.append("The following child task(s) will also be permanently deleted:\n\n");
+            for (Task child : descendants) {
+                md.append("- **").append(child.getKey()).append("** ").append(child.getName()).append("\n");
+            }
+            md.append("\n");
+        }
+
+        if (totalRelations > 0) {
+            md.append(totalRelations).append(" relation(s) from/to **").append(task.getName())
+                    .append("** will be removed.\n\n");
+        }
+
+        md.append("*This action cannot be undone.*");
+
+        com.vaadin.flow.component.markdown.Markdown content =
+                new com.vaadin.flow.component.markdown.Markdown(md.toString());
+
+        de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog dialog =
+                new de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog("Confirm Delete", content, "Delete", () -> {
+                    if (onDeleteTask != null) {
+                        onDeleteTask.accept(task);
+                    }
+                });
+        dialog.open();
+    }
+
+    /**
+     * Recursively collects all descendant tasks (children, grandchildren, …) into {@code result}.
+     *
+     * @param task   the root task whose descendants to collect
+     * @param result the list to accumulate descendants into
+     */
+    private void collectDescendants(Task task, List<Task> result) {
+        for (Task child : task.getChildTasks()) {
+            result.add(child);
+            collectDescendants(child, result);
+        }
     }
 
     private void createGridColumns() {
@@ -744,6 +812,24 @@ public class TaskGrid extends TreeGrid<Task> {
                     return container;
                 }
             })).setHeader("Assigned").setAutoWidth(true);
+        }
+
+        // Delete action column — only visible when NOT in edit mode and task is persisted
+        {
+            addComponentColumn((Task task) -> {
+                if (isEditMode || task.getId() == null || onDeleteTask == null) {
+                    return new Div(); // Hidden placeholder
+                }
+                Button deleteButton = new Button(VaadinIcon.TRASH.create());
+                deleteButton.setId(TASK_GRID_DELETE_BUTTON_PREFIX + task.getName());
+                deleteButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
+                deleteButton.getElement().setAttribute("title", "Delete task");
+                // Stop row-selection propagation so only the button click fires
+                deleteButton.getElement().addEventListener("click", e -> {
+                }).addEventData("event.stopPropagation()");
+                deleteButton.addClickListener(e -> confirmDeleteTask(task));
+                return deleteButton;
+            }).setHeader("").setWidth("52px").setFlexGrow(0).setFrozen(false);
         }
 
     }

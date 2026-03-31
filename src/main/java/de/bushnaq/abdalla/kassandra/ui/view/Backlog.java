@@ -404,10 +404,31 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private TaskGrid createGrid(Clock clock) {
         TaskGrid grid = new TaskGrid(clock, getLocale(), jsonMapper);
         grid.setOnSaveAllChangesAndRefresh(this::saveAllChangesAndRefresh);
+        grid.setOnDeleteTask(this::deleteTaskAndRefresh);
 
         grid.setWidthFull();
 
         return grid;
+    }
+
+    /**
+     * Deletes the given task via the REST API and reloads the view.
+     * Handles child-task cascade and relation cleanup on the server side.
+     * Shows an error notification if the call fails.
+     *
+     * @param task the task to delete
+     */
+    private void deleteTaskAndRefresh(Task task) {
+        try {
+            taskApi.deleteById(task.getId());
+            loadData();
+            refreshGrid();
+        } catch (Exception e) {
+            log.error("Failed to delete task {}: {}", task.getKey(), e.getMessage(), e);
+            com.vaadin.flow.component.notification.Notification.show(
+                    "Failed to delete task: " + e.getMessage(), 3000,
+                    com.vaadin.flow.component.notification.Notification.Position.BOTTOM_START);
+        }
     }
 
     /**

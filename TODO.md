@@ -24,6 +24,7 @@
 8. adding a dependency from story to milestone will not move the story.
 9. SprintDialog save will only save light avatar hash
 10. many places only reference lightAvatar, but not dark.
+11. about
 
 # Failing Tests
 

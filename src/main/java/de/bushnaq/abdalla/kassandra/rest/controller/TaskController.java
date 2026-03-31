@@ -29,8 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -48,11 +47,42 @@ public class TaskController {
     @Autowired
     private VersionRepository versionRepository;
 
+    /**
+     * Recursively collects the IDs of a task and all of its descendants.
+     *
+     * @param taskId the root task ID to start from
+     * @param ids    the set to accumulate IDs into
+     */
+    private void collectDescendantIds(Long taskId, Set<Long> ids) {
+        if (!ids.add(taskId)) {
+            return; // already processed, avoid infinite loops
+        }
+        taskRepository.findByParentTaskId(taskId)
+                .forEach(child -> collectDescendantIds(child.getId(), ids));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasTaskAccess(#id) or hasRole('ADMIN')")
     @Transactional
     public void delete(@PathVariable Long id) {
-        taskRepository.deleteById(id);
+        // 1. Collect the task and all of its descendants
+        Set<Long> idsToDelete = new LinkedHashSet<>();
+        collectDescendantIds(id, idsToDelete);
+
+        // 2. Remove inbound predecessor relations from tasks that are NOT being deleted.
+        //    Relations owned by tasks being deleted are handled by CascadeType.ALL.
+        if (!idsToDelete.isEmpty()) {
+            List<TaskDAO> tasksWithInbound = taskRepository.findByPredecessorIdIn(idsToDelete);
+            for (TaskDAO task : tasksWithInbound) {
+                if (!idsToDelete.contains(task.getId())) {
+                    task.getPredecessors().removeIf(r -> idsToDelete.contains(r.getPredecessorId()));
+                    taskRepository.save(task);
+                }
+            }
+        }
+
+        // 3. Delete all collected tasks (CascadeType.ALL removes their owned relations)
+        taskRepository.deleteAllById(idsToDelete);
     }
 
     @GetMapping("/{id}")

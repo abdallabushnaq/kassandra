@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -37,7 +38,7 @@ public class ConfirmDialog extends Dialog {
     public static final String CONFIRM_DIALOG = "confirm-dialog";
 
     /**
-     * Creates a confirmation dialog for delete operations.
+     * Creates a confirmation dialog for delete operations with a plain text message.
      *
      * @param title             The dialog title
      * @param message           The confirmation message to display
@@ -51,6 +52,48 @@ public class ConfirmDialog extends Dialog {
 
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.add(message);
+        dialogLayout.setPadding(false);
+        dialogLayout.setSpacing(true);
+
+        var buttonLayout = VaadinUtil.createDialogButtonLayout(
+                confirmButtonText,
+                CONFIRM_BUTTON,
+                "Cancel",
+                CANCEL_BUTTON,
+                () -> {
+                    action.run();
+                    close();
+                },
+                this
+        );
+
+        // Add error theme variant to the confirm button (first button in layout)
+        buttonLayout.getComponentAt(0).getElement().getThemeList().add(ButtonVariant.LUMO_ERROR.getVariantName());
+
+        dialogLayout.add(buttonLayout);
+        add(dialogLayout);
+
+        // Allow confirming by pressing Enter (equivalent to clicking the confirm button)
+        Shortcuts.addShortcutListener(this, e -> { action.run(); close(); }, Key.ENTER);
+    }
+
+    /**
+     * Creates a confirmation dialog for delete operations with a rich component as content.
+     * Use this overload when the confirmation message contains multiple paragraphs or
+     * other structured content.
+     *
+     * @param title             The dialog title
+     * @param content           A Vaadin {@link Component} to use as the dialog body
+     * @param confirmButtonText Text for the delete/confirm button
+     * @param action            Runnable to execute when confirmed
+     */
+    public ConfirmDialog(String title, Component content, String confirmButtonText, Runnable action) {
+        setId(CONFIRM_DIALOG);
+        setWidth(DIALOG_DEFAULT_WIDTH);
+        getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.HOURGLASS));
+
+        VerticalLayout dialogLayout = new VerticalLayout();
+        dialogLayout.add(content);
         dialogLayout.setPadding(false);
         dialogLayout.setSpacing(true);
 
