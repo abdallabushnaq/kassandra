@@ -528,19 +528,19 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         Div spacer = new Div();
 
         // Create Milestone button
-        Button createMilestoneButton = new Button("Create Milestone", VaadinIcon.FLAG.create());
+        Button createMilestoneButton = new Button("Milestone", VaadinIcon.PLUS.create());
         createMilestoneButton.setId(CREATE_MILESTONE_BUTTON_ID);
         createMilestoneButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         createMilestoneButton.addClickListener(e -> createMilestone());
 
         // Create Story button
-        Button createStoryButton = new Button("Create Story", VaadinIcon.BOOK.create());
+        Button createStoryButton = new Button("Story", VaadinIcon.PLUS.create());
         createStoryButton.setId(CREATE_STORY_BUTTON_ID);
         createStoryButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         createStoryButton.addClickListener(e -> createStory());
 
         // Create Task button
-        Button createTaskButton = new Button("Create Task", VaadinIcon.TASKS.create());
+        Button createTaskButton = new Button("Task", VaadinIcon.PLUS.create());
         createTaskButton.setId(CREATE_TASK_BUTTON_ID);
         createTaskButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         createTaskButton.addClickListener(e -> grid.createTask(loggedInUser));
