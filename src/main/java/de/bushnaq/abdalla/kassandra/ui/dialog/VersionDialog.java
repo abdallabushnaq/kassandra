@@ -25,6 +25,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import de.bushnaq.abdalla.kassandra.dto.Version;
@@ -78,6 +79,7 @@ public class VersionDialog extends Dialog {
         // Create name field with icon
         {
             nameField = new TextField("Version Name");
+            nameField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
             nameField.setId(VERSION_NAME_FIELD);
             nameField.setWidthFull();
             nameField.setRequired(true);

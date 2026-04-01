@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.dialog;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -28,6 +29,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -100,6 +102,7 @@ public class UserGroupDialog extends Dialog {
         // Name field
         {
             nameField = new TextField("Group Name");
+            nameField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
             nameField.setId(GROUP_NAME_FIELD);
             nameField.setWidthFull();
             nameField.setRequired(true);
@@ -136,6 +139,7 @@ public class UserGroupDialog extends Dialog {
         // Members field (multi-select combo box)
         {
             membersField = new MultiSelectComboBox<>("Members");
+            membersField.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
             membersField.setId(GROUP_MEMBERS_FIELD);
             membersField.setWidthFull();
             membersField.setItems(allUsers);

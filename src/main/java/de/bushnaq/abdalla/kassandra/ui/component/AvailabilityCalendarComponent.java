@@ -351,7 +351,7 @@ public class AvailabilityCalendarComponent extends VerticalLayout {
 
         Button prevYearBtn = new Button(new Icon(VaadinIcon.ANGLE_LEFT));
         prevYearBtn.setId(CALENDAR_PREV_YEAR_BTN);
-        prevYearBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        prevYearBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         prevYearBtn.addClickListener(e -> setYear(currentYear - 1));
 
         H4 yearLabel = new H4(String.valueOf(currentYear));
@@ -359,7 +359,7 @@ public class AvailabilityCalendarComponent extends VerticalLayout {
 
         Button nextYearBtn = new Button(new Icon(VaadinIcon.ANGLE_RIGHT));
         nextYearBtn.setId(CALENDAR_NEXT_YEAR_BTN);
-        nextYearBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        nextYearBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         nextYearBtn.addClickListener(e -> setYear(currentYear + 1));
 
         header.add(prevYearBtn, yearLabel, nextYearBtn);

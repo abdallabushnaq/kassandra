@@ -81,21 +81,22 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
     @Autowired
     private             SprintListViewTester     sprintListViewTester;
     private             String                   sprintName;
-    private             Task                     story1;
-    private             Task                     story2;
-    private             Task                     story3;
-    private             Task                     task11;
-    private             Task                     task12;
-    private             Task                     task13;
-    private             Task                     task21;
-    private             Task                     task22;
-    private             Task                     task23;
-    private             Task                     task31;
-    private             Task                     task32;
-    private             Task                     task33;
+    Task startMilestone;
+    private Task                  story1;
+    private Task                  story2;
+    private Task                  story3;
+    private Task                  task11;
+    private Task                  task12;
+    private Task                  task13;
+    private Task                  task21;
+    private Task                  task22;
+    private Task                  task23;
+    private Task                  task31;
+    private Task                  task32;
+    private Task                  task33;
     @Autowired
-    private             VersionListViewTester    versionListViewTester;
-    private             String                   versionName;
+    private VersionListViewTester versionListViewTester;
+    private String                versionName;
 
     @BeforeAll
     static void beforeAll() {
@@ -145,6 +146,10 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
         paul.narrate(NORMAL, "Let's look at our current sprint. We have three stories: Config API implementation, Config persistence implementation, and Config security implementation. Each story has its own tasks.");
         paul.pause(1000);
 
+        paul.narrate(NORMAL, "We also have a milestone that is manually scheduled to start next week. But all stories are ignoring that.");
+        paul.narrate(NORMAL, "Lets add a relation from teach story to ensure they can only start after the Start milestone.");
+
+
         paul.narrate(NORMAL, "Now, imagine we can't start working on the API until the persistence layer is complete. In Kassandra, we can create a dependency to represent this relationship.");
 
         //---------------------------------------------------------------------------------------
@@ -154,6 +159,24 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
         seleniumHandler.setMouseMoveStepsMultiplier(2.0);
         seleniumHandler.setMouseMoveDelayMultiplier(2);
 
+        paul.narrate(NORMAL, "To create a dependency, we hold down the Control key and drag one task or story onto another. Let's make the API story depend on the Start milestone.");
+        paul.narrate(NORMAL, "First, I'll hold down Control and drag the API story onto the persistence story.");
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story1.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + startMilestone.getName());
+        paul.pauseIfDisabled(1000);
+        paul.pause(1500);
+
+        paul.narrate(NORMAL, "Notice in the Dependency column, the API story now shows the ID of the start milestone. This means the API story can only start after the milestone.");
+        paul.pause(1500);
+
+        paul.narrate(NORMAL, "Now lets do that for the 2 other stories too.");
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story2.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + startMilestone.getName());
+        paul.pauseIfDisabled(1000);
+        paul.pause(1500);
+        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story3.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + startMilestone.getName());
+        paul.pauseIfDisabled(1000);
+        paul.pause(1500);
+
+
         paul.narrate(NORMAL, "To create a dependency, we hold down the Control key and drag one task or story onto another. Let's make the API story depend on the persistence story.");
 
         paul.narrate(NORMAL, "First, I'll hold down Control and drag the API story onto the persistence story.");
@@ -161,20 +184,21 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
         paul.pauseIfDisabled(1000);
         paul.pause(1500);
 
-        paul.narrate(NORMAL, "Notice in the Dependency column, the API story now shows the ID of the persistence story. This means the API story can only start after the persistence story is finished.");
-        paul.pause(1500);
 
         //---------------------------------------------------------------------------------------
         // Creating Task Dependencies
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "We can also create dependencies between individual tasks. Let's say we need to create the controller before we can write the API documentation.");
 
         paul.narrate(NORMAL, "I'll hold Control and drag the API documentation task onto the create controller task.");
         seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + task12.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task11.getName());
         paul.pauseIfDisabled(1000);
         paul.pause(1500);
 
+
+        paul.narrate(NORMAL, "Notice in the Dependency column, the API story now shows the ID of the persistence story. This means the API story can only start after the persistence story is finished.");
+        paul.pause(1500);
+        paul.narrate(NORMAL, "We can also create dependencies between individual tasks. Let's say we need to create the controller before we can write the API documentation.");
         paul.narrate(NORMAL, "Perfect! Now the API documentation task depends on the create controller task.");
         paul.pause(1000);
 
@@ -245,8 +269,8 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
         User christopherPaul = userApi.getByEmail("christopher.paul@kassandra.org").get();
         User graceMartin     = userApi.getByEmail("grace.martin@kassandra.org").get();
         {
-            LocalDateTime startDateTime  = LocalDateTime.parse("2025-08-18T08:00");
-            Task          startMilestone = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+            LocalDateTime startDateTime = LocalDateTime.parse("2025-08-18T08:00");
+            startMilestone = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         }
         {
             story1 = addParentTask("Config api implementation", sprint, null, null);

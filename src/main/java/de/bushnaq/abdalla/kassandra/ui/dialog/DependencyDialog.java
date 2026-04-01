@@ -28,6 +28,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import de.bushnaq.abdalla.kassandra.dto.Relation;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
@@ -172,6 +173,7 @@ public class DependencyDialog extends Dialog {
 
         // Quick edit text field (alternative input method)
         TextField quickEditField = new TextField("Quick Edit (comma-separated #s)");
+        quickEditField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         quickEditField.setWidthFull();
         quickEditField.setPlaceholder("e.g., 3, 5, 12");
         quickEditField.setValue(getDependencyText());
@@ -228,9 +230,10 @@ public class DependencyDialog extends Dialog {
 
         // Footer buttons
         Button saveButton = new Button("Save", event -> save());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
 
         Button cancelButton = new Button("Cancel", event -> close());
+        cancelButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
 
         getFooter().add(cancelButton, saveButton);
 

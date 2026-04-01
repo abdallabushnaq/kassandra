@@ -123,7 +123,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         // AI toggle button - appended to the header's right side
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(PRODUCT_AI_PANEL_BUTTON);
-        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
 

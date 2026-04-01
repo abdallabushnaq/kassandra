@@ -34,6 +34,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
@@ -143,6 +144,7 @@ public class UserDialog extends Dialog {
         // Name field
         {
             nameField = new TextField("Name");
+            nameField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
             nameField.setId(USER_NAME_FIELD);
             nameField.setWidthFull();
             nameField.setRequired(true);

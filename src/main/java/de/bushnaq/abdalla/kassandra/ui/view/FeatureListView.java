@@ -21,6 +21,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -120,6 +121,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                 FEATURE_ROW_COUNTER, FEATURE_GLOBAL_FILTER, aiFilterService, mapper, "Feature"));
 
         versionSelector = new MultiSelectComboBox<>();
+        versionSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
         versionSelector.setId(VERSION_SELECTOR);
         // Version names are only unique within one product — prefix with product name.
         versionSelector.setItemLabelGenerator(v -> {
@@ -141,7 +143,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
 
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(FEATURE_AI_PANEL_BUTTON);
-        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
 

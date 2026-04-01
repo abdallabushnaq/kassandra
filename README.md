@@ -34,7 +34,7 @@ tbd
 5. ✅ Sprint crud
 6. ✅ User crud
 7. ✅ User groups crud
-8. ❌ Task crud
+8. ✅ Task crud
 9. ❌ worklog crud
 10. ✅ User availability time-frames
 11. ✅ User location time-frames

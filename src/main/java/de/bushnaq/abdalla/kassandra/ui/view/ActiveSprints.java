@@ -20,13 +20,16 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -248,6 +251,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
         // 1. Search input box with magnifying glass icon and label for alignment
         TextField searchField = new TextField();
+        searchField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         searchField.setId(ID_SEARCH_FIELD);
         searchField.setClearButtonVisible(true);
         searchField.setLabel("Search");
@@ -266,6 +270,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
         // 2. User multi-select dropdown
         userSelector = new MultiSelectComboBox<>();
+        userSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
         userSelector.setId(ID_USER_SELECTOR);
         userSelector.setLabel("User");
         userSelector.setItemLabelGenerator(User::getName);
@@ -293,6 +298,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
         // 3. Sprint multi-select dropdown
         sprintSelector = new MultiSelectComboBox<>();
+        sprintSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
         sprintSelector.setId(ID_SPRINT_SELECTOR);
         sprintSelector.setLabel("Sprint");
         sprintSelector.setItemLabelGenerator(Sprint::getName);
@@ -309,6 +315,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
         // 4. Grouping mode selector
         groupingModeSelector = new ComboBox<>();
+        groupingModeSelector.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
         groupingModeSelector.setId(ID_GROUPING_MODE_SELECTOR);
         groupingModeSelector.setLabel("Group by");
         groupingModeSelector.setItems(GroupingMode.values());
@@ -326,7 +333,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         // 5. Clear filter button (right after filters, no spacer)
         Button clearButton = new Button("Clear filter", VaadinIcon.CLOSE_SMALL.create());
         clearButton.setId(ID_CLEAR_FILTERS_BUTTON);
-        clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         clearButton.addClickListener(e -> {
             searchField.clear();
             userSelector.clear();

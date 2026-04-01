@@ -32,6 +32,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
@@ -194,7 +195,7 @@ public abstract class AbstractMainGrid<T> extends Main {
 
         Button createButton = new Button("Create", new Icon(VaadinIcon.PLUS));
         createButton.setId(createButtonId);
-        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         createButton.addClickListener(e -> createButtonClickHandler.onClick());
 
         rightLayout.add(createButton);
@@ -296,6 +297,7 @@ public abstract class AbstractMainGrid<T> extends Main {
         // Add global filter if provided
         if (globalFilterId != null && globalFilterFunction != null && grid != null) {
             TextField globalFilter = new TextField();
+            globalFilter.addThemeVariants(TextFieldVariant.LUMO_SMALL);
             globalFilter.setId(globalFilterId);
             globalFilter.setPlaceholder("Search...");
             globalFilter.setClearButtonVisible(true);
@@ -343,7 +345,7 @@ public abstract class AbstractMainGrid<T> extends Main {
 
         Button createButton = new Button("Create", new Icon(VaadinIcon.PLUS));
         createButton.setId(createButtonId);
-        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         createButton.addClickListener(e -> createButtonClickHandler.onClick());
 
         rightLayout.add(createButton);
@@ -473,7 +475,7 @@ public abstract class AbstractMainGrid<T> extends Main {
 
         Button createButton = new Button("Create", new Icon(VaadinIcon.PLUS));
         createButton.setId(createButtonId);
-        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         createButton.addClickListener(e -> createButtonClickHandler.onClick());
 
         rightLayout.add(createButton);

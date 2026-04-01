@@ -26,6 +26,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.Context;
@@ -133,6 +134,7 @@ public class InsightsView extends Main implements AfterNavigationObserver {
 
         // Question input field
         questionField = new TextField("Ask a specific question (optional)");
+        questionField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         questionField.setPlaceholder("e.g., Which sprints are at risk of missing deadlines?");
         questionField.setWidthFull();
         questionField.setHelperText("Leave empty for comprehensive analysis of all aspects");

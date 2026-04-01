@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.dialog;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -158,6 +159,7 @@ public class OffDayDialog extends Dialog {
         lastDayField.setPrefixComponent(new Icon(VaadinIcon.CALENDAR));
 
         typeField.setWidthFull();
+        typeField.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
         typeField.setHelperText("Type of off day");
         typeField.setItems(OffDayType.values());
         typeField.setId(OFFDAY_TYPE_FIELD);

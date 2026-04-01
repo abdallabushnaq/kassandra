@@ -22,6 +22,7 @@ import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
@@ -31,6 +32,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -169,6 +171,7 @@ public class ProductDialog extends Dialog {
         // Create name field with icon and AI button
         {
             nameField = new TextField("Product Name");
+            nameField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
             nameField.setId(PRODUCT_NAME_FIELD);
             nameField.setWidthFull();
             nameField.setRequired(true);
@@ -264,6 +267,7 @@ public class ProductDialog extends Dialog {
 
         // ACL: Users field (multi-select combo box)
         aclUsersField = new MultiSelectComboBox<>("Grant Access to Users");
+        aclUsersField.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
         aclUsersField.setId(PRODUCT_ACL_USERS_FIELD);
         aclUsersField.setWidthFull();
         aclUsersField.setItems(allUsers);
@@ -304,6 +308,7 @@ public class ProductDialog extends Dialog {
 
         // ACL: Groups field (multi-select combo box)
         aclGroupsField = new MultiSelectComboBox<>("Grant Access to Groups");
+        aclGroupsField.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
         aclGroupsField.setId(PRODUCT_ACL_GROUPS_FIELD);
         aclGroupsField.setWidthFull();
         aclGroupsField.setItems(allUserGroups);

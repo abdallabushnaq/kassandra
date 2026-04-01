@@ -98,7 +98,7 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
 
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(USER_AI_PANEL_BUTTON);
-        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
 

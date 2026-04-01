@@ -31,6 +31,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.server.StreamResource;
@@ -132,6 +133,7 @@ public class SprintDialog extends Dialog {
         // Create name field with icon and AI button
         {
             nameField = new TextField("Sprint Name");
+            nameField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
             nameField.setId(SPRINT_NAME_FIELD);
             nameField.setWidthFull();
             nameField.setRequired(true);

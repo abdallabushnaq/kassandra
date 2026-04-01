@@ -21,6 +21,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
@@ -111,7 +112,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         // AI toggle button — added to header later in addHeader() once we have the product
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(VERSION_AI_PANEL_BUTTON);
-        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
 
         chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState);
@@ -200,6 +201,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
 
                         // Create a fresh product selector and insert it at the far left of the header
                         productSelector = new MultiSelectComboBox<>();
+                        productSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
                         productSelector.setId(PRODUCT_SELECTOR);
                         // Product names are unique server-wide — no prefix needed.
                         productSelector.setItemLabelGenerator(Product::getName);

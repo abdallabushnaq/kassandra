@@ -21,7 +21,9 @@ import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.grid.dnd.GridDropLocation;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Main;
@@ -33,6 +35,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.shared.Registration;
@@ -61,6 +64,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Clock;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -84,6 +88,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     public static final String                       SAVE_BUTTON_ID             = "save-tasks-button";
     public static final String                       SEARCH_FIELD_ID            = "search-field";
     public static final String                       SPRINT_SELECTOR_ID         = "sprint-selector";
+    public static final String                       SPRINT_STATUS_SELECTOR_ID  = "sprint-status-selector";
     public static final String                       USER_SELECTOR_ID           = "user-selector";
     private             List<Sprint>                 allSprints                 = new ArrayList<>();
     private final       TaskGrid                     backlogGrid;                        // Grid for Backlog sprint (always at bottom)
@@ -119,8 +124,12 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private             Set<User>                    selectedUsers              = new HashSet<>();
     private             Sprint                       sprint;                             // Current sprint being displayed in grid
     private final       SprintApi                    sprintApi;
+    private             Span                         sprintEndValue;                     // Displays end date of the selected sprint
     private             Long                         sprintId;
+    private final       HorizontalLayout             sprintInfoPanel;                    // Header panel showing sprint start, end and status
     private             ComboBox<Sprint>             sprintSelector;
+    private             Span                         sprintStartValue;                   // Displays start date of the selected sprint
+    private             ComboBox<Status>             sprintStatusComboBox;               // Allows changing the status of the selected sprint
     private final       TaskApi                      taskApi;
     private             Registration                 themeChangedRegistration;
     private final       UserApi                      userApi;
@@ -168,7 +177,10 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             VerticalLayout innerWrapper = new VerticalLayout();
             innerWrapper.setPadding(false);
             innerWrapper.setSpacing(false);
-            gridPanelWrapper.add(innerWrapper);
+
+            // Create the sprint info panel (start date, end date, status) and add it above the grid
+            sprintInfoPanel = createSprintInfoPanel();
+            gridPanelWrapper.add(sprintInfoPanel, innerWrapper);
 
             VerticalLayout gridPanel = new VerticalLayout(grid);
             gridPanel.setPadding(false);
@@ -412,26 +424,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     }
 
     /**
-     * Deletes the given task via the REST API and reloads the view.
-     * Handles child-task cascade and relation cleanup on the server side.
-     * Shows an error notification if the call fails.
-     *
-     * @param task the task to delete
-     */
-    private void deleteTaskAndRefresh(Task task) {
-        try {
-            taskApi.deleteById(task.getId());
-            loadData();
-            refreshGrid();
-        } catch (Exception e) {
-            log.error("Failed to delete task {}: {}", task.getKey(), e.getMessage(), e);
-            com.vaadin.flow.component.notification.Notification.show(
-                    "Failed to delete task: " + e.getMessage(), 3000,
-                    com.vaadin.flow.component.notification.Notification.Position.BOTTOM_START);
-        }
-    }
-
-    /**
      * Creates the header layout with search, filters, create buttons, Edit, Save, and Cancel buttons
      */
     private HorizontalLayout createHeaderWithButtons() {
@@ -443,6 +435,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
         // 1. Search input box with magnifying glass icon
         searchField = new TextField();
+        searchField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         searchField.setId(SEARCH_FIELD_ID);
 //        searchField.setLabel("Search");
         searchField.setPlaceholder("search tasks");
@@ -463,6 +456,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         userSelector.setItemLabelGenerator(User::getName);
         userSelector.setPlaceholder("Select users");
         userSelector.setWidth("200px");
+        userSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
         userSelector.addValueChangeListener(e -> {
             if (e.isFromClient()) {
                 selectedUsers = new java.util.HashSet<>(e.getValue());
@@ -478,6 +472,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         sprintSelector.setItemLabelGenerator(Sprint::getName);
         sprintSelector.setPlaceholder("Select sprint");
         sprintSelector.setWidth("200px");
+        sprintSelector.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
         sprintSelector.addValueChangeListener(e -> {
             if (e.isFromClient()) {
                 selectedSprint = e.getValue();
@@ -490,6 +485,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         Button clearButton = new Button("Clear filter", VaadinIcon.CLOSE_SMALL.create());
         clearButton.setId(CLEAR_FILTER_BUTTON_ID);
         clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        clearButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         clearButton.addClickListener(e -> {
             searchField.clear();
             userSelector.clear();
@@ -531,30 +527,35 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         Button createMilestoneButton = new Button("Milestone", VaadinIcon.PLUS.create());
         createMilestoneButton.setId(CREATE_MILESTONE_BUTTON_ID);
         createMilestoneButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        createMilestoneButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         createMilestoneButton.addClickListener(e -> createMilestone());
 
         // Create Story button
         Button createStoryButton = new Button("Story", VaadinIcon.PLUS.create());
         createStoryButton.setId(CREATE_STORY_BUTTON_ID);
         createStoryButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        createStoryButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         createStoryButton.addClickListener(e -> createStory());
 
         // Create Task button
         Button createTaskButton = new Button("Task", VaadinIcon.PLUS.create());
         createTaskButton.setId(CREATE_TASK_BUTTON_ID);
         createTaskButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        createTaskButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         createTaskButton.addClickListener(e -> grid.createTask(loggedInUser));
 
         // Create Edit button
         editButton = new Button("Edit", VaadinIcon.EDIT.create());
         editButton.setId(EDIT_BUTTON_ID);
         editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        editButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         editButton.addClickListener(e -> enterEditMode());
 
         // Create Save button
         saveButton = new Button("Save", VaadinIcon.CHECK.create());
         saveButton.setId(SAVE_BUTTON_ID);
         saveButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+        saveButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         saveButton.setVisible(false);
         saveButton.addClickListener(e -> saveAllChangesAndRefresh());
 
@@ -562,6 +563,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         cancelButton = new Button("Cancel", VaadinIcon.CLOSE.create());
         cancelButton.setId(CANCEL_BUTTON_ID);
         cancelButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        cancelButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         cancelButton.setVisible(false);
         cancelButton.addClickListener(e -> cancelEditMode());
 
@@ -589,6 +591,76 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         Task saved = taskApi.persist(task);
         loadData();
         refreshGrid();
+    }
+
+    /**
+     * Creates the horizontal info panel displayed above the sprint task grid.
+     * Shows the sprint start date, end date, and an editable status selector.
+     *
+     * @return the constructed info panel
+     */
+    private HorizontalLayout createSprintInfoPanel() {
+        HorizontalLayout panel = new HorizontalLayout();
+        panel.setAlignItems(FlexComponent.Alignment.CENTER);
+        panel.setSpacing(true);
+        panel.setWidthFull();
+        panel.getStyle()
+                .set("padding", "var(--lumo-space-s) var(--lumo-space-m)")
+                .set("background-color", "var(--lumo-contrast-5pct)")
+                .set("border-radius", "var(--lumo-border-radius-m) var(--lumo-border-radius-m) 0 0");
+
+        // Spacer pushes everything that follows to the far right
+        Div spacer = new Div();
+
+        // Start date (read-only – displayed in secondary/gray colour)
+        Span startLabel = new Span("Start:");
+        startLabel.getStyle()
+                .set("font-weight", "600")
+                .set("color", "var(--lumo-secondary-text-color)");
+        sprintStartValue = new Span("-");
+        sprintStartValue.getStyle()
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("margin-right", "var(--lumo-space-m)");
+
+        // End date (read-only – displayed in secondary/gray colour)
+        Span endLabel = new Span("End:");
+        endLabel.getStyle()
+                .set("font-weight", "600")
+                .set("color", "var(--lumo-secondary-text-color)");
+        sprintEndValue = new Span("-");
+        sprintEndValue.getStyle()
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("margin-right", "var(--lumo-space-m)");
+
+        // Status selector
+        Span statusLabel = new Span("Status:");
+        statusLabel.getStyle().set("font-weight", "600");
+        sprintStatusComboBox = new ComboBox<>();
+        sprintStatusComboBox.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
+        sprintStatusComboBox.setId(SPRINT_STATUS_SELECTOR_ID);
+        sprintStatusComboBox.setItems(Status.values());
+        sprintStatusComboBox.setItemLabelGenerator(Status::name);
+        sprintStatusComboBox.setWidth("150px");
+        sprintStatusComboBox.addValueChangeListener(e -> {
+            if (e.isFromClient() && sprint != null && e.getValue() != null) {
+                sprint.setStatus(e.getValue());
+                try {
+                    sprintApi.update(sprint);
+                    log.info("Sprint status updated to {} for sprint {}", e.getValue(), sprint.getName());
+                } catch (Exception ex) {
+                    log.error("Failed to update sprint status for sprint {}", sprint.getName(), ex);
+                    com.vaadin.flow.component.notification.Notification.show(
+                            "Failed to update sprint status: " + ex.getMessage(), 3000,
+                            com.vaadin.flow.component.notification.Notification.Position.BOTTOM_START);
+                    // Revert to old value
+                    sprintStatusComboBox.setValue(e.getOldValue());
+                }
+            }
+        });
+
+        panel.add(spacer, startLabel, sprintStartValue, endLabel, sprintEndValue, statusLabel, sprintStatusComboBox);
+        panel.setFlexGrow(1, spacer);
+        return panel;
     }
 
     /**
@@ -667,6 +739,26 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         Task saved = taskApi.persist(task);
         loadData();
         refreshGrid();
+    }
+
+    /**
+     * Deletes the given task via the REST API and reloads the view.
+     * Handles child-task cascade and relation cleanup on the server side.
+     * Shows an error notification if the call fails.
+     *
+     * @param task the task to delete
+     */
+    private void deleteTaskAndRefresh(Task task) {
+        try {
+            taskApi.deleteById(task.getId());
+            loadData();
+            refreshGrid();
+        } catch (Exception e) {
+            log.error("Failed to delete task {}: {}", task.getKey(), e.getMessage(), e);
+            com.vaadin.flow.component.notification.Notification.show(
+                    "Failed to delete task: " + e.getMessage(), 3000,
+                    com.vaadin.flow.component.notification.Notification.Position.BOTTOM_START);
+        }
     }
 
     /**
@@ -1371,6 +1463,9 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         grid.setExpandInitially(expandAllStories);
         backlogGrid.setExpandInitially(expandAllStories);
 
+        // Update sprint info header
+        updateSprintInfoPanel();
+
         // Update sprint grid
         if (sprint != null) {
             grid.updateData(sprint, new ArrayList<>(sprint.getTasks()), users);
@@ -1522,6 +1617,21 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         // Force immediate expand/collapse of all stories
         grid.forceExpandCollapseAll(expandAllStories);
         backlogGrid.forceExpandCollapseAll(expandAllStories);
+    }
+
+    /**
+     * Updates the sprint info panel with the current sprint's start date, end date, and status.
+     * No-ops when the current sprint or info panel is not yet initialised.
+     */
+    private void updateSprintInfoPanel() {
+        if (sprint == null || sprintInfoPanel == null) {
+            return;
+        }
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        sprintStartValue.setText(sprint.getStart() != null ? sprint.getStart().format(dateFormatter) : "-");
+        sprintEndValue.setText(sprint.getEnd() != null ? sprint.getEnd().format(dateFormatter) : "-");
+        // Set programmatically — isFromClient() returns false, so no API call is triggered
+        sprintStatusComboBox.setValue(sprint.getStatus() != null ? sprint.getStatus() : Status.CREATED);
     }
 
     /**

@@ -32,6 +32,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -197,6 +198,7 @@ public final class VaadinUtil {
 
         // Create filter field
         TextField filterField = new TextField();
+        filterField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         filterField.setPlaceholder("Filter");
         filterField.setClearButtonVisible(true);
         filterField.setValueChangeMode(ValueChangeMode.EAGER);

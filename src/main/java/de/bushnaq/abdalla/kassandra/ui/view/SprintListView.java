@@ -21,6 +21,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
@@ -125,6 +126,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 SPRINT_ROW_COUNTER, SPRINT_GLOBAL_FILTER, aiFilterService, mapper, "Sprint"));
 
         featureSelector = new MultiSelectComboBox<>();
+        featureSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
         featureSelector.setId(FEATURE_SELECTOR);
         // Feature names are only unique within one version,
         // and version names within one product — prefix with "Product / Version"
@@ -151,7 +153,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
 
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(SPRINT_AI_PANEL_BUTTON);
-        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
 

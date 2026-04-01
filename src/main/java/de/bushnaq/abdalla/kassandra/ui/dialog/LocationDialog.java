@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.dialog;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.Icon;
@@ -140,6 +141,7 @@ public class LocationDialog extends Dialog {
 
         // Configure country combobox with ISO 3166-1 alpha-2 values
         countryComboBox.setId(LOCATION_COUNTRY_FIELD);
+        countryComboBox.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
         countryComboBox.setRequired(true);
         countryComboBox.setAllowCustomValue(false);
         countryComboBox.setPrefixComponent(new Icon(VaadinIcon.GLOBE));
@@ -157,6 +159,7 @@ public class LocationDialog extends Dialog {
 
         // Configure state/region combobox
         stateComboBox.setId(LOCATION_STATE_FIELD);
+        stateComboBox.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
         stateComboBox.setRequired(true);
         stateComboBox.setAllowCustomValue(false);
         stateComboBox.setPrefixComponent(new Icon(VaadinIcon.MAP_MARKER));

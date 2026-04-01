@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -153,6 +154,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
 
         // Sprint selector — persists across content reloads triggered by sprint switching
         sprintSelector = new ComboBox<>();
+        sprintSelector.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
         sprintSelector.setItemLabelGenerator(Sprint::getName);
         sprintSelector.setPlaceholder("Select sprint");
         sprintSelector.setWidth("250px");

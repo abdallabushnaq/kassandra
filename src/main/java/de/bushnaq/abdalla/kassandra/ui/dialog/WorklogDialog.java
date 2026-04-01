@@ -30,6 +30,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
@@ -130,6 +131,7 @@ public class WorklogDialog extends Dialog {
 
         // Time spent field
         timeSpentField = new TextField("Time Spent");
+        timeSpentField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         timeSpentField.setId(TIME_SPENT_FIELD);
         timeSpentField.setWidth("50%");
         timeSpentField.setRequired(true);
@@ -172,6 +174,7 @@ public class WorklogDialog extends Dialog {
 
         // Time remaining field
         timeRemainingField = new TextField("Time Remaining");
+        timeRemainingField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         timeRemainingField.setId(TIME_REMAINING_FIELD);
         timeRemainingField.setWidth("50%");
         timeRemainingField.setHelperText("Auto-calculated");

@@ -28,6 +28,7 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterGenerator;
@@ -86,6 +87,7 @@ public class GlobalAiFilter<T> extends HorizontalLayout {
         searchField.setId(fieldId);
         searchField.setPlaceholder("AI powered filter");
         searchField.setClearButtonVisible(true);
+        searchField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         searchField.setValueChangeMode(ValueChangeMode.ON_CHANGE); // Use ON_CHANGE but we'll control when to actually search
         searchField.setWidth("350px");
 
