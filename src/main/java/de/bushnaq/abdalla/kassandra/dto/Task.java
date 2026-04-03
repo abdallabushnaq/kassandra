@@ -119,7 +119,6 @@ public class Task implements Comparable<Task> {
     /**
      * Additional notes or comments about the task.
      */
-    @JsonIgnore
     private String notes;
 
     /**

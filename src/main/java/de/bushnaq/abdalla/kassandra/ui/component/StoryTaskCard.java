@@ -47,25 +47,63 @@ public class StoryTaskCard extends VerticalLayout {
 
     private final List<Task>                   childTasks;
     private final Consumer<Task>               onTaskClick;
+    private final Consumer<Task>               onTaskTitleClick;
     private final BiConsumer<Task, TaskStatus> onTaskStatusChange;
     private final boolean                      showSimplifiedHeader;
     private final Task                         story;
     private final Map<Long, User>              userMap;
 
+    /**
+     * Constructs a StoryTaskCard without click handlers.
+     *
+     * @param story               the parent story task
+     * @param childTasks          the child tasks to display
+     * @param userMap             user map for avatar display
+     * @param onTaskStatusChange  callback invoked when a task is dropped into a new status lane
+     * @param showSimplifiedHeader {@code true} to show a compact story header
+     */
     public StoryTaskCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
                          BiConsumer<Task, TaskStatus> onTaskStatusChange, boolean showSimplifiedHeader) {
-        this(story, childTasks, userMap, onTaskStatusChange, showSimplifiedHeader, null);
+        this(story, childTasks, userMap, onTaskStatusChange, showSimplifiedHeader, null, null);
     }
 
+    /**
+     * Constructs a StoryTaskCard with a card-body click handler.
+     *
+     * @param story               the parent story task
+     * @param childTasks          the child tasks to display
+     * @param userMap             user map for avatar display
+     * @param onTaskStatusChange  callback invoked when a task is dropped into a new status lane
+     * @param showSimplifiedHeader {@code true} to show a compact story header
+     * @param onTaskClick         handler invoked when a task card body is clicked; may be {@code null}
+     */
     public StoryTaskCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
                          BiConsumer<Task, TaskStatus> onTaskStatusChange, boolean showSimplifiedHeader,
                          Consumer<Task> onTaskClick) {
+        this(story, childTasks, userMap, onTaskStatusChange, showSimplifiedHeader, onTaskClick, null);
+    }
+
+    /**
+     * Constructs a StoryTaskCard with separate card-body and title click handlers.
+     *
+     * @param story               the parent story task
+     * @param childTasks          the child tasks to display
+     * @param userMap             user map for avatar display
+     * @param onTaskStatusChange  callback invoked when a task is dropped into a new status lane
+     * @param showSimplifiedHeader {@code true} to show a compact story header
+     * @param onTaskClick         handler invoked when a task card body is clicked; may be {@code null}
+     * @param onTaskTitleClick    handler invoked when the task title is clicked; may be {@code null}
+     */
+    public StoryTaskCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+                         BiConsumer<Task, TaskStatus> onTaskStatusChange, boolean showSimplifiedHeader,
+                         Consumer<Task> onTaskClick, Consumer<Task> onTaskTitleClick) {
         this.story                = story;
         this.childTasks           = childTasks;
         this.userMap              = userMap;
         this.onTaskStatusChange   = onTaskStatusChange;
         this.showSimplifiedHeader = showSimplifiedHeader;
         this.onTaskClick          = onTaskClick;
+        this.onTaskTitleClick     = onTaskTitleClick;
 
         setPadding(false);
         setSpacing(false);
@@ -118,7 +156,12 @@ public class StoryTaskCard extends VerticalLayout {
 
             // Add each child task - TaskCard handles its own drag behavior
             for (Task task : childTasks) {
-                TaskCard taskCard = new TaskCard(task, userMap, onTaskClick != null ? () -> onTaskClick.accept(task) : null);
+                TaskCard taskCard = new TaskCard(
+                        task,
+                        userMap,
+                        onTaskClick != null ? () -> onTaskClick.accept(task) : null,
+                        onTaskTitleClick != null ? () -> onTaskTitleClick.accept(task) : null
+                );
                 taskContainer.add(taskCard);
             }
 

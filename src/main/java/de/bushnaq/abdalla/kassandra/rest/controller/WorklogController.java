@@ -34,7 +34,7 @@ public class WorklogController {
     private WorklogRepository worklogRepository;
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public void delete(@PathVariable Long id) {
         worklogRepository.deleteById(id);
     }
@@ -61,6 +61,12 @@ public class WorklogController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public WorklogDAO save(@RequestBody WorklogDAO worklog) {
+        return worklogRepository.save(worklog);
+    }
+
+    @PutMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public WorklogDAO update(@RequestBody WorklogDAO worklog) {
         return worklogRepository.save(worklog);
     }
 

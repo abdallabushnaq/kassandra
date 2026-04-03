@@ -55,23 +55,58 @@ public class StoryCard extends Div {
     private       VerticalLayout               inProgressLane;
     private       HorizontalLayout             lanesContainer;
     private final Consumer<Task>               onTaskClick;
+    private final Consumer<Task>               onTaskTitleClick;
     private final BiConsumer<Task, TaskStatus> onTaskStatusChange;
     private final Task                         story;
     private       VerticalLayout               todoLane;
     private final Map<Long, User>              userMap;
 
+    /**
+     * Constructs a StoryCard without click handlers.
+     *
+     * @param story              the story task acting as the board header
+     * @param childTasks         mutable list of child tasks to display in lanes
+     * @param userMap            user map for avatar display
+     * @param onTaskStatusChange callback invoked when a task is dropped into a new status lane
+     */
     public StoryCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
                      BiConsumer<Task, TaskStatus> onTaskStatusChange) {
-        this(story, childTasks, userMap, onTaskStatusChange, null);
+        this(story, childTasks, userMap, onTaskStatusChange, null, null);
     }
 
+    /**
+     * Constructs a StoryCard with a card-body click handler.
+     *
+     * @param story              the story task
+     * @param childTasks         mutable list of child tasks
+     * @param userMap            user map for avatar display
+     * @param onTaskStatusChange callback for drag-and-drop status changes
+     * @param onTaskClick        handler invoked when a task card body is clicked; may be {@code null}
+     */
     public StoryCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
                      BiConsumer<Task, TaskStatus> onTaskStatusChange, Consumer<Task> onTaskClick) {
+        this(story, childTasks, userMap, onTaskStatusChange, onTaskClick, null);
+    }
+
+    /**
+     * Constructs a StoryCard with separate card-body and title click handlers.
+     *
+     * @param story               the story task
+     * @param childTasks          mutable list of child tasks
+     * @param userMap             user map for avatar display
+     * @param onTaskStatusChange  callback for drag-and-drop status changes
+     * @param onTaskClick         handler invoked when a task card body is clicked; may be {@code null}
+     * @param onTaskTitleClick    handler invoked when the task title is clicked; may be {@code null}
+     */
+    public StoryCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+                     BiConsumer<Task, TaskStatus> onTaskStatusChange, Consumer<Task> onTaskClick,
+                     Consumer<Task> onTaskTitleClick) {
         this.story              = story;
         this.childTasks         = childTasks;
         this.userMap            = userMap;
         this.onTaskStatusChange = onTaskStatusChange;
         this.onTaskClick        = onTaskClick;
+        this.onTaskTitleClick   = onTaskTitleClick;
 
         addClassName("story-card");
         setWidthFull();
@@ -250,19 +285,25 @@ public class StoryCard extends Div {
 
         // Populate each lane
         tasksByStatus.getOrDefault(TaskStatus.TODO, List.of()).forEach(task -> {
-            TaskCard card = new TaskCard(task, userMap, onTaskClick != null ? () -> onTaskClick.accept(task) : null);
+            TaskCard card = new TaskCard(task, userMap,
+                    onTaskClick != null ? () -> onTaskClick.accept(task) : null,
+                    onTaskTitleClick != null ? () -> onTaskTitleClick.accept(task) : null);
             setupTaskCardDragHandlers(card, task);
             todoLane.add(card);
         });
 
         tasksByStatus.getOrDefault(TaskStatus.IN_PROGRESS, List.of()).forEach(task -> {
-            TaskCard card = new TaskCard(task, userMap, onTaskClick != null ? () -> onTaskClick.accept(task) : null);
+            TaskCard card = new TaskCard(task, userMap,
+                    onTaskClick != null ? () -> onTaskClick.accept(task) : null,
+                    onTaskTitleClick != null ? () -> onTaskTitleClick.accept(task) : null);
             setupTaskCardDragHandlers(card, task);
             inProgressLane.add(card);
         });
 
         tasksByStatus.getOrDefault(TaskStatus.DONE, List.of()).forEach(task -> {
-            TaskCard card = new TaskCard(task, userMap, onTaskClick != null ? () -> onTaskClick.accept(task) : null);
+            TaskCard card = new TaskCard(task, userMap,
+                    onTaskClick != null ? () -> onTaskClick.accept(task) : null,
+                    onTaskTitleClick != null ? () -> onTaskTitleClick.accept(task) : null);
             setupTaskCardDragHandlers(card, task);
             doneLane.add(card);
         });

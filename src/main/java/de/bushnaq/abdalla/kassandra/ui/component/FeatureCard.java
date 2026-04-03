@@ -61,20 +61,63 @@ public class FeatureCard extends Div {
     private       VerticalLayout               inProgressLane;
     private       HorizontalLayout             lanesContainer;
     private final Consumer<Task>               onTaskClick;
+    private final Consumer<Task>               onTaskTitleClick;
     private final BiConsumer<Task, TaskStatus> onTaskStatusChange;
     private final Set<User>                    selectedUsers;
     private final List<Task>                   stories;
     private       VerticalLayout               todoLane;
     private final Map<Long, User>              userMap;
 
+    /**
+     * Constructs a FeatureCard without click handlers.
+     *
+     * @param feature            the feature to display as board header
+     * @param stories            the stories belonging to this feature
+     * @param allTasks           all tasks across sprints (used for child-task lookups)
+     * @param userMap            user map for avatar display
+     * @param onTaskStatusChange callback for drag-and-drop status changes
+     * @param filterText         current search filter text
+     * @param selectedUsers      currently selected users for filtering
+     */
     public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<Long, User> userMap,
                        BiConsumer<Task, TaskStatus> onTaskStatusChange, String filterText, Set<User> selectedUsers) {
-        this(feature, stories, allTasks, userMap, onTaskStatusChange, filterText, selectedUsers, null);
+        this(feature, stories, allTasks, userMap, onTaskStatusChange, filterText, selectedUsers, null, null);
     }
 
+    /**
+     * Constructs a FeatureCard with a card-body click handler.
+     *
+     * @param feature            the feature to display
+     * @param stories            the stories belonging to this feature
+     * @param allTasks           all tasks across sprints
+     * @param userMap            user map for avatar display
+     * @param onTaskStatusChange callback for drag-and-drop status changes
+     * @param filterText         current search filter text
+     * @param selectedUsers      currently selected users for filtering
+     * @param onTaskClick        handler invoked when a task card body is clicked; may be {@code null}
+     */
     public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<Long, User> userMap,
                        BiConsumer<Task, TaskStatus> onTaskStatusChange, String filterText, Set<User> selectedUsers,
                        Consumer<Task> onTaskClick) {
+        this(feature, stories, allTasks, userMap, onTaskStatusChange, filterText, selectedUsers, onTaskClick, null);
+    }
+
+    /**
+     * Constructs a FeatureCard with separate card-body and title click handlers.
+     *
+     * @param feature             the feature to display
+     * @param stories             the stories belonging to this feature
+     * @param allTasks            all tasks across sprints
+     * @param userMap             user map for avatar display
+     * @param onTaskStatusChange  callback for drag-and-drop status changes
+     * @param filterText          current search filter text
+     * @param selectedUsers       currently selected users for filtering
+     * @param onTaskClick         handler for task card body clicks; may be {@code null}
+     * @param onTaskTitleClick    handler for task title clicks (opens TaskDialog); may be {@code null}
+     */
+    public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<Long, User> userMap,
+                       BiConsumer<Task, TaskStatus> onTaskStatusChange, String filterText, Set<User> selectedUsers,
+                       Consumer<Task> onTaskClick, Consumer<Task> onTaskTitleClick) {
         this.feature            = feature;
         this.stories            = stories;
         this.allTasks           = allTasks;
@@ -83,6 +126,7 @@ public class FeatureCard extends Div {
         this.filterText         = filterText != null ? filterText.toLowerCase() : "";
         this.selectedUsers      = selectedUsers;
         this.onTaskClick        = onTaskClick;
+        this.onTaskTitleClick   = onTaskTitleClick;
 
         addClassName("feature-card");
         setWidthFull();
@@ -294,7 +338,7 @@ public class FeatureCard extends Div {
             if (!todoTasks.isEmpty()) {
                 // Use simplified header if story's effective status is not TODO (tasks are in different lane than story)
                 boolean       useSimplifiedHeader = (storyStatus != TaskStatus.TODO);
-                StoryTaskCard card                = new StoryTaskCard(story, todoTasks, userMap, onTaskStatusChange, useSimplifiedHeader, onTaskClick);
+                StoryTaskCard card                = new StoryTaskCard(story, todoTasks, userMap, onTaskStatusChange, useSimplifiedHeader, onTaskClick, onTaskTitleClick);
                 todoLane.add(card);
             }
 
@@ -302,7 +346,7 @@ public class FeatureCard extends Div {
             if (!inProgressTasks.isEmpty()) {
                 // Use simplified header if story's effective status is not IN_PROGRESS
                 boolean       useSimplifiedHeader = (storyStatus != TaskStatus.IN_PROGRESS);
-                StoryTaskCard card                = new StoryTaskCard(story, inProgressTasks, userMap, onTaskStatusChange, useSimplifiedHeader, onTaskClick);
+                StoryTaskCard card                = new StoryTaskCard(story, inProgressTasks, userMap, onTaskStatusChange, useSimplifiedHeader, onTaskClick, onTaskTitleClick);
                 inProgressLane.add(card);
             }
 
@@ -310,7 +354,7 @@ public class FeatureCard extends Div {
             if (!doneTasks.isEmpty()) {
                 // Use simplified header if story's effective status is not DONE
                 boolean       useSimplifiedHeader = (storyStatus != TaskStatus.DONE);
-                StoryTaskCard card                = new StoryTaskCard(story, doneTasks, userMap, onTaskStatusChange, useSimplifiedHeader, onTaskClick);
+                StoryTaskCard card                = new StoryTaskCard(story, doneTasks, userMap, onTaskStatusChange, useSimplifiedHeader, onTaskClick, onTaskTitleClick);
                 doneLane.add(card);
             }
         }

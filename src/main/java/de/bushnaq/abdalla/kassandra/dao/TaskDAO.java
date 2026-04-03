@@ -72,6 +72,8 @@ public class TaskDAO {
     private Duration                                    minEstimate       = Duration.ZERO;
     @Column(nullable = false)
     private String                                      name;
+    @Column(nullable = true)
+    private String                                      notes;
     @Column(nullable = false)
     private Integer                                     orderId           = -1;
     @Column(nullable = true)

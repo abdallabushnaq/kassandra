@@ -45,17 +45,44 @@ import java.util.Map;
 public class TaskCard extends Div {
 
     private final Runnable        onClickHandler;
+    private final Runnable        onTitleClickHandler;
     private final Task            task;
     private final Map<Long, User> userMap;
 
+    /**
+     * Constructs a TaskCard with no click handlers.
+     *
+     * @param task    the task to display
+     * @param userMap map of user IDs to User objects for avatar display
+     */
     public TaskCard(Task task, Map<Long, User> userMap) {
-        this(task, userMap, null);
+        this(task, userMap, null, null);
     }
 
+    /**
+     * Constructs a TaskCard with a card-level click handler.
+     *
+     * @param task           the task to display
+     * @param userMap        map of user IDs to User objects for avatar display
+     * @param onClickHandler handler invoked when the card body is clicked (e.g. log work); may be {@code null}
+     */
     public TaskCard(Task task, Map<Long, User> userMap, Runnable onClickHandler) {
-        this.task           = task;
-        this.userMap        = userMap;
-        this.onClickHandler = onClickHandler;
+        this(task, userMap, onClickHandler, null);
+    }
+
+    /**
+     * Constructs a TaskCard with separate handlers for the card body and the task title.
+     *
+     * @param task               the task to display
+     * @param userMap            map of user IDs to User objects for avatar display
+     * @param onClickHandler     handler invoked when the card body (outside the title) is clicked; may be {@code null}
+     * @param onTitleClickHandler handler invoked when the task title is clicked; may be {@code null}
+     */
+    public TaskCard(Task task, Map<Long, User> userMap, Runnable onClickHandler, Runnable onTitleClickHandler) {
+        this.task                = task;
+        this.userMap             = userMap;
+        this.onClickHandler      = onClickHandler;
+        this.onTitleClickHandler = onTitleClickHandler;
 
         addClassName("task-card");
         setId("task-card-" + task.getId());
@@ -137,6 +164,15 @@ public class TaskCard extends Div {
         title.getStyle().set("text-overflow", "ellipsis");
         title.getStyle().set("white-space", "nowrap");
         title.getStyle().set("flex", "1");
+
+        // Title click opens the TaskDialog; stopPropagation prevents the card click from also firing
+        if (onTitleClickHandler != null) {
+            title.getStyle().set("cursor", "pointer");
+            title.getStyle().set("text-decoration", "underline");
+            title.getStyle().set("text-decoration-style", "dotted");
+            title.getElement().addEventListener("click", e -> onTitleClickHandler.run())
+                    .addEventData("event.stopPropagation()");
+        }
 
         topRow.add(title, getAssignedUserComponent());
 

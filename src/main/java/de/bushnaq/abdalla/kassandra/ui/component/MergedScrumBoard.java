@@ -26,6 +26,7 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
 import de.bushnaq.abdalla.kassandra.rest.api.WorklogApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.ui.dialog.TaskDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.WorklogDialog;
 import de.bushnaq.abdalla.kassandra.ui.view.GroupingMode;
 import lombok.extern.slf4j.Slf4j;
@@ -131,6 +132,27 @@ public class MergedScrumBoard extends VerticalLayout {
             refresh();
         }, currentUser.getId());
 
+        dialog.open();
+    }
+
+    /**
+     * Handle task title click - open the TaskDialog for viewing and editing the task.
+     * Any user can open the dialog; write operations are gated inside the dialog.
+     *
+     * @param task the task whose title was clicked
+     */
+    private void handleTaskTitleClick(Task task) {
+        log.info("Task title clicked: {} (ID: {})", task.getName(), task.getId());
+
+        String currentUserEmail = SecurityUtils.getUserEmail();
+        User   currentUser      = userMap.values().stream()
+                .filter(u -> currentUserEmail != null && currentUserEmail.equalsIgnoreCase(u.getEmail()))
+                .findFirst()
+                .orElse(null);
+
+        Long currentUserId = currentUser != null ? currentUser.getId() : null;
+
+        TaskDialog dialog = new TaskDialog(task, taskApi, worklogApi, userMap, currentUserId, this::refresh);
         dialog.open();
     }
 
@@ -291,7 +313,8 @@ public class MergedScrumBoard extends VerticalLayout {
                     this::handleTaskStatusChange,
                     filterText,
                     selectedUsers,
-                    this::handleTaskClick
+                    this::handleTaskClick,
+                    this::handleTaskTitleClick
             );
 
             // Only add feature if it has visible stories after filtering
@@ -357,7 +380,7 @@ public class MergedScrumBoard extends VerticalLayout {
 
         // Create StoryCard for each story
         storiesWithTasks.forEach((story, childTasks) -> {
-            StoryCard storyCard = new StoryCard(story, childTasks, userMap, this::handleTaskStatusChange, this::handleTaskClick);
+            StoryCard storyCard = new StoryCard(story, childTasks, userMap, this::handleTaskStatusChange, this::handleTaskClick, this::handleTaskTitleClick);
 
             // Restore expanded state (default to true if not found)
             boolean shouldExpand = expandedStories.getOrDefault(story.getId(), true);

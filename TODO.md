@@ -25,6 +25,7 @@
 9. SprintDialog save will only save light avatar hash
 10. many places only reference lightAvatar, but not dark.
 11. about dialog causes exception at startup.
+12. editing a worklog messes up the remaining work.
 
 # Failing Tests
 

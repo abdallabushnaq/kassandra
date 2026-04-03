@@ -66,6 +66,8 @@ public class WorklogDialog extends Dialog {
     private final       TextArea          commentField;
     private final       Long              currentUserId;
     private final       DateTimePicker    dateTimePicker;
+    private final       Worklog           existingWorklog;
+    private final       boolean           isEditMode;
     private final       Consumer<Worklog> onSave;
     private final       Task              task;
     private final       TaskApi           taskApi;
@@ -74,26 +76,43 @@ public class WorklogDialog extends Dialog {
     private final       WorklogApi        worklogApi;
 
     /**
-     * Creates a dialog for logging work on a task.
+     * Creates a dialog for logging work on a task (create mode).
      * Note: Validation should be done before opening this dialog.
      *
      * @param task          The task to log work for
+     * @param taskApi       The task API for updating task data
      * @param worklogApi    The worklog API for saving worklog data
      * @param onSave        Callback to execute after successfully saving the worklog
      * @param currentUserId ID of the currently logged-in user
      */
     public WorklogDialog(Task task, TaskApi taskApi, WorklogApi worklogApi, Consumer<Worklog> onSave, Long currentUserId) {
-        this.task          = task;
-        this.taskApi       = taskApi;
-        this.worklogApi    = worklogApi;
-        this.onSave        = onSave;
-        this.currentUserId = currentUserId;
+        this(null, task, taskApi, worklogApi, onSave, currentUserId);
+    }
+
+    /**
+     * Creates a dialog for editing an existing worklog (edit mode) or logging new work (create mode).
+     *
+     * @param existingWorklog The worklog to edit, or {@code null} to create a new one
+     * @param task            The task the worklog belongs to
+     * @param taskApi         The task API for updating task data
+     * @param worklogApi      The worklog API for persisting changes
+     * @param onSave          Callback invoked with the saved or updated worklog
+     * @param currentUserId   ID of the currently logged-in user
+     */
+    public WorklogDialog(Worklog existingWorklog, Task task, TaskApi taskApi, WorklogApi worklogApi, Consumer<Worklog> onSave, Long currentUserId) {
+        this.existingWorklog = existingWorklog;
+        this.isEditMode      = existingWorklog != null;
+        this.task            = task;
+        this.taskApi         = taskApi;
+        this.worklogApi      = worklogApi;
+        this.onSave          = onSave;
+        this.currentUserId   = currentUserId;
 
         setId(WORKLOG_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);
 
         // Set dialog header with clock icon
-        String title = "Log Work";
+        String title = isEditMode ? "Edit Work Log" : "Log Work";
         getHeader().add(VaadinUtil.createDialogHeader(title, TITLE_ID, VaadinIcon.CLOCK));
 
         VerticalLayout dialogLayout = new VerticalLayout();
@@ -224,6 +243,15 @@ public class WorklogDialog extends Dialog {
         dateTimePicker.setRequiredIndicatorVisible(true);
         dialogLayout.add(dateTimePicker);
 
+        // Pre-fill fields in edit mode
+        if (isEditMode) {
+            timeSpentField.setValue(DateUtil.createWorkDayDurationString(existingWorklog.getTimeSpent()));
+            commentField.setValue(existingWorklog.getComment() != null ? existingWorklog.getComment() : "");
+            if (existingWorklog.getStart() != null) {
+                dateTimePicker.setValue(existingWorklog.getStart().toLocalDateTime());
+            }
+        }
+
         // Buttons
         dialogLayout.add(VaadinUtil.createDialogButtonLayout(
                 "Save", SAVE_BUTTON,
@@ -246,7 +274,7 @@ public class WorklogDialog extends Dialog {
     }
 
     /**
-     * Saves the worklog
+     * Saves the worklog (create or edit mode).
      */
     private void save() {
         try {
@@ -289,48 +317,97 @@ public class WorklogDialog extends Dialog {
                 return;
             }
 
-            // Create worklog
-            Worklog worklog = new Worklog();
-            worklog.setTaskId(task.getId());
-            worklog.setSprintId(task.getSprintId());
-            worklog.setTimeSpent(timeSpent);
-            worklog.setComment(commentField.getValue());
-            worklog.setAuthorId(currentUserId);
-            worklog.setUpdateAuthorId(currentUserId);
-
             // Convert LocalDateTime to OffsetDateTime (using system default zone, then convert to UTC)
             OffsetDateTime startDateTime = dateTimePicker.getValue().atZone(ZoneOffset.systemDefault()).toOffsetDateTime();
-            worklog.setStart(startDateTime);
 
-            // Save via API
-            Worklog savedWorklog = worklogApi.persist(worklog);
-
-            task.addTimeSpent(savedWorklog.getTimeSpent());
-            task.setRemainingEstimate(timeRemaining);
-            task.recalculate();
-            taskApi.update(task);
-
-
-            // If time remaining was specified, update the task's remaining estimate
-            if (timeRemaining != null) {
-                // This would require a task update API call
-                // For now, we'll just log it
-                log.info("Time remaining specified: {}, task update needed", timeRemaining);
+            if (isEditMode) {
+                saveEditMode(timeSpent, timeRemaining, startDateTime);
+            } else {
+                saveCreateMode(timeSpent, timeRemaining, startDateTime);
             }
-
-            showSuccess("Work logged successfully");
-
-            // Call the callback
-            if (onSave != null) {
-                onSave.accept(savedWorklog);
-            }
-
-            close();
 
         } catch (Exception e) {
             log.error("Error saving worklog", e);
             showError("Failed to save worklog: " + e.getMessage());
         }
+    }
+
+    /**
+     * Persists a new worklog and updates the task.
+     *
+     * @param timeSpent    parsed time spent duration
+     * @param timeRemaining parsed time remaining duration, or {@code null} if not specified
+     * @param startDateTime the log date/time
+     */
+    private void saveCreateMode(Duration timeSpent, Duration timeRemaining, OffsetDateTime startDateTime) {
+        // Create worklog
+        Worklog worklog = new Worklog();
+        worklog.setTaskId(task.getId());
+        worklog.setSprintId(task.getSprintId());
+        worklog.setTimeSpent(timeSpent);
+        worklog.setComment(commentField.getValue());
+        worklog.setAuthorId(currentUserId);
+        worklog.setUpdateAuthorId(currentUserId);
+        worklog.setStart(startDateTime);
+
+        // Save via API
+        Worklog savedWorklog = worklogApi.persist(worklog);
+
+        task.addTimeSpent(savedWorklog.getTimeSpent());
+        task.setRemainingEstimate(timeRemaining);
+        task.recalculate();
+        taskApi.update(task);
+
+        if (timeRemaining != null) {
+            log.info("Time remaining specified: {}, task updated", timeRemaining);
+        }
+
+        showSuccess("Work logged successfully");
+
+        if (onSave != null) {
+            onSave.accept(savedWorklog);
+        }
+        close();
+    }
+
+    /**
+     * Updates an existing worklog and adjusts the task's time spent accordingly.
+     *
+     * @param newTimeSpent  new parsed time spent duration
+     * @param timeRemaining new parsed time remaining, or {@code null} if not specified
+     * @param startDateTime new log date/time
+     */
+    private void saveEditMode(Duration newTimeSpent, Duration timeRemaining, OffsetDateTime startDateTime) {
+        Duration oldTimeSpent = existingWorklog.getTimeSpent();
+
+        // Mutate the existing worklog in place (same object reference held by task.getWorklogs())
+        existingWorklog.setTimeSpent(newTimeSpent);
+        existingWorklog.setComment(commentField.getValue());
+        existingWorklog.setStart(startDateTime);
+        existingWorklog.setUpdateAuthorId(currentUserId);
+
+        // Adjust task.timeSpent by the delta
+        Duration adjusted = task.getTimeSpent().minus(oldTimeSpent).plus(newTimeSpent);
+        if (adjusted.isNegative()) {
+            adjusted = Duration.ZERO;
+        }
+        task.setTimeSpent(adjusted);
+
+        if (timeRemaining != null) {
+            task.setRemainingEstimate(timeRemaining);
+        }
+        task.recalculate();
+
+        // Persist via API
+        worklogApi.update(existingWorklog);
+        taskApi.update(task);
+
+        showSuccess("Work log updated successfully");
+
+        if (onSave != null) {
+            onSave.accept(existingWorklog);
+        }
+        close();
     }
 
     private void showError(String message) {
