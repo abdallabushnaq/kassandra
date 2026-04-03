@@ -384,7 +384,8 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     }
 
     private void drawStoryBody(Task task, int x1, int x2, int y, Color fillColor, String marker, String toolTip) {
-        Color originalColor = fillColor;
+//        Color originalColor = fillColor;
+        graphics2D.setColor(fillColor);
         if (marker == null) {
 //            drawTick(task.getStart(), x1, y, TextAlignment.left);
 //            drawTick(task.getFinish(), x2, y, TextAlignment.right);
@@ -410,13 +411,13 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
                 // mark that we do not have a gantt chart
                 int   delta1      = 25;// ribbon offset
                 int   delta2      = 16;// ribbon width
-                Color ribbonColor = originalColor;
+                Color ribbonColor = fillColor;
                 for (int x = x1 - delta2; x < x2; x += delta2) {
                     drawRibbon(graphics2D, y1, x, y2, delta1, delta2 - 1, ribbonColor);
-                    if (ribbonColor == originalColor) {
+                    if (ribbonColor.equals(fillColor)) {
                         ribbonColor = Color.white;
                     } else {
-                        ribbonColor = originalColor;
+                        ribbonColor = fillColor;
                     }
                 }
             }
