@@ -158,6 +158,8 @@ public class GanttRenderer extends AbstractGanttRenderer {
                         String      tooltip = createOffDayToolTip(exception);
                         graphics2D.drawString(letter, x - xShift, y + yShift, tooltip);
                     }
+                } else {
+                    graphics2D.fill(s);
                 }
             }
         }

@@ -6,7 +6,12 @@
 /docker/chatterbox/voices
 /docker/index-tts/voices
 /docker/index-tts/checkpoints
-/references
+/references/critical/*.svg
+/references/dynamic-gantt/*.svg
+/references/gantt/*.svg
+/references/gantt/*private.*
+/references/test/*.svg
+/references/test/*private.*
 /legacy-references
 /node_modules
 /src/main/bundles

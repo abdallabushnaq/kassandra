@@ -63,6 +63,12 @@ public class GanttTest extends AbstractGanttTester {
         return getMppFilesStream(folder);
     }
 
+    /**
+     *
+     * @param name
+     * @param testInfo
+     * @throws Exception
+     */
     @ParameterizedTest
     @MethodSource("mppFileNamesProvider")
     public void test(String name, TestInfo testInfo) throws Exception {
