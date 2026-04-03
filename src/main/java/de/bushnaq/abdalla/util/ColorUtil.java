@@ -22,6 +22,11 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 
+/**
+ * Utility class providing color manipulation, conversion, and contrast-calculation helpers.
+ *
+ * <p>All methods are static; this class is not intended to be instantiated.</p>
+ */
 public class ColorUtil {
     private static final Logger logger = LoggerFactory.getLogger(ColorUtil.class);
 
@@ -47,11 +52,27 @@ public class ColorUtil {
         return c;
     }
 
+    /**
+     * Calculates the complementary color by inverting each RGB component.
+     * The alpha channel is ignored and the returned color is fully opaque.
+     *
+     * @param color the source color
+     * @return a new {@link Color} whose red, green and blue components are {@code 255 - component}
+     */
     public static Color calculateComplementaryColor(Color color) {
         Color complementaryColor = new Color(255 - color.getRed(), 255 - color.getGreen(), 255 - color.getBlue());
         return complementaryColor;
     }
 
+    /**
+     * Calculates a perceived-luminance-weighted contrast value between two colors.
+     * Uses the formula {@code 0.299·R + 0.587·G + 0.114·B} applied to the absolute per-channel
+     * difference, giving a value in the range {@code [0, 255]}.
+     *
+     * @param aC1 the first color
+     * @param aC2 the second color
+     * @return the contrast value; higher means more perceptually distinct
+     */
     public static int calculateContrast(final Color aC1, final Color aC2) {
         final int red   = Math.abs(aC1.getRed() - aC2.getRed());
         final int green = Math.abs(aC1.getGreen() - aC2.getGreen());
@@ -62,6 +83,15 @@ public class ColorUtil {
         return light;
     }
 
+    /**
+     * Scales each RGB component of the given color by {@code aFraction}, clamping the result to
+     * the valid range {@code [0, 255]}. The alpha channel is not preserved; the returned color is
+     * fully opaque.
+     *
+     * @param aColor    the source color
+     * @param aFraction the scale factor; values &lt; 1.0 darken, values &gt; 1.0 brighten
+     * @return a new {@link Color} with scaled RGB components
+     */
     public static Color colorFraction(final Color aColor, final double aFraction) {
         final int _red   = Math.max(Math.min((int) (aColor.getRed() * aFraction), 255), 0);
         final int _green = Math.max(Math.min((int) (aColor.getGreen() * aFraction), 255), 0);
@@ -69,6 +99,16 @@ public class ColorUtil {
         return new Color(_red, _green, _blue);
     }
 
+    /**
+     * Linearly interpolates (blends) two colors in RGB space.
+     * The result is {@code aColor2 * aFraction + aColor1 * (1 - aFraction)}.
+     * A fraction of {@code 0.0} returns {@code aColor1}; {@code 1.0} returns {@code aColor2}.
+     *
+     * @param aColor1   the start color
+     * @param aColor2   the end color
+     * @param aFraction the interpolation weight in the range {@code [0.0, 1.0]}
+     * @return a new {@link Color} representing the blended result
+     */
     public static Color colorMerger(final Color aColor1, final Color aColor2, final float aFraction) {
         final float[] _color1 = aColor1.getColorComponents(null);
         final float[] _color2 = aColor2.getColorComponents(null);
@@ -92,6 +132,14 @@ public class ColorUtil {
         return "#" + colorToHtmlColor(color).toUpperCase();
     }
 
+    /**
+     * Converts a {@link Color} to a 6-character lowercase hex string <em>without</em> a leading
+     * {@code #} character (e.g., {@code "ff0000"} for red).
+     * Use {@link #colorToHexString(Color)} when the {@code #} prefix is required.
+     *
+     * @param aColor the color to convert
+     * @return a 6-character lowercase hex string representing the RGB components
+     */
     public static String colorToHtmlColor(final Color aColor) {
         int       _rgb   = aColor.getRGB();
         final int _red   = aColor.getRed();
@@ -110,6 +158,14 @@ public class ColorUtil {
         }
     }
 
+    /**
+     * Converts a {@link Color} to a CSS {@code rgb()} string suitable for use in JSF / CSS contexts.
+     * For example, {@code Color.RED} produces {@code "rgb( 255, 0, 0)"}.
+     * The alpha channel is ignored.
+     *
+     * @param aColor the color to convert
+     * @return a CSS {@code rgb(r, g, b)} string
+     */
     public static String colorToJsfColor(final Color aColor) {
         final int _red   = aColor.getRed();
         final int _green = aColor.getGreen();
@@ -117,6 +173,18 @@ public class ColorUtil {
         return "rgb( " + _red + ", " + _green + ", " + _blue + ")";
     }
 
+    /**
+     * Computes the perceptual difference between two pixels represented as {@code int[]} arrays
+     * in the format {@code [R, G, B, A]}.
+     *
+     * <p>The comparison is performed in HSB (Hue, Saturation, Brightness) space by summing the
+     * absolute differences of all three HSB components. Pixels where the <em>pattern</em> alpha
+     * ({@code aPatternPixelColor[3]}) is {@code 0} (fully transparent) contribute zero difference.</p>
+     *
+     * @param aPatternPixelColor the reference pixel as {@code [R, G, B, A]}
+     * @param aImagePixelColor   the pixel under test as {@code [R, G, B, A]}
+     * @return the cumulative HSB difference; {@code 0.0f} means identical colors
+     */
     public static float difference(final int[] aPatternPixelColor, final int[] aImagePixelColor) {
         float[] _patternHsb = null;
         {
@@ -143,6 +211,15 @@ public class ColorUtil {
         return _difference;
     }
 
+    /**
+     * Returns either {@link Color#white} or {@link Color#black}, whichever provides the higher
+     * perceptual contrast against the given fully-opaque color.
+     * Uses the luminance formula {@code 0.299·R + 0.587·G + 0.114·B}; colors with a luminance
+     * below 127 are considered dark, so white is returned, and vice versa.
+     *
+     * @param aColor the background color (alpha channel is ignored)
+     * @return {@link Color#white} for dark backgrounds, {@link Color#black} for light backgrounds
+     */
     public static Color heighestContrast(final Color aColor) {
         final int red   = aColor.getRed();
         final int green = aColor.getGreen();
@@ -158,16 +235,36 @@ public class ColorUtil {
     }
 
     /**
-     * Blue 255 will return a gray value of 28 Red 255 will return a gray value of 76 Green 255 will return a gray value
-     * of 150 The commulative gray value is the sum of the component values
+     * Returns either {@link Color#white} or {@link Color#black}, whichever provides the higher
+     * perceptual contrast against the given color when it is rendered over the specified background.
      *
-     * @param aColor given color
-     * @return Returns either white or black, whichever will have the highest contrast to the given color
+     * <p>The color's own alpha channel is used to alpha-blend it over the background, and the
+     * most contrasting candidate is chosen from the resulting blended color via
+     * {@link #selectMostContrastColor(Color, Color[])}.</p>
+     *
+     * @param aColor     the foreground color (its alpha value controls the blend ratio)
+     * @param background the background color that {@code aColor} is drawn on
+     * @return {@link Color#white} or {@link Color#black}, whichever contrasts more with the blended result
      */
     public static Color heighestContrast(final Color aColor, Color background) {
         return heighestContrast(aColor, background, aColor.getAlpha());
     }
 
+    /**
+     * Returns either {@link Color#white} or {@link Color#black}, whichever provides the higher
+     * perceptual contrast against the given color when it is rendered over the specified background
+     * using the supplied alpha value (overriding the color's own alpha channel).
+     *
+     * <p>The supplied {@code alpha} value is used to alpha-blend {@code aColor} over
+     * {@code background}, and the most contrasting candidate is chosen from the resulting blended
+     * color via {@link #selectMostContrastColor(Color, Color[])}.</p>
+     *
+     * @param aColor     the foreground color
+     * @param background the background color that {@code aColor} is drawn on
+     * @param alpha      the explicit alpha value in the range {@code [0, 255]} to use for blending;
+     *                   {@code 0} means fully transparent (background only), {@code 255} means fully opaque
+     * @return {@link Color#white} or {@link Color#black}, whichever contrasts more with the blended result
+     */
     public static Color heighestContrast(final Color aColor, Color background, int alpha) {
         final int red   = (aColor.getRed() * alpha) / 255 + (background.getRed() * (255 - alpha)) / 255;
         final int green = (aColor.getGreen() * alpha) / 255 + (background.getGreen() * (255 - alpha)) / 255;
@@ -211,6 +308,16 @@ public class ColorUtil {
         }
     }
 
+    /**
+     * Selects the color from the given array that provides the highest contrast against the
+     * background color. Contrast is measured as the squared Euclidean distance in RGB space,
+     * which emphasises large per-channel differences.
+     *
+     * @param backgroundColor the reference background color
+     * @param colors          an array of candidate colors to evaluate
+     * @return the candidate color whose squared RGB distance from {@code backgroundColor} is largest;
+     *         {@code null} if {@code colors} is empty
+     */
     public static Color selectMostContrastColor(Color backgroundColor, Color[] colors) {
         int   maxContrast   = 0;
         Color contrastColor = null;
@@ -226,10 +333,25 @@ public class ColorUtil {
         return contrastColor;
     }
 
+    /**
+     * Returns a new {@link Color} identical to the given color but with the specified alpha value.
+     *
+     * @param c1    the source color (RGB components are preserved)
+     * @param alpha the new alpha value in the range {@code [0, 255]};
+     *              {@code 0} is fully transparent, {@code 255} is fully opaque
+     * @return a new {@link Color} with the same RGB components and the new alpha
+     */
     public static Color setAlpha(Color c1, int alpha) {
         return new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alpha);
     }
 
+    /**
+     * Converts a Windows COLORREF color (stored as BGR) to a Java {@link Color} (stored as RGB)
+     * by swapping the red and blue channels. The green channel is unchanged.
+     *
+     * @param aColor the Windows-order color
+     * @return a new {@link Color} with the red and blue channels swapped
+     */
     public static Color windowsToJava(final Color aColor) {
         final int _red   = aColor.getRed();
         final int _green = aColor.getGreen();

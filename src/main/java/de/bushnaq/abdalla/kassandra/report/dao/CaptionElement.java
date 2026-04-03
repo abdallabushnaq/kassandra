@@ -23,11 +23,11 @@ import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import java.awt.*;
 
 public class CaptionElement {
-    private final Color  color  = new Color(0x2c, 0x7b, 0xf4);
     public        Font   font   = new Font(Font.SANS_SERIF, Font.PLAIN, 18);
     public        int    height = 26;
     private final String relateCssPath;
     private final String text;
+    private final Theme  theme;
     public        int    width;
     public        int    x      = 3;
     public        int    y      = 0;
@@ -35,6 +35,7 @@ public class CaptionElement {
     public CaptionElement(String text, String relateCssPath,/*, int chartWidth, int chartHeight*/Theme theme) {
         this.text          = text;
         this.relateCssPath = relateCssPath;
+        this.theme         = theme;
         if (text == null) {
             height = 0;
         }
@@ -45,7 +46,7 @@ public class CaptionElement {
         if (text != null) {
 //            graphics2D.setColor(backgroundColor);
 //            graphics2D.fillRect(0, y, width, height);
-            graphics2D.setColor(color);
+            graphics2D.setColor(theme.chartTheme.captionTextColor);
             graphics2D.setFont(font);
             FontMetrics fm           = graphics2D.getFontMetrics();
             int         ascent       = fm.getAscent();

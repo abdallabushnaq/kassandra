@@ -54,6 +54,7 @@ public class LightTheme extends Theme {
         //---------------------------------------------------------------------
         chartTheme.backgroundColor          = baseBgColor;
         chartTheme.chartBorderColor         = new Color(0xaaaaaa);
+        chartTheme.captionTextColor         = new Color(0x2c, 0x7b, 0xf4);
         chartTheme.footerTextColor          = new Color(0x2c, 0x7b, 0xf4);
         chartTheme.graphTextBackgroundColor = chartTheme.backgroundColor;
         chartTheme.surroundingSquareColor   = new Color(0xaaaaaa);
@@ -140,10 +141,10 @@ public class LightTheme extends Theme {
         ganttTheme.gridColor               = new Color(0xe4e8f3, false);
         //--DayStripeColors
         ganttTheme.outOfOfficeColor      = new Color(0xff, 0xff, 0xff, 0xff);
-        ganttTheme.holidayBgColor        = new Color(0xffe6e6);
-        ganttTheme.sickBgColor           = new Color(0xffe6e6);
-        ganttTheme.tripBgColor           = new Color(0xffe6e6);
-        ganttTheme.vacationBgColor       = new Color(0xffe6e6);
+        ganttTheme.holidayBgColor        = new Color(0xffefef);
+        ganttTheme.sickBgColor           = new Color(0xffefef);
+        ganttTheme.tripBgColor           = new Color(0xffefef);
+        ganttTheme.vacationBgColor       = new Color(0xffefef);
         ganttTheme.taskTickLineColor     = new Color(183, 216, 240);
         ganttTheme.taskTickTextColor     = new Color(0, 0, 0, 127);
         ganttTheme.requestMilestoneColor = Color.RED/*new Color(0xa7, 0x00, 0x00)*/;

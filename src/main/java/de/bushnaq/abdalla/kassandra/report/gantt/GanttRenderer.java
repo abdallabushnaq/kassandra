@@ -49,7 +49,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
 
     private static final int               GANTT_TASK_POST_SPACE = 0;
     private static final int               GANTT_TASK_PRI_SPACE  = 0;
-    private final static Font              NoneWorkingDayFont    = new Font(Font.SANS_SERIF, Font.BOLD, 25);
+    private final static Font              NoneWorkingDayFont    = new Font(Font.SANS_SERIF, Font.BOLD, 22);
     private static final int               ONE_WEEK              = 7;
     public final         DateTimeFormatter dtfymd                = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private final        Logger            logger                = LoggerFactory.getLogger(this.getClass());
