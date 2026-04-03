@@ -51,6 +51,7 @@ public class MPXJReader extends GanttGenerator {
         this.includeLevelingInfo = includeLevelingInfo;
     }
 
+
     public static boolean isValidTask(net.sf.mpxj.Task task) {
         //ignore task with ID 0
         //ignore tasks that have no name
@@ -69,7 +70,6 @@ public class MPXJReader extends GanttGenerator {
             //populate mpxjTaskMap and resourceMap
             for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
                 if (isValidTask(mpxjTask)) {
-                    System.out.printf("Task ID: %s, Task Name: %s%n", mpxjTask.getID(), mpxjTask.getName());
                     mpxjTaskMap.put(mpxjTask.getName(), mpxjTask);//store tasks
                     if (!mpxjTask.getResourceAssignments().isEmpty()) {
                         ResourceAssignment resourceAssignment = mpxjTask.getResourceAssignments().get(0);
@@ -90,6 +90,7 @@ public class MPXJReader extends GanttGenerator {
                                     emailAddress = resourceName.replaceAll(" ", "_") + "@example.com";
                                 }
                                 User user = addUser(resourceName, (float) availability);
+                                System.out.printf("Resource ID: %s, resource Name: %s%n", user.getId(), user.getName());
 
                                 userMap.put(resourceName, user);//store users
                             }
@@ -205,6 +206,7 @@ public class MPXJReader extends GanttGenerator {
         }
         return sprint;
     }
+
 
 //    private void store(String directory, TestInfo testInfo, Sprint sprint, boolean overwrite) throws IOException {
 //        Path filePath = Paths.get(directory, TestInfoUtil.getTestMethodName(testInfo) + ".json");

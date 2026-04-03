@@ -435,7 +435,6 @@ public class GanttUtil {
                             Duration duration = getDurationFromWork(eh, task);
                             task.setDuration(duration);
                             if (task.getStart() != null && duration != null) {
-                                //TODO reintroduce calendar fixed
                                 ProjectCalendar calendar = getCalendar(task);
                                 LocalDateTime   finish   = calendar.getDate(task.getStart(), MpxjUtil.toMpjxDuration(duration));
 //                            LocalDateTime finish = task.getStart().plus(duration);
@@ -453,7 +452,6 @@ public class GanttUtil {
                         //-children
                         //-dependencies
                         //-parent with start
-                        //TODO reintroduce calendar fixed
                         ProjectCalendar calendar = getCalendar(task);
                         if (!isManual(task) && !hasChildTasks(task) && !hasHierarchicalDependencies(task) && !hasStart(task.getParentTask())
                                 && !equals(calendar, currentStartTime, task.getStart())) {
@@ -473,7 +471,6 @@ public class GanttUtil {
                             //+dependency with finish
                             if (!isManual(task) && !hasChildTasks(task)) {
                                 if (start != null) {
-                                    //TODO reintroduce calendar fixed
                                     ProjectCalendar calendar = getCalendar(task);
                                     start = calendar.getNextWorkStart(start);//ensure we are not starting on a none-working-day
                                     if (!equals(getCalendar(task), start, task.getStart())) {
@@ -495,8 +492,7 @@ public class GanttUtil {
                             //-manual
                             //+children
                             //-dependency
-                            LocalDateTime start = getFirstChildStart(task);
-                            //TODO reintroduce calendar fixed
+                            LocalDateTime   start    = getFirstChildStart(task);
                             ProjectCalendar calendar = getCalendar(task);
                             if (!isManual(task) && hasChildTasks(task) && !depends) {
                                 if (start != null && !equals(calendar, start, task.getStart())) {
@@ -541,8 +537,7 @@ public class GanttUtil {
                                 } else {
                                     start = lastStartConstraint;
                                 }
-                                LocalDateTime finish = getLastChildFinish(task);
-                                //TODO reintroduce calendar fixed
+                                LocalDateTime   finish   = getLastChildFinish(task);
                                 ProjectCalendar calendar = getCalendar(task);
                                 if (start != null) {
                                     start = calendar.getNextWorkStart(start);

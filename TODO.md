@@ -28,8 +28,8 @@
 
 # Failing Tests
 
-1. all TestTest
-2. GanttTest 5, 6, 7, 8, 9
+1. all TestTest (dependency to task with higher orderId fails to level)
+2. most listview tests in github
 
 # Next Tooling Ideas
 

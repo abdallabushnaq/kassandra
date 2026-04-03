@@ -59,6 +59,7 @@ import static de.bushnaq.abdalla.kassandra.util.NameGenerator.PROJECT_HUB_ORG;
 //@Transactional
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@Deprecated
 public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
     public static final String ANONYMOUS     = "anonymous";
     private             int    testCaseIndex = 1;

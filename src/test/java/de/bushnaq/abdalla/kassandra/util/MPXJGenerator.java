@@ -26,6 +26,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,13 +70,13 @@ public class MPXJGenerator {
         user.addLocation(location);
     }
 
-//    protected Task addParentTask(String name, User user, Sprint sprint, Task parent, Task dependency) {
-//        return addTask(sprint, parent, name, null, Duration.ofDays(0), null, user, dependency);
-//    }
-
     public Task addParentTask(String name, Sprint sprint, Task parent, Task dependency) {
         return addTask(sprint, parent, name, null, Duration.ofDays(0), null, null, dependency);
     }
+
+//    protected Task addParentTask(String name, User user, Sprint sprint, Task parent, Task dependency) {
+//        return addTask(sprint, parent, name, null, Duration.ofDays(0), null, user, dependency);
+//    }
 
     protected Product addProduct(String name) {
         Product product = new Product();
@@ -159,6 +160,7 @@ public class MPXJGenerator {
         task.setOrderId(tasks.size());
         tasks.add(task);
 //        System.out.printf("Adding %s%n", task);
+        System.out.printf("Task ID: %s, Task Name: %s resource id: %d%n", task.getId(), task.getName(), task.getResourceId());
         return task;
     }
 
@@ -183,6 +185,21 @@ public class MPXJGenerator {
         product.addVersion(version);
         versions.add(version);
         return version;
+    }
+
+    protected Worklog addWorklog(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
+        Worklog worklog = new Worklog();
+        worklog.setSprintId(task.getSprintId());
+        worklog.setTaskId(task.getId());
+        worklog.setAuthorId(user.getId());
+        worklog.setStart(start);
+        worklog.setTimeSpent(timeSpent);
+        worklog.setComment(comment);
+        worklog.setId((long) worklogs.size());
+        task.addWorklog(worklog);
+//        Worklog saved = worklogApi.persist(worklog);
+        worklogs.add(worklog);
+        return worklog;
     }
 
 

@@ -48,14 +48,13 @@ import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 @Slf4j
 public class AbstractGanttTester extends DTOAsserts {
     private final DateTimeFormatter dtfymdhmss = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm:ss.SSS");
-
     /**
      * Theme used when generating Gantt charts in {@link #evaluate}.
      * Defaults to {@link ETheme#dark} to preserve pre-existing test reference images.
      * Sub-classes (e.g. {@code CriticalTest}) may set this field before calling
      * {@link #executeTest} to switch the rendering theme.
      */
-    protected ETheme testTheme = ETheme.dark;
+    protected     ETheme            testTheme  = ETheme.dark;
 
     /**
      * Compares two Lombok {@code toString()} outputs field by field and returns the actual
@@ -100,7 +99,10 @@ public class AbstractGanttTester extends DTOAsserts {
         project.levelResources(testInfo, sprint, null);
         project.testTheme = testTheme;
 
+        ParameterOptions.setNow(DateUtil.localDateTimeToOffsetDateTime(DateUtil.addDay(sprint.getStart(), 10)));
+        project.generateWorklogs(sprint.getId(), ParameterOptions.getLocalNow());
         project.generateGanttChart(testInfo, sprint.getId(), testFolder);
+        project.generateBurndownChart(testInfo, sprint.getId(), testFolder);
 
         sanitizeTasks(sprint);
         for (int i = 0; i < referenceSprint.getTasks().size(); i++) {
