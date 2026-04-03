@@ -367,6 +367,7 @@ public class ProductListViewTester extends AbstractViewTester {
 //                    System.out.println("OIDC Login: Waiting for redirect back to application");
                     seleniumHandler.waitForElementToBeClickable(AboutView.ABOUT_PAGE_TITLE);
                     seleniumHandler.click(ProductListView.MENU_ITEM_ID);
+                    seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
 //                    System.out.println("OIDC Login: Successfully logged in with OIDC");
                 } catch (Exception e) {
                     log.error("OIDC Login: Error during Keycloak login: " + e.getMessage());
