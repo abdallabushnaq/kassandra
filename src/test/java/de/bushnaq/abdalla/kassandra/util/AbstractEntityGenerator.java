@@ -18,7 +18,10 @@
 package de.bushnaq.abdalla.kassandra.util;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.*;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
@@ -120,8 +123,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         feature.setCreated(ParameterOptions.getNow());
         feature.setUpdated(ParameterOptions.getNow());
 
-        Feature              saved      = null;
-        long                 startTime  = System.currentTimeMillis();
+        Feature              saved              = null;
+        long                 startTime          = System.currentTimeMillis();
         String               basePrompt         = Feature.getDefaultLightAvatarPrompt(name);
         String               darkBasePrompt     = Feature.getDefaultDarkAvatarPrompt(name);
         String               negativePrompt     = Feature.getDefaultLightAvatarNegativePrompt();
@@ -275,8 +278,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         product.setCreated(ParameterOptions.getNow());
         product.setUpdated(ParameterOptions.getNow());
 
-        Product              saved      = null;
-        long                 startTime  = System.currentTimeMillis();
+        Product              saved              = null;
+        long                 startTime          = System.currentTimeMillis();
         String               basePrompt         = Product.getDefaultLightAvatarPrompt(name);
         String               darkBasePrompt     = Product.getDefaultDarkAvatarPrompt(name);
         String               negativePrompt     = Product.getDefaultLightAvatarNegativePrompt();
@@ -431,8 +434,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         sprint.setCreated(ParameterOptions.getNow());
         sprint.setUpdated(ParameterOptions.getNow());
 
-        Sprint               saved      = null;
-        long                 startTime  = System.currentTimeMillis();
+        Sprint               saved              = null;
+        long                 startTime          = System.currentTimeMillis();
         String               basePrompt         = Sprint.getDefaultLightAvatarPrompt(name);
         String               darkBasePrompt     = Sprint.getDefaultDarkAvatarPrompt(name);
         String               negativePrompt     = Sprint.getDefaultLightAvatarNegativePrompt();
@@ -539,18 +542,18 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         user.setCreated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
         user.setUpdated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
 
-        long                 startTime      = System.currentTimeMillis();
+        long                 startTime          = System.currentTimeMillis();
         String               basePrompt         = User.getDefaultLightAvatarPrompt(name);
         String               darkBasePrompt     = User.getDefaultDarkAvatarPrompt(name);
         String               negativePrompt     = User.getDefaultLightAvatarNegativePrompt();
         String               darkNegativePrompt = User.getDefaultDarkAvatarNegativePrompt();
-        GeneratedImageResult image;
-        try {
-            image = avatarService.generateLightAvatar(basePrompt, negativePrompt);
-        } catch (StableDiffusionException e) {
-            log.warn("Failed to generate light avatar for user {}: {}", name, e.getMessage());
-            image = avatarService.generateDefaultLightAvatar("user");
-        }
+        GeneratedImageResult image              = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "user");
+//        try {
+//            image = avatarService.generateLightAvatar(basePrompt, negativePrompt);
+//        } catch (StableDiffusionException e) {
+//            log.warn("Failed to generate light avatar for user {}: {}", name, e.getMessage());
+//            image = avatarService.generateDefaultLightAvatar("user");
+//        }
         user.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
 
         User saved = userApi.persist(user);
@@ -558,13 +561,13 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         addLocation(saved, country, state, start);
         addAvailability(saved, availability, start);
 
-        GeneratedImageResult darkImage;
-        try {
-            darkImage = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, image);
-        } catch (StableDiffusionException e) {
-            log.warn("Failed to generate dark avatar for user {}: {}", name, e.getMessage());
-            darkImage = avatarService.generateDefaultDarkAvatar("user");
-        }
+        GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "user");
+//        try {
+//            darkImage = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, image);
+//        } catch (StableDiffusionException e) {
+//            log.warn("Failed to generate dark avatar for user {}: {}", name, e.getMessage());
+//            darkImage = avatarService.generateDefaultDarkAvatar("user");
+//        }
 
         userApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
                 darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),

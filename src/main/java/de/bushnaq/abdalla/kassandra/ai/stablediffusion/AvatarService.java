@@ -143,7 +143,7 @@ public class AvatarService {
      * @return {@link GeneratedImageResult} containing the original and resized dark images.
      * @throws StableDiffusionException if Stable Diffusion is unavailable or generation fails.
      */
-    public GeneratedImageResult generateDarkAvatar(String basePrompt, String negativePrompt, GeneratedImageResult lightResult)
+    protected GeneratedImageResult generateDarkAvatar(String basePrompt, String negativePrompt, GeneratedImageResult lightResult)
             throws StableDiffusionException {
         return generateDarkAvatar(basePrompt, negativePrompt, lightResult, null);
     }
@@ -267,7 +267,7 @@ public class AvatarService {
      * @return {@link GeneratedImageResult} containing the original and resized images, plus the SD seed.
      * @throws StableDiffusionException if Stable Diffusion is unavailable or generation fails.
      */
-    public GeneratedImageResult generateLightAvatar(String basePrompt, String negativePrompt) throws StableDiffusionException {
+    protected GeneratedImageResult generateLightAvatar(String basePrompt, String negativePrompt) throws StableDiffusionException {
         return generateLightAvatar(basePrompt, negativePrompt, null);
     }
 
