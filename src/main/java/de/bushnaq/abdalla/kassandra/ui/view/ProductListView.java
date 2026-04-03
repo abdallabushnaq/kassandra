@@ -68,6 +68,7 @@ import java.util.Map;
 @RolesAllowed({"USER", "ADMIN"})
 public class ProductListView extends AbstractMainGrid<Product> implements AfterNavigationObserver {
     public static final  String                 CREATE_PRODUCT_BUTTON             = "create-product-button";
+    public static final  String                 MENU_ITEM_ID                      = "/product-list";
     public static final  String                 PRODUCT_AI_PANEL_BUTTON           = "product-ai-panel-button";
     public static final  String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
     public static final  String                 PRODUCT_GRID                      = "product-grid";
@@ -80,13 +81,13 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     public static final  String                 ROUTE                             = "product-list";
     private static final String                 ROUTE_KEY                         = "product-list";
     private final        Button                 aiToggleButton;
+    private final        AvatarService          avatarService;
     private final        SplitLayout            bodySplit;
     private final        ChatAgentPanel         chatAgentPanel;
     private final        Div                    chatPane;
     private final        ProductAclApi          productAclApi;
     private final        ProductApi             productApi;
     private final        ChatPanelSessionState  sessionState;
-    private final        AvatarService          avatarService;
     private final        StableDiffusionService stableDiffusionService;
     private final        UserApi                userApi;
     private final        UserGroupApi           userGroupApi;

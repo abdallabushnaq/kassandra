@@ -273,8 +273,6 @@ public class OffDayListViewTester extends AbstractViewTester {
         }
     }
 
-    // Helper methods
-
     /**
      * Finds the ID of an off day record based on its first day.
      *
@@ -292,6 +290,8 @@ public class OffDayListViewTester extends AbstractViewTester {
         String fullId = startDateSpan.getAttribute("id");
         return fullId.substring(OffDayListView.OFFDAY_GRID_START_DATE_PREFIX.length());
     }
+
+    // Helper methods
 
     /**
      * Navigates to the OffDayListView for a specific user.

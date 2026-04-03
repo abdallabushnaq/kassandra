@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dao.AboutImageDAO;
 import de.bushnaq.abdalla.kassandra.repository.AboutImageRepository;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,8 +77,19 @@ public class AboutBoxService {
     @Value("${kassandra.version:0.0.1}")
     private String version;
 
-    private volatile byte[]    cachedImage = null;
-    private volatile LocalDate cacheDate   = null;
+    private volatile byte[]    cachedImage      = null;
+    private volatile LocalDate cacheDate        = null;
+    /**
+     * Set to {@code false} by {@link #destroy()} so that any in-flight or future call to
+     * {@link #getOrGenerateImage()} returns the sentinel value without touching the database.
+     * This prevents Hibernate "table not found" warnings when the JPA schema is dropped
+     * during Spring context teardown (e.g. between {@code @DirtiesContext} tests).
+     */
+    private volatile boolean   active           = true;
+    /**
+     * Reference to the background pre-load thread so that {@link #destroy()} can join it.
+     */
+    private          Thread    backgroundThread = null;
 
     /**
      * Kicks off a daemon background thread that pre-loads or generates the first daily
@@ -85,9 +97,32 @@ public class AboutBoxService {
      */
     @PostConstruct
     private void init() {
-        Thread t = new Thread(this::getOrGenerateImage, "about-image-init");
-        t.setDaemon(true);
-        t.start();
+        backgroundThread = new Thread(this::getOrGenerateImage, "about-image-init");
+        backgroundThread.setDaemon(true);
+        backgroundThread.start();
+    }
+
+    /**
+     * Signals the background thread to stop and waits for it to finish (up to 2 s).
+     * <p>
+     * Spring destroys beans in reverse dependency order, so this method runs before
+     * the JPA infrastructure is torn down. Joining the thread here ensures it has
+     * exited before Hibernate drops the {@code about_images} table, preventing
+     * spurious {@code HHH000247} WARN messages during context teardown.
+     * </p>
+     */
+    @PreDestroy
+    private void destroy() {
+        active = false;
+        if (backgroundThread != null && backgroundThread.isAlive()) {
+            backgroundThread.interrupt();
+            try {
+                backgroundThread.join(2_000L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("Interrupted while waiting for about-image-init thread to finish");
+            }
+        }
     }
 
     /**
@@ -115,6 +150,11 @@ public class AboutBoxService {
      */
     public synchronized byte[] getOrGenerateImage() {
         LocalDate today = LocalDate.now();
+
+        // Guard: return immediately if the service is being shut down.
+        if (!active) {
+            return SD_UNAVAILABLE;
+        }
 
         // 1. In-memory cache hit
         if (cachedImage != null && today.equals(cacheDate)) {

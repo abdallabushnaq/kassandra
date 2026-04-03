@@ -62,30 +62,30 @@ import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 @Slf4j
 public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
-    public static final String           ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
-    public static final String           ID_LOGO                         = "main-layout-logo";
-    public static final String           ID_TAB_BASE                     = "main-layout-tab-";
+    public static final String                               ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
+    public static final String                               ID_LOGO                         = "main-layout-logo";
+    public static final String                               ID_TAB_BASE                     = "main-layout-tab-";
     //    public static final String           ID_TAB_USERS                 = "main-layout-tab-users";
-    public static final String           ID_THEME_TOGGLE                 = "main-layout-theme-toggle";
-    public static final String           ID_USER_MENU                    = "main-layout-user-menu";
-    public static final String           ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
-    public static final String           ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
-    public static final String           ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
-    public static final String           ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
-    public static final String           ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
-    public static final String           ID_USER_MENU_MANAGE_USER_GROUPS = "main-layout-user-menu-manage-user-groups";
-    public static final String           ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
-    public static final String           ID_USER_MENU_OFF_DAYS           = "main-layout-user-menu-off-days";
-    public static final String           ID_USER_MENU_VIEW_PROFILE       = "main-layout-user-menu-view-profile";
+    public static final String                               ID_THEME_TOGGLE                 = "main-layout-theme-toggle";
+    public static final String                               ID_USER_MENU                    = "main-layout-user-menu";
+    public static final String                               ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
+    public static final String                               ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
+    public static final String                               ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
+    public static final String                               ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
+    public static final String                               ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
+    public static final String                               ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
+    public static final String                               ID_USER_MENU_MANAGE_USER_GROUPS = "main-layout-user-menu-manage-user-groups";
+    public static final String                               ID_USER_MENU_OFF_DAYS           = "main-layout-user-menu-off-days";
+    public static final String                               ID_USER_MENU_VIEW_PROFILE       = "main-layout-user-menu-view-profile";
+    private final       Div                                  breadcrumbContainer;
     @Getter
-    private final       Breadcrumbs      breadcrumbs  = new Breadcrumbs();
-    private             Div              breadcrumbContainer;
-    private             Image            logoImage;
-    private final       ThemeSessionState themeSessionState;
+    private final       Breadcrumbs                          breadcrumbs                     = new Breadcrumbs();
+    private             Image                                logoImage;
+    private final       Map<Tab, String>                     tabToPathMap                    = new HashMap<>();
+    private             Tabs                                 tabs;
+    private final       ThemeSessionState                    themeSessionState;
+    private final       UserApi                              userApi;
     private             com.vaadin.flow.component.html.Image userAvatarImage;
-    private final       Map<Tab, String> tabToPathMap = new HashMap<>();
-    private             Tabs             tabs;
-    private final       UserApi          userApi;
 
     MainLayout(UserApi userApi, ThemeSessionState themeSessionState) {
         this.userApi           = userApi;
@@ -126,18 +126,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
                 tabs.setSelectedTab(tab);
             }
         });
-    }
-
-    /**
-     * Shows or hides the breadcrumb bar below the main navigation.
-     * Called by views that do not need breadcrumb context (e.g. {@link de.bushnaq.abdalla.kassandra.ui.view.AboutView}).
-     *
-     * @param visible {@code true} to show the bar, {@code false} to hide it
-     */
-    public void setBreadcrumbsVisible(boolean visible) {
-        if (breadcrumbContainer != null) {
-            breadcrumbContainer.setVisible(visible);
-        }
     }
 
     /**
@@ -220,6 +208,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         } else {
             tab.add(new Span(menuEntry.title()));
         }
+//        tab.setId(menuEntry.title().substring(1));
 
         return tab;
     }
@@ -391,6 +380,18 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     private void navigateToUsers() {
         getUI().ifPresent(ui -> ui.navigate("user-list"));
+    }
+
+    /**
+     * Shows or hides the breadcrumb bar below the main navigation.
+     * Called by views that do not need breadcrumb context (e.g. {@link de.bushnaq.abdalla.kassandra.ui.view.AboutView}).
+     *
+     * @param visible {@code true} to show the bar, {@code false} to hide it
+     */
+    public void setBreadcrumbsVisible(boolean visible) {
+        if (breadcrumbContainer != null) {
+            breadcrumbContainer.setVisible(visible);
+        }
     }
 
     /**

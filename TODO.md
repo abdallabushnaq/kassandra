@@ -29,7 +29,9 @@
 # Failing Tests
 
 1. all TestTest (dependency to task with higher orderId fails to level)
-2. most listview tests in github
+2. ProductListViewTest.testEditProductAddAcl
+3. ProductListViewTest.testCreateProductWithGroupAcl
+4. all gantt tests that draw burndown charts have errors in the height of the graph.
 
 # Next Tooling Ideas
 

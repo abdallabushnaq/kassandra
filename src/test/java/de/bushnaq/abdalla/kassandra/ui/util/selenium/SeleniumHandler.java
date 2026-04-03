@@ -961,7 +961,7 @@ class SeleniumHandler {
         }
         // Humanized typing into the combobox
         typeText(i, text);
-        sendKeys(id, Keys.RETURN);
+        sendKeys(id, Keys.LEFT_SHIFT, Keys.RETURN);
         wait(500);
         sendKeys(id, Keys.ARROW_DOWN, Keys.TAB);
         log.trace("set ComboBox value=" + text);
@@ -994,7 +994,7 @@ class SeleniumHandler {
 
         typeText(inputField, dateStr);
 
-        inputField.sendKeys(Keys.ENTER);// Press Enter to confirm the date and close the calendar
+        inputField.sendKeys(Keys.LEFT_SHIFT, Keys.ENTER);// Press Enter to confirm the date and close the calendar
         log.trace("Pressed Enter to confirm date");
 
         log.trace("Successfully set date: {}", date);

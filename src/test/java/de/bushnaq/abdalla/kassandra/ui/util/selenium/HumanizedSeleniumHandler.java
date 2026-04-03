@@ -906,7 +906,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             inputElement.sendKeys(Keys.DELETE);
         }
         typeText(inputElement, text);
-        inputElement.sendKeys(Keys.RETURN);
+        inputElement.sendKeys(Keys.LEFT_SHIFT, Keys.RETURN);
         wait(500);
         inputElement.sendKeys(Keys.ARROW_DOWN, Keys.TAB);
     }
