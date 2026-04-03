@@ -156,6 +156,7 @@ public class MPXJGenerator {
             sprint.addTask(task);
         }
         task.setId((long) tasks.size());
+        task.setOrderId(tasks.size());
         tasks.add(task);
 //        System.out.printf("Adding %s%n", task);
         return task;
