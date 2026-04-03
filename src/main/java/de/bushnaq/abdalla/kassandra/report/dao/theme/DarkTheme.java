@@ -48,7 +48,7 @@ public class DarkTheme extends Theme {
 
         Color basicTextColor  = Color.lightGray;
         Color baseBgColor     = ColorUtil.colorFraction(ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor()), 0.9);
-        Color baseBorderColor = ColorUtil.colorFraction(ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor()), 1);
+        Color baseBorderColor = ColorUtil.colorFraction(ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor()), 1.2);
 
         //---------------------------------------------------------------------
         //-- ChartTheme
@@ -58,7 +58,8 @@ public class DarkTheme extends Theme {
         chartTheme.footerTextColor          = basicTextColor;
         chartTheme.graphTextBackgroundColor = chartTheme.backgroundColor;
         chartTheme.surroundingSquareColor   = new Color(0xaaaaaa);
-        ganttTheme.requestMilestoneColor    = Color.RED/*new Color(0xa7, 0x00, 0x00)*/;
+        chartTheme.dayOfweekSaturdayBgColor = ColorUtil.colorFraction(baseBgColor, 1.2);
+        chartTheme.dayOfweekSundayBgColor   = ColorUtil.colorFraction(baseBgColor, 1.1);
         //---------------------------------------------------------------------
 
         //---------------------------------------------------------------------
@@ -95,7 +96,8 @@ public class DarkTheme extends Theme {
         xAxesTheme.dayOfweekBgColor          = ColorUtil.colorFraction(baseBgColor, 1);
         xAxesTheme.dayOfWeekBorderColor      = baseBorderColor;
         xAxesTheme.dayOfWeekTextColor        = basicTextColor;
-        xAxesTheme.dayOfweekWeekendBgColor   = ColorUtil.colorFraction(baseBgColor, 2);
+        xAxesTheme.dayOfweekSaturdayBgColor  = ColorUtil.colorFraction(baseBgColor, 2);
+        xAxesTheme.dayOfweekSundayBgColor    = ColorUtil.colorFraction(baseBgColor, 1.9);
         xAxesTheme.dayOfWeekWeekendTextColor = basicTextColor;
         //------------------------- Month
         xAxesTheme.monthBorderColor = baseBorderColor;
@@ -136,13 +138,14 @@ public class DarkTheme extends Theme {
         ganttTheme.criticalTaskBorderColor = new Color(0xff, 0x0, 0x0, 0xff);
         ganttTheme.gridColor               = baseBorderColor;//ColorUtil.colorFraction(new Color(0xe5f2ff, false), 0.1);//done
         //--DayStripeColors
-        ganttTheme.outOfOfficeColor  = ColorUtil.colorFraction(new Color(0xff, 0xff, 0xff, 0xff), 0.2);
-        ganttTheme.holidayBgColor    = ColorUtil.colorFraction(new Color(0xff0000), 0.3);
-        ganttTheme.sickBgColor       = new Color(0xffe6e6);
-        ganttTheme.tripBgColor       = new Color(0xffe6e6);
-        ganttTheme.vacationBgColor   = new Color(0xffe6e6);
-        ganttTheme.taskTickLineColor = new Color(183, 216, 240);
-        ganttTheme.taskTickTextColor = new Color(0, 0, 0, 127);
+        ganttTheme.outOfOfficeColor      = ColorUtil.colorFraction(new Color(0xff, 0xff, 0xff, 0xff), 0.2);
+        ganttTheme.holidayBgColor        = ColorUtil.colorFraction(new Color(0xff0000), 0.3);
+        ganttTheme.sickBgColor           = new Color(0xffe6e6);
+        ganttTheme.tripBgColor           = new Color(0xffe6e6);
+        ganttTheme.vacationBgColor       = new Color(0xffe6e6);
+        ganttTheme.taskTickLineColor     = new Color(183, 216, 240);
+        ganttTheme.taskTickTextColor     = new Color(0, 0, 0, 127);
+        ganttTheme.requestMilestoneColor = Color.RED/*new Color(0xa7, 0x00, 0x00)*/;
         //---------------------------------------------------------------------
 
         //---------------------------------------------------------------------

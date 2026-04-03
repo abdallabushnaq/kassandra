@@ -31,7 +31,8 @@ public class XAxesTheme {
     public Color   dayOfWeekTextColor;
     public Color   dayOfWeekWeekendTextColor;
     public Color   dayOfweekBgColor;
-    public Color   dayOfweekWeekendBgColor;
+    public Color   dayOfweekSaturdayBgColor;
+    public Color   dayOfweekSundayBgColor;
     //-------------------------------
     public Color   futureEventColor;
     public Color   milestoneFlagColor;

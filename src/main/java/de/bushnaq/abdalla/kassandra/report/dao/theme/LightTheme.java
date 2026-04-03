@@ -57,7 +57,8 @@ public class LightTheme extends Theme {
         chartTheme.footerTextColor          = new Color(0x2c, 0x7b, 0xf4);
         chartTheme.graphTextBackgroundColor = chartTheme.backgroundColor;
         chartTheme.surroundingSquareColor   = new Color(0xaaaaaa);
-        ganttTheme.requestMilestoneColor    = Color.RED/*new Color(0xa7, 0x00, 0x00)*/;
+        chartTheme.dayOfweekSaturdayBgColor = new Color(0xfafafa);
+        chartTheme.dayOfweekSundayBgColor   = new Color(0xf7f7f7);
         //---------------------------------------------------------------------
 
 
@@ -90,13 +91,14 @@ public class LightTheme extends Theme {
         xAxesTheme.dayOfMonthBgColor          = new Color(0xababab);
         xAxesTheme.dayOfMonthBorderColor      = Color.WHITE;
         xAxesTheme.dayOfMonthTextColor        = Color.WHITE;
-        xAxesTheme.dayOfMonthWeekendBgColor   = new Color(247, 247, 247);
+        xAxesTheme.dayOfMonthWeekendBgColor   = new Color(0xd7d7d7);
         xAxesTheme.dayOfMonthWeekendTextColor = Color.BLACK;
         //------------------------- Day of Week
         xAxesTheme.dayOfweekBgColor          = Color.WHITE;
         xAxesTheme.dayOfWeekBorderColor      = Color.WHITE;
         xAxesTheme.dayOfWeekTextColor        = Color.BLACK;
-        xAxesTheme.dayOfweekWeekendBgColor   = new Color(247, 247, 247);
+        xAxesTheme.dayOfweekSaturdayBgColor  = new Color(0xd7d7d7);
+        xAxesTheme.dayOfweekSundayBgColor    = new Color(0xd7d7d7);
         xAxesTheme.dayOfWeekWeekendTextColor = Color.BLACK;
         //------------------------- Month
         xAxesTheme.monthBorderColor = Color.WHITE;
@@ -135,15 +137,16 @@ public class LightTheme extends Theme {
         ganttTheme.idTextColor = new Color(0xaa, 0xaa, 0xaa, 0xff);
 //        ganttTheme.ganttIdTextErrorColor        = new Color(0xff, 0xff, 0xff, 0xff);
         ganttTheme.criticalTaskBorderColor = new Color(0xff, 0x0, 0x0, 0xC0);
-        ganttTheme.gridColor               = new Color(0xe5f2ff, false);
+        ganttTheme.gridColor               = new Color(0xe4e8f3, false);
         //--DayStripeColors
-        ganttTheme.outOfOfficeColor  = new Color(0xff, 0xff, 0xff, 0xff);
-        ganttTheme.holidayBgColor    = new Color(0xffe6e6);
-        ganttTheme.sickBgColor       = new Color(0xffe6e6);
-        ganttTheme.tripBgColor       = new Color(0xffe6e6);
-        ganttTheme.vacationBgColor   = new Color(0xffe6e6);
-        ganttTheme.taskTickLineColor = new Color(183, 216, 240);
-        ganttTheme.taskTickTextColor = new Color(0, 0, 0, 127);
+        ganttTheme.outOfOfficeColor      = new Color(0xff, 0xff, 0xff, 0xff);
+        ganttTheme.holidayBgColor        = new Color(0xffe6e6);
+        ganttTheme.sickBgColor           = new Color(0xffe6e6);
+        ganttTheme.tripBgColor           = new Color(0xffe6e6);
+        ganttTheme.vacationBgColor       = new Color(0xffe6e6);
+        ganttTheme.taskTickLineColor     = new Color(183, 216, 240);
+        ganttTheme.taskTickTextColor     = new Color(0, 0, 0, 127);
+        ganttTheme.requestMilestoneColor = Color.RED/*new Color(0xa7, 0x00, 0x00)*/;
         //---------------------------------------------------------------------
 
 

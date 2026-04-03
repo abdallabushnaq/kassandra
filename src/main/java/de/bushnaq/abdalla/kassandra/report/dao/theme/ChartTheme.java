@@ -22,6 +22,8 @@ import java.awt.*;
 public class ChartTheme {
     public Color backgroundColor;
     public Color chartBorderColor;
+    public Color dayOfweekSaturdayBgColor;
+    public Color dayOfweekSundayBgColor;
     public Color footerTextColor;
     public Color graphTextBackgroundColor;
     public Color surroundingSquareColor;
