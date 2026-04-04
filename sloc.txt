@@ -165,7 +165,7 @@
 | kassandra.dao                        | TaskDAO.java                                             | src      |        8 |        3 |       16 |       78 |      105 |
 | kassandra.dao                        | UserAvatarDAO.java                                       | src      |        3 |        0 |       16 |       25 |       44 |
 | kassandra.dao                        | UserAvatarGenerationDataDAO.java                         | src      |        5 |        0 |       16 |       33 |       54 |
-| kassandra.dao                        | UserDAO.java                                             | src      |       12 |       26 |       16 |       93 |      147 |
+| kassandra.dao                        | UserDAO.java                                             | src      |       12 |       26 |       16 |       95 |      149 |
 | kassandra.dao                        | UserGroupDAO.java                                        | src      |       11 |       24 |       16 |       44 |       95 |
 | kassandra.dao                        | UserWorkWeekDAO.java                                     | src      |        9 |        4 |       16 |       32 |       61 |
 | kassandra.dao                        | VersionDAO.java                                          | src      |        7 |        0 |       16 |       25 |       48 |
@@ -496,7 +496,7 @@
 | kassandra.ui.view                    | UserListViewTest.java                                    | src      |       11 |       63 |       16 |       87 |      177 |
 | kassandra.ui.view                    | UserProfileView.java                                     | src      |       50 |       10 |       66 |      387 |      513 |
 | kassandra.ui.view                    | UserProfileViewTest.java                                 | src      |       11 |       30 |       20 |       67 |      128 |
-| kassandra.ui.view                    | UserWorkWeekListView.java                                | src      |       20 |       15 |       21 |      186 |      242 |
+| kassandra.ui.view                    | UserWorkWeekListView.java                                | src      |       23 |       21 |       25 |      205 |      274 |
 | kassandra.ui.view                    | VersionListView.java                                     | src      |       45 |       13 |       46 |      389 |      493 |
 | kassandra.ui.view                    | VersionListViewTest.java                                 | src      |       13 |       80 |       20 |      101 |      214 |
 | kassandra.ui.view                    | WorkWeekListView.java                                    | src      |       17 |       12 |       20 |      124 |      173 |
@@ -584,5 +584,5 @@
 | util                                 | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                                 | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 62 package(s)                        | 521 file(s)                                              | java     |    11566 |    10463 |    15102 |    61357 |    98488 |
+| 62 package(s)                        | 521 file(s)                                              | java     |    11569 |    10469 |    15106 |    61378 |    98522 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

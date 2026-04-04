@@ -62,6 +62,7 @@ public class UserDAO extends AbstractTimeAwareDAO {
     @Column(nullable = true)
     private LocalDate             lastWorkingDay;//last working day
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("start ASC")
     @JsonManagedReference
     private List<LocationDAO>     locations      = new ArrayList<>();
     @Column(nullable = false, unique = true)
@@ -72,6 +73,7 @@ public class UserDAO extends AbstractTimeAwareDAO {
     @Column(nullable = false)
     private String                roles          = "USER"; // Default role for new users
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("start ASC")
     @JsonManagedReference
     private List<UserWorkWeekDAO> userWorkWeeks  = new ArrayList<>();
 

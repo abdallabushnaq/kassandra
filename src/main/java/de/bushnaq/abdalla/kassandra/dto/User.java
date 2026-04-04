@@ -88,28 +88,6 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     }
 
     /**
-     * Adds a work-week assignment to this user.
-     *
-     * @param userWorkWeek the assignment to add
-     */
-    public void addUserWorkWeek(UserWorkWeek userWorkWeek) {
-        if (userWorkWeek.getStart() == null)
-            throw new IllegalArgumentException("start date is null");
-        if (userWorkWeek.getWorkWeek() == null)
-            throw new IllegalArgumentException("work week is null");
-        userWorkWeeks.add(userWorkWeek);
-    }
-
-    /**
-     * Removes a work-week assignment from this user.
-     *
-     * @param userWorkWeek the assignment to remove
-     */
-    public void removeUserWorkWeek(UserWorkWeek userWorkWeek) {
-        userWorkWeeks.remove(userWorkWeek);
-    }
-
-    /**
      * Add a role to this user
      *
      * @param role the role to add (e.g., "ADMIN", "USER")
@@ -121,6 +99,19 @@ public class User extends AbstractTimeAware implements Comparable<User> {
             roleList.add(role);
             setRoleList(roleList);
         }
+    }
+
+    /**
+     * Adds a work-week assignment to this user.
+     *
+     * @param userWorkWeek the assignment to add
+     */
+    public void addUserWorkWeek(UserWorkWeek userWorkWeek) {
+        if (userWorkWeek.getStart() == null)
+            throw new IllegalArgumentException("start date is null");
+        if (userWorkWeek.getWorkWeek() == null)
+            throw new IllegalArgumentException("work week is null");
+        userWorkWeeks.add(userWorkWeek);
     }
 
     @Override
@@ -357,6 +348,15 @@ public class User extends AbstractTimeAware implements Comparable<User> {
         List<String> roleList = getRoleList();
         roleList.remove(role);
         setRoleList(roleList);
+    }
+
+    /**
+     * Removes a work-week assignment from this user.
+     *
+     * @param userWorkWeek the assignment to remove
+     */
+    public void removeUserWorkWeek(UserWorkWeek userWorkWeek) {
+        userWorkWeeks.remove(userWorkWeek);
     }
 
     /**

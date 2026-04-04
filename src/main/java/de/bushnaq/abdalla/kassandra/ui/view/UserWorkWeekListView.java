@@ -22,8 +22,10 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.UserWorkWeek;
@@ -33,6 +35,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.OffDaysCalendarComponent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserWorkWeekDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -68,11 +71,12 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
     public static final String PAGE_TITLE                = "user-work-week-page-title";
     public static final String ROUTE                     = "user-work-week";
     public static final String ROW_COUNTER               = "user-work-week-row-counter";
-    private       User              currentUser;
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private final UserApi           userApi;
-    private final UserWorkWeekApi   userWorkWeekApi;
-    private final WorkWeekApi       workWeekApi;
+    private       User                     currentUser;
+    private final DateTimeFormatter         dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private final UserApi                   userApi;
+    private final UserWorkWeekApi           userWorkWeekApi;
+    private final WorkWeekApi               workWeekApi;
+    private       OffDaysCalendarComponent  yearCalendar;
 
     /**
      * Constructs the view.
@@ -102,7 +106,7 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
                         GLOBAL_FILTER,
                         aiFilterService, mapper, "UserWorkWeek"
                 ),
-                getGridPanelWrapper()
+                new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
     }
 
@@ -121,6 +125,7 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
             try {
                 currentUser = userApi.getByEmail(userEmail).orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                currentUser.initialize();
             } catch (ResponseStatusException ex) {
                 if (ex.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                     Notification notification = Notification.show("User not found: " + userEmail, 3000, Notification.Position.MIDDLE);
@@ -133,6 +138,7 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
         } else {
             event.forwardTo("");
         }
+        createCalendar();
     }
 
     private void confirmDelete(UserWorkWeek userWorkWeek) {
@@ -219,6 +225,26 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
         );
     }
 
+    private OffDaysCalendarComponent createCalendar() {
+        // Create a new OffDaysCalendarComponent with the current user and the current year
+        if (yearCalendar != null)
+            return yearCalendar;
+        yearCalendar = new OffDaysCalendarComponent(currentUser, ParameterOptions.getLocalNow().getYear(), this::handleCalendarDayClick);
+        // Set up handler to refresh grid when year changes
+        yearCalendar.setYearChangeHandler(year -> refreshGrid());
+        return yearCalendar;
+    }
+
+    /**
+     * Handles clicks on calendar days that have off days.
+     * No special action is needed in the work-week context.
+     *
+     * @param date The date that was clicked
+     */
+    private void handleCalendarDayClick(java.time.LocalDate date) {
+        // No action required for this view
+    }
+
     private void openDialog(UserWorkWeek userWorkWeek) {
         UserWorkWeekDialog dialog = new UserWorkWeekDialog(
                 userWorkWeek, currentUser, userWorkWeekApi, workWeekApi, this::refreshGrid);
@@ -228,6 +254,7 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
     private void refreshGrid() {
         if (currentUser != null) {
             currentUser = userApi.getById(currentUser.getId());
+            currentUser.initialize();
             List<UserWorkWeek> sorted = currentUser.getUserWorkWeeks().stream()
                     .sorted(Comparator.comparing(UserWorkWeek::getStart,
                             Comparator.nullsLast(Comparator.naturalOrder())).reversed())
@@ -235,6 +262,11 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
             getDataProvider().getItems().clear();
             getDataProvider().getItems().addAll(sorted);
             getDataProvider().refreshAll();
+
+            // Update the calendar with the fresh user data
+            if (yearCalendar != null) {
+                yearCalendar.updateCalendar(currentUser);
+            }
         }
     }
 }
