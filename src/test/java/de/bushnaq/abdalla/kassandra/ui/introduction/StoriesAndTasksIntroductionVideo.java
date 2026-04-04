@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
@@ -97,6 +98,7 @@ public class StoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo 
 
     @BeforeAll
     static void beforeAll() {
+        StableDiffusionService.setEnabled(true);
         video.setVersion(1);
         video.setTitle("Stories and Tasks in Kassandra");
         video.setDescription("Today we're going to learn about Stories and Tasks in Kassandra. A story is basically a container for a list of Tasks. Tasks represent the work we plan including the estimation for the effort. This is essential for accurate sprint planning and capacity calculations.");

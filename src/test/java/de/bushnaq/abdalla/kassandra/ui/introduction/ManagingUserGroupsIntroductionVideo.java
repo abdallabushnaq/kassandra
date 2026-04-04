@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -87,6 +88,7 @@ public class ManagingUserGroupsIntroductionVideo extends AbstractIntroductionVid
 
     @BeforeAll
     static void beforeAll() {
+        StableDiffusionService.setEnabled(true);
         video.setTitle("Managing User Groups in Kassandra");
         video.setDescription("Today we're going to learn about User Groups in Kassandra. User Groups are a powerful feature that lets you control access to products by organizing team members into groups.");
         video.setVersion(1);

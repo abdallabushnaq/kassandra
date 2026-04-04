@@ -39,25 +39,24 @@ tbd
 10. ✅ User availability time-frames
 11. ✅ User location time-frames
 12. ❌ User work week time-frames
-13. ✅ National Holidays
-14. ✅ vacations
-15. ✅ sick leaves
-16. ✅ Authorization, access control using user groups on project level.
-17. ✅ Gantt chart
-18. ❌ Automatic Gantt buffer calculation
-19. ✅ Burn down chart
-20. ❌ Close project Release Date.
-21. ✅ Dialog should set curser to edit box
-22. ✅ Dialog confirmation button should react to return
-23. ✅ add dark avatar
-24. ❌ show product, versions, features, in backlog view
-25. ❌ show product, versions, features, in quality view
-26. ✅ show Versions, Features, Sprints pages in menu
-27. ❌ can we run browser in full screen mode?
+13. ❌ Project work week time-frames
+14. ✅ National Holidays
+15. ✅ vacations
+16. ✅ sick leaves
+17. ✅ Authorization, access control using user groups on project level.
+18. ✅ Gantt chart
+19. ❌ Automatic Gantt buffer calculation
+20. ✅ Burn down chart
+21. ❌ Close project Release Date.
+22. ✅ Dialog should set curser to edit box
+23. ✅ Dialog confirmation button should react to return
+24. ✅ add dark avatar
+25. ❌ show product, versions, features, in backlog view
+26. ❌ show product, versions, features, in quality view
+27. ✅ show Versions, Features, Sprints pages in menu
 28. ✅ add about box.
-29. ❌ test should not create one user with avatar.
-30. ❌ optimaze AbstractEntityGenrator avatar generation code.
-31. ❌ data scenario simulation generator
+29. ✅ optimaze AbstractEntityGenrator avatar generation code.
+30. ❌ data scenario simulation generator
     1. ✅ Simulator Write the use case as a Story in the project or product
     2. ❌ include closed and delayed sprints.
 
@@ -70,20 +69,23 @@ tbd
 
 ## Phase 3 (optimizations)
 
-1. ❌ gantt chart generation with resource conflict visualization.
-2. ❌ keep number of clicks to minimum for daily work of developer.
-3. ❌ Audit logs
-4. ❌ lock project.
-5. ❌ give project managers ways to control schedule.
-6. ❌ Admin hub
-7. ❌ Performance
-8. ❌ Live updates to your inputs
-9. ❌ Live response to your Input.
-10. ✅ product page.
-11. ❌ GDPR
-12. ❌ undo
-13. ❌ history
-14. ❌ add aura theme
+1. ❌ test should not create default user with avatar to speed up test execution.
+2. ❌ unit tests should turn off stable diffusion service to speed up tests execution.
+3. ❌ run ui tests in browser full screen mode.
+4. ❌ gantt chart generation with resource conflict visualization.
+5. ❌ keep number of clicks to minimum for daily work of developer.
+6. ❌ Audit logs
+7. ❌ lock project.
+8. ❌ give project managers ways to control schedule.
+9. ❌ Admin hub
+10. ❌ Performance
+11. ❌ Live updates to your inputs
+12. ❌ Live response to your Input.
+13. ✅ product page.
+14. ❌ GDPR
+15. ❌ undo
+16. ❌ history
+17. ❌ add aura theme
 
 # Kassandra Introduction Videos
 

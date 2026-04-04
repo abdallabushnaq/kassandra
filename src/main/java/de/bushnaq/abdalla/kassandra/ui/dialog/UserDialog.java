@@ -22,6 +22,8 @@ import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
@@ -29,6 +31,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -42,17 +45,27 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
+import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.dto.UserWorkWeek;
+import de.bushnaq.abdalla.kassandra.dto.WorkWeek;
 import lombok.extern.slf4j.Slf4j;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
+import de.bushnaq.abdalla.kassandra.rest.api.LocationApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UserWorkWeekApi;
+import de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
+import de.focus_shift.jollyday.core.HolidayManager;
+import de.focus_shift.jollyday.core.ManagerParameters;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;
-import java.util.HashMap;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
 
@@ -69,7 +82,10 @@ public class UserDialog extends Dialog {
     public static final String                 USER_EMAIL_FIELD              = "user-email-field";
     public static final String                 USER_FIRST_WORKING_DAY_PICKER = "user-first-working-day-picker";
     public static final String                 USER_LAST_WORKING_DAY_PICKER  = "user-last-working-day-picker";
+    public static final String                 USER_LOCATION_COUNTRY_COMBO   = "user-location-country-combo";
+    public static final String                 USER_LOCATION_STATE_COMBO     = "user-location-state-combo";
     public static final String                 USER_NAME_FIELD               = "user-name-field";
+    public static final String                 USER_WORK_WEEK_COMBO          = "user-work-week-combo";
     private final       Image                  avatarPreview;
     private final       AvatarUpdateRequest    avatarUpdateRequest;
     private final       Binder<User>           binder;
@@ -87,27 +103,43 @@ public class UserDialog extends Dialog {
     private final       Image                  headerAvatar;
     private final       boolean                isEditMode;
     private final       DatePicker             lastWorkingDayPicker;
+    private final       LocationApi            locationApi;
+    /** ComboBox for country selection; only initialised in create mode (null in edit mode). */
+    private final       ComboBox<String>       locationCountryComboBox;
+    /** ComboBox for state/region selection; only initialised in create mode (null in edit mode). */
+    private final       ComboBox<String>       locationStateComboBox;
     private final       TextField              nameField;
     private final       Image                  nameFieldAvatar;
     private final       CheckboxGroup<String>  rolesCheckboxGroup;
+    /** Reference to the Save button so extra create-mode validations can toggle it. */
+    private             Button                 saveButtonRef;
     private final       StableDiffusionService stableDiffusionService;
     private final       AvatarService          avatarService;
     private final       User                   user;
     private final       UserApi                userApi;
+    private final       UserWorkWeekApi        userWorkWeekApi;
+    /** ComboBox for selecting the initial work week; only initialised in create mode (null in edit mode). */
+    private final       ComboBox<WorkWeek>     workWeekComboBox;
 
     /**
      * Creates a dialog for creating or editing a user.
      *
-     * @param user                   The user to edit, or null for creating a new user
+     * @param user                   The user to edit, or {@code null} for creating a new user
      * @param avatarService          The avatar generation service
      * @param stableDiffusionService The AI image generation service (optional, can be null)
      * @param userApi                The user API for saving user data
+     * @param workWeekApi            REST client for global work weeks (used in create mode to populate the combo box)
+     * @param userWorkWeekApi        REST client for user work-week assignments (used to create the initial assignment)
+     * @param locationApi            REST client for user locations (used to create the initial location in create mode)
      */
-    public UserDialog(User user, AvatarService avatarService, StableDiffusionService stableDiffusionService, UserApi userApi) {
+    public UserDialog(User user, AvatarService avatarService, StableDiffusionService stableDiffusionService, UserApi userApi,
+                      WorkWeekApi workWeekApi, UserWorkWeekApi userWorkWeekApi, LocationApi locationApi) {
         this.user                   = user;
         this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.userApi                = userApi;
+        this.userWorkWeekApi        = userWorkWeekApi;
+        this.locationApi            = locationApi;
         isEditMode                  = user != null;
         this.binder                 = new Binder<>(User.class);
 
@@ -313,8 +345,111 @@ public class UserDialog extends Dialog {
             dialogLayout.add(rolesCheckboxGroup);
         }
 
-        dialogLayout.add(VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder));
+        // Initial location selection — country + state (create mode only)
+        if (!isEditMode) {
+            locationCountryComboBox = new ComboBox<>("Country");
+            locationCountryComboBox.setId(USER_LOCATION_COUNTRY_COMBO);
+            locationCountryComboBox.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
+            locationCountryComboBox.setRequired(true);
+            locationCountryComboBox.setAllowCustomValue(false);
+            locationCountryComboBox.setWidthFull();
+            locationCountryComboBox.setPrefixComponent(new Icon(VaadinIcon.GLOBE));
+            populateCountries();
+
+            locationStateComboBox = new ComboBox<>("State/Region");
+            locationStateComboBox.setId(USER_LOCATION_STATE_COMBO);
+            locationStateComboBox.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
+            locationStateComboBox.setRequired(true);
+            locationStateComboBox.setAllowCustomValue(false);
+            locationStateComboBox.setWidthFull();
+            locationStateComboBox.setPrefixComponent(new Icon(VaadinIcon.MAP_MARKER));
+            locationStateComboBox.setEnabled(false);
+
+            locationCountryComboBox.addValueChangeListener(event -> {
+                if (event.getValue() != null) {
+                    populateStates(event.getValue());
+                } else {
+                    locationStateComboBox.setItems(new HashSet<>());
+                    locationStateComboBox.setEnabled(false);
+                }
+            });
+
+            dialogLayout.add(locationCountryComboBox, locationStateComboBox);
+        } else {
+            locationCountryComboBox = null;
+            locationStateComboBox   = null;
+        }
+
+        // Initial work week selection (create mode only)
+        if (!isEditMode) {
+            List<WorkWeek> allWorkWeeks = workWeekApi.getAll();
+            workWeekComboBox = new ComboBox<>("Initial Work Week");
+            workWeekComboBox.setId(USER_WORK_WEEK_COMBO);
+            workWeekComboBox.setRequired(true);
+            workWeekComboBox.setAllowCustomValue(false);
+            workWeekComboBox.setWidthFull();
+            workWeekComboBox.setPrefixComponent(new Icon(VaadinIcon.CALENDAR));
+            workWeekComboBox.setItemLabelGenerator(WorkWeek::getName);
+            workWeekComboBox.setItems(allWorkWeeks);
+            workWeekComboBox.setHelperText("Select the initial work week for this user");
+            // Auto-select when there is only one option
+            if (allWorkWeeks.size() == 1) {
+                workWeekComboBox.setValue(allWorkWeeks.getFirst());
+            }
+            dialogLayout.add(workWeekComboBox);
+        } else {
+            workWeekComboBox = null;
+        }
+
+        HorizontalLayout buttonLayout = VaadinUtil.createDialogButtonLayout("Save", CONFIRM_BUTTON, "Cancel", CANCEL_BUTTON, this::save, this, binder);
+        dialogLayout.add(buttonLayout);
         add(dialogLayout);
+
+        // Find the save button so create-mode combo validations can toggle its enabled state.
+        // Our extra binder status listener fires *after* the one registered by createDialogButtonLayout,
+        // so its result is always the final state.
+        buttonLayout.getChildren()
+                .filter(c -> c.getId().map(CONFIRM_BUTTON::equals).orElse(false))
+                .findFirst()
+                .ifPresent(c -> saveButtonRef = (Button) c);
+
+        if (!isEditMode && saveButtonRef != null) {
+            Runnable updateSave = () -> saveButtonRef.setEnabled(isSaveEnabled());
+            binder.addStatusChangeListener(e -> updateSave.run());
+
+            workWeekComboBox.addValueChangeListener(e -> {
+                workWeekComboBox.setInvalid(e.getValue() == null);
+                if (e.getValue() == null) workWeekComboBox.setErrorMessage("Work week is required");
+                updateSave.run();
+            });
+
+            // Note: locationCountryComboBox already has a listener that calls populateStates (registered
+            // earlier). This second listener fires after that one, so states are already populated when
+            // we update the invalid states here.
+            locationCountryComboBox.addValueChangeListener(e -> {
+                locationCountryComboBox.setInvalid(e.getValue() == null);
+                if (e.getValue() == null) locationCountryComboBox.setErrorMessage("Country is required");
+                // Changing country always invalidates the state selection
+                locationStateComboBox.setInvalid(true);
+                locationStateComboBox.setErrorMessage("State/region is required");
+                updateSave.run();
+            });
+
+            locationStateComboBox.addValueChangeListener(e -> {
+                boolean invalid = locationStateComboBox.isEnabled() && e.getValue() == null;
+                locationStateComboBox.setInvalid(invalid);
+                if (invalid) locationStateComboBox.setErrorMessage("State/region is required");
+                updateSave.run();
+            });
+
+            // Set initial invalid state so the red indicators are visible from the start.
+            // (workWeekComboBox may already have a value if auto-selected.)
+            workWeekComboBox.setInvalid(workWeekComboBox.getValue() == null);
+            if (workWeekComboBox.getValue() == null) workWeekComboBox.setErrorMessage("Work week is required");
+            locationCountryComboBox.setInvalid(true);
+            locationCountryComboBox.setErrorMessage("Country is required");
+            // locationStateComboBox is disabled initially; it will be marked invalid once a country is selected.
+        }
 
         if (isEditMode) {
             binder.readBean(user);
@@ -338,8 +473,99 @@ public class UserDialog extends Dialog {
         Shortcuts.addShortcutListener(this, e -> save(), Key.ENTER);
     }
 
-    private void handleGeneratedImage(GeneratedImageResult lightResult, GeneratedImageResult darkResult) {
-        generatedImageBytes         = lightResult.getResizedImage();
+    // -------------------------------------------------------------------------
+    // Validation helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns {@code true} when the Save button should be enabled.
+     * In create mode this requires the binder to be valid AND both the location and work-week
+     * combos to have a selected value.
+     *
+     * @return whether the form is fully valid
+     */
+    private boolean isSaveEnabled() {
+        if (!binder.isValid()) return false;
+        if (!isEditMode) {
+            if (workWeekComboBox != null && workWeekComboBox.getValue() == null) return false;
+            if (locationCountryComboBox != null && locationCountryComboBox.getValue() == null) return false;
+            if (locationStateComboBox != null && locationStateComboBox.getValue() == null) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Populates the country combo box with all countries supported by jollyday,
+     * sorted by their display name in the current locale.
+     */
+    private void populateCountries() {
+        Set<String> countryCodeSet = new HashSet<>(HolidayManager.getSupportedCalendarCodes());
+
+        List<String> sortedCodes = countryCodeSet.stream()
+                .sorted((c1, c2) -> new Locale("", c1).getDisplayCountry()
+                        .compareTo(new Locale("", c2).getDisplayCountry()))
+                .collect(Collectors.toList());
+
+        locationCountryComboBox.setItems(sortedCodes);
+        locationCountryComboBox.setItemLabelGenerator(code -> {
+            Locale locale = new Locale("", code);
+            return locale.getDisplayCountry() + " (" + code + ")";
+        });
+    }
+
+    /**
+     * Populates the state combo box for the given country code, enabling it when states are found.
+     *
+     * @param countryCode ISO 3166-1 alpha-2 country code
+     */
+    private void populateStates(String countryCode) {
+        try {
+            HolidayManager manager      = HolidayManager.getInstance(ManagerParameters.create(countryCode));
+            Set<String>    stateCodeSet = new HashSet<>(manager.getCalendarHierarchy().getChildren().keySet());
+
+            if (stateCodeSet.isEmpty()) {
+                stateCodeSet.add(countryCode);
+            }
+
+            Function<String, String> getDesc = stateCode -> {
+                if (stateCode.equals(countryCode)) {
+                    return "All of " + new Locale("", countryCode).getDisplayCountry();
+                }
+                try {
+                    String desc = manager.getCalendarHierarchy().getChildren().get(stateCode).getDescription();
+                    if (desc != null && !desc.isEmpty()) return desc;
+                } catch (Exception ignored) {
+                }
+                return stateCode;
+            };
+
+            List<String> sortedStates = stateCodeSet.stream()
+                    .sorted((c1, c2) -> getDesc.apply(c1).compareTo(getDesc.apply(c2)))
+                    .collect(Collectors.toList());
+
+            locationStateComboBox.setItems(sortedStates);
+            locationStateComboBox.setItemLabelGenerator(stateCode -> {
+                if (stateCode.equals(countryCode)) {
+                    return "All of " + new Locale("", countryCode).getDisplayCountry();
+                }
+                try {
+                    String desc = manager.getCalendarHierarchy().getChildren().get(stateCode).getDescription();
+                    if (desc != null && !desc.isEmpty()) return desc + " (" + stateCode + ")";
+                } catch (Exception ignored) {
+                }
+                return stateCode;
+            });
+            locationStateComboBox.setEnabled(true);
+        } catch (Exception ex) {
+            Notification n = Notification.show(
+                    "Error loading regions for " + countryCode + ": " + ex.getMessage(),
+                    3000, Notification.Position.MIDDLE);
+            n.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            locationStateComboBox.setEnabled(false);
+        }
+    }
+
+    private void handleGeneratedImage(GeneratedImageResult lightResult, GeneratedImageResult darkResult) {        generatedImageBytes         = lightResult.getResizedImage();
         generatedImageBytesOriginal = lightResult.getOriginalImage();
         generatedImagePrompt        = lightResult.getPrompt();
         generatedNegativePrompt     = lightResult.getNegativePrompt();
@@ -431,6 +657,25 @@ public class UserDialog extends Dialog {
         }
         userToSave.setRoleList(selectedRoles);
 
+                // Validate work week selection in create mode
+        if (!isEditMode) {
+            if (workWeekComboBox.getValue() == null) {
+                workWeekComboBox.setInvalid(true);
+                workWeekComboBox.setErrorMessage("Please select a work week");
+                return;
+            }
+            if (locationCountryComboBox.getValue() == null) {
+                locationCountryComboBox.setInvalid(true);
+                locationCountryComboBox.setErrorMessage("Please select a country");
+                return;
+            }
+            if (locationStateComboBox.getValue() == null) {
+                locationStateComboBox.setInvalid(true);
+                locationStateComboBox.setErrorMessage("Please select a state/region");
+                return;
+            }
+        }
+
         // color is managed by the user profile now; ensure a default is present for new users
         if (!isEditMode && userToSave.getColor() == null) {
             userToSave.setColor(new Color(211, 211, 211)); // Light Gray default
@@ -500,6 +745,21 @@ public class UserDialog extends Dialog {
                             darkNegativePrompt
                     );
                 }
+
+                // Create the initial work week assignment
+                LocalDate workWeekStart = firstWorkingDayPicker.getValue() != null
+                        ? firstWorkingDayPicker.getValue()
+                        : LocalDate.now();
+                userWorkWeekApi.persist(new UserWorkWeek(workWeekComboBox.getValue(), workWeekStart), saved.getId());
+
+                // Create the initial location assignment using the same start date
+                LocalDate locationStart = firstWorkingDayPicker.getValue() != null
+                        ? firstWorkingDayPicker.getValue()
+                        : LocalDate.now();
+                locationApi.persist(new Location(
+                        locationCountryComboBox.getValue(),
+                        locationStateComboBox.getValue(),
+                        locationStart), saved.getId());
             }
 
             Notification.show("User saved successfully", 3000, Notification.Position.MIDDLE);

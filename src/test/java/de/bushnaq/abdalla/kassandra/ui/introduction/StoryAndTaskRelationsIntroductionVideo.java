@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -100,6 +101,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
 
     @BeforeAll
     static void beforeAll() {
+        StableDiffusionService.setEnabled(true);
         video.setVersion(1);
         video.setTitle("Story and Task Relations in Kassandra");
         video.setDescription("Today we're going to learn about task and story dependencies. Dependencies let you define relationships between tasks and stories, ensuring that one task can only start after another task is finished. This is crucial for managing complex workflows and project schedules.");

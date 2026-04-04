@@ -75,8 +75,10 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public static final String                               ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
     public static final String                               ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
     public static final String                               ID_USER_MENU_MANAGE_USER_GROUPS = "main-layout-user-menu-manage-user-groups";
+    public static final String                               ID_USER_MENU_MANAGE_WORK_WEEKS  = "main-layout-user-menu-manage-work-weeks";
     public static final String                               ID_USER_MENU_OFF_DAYS           = "main-layout-user-menu-off-days";
     public static final String                               ID_USER_MENU_VIEW_PROFILE       = "main-layout-user-menu-view-profile";
+    public static final String                               ID_USER_MENU_WORK_WEEK          = "main-layout-user-menu-work-week";
     private final       Div                                  breadcrumbContainer;
     @Getter
     private final       Breadcrumbs                          breadcrumbs                     = new Breadcrumbs();
@@ -316,6 +318,9 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         var offDaysItem = userMenuItem.getSubMenu().addItem("Manage Off Days", e -> navigateToOffDays(userEmail));
         offDaysItem.setId(ID_USER_MENU_OFF_DAYS);
 
+        var workWeekItem = userMenuItem.getSubMenu().addItem("Manage Work Week", e -> navigateToUserWorkWeek(userEmail));
+        workWeekItem.setId(ID_USER_MENU_WORK_WEEK);
+
         var viewProfileItem = userMenuItem.getSubMenu().addItem("View Profile", e -> navigateToProfile(userEmail));
         viewProfileItem.setId(ID_USER_MENU_VIEW_PROFILE);
 
@@ -326,6 +331,9 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
             var manageUsersItem = userMenuItem.getSubMenu().addItem("Manage Users", e -> navigateToUsers());
             manageUsersItem.setId(ID_USER_MENU_MANAGE_USERS);
+
+            var manageWorkWeeksItem = userMenuItem.getSubMenu().addItem("Manage Work Weeks", e -> navigateToWorkWeeks());
+            manageWorkWeeksItem.setId(ID_USER_MENU_MANAGE_WORK_WEEKS);
         }
 
         var manageSettingsItem = userMenuItem.getSubMenu().addItem("Manage Settings");
@@ -378,8 +386,16 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         getUI().ifPresent(ui -> ui.navigate("user-group-list"));
     }
 
+    private void navigateToUserWorkWeek(String userEmail) {
+        getUI().ifPresent(ui -> ui.navigate("user-work-week/" + userEmail));
+    }
+
     private void navigateToUsers() {
         getUI().ifPresent(ui -> ui.navigate("user-list"));
+    }
+
+    private void navigateToWorkWeeks() {
+        getUI().ifPresent(ui -> ui.navigate("work-week-list"));
     }
 
     /**

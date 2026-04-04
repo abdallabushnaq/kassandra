@@ -30,6 +30,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 
@@ -44,26 +45,73 @@ import java.util.List;
 @Slf4j
 public class DefaultEntitiesInitializer implements ApplicationRunner {
 
-    public static final String ALL_USERS_GROUP_NAME = "All";
-    public static final String BACKLOG_SPRINT_NAME  = "Backlog";
-    public static final String DEFAULT_NAME         = "Default";
+    public static final String                    ALL_USERS_GROUP_NAME  = "All";
+    public static final String                    BACKLOG_SPRINT_NAME   = "Backlog";
+    public static final String                    DEFAULT_NAME          = "Default";
+    public static final String                    WORK_WEEK_5X8         = "Western 5x8";
+    public static final String                    WORK_WEEK_ISLAMIC_5X8 = "Islamic Sun-Thu 5x8";
+    public static final String                    WORK_WEEK_JEWISH_5X8  = "Jewish Sun-Thu 5x8";
+    @Autowired
+    private             FeatureRepository         featureRepository;
+    @Autowired
+    private             ProductAclEntryRepository productAclEntryRepository;
+    @Autowired
+    private             ProductAclService         productAclService;
+    @Autowired
+    private             ProductRepository         productRepository;
+    @Autowired
+    private             SprintRepository          sprintRepository;
+    @Autowired
+    private             UserGroupRepository       userGroupRepository;
+    @Autowired
+    private             UserRepository            userRepository;
+    @Autowired
+    private             VersionRepository         versionRepository;
+    @Autowired
+    private             WorkWeekRepository        workWeekRepository;
 
-    @Autowired
-    private FeatureRepository         featureRepository;
-    @Autowired
-    private ProductAclEntryRepository productAclEntryRepository;
-    @Autowired
-    private ProductAclService         productAclService;
-    @Autowired
-    private ProductRepository         productRepository;
-    @Autowired
-    private SprintRepository          sprintRepository;
-    @Autowired
-    private UserGroupRepository       userGroupRepository;
-    @Autowired
-    private UserRepository            userRepository;
-    @Autowired
-    private VersionRepository         versionRepository;
+    private WorkDayScheduleDAO buildSchedule(boolean working,
+                                             LocalTime workStart, LocalTime workEnd, LocalTime lunchStart, LocalTime lunchEnd) {
+        if (working) return new WorkDayScheduleDAO(workStart, workEnd, lunchStart, lunchEnd);
+        return new WorkDayScheduleDAO();
+    }
+
+    /**
+     * Creates a named work week with the given day pattern if it does not already exist.
+     * All working days use 08:00–17:00 with a 12:00–13:00 lunch break.
+     *
+     * @param name        unique work week name
+     * @param description human-readable description
+     * @param mon         whether Monday is a working day
+     * @param tue         whether Tuesday is a working day
+     * @param wed         whether Wednesday is a working day
+     * @param thu         whether Thursday is a working day
+     * @param fri         whether Friday is a working day
+     * @param sat         whether Saturday is a working day
+     * @param sun         whether Sunday is a working day
+     */
+    private void createDefaultWorkWeekIfAbsent(String name, String description,
+                                               boolean mon, boolean tue, boolean wed, boolean thu, boolean fri, boolean sat, boolean sun) {
+        if (workWeekRepository.findByName(name).isEmpty()) {
+            LocalTime workStart  = LocalTime.of(8, 0);
+            LocalTime workEnd    = LocalTime.of(17, 0);
+            LocalTime lunchStart = LocalTime.of(12, 0);
+            LocalTime lunchEnd   = LocalTime.of(13, 0);
+
+            WorkWeekDAO ww = new WorkWeekDAO();
+            ww.setName(name);
+            ww.setDescription(description);
+            ww.setMonday(buildSchedule(mon, workStart, workEnd, lunchStart, lunchEnd));
+            ww.setTuesday(buildSchedule(tue, workStart, workEnd, lunchStart, lunchEnd));
+            ww.setWednesday(buildSchedule(wed, workStart, workEnd, lunchStart, lunchEnd));
+            ww.setThursday(buildSchedule(thu, workStart, workEnd, lunchStart, lunchEnd));
+            ww.setFriday(buildSchedule(fri, workStart, workEnd, lunchStart, lunchEnd));
+            ww.setSaturday(buildSchedule(sat, workStart, workEnd, lunchStart, lunchEnd));
+            ww.setSunday(buildSchedule(sun, workStart, workEnd, lunchStart, lunchEnd));
+            workWeekRepository.save(ww);
+            log.info("Created default work week '{}'", name);
+        }
+    }
 
     private void createMissingEntities() {
         // Find or create default product
@@ -137,6 +185,17 @@ public class DefaultEntitiesInitializer implements ApplicationRunner {
             productAclService.grantGroupAccess(product.getId(), allUsersGroup.getId());
             log.info("Granted 'All' group access to Default product");
         }
+
+        // Create default work weeks if they don't exist
+        createDefaultWorkWeekIfAbsent(WORK_WEEK_5X8,
+                "Standard Monday–Friday 8-hour work week with a 1-hour lunch break",
+                true, true, true, true, true, false, false);
+        createDefaultWorkWeekIfAbsent(WORK_WEEK_ISLAMIC_5X8,
+                "Sunday–Thursday 8-hour work week (common in Arab countries) with a 1-hour lunch break",
+                true, true, true, true, true, false, true);
+        createDefaultWorkWeekIfAbsent(WORK_WEEK_JEWISH_5X8,
+                "Sunday–Thursday 8-hour work week (Israeli work week) with a 1-hour lunch break",
+                true, true, true, true, true, false, true);
     }
 
     @Override

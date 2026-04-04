@@ -19,10 +19,12 @@ package de.bushnaq.abdalla.kassandra.ui.util;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.TtsCacheManager;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +59,11 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     protected            PlatformTransactionManager transactionManager;
     @Autowired
     protected            UserRepository             userRepository;
+
+    @BeforeAll
+    static void beforeAll() {
+        StableDiffusionService.setEnabled(true);
+    }
 
     private static synchronized KeycloakContainer getKeycloakContainer() {
         // Allocate port in static initializer (runs before everything)

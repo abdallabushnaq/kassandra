@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
@@ -105,6 +106,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
 
     @BeforeAll
     static void beforeAll() {
+        StableDiffusionService.setEnabled(true);
         video.setVersion(2);
         video.setTitle("Kassandra Products, Versions, Features and Sprints");
         video.setDescription("Good morning, my name is Christopher Paul. I am the product manager of Kassandra and I will be demonstrating the latest alpha version of the Kassandra project server to you today.");

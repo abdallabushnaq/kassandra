@@ -59,11 +59,10 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ProductApiTest extends AbstractUiTestUtil {
     private static final long   FAKE_ID     = 999999L;
     private static final String SECOND_NAME = "SECOND_NAME";
-
-    private User admin1;
-    private User user1;
-    private User user2;
-    private User user3;
+    private              User   admin1;
+    private              User   user1;
+    private              User   user2;
+    private              User   user3;
 
     @Test
     public void anonymousSecurity() {

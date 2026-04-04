@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
@@ -89,6 +90,7 @@ public class UserLocationsIntroductionVideo extends AbstractIntroductionVideo {
 
     @BeforeAll
     static void beforeAll() {
+        StableDiffusionService.setEnabled(true);
         video.setVersion(1);
         video.setTitle("User Locations in Kassandra");
         video.setDescription("Today we're going to learn about User Location management in Kassandra. User locations are essential for accurate project planning because they determine which public holidays apply to each team member.");

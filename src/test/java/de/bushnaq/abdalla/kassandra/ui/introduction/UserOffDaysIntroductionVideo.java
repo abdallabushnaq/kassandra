@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
@@ -89,6 +90,7 @@ public class UserOffDaysIntroductionVideo extends AbstractIntroductionVideo {
 
     @BeforeAll
     static void beforeAll() {
+        StableDiffusionService.setEnabled(true);
         video.setVersion(1);
         video.setTitle("User Off Days in Kassandra");
         video.setDescription("Today I am happy to release our first instruction video for our Kassandra project management server.");

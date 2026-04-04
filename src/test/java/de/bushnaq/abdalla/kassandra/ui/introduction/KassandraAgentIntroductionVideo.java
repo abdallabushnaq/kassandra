@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
@@ -109,8 +110,10 @@ public class KassandraAgentIntroductionVideo extends AbstractIntroductionVideo {
 
     @BeforeAll
     static void beforeAll() {
-        video.setTitle("Kassandra Agent");
+        StableDiffusionService.setEnabled(true);
         video.setVersion(1);
+        video.setTitle("Kassandra Agent");
+        video.setDescription("Today I will be demonstrating the AI capability of the latest alpha version of the Kassandra project server to you today.");
     }
 
     @ParameterizedTest

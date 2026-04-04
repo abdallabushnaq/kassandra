@@ -35,8 +35,13 @@ import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.dto.UserWorkWeek;
+import de.bushnaq.abdalla.kassandra.rest.api.LocationApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UserWorkWeekApi;
+import de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
@@ -50,8 +55,10 @@ import jakarta.annotation.security.RolesAllowed;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.Comparator;
 import java.util.List;
 
 @Route(value = "user-list", layout = MainLayout.class)
@@ -79,18 +86,27 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
     private final        AvatarService          avatarService;
     private final        StableDiffusionService stableDiffusionService;
     private final        UserApi                userApi;
+    private final        UserWorkWeekApi        userWorkWeekApi;
+    private final        WorkWeekApi            workWeekApi;
+    private final        LocationApi            locationApi;
 
     public UserListView(UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
                         AvatarService avatarService,
                         StableDiffusionService stableDiffusionService,
                         AiAssistantService aiAssistantService,
-                        ChatPanelSessionState chatPanelSessionState) {
+                        ChatPanelSessionState chatPanelSessionState,
+                        WorkWeekApi workWeekApi,
+                        UserWorkWeekApi userWorkWeekApi,
+                        LocationApi locationApi) {
         super(clock);
         this.userApi                = userApi;
         this.clock                  = clock;
         this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.sessionState           = chatPanelSessionState;
+        this.workWeekApi            = workWeekApi;
+        this.userWorkWeekApi        = userWorkWeekApi;
+        this.locationApi            = locationApi;
 
         add(createSmartHeader("Users", USER_LIST_PAGE_TITLE, VaadinIcon.USERS,
                 CREATE_USER_BUTTON, () -> openUserDialog(null),
@@ -277,6 +293,30 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
         }
 
         {
+            Grid.Column<User> countryColumn = getGrid().addColumn(user -> {
+                Location loc = getEffectiveLocation(user);
+                return loc != null ? loc.getCountry() : "";
+            });
+            VaadinUtil.addSimpleHeader(countryColumn, "Country", VaadinIcon.GLOBE);
+        }
+
+        {
+            Grid.Column<User> stateColumn = getGrid().addColumn(user -> {
+                Location loc = getEffectiveLocation(user);
+                return loc != null ? loc.getState() : "";
+            });
+            VaadinUtil.addSimpleHeader(stateColumn, "State", VaadinIcon.MAP_MARKER);
+        }
+
+        {
+            Grid.Column<User> workWeekColumn = getGrid().addColumn(user -> {
+                UserWorkWeek uww = getEffectiveUserWorkWeek(user);
+                return uww != null && uww.getWorkWeek() != null ? uww.getWorkWeek().getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(workWeekColumn, "Work Week", VaadinIcon.CALENDAR);
+        }
+
+        {
             Grid.Column<User> createdColumn = getGrid().addColumn(user -> dateTimeFormatter.format(user.getCreated()));
             VaadinUtil.addSimpleHeader(createdColumn, "Created", VaadinIcon.CALENDAR);
         }
@@ -298,8 +338,49 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
 
     }
 
+    /**
+     * Returns the location that is effective on today's date: the one with the latest start date
+     * that is not after today. Falls back to the earliest future location if all are in the future.
+     *
+     * @param user the user whose locations to inspect
+     * @return the effective {@link Location}, or {@code null} if the user has none
+     */
+    private Location getEffectiveLocation(User user) {
+        List<Location> locs = user.getLocations();
+        if (locs == null || locs.isEmpty()) return null;
+        LocalDate today = LocalDate.now();
+        return locs.stream()
+                .filter(l -> l.getStart() != null && !l.getStart().isAfter(today))
+                .max(Comparator.comparing(Location::getStart))
+                .orElseGet(() -> locs.stream()
+                        .filter(l -> l.getStart() != null)
+                        .min(Comparator.comparing(Location::getStart))
+                        .orElse(null));
+    }
+
+    /**
+     * Returns the work-week assignment that is effective on today's date: the one with the latest
+     * start date that is not after today. Falls back to the earliest future assignment if all are
+     * in the future.
+     *
+     * @param user the user whose work-week assignments to inspect
+     * @return the effective {@link UserWorkWeek}, or {@code null} if the user has none
+     */
+    private UserWorkWeek getEffectiveUserWorkWeek(User user) {
+        List<UserWorkWeek> assignments = user.getUserWorkWeeks();
+        if (assignments == null || assignments.isEmpty()) return null;
+        LocalDate today = LocalDate.now();
+        return assignments.stream()
+                .filter(a -> a.getStart() != null && !a.getStart().isAfter(today))
+                .max(Comparator.comparing(UserWorkWeek::getStart))
+                .orElseGet(() -> assignments.stream()
+                        .filter(a -> a.getStart() != null)
+                        .min(Comparator.comparing(UserWorkWeek::getStart))
+                        .orElse(null));
+    }
+
     private void openUserDialog(User user) {
-        UserDialog dialog = new UserDialog(user, avatarService, stableDiffusionService, userApi);
+        UserDialog dialog = new UserDialog(user, avatarService, stableDiffusionService, userApi, workWeekApi, userWorkWeekApi, locationApi);
         dialog.addOpenedChangeListener(event -> {
             if (!event.isOpened()) {
                 // Dialog was closed, refresh the grid

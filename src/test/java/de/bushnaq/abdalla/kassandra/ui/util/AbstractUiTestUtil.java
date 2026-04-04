@@ -17,10 +17,12 @@
 
 package de.bushnaq.abdalla.kassandra.ui.util;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.util.AbstractGanttTestUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
@@ -35,6 +37,11 @@ public class AbstractUiTestUtil extends AbstractGanttTestUtil {
             System.setProperty("java.awt.headless", "false");
         }
 
+    }
+
+    @BeforeAll
+    static void beforeAll() {
+        StableDiffusionService.setEnabled(false);
     }
 
     protected void logHeader(String header) {

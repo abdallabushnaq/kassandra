@@ -71,6 +71,9 @@ public class UserDAO extends AbstractTimeAwareDAO {
     private List<OffDayDAO>       offDays        = new ArrayList<>();
     @Column(nullable = false)
     private String                roles          = "USER"; // Default role for new users
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonManagedReference
+    private List<UserWorkWeekDAO> userWorkWeeks  = new ArrayList<>();
 
     /**
      * Add a role to this user

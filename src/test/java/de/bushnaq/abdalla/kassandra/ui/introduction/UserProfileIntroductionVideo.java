@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
@@ -70,6 +71,7 @@ public class UserProfileIntroductionVideo extends AbstractIntroductionVideo {
 
     @BeforeAll
     static void beforeAll() {
+        StableDiffusionService.setEnabled(true);
         video.setTitle("User Profiles in Kassandra");
         video.setDescription("Today we're going to learn about managing your user profile and creating custom avatar icons using AI in Kassandra. Your profile contains important information about how you're identified in the system and displayed in reports.");
         video.setVersion(1);

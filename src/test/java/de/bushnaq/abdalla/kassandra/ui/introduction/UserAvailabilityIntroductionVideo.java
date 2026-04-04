@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
@@ -88,6 +89,7 @@ public class UserAvailabilityIntroductionVideo extends AbstractIntroductionVideo
 
     @BeforeAll
     static void beforeAll() {
+        StableDiffusionService.setEnabled(true);
         video.setVersion(1);
         video.setTitle("User Availability in Kassandra");
         video.setDescription("Today we're going to learn about User Availability management in Kassandra. User availability defines what percentage of your time you can dedicate to project work. This is essential for accurate sprint planning and capacity calculations.");

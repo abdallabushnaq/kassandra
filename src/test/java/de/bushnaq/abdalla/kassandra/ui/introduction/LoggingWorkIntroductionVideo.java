@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.introduction;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -91,8 +92,10 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
 
     @BeforeAll
     static void beforeAll() {
-        video.setTitle("Logging Work");
+        StableDiffusionService.setEnabled(true);
         video.setVersion(1);
+        video.setTitle("Logging Work");
+        video.setDescription("Today I'm going to show you how to log work on your tasks using the Active Sprints view and the Worklog dialog. This is essential for tracking your progress and keeping the team informed about task status.");
     }
 
 

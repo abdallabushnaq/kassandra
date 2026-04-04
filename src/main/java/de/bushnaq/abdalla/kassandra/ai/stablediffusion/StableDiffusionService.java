@@ -51,6 +51,7 @@ public class StableDiffusionService {
     //    public static final String                  NEGATIVE_PROMPT = "blurry, (nsfw), distorted, low quality, ugly, deformed, bad anatomy, (worst quality, low quality:2), cartoon, painting, illustration";
     public static final String                  NEGATIVE_PROMPT = "";
     private final       StableDiffusionConfig   config;
+    static              boolean                 enabled         = true;//can be used to disable the service
     private final       ResourcePatternResolver resourcePatternResolver;
     private final       WebClient               webClient;
 
@@ -574,6 +575,8 @@ public class StableDiffusionService {
      * @return true if the API is reachable, false otherwise
      */
     public boolean isAvailable() {
+        if (!enabled)
+            return false;
         try {
             String response = webClient.get()
                     .uri("/internal/ping")
@@ -730,6 +733,14 @@ public class StableDiffusionService {
             log.error("Failed to select model '{}': {}", modelName, e.getMessage(), e);
             return false;
         }
+    }
+
+    public static void setEnabled(boolean enabled) {
+        if (enabled)
+            log.warn("Enabling Stable Diffusion integration. Ensure that the Stable Diffusion API is running and configured correctly.");
+        else
+            log.warn("Disabling Stable Diffusion integration. The application will use default avatar generation instead of AI-generated images.");
+        StableDiffusionService.enabled = enabled;
     }
 
     /**

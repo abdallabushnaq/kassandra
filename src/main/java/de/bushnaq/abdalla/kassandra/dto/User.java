@@ -66,6 +66,8 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     @JsonManagedReference
     private List<OffDay>       offDays        = new ArrayList<>();
     private String             roles          = "USER"; // Default role for new users
+    @JsonManagedReference
+    private List<UserWorkWeek> userWorkWeeks  = new ArrayList<>();
 
     public void addAvailability(Availability availability) {
         availabilities.add(availability);
@@ -83,6 +85,28 @@ public class User extends AbstractTimeAware implements Comparable<User> {
 
     public void addOffday(OffDay offDay) {
         offDays.add(offDay);
+    }
+
+    /**
+     * Adds a work-week assignment to this user.
+     *
+     * @param userWorkWeek the assignment to add
+     */
+    public void addUserWorkWeek(UserWorkWeek userWorkWeek) {
+        if (userWorkWeek.getStart() == null)
+            throw new IllegalArgumentException("start date is null");
+        if (userWorkWeek.getWorkWeek() == null)
+            throw new IllegalArgumentException("work week is null");
+        userWorkWeeks.add(userWorkWeek);
+    }
+
+    /**
+     * Removes a work-week assignment from this user.
+     *
+     * @param userWorkWeek the assignment to remove
+     */
+    public void removeUserWorkWeek(UserWorkWeek userWorkWeek) {
+        userWorkWeeks.remove(userWorkWeek);
     }
 
     /**
