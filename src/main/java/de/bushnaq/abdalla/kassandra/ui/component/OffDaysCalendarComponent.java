@@ -324,14 +324,6 @@ public class OffDaysCalendarComponent extends VerticalLayout {
         for (int day = 1; day <= lastDay; day++) {
             LocalDate date      = LocalDate.of(currentYear, month, day);
             boolean   isWeekend = isWeekend(date);
-
-            {
-                LocalDate ld = LocalDate.parse("2025-01-10");
-                boolean   iw = isWeekend(ld);
-                System.out.print(iw);
-            }
-
-
             // Check if it's today
             boolean isToday = date.equals(today);
             calendarGrid.add(createDayComponent(day, date, isWeekend, false, isToday));
