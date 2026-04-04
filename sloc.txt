@@ -318,10 +318,12 @@
 | kassandra.rest.api                   | UserGroupApi.java                                        | src      |       22 |       62 |       16 |      120 |      220 |
 | kassandra.rest.api                   | UserGroupApiTest.java                                    | src      |       40 |        3 |       33 |      194 |      270 |
 | kassandra.rest.api                   | UserWorkWeekApi.java                                     | src      |       11 |       37 |       16 |       59 |      123 |
+| kassandra.rest.api                   | UserWorkWeekApiTest.java                                 | src      |       48 |       41 |       54 |      319 |      462 |
 | kassandra.rest.api                   | VersionAclApiTest.java                                   | src      |       61 |       74 |       55 |      229 |      419 |
 | kassandra.rest.api                   | VersionApi.java                                          | src      |       15 |        0 |       16 |       97 |      128 |
 | kassandra.rest.api                   | VersionApiTest.java                                      | src      |       33 |        0 |       31 |      202 |      266 |
 | kassandra.rest.api                   | WorkWeekApi.java                                         | src      |       13 |       39 |       16 |       68 |      136 |
+| kassandra.rest.api                   | WorkWeekApiTest.java                                     | src      |       41 |       54 |       40 |      166 |      301 |
 | kassandra.rest.api                   | WorklogApi.java                                          | src      |       14 |        0 |       16 |       77 |      107 |
 | kassandra.rest.api                   | WorklogApiTest.java                                      | src      |       16 |        0 |       18 |       75 |      109 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -506,11 +508,11 @@
 | kassandra.ui                         | MainLayout.java                                          | src      |       68 |       33 |       41 |      306 |      448 |
 | kassandra.ui                         | SprintStatus.java                                        | src      |        2 |        0 |       16 |        4 |       22 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.util                       | AbstractEntityGenerator.java                             | src      |      122 |       48 |       64 |      735 |      969 |
+| kassandra.util                       | AbstractEntityGenerator.java                             | src      |      126 |       70 |       65 |      760 |     1021 |
 | kassandra.util                       | AbstractGanttTestUtil.java                               | src      |       52 |        6 |       56 |      500 |      614 |
 | kassandra.util                       | AbstractLegacyGanttTestUtil.java                         | src      |       10 |        0 |       21 |       83 |      114 |
 | kassandra.util                       | AbstractTestUtil.java                                    | src      |       26 |        0 |       32 |      130 |      188 |
-| kassandra.util                       | DTOAsserts.java                                          | src      |       30 |        0 |       25 |      135 |      190 |
+| kassandra.util                       | DTOAsserts.java                                          | src      |       32 |        0 |       25 |      149 |      206 |
 | kassandra.util                       | GanttGenerator.java                                      | src      |       19 |       11 |       46 |      141 |      217 |
 | kassandra.util                       | H2DatabaseStateManager.java                              | src      |       22 |       27 |       27 |      125 |      201 |
 | kassandra.util                       | MPXJGenerator.java                                       | src      |       21 |        0 |       23 |      162 |      206 |
@@ -582,5 +584,5 @@
 | util                                 | TaskUtil.java                                            | src      |        8 |        0 |       31 |       15 |       54 |
 | util                                 | Util.java                                                | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 62 package(s)                        | 519 file(s)                                              | java     |    11471 |    10346 |    15007 |    60833 |    97657 |
+| 62 package(s)                        | 521 file(s)                                              | java     |    11566 |    10463 |    15102 |    61357 |    98488 |
 +--------------------------------------+----------------------------------------------------------+----------+----------+----------+----------+----------+----------+

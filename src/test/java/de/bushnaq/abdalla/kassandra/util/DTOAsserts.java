@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DTOAsserts {
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -77,6 +77,16 @@ public class DTOAsserts {
         assertEquals(expected.getFirstDay(), actual.getFirstDay());
         assertEquals(expected.getLastDay(), actual.getLastDay());
         assertEquals(expected.getType(), actual.getType());
+    }
+
+    private static void assertUserWorkWeekEquals(UserWorkWeek expected, UserWorkWeek actual) {
+        assertEquals(expected.getCreated(), actual.getCreated(),
+                String.format("UserWorkWeek '%d' created date does not match", actual.getId()));
+        assertEquals(expected.getId(), actual.getId(), "UserWorkWeek IDs do not match");
+        assertEquals(expected.getStart(), actual.getStart(), "UserWorkWeek start dates do not match");
+        assertNotNull(actual.getWorkWeek(), "UserWorkWeek work-week reference must not be null");
+        assertEquals(expected.getWorkWeek().getId(), actual.getWorkWeek().getId(),
+                "UserWorkWeek work-week IDs do not match");
     }
 
     protected static void assertProductEquals(Product expected, Product actual) {
@@ -168,6 +178,12 @@ public class DTOAsserts {
         assertEquals(expected.getOffDays().size(), actual.getOffDays().size(), String.format("Number of user '%s' off days do not match", actual.getName()));
         for (int i = 0; i < expected.getOffDays().size(); i++) {
             assertOffDayEquals(expected.getOffDays().get(i), actual.getOffDays().get(i));
+        }
+
+        assertEquals(expected.getUserWorkWeeks().size(), actual.getUserWorkWeeks().size(),
+                String.format("Number of user '%s' work-week assignments do not match", actual.getName()));
+        for (int i = 0; i < expected.getUserWorkWeeks().size(); i++) {
+            assertUserWorkWeekEquals(expected.getUserWorkWeeks().get(i), actual.getUserWorkWeeks().get(i));
         }
     }
 

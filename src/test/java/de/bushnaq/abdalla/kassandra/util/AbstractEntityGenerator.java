@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
@@ -100,9 +101,11 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     protected           UserApi                userApi;
     protected           UserGroupApi           userGroupApi;
     protected static    int                    userIndex                 = 0;
+    protected           UserWorkWeekApi        userWorkWeekApi;
     protected           VersionApi             versionApi;
     protected static    int                    versionIndex              = 0;
     protected           WorklogApi             worklogApi;
+    protected           WorkWeekApi            workWeekApi;
 
     protected void addAvailability(User user, float availability, LocalDate start) {
         Availability a = new Availability(availability, start);
@@ -270,6 +273,46 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
     protected Task addParentTask(String name, Sprint sprint, Task parent, Task dependency) {
         return addTask(sprint, parent, name, null, Duration.ofDays(0), null, null, dependency);
+    }
+
+    /**
+     * Assigns a {@link WorkWeek} to a user starting on {@code start}.
+     * The saved assignment is added to {@code user.getUserWorkWeeks()} to keep the
+     * in-memory state in sync with the database.
+     *
+     * @param user     the owning user
+     * @param workWeek the work-week definition to assign
+     * @param start    the effective start date of the assignment
+     */
+    protected void addWorkWeek(User user, WorkWeek workWeek, LocalDate start) {
+        UserWorkWeek uww = new UserWorkWeek(workWeek, start);
+        uww.setUser(user);
+        uww.setCreated(user.getCreated());
+        uww.setUpdated(user.getUpdated());
+        UserWorkWeek saved = userWorkWeekApi.persist(uww, user.getId());
+        user.addUserWorkWeek(saved);
+    }
+
+    /**
+     * Removes a work-week assignment from a user.
+     * Both the REST endpoint and the in-memory list are updated.
+     *
+     * @param userWorkWeek the assignment to remove
+     * @param user         the owning user
+     */
+    protected void removeWorkWeek(UserWorkWeek userWorkWeek, User user) {
+        userWorkWeekApi.deleteById(user.getId(), userWorkWeek.getId());
+        user.removeUserWorkWeek(userWorkWeek);
+    }
+
+    /**
+     * Persists an updated work-week assignment via the REST API.
+     *
+     * @param userWorkWeek the assignment with updated fields (must have a non-null ID)
+     * @param user         the owning user
+     */
+    protected void updateWorkWeek(UserWorkWeek userWorkWeek, User user) {
+        userWorkWeekApi.update(userWorkWeek, user.getId());
     }
 
     protected Product addProduct(String name) {
@@ -561,6 +604,13 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         addLocation(saved, country, state, start);
         addAvailability(saved, availability, start);
 
+        // Assign the default Western work week starting on the user's first working day
+        WorkWeek defaultWorkWeek = workWeekApi.getAll().stream()
+                .filter(ww -> DefaultEntitiesInitializer.WORK_WEEK_5X8.equals(ww.getName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Default work week '" + DefaultEntitiesInitializer.WORK_WEEK_5X8 + "' not found"));
+        addWorkWeek(saved, defaultWorkWeek, start);
+
         GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "user");
 //        try {
 //            darkImage = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, image);
@@ -717,6 +767,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         worklogApi      = new WorklogApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
         userGroupApi    = new UserGroupApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
         productAclApi   = new ProductAclApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        workWeekApi     = new WorkWeekApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+        userWorkWeekApi = new UserWorkWeekApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
     }
 
     protected void removeAvailability(Availability availability, User user) {

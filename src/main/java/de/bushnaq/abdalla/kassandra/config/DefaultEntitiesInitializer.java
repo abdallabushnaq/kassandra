@@ -192,10 +192,10 @@ public class DefaultEntitiesInitializer implements ApplicationRunner {
                 true, true, true, true, true, false, false);
         createDefaultWorkWeekIfAbsent(WORK_WEEK_ISLAMIC_5X8,
                 "Sunday–Thursday 8-hour work week (common in Arab countries) with a 1-hour lunch break",
-                true, true, true, true, true, false, true);
+                true, true, true, true, false, false, true);
         createDefaultWorkWeekIfAbsent(WORK_WEEK_JEWISH_5X8,
                 "Sunday–Thursday 8-hour work week (Israeli work week) with a 1-hour lunch break",
-                true, true, true, true, true, false, true);
+                true, true, true, true, false, false, true);
     }
 
     @Override

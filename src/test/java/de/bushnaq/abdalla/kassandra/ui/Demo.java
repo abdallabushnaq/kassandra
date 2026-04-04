@@ -149,7 +149,7 @@ public class Demo extends AbstractKeycloakUiTestUtil {
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void testShowProducts(RandomCase randomCase, TestInfo testInfo) throws Exception {
+    public void testDemo(RandomCase randomCase, TestInfo testInfo) throws Exception {
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
