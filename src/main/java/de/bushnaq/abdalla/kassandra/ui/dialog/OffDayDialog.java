@@ -210,14 +210,14 @@ public class OffDayDialog extends Dialog {
 //    }
 
     /**
-     * Checks if a given date is a weekend day.
+     * Checks if a given date falls on a structurally non-working day according to the user's
+     * effective work-week definition for that date. Ignores holiday and off-day exceptions.
      *
      * @param date The date to check
-     * @return true if the date is a weekend, false otherwise
+     * @return true if the date is a non-working day in the applicable work week, false otherwise
      */
     private boolean isWeekend(LocalDate date) {
-        ProjectCalendar calendar = user.getCalendar();
-        return !calendar.isWorkingDay(date.getDayOfWeek());
+        return !user.isWorkingDay(date);
     }
 
     private void save() {

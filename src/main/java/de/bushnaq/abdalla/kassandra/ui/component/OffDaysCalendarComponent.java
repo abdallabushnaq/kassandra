@@ -186,8 +186,8 @@ public class OffDaysCalendarComponent extends VerticalLayout {
                             dayClickHandler.accept(date);
                         }
                     });
-                } else if (!calendar.isWorkingDay(date.getDayOfWeek())) {
-                    // Weekend based on calendar definition
+                } else if (!user.isWorkingDay(date)) {
+                    // Weekend based on the user's effective work-week definition for this date
                     dayComponent.addClassName(CLASS_WEEKEND_DAY);
                 } else {
                     // Normal working day
@@ -378,11 +378,14 @@ public class OffDaysCalendarComponent extends VerticalLayout {
 
 
     /**
-     * Checks if a date falls on a weekend based on the user's calendar.
+     * Checks if a date falls on a non-working day based on the user's effective work-week
+     * definition for that specific date. Ignores holiday and off-day exceptions.
+     *
+     * @param date the date to check
+     * @return {@code true} if the day is structurally non-working for the user on that date
      */
     private boolean isWeekend(LocalDate date) {
-        ProjectCalendar calendar = user.getCalendar();
-        return !calendar.isWorkingDay(date.getDayOfWeek());
+        return !user.isWorkingDay(date);
     }
 
     /**
