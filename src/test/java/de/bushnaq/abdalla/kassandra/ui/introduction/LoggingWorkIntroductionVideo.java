@@ -93,8 +93,8 @@ public class LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
-        video.setVersion(1);
-        video.setTitle("Logging Work");
+        video.setVersion(2);
+        video.setTitle("13 Logging Work in Kassandra");
         video.setDescription("Today I'm going to show you how to log work on your tasks using the Active Sprints view and the Worklog dialog. This is essential for tracking your progress and keeping the team informed about task status.");
     }
 

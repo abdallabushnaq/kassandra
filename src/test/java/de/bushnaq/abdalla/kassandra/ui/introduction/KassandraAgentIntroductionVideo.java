@@ -111,8 +111,8 @@ public class KassandraAgentIntroductionVideo extends AbstractIntroductionVideo {
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
-        video.setVersion(1);
-        video.setTitle("Kassandra Agent");
+        video.setVersion(2);
+        video.setTitle("14 Kassandra Agent");
         video.setDescription("Today I will be demonstrating the AI capability of the latest alpha version of the Kassandra project server to you today.");
     }
 

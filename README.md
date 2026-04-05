@@ -102,9 +102,9 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 9. ✅ 09 Kassandra Products, Versions, Features and Sprints Introduction Video
 10. ✅ 10 Stories and Tasks Introduction Video
 11. ✅ 11 Rearranging Stories and Tasks Introduction Video
-12. ❌ 12 Story and Task Relations Introduction Video
-13. ❌ 13 Logging Work Introduction Video
-14. ❌ 14 Kassandra Agent Introduction Video
+12. ✅ 12 Story and Task Relations Introduction Video
+13. ✅ 13 Logging Work Introduction Video
+14. ✅ 14 Kassandra Agent Introduction Video
 
 # Screenshots
 
