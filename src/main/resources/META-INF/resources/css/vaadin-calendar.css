@@ -14,67 +14,86 @@ body {
     --calendar-holiday-text-color: #0C5460;
     --calendar-trip-color: #6C757D;
     --calendar-trip-text-color: #FFFFFF;
-    --calendar-weekend-color: #F0F0F0;
+    --calendar-weekend-color: #cccccc;
     --calendar-month-name-color: #DC3545;
     --calendar-normal-day-color: #FFFFFF;
     --calendar-normal-day-text-color: #000000;
     --calendar-filling-day-color: #FFFFFF;
-    --calendar-filling-day-text-color: #AAAAAA;
+    --calendar-filling-day-text-color: #dddddd;
 }
+
+[theme~="dark"] {
+    --calendar-vacation-color: #82ed9c;
+    --calendar-vacation-text-color: #FFFFFF;
+    --calendar-sick-color: #f998a1;
+    --calendar-sick-text-color: #FFFFFF;
+    --calendar-holiday-color: #6fc3ed;
+    --calendar-holiday-text-color: #FFFFFF;
+    --calendar-trip-color: #5e666d;
+    --calendar-trip-text-color: #FFFFFF;
+
+    --calendar-weekend-color: #555555;
+    --calendar-month-name-color: #FF6B70;
+    --calendar-normal-day-color: #1E1E1E;
+    --calendar-normal-day-text-color: #FFFFFF;
+    --calendar-filling-day-color: #1E1E1E;
+    --calendar-filling-day-text-color: #666666;
+}
+
 
 /* Calendar component styles */
 .calendar-normal-day {
-  color: var(--calendar-normal-day-text-color);
+    color: var(--calendar-normal-day-text-color);
 }
 
 .calendar-filling-day {
-  color: var(--calendar-filling-day-text-color);
+    color: var(--calendar-filling-day-text-color);
 }
 
 .calendar-weekend-day {
-  color: #777777;
+    color: var(--calendar-weekend-color);
 }
 
 .calendar-vacation-day {
-  background-color: var(--calendar-vacation-color);
-  color: var(--calendar-vacation-text-color);
+    background-color: var(--calendar-vacation-color);
+    color: var(--calendar-vacation-text-color);
 }
 
 .calendar-sick-day {
-  background-color: var(--calendar-sick-color);
-  color: var(--calendar-sick-text-color);
+    background-color: var(--calendar-sick-color);
+    color: var(--calendar-sick-text-color);
 }
 
 .calendar-holiday-day {
-  background-color: var(--calendar-holiday-color);
-  color: var(--calendar-holiday-text-color);
+    background-color: var(--calendar-holiday-color);
+    color: var(--calendar-holiday-text-color);
 }
 
 .calendar-trip-day {
-  background-color: var(--calendar-trip-color);
-  color: var(--calendar-trip-text-color);
+    background-color: var(--calendar-trip-color);
+    color: var(--calendar-trip-text-color);
 }
 
 .calendar-today {
-  position: relative;
-  font-weight: bold;
+    position: relative;
+    font-weight: bold;
 }
 
 .calendar-today::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border: 2px solid rgba(255, 0, 0, 0.8);
-  border-radius: 50%;
-  z-index: 1;
-  box-sizing: border-box;
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px solid rgba(255, 0, 0, 0.8);
+    border-radius: 50%;
+    z-index: 1;
+    box-sizing: border-box;
 }
 
 .calendar-month-name {
-  color: var(--calendar-month-name-color);
+    color: var(--calendar-month-name-color);
 }
 
 

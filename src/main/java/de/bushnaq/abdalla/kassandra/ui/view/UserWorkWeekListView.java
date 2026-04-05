@@ -61,22 +61,22 @@ import java.util.stream.Collectors;
 public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
         implements BeforeEnterObserver, AfterNavigationObserver {
 
-    public static final String CREATE_BUTTON             = "create-user-work-week-button";
-    public static final String GLOBAL_FILTER             = "user-work-week-global-filter";
-    public static final String GRID                      = "user-work-week-grid";
-    public static final String GRID_DELETE_BUTTON_PREFIX = "user-work-week-delete-button-";
-    public static final String GRID_EDIT_BUTTON_PREFIX   = "user-work-week-edit-button-";
-    public static final String GRID_NAME_PREFIX          = "user-work-week-name-";
-    public static final String GRID_START_DATE_PREFIX    = "user-work-week-start-";
-    public static final String PAGE_TITLE                = "user-work-week-page-title";
-    public static final String ROUTE                     = "user-work-week";
-    public static final String ROW_COUNTER               = "user-work-week-row-counter";
-    private       User                     currentUser;
-    private final DateTimeFormatter         dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private final UserApi                   userApi;
-    private final UserWorkWeekApi           userWorkWeekApi;
-    private final WorkWeekApi               workWeekApi;
-    private       OffDaysCalendarComponent  yearCalendar;
+    public static final String                   CREATE_BUTTON             = "create-user-work-week-button";
+    public static final String                   GLOBAL_FILTER             = "user-work-week-global-filter";
+    public static final String                   GRID                      = "user-work-week-grid";
+    public static final String                   GRID_DELETE_BUTTON_PREFIX = "user-work-week-delete-button-";
+    public static final String                   GRID_EDIT_BUTTON_PREFIX   = "user-work-week-edit-button-";
+    public static final String                   GRID_NAME_PREFIX          = "user-work-week-name-";
+    public static final String                   GRID_START_DATE_PREFIX    = "user-work-week-start-";
+    public static final String                   PAGE_TITLE                = "user-work-week-page-title";
+    public static final String                   ROUTE                     = "user-work-week";
+    public static final String                   ROW_COUNTER               = "user-work-week-row-counter";
+    private             User                     currentUser;
+    private final       DateTimeFormatter        dateFormatter             = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private final       UserApi                  userApi;
+    private final       UserWorkWeekApi          userWorkWeekApi;
+    private final       WorkWeekApi              workWeekApi;
+    private             OffDaysCalendarComponent yearCalendar;
 
     /**
      * Constructs the view.
@@ -165,6 +165,26 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
         dialog.open();
     }
 
+    private OffDaysCalendarComponent createCalendar() {
+        // Create a new OffDaysCalendarComponent with the current user and the current year
+        if (yearCalendar != null)
+            return yearCalendar;
+        yearCalendar = new OffDaysCalendarComponent(currentUser, ParameterOptions.getLocalNow().getYear(), this::handleCalendarDayClick);
+        // Set up handler to refresh grid when year changes
+        yearCalendar.setYearChangeHandler(year -> refreshGrid());
+        return yearCalendar;
+    }
+
+    /**
+     * Handles clicks on calendar days that have off days.
+     * No special action is needed in the work-week context.
+     *
+     * @param date The date that was clicked
+     */
+    private void handleCalendarDayClick(java.time.LocalDate date) {
+        // No action required for this view
+    }
+
     @Override
     protected void initGrid(Clock clock) {
         getGrid().setId(GRID);
@@ -197,7 +217,7 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
                 String summary = uww.getWorkWeek() != null ? uww.getWorkWeek().getWorkingDaysSummary() : "";
                 return new Span(summary);
             }));
-            VaadinUtil.addSimpleHeader(col, "Working Days", VaadinIcon.CLOCK);
+            VaadinUtil.addSimpleHeader(col, "Working Days", VaadinIcon.INFO_CIRCLE);
         }
 
         // Action column
@@ -223,26 +243,6 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
                     return VaadinUtil.DeleteValidationResult.valid();
                 }
         );
-    }
-
-    private OffDaysCalendarComponent createCalendar() {
-        // Create a new OffDaysCalendarComponent with the current user and the current year
-        if (yearCalendar != null)
-            return yearCalendar;
-        yearCalendar = new OffDaysCalendarComponent(currentUser, ParameterOptions.getLocalNow().getYear(), this::handleCalendarDayClick);
-        // Set up handler to refresh grid when year changes
-        yearCalendar.setYearChangeHandler(year -> refreshGrid());
-        return yearCalendar;
-    }
-
-    /**
-     * Handles clicks on calendar days that have off days.
-     * No special action is needed in the work-week context.
-     *
-     * @param date The date that was clicked
-     */
-    private void handleCalendarDayClick(java.time.LocalDate date) {
-        // No action required for this view
     }
 
     private void openDialog(UserWorkWeek userWorkWeek) {

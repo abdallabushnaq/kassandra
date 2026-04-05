@@ -51,6 +51,12 @@ public class WorkWeekDialog extends Dialog {
     public static final String CONFIRM_BUTTON             = "work-week-dialog-confirm";
     public static final String DESCRIPTION_FIELD          = "work-week-description-field";
     public static final String NAME_FIELD                 = "work-week-name-field";
+    /**
+     * ID prefix for per-day working-day checkboxes.
+     * Full ID is {@code WORKING_DAY_CHECK_ID_PREFIX + dayName.toLowerCase()},
+     * e.g. {@code "work-week-dialog-working-monday"}.
+     */
+    public static final String WORKING_DAY_CHECK_ID_PREFIX = "work-week-dialog-working-";
     public static final String WORK_WEEK_DIALOG           = "work-week-dialog";
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
@@ -146,6 +152,7 @@ public class WorkWeekDialog extends Dialog {
 
     private HorizontalLayout buildDayRow(int index, @SuppressWarnings("unused") WorkDaySchedule schedule) {
         Checkbox   check      = new Checkbox();
+        check.setId(WORKING_DAY_CHECK_ID_PREFIX + DAY_LABELS[index].toLowerCase());
         TimePicker wStart     = timePicker("08:00");
         TimePicker wEnd       = timePicker("17:00");
         TimePicker lStart     = timePicker("12:00");
