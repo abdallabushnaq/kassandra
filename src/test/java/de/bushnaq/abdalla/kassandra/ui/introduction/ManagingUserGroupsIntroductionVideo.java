@@ -89,9 +89,9 @@ public class ManagingUserGroupsIntroductionVideo extends AbstractIntroductionVid
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
-        video.setTitle("Managing User Groups in Kassandra");
+        video.setVersion(2);
+        video.setTitle("03 Managing User Groups in Kassandra");
         video.setDescription("Today we're going to learn about User Groups in Kassandra. User Groups are a powerful feature that lets you control access to products by organizing team members into groups.");
-        video.setVersion(1);
     }
 
 

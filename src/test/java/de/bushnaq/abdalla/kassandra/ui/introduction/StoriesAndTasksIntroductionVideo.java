@@ -99,8 +99,8 @@ public class StoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo 
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
-        video.setVersion(1);
-        video.setTitle("Stories and Tasks in Kassandra");
+        video.setVersion(2);
+        video.setTitle("10 Stories and Tasks in Kassandra");
         video.setDescription("Today we're going to learn about Stories and Tasks in Kassandra. A story is basically a container for a list of Tasks. Tasks represent the work we plan including the estimation for the effort. This is essential for accurate sprint planning and capacity calculations.");
     }
 

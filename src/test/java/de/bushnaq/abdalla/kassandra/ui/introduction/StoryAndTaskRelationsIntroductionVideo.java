@@ -66,22 +66,20 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroductionVideo {
-    public static final NarratorAttribute        EXCITED = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    //    public static final String                   NEW_MILESTONE = "New Milestone-";
-//    public static final String                   NEW_STORY     = "New Story-";
-//    public static final String                   NEW_TASK      = "New Task-";
-    public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute     EXCITED = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute     NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
-    private             FeatureListViewTester    featureListViewTester;
-    private             String                   featureName;
+    private             FeatureListViewTester featureListViewTester;
+    private             String                featureName;
+    User graceMartin;
     @Autowired
-    private             ProductListViewTester    productListViewTester;
-    private             String                   productName;
+    private ProductListViewTester    productListViewTester;
+    private String                   productName;
     @Autowired
-    private             HumanizedSeleniumHandler seleniumHandler;
+    private HumanizedSeleniumHandler seleniumHandler;
     @Autowired
-    private             SprintListViewTester     sprintListViewTester;
-    private             String                   sprintName;
+    private SprintListViewTester     sprintListViewTester;
+    private String                   sprintName;
     Task startMilestone;
     private Task                  story1;
     private Task                  story2;
@@ -121,9 +119,9 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
         Sprint sprint = generateData();
 
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
-        paul.setEnabled(false);
-        Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
-        grace.setEnabled(false);
+        paul.setEnabled(true);
+//        Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
+//        grace.setEnabled(false);
         //seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
 
@@ -152,55 +150,42 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
         paul.narrate(NORMAL, "Lets add a relation from teach story to ensure they can only start after the Start milestone.");
 
 
-        paul.narrate(NORMAL, "Now, imagine we can't start working on the API until the persistence layer is complete. In Kassandra, we can create a dependency to represent this relationship.");
-
         //---------------------------------------------------------------------------------------
-        // Creating Story Dependencies
+        // Creating Story Dependencies to milestone
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.setMouseMoveStepsMultiplier(2.0);
         seleniumHandler.setMouseMoveDelayMultiplier(2);
 
         paul.narrate(NORMAL, "To create a dependency, we hold down the Control key and drag one task or story onto another. Let's make the API story depend on the Start milestone.");
-        paul.narrate(NORMAL, "First, I'll hold down Control and drag the API story onto the persistence story.");
+        paul.narrate(NORMAL, "First, I'll hold down Control and drag the API story onto the milestone.");
         seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story1.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + startMilestone.getName());
         paul.pauseIfDisabled(1000);
         paul.pause(1500);
 
         paul.narrate(NORMAL, "Notice in the Dependency column, the API story now shows the ID of the start milestone. This means the API story can only start after the milestone.");
+        paul.narrate(NORMAL, "The Gantt chart was also update automatically and now shows that the story starts after the milestone. We can even see a small arrow representing the dependency.");
         paul.pause(1500);
 
         paul.narrate(NORMAL, "Now lets do that for the 2 other stories too.");
         seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story2.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + startMilestone.getName());
         paul.pauseIfDisabled(1000);
         paul.pause(1500);
+        paul.narrate(NORMAL, "The second story is now also dependent on the milestone, but as you can see in teh Gantt chart, it starts later, it actually starts after the first story. The reason for that is that all tasks in both stories are assigned to the same resource, 'Grace', and Grace can only work at one task at a time, so Kassandra schedules the tasks accordingly.");
+
         seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story3.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + startMilestone.getName());
         paul.pauseIfDisabled(1000);
         paul.pause(1500);
-
-
-        paul.narrate(NORMAL, "To create a dependency, we hold down the Control key and drag one task or story onto another. Let's make the API story depend on the persistence story.");
-
-        paul.narrate(NORMAL, "First, I'll hold down Control and drag the API story onto the persistence story.");
-        seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + story1.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + story2.getName());
-        paul.pauseIfDisabled(1000);
-        paul.pause(1500);
-
 
         //---------------------------------------------------------------------------------------
         // Creating Task Dependencies
         //---------------------------------------------------------------------------------------
 
 
-        paul.narrate(NORMAL, "I'll hold Control and drag the API documentation task onto the create controller task.");
+        paul.narrate(NORMAL, "We can also create dependencies between individual tasks. Let's say we need to create the controller before we can write the API documentation.");
         seleniumHandler.dragAndDropWithControl(TaskGrid.TASK_GRID_NAME_PREFIX + task12.getName(), TaskGrid.TASK_GRID_NAME_PREFIX + task11.getName());
         paul.pauseIfDisabled(1000);
         paul.pause(1500);
-
-
-        paul.narrate(NORMAL, "Notice in the Dependency column, the API story now shows the ID of the persistence story. This means the API story can only start after the persistence story is finished.");
-        paul.pause(1500);
-        paul.narrate(NORMAL, "We can also create dependencies between individual tasks. Let's say we need to create the controller before we can write the API documentation.");
         paul.narrate(NORMAL, "Perfect! Now the API documentation task depends on the create controller task.");
         paul.pause(1000);
 
@@ -269,7 +254,7 @@ public class StoryAndTaskRelationsIntroductionVideo extends AbstractIntroduction
         Sprint  sprint  = addSprint(feature, sprintName);
 
         User christopherPaul = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        User graceMartin     = userApi.getByEmail("grace.martin@kassandra.org").get();
+        graceMartin = userApi.getByEmail("grace.martin@kassandra.org").get();
         {
             LocalDateTime startDateTime = LocalDateTime.parse("2025-08-18T08:00");
             startMilestone = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);

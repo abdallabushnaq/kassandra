@@ -108,7 +108,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo extends Abstrac
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
         video.setVersion(2);
-        video.setTitle("Kassandra Products, Versions, Features and Sprints");
+        video.setTitle("09 Kassandra Products, Versions, Features and Sprints");
         video.setDescription("Good morning, my name is Christopher Paul. I am the product manager of Kassandra and I will be demonstrating the latest alpha version of the Kassandra project server to you today.");
     }
 

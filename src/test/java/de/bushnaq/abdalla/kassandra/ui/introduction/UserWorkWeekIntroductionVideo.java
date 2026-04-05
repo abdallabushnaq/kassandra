@@ -109,8 +109,8 @@ public class UserWorkWeekIntroductionVideo extends AbstractIntroductionVideo {
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
-        video.setVersion(1);
-        video.setTitle("Work Weeks in Kassandra");
+        video.setVersion(2);
+        video.setTitle("08 Work Weeks in Kassandra");
         video.setDescription("Learn how to create a custom work week schedule and assign it to yourself. "
                 + "We follow Christopher Paul as he switches to a 4-day Monday–Thursday work week starting June 1st, "
                 + "and see how the calendar immediately reflects the change.");

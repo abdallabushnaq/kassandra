@@ -75,9 +75,9 @@ public class ManagingUsersIntroductionVideo extends AbstractIntroductionVideo {
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
-        video.setTitle("Managing Users in Kassandra");
+        video.setVersion(2);
+        video.setTitle("02 Managing Users in Kassandra");
         video.setDescription("Today we're going to learn about User Management in Kassandra. As an administrator, the Users page is where you add team members to the system so they can access Kassandra and be assigned to projects.");
-        video.setVersion(1);
     }
 
 

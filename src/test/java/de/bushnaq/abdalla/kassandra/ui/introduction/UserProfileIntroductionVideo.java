@@ -72,9 +72,9 @@ public class UserProfileIntroductionVideo extends AbstractIntroductionVideo {
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
-        video.setTitle("User Profiles in Kassandra");
+        video.setVersion(2);
+        video.setTitle("04 User Profiles in Kassandra");
         video.setDescription("Today we're going to learn about managing your user profile and creating custom avatar icons using AI in Kassandra. Your profile contains important information about how you're identified in the system and displayed in reports.");
-        video.setVersion(1);
     }
 
     @ParameterizedTest

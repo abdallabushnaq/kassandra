@@ -91,8 +91,8 @@ public class UserLocationsIntroductionVideo extends AbstractIntroductionVideo {
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
-        video.setVersion(1);
-        video.setTitle("User Locations in Kassandra");
+        video.setVersion(2);
+        video.setTitle("06 User Locations in Kassandra");
         video.setDescription("Today we're going to learn about User Location management in Kassandra. User locations are essential for accurate project planning because they determine which public holidays apply to each team member.");
     }
 

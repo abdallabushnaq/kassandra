@@ -90,8 +90,8 @@ public class UserAvailabilityIntroductionVideo extends AbstractIntroductionVideo
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
-        video.setVersion(1);
-        video.setTitle("User Availability in Kassandra");
+        video.setVersion(2);
+        video.setTitle("07 User Availability in Kassandra");
         video.setDescription("Today we're going to learn about User Availability management in Kassandra. User availability defines what percentage of your time you can dedicate to project work. This is essential for accurate sprint planning and capacity calculations.");
     }
 

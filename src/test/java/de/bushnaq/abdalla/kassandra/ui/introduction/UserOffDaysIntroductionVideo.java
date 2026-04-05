@@ -91,8 +91,8 @@ public class UserOffDaysIntroductionVideo extends AbstractIntroductionVideo {
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
-        video.setVersion(1);
-        video.setTitle("User Off Days in Kassandra");
+        video.setVersion(2);
+        video.setTitle("05 User Off Days in Kassandra");
         video.setDescription("Today I am happy to release our first instruction video for our Kassandra project management server.");
     }
 
