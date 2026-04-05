@@ -32,8 +32,10 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Version;
@@ -99,7 +101,9 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     public VersionListView(VersionApi versionApi, ProductApi productApi, UserApi userApi, Clock clock,
                            AiFilterService aiFilterService, JsonMapper mapper,
                            AiAssistantService aiAssistantService,
-                           ChatPanelSessionState chatPanelSessionState) {
+                           ChatPanelSessionState chatPanelSessionState,
+                           KassandraProperties kassandraProperties,
+                           LmStudioService lmStudioService) {
         super(clock);
         this.versionApi         = versionApi;
         this.productApi         = productApi;
@@ -115,7 +119,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
 
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState);
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, kassandraProperties, lmStudioService);
         chatAgentPanel.setSizeFull();
 
         chatPane = new Div(chatAgentPanel);

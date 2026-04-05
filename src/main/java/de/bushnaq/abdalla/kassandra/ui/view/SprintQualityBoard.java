@@ -30,6 +30,7 @@ import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
@@ -38,7 +39,6 @@ import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.HtmlColor;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
-import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -66,10 +66,12 @@ import java.util.stream.Collectors;
 
 @Route(value = "sprint-quality-board", layout = MainLayout.class)
 @PageTitle("Sprint Quality Board")
-@Menu(order = 5, icon = "vaadin:chart-3d", title = "Quality Board")
+@Menu(order = 8, icon = "vaadin:chart-3d", title = "Quality Board")
 @PermitAll // When security is enabled, allow all authenticated users
 public class SprintQualityBoard extends Main implements AfterNavigationObserver {
+    public static final String                  MENU_ITEM_ID            = "/sprint-quality-board";
     public static final String                  SPRINT_GRID_NAME_PREFIX = "sprint-grid-name-";
+    public static final String                  SPRINT_SELECTOR_ID      = "sprint-selector";
     /**
      * All non-Backlog sprints belonging to the current feature, used to populate the sprint selector.
      */
@@ -154,6 +156,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
 
         // Sprint selector — persists across content reloads triggered by sprint switching
         sprintSelector = new ComboBox<>();
+        sprintSelector.setId(SPRINT_SELECTOR_ID);
         sprintSelector.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
         sprintSelector.setItemLabelGenerator(Sprint::getName);
         sprintSelector.setPlaceholder("Select sprint");
@@ -218,7 +221,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
             final Long fid = featureId;
             sprintId = sprintApi.getAll().stream()
                     .filter(s -> fid.equals(s.getFeatureId())
-                                 && !DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s.getName()))
+                            && !DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s.getName()))
                     .map(Sprint::getId)
                     .findFirst()
                     .orElse(null);

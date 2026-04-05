@@ -71,7 +71,7 @@ import java.util.concurrent.ExecutionException;
 
 @Route(value = "backlog", layout = MainLayout.class)
 @PageTitle("Backlog")
-@Menu(order = 6, icon = "vaadin:grid-v", title = "Backlog")
+@Menu(order = 5, icon = "vaadin:grid-v", title = "Backlog")
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
 @Log4j2
@@ -84,6 +84,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     public static final String                       CREATE_TASK_BUTTON_ID      = "create-task-button";
     public static final String                       EDIT_BUTTON_ID             = "edit-tasks-button";
     public static final String                       EXPAND_TOGGLE_BUTTON_ID    = "expand-toggle-button";
+    public static final String                       MENU_ITEM_ID               = "/backlog";
     public static final String                       ROUTE                      = "backlog";
     public static final String                       SAVE_BUTTON_ID             = "save-tasks-button";
     public static final String                       SEARCH_FIELD_ID            = "search-field";

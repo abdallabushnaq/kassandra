@@ -31,11 +31,14 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.SessionToolActivityContext;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -65,10 +68,23 @@ public class ChatAgentPanel extends VerticalLayout {
      * Route key of the page currently using this panel. Set by restoreOrStart().
      */
     private             String                                        currentRouteKey;
+    /**
+     * -- SETTER --
+     * Sets the current user for avatar and name display in messages.
+     * Call this from the parent view's afterNavigation.
+     */
+    @Setter
     private             User                                          currentUser;
+    private final       KassandraProperties                           kassandraProperties;
+    private final       LmStudioService                               lmStudioService;
     /**
      * Called on the UI thread after every successful AI reply — use to refresh the host view's grid.
+     * -- SETTER --
+     * Registers a callback that is invoked on the UI thread immediately after
+     * every AI reply is rendered. Use this to refresh the host view's data grid
+     * so changes made by the AI are reflected without a manual page reload.
      */
+    @Setter
     private             Runnable                                      onAiReply;
     private final       TextArea                                      queryInput;
     private final       Div                                           responseArea;
@@ -81,17 +97,43 @@ public class ChatAgentPanel extends VerticalLayout {
     private final       UserApi                                       userApi;
     /**
      * Current navigation context sentence prepended to every query so the AI knows which entities are selected.
+     * -- SETTER --
+     * Sets the navigation context sentence that is silently prepended to every user query
+     * so the AI always knows which entities are currently selected in the UI.
+     * Call this from the parent view's afterNavigation.
      */
+    @Setter
     private             String                                        viewContext       = null;
 
-    public ChatAgentPanel(AiAssistantService aiAssistantService, UserApi userApi) {
-        this(aiAssistantService, userApi, null);
+    /**
+     * Constructs a {@code ChatAgentPanel} without a session state (standalone use).
+     *
+     * @param aiAssistantService  the AI assistant service for streaming queries
+     * @param userApi             the user REST API for avatar/name lookup
+     * @param kassandraProperties application configuration (provides the MCP model name)
+     * @param lmStudioService     service used to ensure the required model is loaded before querying
+     */
+    public ChatAgentPanel(AiAssistantService aiAssistantService, UserApi userApi,
+                          KassandraProperties kassandraProperties, LmStudioService lmStudioService) {
+        this(aiAssistantService, userApi, null, kassandraProperties, lmStudioService);
     }
 
-    public ChatAgentPanel(AiAssistantService aiAssistantService, UserApi userApi, ChatPanelSessionState sessionState) {
-        this.aiAssistantService = aiAssistantService;
-        this.userApi            = userApi;
-        this.sessionState       = sessionState;
+    /**
+     * Constructs a {@code ChatAgentPanel} with an optional session state for conversation persistence.
+     *
+     * @param aiAssistantService  the AI assistant service for streaming queries
+     * @param userApi             the user REST API for avatar/name lookup
+     * @param sessionState        session-scoped bean that persists conversation history across reloads; may be null
+     * @param kassandraProperties application configuration (provides the MCP model name)
+     * @param lmStudioService     service used to ensure the required model is loaded before querying
+     */
+    public ChatAgentPanel(AiAssistantService aiAssistantService, UserApi userApi, ChatPanelSessionState sessionState,
+                          KassandraProperties kassandraProperties, LmStudioService lmStudioService) {
+        this.aiAssistantService  = aiAssistantService;
+        this.userApi             = userApi;
+        this.sessionState        = sessionState;
+        this.kassandraProperties = kassandraProperties;
+        this.lmStudioService     = lmStudioService;
         // sessionMessages and conversationId are set by restoreOrStart() on first afterNavigation call.
         // Start with null / a temporary UUID so the component is valid before restoreOrStart() fires.
         this.sessionMessages = null;
@@ -218,6 +260,10 @@ public class ChatAgentPanel extends VerticalLayout {
         }
     }
 
+    // -----------------------------------------------------------------------
+    // Private helpers
+    // -----------------------------------------------------------------------
+
     private void addErrorMessage(String message) {
         Div messageDiv = createMessageDiv(message, "error");
         conversationHistory.add(messageDiv);
@@ -231,10 +277,6 @@ public class ChatAgentPanel extends VerticalLayout {
         scrollToBottom();
         snapshotMessage("system", message);
     }
-
-    // -----------------------------------------------------------------------
-    // Private helpers
-    // -----------------------------------------------------------------------
 
     private void addToolMessage(String message) {
         Div messageDiv = createMessageDiv(message, "tool");
@@ -360,6 +402,12 @@ public class ChatAgentPanel extends VerticalLayout {
         final String    username                = SecurityUtils.getUserEmail();
 
         getUI().ifPresent(ui -> {
+            String mcpModel = kassandraProperties.getAi().getMcpModel();
+            if (mcpModel != null && !mcpModel.isBlank()) {
+                lmStudioService.ensureModelLoaded(mcpModel);
+            }
+
+
             // Set up tool activity streaming listener before subscribing
             SessionToolActivityContext activityContext = aiAssistantService.getActivityContext(conversationId);
             activityStreaming = true;
@@ -474,32 +522,6 @@ public class ChatAgentPanel extends VerticalLayout {
 
     private void scrollToBottom() {
         conversationHistory.getElement().executeJs("this.scrollTop = this.scrollHeight;");
-    }
-
-    /**
-     * Sets the current user for avatar and name display in messages.
-     * Call this from the parent view's afterNavigation.
-     */
-    public void setCurrentUser(User user) {
-        this.currentUser = user;
-    }
-
-    /**
-     * Registers a callback that is invoked on the UI thread immediately after
-     * every AI reply is rendered. Use this to refresh the host view's data grid
-     * so changes made by the AI are reflected without a manual page reload.
-     */
-    public void setOnAiReply(Runnable onAiReply) {
-        this.onAiReply = onAiReply;
-    }
-
-    /**
-     * Sets the navigation context sentence that is silently prepended to every user query
-     * so the AI always knows which entities are currently selected in the UI.
-     * Call this from the parent view's afterNavigation.
-     */
-    public void setViewContext(String context) {
-        this.viewContext = context;
     }
 
     /**

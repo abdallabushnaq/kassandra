@@ -35,10 +35,12 @@ import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
 import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
@@ -109,7 +111,9 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                           AvatarService avatarService,
                           StableDiffusionService stableDiffusionService,
                           AiAssistantService aiAssistantService,
-                          ChatPanelSessionState chatPanelSessionState) {
+                          ChatPanelSessionState chatPanelSessionState,
+                          KassandraProperties kassandraProperties,
+                          LmStudioService lmStudioService) {
         super(clock);
         this.sprintApi              = sprintApi;
         this.productApi             = productApi;
@@ -157,7 +161,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
 
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState);
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, kassandraProperties, lmStudioService);
         chatAgentPanel.setSizeFull();
 
         chatPane = new Div(chatAgentPanel);

@@ -57,6 +57,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     public static final String                      ID_SEARCH_FIELD           = "search-field";
     public static final String                      ID_SPRINT_SELECTOR        = "sprint-selector";
     public static final String                      ID_USER_SELECTOR          = "user-selector";
+    public static final String                      MENU_ITEM_ID              = "/active-sprints";
     //    public static final String                      ACTIVE_SPRINTS_PAGE_TITLE_ID = "active-sprints-title";
     public static final String                      ROUTE                     = "active-sprints";
     private             List<Sprint>                allSprints                = new ArrayList<>();
