@@ -24,5 +24,13 @@ import org.springframework.data.repository.ListCrudRepository;
  * Spring Data repository for {@link UserWorkWeekDAO}.
  */
 public interface UserWorkWeekRepository extends ListCrudRepository<UserWorkWeekDAO, Long> {
+
+    /**
+     * Returns the number of user work-week assignments that reference the given work week.
+     *
+     * @param workWeekId the ID of the work week
+     * @return assignment count
+     */
+    long countByWorkWeekId(Long workWeekId);
 }
 

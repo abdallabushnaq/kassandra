@@ -42,6 +42,12 @@ public class WorkWeek extends AbstractTimeAware implements Comparable<WorkWeek> 
     /** Primary key. */
     private Long            id;
 
+    /**
+     * Number of {@link UserWorkWeek} assignments that reference this work week.
+     * Populated by the server; zero when no users are assigned.
+     */
+    private int             userCount;
+
     /** Monday schedule. */
     private WorkDaySchedule monday    = new WorkDaySchedule();
 

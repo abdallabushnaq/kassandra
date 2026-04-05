@@ -41,6 +41,13 @@ public class WorkWeekDAO extends AbstractTimeAwareDAO {
     @Column(nullable = false, unique = true)
     private String name;
 
+    /**
+     * Transient field: the number of {@link UserWorkWeekDAO} entries that reference this work week.
+     * Not persisted; populated by the controller before serialisation.
+     */
+    @jakarta.persistence.Transient
+    private int userCount;
+
     /** Optional description of the work week. */
     @Column(length = 500)
     private String description;

@@ -18,9 +18,11 @@
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.dao.WorkWeekDAO;
+import de.bushnaq.abdalla.kassandra.repository.UserWorkWeekRepository;
 import de.bushnaq.abdalla.kassandra.repository.WorkWeekRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +41,9 @@ public class WorkWeekController {
     @Autowired
     private WorkWeekRepository workWeekRepository;
 
+    @Autowired
+    private UserWorkWeekRepository userWorkWeekRepository;
+
     /**
      * Create a new work week.
      *
@@ -55,9 +60,11 @@ public class WorkWeekController {
 
     /**
      * Delete a work week by ID.
+     * Deletion is refused with {@code 409 Conflict} when the work week is still referenced
+     * by one or more user work-week assignments.
      *
      * @param id the work week ID
-     * @return 200 OK or 404
+     * @return 200 OK, 404 when not found, or 409 when the work week is in use
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -65,24 +72,32 @@ public class WorkWeekController {
         if (!workWeekRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
+        long refs = userWorkWeekRepository.countByWorkWeekId(id);
+        if (refs > 0) {
+            log.warn("Cannot delete work week {}: referenced by {} user assignment(s)", id, refs);
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Cannot delete work week: it is still assigned to " + refs + " user(s)");
+        }
         log.info("Deleting work week: {}", id);
         workWeekRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
 
     /**
-     * Get all work weeks.
+     * Get all work weeks, each populated with a user-reference count.
      *
      * @return list of all work weeks
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public List<WorkWeekDAO> getAll() {
-        return workWeekRepository.findAll();
+        List<WorkWeekDAO> workWeeks = workWeekRepository.findAll();
+        workWeeks.forEach(ww -> ww.setUserCount((int) userWorkWeekRepository.countByWorkWeekId(ww.getId())));
+        return workWeeks;
     }
 
     /**
-     * Get a single work week by ID.
+     * Get a single work week by ID, populated with a user-reference count.
      *
      * @param id the work week ID
      * @return the work week, or 404
@@ -91,7 +106,10 @@ public class WorkWeekController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<WorkWeekDAO> getById(@PathVariable Long id) {
         return workWeekRepository.findById(id)
-                .map(ResponseEntity::ok)
+                .map(ww -> {
+                    ww.setUserCount((int) userWorkWeekRepository.countByWorkWeekId(ww.getId()));
+                    return ResponseEntity.ok(ww);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
