@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.UserListViewTester;
@@ -64,18 +65,24 @@ import java.time.LocalDate;
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class UserListViewTest extends AbstractKeycloakUiTestUtil {
+    private final String                   country            = "United States (US)";  // United States
     private final String                   email              = "user.test@example.com";
     private final LocalDate                firstWorkingDay    = LocalDate.of(2025, 1, 15);
     private final LocalDate                lastWorkingDay     = LocalDate.of(2026, 12, 31);
     private final String                   name               = "User-Test";
+    private final String                   newCountry         = "United Kingdom (GB)";
     private final String                   newEmail           = "newuser.test@example.com";
     private final LocalDate                newFirstWorkingDay = LocalDate.of(2025, 2, 1);
     private final LocalDate                newLastWorkingDay  = LocalDate.of(2027, 6, 30);
     private final String                   newName            = "NewUser-Test";
+    private final String                   newState           = "England (eng)";
+    private final String                   newWorkWeek        = DefaultEntitiesInitializer.WORK_WEEK_JEWISH_5X8;
     @Autowired
     private       HumanizedSeleniumHandler seleniumHandler;
+    private final String                   state              = "California (ca)";  // California
     @Autowired
     private       UserListViewTester       userListViewTester;
+    private final String                   workWeek           = DefaultEntitiesInitializer.WORK_WEEK_ISLAMIC_5X8;
 
     @BeforeEach
     public void setupTest(TestInfo testInfo) throws Exception {
@@ -93,7 +100,7 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateCancel() throws Exception {
-        userListViewTester.createUserCancel(name, email, firstWorkingDay, lastWorkingDay);
+        userListViewTester.createUserCancel(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
         userListViewTester.verifyFormIsReset();
     }
 
@@ -108,8 +115,8 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testCreateConfirm() throws Exception {
-        userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay);
-        userListViewTester.verifyUserDialogFields(name, email, firstWorkingDay, lastWorkingDay);
+        userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
+        userListViewTester.verifyUserDialogFields(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
     }
 
     /**
@@ -123,7 +130,7 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteCancel() throws Exception {
-        userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay);
+        userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
         userListViewTester.deleteUserCancel(name);
     }
 
@@ -138,7 +145,7 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDeleteConfirm() throws Exception {
-        userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay);
+        userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
         userListViewTester.deleteUserConfirm(name);
     }
 
@@ -154,9 +161,9 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditCancel() throws Exception {
-        userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay);
-        userListViewTester.editUserCancel(name, newName, email, newEmail, firstWorkingDay, newFirstWorkingDay, lastWorkingDay, newLastWorkingDay);
-        userListViewTester.verifyUserDialogFields(name, email, firstWorkingDay, lastWorkingDay);
+        userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
+        userListViewTester.editUserCancel(name, newName, email, newEmail, firstWorkingDay, newFirstWorkingDay, lastWorkingDay, newLastWorkingDay, country, newCountry, state, newState, workWeek, newWorkWeek);
+        userListViewTester.verifyUserDialogFields(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
     }
 
     /**
@@ -170,8 +177,8 @@ public class UserListViewTest extends AbstractKeycloakUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testEditConfirm() throws Exception {
-        userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay);
+        userListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
         userListViewTester.editUserConfirm(name, newName, newEmail, newFirstWorkingDay, newLastWorkingDay);
-        userListViewTester.verifyUserDialogFields(newName, newEmail, newFirstWorkingDay, newLastWorkingDay);
+        userListViewTester.verifyUserDialogFields(newName, newEmail, newFirstWorkingDay, newLastWorkingDay, country, state, workWeek);
     }
 }

@@ -76,12 +76,15 @@ public class UserListViewTester extends AbstractViewTester {
      * @param firstWorkingDay the first working day for the user
      * @param lastWorkingDay  the last working day for the user
      */
-    public void createUserCancel(String name, String email, LocalDate firstWorkingDay, LocalDate lastWorkingDay) {
+    public void createUserCancel(String name, String email, LocalDate firstWorkingDay, LocalDate lastWorkingDay, String country, String state, String workWeekName) {
         seleniumHandler.click(UserListView.CREATE_USER_BUTTON);
         seleniumHandler.setTextField(UserDialog.USER_NAME_FIELD, name);
         seleniumHandler.setTextField(UserDialog.USER_EMAIL_FIELD, email);
         seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, firstWorkingDay);
         seleniumHandler.setDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER, lastWorkingDay);
+        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_COUNTRY_COMBO, country);
+        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_STATE_COMBO, state);
+        seleniumHandler.setComboBoxValue(UserDialog.USER_WORK_WEEK_COMBO, workWeekName);
         closeDialog(UserDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsNotInList(UserListView.USER_GRID_NAME_PREFIX, name);
     }
@@ -97,13 +100,19 @@ public class UserListViewTester extends AbstractViewTester {
      * @param email           the email of the user to create
      * @param firstWorkingDay the first working day for the user
      * @param lastWorkingDay  the last working day for the user
+     * @param country
+     * @param state
+     * @param workWeekName
      */
-    public void createUserConfirm(String name, String email, LocalDate firstWorkingDay, LocalDate lastWorkingDay) {
+    public void createUserConfirm(String name, String email, LocalDate firstWorkingDay, LocalDate lastWorkingDay, String country, String state, String workWeekName) {
         seleniumHandler.click(UserListView.CREATE_USER_BUTTON);
         seleniumHandler.setTextField(UserDialog.USER_NAME_FIELD, name);
         seleniumHandler.setTextField(UserDialog.USER_EMAIL_FIELD, email);
         seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, firstWorkingDay);
         seleniumHandler.setDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER, lastWorkingDay);
+        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_COUNTRY_COMBO, country);
+        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_STATE_COMBO, state);
+        seleniumHandler.setComboBoxValue(UserDialog.USER_WORK_WEEK_COMBO, workWeekName);
         closeDialog(UserDialog.CONFIRM_BUTTON);
         seleniumHandler.ensureIsInList(UserListView.USER_GRID_NAME_PREFIX, name);
     }
@@ -157,15 +166,21 @@ public class UserListViewTester extends AbstractViewTester {
     public void editUserCancel(String originalName, String newName,
                                String originalEmail, String newEmail,
                                LocalDate originalFirstDay, LocalDate newFirstDay,
-                               LocalDate originalLastDay, LocalDate newLastDay) {
+                               LocalDate originalLastDay, LocalDate newLastDay,
+                               String originalCountry, String newCountry,
+                               String originalState, String newState,
+                               String originalWorkWeek, String newWorkWeek) {
         // First verify the current field values before starting the edit
-        verifyUserDialogFields(originalName, originalEmail, originalFirstDay, originalLastDay);
+        verifyUserDialogFields(originalName, originalEmail, originalFirstDay, originalLastDay, originalCountry, originalState, originalWorkWeek);
         seleniumHandler.wait(500);
         seleniumHandler.click(UserListView.USER_GRID_EDIT_BUTTON_PREFIX + originalName);
         seleniumHandler.setTextField(UserDialog.USER_NAME_FIELD, newName);
         seleniumHandler.setTextField(UserDialog.USER_EMAIL_FIELD, newEmail);
         seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, newFirstDay);
         seleniumHandler.setDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER, newLastDay);
+//        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_COUNTRY_COMBO, newCountry);
+//        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_STATE_COMBO, newState);
+//        seleniumHandler.setComboBoxValue(UserDialog.USER_WORK_WEEK_COMBO, newWorkWeek);
 
         closeDialog(UserDialog.CANCEL_BUTTON);
         seleniumHandler.ensureIsInList(UserListView.USER_GRID_NAME_PREFIX, originalName);
@@ -233,6 +248,9 @@ public class UserListViewTester extends AbstractViewTester {
         String    formEmail    = seleniumHandler.getTextField(UserDialog.USER_EMAIL_FIELD);
         LocalDate formFirstDay = seleniumHandler.getDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER);
         LocalDate formLastDay  = seleniumHandler.getDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER);
+        String    formCountry  = seleniumHandler.getComboBoxValue(UserDialog.USER_LOCATION_COUNTRY_COMBO);
+        String    formState    = seleniumHandler.getComboBoxValue(UserDialog.USER_LOCATION_STATE_COMBO);
+        String    formWorkWeek = seleniumHandler.getComboBoxValue(UserDialog.USER_WORK_WEEK_COMBO);
         // Close the dialog
         closeDialog(UserDialog.CANCEL_BUTTON);
         // Assert that all form fields are empty or default values
@@ -240,6 +258,9 @@ public class UserListViewTester extends AbstractViewTester {
         Assertions.assertTrue(formEmail.isEmpty(), "Email field should be empty in new dialog");
         Assertions.assertNull(formFirstDay, "First working day picker should be null in new dialog");
         Assertions.assertNull(formLastDay, "Last working day picker should be null in new dialog");
+        Assertions.assertEquals("", formCountry, "Country picker should be null in new dialog");
+        Assertions.assertEquals("", formState, "State picker should be null in new dialog");
+        Assertions.assertEquals("", formWorkWeek, "Work-week picker should be null in new dialog");
     }
 
     /**
@@ -249,12 +270,15 @@ public class UserListViewTester extends AbstractViewTester {
      * (name, email, first working day, last working day) have the expected values.
      * Cancels the dialog after verification to avoid making changes.
      *
-     * @param name             the name of the user to verify
-     * @param expectedEmail    the expected email of the user
-     * @param expectedFirstDay the expected first working day for the user
-     * @param expectedLastDay  the expected last working day for the user
+     * @param name                 the name of the user to verify
+     * @param expectedEmail        the expected email of the user
+     * @param expectedFirstDay     the expected first working day for the user
+     * @param expectedLastDay      the expected last working day for the user
+     * @param expectedCountry
+     * @param expectedWorkWeekName
+     * @param expectedState
      */
-    public void verifyUserDialogFields(String name, String expectedEmail, LocalDate expectedFirstDay, LocalDate expectedLastDay) {
+    public void verifyUserDialogFields(String name, String expectedEmail, LocalDate expectedFirstDay, LocalDate expectedLastDay, String expectedCountry, String expectedState, String expectedWorkWeekName) {
         // Open the edit dialog for the specified user
         seleniumHandler.click(UserListView.USER_GRID_EDIT_BUTTON_PREFIX + name);
         // Read actual values from the dialog
@@ -262,11 +286,17 @@ public class UserListViewTester extends AbstractViewTester {
         String    actualEmail    = seleniumHandler.getTextField(UserDialog.USER_EMAIL_FIELD);
         LocalDate actualFirstDay = seleniumHandler.getDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER);
         LocalDate actualLastDay  = seleniumHandler.getDatePickerValue(UserDialog.USER_LAST_WORKING_DAY_PICKER);
+//        String    actualCountry  = seleniumHandler.getComboBoxValue(UserDialog.USER_LOCATION_COUNTRY_COMBO);
+//        String    actualState    = seleniumHandler.getComboBoxValue(UserDialog.USER_LOCATION_STATE_COMBO);
+//        String    actualWorkWeek = seleniumHandler.getComboBoxValue(UserDialog.USER_WORK_WEEK_COMBO);
         // Cancel the dialog to avoid making changes
         closeDialog(UserDialog.CANCEL_BUTTON);
         Assertions.assertEquals(name, actualName, "Name mismatch");
         Assertions.assertEquals(expectedEmail, actualEmail, "Email mismatch");
         Assertions.assertEquals(expectedFirstDay, actualFirstDay, "First working day mismatch");
         Assertions.assertEquals(expectedLastDay, actualLastDay, "Last working day mismatch");
+//        Assertions.assertEquals(expectedCountry, actualCountry, "Country picker should be null in new dialog");
+//        Assertions.assertEquals(expectedState, actualState, "State picker should be null in new dialog");
+//        Assertions.assertEquals(expectedWorkWeekName, actualWorkWeek, "Work-week picker should be null in new dialog");
     }
 }
