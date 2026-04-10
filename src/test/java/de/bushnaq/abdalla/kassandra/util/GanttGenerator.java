@@ -138,7 +138,7 @@ public class GanttGenerator extends MPXJGenerator {
                 //iterate over all tasks
                 for (de.bushnaq.abdalla.kassandra.dto.Task task : sprint.getTasks()) {
                     if (task.isTask()) {
-                        Number availability = task.getAssignedUser().getAvailabilities().getLast().getAvailability();
+                        Number availability = task.getAvailability();
                         if (!day.isBefore(task.getStart().toLocalDate())) {
                             // Day is after task start
                             if (task.getEffectiveCalendar().isWorkingDate(day)) {

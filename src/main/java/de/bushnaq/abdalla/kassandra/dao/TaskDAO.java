@@ -46,7 +46,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TaskDAO {
     @Column(nullable = false)
-    private Boolean critical;
+    private boolean critical;
 
     @Column(nullable = true)
     @JsonSerialize(using = DurationSerializer.class)

@@ -38,15 +38,13 @@ import java.util.Set;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class GanttUtil {
-    private static final String DELIVERY_BUFFER          = "Delivery buffer (from critical path tasks)";
-    private static final String DELIVERY_BUFFER_LEGACY_1 = "delivery buffer";
-    private static final String DELIVERY_BUFFER_LEGACY_2 = "time contingency reserve";
+    public static final String DELIVERY_BUFFER = "Delivery buffer (from critical path tasks)";
 
     private static final String    ERROR_103_TASK_IS_MANUALLY_SCHEDULED_AND_CANNOT_FULLFILL_ITS_DEPENDENCY = "Error #103: Task [%d]'%s' is manually scheduled and cannot fullfill its dependency to task [%d]'%s'.";
     private static final String    ERROR_104_TASK_CANNOT_FULLFILL_ITS_DEPENDENCY                           = "Error #104: Task [%d]'%s' start %s cannot fullfill its dependency to task [%d]'%s' finish %s.";
     //    private final        Context   context;
     @Getter
-    private final        Task      deliveryBufferTask                                                      = null;
+    private              Task      deliveryBufferTask                                                      = null;
     private final        Set<Task> finishSet                                                               = new HashSet<>();
     //    private long count = 0;
     private final        DateUtil  localDateTimeUtil                                                       = new DateUtil();
@@ -61,64 +59,27 @@ public class GanttUtil {
 //        this.context = context;
     }
 
-//    private Duration calculateDeliveryBuffer(Sprint projectFile) throws ProjectsDashboardException {
-//        Duration deliveryBuffer = Duration.ZERO;
-//        int      i              = 0;
-//        for (Task task : projectFile.getTasks()) {
-//            for (ResourceAssignment resourceAssignment : task.getResourceAssignments()) {
+    private Duration calculateDeliveryBuffer(GanttErrorHandler eh, Sprint sprint) {
+        Duration deliveryBuffer = Duration.ZERO;
+        int      i              = 0;
+        for (Task task : sprint.getTasks()) {
+            Duration minWork = task.getMinEstimate();
+            if (minWork != null) {
+                if (task.isCritical()) {
+                    Duration maxWork  = task.getMaxEstimate();
+                    Duration duration = Duration.ofSeconds(maxWork.getSeconds() - minWork.getSeconds());
+                    if (duration.getSeconds() >= 6) {
+                        deliveryBuffer = Duration.ofSeconds(deliveryBuffer.getSeconds() + duration.getSeconds());
+                        logger.info(String.format("Delivery buffer #%d for task '%s' %s.", i++, task.getName(),
+                                DateUtil.createWorkDayDurationString(duration, false, true, false)));
+                    }
+                }
+            }
+            //            logger.info(String.format("Delivery buffer %.2f%s.", deliveryBuffer.getDuration(), deliveryBuffer.getUnits().getName()));
+        }
+        return deliveryBuffer;
+    }
 
-    /// /                Number   units = resourceAssignment.getUnits();
-//                Duration work = task.getWork();
-//                if (work != null) {
-//                    if (task.isCritical()) {
-//
-//                        MetaData md = TaskUtil.getTaskMetaData(task);
-//                        if (md != null) {
-//                            if (md.risk != null) {
-//                                Double risk         = md.risk;
-//                                double availability = 100 / units.doubleValue();
-//                                //            double a = Math.ceil(work.getDuration() * availability * 60 * 60) / (60 * 60);
-//                                //            double d = work.getDuration();
-//                                //            double a = availability * work.getDuration();
-//                                double a = work.getDuration() * availability;
-//                                //            double seconds = (Math.round(a * 60 * 10) * 6);
-//                                //                    a = (Math.round(a * 60 * 10) * 6) / (60 * 10 * 6.0);
-//                                Duration duration = Duration.getInstance(a * risk, work.getUnits());
-//                                //            duration = duration.convertUnits(TimeUnit.HOURS, projectProperties);
-//                                //            String ds = DateUtil.createDurationString(duration, true, true, true);
-//                                deliveryBuffer = Duration.add(deliveryBuffer, duration, projectProperties);
-//
-//                                //delivery buffer = (effort/availability)*risk
-//                                logger.info(String.format("Delivery buffer #%d for task '%s' %s%s.", i++, task.getName(), deliveryBuffer.getDuration(),
-//                                        deliveryBuffer.getUnits().getName()));
-//                            } else if (md.maxDuration != null) {
-//                                double maxDuration  = md.maxDuration * 7.5;
-//                                double availability = 100 / units.doubleValue();
-//                                //            double a = Math.ceil(work.getDuration() * availability * 60 * 60) / (60 * 60);
-//                                //            double d = work.getDuration();
-//                                //            double a = availability * work.getDuration();
-//                                double a = work.getDuration() * availability;
-//                                //            double seconds = (Math.round(a * 60 * 10) * 6);
-//                                //                    a = (Math.round(a * 60 * 10) * 6) / (60 * 10 * 6.0);
-//                                Duration duration = Duration.getInstance(maxDuration - a, work.getUnits());
-//                                if (duration.getDuration() > 1f / (60 * 10)) {
-//                                    //            duration = duration.convertUnits(TimeUnit.HOURS, projectProperties);
-//                                    //            String ds = DateUtil.createDurationString(duration, true, true, true);
-//                                    deliveryBuffer = Duration.add(deliveryBuffer, duration, projectProperties);
-//
-//                                    //delivery buffer = (effort/availability)*risk
-//                                    logger.info(String.format("Delivery buffer #%d for task '%s' %s.", i++, task.getName(),
-//                                            DateUtil.createWorkDayDurationString(MpxjUtil.toJavaDuration(duration), false, true, false)));
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            //            logger.info(String.format("Delivery buffer %.2f%s.", deliveryBuffer.getDuration(), deliveryBuffer.getUnits().getName()));
-//        }
-//        return deliveryBuffer;
-//    }
     public static int calculateNumberOfTasks(Sprint sprint) {
         int size = 0;
         for (Task task : sprint.getTasks()) {
@@ -201,6 +162,16 @@ public class GanttUtil {
         return DateUtil.createDurationString(duration, true, true, true).equals(DateUtil.createDurationString(duration2, true, true, true));
     }
 
+    private Task findDeliveryBuffertask(GanttErrorHandler eh, Sprint sprint) {
+        Task deliveryBufferTask = null;
+        for (Task task : sprint.getTasks()) {
+            if (isDeliveryBufferTask(task)) {
+                deliveryBufferTask = task;
+            }
+        }
+        return deliveryBufferTask;
+    }
+
 //    /**
 //     * equal timestamps even if there is a out of office duration in between
 //     *
@@ -238,27 +209,6 @@ public class GanttUtil {
 
     public static ProjectCalendar getCalendar(Task task) {
         return task.getEffectiveCalendar();
-    }
-
-
-    private Duration getDurationFromWork(GanttErrorHandler eh, Task task) {
-        float availability = 1;//tasks without resources have 100% availability
-        if (task.getAssignedUser() != null) {
-            User resourceAssignment = task.getAssignedUser();
-            availability = resourceAssignment.getAvailabilities().getLast().getAvailability();
-        }
-        Duration work = task.getMinEstimate();
-        if (work != null) {
-            {
-                double inverseAvailability = 1 / availability;
-                double durationUnits       = inverseAvailability * work.getSeconds();
-                durationUnits = Math.round(durationUnits / 6) * 6;
-
-                return Duration.of((long) durationUnits, SECONDS);
-            }
-        } else {
-            return Duration.ZERO;
-        }
     }
 
     public static LocalDateTime getEarliestStartDate(Sprint projectFile) {
@@ -336,6 +286,26 @@ public class GanttUtil {
         return finish;
     }
 
+    private Duration getMinDurationFromWork(GanttErrorHandler eh, Task task) {
+        float availability = 1;//tasks without resources have 100% availability
+        if (task.getAssignedUser() != null) {
+            User resourceAssignment = task.getAssignedUser();
+            availability = resourceAssignment.getAvailabilities().getLast().getAvailability();
+        }
+        Duration work = task.getMinEstimate();
+        if (work != null) {
+            {
+                double inverseAvailability = 1 / availability;
+                double durationUnits       = inverseAvailability * work.getSeconds();
+                durationUnits = Math.round(durationUnits / 6) * 6;
+
+                return Duration.of((long) durationUnits, SECONDS);
+            }
+        } else {
+            return Duration.ZERO;
+        }
+    }
+
     private LocalDateTime getStart(Task task) {
         if (task == null) {
             return null;
@@ -347,7 +317,7 @@ public class GanttUtil {
         return !task.getChildTasks().isEmpty();
     }
 
-    private boolean hasDependency(Task task1, Task task2) {
+    public static boolean hasDependency(Task task1, Task task2) {
 
         //is task2 one of task1's its predecessors?
         for (Relation r : task1.getPredecessors()) {
@@ -386,9 +356,33 @@ public class GanttUtil {
         return task != null && task.getStart() != null;
     }
 
+    private void injectDeliveryBuffer(GanttErrorHandler eh, Sprint sprint) {
+        logger.info("Calculate delivery buffer start");
+        Duration deliveryBuffer = calculateDeliveryBuffer(eh, sprint);
+        //add delivery buffer to the correct task
+        if (deliveryBuffer.getSeconds() > 6) {
+            //use 6 seconds accuracy
+            deliveryBufferTask = findDeliveryBuffertask(eh, sprint);
+            if (deliveryBufferTask != null) {
+                LocalDateTime latestFinishDate = sprint.getLatestFinishDate();
+                deliveryBufferTask.setMinEstimate(deliveryBuffer);
+                setStart(eh, deliveryBufferTask, latestFinishDate);
+                for (Task story : sprint.getTasks()) {
+                    if (story.isStory() && !Objects.equals(story.getId(), deliveryBufferTask.getId())) {
+                        //create hidden dependency to every story of this sprint, so that this buffer is the last task in the sprint
+                        if (!GanttUtil.hasDependency(deliveryBufferTask, story)) {
+                            deliveryBufferTask.addPredecessor(story, true);
+                        }
+                    }
+                }
+            }
+        }
+        logger.info("Calculate delivery buffer end");
+
+    }
+
     private boolean isDeliveryBufferTask(Task task) {
-        return task.getName().equalsIgnoreCase(DELIVERY_BUFFER) || task.getName().equalsIgnoreCase(DELIVERY_BUFFER_LEGACY_1)
-                || task.getName().equalsIgnoreCase(DELIVERY_BUFFER_LEGACY_2);
+        return task.getName().equalsIgnoreCase(DELIVERY_BUFFER);
     }
 
     private boolean isManual(Task task) {
@@ -432,7 +426,7 @@ public class GanttUtil {
                     for (Task task : sprint.getTasks()) {
                         checks++;
                         if (isManual(task) /*&& !task.isMilestone()*/ && (task.getDuration() == null || (task.getDuration().isZero() && !task.isMilestone())) && !hasChildTasks(task)) {
-                            Duration duration = getDurationFromWork(eh, task);
+                            Duration duration = getMinDurationFromWork(eh, task);
                             task.setDuration(duration);
                             if (task.getStart() != null && duration != null) {
                                 ProjectCalendar calendar = getCalendar(task);
@@ -604,6 +598,7 @@ public class GanttUtil {
         } catch (LevelingResourcesException e) {
             logger.error("Error leveling resources: " + e.getMessage());
         }
+        injectDeliveryBuffer(eh, sprint);
         sprint.setStart(sprint.getEarliestStartDate());
         logger.trace("Setting start date of sprint to earliest start date: {}", sprint.getStart());
         sprint.setEnd(sprint.getLatestFinishDate());
@@ -732,7 +727,7 @@ public class GanttUtil {
             Duration duration = Duration.ZERO;
             task.setDuration(duration);
         } else if (!hasChildTasks(task)) {//task
-            Duration duration = getDurationFromWork(eh, task);
+            Duration duration = getMinDurationFromWork(eh, task);
             task.setDuration(duration);
             LocalDateTime finish = calendar.getDate(start, MpxjUtil.toMpjxDuration(duration));
             task.setFinish(finish);

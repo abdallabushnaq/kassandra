@@ -140,7 +140,7 @@ public class KassandraIntroductionVideo extends AbstractIntroductionVideo {
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createVideo(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT + 150);
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
@@ -287,7 +287,7 @@ public class KassandraIntroductionVideo extends AbstractIntroductionVideo {
         paul.narrateAsync(NORMAL, "The Sprint Quality Board is where managers and product owners monitor the health of a sprint in real time.");
         seleniumHandler.click(SprintQualityBoard.MENU_ITEM_ID);
         seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
-        seleniumHandler.setComboBoxValue(SprintQualityBoard.SPRINT_SELECTOR_ID, sprintName);
+        seleniumHandler.setComboBoxValue(SprintQualityBoard.SPRINT_SELECTOR_ID, "Oslo");
 
         paul.narrate(NORMAL, "At the top, you see key sprint statistics — total effort, elapsed time, and completion percentage.").pause();
         paul.narrate(NORMAL, "The Gantt chart shows the planned schedule with current progress overlaid. You can see at a glance whether tasks are running on time or slipping.").pause();

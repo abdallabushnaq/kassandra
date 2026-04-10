@@ -4,6 +4,12 @@
 @import url('css/vaadin-grid.css');
 @import url('css/vaadin-tree-grid.css');
 /* Add your styles here for elements not in the shadow dom*/
+/*
+h3 {
+    color: #f24a84;
+    font-weight: bold;
+}
+*/
 
 [theme~="dark"] {
     --lumo-base-color: hsl(0, 0%, 20%);

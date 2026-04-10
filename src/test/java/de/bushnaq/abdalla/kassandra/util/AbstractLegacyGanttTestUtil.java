@@ -89,7 +89,7 @@ public class AbstractLegacyGanttTestUtil extends AbstractGanttTestUtil {
                 boolean c = mpxjTask.getCritical();
                 if (mpxjTask.getChildTasks().isEmpty()) {
                     //TODO fix discrepancy between mpxj and java
-                    assertEquals(mpxjTask.getCritical(), task.getCritical(), String.format("unexpected task: %s critical", task.getName()));
+                    assertEquals(mpxjTask.getCritical(), task.isCritical(), String.format("unexpected task: %s critical", task.getName()));
                 }
             }
         }

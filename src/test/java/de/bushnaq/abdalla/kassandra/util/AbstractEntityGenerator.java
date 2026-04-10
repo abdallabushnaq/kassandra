@@ -27,6 +27,7 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
+import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
@@ -104,8 +105,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     protected           UserWorkWeekApi        userWorkWeekApi;
     protected           VersionApi             versionApi;
     protected static    int                    versionIndex              = 0;
-    protected           WorklogApi             worklogApi;
     protected           WorkWeekApi            workWeekApi;
+    protected           WorklogApi             worklogApi;
 
     protected void addAvailability(User user, float availability, LocalDate start) {
         Availability a = new Availability(availability, start);
@@ -273,46 +274,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
     protected Task addParentTask(String name, Sprint sprint, Task parent, Task dependency) {
         return addTask(sprint, parent, name, null, Duration.ofDays(0), null, null, dependency);
-    }
-
-    /**
-     * Assigns a {@link WorkWeek} to a user starting on {@code start}.
-     * The saved assignment is added to {@code user.getUserWorkWeeks()} to keep the
-     * in-memory state in sync with the database.
-     *
-     * @param user     the owning user
-     * @param workWeek the work-week definition to assign
-     * @param start    the effective start date of the assignment
-     */
-    protected void addWorkWeek(User user, WorkWeek workWeek, LocalDate start) {
-        UserWorkWeek uww = new UserWorkWeek(workWeek, start);
-        uww.setUser(user);
-        uww.setCreated(user.getCreated());
-        uww.setUpdated(user.getUpdated());
-        UserWorkWeek saved = userWorkWeekApi.persist(uww, user.getId());
-        user.addUserWorkWeek(saved);
-    }
-
-    /**
-     * Removes a work-week assignment from a user.
-     * Both the REST endpoint and the in-memory list are updated.
-     *
-     * @param userWorkWeek the assignment to remove
-     * @param user         the owning user
-     */
-    protected void removeWorkWeek(UserWorkWeek userWorkWeek, User user) {
-        userWorkWeekApi.deleteById(user.getId(), userWorkWeek.getId());
-        user.removeUserWorkWeek(userWorkWeek);
-    }
-
-    /**
-     * Persists an updated work-week assignment via the REST API.
-     *
-     * @param userWorkWeek the assignment with updated fields (must have a non-null ID)
-     * @param user         the owning user
-     */
-    protected void updateWorkWeek(UserWorkWeek userWorkWeek, User user) {
-        userWorkWeekApi.update(userWorkWeek, user.getId());
     }
 
     protected Product addProduct(String name) {
@@ -644,6 +605,24 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         return saved;
     }
 
+    /**
+     * Assigns a {@link WorkWeek} to a user starting on {@code start}.
+     * The saved assignment is added to {@code user.getUserWorkWeeks()} to keep the
+     * in-memory state in sync with the database.
+     *
+     * @param user     the owning user
+     * @param workWeek the work-week definition to assign
+     * @param start    the effective start date of the assignment
+     */
+    protected void addWorkWeek(User user, WorkWeek workWeek, LocalDate start) {
+        UserWorkWeek uww = new UserWorkWeek(workWeek, start);
+        uww.setUser(user);
+        uww.setCreated(user.getCreated());
+        uww.setUpdated(user.getUpdated());
+        UserWorkWeek saved = userWorkWeekApi.persist(uww, user.getId());
+        user.addUserWorkWeek(saved);
+    }
+
     protected Worklog addWorklog(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
         Worklog worklog = new Worklog();
         worklog.setSprintId(task.getSprintId());
@@ -669,6 +648,26 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         nameGenerator.resetStoryPool(); // Reset story pool for each test
     }
 
+    public Task createDeliveryBufferTask(Sprint sprint, Duration minWork) {
+        //create the buffer task
+        Task task = new Task();
+        task.setName(GanttUtil.DELIVERY_BUFFER);
+        task.setImpactOnCost(false);//delivery buffer has no impact on cost
+        if (sprint != null) {
+            task.setSprint(sprint);
+            task.setSprintId(sprint.getId());
+        }
+        task.setMinEstimate(minWork);
+
+        Task saved = taskApi.persist(task);
+//        Task saved = task;
+        saved.setId(9999L);
+        if (sprint != null) {
+            saved.setSprint(sprint);
+            sprint.addTask(saved);
+        }
+        return task;
+    }
 
     protected void generateRandomOffDays(User saved, LocalDate employmentDate) {
         try (Profiler pc = new Profiler(SampleType.CPU)) {
@@ -701,7 +700,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             }
         }
     }
-
 
     protected Color generateUserColor(int userIndex) {
         int index = userIndex % LightTheme.KELLY_COLORS.length;
@@ -887,6 +885,18 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         }
     }
 
+    /**
+     * Removes a work-week assignment from a user.
+     * Both the REST endpoint and the in-memory list are updated.
+     *
+     * @param userWorkWeek the assignment to remove
+     * @param user         the owning user
+     */
+    protected void removeWorkWeek(UserWorkWeek userWorkWeek, User user) {
+        userWorkWeekApi.deleteById(user.getId(), userWorkWeek.getId());
+        user.removeUserWorkWeek(userWorkWeek);
+    }
+
     protected static void setUser(Authentication authentication) {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
@@ -1016,6 +1026,16 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         versionApi.update(version);
         expectedVersions.remove(version);
         expectedVersions.add(version);//replace old products with the updated one
+    }
+
+    /**
+     * Persists an updated work-week assignment via the REST API.
+     *
+     * @param userWorkWeek the assignment with updated fields (must have a non-null ID)
+     * @param user         the owning user
+     */
+    protected void updateWorkWeek(UserWorkWeek userWorkWeek, User user) {
+        userWorkWeekApi.update(userWorkWeek, user.getId());
     }
 
 }

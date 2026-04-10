@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.util;
 
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.gantt.ColorGenerator;
+import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.json.JsonMapper;
@@ -73,10 +74,6 @@ public class MPXJGenerator {
     public Task addParentTask(String name, Sprint sprint, Task parent, Task dependency) {
         return addTask(sprint, parent, name, null, Duration.ofDays(0), null, null, dependency);
     }
-
-//    protected Task addParentTask(String name, User user, Sprint sprint, Task parent, Task dependency) {
-//        return addTask(sprint, parent, name, null, Duration.ofDays(0), null, user, dependency);
-//    }
 
     protected Product addProduct(String name) {
         Product product = new Product();
@@ -200,6 +197,36 @@ public class MPXJGenerator {
 //        Worklog saved = worklogApi.persist(worklog);
         worklogs.add(worklog);
         return worklog;
+    }
+
+    //    protected Task addParentTask(String name, User user, Sprint sprint, Task parent, Task dependency) {
+//        return addTask(sprint, parent, name, null, Duration.ofDays(0), null, user, dependency);
+//    }
+    public Task createDeliveryBufferTask(Sprint sprint, Duration minWork) {
+        //create the buffer task
+        Task task = new Task();
+        task.setName(GanttUtil.DELIVERY_BUFFER);
+        task.setImpactOnCost(false);//delivery buffer has no impact on cost
+        if (sprint != null) {
+            task.setSprint(sprint);
+            task.setSprintId(sprint.getId());
+        }
+        task.setMinEstimate(minWork);
+
+        task.setId((long) tasks.size());
+        if (sprint != null) {
+            task.setSprint(sprint);
+            sprint.addTask(task);
+        }
+//        for (Task story : sprint.getTasks()) {
+//            if (story.isStory()) {
+//                //create hidden dependency to every story of this sprint, so that this buffer is the last task in the sprint
+//                if (!GanttUtil.hasDependency(task, story)) {
+//                    task.addPredecessor(story, true);
+//                }
+//            }
+//        }
+        return task;
     }
 
 

@@ -305,7 +305,10 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                         int userIndex = random.nextInt(numberOfUsers);
 //                    System.out.println("User index=" + userIndex);
                         User   user             = expectedUsers.stream().toList().get(userIndex);
-                        String duration         = String.format("%dh", (int) (random.nextFloat(randomCase.getMaxDurationDays() * 7.5f) + 1));
+                        float  minHours         = random.nextFloat(randomCase.getMaxDurationDays() * 7.5f) + 1;
+                        float  maxHours         = minHours + random.nextFloat() * minHours;
+                        String minWork          = String.format("%dh", (int) minHours);
+                        String maxWork          = String.format("%dh", (int) maxHours);
                         String workName         = NameGenerator.generateWorkName(storyName, t);
                         Task   depenedenycyTask = null;
                         if (random.nextFloat(1) > 0.5f) {
@@ -320,10 +323,11 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                             }
                             while (depenedenycyTask == null && tries > 0);
                         }
-                        addTask(workName, duration, null, user, sprint, story, depenedenycyTask);
+                        addTask(workName, minWork, maxWork, user, sprint, story, depenedenycyTask);
                     }
                 }
             }
+            createDeliveryBufferTask(sprint, Duration.ZERO);
             try (Profiler pc2 = new Profiler(SampleType.CPU)) {
                 sprint.initialize();
             }
@@ -381,7 +385,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                 //iterate over all tasks
                 for (Task task : sprint.getTasks()) {
                     if (task.isTask()) {
-                        Number availability = task.getAssignedUser().getAvailabilities().getLast().getAvailability();
+                        Number availability = task.getAvailability();
                         if (!day.isBefore(task.getStart().toLocalDate())) {
                             // Day is after task start
                             if (task.getEffectiveCalendar().isWorkingDate(day)) {
@@ -488,7 +492,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
 
     private void logTask(Task task, Task referenceTask, int maxNameLength) {
         String   buffer         = "";
-        String   criticalString = task.getCritical() ? "Y" : "N";
+        String   criticalString = task.isCritical() ? "Y" : "N";
         String   startString    = DateUtil.createDateString(task.getStart(), dtfymdhmss);
         String   finishString   = DateUtil.createDateString(task.getFinish(), dtfymdhmss);
         String   durationString = null;
@@ -511,7 +515,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         String          durationFlag = ANSI_GREEN;
         ProjectCalendar calendar     = GanttUtil.getCalendar(task);
         if (referenceTask != null) {
-            if (task.getChildTasks().isEmpty() && task.getCritical() != referenceTask.getCritical()) {
+            if (task.getChildTasks().isEmpty() && task.isCritical() != referenceTask.isCritical()) {
                 criticalFlag = ANSI_RED;
             }
             if (task.getStart() == null) {

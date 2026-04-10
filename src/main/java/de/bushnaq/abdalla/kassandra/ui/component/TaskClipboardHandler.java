@@ -60,7 +60,7 @@ public class TaskClipboardHandler {
      * @param task The task to clear data from
      */
     private void clearTaskFields(Task task) {
-        task.setCritical(null);
+//        task.setCritical(false);
         task.setDuration(null);
         task.setFinish(null);
         task.setId(null);

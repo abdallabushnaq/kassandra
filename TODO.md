@@ -26,6 +26,9 @@
 10. many places only reference lightAvatar, but not dark.
 11. about dialog causes exception at startup.
 12. editing a worklog messes up the remaining work.
+13. introduction video needs to ue another sprint than paris, as it si still not started.
+14. agent is very slow in introduction video.
+15. introduction video calendar does not show legend because of video size.
 
 # Failing Tests
 

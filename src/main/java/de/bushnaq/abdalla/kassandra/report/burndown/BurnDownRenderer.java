@@ -151,7 +151,7 @@ public class BurnDownRenderer extends AbstractRenderer {
     private void calculateWorkPerDay(Context context, Task task, BurnDownGuide guide) throws Exception {
         LocalDateTime start = task.getStart();
         LocalDateTime stop  = task.getFinish();
-        if (!task.isMilestone() && task.getResourceId() != null) {
+        if (!task.isMilestone()) {
             if (GanttUtil.isValidTask(task) && !task.isMilestone() && task.getChildTasks().isEmpty()) {
                 if (stop.isBefore(start) || stop.isEqual(start)) {
                     sprint.exceptions.add(new ErrorException(String.format("Task %s finish time has to be after start time. Ignoring task.", task.getName())));
@@ -162,7 +162,7 @@ public class BurnDownRenderer extends AbstractRenderer {
 //                        Resource resource =  assignment.getResource();
 
 //                        Number availability = assignment.getUnits();
-                        Number availability = task.getAssignedUser().getAvailabilities().getLast().getAvailability();
+                        Number availability = task.getAvailability();
                         if (/*resource != null &&*/ availability != null && context.debug.filterResource(task.getAssignedUser())) {
                             int  startDayIndex = calculateDayIndex(start);
                             int  stopDayIndex  = calculateDayIndex(stop);

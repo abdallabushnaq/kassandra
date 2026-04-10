@@ -68,7 +68,7 @@ public class Task implements Comparable<Task> {
     /**
      * Indicates whether this task is on the critical path of the project.
      */
-    private Boolean critical = false;
+    private boolean critical = false;
 
     /**
      * The total duration of the task. Depends on the min estimate and the availability of the assigned resource.
@@ -328,6 +328,13 @@ public class Task implements Comparable<Task> {
     @JsonIgnore
     public User getAssignedUser() {
         return sprint.getuser(resourceId);
+    }
+
+    @JsonIgnore
+    public float getAvailability() {
+        if (resourceId == null)
+            return 1.0f;
+        return getAssignedUser().getAvailabilities().getLast().getAvailability();
     }
 
     /**

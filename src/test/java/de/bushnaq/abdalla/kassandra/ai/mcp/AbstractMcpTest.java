@@ -18,12 +18,14 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp;
 
 import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import de.bushnaq.abdalla.profiler.TimeKeeping;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,11 @@ public class AbstractMcpTest extends AbstractUiTestUtil {
     private                KassandraProperties kassandraProperties;
     @Autowired
     protected              LmStudioService     lmStudioService;
+
+    @BeforeAll
+    static void beforeAll() {
+        StableDiffusionService.setEnabled(false);
+    }
 
     protected void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());

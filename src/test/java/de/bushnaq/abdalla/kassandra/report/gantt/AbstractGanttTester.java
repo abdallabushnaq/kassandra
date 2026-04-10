@@ -170,7 +170,7 @@ public class AbstractGanttTester extends DTOAsserts {
 
     private void logTask(Task task, Task referenceTask, int maxNameLength) {
         String   buffer         = "";
-        String   criticalString = task.getCritical() ? "Y" : "N";
+        String   criticalString = task.isCritical() ? "Y" : "N";
         String   startString    = DateUtil.createDateString(task.getStart(), dtfymdhmss);
         String   finishString   = DateUtil.createDateString(task.getFinish(), dtfymdhmss);
         String   durationString = null;
@@ -193,7 +193,7 @@ public class AbstractGanttTester extends DTOAsserts {
         String          durationFlag = ANSI_GREEN;
         ProjectCalendar calendar     = GanttUtil.getCalendar(task);
         if (referenceTask != null) {
-            if (task.getChildTasks().isEmpty() && task.getCritical() != referenceTask.getCritical()) {
+            if (task.getChildTasks().isEmpty() && task.isCritical() != referenceTask.isCritical()) {
                 criticalFlag = ANSI_RED;
             }
             if (task.getStart() == null) {
