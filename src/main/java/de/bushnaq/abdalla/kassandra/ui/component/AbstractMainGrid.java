@@ -25,17 +25,17 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Main;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
-import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
@@ -45,7 +45,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.util.ArrayList;
-import java.util.function.Function;
 
 @Getter
 public abstract class AbstractMainGrid<T> extends Main {
@@ -126,264 +125,264 @@ public abstract class AbstractMainGrid<T> extends Main {
         }
     }
 
-    /**
-     * Creates a standardized header layout with a title, icon, and create button.
-     * If a grid is provided, also includes a row counter showing filtered/total rows.
-     *
-     * @param title                    The title text to display
-     * @param titleId                  ID for the title component
-     * @param titleIcon                Icon to display next to the title
-     * @param createButtonId           ID for the create button
-     * @param createButtonClickHandler Click handler for the create button
-     * @param grid                     Optional grid to count rows from (can be null)
-     * @param rowCounterId             Optional ID for row counter (can be null if grid is null)
-     * @return A configured HorizontalLayout containing the header elements
-     */
-    private static <T> HorizontalLayout createHeader(
-            String title,
-            String titleId,
-            Icon titleIcon,
-            String createButtonId,
-            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
-            Grid<T> grid,
-            String rowCounterId) {
+//    /**
+//     * Creates a standardized header layout with a title, icon, and create button.
+//     * If a grid is provided, also includes a row counter showing filtered/total rows.
+//     *
+//     * @param title                    The title text to display
+//     * @param titleId                  ID for the title component
+//     * @param titleIcon                Icon to display next to the title
+//     * @param createButtonId           ID for the create button
+//     * @param createButtonClickHandler Click handler for the create button
+//     * @param grid                     Optional grid to count rows from (can be null)
+//     * @param rowCounterId             Optional ID for row counter (can be null if grid is null)
+//     * @return A configured HorizontalLayout containing the header elements
+//     */
+//    private static <T> HorizontalLayout createHeader(
+//            String title,
+//            String titleId,
+//            Icon titleIcon,
+//            String createButtonId,
+//            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
+//            Grid<T> grid,
+//            String rowCounterId) {
+//
+//        HorizontalLayout headerLayout = new HorizontalLayout();
+//        headerLayout.setWidthFull();
+//        headerLayout.setPadding(false);
+//        headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+//        headerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+//
+//        // Create page title with icon
+//        HorizontalLayout titleLayout = new HorizontalLayout();
+//        titleLayout.setSpacing(true);
+//        titleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+//
+//        H1 pageTitle = new H1(title);
+//        pageTitle.setId(titleId);
+//        pageTitle.addClassNames(
+//                LumoUtility.Margin.Top.MEDIUM,
+//                LumoUtility.Margin.Bottom.SMALL
+//        );
+//
+//        titleLayout.add(titleIcon, pageTitle);
+//
+//        // Right side with row counter (if grid provided) and create button
+//        HorizontalLayout rightLayout = new HorizontalLayout();
+//        rightLayout.setSpacing(true);
+//        rightLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+//
+//        // Add row counter if grid is provided
+//        if (grid != null && rowCounterId != null) {
+//            Span rowCounter = new Span();
+//            rowCounter.setId(rowCounterId);
+//            rowCounter.getStyle().set("margin-right", "var(--lumo-space-m)");
+//            rowCounter.getStyle().set("color", "var(--lumo-secondary-text-color)");
+//
+//            // Initial counter update
+//            updateRowCounter(grid, rowCounter);
+//
+//            DataProvider<T, ?> dataProvider = grid.getDataProvider();
+//
+//            // Register a ComponentEventListener for grid's data changes, will be triggered when filtering
+//            grid.getDataProvider().addDataProviderListener(event -> {
+//                updateRowCounter(grid, rowCounter);
+//            });
+//
+//            rightLayout.add(rowCounter);
+//        }
+//
+//        Button createButton = new Button("Create", new Icon(VaadinIcon.PLUS));
+//        createButton.setId(createButtonId);
+//        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+//        createButton.addClickListener(e -> createButtonClickHandler.onClick());
+//
+//        rightLayout.add(createButton);
+//        headerLayout.add(titleLayout, rightLayout);
+//        headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
+//        return headerLayout;
+//    }
 
-        HorizontalLayout headerLayout = new HorizontalLayout();
-        headerLayout.setWidthFull();
-        headerLayout.setPadding(false);
-        headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        headerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+//    /**
+//     * Convenience methods that use VaadinIcon instead of Icon
+//     */
+//    public static <T> HorizontalLayout createHeader(
+//            String title,
+//            String titleId,
+//            VaadinIcon titleIcon,
+//            String createButtonId,
+//            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
+//            Grid<T> grid,
+//            String rowCounterId) {
+//        return createHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId);
+//    }
 
-        // Create page title with icon
-        HorizontalLayout titleLayout = new HorizontalLayout();
-        titleLayout.setSpacing(true);
-        titleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+//    /**
+//     * Convenience methods that use VaadinIcon instead of Icon
+//     */
+//    public <T> HorizontalLayout createHeader(
+//            String title,
+//            String titleId,
+//            VaadinIcon titleIcon,
+//            String createButtonId,
+//            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
+//            String rowCounterId) {
+//        return createHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId);
+//    }
 
-        H2 pageTitle = new H2(title);
-        pageTitle.setId(titleId);
-        pageTitle.addClassNames(
-                LumoUtility.Margin.Top.MEDIUM,
-                LumoUtility.Margin.Bottom.SMALL
-        );
+//    /**
+//     * Convenience overload that uses VaadinIcon and doesn't require row counter
+//     */
+//    public static HorizontalLayout createHeader(
+//            String title,
+//            String titleId,
+//            VaadinIcon titleIcon,
+//            String createButtonId,
+//            VaadinUtil.CreateButtonClickHandler createButtonClickHandler) {
+//        return createHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, null, null);
+//    }
 
-        titleLayout.add(titleIcon, pageTitle);
+//    /**
+//     * Creates a standardized header layout with a title, icon, global filter, and create button.
+//     * If a grid is provided, also includes a row counter showing filtered/total rows.
+//     *
+//     * @param title                    The title text to display
+//     * @param titleId                  ID for the title component
+//     * @param titleIcon                Icon to display next to the title
+//     * @param createButtonId           ID for the create button
+//     * @param createButtonClickHandler Click handler for the create button
+//     * @param grid                     Optional grid to count rows from (can be null)
+//     * @param rowCounterId             Optional ID for row counter (can be null if grid is null)
+//     * @param globalFilterId           ID for the global filter field
+//     * @param globalFilterFunction     Function to apply global filtering to items
+//     * @return A configured HorizontalLayout containing the header elements
+//     */
+//    private static <T> HorizontalLayout createHeader(
+//            String title,
+//            String titleId,
+//            Icon titleIcon,
+//            String createButtonId,
+//            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
+//            Grid<T> grid,
+//            String rowCounterId,
+//            String globalFilterId,
+//            Function<T, String> globalFilterFunction) {
+//
+//        HorizontalLayout headerLayout = new HorizontalLayout();
+//        headerLayout.setWidthFull();
+//        headerLayout.setPadding(false);
+//        headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+//        headerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+//
+//        // Create page title with icon
+//        HorizontalLayout titleLayout = new HorizontalLayout();
+//        titleLayout.setSpacing(true);
+//        titleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+//
+//        H1 pageTitle = new H1(title);
+//        pageTitle.setId(titleId);
+//        pageTitle.addClassNames(
+//                LumoUtility.Margin.Top.MEDIUM,
+//                LumoUtility.Margin.Bottom.SMALL
+//        );
+//
+//        titleLayout.add(titleIcon, pageTitle);
+//
+//        // Right side with global filter, row counter (if grid provided) and create button
+//        HorizontalLayout rightLayout = new HorizontalLayout();
+//        rightLayout.setSpacing(true);
+//        rightLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+//
+//        // Add global filter if provided
+//        if (globalFilterId != null && globalFilterFunction != null && grid != null) {
+//            TextField globalFilter = new TextField();
+//            globalFilter.addThemeVariants(TextFieldVariant.LUMO_SMALL);
+//            globalFilter.setId(globalFilterId);
+//            globalFilter.setPlaceholder("Search...");
+//            globalFilter.setClearButtonVisible(true);
+//            globalFilter.setValueChangeMode(ValueChangeMode.EAGER);
+//            globalFilter.getStyle().set("margin-right", "var(--lumo-space-m)");
+//            globalFilter.setWidth("250px");
+//
+//            // Add global filter change listener
+//            globalFilter.addValueChangeListener(e -> {
+//                ListDataProvider<T> dataProvider = (ListDataProvider<T>) grid.getDataProvider();
+//                String              filterValue  = e.getValue().toLowerCase().trim();
+//
+//                if (filterValue.isEmpty()) {
+//                    dataProvider.clearFilters();
+//                } else {
+//                    dataProvider.setFilter(item -> {
+//                        String searchText = globalFilterFunction.apply(item);
+//                        return searchText != null && searchText.toLowerCase().contains(filterValue);
+//                    });
+//                }
+//            });
+//
+//            rightLayout.add(globalFilter);
+//        }
+//
+//        // Add row counter if grid is provided
+//        if (grid != null && rowCounterId != null) {
+//            Span rowCounter = new Span();
+//            rowCounter.setId(rowCounterId);
+//            rowCounter.getStyle().set("margin-right", "var(--lumo-space-m)");
+//            rowCounter.getStyle().set("color", "var(--lumo-secondary-text-color)");
+//
+//            // Initial counter update
+//            updateRowCounter(grid, rowCounter);
+//
+//            DataProvider<T, ?> dataProvider = grid.getDataProvider();
+//
+//            // Register a ComponentEventListener for grid's data changes, will be triggered when filtering
+//            grid.getDataProvider().addDataProviderListener(event -> {
+//                updateRowCounter(grid, rowCounter);
+//            });
+//
+//            rightLayout.add(rowCounter);
+//        }
+//
+//        Button createButton = new Button("Create", new Icon(VaadinIcon.PLUS));
+//        createButton.setId(createButtonId);
+//        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+//        createButton.addClickListener(e -> createButtonClickHandler.onClick());
+//
+//        rightLayout.add(createButton);
+//        headerLayout.add(titleLayout, rightLayout);
+//        headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
+//        return headerLayout;
+//    }
 
-        // Right side with row counter (if grid provided) and create button
-        HorizontalLayout rightLayout = new HorizontalLayout();
-        rightLayout.setSpacing(true);
-        rightLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+//    /**
+//     * Convenience methods that use VaadinIcon instead of Icon with global filter
+//     */
+//    public static <T> HorizontalLayout createHeader(
+//            String title,
+//            String titleId,
+//            VaadinIcon titleIcon,
+//            String createButtonId,
+//            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
+//            Grid<T> grid,
+//            String rowCounterId,
+//            String globalFilterId,
+//            Function<T, String> globalFilterFunction) {
+//        return createHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId, globalFilterId, globalFilterFunction);
+//    }
 
-        // Add row counter if grid is provided
-        if (grid != null && rowCounterId != null) {
-            Span rowCounter = new Span();
-            rowCounter.setId(rowCounterId);
-            rowCounter.getStyle().set("margin-right", "var(--lumo-space-m)");
-            rowCounter.getStyle().set("color", "var(--lumo-secondary-text-color)");
-
-            // Initial counter update
-            updateRowCounter(grid, rowCounter);
-
-            DataProvider<T, ?> dataProvider = grid.getDataProvider();
-
-            // Register a ComponentEventListener for grid's data changes, will be triggered when filtering
-            grid.getDataProvider().addDataProviderListener(event -> {
-                updateRowCounter(grid, rowCounter);
-            });
-
-            rightLayout.add(rowCounter);
-        }
-
-        Button createButton = new Button("Create", new Icon(VaadinIcon.PLUS));
-        createButton.setId(createButtonId);
-        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
-        createButton.addClickListener(e -> createButtonClickHandler.onClick());
-
-        rightLayout.add(createButton);
-        headerLayout.add(titleLayout, rightLayout);
-        headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
-        return headerLayout;
-    }
-
-    /**
-     * Convenience methods that use VaadinIcon instead of Icon
-     */
-    public static <T> HorizontalLayout createHeader(
-            String title,
-            String titleId,
-            VaadinIcon titleIcon,
-            String createButtonId,
-            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
-            Grid<T> grid,
-            String rowCounterId) {
-        return createHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId);
-    }
-
-    /**
-     * Convenience methods that use VaadinIcon instead of Icon
-     */
-    public <T> HorizontalLayout createHeader(
-            String title,
-            String titleId,
-            VaadinIcon titleIcon,
-            String createButtonId,
-            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
-            String rowCounterId) {
-        return createHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId);
-    }
-
-    /**
-     * Convenience overload that uses VaadinIcon and doesn't require row counter
-     */
-    public static HorizontalLayout createHeader(
-            String title,
-            String titleId,
-            VaadinIcon titleIcon,
-            String createButtonId,
-            VaadinUtil.CreateButtonClickHandler createButtonClickHandler) {
-        return createHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, null, null);
-    }
-
-    /**
-     * Creates a standardized header layout with a title, icon, global filter, and create button.
-     * If a grid is provided, also includes a row counter showing filtered/total rows.
-     *
-     * @param title                    The title text to display
-     * @param titleId                  ID for the title component
-     * @param titleIcon                Icon to display next to the title
-     * @param createButtonId           ID for the create button
-     * @param createButtonClickHandler Click handler for the create button
-     * @param grid                     Optional grid to count rows from (can be null)
-     * @param rowCounterId             Optional ID for row counter (can be null if grid is null)
-     * @param globalFilterId           ID for the global filter field
-     * @param globalFilterFunction     Function to apply global filtering to items
-     * @return A configured HorizontalLayout containing the header elements
-     */
-    private static <T> HorizontalLayout createHeader(
-            String title,
-            String titleId,
-            Icon titleIcon,
-            String createButtonId,
-            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
-            Grid<T> grid,
-            String rowCounterId,
-            String globalFilterId,
-            Function<T, String> globalFilterFunction) {
-
-        HorizontalLayout headerLayout = new HorizontalLayout();
-        headerLayout.setWidthFull();
-        headerLayout.setPadding(false);
-        headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        headerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-
-        // Create page title with icon
-        HorizontalLayout titleLayout = new HorizontalLayout();
-        titleLayout.setSpacing(true);
-        titleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        H2 pageTitle = new H2(title);
-        pageTitle.setId(titleId);
-        pageTitle.addClassNames(
-                LumoUtility.Margin.Top.MEDIUM,
-                LumoUtility.Margin.Bottom.SMALL
-        );
-
-        titleLayout.add(titleIcon, pageTitle);
-
-        // Right side with global filter, row counter (if grid provided) and create button
-        HorizontalLayout rightLayout = new HorizontalLayout();
-        rightLayout.setSpacing(true);
-        rightLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        // Add global filter if provided
-        if (globalFilterId != null && globalFilterFunction != null && grid != null) {
-            TextField globalFilter = new TextField();
-            globalFilter.addThemeVariants(TextFieldVariant.LUMO_SMALL);
-            globalFilter.setId(globalFilterId);
-            globalFilter.setPlaceholder("Search...");
-            globalFilter.setClearButtonVisible(true);
-            globalFilter.setValueChangeMode(ValueChangeMode.EAGER);
-            globalFilter.getStyle().set("margin-right", "var(--lumo-space-m)");
-            globalFilter.setWidth("250px");
-
-            // Add global filter change listener
-            globalFilter.addValueChangeListener(e -> {
-                ListDataProvider<T> dataProvider = (ListDataProvider<T>) grid.getDataProvider();
-                String              filterValue  = e.getValue().toLowerCase().trim();
-
-                if (filterValue.isEmpty()) {
-                    dataProvider.clearFilters();
-                } else {
-                    dataProvider.setFilter(item -> {
-                        String searchText = globalFilterFunction.apply(item);
-                        return searchText != null && searchText.toLowerCase().contains(filterValue);
-                    });
-                }
-            });
-
-            rightLayout.add(globalFilter);
-        }
-
-        // Add row counter if grid is provided
-        if (grid != null && rowCounterId != null) {
-            Span rowCounter = new Span();
-            rowCounter.setId(rowCounterId);
-            rowCounter.getStyle().set("margin-right", "var(--lumo-space-m)");
-            rowCounter.getStyle().set("color", "var(--lumo-secondary-text-color)");
-
-            // Initial counter update
-            updateRowCounter(grid, rowCounter);
-
-            DataProvider<T, ?> dataProvider = grid.getDataProvider();
-
-            // Register a ComponentEventListener for grid's data changes, will be triggered when filtering
-            grid.getDataProvider().addDataProviderListener(event -> {
-                updateRowCounter(grid, rowCounter);
-            });
-
-            rightLayout.add(rowCounter);
-        }
-
-        Button createButton = new Button("Create", new Icon(VaadinIcon.PLUS));
-        createButton.setId(createButtonId);
-        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
-        createButton.addClickListener(e -> createButtonClickHandler.onClick());
-
-        rightLayout.add(createButton);
-        headerLayout.add(titleLayout, rightLayout);
-        headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
-        return headerLayout;
-    }
-
-    /**
-     * Convenience methods that use VaadinIcon instead of Icon with global filter
-     */
-    public static <T> HorizontalLayout createHeader(
-            String title,
-            String titleId,
-            VaadinIcon titleIcon,
-            String createButtonId,
-            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
-            Grid<T> grid,
-            String rowCounterId,
-            String globalFilterId,
-            Function<T, String> globalFilterFunction) {
-        return createHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId, globalFilterId, globalFilterFunction);
-    }
-
-    /**
-     * Convenience methods that use VaadinIcon instead of Icon with global filter (instance method)
-     */
-    public HorizontalLayout createHeader(
-            String title,
-            String titleId,
-            VaadinIcon titleIcon,
-            String createButtonId,
-            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
-            String rowCounterId,
-            String globalFilterId,
-            Function<T, String> globalFilterFunction) {
-        return createHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId, globalFilterId, globalFilterFunction);
-    }
+//    /**
+//     * Convenience methods that use VaadinIcon instead of Icon with global filter (instance method)
+//     */
+//    public HorizontalLayout createHeader(
+//            String title,
+//            String titleId,
+//            VaadinIcon titleIcon,
+//            String createButtonId,
+//            VaadinUtil.CreateButtonClickHandler createButtonClickHandler,
+//            String rowCounterId,
+//            String globalFilterId,
+//            Function<T, String> globalFilterFunction) {
+//        return createHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId, globalFilterId, globalFilterFunction);
+//    }
 
     /**
      * Creates a standardized header layout with a title, icon, smart global filter, and create button.
@@ -428,12 +427,13 @@ public abstract class AbstractMainGrid<T> extends Main {
         titleLayout.setSpacing(false);
         titleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        H3 pageTitle = new H3(title);
+        H2 pageTitle = new H2(title);
         pageTitle.setId(titleId);
         pageTitle.addClassNames(LumoUtility.Margin.NONE);
-
-        titleLayout.add(titleIcon, pageTitle);
-
+        if (titleIcon != null)
+            titleLayout.add(titleIcon, pageTitle);
+        else
+            titleLayout.add(pageTitle);
         // Right side with smart global filter, row counter (if grid provided) and create button
         HorizontalLayout rightLayout = new HorizontalLayout();
         rightLayout.setSpacing(false);
