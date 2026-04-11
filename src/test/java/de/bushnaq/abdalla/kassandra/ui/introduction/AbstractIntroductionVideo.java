@@ -191,4 +191,14 @@ public abstract class AbstractIntroductionVideo extends AbstractKeycloakUiTestUt
         seleniumHandler.waitForElementToBeInteractable(ImagePromptDialog.ID_GENERATE_BUTTON);
         seleniumHandler.popWaitDuration();
     }
+
+    /**
+     * Waits up to 120 seconds for the dark-avatar generation to finish, indicated by the dark
+     * update button ({@link ImagePromptDialog#ID_DARK_UPDATE_BUTTON}) becoming interactable again.
+     */
+    protected void waitForDarkStableDiffusion() {
+        seleniumHandler.pushWaitDuration(Duration.ofSeconds(120));
+        seleniumHandler.waitForElementToBeInteractable(ImagePromptDialog.ID_DARK_UPDATE_BUTTON);
+        seleniumHandler.popWaitDuration();
+    }
 }

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -132,79 +132,121 @@ public class Test_04_UserProfileIntroductionVideo extends AbstractIntroductionVi
         seleniumHandler.wait(1000);
 
         //---------------------------------------------------------------------------------------
-        // Explain Image Dialog
+        // Explain Image Dialog - Light and Dark Side by Side
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "This opens the AI Image Generation Dialog. Here I can describe the avatar I want, generate it, upload an existing image, or download the result.");
+        paul.narrate(NORMAL, "This opens the AI Image Generation Dialog. It shows two side-by-side previews: a light avatar on the left for the regular theme, and a dark avatar on the right for the dark theme. Both are generated automatically from your prompt.");
 
         //---------------------------------------------------------------------------------------
-        // Enter Prompt
+        // Enter Light Prompt
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.highlight(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD);
         paul.narrate(NORMAL, "Let me enter a description for my avatar. I'll describe a professional portrait in a minimalist style.");
-        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Professional avatar portrait of Christopher Wilson, software developer, minimalist flat design, simple background, icon style, blue tones");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Professional avatar portrait of Christopher Wilson, software developer, simple white background");
         seleniumHandler.wait(500);
 
         //---------------------------------------------------------------------------------------
-        // Generate Image
+        // Explain Negative Prompt
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_NEGATIVE_PROMPT_FIELD);
+        paul.narrate(NORMAL, "Below the main prompt is the negative prompt. Here you list things you want the AI to avoid — such as blurry backgrounds, extra limbs, or text. You can leave it empty most of the time.");
+
+        //---------------------------------------------------------------------------------------
+        // Explain Dark Prompt
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_DARK_PROMPT_FIELD);
+        paul.narrate(NORMAL, "Lets add a dark avatar prompt.");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_DARK_PROMPT_FIELD, "Professional avatar portrait of Christopher Wilson, software developer, simple dark background");
+
+        //---------------------------------------------------------------------------------------
+        // Explain Dark Negative Prompt
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_DARK_NEGATIVE_PROMPT_FIELD);
+        paul.narrate(NORMAL, "There is also a separate negative prompt for the dark avatar, so you can independently fine-tune what the dark variant should avoid.");
+
+        //---------------------------------------------------------------------------------------
+        // Generate Image (light + dark)
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.highlight(ImagePromptDialog.ID_GENERATE_BUTTON);
-        paul.narrateAsync(NORMAL, "Now I'll click the Generate button to create the avatar using AI. This will take a few moments.");
+        paul.narrateAsync(NORMAL, "Now I'll click Generate. Kassandra will produce both the light and dark avatars one after the other.");
         seleniumHandler.click(ImagePromptDialog.ID_GENERATE_BUTTON);
 
-        // Wait for generation to complete (showing progress)
+        // Wait for light generation to complete
         waitForStableDiffusion();
+        paul.narrate(NORMAL, "The light avatar is ready. The dark avatar is now being generated automatically in the background.");
 
-        paul.narrate(NORMAL, "Great! The AI has generated an avatar based on my description. I can see the preview here in the dialog.");
+        // Wait for dark generation to complete
+        waitForDarkStableDiffusion();
+        paul.narrate(NORMAL, "Both avatars are now ready. Notice how the dark variant uses the same style but with a darker background, making it look great in dark mode.");
 
         //---------------------------------------------------------------------------------------
-        // Demonstrate Update Button
+        // Demonstrate Light Update Button
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.highlight(ImagePromptDialog.ID_UPDATE_BUTTON);
-        paul.narrate(NORMAL, "If I want to refine the image, I can use the Update button. This uses the current image as a starting point and applies my prompt to modify it. Let me adjust my description slightly.");
-        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Professional avatar portrait of Christopher Wilson, software developer, minimalist flat design, simple background, icon style, green tones");
+        paul.narrate(NORMAL, "If I want to refine the light avatar, I can update the prompt and click the refresh button on the light panel. This uses the current image as a starting point and applies the new prompt to modify it.");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Professional avatar portrait of Christopher Wilson wearing glasses, software developer, simple white background");
         seleniumHandler.wait(500);
 
-        paul.narrateAsync(NORMAL, "I'll click Update to refine the avatar with green tones instead.");
+        paul.narrateAsync(NORMAL, "I'll click the light update button to refine it with green tones.");
         seleniumHandler.click(ImagePromptDialog.ID_UPDATE_BUTTON);
         waitForStableDiffusion();
+        paul.narrate(NORMAL, "The light avatar has been updated. Now let me keep the dark variant in sync by updating its prompt as well.");
 
-        paul.narrate(NORMAL, "Perfect! The avatar has been updated with the new color scheme while maintaining the overall style.");
+        //---------------------------------------------------------------------------------------
+        // Demonstrate Dark Prompt Update and Dark Update Button
+        //---------------------------------------------------------------------------------------
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_DARK_PROMPT_FIELD);
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_DARK_PROMPT_FIELD, "Professional avatar portrait of Christopher Wilson wearing glasses, software developer, simple dark background");
+        seleniumHandler.wait(500);
+
+        seleniumHandler.highlight(ImagePromptDialog.ID_DARK_UPDATE_BUTTON);
+        paul.narrateAsync(NORMAL, "Now I'll click the dark update button to regenerate just the dark variant independently.");
+        seleniumHandler.click(ImagePromptDialog.ID_DARK_UPDATE_BUTTON);
+        waitForDarkStableDiffusion();
+        paul.narrate(NORMAL, "The dark avatar uses a dark background while the light avatar uses a bright one — consistent and theme-aware.");
 
         //---------------------------------------------------------------------------------------
         // Demonstrate Upload Button
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.highlight(ImagePromptDialog.ID_UPLOAD_BUTTON);
-        paul.narrate(NORMAL, "You can also upload an existing image using this upload area. The system automatically resizes it to the correct dimensions. Just drag and drop a PNG file here, or click to browse.");
+        paul.narrate(NORMAL, "You can also upload an existing PNG image using this upload area. The system automatically resizes it to the correct dimensions.");
 
         //---------------------------------------------------------------------------------------
         // Demonstrate Download Button
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.highlight(ImagePromptDialog.ID_DOWNLOAD_BUTTON);
-        paul.narrate(NORMAL, "If you want to save the generated image for use elsewhere, click the download button to save it as a PNG file to your computer.");
+        paul.narrate(NORMAL, "And you can download the generated image to save it locally for use elsewhere.");
 
         //---------------------------------------------------------------------------------------
         // Create another Image
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "I am still not happy with my image. Lets generate something different.");
-        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "portrait of a friendly robot character, cartoon style, simple background");
+        paul.narrate(NORMAL, "I am still not happy with my image. Let me try a completely different style.");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "portrait of a friendly robot character, simple white background");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_DARK_PROMPT_FIELD, "portrait of a friendly robot character, simple dark background");
         seleniumHandler.wait(500);
 
-        paul.narrateAsync(NORMAL, "Lets see what we get this time.");
+        paul.narrateAsync(NORMAL, "Let's see what we get this time with a robot character.");
         seleniumHandler.click(ImagePromptDialog.ID_GENERATE_BUTTON);
         waitForStableDiffusion();
+        paul.narrate(NORMAL, "The light robot avatar is ready. Waiting for the dark variant.");
+        waitForDarkStableDiffusion();
 
         //---------------------------------------------------------------------------------------
         // Accept Image
         //---------------------------------------------------------------------------------------
+
         seleniumHandler.highlight(ImagePromptDialog.ID_ACCEPT_BUTTON);
-        paul.narrateAsync(NORMAL, "I'm happy with this avatar, so I'll click Accept to use it for my profile.");
+        paul.narrateAsync(NORMAL, "I'm happy with both avatars this time! I'll click Accept to save them to my profile.");
         seleniumHandler.click(ImagePromptDialog.ID_ACCEPT_BUTTON);
         seleniumHandler.wait(1000);
 
@@ -241,7 +283,7 @@ public class Test_04_UserProfileIntroductionVideo extends AbstractIntroductionVi
         // Closing
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "That's all there is to managing your profile and creating custom avatars in Kassandra. You can generate AI-powered avatars, upload your own images, or update existing ones. Keep your profile up to date so your team members can easily identify you. Thanks for watching!");
+        paul.narrate(NORMAL, "That's all there is to managing your profile and creating custom avatars in Kassandra. You can generate AI-powered avatars for both the light and dark themes, fine-tune them with negative prompts, update each variant independently, or upload your own images. Keep your profile up to date so your team members can easily identify you. Thanks for watching!");
 
         seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);

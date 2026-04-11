@@ -18,8 +18,11 @@
 package de.bushnaq.abdalla.kassandra.ui;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -45,6 +48,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
+import de.bushnaq.abdalla.kassandra.ui.component.UserProfileChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
 import jakarta.annotation.security.PermitAll;
 import lombok.Getter;
@@ -54,6 +58,8 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 
 import java.util.HashMap;
 import java.util.Map;
+
+import com.vaadin.flow.shared.Registration;
 
 import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 
@@ -88,6 +94,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final       ThemeSessionState                    themeSessionState;
     private final       UserApi                              userApi;
     private             com.vaadin.flow.component.html.Image userAvatarImage;
+    private             Registration                         userProfileChangedRegistration;
 
     MainLayout(UserApi userApi, ThemeSessionState themeSessionState) {
         this.userApi           = userApi;
@@ -116,6 +123,26 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         // Remove these lines that are causing the overflow
         this.getStyle().set("padding-left", "var(--lumo-space-xs)");
         this.getStyle().set("padding-right", "var(--lumo-space-xs)");
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        userProfileChangedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), UserProfileChangedEvent.class,
+                e -> {
+                    boolean isDark = attachEvent.getUI().getElement().getThemeList().contains(Lumo.DARK);
+                    updateUserAvatarBasedOnTheme(isDark);
+                });
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (userProfileChangedRegistration != null) {
+            userProfileChangedRegistration.remove();
+            userProfileChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
     }
 
     @Override
