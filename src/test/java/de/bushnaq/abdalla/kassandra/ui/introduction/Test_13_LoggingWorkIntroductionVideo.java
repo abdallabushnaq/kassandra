@@ -21,7 +21,9 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.ui.component.TaskCard;
 import de.bushnaq.abdalla.kassandra.ui.dialog.WorklogDialog;
+import de.bushnaq.abdalla.kassandra.ui.dialog.TaskDialog;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -395,6 +397,50 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
 
             grace.narrate(NORMAL, "Perfect! The task is now in the done lane, showing it's complete. The story remains in the in-progress lane because we still have other tasks in progress.");
             grace.pause(3000);
+        }
+
+        //---------------------------------------------------------------------------------------
+        // Task Dialog: Viewing and Editing Worklogs
+        //---------------------------------------------------------------------------------------
+        {
+            grace.narrate(NORMAL, "But what if I need to edit a worklog or even delete it? Great question! Worklogs can be accessed in the Task Dialog, which you open by clicking on the task title.");
+            grace.pause(2000);
+
+            grace.narrate(NORMAL, "Let me click on the API documentation task title. That is the task where we logged two separate worklogs, so it is a perfect example.");
+            grace.pause(2000);
+
+            String task12TitleId = TaskCard.TASK_CARD_TITLE_ID_PREFIX + task12.getId();
+            seleniumHandler.highlight(task12TitleId);
+            seleniumHandler.click(task12TitleId);
+            grace.pauseIfDisabled(500);
+
+            seleniumHandler.waitForElementToBeClickable(TaskDialog.CANCEL_BUTTON);
+            grace.pause(2000);
+
+            grace.narrate(NORMAL, "This is the Task Dialog. It brings everything about the task together in one place. Let me walk you through it.");
+            grace.pause(2000);
+
+            grace.narrate(NORMAL, "At the top is the read-only summary section. It shows Time Spent, Remaining Estimate, and Progress — all automatically calculated from the logged worklogs. You cannot edit these directly; they reflect the true state of the task.");
+            grace.pause(3500);
+
+            grace.narrate(NORMAL, "Below the summary is the Edit Task section. Here you can rename the task, add or update notes, and adjust the minimum and maximum estimates. When you are happy with your changes, click Save Task to persist them.");
+            grace.pause(3500);
+
+            grace.narrate(NORMAL, "And at the bottom is the Work Logs section. You can see both entries we logged for this task: the first hour and the second hour with the adjusted remaining time. Each row shows the date, time spent, the comment, and the author.");
+            grace.pause(4000);
+
+            grace.narrate(NORMAL, "The pencil icon on the right opens the worklog entry in the Worklog Dialog so you can correct the time or the comment. The red trash icon lets you delete the entry entirely. Only the author of a worklog — or an administrator — can edit or delete it.");
+            grace.pause(4000);
+
+            grace.narrate(NORMAL, "You can also log fresh work directly from here by clicking the Log Work button next to the Work Logs heading, without having to go back to the board.");
+            grace.pause(3000);
+
+            grace.narrate(NORMAL, "Let me close this dialog and return to the board.");
+            grace.pause(1000);
+
+            activeSprintsTester.closeDialog(TaskDialog.CANCEL_BUTTON);
+            grace.pauseIfDisabled(500);
+            grace.pause(1500);
         }
 
         //---------------------------------------------------------------------------------------
