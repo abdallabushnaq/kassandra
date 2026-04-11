@@ -283,9 +283,9 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     public int getNextOrderId() {
         return getTasks().isEmpty() ? 0 :
                 getTasks().stream()
-                        .mapToInt(Task::getOrderId)
-                        .max()
-                        .orElse(-1) + 1;
+                .mapToInt(Task::getOrderId)
+                .max()
+                .orElse(-1) + 1;
     }
 
     public Task getTaskById(Long predecessorId) {
@@ -304,6 +304,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     public void initTaskMap(List<Task> tasks, List<Worklog> worklogs) {
         this.worklogs = worklogs;
         taskMap.clear();
+        worklogRemaining.clear();
         for (Task task : tasks) {
             taskMap.put(task.getId(), task);
         }

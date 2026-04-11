@@ -96,15 +96,20 @@ public class DynamicGanttTest extends AbstractGanttTester {
         Task startMilestone = g.addTask(sprint, null, "Start", LocalDateTime.parse("2025-05-05T08:00:00"), null, Duration.ZERO, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         task1.getPredecessors().add(new Relation(startMilestone.getId(), true));
 
+        g.createDeliveryBufferTask(sprint, Duration.ZERO);
         g.initializeSprint(sprint);
-//        g.levelResources(testInfo, sprint, null);
         g.testTheme = testTheme;
 
-        g.createDeliveryBufferTask(sprint, Duration.ZERO);
-
         g.levelResources(testInfo, sprint, null);
-//        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
         g.generateWorklogs(sprint.getId(), ParameterOptions.getLocalNow());
+        for (Task task : sprint.getTasks()) {
+            Duration work = Duration.ZERO;
+            for (Worklog worklog : task.getWorklogs()) {
+                work = work.plus(worklog.getTimeSpent());
+            }
+            log.info("Task {} {} has worklogs with total duration {}", task.getName(), task.getMinEstimate(), work);
+        }
+
         g.generateGanttChart(testInfo, sprint.getId(), testFolder);
         g.generateBurndownChart(testInfo, sprint.getId(), testFolder);
 
