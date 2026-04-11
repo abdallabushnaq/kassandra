@@ -62,7 +62,7 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 //@Transactional
-public class ManagingUsersIntroductionVideo extends AbstractIntroductionVideo {
+public class Test_02_ManagingUsersIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute        INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
@@ -79,7 +79,6 @@ public class ManagingUsersIntroductionVideo extends AbstractIntroductionVideo {
         video.setTitle("02 Managing Users in Kassandra");
         video.setDescription("Today we're going to learn about User Management in Kassandra. As an administrator, the Users page is where you add team members to the system so they can access Kassandra and be assigned to projects.");
     }
-
 
     @ParameterizedTest
     @MethodSource("listRandomCases")

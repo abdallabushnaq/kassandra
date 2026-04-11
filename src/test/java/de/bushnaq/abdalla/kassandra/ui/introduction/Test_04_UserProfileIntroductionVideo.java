@@ -62,7 +62,7 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 //@Transactional
-public class UserProfileIntroductionVideo extends AbstractIntroductionVideo {
+public class Test_04_UserProfileIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute        NORMAL = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
     private             ProductListViewTester    productListViewTester;

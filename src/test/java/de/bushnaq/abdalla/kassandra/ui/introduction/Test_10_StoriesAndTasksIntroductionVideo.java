@@ -65,7 +65,7 @@ import java.util.List;
 )
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
-public class StoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo {
+public class Test_10_StoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute          EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final String                     NEW_MILESTONE = "New Milestone-";
     public static final String                     NEW_STORY     = "New Story-";

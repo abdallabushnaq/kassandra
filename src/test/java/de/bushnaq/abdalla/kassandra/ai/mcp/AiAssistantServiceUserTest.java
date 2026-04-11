@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit tests for AiAssistantService.processQuery method.
- * Tests are based on scenarios from KassandraAgentIntroductionVideo.
+ * Tests are based on scenarios from Test_14_KassandraAgentIntroductionVideo.
  * Tests use the configured ChatModel (Anthropic Claude Haiku 3).
  */
 @Tag("AiUnitTest")

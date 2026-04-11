@@ -80,7 +80,7 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 //@Transactional
-public class UserWorkWeekIntroductionVideo extends AbstractIntroductionVideo {
+public class Test_08_UserWorkWeekIntroductionVideo extends AbstractIntroductionVideo {
 
     /**
      * The date from which the narrator switches to the 4-day schedule.

@@ -66,7 +66,7 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 //@Transactional
-public class RearrangeStoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo {
+public class Test_11_RearrangeStoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute        EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final String                   NEW_MILESTONE = "New Milestone-";
     public static final String                   NEW_STORY     = "New Story-";

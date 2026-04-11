@@ -85,7 +85,7 @@ import java.util.List;
 @AutoConfigureTestRestTemplate
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
-public class KassandraIntroductionVideo extends AbstractIntroductionVideo {
+public class Test_01_KassandraIntroductionVideo extends AbstractIntroductionVideo {
 
     /**
      * Narrator attribute for emphatic, high-energy passages.
@@ -122,8 +122,8 @@ public class KassandraIntroductionVideo extends AbstractIntroductionVideo {
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
-        video.setVersion(1);
-        video.setTitle("Welcome to Kassandra");
+        video.setVersion(2);
+        video.setTitle("10 Welcome to Kassandra");
         video.setDescription(
                 "A complete overview of Kassandra — the open-source self-hosted project management server. "
                         + "Covering products, users, sprint planning, progress tracking, monitoring, and the AI agent.");
@@ -287,7 +287,7 @@ public class KassandraIntroductionVideo extends AbstractIntroductionVideo {
         paul.narrateAsync(NORMAL, "The Sprint Quality Board is where managers and product owners monitor the health of a sprint in real time.");
         seleniumHandler.click(SprintQualityBoard.MENU_ITEM_ID);
         seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
-        seleniumHandler.setComboBoxValue(SprintQualityBoard.SPRINT_SELECTOR_ID, "Oslo");
+        seleniumHandler.setComboBoxValue(SprintQualityBoard.SPRINT_SELECTOR_ID, "London");
 
         paul.narrate(NORMAL, "At the top, you see key sprint statistics — total effort, elapsed time, and completion percentage.").pause();
         paul.narrate(NORMAL, "The Gantt chart shows the planned schedule with current progress overlaid. You can see at a glance whether tasks are running on time or slipping.").pause();

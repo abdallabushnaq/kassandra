@@ -76,7 +76,7 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 //@Transactional
-public class ManagingUserGroupsIntroductionVideo extends AbstractIntroductionVideo {
+public class Test_03_ManagingUserGroupsIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute        INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
     public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f);
     @Autowired

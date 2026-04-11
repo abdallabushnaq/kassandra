@@ -21,11 +21,11 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
-import de.bushnaq.abdalla.kassandra.ui.component.AvailabilityCalendarComponent;
-import de.bushnaq.abdalla.kassandra.ui.dialog.AvailabilityDialog;
+import de.bushnaq.abdalla.kassandra.ui.component.OffDaysCalendarComponent;
+import de.bushnaq.abdalla.kassandra.ui.dialog.LocationDialog;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.AvailabilityListView;
+import de.bushnaq.abdalla.kassandra.ui.view.LocationListView;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -56,13 +56,14 @@ import java.util.List;
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
         properties = {
                 "server.port=${test.server.port:0}",
-                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+                // Disable basic authentication for these tests
+                "spring.security.basic.enabled=false"
         }
 )
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 //@Transactional
-public class UserAvailabilityIntroductionVideo extends AbstractIntroductionVideo {
+public class Test_06_UserLocationsIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute          INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute          NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
@@ -91,8 +92,8 @@ public class UserAvailabilityIntroductionVideo extends AbstractIntroductionVideo
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
         video.setVersion(2);
-        video.setTitle("07 User Availability in Kassandra");
-        video.setDescription("Today we're going to learn about User Availability management in Kassandra. User availability defines what percentage of your time you can dedicate to project work. This is essential for accurate sprint planning and capacity calculations.");
+        video.setTitle("06 User Locations in Kassandra");
+        video.setDescription("Today we're going to learn about User Location management in Kassandra. User locations are essential for accurate project planning because they determine which public holidays apply to each team member.");
     }
 
     @ParameterizedTest
@@ -107,107 +108,114 @@ public class UserAvailabilityIntroductionVideo extends AbstractIntroductionVideo
         generateProductsIfNeeded(testInfo, randomCase);
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         HumanizedSeleniumHandler.setHumanize(true);
-//        seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
+        //seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
         seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.VIDEO_SUBTITLE);
         startRecording();
         seleniumHandler.wait(3000);
-        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about User Availability management in Kassandra. User availability defines what percentage of your time you can dedicate to project work. This is essential for accurate sprint planning and capacity calculations.");
+        paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about User Location management in Kassandra. User locations are essential for accurate project planning because they determine which public holidays apply to each team member.");
         seleniumHandler.hideOverlay();
         productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 
         //---------------------------------------------------------------------------------------
-        // Navigate to Availability Page
+        // Navigate to Location Page
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.setHighlightEnabled(true);//highlight elements starting now
-        paul.narrateAsync(NORMAL, "Let's open the user menu and navigate to the User Availability page.");
+        paul.narrateAsync(NORMAL, "Let's open the user menu and navigate to the User Location page.");
         seleniumHandler.click(MainLayout.ID_USER_MENU);
-        seleniumHandler.click(MainLayout.ID_USER_MENU_AVAILABILITY);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_LOCATION);
 
         //---------------------------------------------------------------------------------------
-        // Explain Availability Page Purpose
+        // Explain Location Page Purpose
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(AvailabilityListView.AVAILABILITY_LIST_PAGE_TITLE);
-        paul.narrate(NORMAL, "This page shows your availability history. Each availability record defines what percentage of your working time is dedicated to project tasks during a specific time period.");
-        seleniumHandler.highlight(AvailabilityListView.AVAILABILITY_GRID);
-        paul.narrate(NORMAL, "For example, one hundred percent means you're fully available, fifty percent means you're working half time, and values over one hundred percent represent overtime work.");
+        seleniumHandler.highlight(LocationListView.LOCATION_LIST_PAGE_TITLE);
+        paul.narrate(NORMAL, "This page shows your location history. Each location record defines where you were working during a specific time period.");
+        paul.narrate(NORMAL, "This is important because Kassandra uses this information to automatically populate the correct public holidays for your region when planning sprints and calculating availability.");
 
-        //---------------------------------------------------------------------------------------
-        // Explain Existing Records
-        //---------------------------------------------------------------------------------------
-
-        paul.narrate(NORMAL, "I have one availability record starting from my first working day, set to fifty percent. This means Kassandra assumes I'm working half time on project work.");
-        paul.narrate(NORMAL, "However, my capacity might change over time.");
         //---------------------------------------------------------------------------------------
         // Explain Calendar
         //---------------------------------------------------------------------------------------
 
         paul.narrate(NORMAL, "On the right side, you can see a calendar with every day of the current year.");
-        seleniumHandler.highlight(AvailabilityCalendarComponent.LEGEND_ITEM_ID_100_PERCENT, AvailabilityCalendarComponent.LEGEND_ITEM_ID_80_PERCENT, AvailabilityCalendarComponent.LEGEND_ITEM_ID_60_PERCENT, AvailabilityCalendarComponent.LEGEND_ITEM_ID_40_PERCENT, AvailabilityCalendarComponent.LEGEND_ITEM_ID_20_PERCENT, AvailabilityCalendarComponent.LEGEND_ITEM_ID_0_PERCENT);
-        paul.narrate(NORMAL, "The legend at the bottom shows the different availability levels and their colors. Each day is filled from the bottom up to represent your availability percentage.");
+        seleniumHandler.highlight(OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_BUSINESS_TRIP, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_SICK_LEAVE, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_VACATION, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_HOLIDAY);
+        paul.narrate(NORMAL, "The legend on the bottom explains the different types of days and their colors.");
+        paul.narrateAsync(NORMAL, "Let's take a look at last year. There is a lot more going on.");
+        seleniumHandler.click(OffDaysCalendarComponent.CALENDAR_PREV_YEAR_BTN);
+        paul.narrate(NORMAL, "You can see the holidays marked in the calendar, based on my Germany North Rhine Westphalia location.");
+        paul.narrate(NORMAL, "When you change your location, the holidays will automatically update to match your new region.");
+        seleniumHandler.click(OffDaysCalendarComponent.CALENDAR_NEXT_YEAR_BTN);
 
         //---------------------------------------------------------------------------------------
-        // Why Multiple Availability Records
+        // Explain Existing Records
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "Why do we need an availability history? Well, your capacity can change over time.");
-        paul.narrate(NORMAL, "You might switch to part-time work, take on management responsibilities that reduce your project time, or work overtime during critical project phases.");
-        paul.narrate(NORMAL, "Kassandra uses this information to accurately calculate team capacity, plan realistic sprints, and estimate project release dates.");
+        seleniumHandler.highlight(LocationListView.LOCATION_GRID);
+        paul.narrate(NORMAL, "On the left, the location grid shows my location history.");
+        paul.narrate(NORMAL, "I have one location record starting from my first working day, which is currently active.");
 
         //---------------------------------------------------------------------------------------
-        // Create New Availability - Intro
+        // Why Multiple Locations
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "Let me show you how to add a new availability record. I've been working at fifty percent project availability because I was handling third level support tasks.");
-        paul.narrate(NORMAL, "Good news - those support responsibilities are being reassigned, so I can increase my availability to eighty percent starting next month.");
+        paul.narrate(NORMAL, "Why do we need a location history? Well, if you relocate to a different country or region, the holidays will change.");
+        paul.narrate(NORMAL, "For example, if I move from Germany to the United States, Thanksgiving would now count as a day off, but German Unity Day would not.");
 
         //---------------------------------------------------------------------------------------
-        // Create New Availability - Dialog
+        // Create New Location - Intro
+        //---------------------------------------------------------------------------------------
+
+        paul.narrate(NORMAL, "Let me show you how to add a new location. Imagine I'm planning to relocate to California in September. Let's create that location record now.");
+
+        //---------------------------------------------------------------------------------------
+        // Create New Location - Dialog
         //---------------------------------------------------------------------------------------
 
         paul.narrateAsync(NORMAL, "Click the create button.");
-        seleniumHandler.click(AvailabilityListView.CREATE_AVAILABILITY_BUTTON);
+        seleniumHandler.click(LocationListView.CREATE_LOCATION_BUTTON);
 
-        paul.narrate(NORMAL, "First, we select the start date - this is when the new availability becomes effective. Let's set it to June first, twenty twenty-five.");
-        final LocalDate newAvailabilityStartDate = LocalDate.of(2025, 6, 1);
-        seleniumHandler.setDatePickerValue(AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, newAvailabilityStartDate);
+        paul.narrate(NORMAL, "First, we select the start date - this is when the new location becomes effective.");
+        paul.narrateAsync(NORMAL, "Let's set it to September first, twenty twenty-five.");
+        final LocalDate californiaStartDate = LocalDate.of(2025, 9, 1);
+        seleniumHandler.setDatePickerValue(LocationDialog.LOCATION_START_DATE_FIELD, californiaStartDate);
 
-        paul.narrate(NORMAL, "Next, we enter the availability percentage. I'll enter eighty to represent eighty percent availability.");
-        seleniumHandler.setTextField(AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD, "80");
+        paul.narrateAsync(NORMAL, "Next, we choose the country - United States.");
+        seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_COUNTRY_FIELD, "United States (US)");
 
-        paul.narrateAsync(NORMAL, "Now click Save to create the availability record.");
-        availabilityListViewTester.closeDialog(AvailabilityDialog.CONFIRM_BUTTON);
+        paul.narrateAsync(NORMAL, "And finally, the state or region - California.");
+        seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_STATE_FIELD, "California (ca)");
+
+        paul.narrateAsync(NORMAL, "Now click Save to create the location record.");
+        locationListViewTester.closeDialog(LocationDialog.CONFIRM_BUTTON);
 
         //---------------------------------------------------------------------------------------
         // Verify Creation & Explain Impact
         //---------------------------------------------------------------------------------------
 
         seleniumHandler.wait(1000);
-        seleniumHandler.highlight(AvailabilityListView.AVAILABILITY_GRID_START_DATE_PREFIX + "2025-06-01");
-        paul.narrate(NORMAL, "Perfect! The new availability record is now visible in the grid and the calendar view.");
-        paul.narrate(NORMAL, "Starting June first, Kassandra will use this new availability to calculate the number of days I need to finish my estimated tasks.");
-        paul.narrate(NORMAL, "For example, a task that would take me ten days at one hundred percent availability will now take twelve and a half days.");
-        paul.narrate(NORMAL, "My old availability record automatically ends the day before the new one begins, ensuring accurate capacity tracking throughout the year.");
+        seleniumHandler.highlight(LocationListView.LOCATION_GRID_START_DATE_PREFIX + "2025-09-01");
+        paul.narrate(NORMAL, "Perfect! The new location record is now visible in the grid.");
+        paul.narrate(NORMAL, "Starting September first, Kassandra will use California holidays instead of North Rhine-Westphalia holidays when calculating my availability and planning sprints.");
+        paul.narrate(NORMAL, "My old location record automatically ends the day before the new one begins, ensuring there are no gaps or overlaps.");
 
         //---------------------------------------------------------------------------------------
         // Mention Edit/Delete Capabilities
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "With the little notepad and trashcan icons, on the right side, you can edit or delete any existing availability record.");
+        paul.narrate(NORMAL, "With the little notepad and trashcan icons, on the right side, you can edit or delete any existing location.");
 
         //---------------------------------------------------------------------------------------
-        // Mention Minimum Availability Requirement
+        // Mention Minimum Location Requirement
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(AvailabilityListView.AVAILABILITY_GRID);
-        paul.narrate(NORMAL, "However, you cannot delete your only availability record - Kassandra requires at least one availability record to calculate capacity properly.");
+        seleniumHandler.highlight(LocationListView.LOCATION_GRID);
+        paul.narrate(NORMAL, "However, you cannot delete your only location record - Kassandra requires at least one location to calculate holidays properly.");
 
         //---------------------------------------------------------------------------------------
         // Closing
         //---------------------------------------------------------------------------------------
 
-        paul.narrate(NORMAL, "That's all there is to managing your availability in Kassandra. Remember, keeping your availability up to date ensures accurate capacity planning and realistic sprint commitments. Thanks for watching!");
+        paul.narrate(NORMAL, "That's all there is to managing your location in Kassandra. Remember, keeping your location up to date ensures accurate holiday calculations and better project planning. Thanks for watching!");
 
         seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
         seleniumHandler.waitUntilBrowserClosed(5000);
@@ -219,6 +227,5 @@ public class UserAvailabilityIntroductionVideo extends AbstractIntroductionVideo
         };
         return Arrays.stream(randomCases).toList();
     }
-
 
 }
