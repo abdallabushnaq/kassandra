@@ -17,7 +17,12 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -26,6 +31,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.NumberRenderer;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
@@ -37,6 +44,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.AvailabilityCalendarComponent;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.AvailabilityDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -67,9 +75,11 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
     public static final String                        AVAILABILITY_ROW_COUNTER               = "availability-row-counter";
     public static final String                        CREATE_AVAILABILITY_BUTTON             = "create-availability-button";
     public static final String                        ROUTE                                  = "availability";
+    private             Registration                  avatarThemeRegistration;
     private final       AvailabilityApi               availabilityApi;
     private             User                          currentUser;
     private final       DateTimeFormatter             dateFormatter                          = DateTimeFormatter.ISO_LOCAL_DATE /*DateTimeFormatter.ofPattern("yyyy-MM-dd")*/;// Format dates consistently
+    private             Image                         headerAvatarImage;
     private final       UserApi                       userApi;
     private             AvailabilityCalendarComponent yearCalendar;
 
@@ -78,11 +88,19 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
         this.availabilityApi = availabilityApi;
         this.userApi         = userApi;
 
+        headerAvatarImage = new Image();
+        headerAvatarImage.setWidth("32px");
+        headerAvatarImage.setHeight("32px");
+        headerAvatarImage.getStyle()
+                .set("border-radius", "4px")
+                .set("object-fit", "cover")
+                .set("margin-right", "var(--lumo-space-s)");
+
         add(
                 createSmartHeader(
                         "User Availability",
                         AVAILABILITY_LIST_PAGE_TITLE,
-                        VaadinIcon.CHART,
+                        headerAvatarImage,
                         CREATE_AVAILABILITY_BUTTON,
                         () -> openAvailabilityDialog(null),
                         AVAILABILITY_ROW_COUNTER,
@@ -128,6 +146,23 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
             // Redirect to main page if no username and not authenticated
             event.forwardTo("");
         }
+        updateHeaderAvatar();
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        avatarThemeRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderAvatar());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (avatarThemeRegistration != null) {
+            avatarThemeRegistration.remove();
+            avatarThemeRegistration = null;
+        }
+        super.onDetach(detachEvent);
     }
 
     private void confirmDelete(Availability availability) {
@@ -151,6 +186,14 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
                     }
                 });
         dialog.open();
+    }
+
+    private void updateHeaderAvatar() {
+        if (currentUser == null || headerAvatarImage == null) {
+            return;
+        }
+        boolean isDark = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
     }
 
     private AvailabilityCalendarComponent createCalendar() {

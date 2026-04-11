@@ -248,14 +248,8 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             headerAvatarImage.setHeight("32px");
             headerAvatarImage.getStyle()
                     .set("border-radius", "4px")
-                    .set("object-fit", "cover");
-//            com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
-//                    "user-profile-" + System.currentTimeMillis() + ".png",
-//                    () -> new java.io.ByteArrayInputStream(currentUser.getAvatarImage())
-//            );
-//            resource.setContentType("image/png");
-//            resource.setCacheTime(0);
-//            headerAvatarImage.setSrc(resource);
+                    .set("object-fit", "cover")
+                    .set("margin-right", "var(--lumo-space-s)");
             headerAvatarImage.setSrc(currentUser.getAvatarUrl(UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK)));
             titleIcon = headerAvatarImage;
         }
@@ -266,17 +260,13 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
 
         H2 pageTitle = new H2("User Profile");
         pageTitle.setId(PROFILE_PAGE_TITLE);
-        pageTitle.addClassNames(
-                LumoUtility.Margin.Top.MEDIUM,
-                LumoUtility.Margin.Bottom.SMALL
-        );
+        pageTitle.addClassNames(LumoUtility.Margin.NONE);
 
         HorizontalLayout titleLayout = new HorizontalLayout(titleIcon, pageTitle);
-        titleLayout.setSpacing(true);
+        titleLayout.setSpacing(false);
         titleLayout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
 
         headerLayout.add(titleLayout);
-        headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
 
         // User info
         nameField = new com.vaadin.flow.component.textfield.TextField("Name");

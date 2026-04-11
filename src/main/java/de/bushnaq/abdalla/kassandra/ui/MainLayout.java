@@ -285,6 +285,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             userAvatarImage.setHeight("24px");
             userAvatarImage.getStyle()
                     .set("border-radius", "4px")
+                    .set("margin-right", "var(--lumo-space-s)")
                     .set("object-fit", "cover");
 
             // Use REST API endpoint for avatar with hash-based caching; theme-aware

@@ -17,7 +17,12 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -25,6 +30,8 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
@@ -36,6 +43,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.OffDaysCalendarComponent;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.LocationDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -68,7 +76,9 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
     public static final String                   LOCATION_LIST_PAGE_TITLE           = "location-page-title";
     public static final String                   LOCATION_ROW_COUNTER               = "location-row-counter";
     public static final String                   ROUTE                              = "location";
+    private             Registration             avatarThemeRegistration;
     private             User                     currentUser;
+    private             Image                    headerAvatarImage;
     private final       LocationApi              locationApi;
     private final       UserApi                  userApi;
     private             OffDaysCalendarComponent yearCalendar;
@@ -78,11 +88,19 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
         this.locationApi = locationApi;
         this.userApi     = userApi;
 
+        headerAvatarImage = new Image();
+        headerAvatarImage.setWidth("32px");
+        headerAvatarImage.setHeight("32px");
+        headerAvatarImage.getStyle()
+                .set("border-radius", "4px")
+                .set("object-fit", "cover")
+                .set("margin-right", "var(--lumo-space-s)");
+
         add(
                 createSmartHeader(
                         "User Location",
                         LOCATION_LIST_PAGE_TITLE,
-                        VaadinIcon.MAP_MARKER,
+                        headerAvatarImage,
                         CREATE_LOCATION_BUTTON,
                         () -> openLocationDialog(null),
                         LOCATION_ROW_COUNTER,
@@ -131,6 +149,23 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
             event.forwardTo("");
         }
         createCalendar();
+        updateHeaderAvatar();
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        avatarThemeRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderAvatar());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (avatarThemeRegistration != null) {
+            avatarThemeRegistration.remove();
+            avatarThemeRegistration = null;
+        }
+        super.onDetach(detachEvent);
     }
 
     private void confirmDelete(Location location) {
@@ -157,6 +192,14 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
                     }
                 });
         dialog.open();
+    }
+
+    private void updateHeaderAvatar() {
+        if (currentUser == null || headerAvatarImage == null) {
+            return;
+        }
+        boolean isDark = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
     }
 
     private OffDaysCalendarComponent createCalendar() {

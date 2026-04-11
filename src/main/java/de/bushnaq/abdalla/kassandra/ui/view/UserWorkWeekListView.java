@@ -17,7 +17,12 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -25,6 +30,8 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -36,6 +43,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.OffDaysCalendarComponent;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserWorkWeekDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -71,8 +79,10 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
     public static final String                   PAGE_TITLE                = "user-work-week-page-title";
     public static final String                   ROUTE                     = "user-work-week";
     public static final String                   ROW_COUNTER               = "user-work-week-row-counter";
+    private             Registration             avatarThemeRegistration;
     private             User                     currentUser;
     private final       DateTimeFormatter        dateFormatter             = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private             Image                    headerAvatarImage;
     private final       UserApi                  userApi;
     private final       UserWorkWeekApi          userWorkWeekApi;
     private final       WorkWeekApi              workWeekApi;
@@ -95,11 +105,19 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
         this.workWeekApi     = workWeekApi;
         this.userApi         = userApi;
 
+        headerAvatarImage = new Image();
+        headerAvatarImage.setWidth("32px");
+        headerAvatarImage.setHeight("32px");
+        headerAvatarImage.getStyle()
+                .set("border-radius", "4px")
+                .set("object-fit", "cover")
+                .set("margin-right", "var(--lumo-space-s)");
+
         add(
                 createSmartHeader(
                         "User Work Week",
                         PAGE_TITLE,
-                        VaadinIcon.CALENDAR,
+                        headerAvatarImage,
                         CREATE_BUTTON,
                         () -> openDialog(null),
                         ROW_COUNTER,
@@ -139,6 +157,23 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
             event.forwardTo("");
         }
         createCalendar();
+        updateHeaderAvatar();
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        avatarThemeRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderAvatar());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (avatarThemeRegistration != null) {
+            avatarThemeRegistration.remove();
+            avatarThemeRegistration = null;
+        }
+        super.onDetach(detachEvent);
     }
 
     private void confirmDelete(UserWorkWeek userWorkWeek) {
@@ -163,6 +198,14 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
                     }
                 });
         dialog.open();
+    }
+
+    private void updateHeaderAvatar() {
+        if (currentUser == null || headerAvatarImage == null) {
+            return;
+        }
+        boolean isDark = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
     }
 
     private OffDaysCalendarComponent createCalendar() {
@@ -270,5 +313,4 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
         }
     }
 }
-
 
