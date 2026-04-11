@@ -282,6 +282,15 @@ public class Test_01_KassandraIntroductionVideo extends AbstractIntroductionVide
         paul.narrate(NORMAL, "The board can be filtered by user and by sprint, and organised by feature or story — so each team member sees exactly the tasks relevant to them.").pause();
 
         //---------------------------------------------------------------------------------------
+        logHeader("Dark Mode");
+        //---------------------------------------------------------------------------------------
+        paul.narrateAsync(NORMAL, "One small but welcome detail: Kassandra fully supports dark mode. One click on the theme toggle in the top navigation bar switches the entire interface.");
+        seleniumHandler.click(MainLayout.ID_THEME_TOGGLE);
+        paul.narrate(NORMAL, "Every view, chart, and component adapts instantly. Click again to return to light mode.").pause();
+        seleniumHandler.click(MainLayout.ID_THEME_TOGGLE);
+        seleniumHandler.wait(1000);
+
+        //---------------------------------------------------------------------------------------
         logHeader("Sprint Quality Board — Monitoring");
         //---------------------------------------------------------------------------------------
         paul.narrateAsync(NORMAL, "The Sprint Quality Board is where managers and product owners monitor the health of a sprint in real time.");

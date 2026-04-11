@@ -22,8 +22,8 @@ import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskCard;
-import de.bushnaq.abdalla.kassandra.ui.dialog.WorklogDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.TaskDialog;
+import de.bushnaq.abdalla.kassandra.ui.dialog.WorklogDialog;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -205,7 +205,7 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
         String inProgressLaneId = VaadinUtil.generateFeatureLaneId(story1.getSprint().getFeature(), TaskStatus.IN_PROGRESS);
 
         //---------------------------------------------------------------------------------------
-        // Moving Task 11 to IN PROGRESS
+        // Moving Task 11 (create controller) to IN PROGRESS
         //---------------------------------------------------------------------------------------
         {
             grace.narrate(NORMAL, "To start working on a task, I simply drag it from the to-do lane to the in-progress lane. Let me move the 'create controller' task. This tells the team that I've started working on it.");
@@ -219,8 +219,7 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
             grace.pauseIfDisabled(1000);
             grace.pause(1500);
 
-            grace.narrate(NORMAL, "Perfect! The task is now in the in-progress lane. Everyone can see that I'm actively working on it.");
-            grace.pause(1500);
+            grace.narrate(NORMAL, "Perfect! The task is now in the in-progress lane. Everyone can see that I'm actively working on it.").pause();
 
             //---------------------------------------------------------------------------------------
             // Opening Worklog Dialog
@@ -236,26 +235,21 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
 
             grace.pause(2000);
 
-            grace.narrate(NORMAL, "Here's the Worklog dialog. It shows the task I'm logging work for at the top, and provides fields to enter my time and comments.");
-            grace.pause(1500);
+            grace.narrate(NORMAL, "Here's the Worklog dialog. It shows the task I'm logging work for at the top, and provides fields to enter my time and comments.").pause();
 
             //---------------------------------------------------------------------------------------
             // Filling Worklog Fields
             //---------------------------------------------------------------------------------------
 
-            grace.narrate(NORMAL, "I'll enter the time I spent today. Let's say 1 hours. Notice how the Time Remaining field automatically updates based on what I enter.");
+            grace.narrate(NORMAL, "I'll enter the time I spent today. Let's say 1 hour. Notice how the Time Remaining field automatically updates based on what I enter.");
 
             seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "1h");
             grace.pauseIfDisabled(1000);
-            grace.pause(2000);
-
-            grace.narrate(NORMAL, "See that? Originally this task had 4 hours remaining, and now it shows 3 hours after logging 1 hours of work. The system automatically calculates the burndown for us!");
-            grace.pause(2000);
+            grace.narrate(NORMAL, "See that? Originally this task had 4 hours remaining, and now it shows 3 hours after logging 1 hour of work. The system automatically calculates the burndown for us!").pause();
 
             grace.narrate(NORMAL, "In the comment field, I'll add a description of what I did. This helps the team understand what progress was made.");
 
             seleniumHandler.setTextArea(WorklogDialog.COMMENT_FIELD, "Implemented basic controller structure and routing");
-            grace.pauseIfDisabled(1000);
             grace.pause(2000);
 
             //---------------------------------------------------------------------------------------
@@ -271,22 +265,19 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
 //            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
 //            grace.pause(1500);
 
-            grace.narrate(NORMAL, "The dialog closes and we're back at the scrum board.");
-            grace.pause(1000);
+            grace.narrate(NORMAL, "The dialog closes and we're back at the scrum board.").pause();
 
             //---------------------------------------------------------------------------------------
             // Show Results
             //---------------------------------------------------------------------------------------
 
-            grace.narrate(NORMAL, "Look at the task card now. The remaining work has been updated to 3 hours. This is your burndown in action! The team can see that real progress is being made on this task.");
-            grace.pause(2500);
+            grace.narrate(NORMAL, "Look at the task card now. The remaining work has been updated to 3 hours. This is your burndown in action! The team can see that real progress is being made on this task.").pause();
 
-            grace.narrate(NORMAL, "This information feeds into the sprint burndown chart, giving everyone visibility into how the sprint is progressing. It helps us track velocity and understand if we're on track to complete our commitments.");
-            grace.pause(2000);
+            grace.narrate(NORMAL, "This information feeds into the sprint burndown chart, giving everyone visibility into how the sprint is progressing. It helps us track velocity and understand if we're on track to complete our commitments.").pause();
         }
 
         //---------------------------------------------------------------------------------------
-        // Logging More Work on Another Task (Optional)
+        // Logging More Work on Another Task (api documentation)
         //---------------------------------------------------------------------------------------
         {
 
@@ -296,7 +287,6 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
             String task12CardId = "task-card-" + task12.getId();
             seleniumHandler.dragAndDrop(task12CardId, inProgressLaneId);
             grace.pauseIfDisabled(1000);
-            grace.pause(1500);
 
             grace.narrate(NORMAL, "Now I'll click on the API documentation task to log work.");
             seleniumHandler.click(task12CardId);
@@ -307,25 +297,19 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
             grace.narrate(NORMAL, "I'll log 1 hour of work on this task.");
             seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "1h");
             grace.pauseIfDisabled(1000);
-            grace.pause(1500);
 
-            grace.narrate(NORMAL, "Notice that the system automatically reduced the remaining time. But wait - sometimes you spend time on a task without actually making progress. Maybe you hit unexpected complexity or had to research something.");
-            grace.pause(3000);
+            grace.narrate(NORMAL, "Notice that the system automatically reduced the remaining time. But wait - sometimes you spend time on a task without actually making progress. Maybe you hit unexpected complexity or had to research something.").pause();
 
-            grace.narrate(NORMAL, "In this case, I spent an hour but realized the task will take longer than expected. So I need to adjust the remaining time back to 2 hours to reflect the actual work left.");
-            grace.pause(2500);
+            grace.narrate(NORMAL, "In this case, I spent an hour but realized the task will take longer than expected. So I need to adjust the remaining time back to 2 hours to reflect the actual work left.").pause();
 
             seleniumHandler.setTextField(WorklogDialog.TIME_REMAINING_FIELD, "2h");
             grace.pauseIfDisabled(1000);
-            grace.pause(1500);
 
-            grace.narrate(NORMAL, "This is important for accurate tracking. We're being honest about both the time spent and the work remaining. This helps the team make better planning decisions.");
-            grace.pause(2500);
+            grace.narrate(NORMAL, "This is important for accurate tracking. We're being honest about both the time spent and the work remaining. This helps the team make better planning decisions.").pause();
 
             grace.narrate(NORMAL, "Now I'll add a comment explaining what happened.");
             seleniumHandler.setTextArea(WorklogDialog.COMMENT_FIELD, "Researched documentation approach - task more complex than expected");
             grace.pauseIfDisabled(1000);
-            grace.pause(2000);
 
             grace.narrate(NORMAL, "And I'll save this worklog entry.");
             activeSprintsTester.closeDialog(WorklogDialog.SAVE_BUTTON);
@@ -334,60 +318,45 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
 //            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
 //            grace.pause(1500);
 
-            grace.narrate(NORMAL, "Perfect! The task card still shows 2 hours remaining, accurately reflecting the reality. This is exactly how you track your daily progress in Kassandra - honestly and transparently.");
-            grace.pause(2500);
+            grace.narrate(NORMAL, "Perfect! The task card still shows 2 hours remaining, accurately reflecting the reality. This is exactly how you track your daily progress in Kassandra - honestly and transparently.").pause();
         }
 
         //---------------------------------------------------------------------------------------
-        // Complete a Task and Move to DONE
+        // Complete a Task (api error handling) and Move to DONE
         //---------------------------------------------------------------------------------------
         {
-            grace.narrate(NORMAL, "Now let me show you what happens when you complete a task. I'll work on the error handling task and finish it completely.");
-            grace.pause(2000);
+            grace.narrate(NORMAL, "Now let me show you what happens when you complete a task. I'll work on the error handling task and finish it completely.").pause();
 
             // Drag the third task to IN_PROGRESS
             String task13CardId = "task-card-" + task13.getId();
             seleniumHandler.dragAndDrop(task13CardId, inProgressLaneId);
             grace.pauseIfDisabled(1000);
-            grace.pause(1500);
 
-            grace.narrate(NORMAL, "I've moved the error handling task to in-progress. Notice something important: the story itself has now moved to the in-progress lane! This happened because all tasks in the story are now either in-progress or done - none are left in the to-do lane.");
-            grace.pause(3500);
+            grace.narrate(NORMAL, "I've moved the error handling task to in-progress. Notice something important: the story itself has now moved to the in-progress lane! This happened because all tasks in the story are now either in-progress or done - none are left in the to-do lane.").pause();
 
-            grace.narrate(NORMAL, "The story status automatically changes from to-do to in-progress when all of its tasks have been started. This gives you a quick overview of which stories are actively being worked on.");
-            grace.pause(3000);
+            grace.narrate(NORMAL, "The story status automatically changes from to-do to in-progress when all of its tasks have been started. This gives you a quick overview of which stories are actively being worked on.").pause();
 
             grace.narrate(NORMAL, "Now I'll log the work I did to complete this task.");
-            grace.pause(2000);
 
             // Open worklog dialog
             seleniumHandler.click(task13CardId);
             grace.pauseIfDisabled(500);
             seleniumHandler.waitForElementToBeClickable(WorklogDialog.TITLE_ID);
-            grace.pause(1500);
 
-            grace.narrate(NORMAL, "This task has 5 hours remaining. I'll log 5 hours of work to complete it entirely.");
+            grace.narrate(NORMAL, "This task has 5 hours remaining. I'll log 5 hours of work to complete it entirely.").pause();
             grace.pause(2000);
 
             seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "5h");
             grace.pauseIfDisabled(1000);
-            grace.pause(2000);
 
-            grace.narrate(NORMAL, "Notice how the remaining time automatically goes to zero. This means the task is now complete.");
-            grace.pause(2000);
+            grace.narrate(NORMAL, "Notice how the remaining time automatically goes to zero. This means the task is now complete.").pause();
 
             seleniumHandler.setTextArea(WorklogDialog.COMMENT_FIELD, "Completed error handling implementation and testing");
             grace.pauseIfDisabled(1000);
-            grace.pause(1500);
 
             activeSprintsTester.closeDialog(WorklogDialog.SAVE_BUTTON);
-//            seleniumHandler.click(WorklogDialog.SAVE_BUTTON);
-//            grace.pauseIfSilent(500);
-//            seleniumHandler.waitForElementInvisibility(WorklogDialog.WORKLOG_DIALOG);
-//            grace.pause(1500);
 
             grace.narrate(NORMAL, "Now I'll move this completed task to the done lane by dragging it.");
-            grace.pause(2000);
 
             // Drag task to DONE lane
             String doneLaneId = VaadinUtil.generateFeatureLaneId(story1.getSprint().getFeature(), TaskStatus.DONE);
@@ -395,52 +364,30 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
             grace.pauseIfDisabled(1000);
             grace.pause(2000);
 
-            grace.narrate(NORMAL, "Perfect! The task is now in the done lane, showing it's complete. The story remains in the in-progress lane because we still have other tasks in progress.");
-            grace.pause(3000);
+            grace.narrate(NORMAL, "Perfect! The task is now in the done lane, showing it's complete. The story remains in the in-progress lane because we still have other tasks in progress.").pause();
         }
 
         //---------------------------------------------------------------------------------------
         // Task Dialog: Viewing and Editing Worklogs
         //---------------------------------------------------------------------------------------
         {
-            grace.narrate(NORMAL, "But what if I need to edit a worklog or even delete it? Great question! Worklogs can be accessed in the Task Dialog, which you open by clicking on the task title.");
-            grace.pause(2000);
-
-            grace.narrate(NORMAL, "Let me click on the API documentation task title. That is the task where we logged two separate worklogs, so it is a perfect example.");
-            grace.pause(2000);
-
+            grace.narrate(NORMAL, "But what if I need to edit a worklog or even delete it?").pause();
+            grace.narrate(NORMAL, "Great question! Worklogs can be accessed in the Task Dialog, which you open by clicking on the task title.").pause();
+            grace.narrate(NORMAL, "Let me open the dialog for the 'API documentation' task title.").pause();
             String task12TitleId = TaskCard.TASK_CARD_TITLE_ID_PREFIX + task12.getId();
             seleniumHandler.highlight(task12TitleId);
             seleniumHandler.click(task12TitleId);
             grace.pauseIfDisabled(500);
-
             seleniumHandler.waitForElementToBeClickable(TaskDialog.CANCEL_BUTTON);
-            grace.pause(2000);
-
-            grace.narrate(NORMAL, "This is the Task Dialog. It brings everything about the task together in one place. Let me walk you through it.");
-            grace.pause(2000);
-
-            grace.narrate(NORMAL, "At the top is the read-only summary section. It shows Time Spent, Remaining Estimate, and Progress — all automatically calculated from the logged worklogs. You cannot edit these directly; they reflect the true state of the task.");
-            grace.pause(3500);
-
-            grace.narrate(NORMAL, "Below the summary is the Edit Task section. Here you can rename the task, add or update notes, and adjust the minimum and maximum estimates. When you are happy with your changes, click Save Task to persist them.");
-            grace.pause(3500);
-
-            grace.narrate(NORMAL, "And at the bottom is the Work Logs section. You can see both entries we logged for this task: the first hour and the second hour with the adjusted remaining time. Each row shows the date, time spent, the comment, and the author.");
-            grace.pause(4000);
-
-            grace.narrate(NORMAL, "The pencil icon on the right opens the worklog entry in the Worklog Dialog so you can correct the time or the comment. The red trash icon lets you delete the entry entirely. Only the author of a worklog — or an administrator — can edit or delete it.");
-            grace.pause(4000);
-
-            grace.narrate(NORMAL, "You can also log fresh work directly from here by clicking the Log Work button next to the Work Logs heading, without having to go back to the board.");
-            grace.pause(3000);
-
+            grace.narrate(NORMAL, "This is the Task Dialog. It brings everything about the task together in one place. Let me walk you through it.").pause();
+            grace.narrate(NORMAL, "At the top is the read-only summary section. It shows Time Spent, Remaining Estimate, and Progress — all automatically calculated from the logged worklogs. You cannot edit these directly; they reflect the true state of the task.").pause();
+            grace.narrate(NORMAL, "Below the summary is the Edit Task section. Here you can rename the task, add or update notes, and adjust the minimum and maximum estimates. When you are happy with your changes, click Save Task to persist them.").pause();
+            grace.narrate(NORMAL, "And at the bottom is the Work Logs section. You can see the entry we logged for this task: one hour with the adjusted remaining time. Each row shows the date, time spent, the comment, and the author.").pause();
+            grace.narrate(NORMAL, "The pencil icon on the right opens the worklog entry in the Worklog Dialog so you can correct the time or the comment. The red trash icon lets you delete the entry entirely. Only the author of a worklog — or an administrator — can edit or delete it.").pause();
+            grace.narrate(NORMAL, "You can also log fresh work directly from here by clicking the Log Work button next to the Work Logs heading, without having to go back to the board.").pause();
             grace.narrate(NORMAL, "Let me close this dialog and return to the board.");
-            grace.pause(1000);
-
             activeSprintsTester.closeDialog(TaskDialog.CANCEL_BUTTON);
             grace.pauseIfDisabled(500);
-            grace.pause(1500);
         }
 
         //---------------------------------------------------------------------------------------

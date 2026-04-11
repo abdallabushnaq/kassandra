@@ -968,7 +968,8 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         typeText(inputField, dateStr);
 
         wait(500);
-        inputField.sendKeys(Keys.ENTER);// Press Enter to confirm the date and close the calendar
+        inputField.sendKeys(Keys.LEFT_SHIFT, Keys.ENTER);// Press Enter to confirm the date and close the calendar
+
         log.trace("Pressed Enter to confirm date");
 
         // Wait for the calendar overlay to close
@@ -1026,7 +1027,7 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
             typeText(inputField, dateStr);
 
             wait(500);
-            inputField.sendKeys(Keys.ENTER);// Press Enter to confirm the date and close the calendar
+            inputField.sendKeys(Keys.LEFT_SHIFT, Keys.ENTER);// Press Enter to confirm the date and close the calendar
             log.trace("Pressed Enter to confirm date-time");
 
             // Wait for the calendar overlay to close

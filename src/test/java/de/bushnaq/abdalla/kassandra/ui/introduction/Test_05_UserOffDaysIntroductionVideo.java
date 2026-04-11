@@ -145,7 +145,7 @@ public class Test_05_UserOffDaysIntroductionVideo extends AbstractIntroductionVi
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, OffDayType.VACATION.name());
 
         paul.narrateAsync(NORMAL, "Select the start date.");
-        final LocalDate firstDay = LocalDate.of(2025, 10, 1);
+        final LocalDate firstDay = LocalDate.of(2025, 10, 6);
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_START_DATE_FIELD, firstDay);
 
         paul.narrate(NORMAL, "and select the end date.");

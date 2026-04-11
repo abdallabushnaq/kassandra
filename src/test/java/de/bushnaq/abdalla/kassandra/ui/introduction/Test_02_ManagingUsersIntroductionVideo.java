@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.introduction;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserDialog;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -63,14 +64,17 @@ import java.util.List;
 @AutoConfigureTestRestTemplate
 //@Transactional
 public class Test_02_ManagingUsersIntroductionVideo extends AbstractIntroductionVideo {
-    public static final NarratorAttribute        INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute        INTENSE  = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute        NORMAL   = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    private final       String                   country  = "United States (US)";  // United States
     @Autowired
     private             ProductListViewTester    productListViewTester;
     @Autowired
     private             HumanizedSeleniumHandler seleniumHandler;
+    private final       String                   state    = "California (ca)";  // California
     @Autowired
     private             UserListViewTester       userListViewTester;
+    private final       String                   workWeek = DefaultEntitiesInitializer.WORK_WEEK_5X8;
 
     @BeforeAll
     static void beforeAll() {
@@ -170,6 +174,15 @@ public class Test_02_ManagingUsersIntroductionVideo extends AbstractIntroduction
         seleniumHandler.highlight(UserDialog.USER_LAST_WORKING_DAY_PICKER);
         paul.narrate(NORMAL, "The Last Working Day is optional and only used when someone leaves the company. We'll leave it empty for Sarah.");
 
+
+        paul.narrate(NORMAL, "We also need to define Sara's location. This includes the country and state. These control the automatically populated vacation days for Sara's calendar.").pause();
+        paul.narrate(NORMAL, "Our new colleague Sara's is located in California, USA.");
+        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_COUNTRY_COMBO, country);
+        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_STATE_COMBO, state);
+        paul.narrate(NORMAL, "We also need to define her worling week. This defines a users expected working hours and weekends.");
+        seleniumHandler.setComboBoxValue(UserDialog.USER_WORK_WEEK_COMBO, workWeek);
+
+
         //---------------------------------------------------------------------------------------
         // Save User
         //---------------------------------------------------------------------------------------
@@ -225,5 +238,4 @@ public class Test_02_ManagingUsersIntroductionVideo extends AbstractIntroduction
         };
         return Arrays.stream(randomCases).toList();
     }
-
 }
