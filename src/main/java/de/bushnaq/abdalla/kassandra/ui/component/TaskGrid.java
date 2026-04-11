@@ -34,14 +34,12 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.DependencyDialog;
 import de.bushnaq.abdalla.util.ColorUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -220,6 +218,19 @@ public class TaskGrid extends TreeGrid<Task> {
     }
 
     /**
+     * Recursively collects all descendant tasks (children, grandchildren, …) into {@code result}.
+     *
+     * @param task   the root task whose descendants to collect
+     * @param result the list to accumulate descendants into
+     */
+    private void collectDescendants(Task task, List<Task> result) {
+        for (Task child : task.getChildTasks()) {
+            result.add(child);
+            collectDescendants(child, result);
+        }
+    }
+
+    /**
      * Shows a confirmation dialog before permanently deleting a task.
      * The message is rendered as Markdown (Vaadin 25+) and lists every
      * child task by key, plus the number of relations that will be removed.
@@ -228,11 +239,11 @@ public class TaskGrid extends TreeGrid<Task> {
      * @param task the task to delete
      */
     private void confirmDeleteTask(Task task) {
-        List<Task> descendants    = new ArrayList<>();
+        List<Task> descendants = new ArrayList<>();
         collectDescendants(task, descendants);
 
         long outboundRelCount = task.getPredecessors().stream().filter(Relation::isVisible).count();
-        long inboundRelCount  = taskOrder.stream()
+        long inboundRelCount = taskOrder.stream()
                 .filter(t -> !t.equals(task))
                 .flatMap(t -> t.getPredecessors().stream())
                 .filter(r -> r.isVisible() && r.getPredecessorId().equals(task.getId()))
@@ -267,19 +278,6 @@ public class TaskGrid extends TreeGrid<Task> {
                     }
                 });
         dialog.open();
-    }
-
-    /**
-     * Recursively collects all descendant tasks (children, grandchildren, …) into {@code result}.
-     *
-     * @param task   the root task whose descendants to collect
-     * @param result the list to accumulate descendants into
-     */
-    private void collectDescendants(Task task, List<Task> result) {
-        for (Task child : task.getChildTasks()) {
-            result.add(child);
-            collectDescendants(child, result);
-        }
     }
 
     private void createGridColumns() {
@@ -357,7 +355,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 colorBar.getStyle()
                         .set("background", "var(--lumo-base-color)")
                         .set("border-left", "4px solid " + userColor) // 4px colored left border
-                        .set("border-radius", "var(--lumo-border-radius-m)")
+                        .set("border-radius", "4px")
                         .set("cursor", "grab")
                         .set("transition", "all 0.2s ease")
                         .set("min-height", "32px")

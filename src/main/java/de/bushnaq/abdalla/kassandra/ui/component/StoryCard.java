@@ -138,12 +138,13 @@ public class StoryCard extends Div {
         lane.addClassName("task-lane");
         lane.addClassName("task-lane-" + status.name().toLowerCase().replace("_", "-"));
         lane.setWidth("33.33%");
-        lane.setPadding(true);
+        lane.setPadding(false);
         lane.setSpacing(false); // Disable default spacing
         lane.getStyle()
+                .set("padding", "var(--lumo-space-xs)") // compact inner padding
                 .set("background", "var(--lumo-contrast-5pct)") // Lighter gray background
-                .set("border-radius", "8px") // Rounded corners
-                .set("min-height", "150px")
+                .set("border-radius", "4px") // subtly rounded corners
+                .set("min-height", "80px")
                 .set("box-sizing", "border-box")
                 .set("gap", "2px"); // 2px vertical space between task cards
 
@@ -177,8 +178,8 @@ public class StoryCard extends Div {
         lanesContainer.setPadding(false);
         lanesContainer.setSpacing(false); // Disable default spacing
         lanesContainer.getStyle()
-                .set("min-height", "200px")
-                .set("padding", "var(--lumo-space-m)")
+                .set("min-height", "100px")
+                .set("padding", "var(--lumo-space-xs) var(--lumo-space-s)") // tighter vertical padding
                 .set("box-sizing", "border-box")
                 .set("gap", "9px"); // 9px horizontal space between lanes
 

@@ -75,7 +75,7 @@ public class BacklogTaskCard extends Div {
                 .set("background", "var(--lumo-base-color)")
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("border-left", "4px solid " + userColor) // 4px colored left border
-                .set("border-radius", "var(--lumo-border-radius-m)")
+                .set("border-radius", "4px")
                 .set("padding", "var(--lumo-space-xs)")
                 .set("box-sizing", "border-box")
                 .set("margin-left", "6px") // 6px indentation

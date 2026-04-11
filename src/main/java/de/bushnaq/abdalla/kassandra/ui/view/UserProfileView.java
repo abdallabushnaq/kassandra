@@ -71,15 +71,15 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
     public static final String                                        USER_EMAIL_FIELD       = "user-email-field";
     public static final String                                        USER_NAME_FIELD        = "user-name-field";
     private             com.vaadin.flow.component.html.Image          avatarPreview;
+    private final       AvatarService                                 avatarService;
     private             AvatarUpdateRequest                           avatarUpdateRequest;
     private             ColorPicker                                   colorPicker;
     private             User                                          currentUser;
     private             com.vaadin.flow.component.html.Image          headerAvatarImage;
     private             com.vaadin.flow.component.textfield.TextField nameField;
     private             com.vaadin.flow.component.html.Image          nameFieldAvatarImage;
-    private             Registration                                  themeChangedRegistration;
     private final       StableDiffusionService                        stableDiffusionService;
-    private final       AvatarService                                 avatarService;
+    private             Registration                                  themeChangedRegistration;
     private final       UserApi                                       userApi;
 
     public UserProfileView(UserApi userApi, AvatarService avatarService, StableDiffusionService stableDiffusionService) {
@@ -95,39 +95,6 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         );
         getStyle().set("padding-left", "var(--lumo-space-m)");
         getStyle().set("padding-right", "var(--lumo-space-m)");
-    }
-
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        themeChangedRegistration = ComponentUtil.addListener(
-                attachEvent.getUI(), ThemeChangedEvent.class, e -> refreshAvatarSources());
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        if (themeChangedRegistration != null) {
-            themeChangedRegistration.remove();
-            themeChangedRegistration = null;
-        }
-        super.onDetach(detachEvent);
-    }
-
-    /**
-     * Re-applies the theme-aware avatar URL to both avatar image components after a theme toggle.
-     * No-op if the current user has not been loaded yet.
-     */
-    private void refreshAvatarSources() {
-        if (currentUser == null) {
-            return;
-        }
-        boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
-        if (headerAvatarImage != null) {
-            headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
-        }
-        if (nameFieldAvatarImage != null) {
-            nameFieldAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
-        }
     }
 
     @Override
@@ -191,7 +158,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
     }
 
     private void handleGeneratedAvatar(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result,
-            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult) {
+                                       de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult) {
         avatarUpdateRequest.setLightAvatarImage(result.getResizedImage());
         avatarUpdateRequest.setLightAvatarImageOriginal(result.getOriginalImage());
         avatarUpdateRequest.setLightAvatarPrompt(result.getPrompt());
@@ -397,10 +364,26 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         formLayout.setSpacing(true);
         formLayout.setMaxWidth("600px");
         formLayout.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
-        formLayout.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
+        formLayout.getStyle().set("border-radius", "4px");
         formLayout.add(nameRow, emailField, colorPicker, saveButton);
 
         add(headerLayout, formLayout);
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> refreshAvatarSources());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
     }
 
     private void openAvatarPromptDialogWithInitialImage() {
@@ -440,6 +423,23 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                 defaultDarkNegativePrompt
         );
         imageDialog.open();
+    }
+
+    /**
+     * Re-applies the theme-aware avatar URL to both avatar image components after a theme toggle.
+     * No-op if the current user has not been loaded yet.
+     */
+    private void refreshAvatarSources() {
+        if (currentUser == null) {
+            return;
+        }
+        boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        if (headerAvatarImage != null) {
+            headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
+        }
+        if (nameFieldAvatarImage != null) {
+            nameFieldAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
+        }
     }
 
     private void saveProfile() {

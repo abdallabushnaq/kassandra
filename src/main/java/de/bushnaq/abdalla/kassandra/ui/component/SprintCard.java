@@ -80,7 +80,7 @@ public class SprintCard extends Div {
         grayContainer.setWidthFull();
         grayContainer.getStyle()
                 .set("background", "var(--lumo-contrast-5pct)") // Light gray background
-                .set("border-radius", "8px") // Rounded corners
+                .set("border-radius", "4px") // Rounded corners
                 .set("padding", "var(--lumo-space-s) var(--lumo-space-m)") // Padding all around
                 .set("box-sizing", "border-box");
 

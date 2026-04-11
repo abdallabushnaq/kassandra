@@ -87,7 +87,7 @@ public class BacklogStoryCard extends Div {
         containerBox.getStyle()
                 .set("background", "var(--lumo-contrast-5pct)") // Gray background
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "8px")
+                .set("border-radius", "4px")
                 .set("padding", "8px")
                 .set("box-sizing", "border-box");
 

@@ -110,8 +110,8 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
             add(headerLayout, contentLayout);
 
-            this.getStyle().set("padding-left", "var(--lumo-space-m)");
-            this.getStyle().set("padding-right", "var(--lumo-space-m)");
+            this.getStyle().set("padding-left", "var(--lumo-space-s)");
+            this.getStyle().set("padding-right", "var(--lumo-space-s)");
 
         } catch (Exception e) {
             log.error("Error initializing ActiveSprints", e);
@@ -255,7 +255,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         searchField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         searchField.setId(ID_SEARCH_FIELD);
         searchField.setClearButtonVisible(true);
-        searchField.setLabel("Search");
+//        searchField.setLabel("Search");
         searchField.setPlaceholder("search board");
         searchField.setPrefixComponent(VaadinIcon.SEARCH.create());
         searchField.setValueChangeMode(ValueChangeMode.EAGER);
@@ -273,7 +273,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         userSelector = new MultiSelectComboBox<>();
         userSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
         userSelector.setId(ID_USER_SELECTOR);
-        userSelector.setLabel("User");
+//        userSelector.setLabel("User");
         userSelector.setItemLabelGenerator(User::getName);
         userSelector.setPlaceholder("Select users");
         userSelector.setWidth("300px");
@@ -301,7 +301,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         sprintSelector = new MultiSelectComboBox<>();
         sprintSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
         sprintSelector.setId(ID_SPRINT_SELECTOR);
-        sprintSelector.setLabel("Sprint");
+//        sprintSelector.setLabel("Sprint");
         sprintSelector.setItemLabelGenerator(Sprint::getName);
         sprintSelector.setPlaceholder("Select sprints");
         sprintSelector.setWidth("300px");
@@ -318,7 +318,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         groupingModeSelector = new ComboBox<>();
         groupingModeSelector.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
         groupingModeSelector.setId(ID_GROUPING_MODE_SELECTOR);
-        groupingModeSelector.setLabel("Group by");
+//        groupingModeSelector.setLabel("Group by");
         groupingModeSelector.setItems(GroupingMode.values());
         groupingModeSelector.setItemLabelGenerator(GroupingMode::getDisplayName);
         groupingModeSelector.setValue(GroupingMode.FEATURES); // Default to Features mode

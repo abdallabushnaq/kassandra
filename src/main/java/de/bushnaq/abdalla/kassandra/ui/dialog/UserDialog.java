@@ -44,12 +44,7 @@ import com.vaadin.flow.server.StreamResource;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
-import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
-import de.bushnaq.abdalla.kassandra.dto.Location;
-import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.dto.UserWorkWeek;
-import de.bushnaq.abdalla.kassandra.dto.WorkWeek;
-import lombok.extern.slf4j.Slf4j;
+import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.LocationApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
@@ -58,6 +53,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.focus_shift.jollyday.core.HolidayManager;
 import de.focus_shift.jollyday.core.ManagerParameters;
+import lombok.extern.slf4j.Slf4j;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;
@@ -87,38 +83,46 @@ public class UserDialog extends Dialog {
     public static final String                 USER_NAME_FIELD               = "user-name-field";
     public static final String                 USER_WORK_WEEK_COMBO          = "user-work-week-combo";
     private final       Image                  avatarPreview;
+    private final       AvatarService          avatarService;
     private final       AvatarUpdateRequest    avatarUpdateRequest;
     private final       Binder<User>           binder;
     private final       EmailField             emailField;
     private final       Span                   errorMessage;
     private final       DatePicker             firstWorkingDayPicker;
-    private             byte[]                 generatedImageBytes;
-    private             byte[]                 generatedImageBytesOriginal;
-    private             String                 generatedImagePrompt;
     private volatile    byte[]                 generatedDarkImageBytes;
     private volatile    byte[]                 generatedDarkImageBytesOriginal;
     private             String                 generatedDarkImagePrompt;
-    private             String                 generatedNegativePrompt;
     private             String                 generatedDarkNegativePrompt;
+    private             byte[]                 generatedImageBytes;
+    private             byte[]                 generatedImageBytesOriginal;
+    private             String                 generatedImagePrompt;
+    private             String                 generatedNegativePrompt;
     private final       Image                  headerAvatar;
     private final       boolean                isEditMode;
     private final       DatePicker             lastWorkingDayPicker;
     private final       LocationApi            locationApi;
-    /** ComboBox for country selection; only initialised in create mode (null in edit mode). */
+    /**
+     * ComboBox for country selection; only initialised in create mode (null in edit mode).
+     */
     private final       ComboBox<String>       locationCountryComboBox;
-    /** ComboBox for state/region selection; only initialised in create mode (null in edit mode). */
+    /**
+     * ComboBox for state/region selection; only initialised in create mode (null in edit mode).
+     */
     private final       ComboBox<String>       locationStateComboBox;
     private final       TextField              nameField;
     private final       Image                  nameFieldAvatar;
     private final       CheckboxGroup<String>  rolesCheckboxGroup;
-    /** Reference to the Save button so extra create-mode validations can toggle it. */
+    /**
+     * Reference to the Save button so extra create-mode validations can toggle it.
+     */
     private             Button                 saveButtonRef;
     private final       StableDiffusionService stableDiffusionService;
-    private final       AvatarService          avatarService;
     private final       User                   user;
     private final       UserApi                userApi;
     private final       UserWorkWeekApi        userWorkWeekApi;
-    /** ComboBox for selecting the initial work week; only initialised in create mode (null in edit mode). */
+    /**
+     * ComboBox for selecting the initial work week; only initialised in create mode (null in edit mode).
+     */
     private final       ComboBox<WorkWeek>     workWeekComboBox;
 
     /**
@@ -257,7 +261,7 @@ public class UserDialog extends Dialog {
             avatarPreview.setWidth("64px");
             avatarPreview.setHeight("64px");
             avatarPreview.getStyle()
-                    .set("border-radius", "var(--lumo-border-radius)")
+                    .set("border-radius", "4px")
                     .set("object-fit", "cover")
                     .set("border", "1px solid var(--lumo-contrast-20pct)");
             avatarPreview.setVisible(false);
@@ -477,6 +481,39 @@ public class UserDialog extends Dialog {
     // Validation helpers
     // -------------------------------------------------------------------------
 
+    private void handleGeneratedImage(GeneratedImageResult lightResult, GeneratedImageResult darkResult) {
+        generatedImageBytes         = lightResult.getResizedImage();
+        generatedImageBytesOriginal = lightResult.getOriginalImage();
+        generatedImagePrompt        = lightResult.getPrompt();
+        generatedNegativePrompt     = lightResult.getNegativePrompt();
+        generatedDarkNegativePrompt = darkResult != null ? darkResult.getNegativePrompt() : null;
+        if (darkResult != null) {
+            generatedDarkImageBytes         = darkResult.getResizedImage();
+            generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
+            generatedDarkImagePrompt        = darkResult.getPrompt();
+        }
+
+        // Update UI from callback (might be from async thread)
+        getUI().ifPresent(ui -> ui.access(() -> {
+            // Create StreamResource for the generated image
+            StreamResource resource = new StreamResource("user-avatar.png",
+                    () -> new ByteArrayInputStream(lightResult.getResizedImage()));
+
+            // Show preview
+            avatarPreview.setSrc(resource);
+            avatarPreview.setVisible(true);
+
+            // Update header icon and name field icon with StreamResource (works for both create and edit mode)
+            headerAvatar.setSrc(resource);
+            nameFieldAvatar.setSrc(resource);
+
+            Notification.show("Avatar set successfully", 3000, Notification.Position.BOTTOM_END);
+
+            // Push the UI update
+            ui.push();
+        }));
+    }
+
     /**
      * Returns {@code true} when the Save button should be enabled.
      * In create mode this requires the binder to be valid AND both the location and work-week
@@ -489,9 +526,47 @@ public class UserDialog extends Dialog {
         if (!isEditMode) {
             if (workWeekComboBox != null && workWeekComboBox.getValue() == null) return false;
             if (locationCountryComboBox != null && locationCountryComboBox.getValue() == null) return false;
-            if (locationStateComboBox != null && locationStateComboBox.getValue() == null) return false;
+            return locationStateComboBox == null || locationStateComboBox.getValue() != null;
         }
         return true;
+    }
+
+    private void openImagePromptDialog() {
+        // Use stored prompt if available, otherwise generate default prompt
+        String defaultPrompt;
+        if (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarPrompt() != null && !avatarUpdateRequest.getLightAvatarPrompt().isEmpty()) {
+            defaultPrompt = avatarUpdateRequest.getLightAvatarPrompt();
+        } else {
+            defaultPrompt = User.getDefaultLightAvatarPrompt(nameField.getValue());
+        }
+
+        String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
+                ? avatarUpdateRequest.getDarkAvatarPrompt()
+                : User.getDefaultDarkAvatarPrompt(nameField.getValue());
+
+        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarNegativePrompt() != null && !avatarUpdateRequest.getLightAvatarNegativePrompt().isEmpty())
+                ? avatarUpdateRequest.getLightAvatarNegativePrompt()
+                : User.getDefaultLightAvatarNegativePrompt();
+
+        String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
+                ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
+                : User.getDefaultDarkAvatarNegativePrompt();
+
+        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarImageOriginal() != null && avatarUpdateRequest.getLightAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getLightAvatarImageOriginal() : null;
+        byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
+        ImagePromptDialog imageDialog = new ImagePromptDialog(
+                avatarService,
+                stableDiffusionService,
+                defaultPrompt,
+                "user",
+                this::handleGeneratedImage,
+                initialImage,
+                initialDarkImage,
+                defaultDarkPrompt,
+                defaultNegativePrompt,
+                defaultDarkNegativePrompt
+        );
+        imageDialog.open();
     }
 
     /**
@@ -565,76 +640,6 @@ public class UserDialog extends Dialog {
         }
     }
 
-    private void handleGeneratedImage(GeneratedImageResult lightResult, GeneratedImageResult darkResult) {        generatedImageBytes         = lightResult.getResizedImage();
-        generatedImageBytesOriginal = lightResult.getOriginalImage();
-        generatedImagePrompt        = lightResult.getPrompt();
-        generatedNegativePrompt     = lightResult.getNegativePrompt();
-        generatedDarkNegativePrompt = darkResult != null ? darkResult.getNegativePrompt() : null;
-        if (darkResult != null) {
-            generatedDarkImageBytes         = darkResult.getResizedImage();
-            generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
-            generatedDarkImagePrompt        = darkResult.getPrompt();
-        }
-
-        // Update UI from callback (might be from async thread)
-        getUI().ifPresent(ui -> ui.access(() -> {
-            // Create StreamResource for the generated image
-            StreamResource resource = new StreamResource("user-avatar.png",
-                    () -> new ByteArrayInputStream(lightResult.getResizedImage()));
-
-            // Show preview
-            avatarPreview.setSrc(resource);
-            avatarPreview.setVisible(true);
-
-            // Update header icon and name field icon with StreamResource (works for both create and edit mode)
-            headerAvatar.setSrc(resource);
-            nameFieldAvatar.setSrc(resource);
-
-            Notification.show("Avatar set successfully", 3000, Notification.Position.BOTTOM_END);
-
-            // Push the UI update
-            ui.push();
-        }));
-    }
-
-    private void openImagePromptDialog() {
-        // Use stored prompt if available, otherwise generate default prompt
-        String defaultPrompt;
-        if (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarPrompt() != null && !avatarUpdateRequest.getLightAvatarPrompt().isEmpty()) {
-            defaultPrompt = avatarUpdateRequest.getLightAvatarPrompt();
-        } else {
-            defaultPrompt = User.getDefaultLightAvatarPrompt(nameField.getValue());
-        }
-
-        String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
-                ? avatarUpdateRequest.getDarkAvatarPrompt()
-                : User.getDefaultDarkAvatarPrompt(nameField.getValue());
-
-        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarNegativePrompt() != null && !avatarUpdateRequest.getLightAvatarNegativePrompt().isEmpty())
-                ? avatarUpdateRequest.getLightAvatarNegativePrompt()
-                : User.getDefaultLightAvatarNegativePrompt();
-
-        String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
-                ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
-                : User.getDefaultDarkAvatarNegativePrompt();
-
-        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarImageOriginal() != null && avatarUpdateRequest.getLightAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getLightAvatarImageOriginal() : null;
-        byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
-        ImagePromptDialog imageDialog = new ImagePromptDialog(
-                avatarService,
-                stableDiffusionService,
-                defaultPrompt,
-                "user",
-                this::handleGeneratedImage,
-                initialImage,
-                initialDarkImage,
-                defaultDarkPrompt,
-                defaultNegativePrompt,
-                defaultDarkNegativePrompt
-        );
-        imageDialog.open();
-    }
-
     private void save() {
         // Clear any previous error messages
         VaadinUtil.hideDialogError(errorMessage);
@@ -657,7 +662,7 @@ public class UserDialog extends Dialog {
         }
         userToSave.setRoleList(selectedRoles);
 
-                // Validate work week selection in create mode
+        // Validate work week selection in create mode
         if (!isEditMode) {
             if (workWeekComboBox.getValue() == null) {
                 workWeekComboBox.setInvalid(true);

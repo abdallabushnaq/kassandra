@@ -73,9 +73,9 @@ public class TaskCard extends Div {
     /**
      * Constructs a TaskCard with separate handlers for the card body and the task title.
      *
-     * @param task               the task to display
-     * @param userMap            map of user IDs to User objects for avatar display
-     * @param onClickHandler     handler invoked when the card body (outside the title) is clicked; may be {@code null}
+     * @param task                the task to display
+     * @param userMap             map of user IDs to User objects for avatar display
+     * @param onClickHandler      handler invoked when the card body (outside the title) is clicked; may be {@code null}
      * @param onTitleClickHandler handler invoked when the task title is clicked; may be {@code null}
      */
     public TaskCard(Task task, Map<Long, User> userMap, Runnable onClickHandler, Runnable onTitleClickHandler) {
@@ -122,7 +122,7 @@ public class TaskCard extends Div {
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("border-left", "4px solid " + userColor) // 4px colored left border
                 .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("padding", "var(--lumo-space-s)")
+                .set("padding", "var(--lumo-space-xs) var(--lumo-space-s)") // reduced vertical padding
                 .set("cursor", "grab")
                 .set("box-shadow", "var(--lumo-box-shadow-xs)")
                 .set("transition", "all 0.2s ease")
@@ -145,16 +145,18 @@ public class TaskCard extends Div {
     private void createCardContent() {
         VerticalLayout content = new VerticalLayout();
         content.setPadding(false);
-        content.setSpacing(true);
+        content.setSpacing(false); // remove gap between top/bottom rows
+        content.getStyle().set("gap", "var(--lumo-space-xs)"); // tight 4 px gap instead
         content.setWidthFull();
 
         // Top row: Task title (left) and assigned user (right)
         HorizontalLayout topRow = new HorizontalLayout();
         topRow.setWidthFull();
         topRow.setJustifyContentMode(HorizontalLayout.JustifyContentMode.BETWEEN);
-        topRow.setAlignItems(HorizontalLayout.Alignment.START);
+        topRow.setAlignItems(HorizontalLayout.Alignment.CENTER);
         topRow.setPadding(false);
         topRow.setSpacing(true);
+        topRow.getStyle().set("min-height", "0"); // prevent Lumo's default row min-height
 
         Span title = new Span(task.getName());
         title.addClassName("task-card-title");
@@ -180,9 +182,10 @@ public class TaskCard extends Div {
         HorizontalLayout bottomRow = new HorizontalLayout();
         bottomRow.setWidthFull();
         bottomRow.setJustifyContentMode(HorizontalLayout.JustifyContentMode.BETWEEN);
-        bottomRow.setAlignItems(HorizontalLayout.Alignment.END);
+        bottomRow.setAlignItems(HorizontalLayout.Alignment.CENTER);
         bottomRow.setPadding(false);
         bottomRow.setSpacing(true);
+        bottomRow.getStyle().set("min-height", "0"); // prevent Lumo's default row min-height
 
         Span taskKey = new Span(formatTaskKey(task));
         taskKey.addClassName("task-card-key");

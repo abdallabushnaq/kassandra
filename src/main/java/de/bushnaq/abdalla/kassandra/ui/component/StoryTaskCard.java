@@ -47,8 +47,8 @@ public class StoryTaskCard extends VerticalLayout {
 
     private final List<Task>                   childTasks;
     private final Consumer<Task>               onTaskClick;
-    private final Consumer<Task>               onTaskTitleClick;
     private final BiConsumer<Task, TaskStatus> onTaskStatusChange;
+    private final Consumer<Task>               onTaskTitleClick;
     private final boolean                      showSimplifiedHeader;
     private final Task                         story;
     private final Map<Long, User>              userMap;
@@ -56,10 +56,10 @@ public class StoryTaskCard extends VerticalLayout {
     /**
      * Constructs a StoryTaskCard without click handlers.
      *
-     * @param story               the parent story task
-     * @param childTasks          the child tasks to display
-     * @param userMap             user map for avatar display
-     * @param onTaskStatusChange  callback invoked when a task is dropped into a new status lane
+     * @param story                the parent story task
+     * @param childTasks           the child tasks to display
+     * @param userMap              user map for avatar display
+     * @param onTaskStatusChange   callback invoked when a task is dropped into a new status lane
      * @param showSimplifiedHeader {@code true} to show a compact story header
      */
     public StoryTaskCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
@@ -70,12 +70,12 @@ public class StoryTaskCard extends VerticalLayout {
     /**
      * Constructs a StoryTaskCard with a card-body click handler.
      *
-     * @param story               the parent story task
-     * @param childTasks          the child tasks to display
-     * @param userMap             user map for avatar display
-     * @param onTaskStatusChange  callback invoked when a task is dropped into a new status lane
+     * @param story                the parent story task
+     * @param childTasks           the child tasks to display
+     * @param userMap              user map for avatar display
+     * @param onTaskStatusChange   callback invoked when a task is dropped into a new status lane
      * @param showSimplifiedHeader {@code true} to show a compact story header
-     * @param onTaskClick         handler invoked when a task card body is clicked; may be {@code null}
+     * @param onTaskClick          handler invoked when a task card body is clicked; may be {@code null}
      */
     public StoryTaskCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
                          BiConsumer<Task, TaskStatus> onTaskStatusChange, boolean showSimplifiedHeader,
@@ -86,13 +86,13 @@ public class StoryTaskCard extends VerticalLayout {
     /**
      * Constructs a StoryTaskCard with separate card-body and title click handlers.
      *
-     * @param story               the parent story task
-     * @param childTasks          the child tasks to display
-     * @param userMap             user map for avatar display
-     * @param onTaskStatusChange  callback invoked when a task is dropped into a new status lane
+     * @param story                the parent story task
+     * @param childTasks           the child tasks to display
+     * @param userMap              user map for avatar display
+     * @param onTaskStatusChange   callback invoked when a task is dropped into a new status lane
      * @param showSimplifiedHeader {@code true} to show a compact story header
-     * @param onTaskClick         handler invoked when a task card body is clicked; may be {@code null}
-     * @param onTaskTitleClick    handler invoked when the task title is clicked; may be {@code null}
+     * @param onTaskClick          handler invoked when a task card body is clicked; may be {@code null}
+     * @param onTaskTitleClick     handler invoked when the task title is clicked; may be {@code null}
      */
     public StoryTaskCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
                          BiConsumer<Task, TaskStatus> onTaskStatusChange, boolean showSimplifiedHeader,
@@ -121,7 +121,7 @@ public class StoryTaskCard extends VerticalLayout {
         containerBox.getStyle()
                 .set("background", "var(--lumo-contrast-5pct)") // Lighter gray background for subtle appearance
                 .set("border", "1px solid var(--lumo-contrast-20pct)") // Subtle border for definition
-                .set("border-radius", "8px") // Rounded edges
+                .set("border-radius", "4px") // Rounded edges
                 .set("padding", "8px") // Padding inside the box
                 .set("margin-bottom", "6px") // 6px margin to bottom
                 .set("box-sizing", "border-box")
@@ -216,7 +216,7 @@ public class StoryTaskCard extends VerticalLayout {
         storyCard.getStyle()
                 .set("background", "var(--lumo-base-color)")
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
+                .set("border-radius", "4px")
                 .set("padding", "var(--lumo-space-s)")
                 .set("box-shadow", "var(--lumo-box-shadow-xs)")
                 .set("margin-bottom", "2px")
