@@ -247,7 +247,8 @@ public class Task implements Comparable<Task> {
      * @param worklog the work log entry to add
      */
     public void addWorklog(Worklog worklog) {
-        worklog.setTaskId(id);
+        addTimeSpent(worklog.getTimeSpent());
+        recalculate();
         worklogs.add(worklog);
     }
 

@@ -335,7 +335,7 @@ public class WorklogDialog extends Dialog {
     /**
      * Persists a new worklog and updates the task.
      *
-     * @param timeSpent    parsed time spent duration
+     * @param timeSpent     parsed time spent duration
      * @param timeRemaining parsed time remaining duration, or {@code null} if not specified
      * @param startDateTime the log date/time
      */
@@ -353,9 +353,10 @@ public class WorklogDialog extends Dialog {
         // Save via API
         Worklog savedWorklog = worklogApi.persist(worklog);
 
-        task.addTimeSpent(savedWorklog.getTimeSpent());
+        task.addWorklog(savedWorklog);
+//        task.addTimeSpent(savedWorklog.getTimeSpent());
         task.setRemainingEstimate(timeRemaining);
-        task.recalculate();
+//        task.recalculate();
         taskApi.update(task);
 
         if (timeRemaining != null) {

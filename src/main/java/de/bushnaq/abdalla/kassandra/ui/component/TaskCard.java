@@ -25,6 +25,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.util.ColorUtil;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -44,12 +45,15 @@ import java.util.Map;
 @Slf4j
 public class TaskCard extends Div {
 
-    /** ID prefix for the task-title span; append the task ID to get the full element ID. */
-    public static final  String            TASK_CARD_TITLE_ID_PREFIX = "task-card-title-";
-    private final        Runnable          onClickHandler;
-    private final        Runnable          onTitleClickHandler;
-    private final        Task              task;
-    private final        Map<Long, User>   userMap;
+    /**
+     * ID prefix for the task-title span; append the task ID to get the full element ID.
+     */
+    public static final String          TASK_CARD_TITLE_ID_PREFIX = "task-card-title-";
+    private final       Runnable        onClickHandler;
+    private final       Runnable        onTitleClickHandler;
+    @Getter
+    private final       Task            task;
+    private final       Map<Long, User> userMap;
 
     /**
      * Constructs a TaskCard with no click handlers.
@@ -275,10 +279,6 @@ public class TaskCard extends Div {
         unassigned.getStyle().set("color", "var(--lumo-secondary-text-color)");
         unassigned.getStyle().set("white-space", "nowrap");
         return unassigned;
-    }
-
-    public Task getTask() {
-        return task;
     }
 
     /**
