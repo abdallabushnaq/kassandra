@@ -17,6 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.Svg;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -24,16 +28,20 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
+import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
+import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
@@ -48,18 +56,25 @@ import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.SprintDialog;
+import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Route(value = "sprint-list", layout = MainLayout.class)
@@ -87,11 +102,20 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     private final        ChatAgentPanel               chatAgentPanel;
     private final        Div                          chatPane;
     private final        Clock                        clock;
+    /** Application context – injected by Spring after the constructor runs; used for chart rendering. */
+    @Autowired
+    protected            Context                      context;
     private final        FeatureApi                   featureApi;
     private              Long                         featureId;
     private final        Map<Long, Feature>           featureMap                       = new HashMap<>();
     private final        MultiSelectComboBox<Feature> featureSelector;
     private              boolean                      isRestoringFromUrl               = false;
+    /** Container for the SprintsOverviewChart SVG placed above the sprint list. */
+    private final        Div                          overviewChartContainer;
+    /** In-flight async overview-chart generation; cancelled if a newer refresh arrives. */
+    private              CompletableFuture<Void>      overviewChartGenerationFuture;
+    /** Registration for the ThemeChangedEvent listener that re-renders the overview chart. */
+    private              Registration                 overviewThemeChangedRegistration;
     private final        ProductApi                   productApi;
     private              Long                         productId;
     private final        Map<Long, Product>           productMap                       = new HashMap<>();
@@ -169,6 +193,15 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 .set("height", "100%").set("overflow", "hidden")
                 .set("transition", "width 0.3s ease, opacity 0.3s ease")
                 .set("width", "0").set("opacity", "0").set("min-width", "0");
+
+        // Overview chart sits above the sprint-list / AI split layout
+        overviewChartContainer = new Div();
+        overviewChartContainer.getStyle()
+                .set("overflow-x", "auto")
+                .set("flex-shrink", "0")  // Prevent flex compression so the full SVG height is always shown
+                .set("width", "100%")
+                .set("margin-bottom", "var(--lumo-space-xs)");
+        add(overviewChartContainer);
 
         bodySplit = new SplitLayout(getGridPanelWrapper(), chatPane);
         bodySplit.setOrientation(SplitLayout.Orientation.HORIZONTAL);
@@ -518,6 +551,125 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     }
 
     /**
+     * Generates the SprintsOverviewChart asynchronously and places the resulting SVG in
+     * {@code overviewChartContainer}.  The chart always shows <em>all</em> sprints
+     * (i.e. {@code allSprints}), not just the ones currently visible in the table.
+     * <p>
+     * Sprints without a valid start or end date are filtered out before the chart is
+     * created, because the renderer requires every sprint to have both dates.  If no
+     * sprints with valid dates exist the container is simply cleared.
+     * </p>
+     */
+    private void generateOverviewChart() {
+        // Pre-filter to sprints that have both start and end (required by the renderer).
+        List<Sprint> chartSprints = allSprints.stream()
+                .filter(s -> s.getStart() != null && s.getEnd() != null)
+                .collect(Collectors.toList());
+
+        if (chartSprints.isEmpty()) {
+            overviewChartContainer.removeAll();
+            return;
+        }
+
+        // Capture the current theme on the UI thread before going async.
+        context.syncTheme();
+
+        // Cancel any previous in-flight generation.
+        if (overviewChartGenerationFuture != null && !overviewChartGenerationFuture.isDone()) {
+            overviewChartGenerationFuture.cancel(true);
+            log.debug("Cancelled previous sprints overview chart generation");
+        }
+
+        // Show a loading indicator while the chart renders in the background.
+        overviewChartContainer.removeAll();
+        ProgressBar progressBar = new ProgressBar();
+        progressBar.setIndeterminate(true);
+        progressBar.setWidth("300px");
+
+        Span loadingText = new Span("Generating sprints overview...");
+        loadingText.getStyle()
+                .set("margin-right", "var(--lumo-space-xs)")
+                .set("font-style", "italic")
+                .set("color", "var(--lumo-secondary-text-color)");
+
+        Div loadingContainer = new Div(loadingText, progressBar);
+        loadingContainer.getStyle()
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("padding", "var(--lumo-space-m)");
+        overviewChartContainer.add(loadingContainer);
+
+        UI             ui              = UI.getCurrent();
+        Authentication authentication  = SecurityContextHolder.getContext().getAuthentication();
+        List<Sprint>   sprintsSnapshot = new ArrayList<>(chartSprints);
+
+        overviewChartGenerationFuture = CompletableFuture.supplyAsync(() -> {
+            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
+            ctx.setAuthentication(authentication);
+            SecurityContextHolder.setContext(ctx);
+            try {
+                Svg svg = new Svg();
+                RenderUtil.generateSprintsOverviewChartSvg(context, sprintsSnapshot, svg);
+                return svg;
+            } catch (Exception e) {
+                throw new RuntimeException("Error generating sprints overview chart", e);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        }).thenAccept(svg -> {
+            ui.access(() -> {
+                overviewChartContainer.removeAll();
+                svg.getStyle()
+                        .set("max-width", "100%")
+                        .set("height", "auto")
+                        .set("display", "block");
+                overviewChartContainer.add(svg);
+                ui.push();
+            });
+        }).exceptionally(ex -> {
+            log.error("Error generating sprints overview chart: {}", ex.getMessage(), ex);
+            ui.access(() -> {
+                overviewChartContainer.removeAll();
+                Span errorMsg = new Span("Could not render sprints overview: " + ex.getMessage());
+                errorMsg.getStyle().set("color", "var(--lumo-error-color)");
+                overviewChartContainer.add(errorMsg);
+                ui.push();
+            });
+            return null;
+        });
+    }
+
+    /**
+     * Subscribes to {@link ThemeChangedEvent} so the SprintsOverviewChart is re-generated
+     * in the new theme.  Calls {@code super.onAttach()} to preserve the data-provider
+     * refresh that {@link AbstractMainGrid} registers for the same event.
+     *
+     * @param attachEvent the attach event
+     */
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        overviewThemeChangedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class,
+                e -> generateOverviewChart());
+    }
+
+    /**
+     * Removes the {@link ThemeChangedEvent} subscription for the overview chart to prevent
+     * memory leaks.  Calls {@code super.onDetach()} to preserve the base-class cleanup.
+     *
+     * @param detachEvent the detach event
+     */
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (overviewThemeChangedRegistration != null) {
+            overviewThemeChangedRegistration.remove();
+            overviewThemeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
+    }
+
+    /**
      * Reloads sprints from the API, refreshes the feature ComboBox item list while
      * preserving (or initially setting) the current selection, then re-applies
      * the grid filter.
@@ -607,6 +759,9 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         getDataProvider().refreshAll();
         getGrid().getDataProvider().refreshAll();
         getUI().ifPresent(ui -> ui.push());
+
+        // Generate or refresh the overview chart after the grid is updated
+        generateOverviewChart();
     }
 
     /**

@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
+import de.bushnaq.abdalla.kassandra.report.overview.SprintsOverviewChart;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import org.slf4j.Logger;
@@ -36,9 +37,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RenderUtil {
-    public static final String BURNDOWN_CHART = "burndown-chart";
-    public static final String GANTT_CHART    = "gantt-chart";
-    final static        Logger logger         = LoggerFactory.getLogger(RenderUtil.class);
+    public static final String BURNDOWN_CHART        = "burndown-chart";
+    public static final String GANTT_CHART           = "gantt-chart";
+    public static final String SPRINTS_OVERVIEW_CHART = "sprints-overview-chart";
+    final static        Logger logger                = LoggerFactory.getLogger(RenderUtil.class);
 
     private static RenderDao createRenderDao(Context context, Sprint sprint, String column, LocalDateTime now, int chartWidth, int chartHeight, String link) {
         RenderDao dao = new RenderDao();
@@ -167,6 +169,60 @@ public class RenderUtil {
             svg.setSvg(svgString);
         } catch (Exception e) {
             logger.error("Error creating gantt chart", e);
+        }
+    }
+
+    /**
+     * Generates a SprintsOverviewChart SVG for the provided sprint list and updates the given Svg component.
+     * Only sprints with non-null start and end dates are included; sprints without dates are silently skipped.
+     *
+     * @param context the application context (must have its theme synchronised before calling from a background thread)
+     * @param sprints the list of sprints to display; must contain at least one sprint with valid start/end dates
+     * @param svg     the Svg component to populate with the rendered chart
+     * @throws Exception if an error occurs during chart generation
+     */
+    public static void generateSprintsOverviewChartSvg(Context context, List<Sprint> sprints, Svg svg) throws Exception {
+        SprintsOverviewChart chart = new SprintsOverviewChart(
+                context, "", "/", "sprints-overview", null,
+                ParameterOptions.getLocalNow(), sprints,
+                1887, 1000, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+        renderSvg(chart, svg);
+        svg.setId(SPRINTS_OVERVIEW_CHART);
+    }
+
+    /**
+     * Renders a SprintsOverviewChart to a ByteArrayOutputStream.
+     *
+     * @param chart the SprintsOverviewChart to render
+     * @return ByteArrayOutputStream containing the rendered chart
+     */
+    private static ByteArrayOutputStream render(SprintsOverviewChart chart) {
+        ByteArrayOutputStream o = new ByteArrayOutputStream(64 * 1024);
+        try {
+            chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), o);
+            return o;
+        } catch (Exception e) {
+            try {
+                o.close();
+            } catch (Exception closeException) {
+                logger.warn("Failed to close output stream", closeException);
+            }
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Renders a SprintsOverviewChart to a Svg component.
+     *
+     * @param chart the SprintsOverviewChart to render
+     * @param svg   the Svg component to update
+     */
+    private static void renderSvg(SprintsOverviewChart chart, Svg svg) {
+        try (ByteArrayOutputStream outputStream = render(chart)) {
+            String svgString = outputStream.toString(StandardCharsets.UTF_8);
+            svg.setSvg(svgString);
+        } catch (Exception e) {
+            logger.error("Error creating sprints overview chart", e);
         }
     }
 
