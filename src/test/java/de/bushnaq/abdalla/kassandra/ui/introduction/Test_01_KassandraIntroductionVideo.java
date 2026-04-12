@@ -123,7 +123,7 @@ public class Test_01_KassandraIntroductionVideo extends AbstractIntroductionVide
     static void beforeAll() {
         StableDiffusionService.setEnabled(true);
         video.setVersion(2);
-        video.setTitle("10 Welcome to Kassandra");
+        video.setTitle("01 Welcome to Kassandra");
         video.setDescription(
                 "A complete overview of Kassandra — the open-source self-hosted project management server. "
                         + "Covering products, users, sprint planning, progress tracking, monitoring, and the AI agent.");

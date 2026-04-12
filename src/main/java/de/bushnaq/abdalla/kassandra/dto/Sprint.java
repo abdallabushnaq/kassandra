@@ -301,6 +301,10 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
         return userMap.get(resourceId);
     }
 
+    public boolean hasValidGanttChart() {
+        return getStart() != null && getEnd() != null;
+    }
+
     public void initTaskMap(List<Task> tasks, List<Worklog> worklogs) {
         this.worklogs = worklogs;
         taskMap.clear();

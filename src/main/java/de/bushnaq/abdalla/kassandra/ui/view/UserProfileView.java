@@ -50,7 +50,6 @@ import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
-import de.bushnaq.abdalla.kassandra.ui.component.UserProfileChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.http.HttpStatus;
@@ -494,11 +493,6 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
             Notification notification = Notification.show("Profile updated successfully", 3000, Notification.Position.MIDDLE);
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-            // Notify other components (e.g. MainLayout header) that the profile has changed
-            com.vaadin.flow.component.ComponentUtil.fireEvent(UI.getCurrent(), new UserProfileChangedEvent(UI.getCurrent()));
-
-            // Refresh the view to show updated data
-            initializeView();
         } catch (Exception ex) {
             Notification notification = Notification.show("Failed to update profile: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
             notification.addThemeVariants(NotificationVariant.LUMO_ERROR);

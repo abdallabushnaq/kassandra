@@ -27,6 +27,7 @@ import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
+import de.bushnaq.abdalla.kassandra.report.overview.SprintsOverviewChart;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -37,6 +38,8 @@ import org.junit.jupiter.api.TestInfo;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class GanttGenerator extends MPXJGenerator {
@@ -111,6 +114,29 @@ public class GanttGenerator extends MPXJGenerator {
         GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
 //        String     description = testCaseInfo.getDisplayName().replace("_", "-");
         String description = TestInfoUtil.getTestMethodName(testInfo);
+        chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
+    }
+
+    public void generateOverviewChart(TestInfo testInfo, Long sprintId, String testFolder) throws Exception {
+        Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
+        sprint.initialize();
+        sprint.initUserMap(users);
+        sprint.initTaskMap(tasks, worklogs);
+        sprint.recalculate(ParameterOptions.getLocalNow());
+
+        List<Sprint> sprintList = new ArrayList<>();
+        sprintList.add(sprint);
+
+        Context context = new Context(null);
+        context.parameters.setTheme(testTheme);
+        String sprintName;
+        if (testInfo.getDisplayName().indexOf('=') != -1) {
+            sprintName = testInfo.getDisplayName().substring(testInfo.getDisplayName().indexOf('"') + 1, testInfo.getDisplayName().lastIndexOf('"')) + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-overview-chart";
+        } else {
+            sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-overview-chart";
+        }
+        SprintsOverviewChart chart       = new SprintsOverviewChart(context, "", "/", sprintName, null, ParameterOptions.getLocalNow(), sprintList, 1887, 1000, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+        String               description = TestInfoUtil.getTestMethodName(testInfo);
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
     }
 

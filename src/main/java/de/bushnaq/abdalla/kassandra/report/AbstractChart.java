@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.report;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.report.dao.CaptionElement;
 import de.bushnaq.abdalla.kassandra.report.dao.FooterElement;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
@@ -25,7 +26,6 @@ import de.bushnaq.abdalla.util.Util;
 import lombok.Getter;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +39,7 @@ public abstract class AbstractChart extends AbstractCanvas {
     public AbstractChart(String caption, String projectRequestKey, String relateCssPath, String column, String imageName/*, String mapName*/, String link, String cssClass, Theme theme) throws IOException {
         super(column, imageName/*, mapName*/, link, cssClass, theme);
         captionElement = new CaptionElement(caption, relateCssPath, theme);
-        footerElement  = new FooterElement(Util.generateCopyrightString(LocalDateTime.now()), projectRequestKey, theme);
+        footerElement  = new FooterElement(Util.generateCopyrightString(ParameterOptions.getLocalNow()), projectRequestKey, theme);
 //        this.mapName   = mapName;
     }
 
