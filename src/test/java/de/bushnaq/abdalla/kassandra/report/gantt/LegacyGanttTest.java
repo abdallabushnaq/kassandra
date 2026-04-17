@@ -56,7 +56,6 @@ import static de.bushnaq.abdalla.kassandra.util.NameGenerator.PROJECT_HUB_ORG;
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-//@Transactional
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Deprecated
@@ -209,7 +208,7 @@ public class LegacyGanttTest extends AbstractLegacyGanttTestUtil {
                 readSprint.initialize();
                 readSprint.initUserMap(userApi.getAll(readSprint.getId()));
                 readSprint.initTaskMap(taskApi.getAll(readSprint.getId()), worklogApi.getAll(readSprint.getId()));
-                levelResources(testInfo, readSprint, projectFile);
+                levelResourcesAndPersist(testInfo, readSprint, projectFile);
                 ParameterOptions.setNow(ParameterOptions.getNow().plusDays(TestInfoUtil.getDaysAfterStart(testInfo)));
                 generateWorklogs(readSprint, ParameterOptions.getLocalNow());
                 initializeInstances();//reload from db for our test comparison

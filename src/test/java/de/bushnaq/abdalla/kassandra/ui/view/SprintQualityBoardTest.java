@@ -96,7 +96,7 @@ public class SprintQualityBoardTest extends AbstractKeycloakUiTestUtil {
             Task   feature     = addParentTask(featureName, sprint, null, startMilestone);
             for (int t = 0; t < numberOfTasks; t++) {
                 User   user     = expectedUsers.stream().toList().get(random.nextInt(numberOfUsers));
-                String duration = String.format("%dd", random.nextInt(randomCase.getMaxDurationDays()) + 1);
+                String duration = String.format("%dd", random.nextInt(randomCase.getMaxTaskDurationDays()) + 1);
                 String workName = NameGenerator.generateWorkName(featureName, t);
                 addTask(workName, duration, null, user, sprint, feature, null);
             }
@@ -125,7 +125,7 @@ public class SprintQualityBoardTest extends AbstractKeycloakUiTestUtil {
         sprint.initUserMap(userApi.getAll(sprint.getId()));
         sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
 
-        levelResources(testInfo, sprint, null);
+        levelResourcesAndPersist(testInfo, sprint, null);
         generateWorklogs(sprint, ParameterOptions.getLocalNow());
 //        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         productListViewTester.switchToProductListViewWithOidc(

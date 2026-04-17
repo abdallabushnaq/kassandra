@@ -70,8 +70,6 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-//@Transactional
-//@Testcontainers
 @Slf4j
 public class Test_09_ProductsVersionsFeaturesAndSprintsIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;

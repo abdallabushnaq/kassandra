@@ -59,147 +59,124 @@ import java.util.Objects;
 @ToString(callSuper = false)
 public class Task implements Comparable<Task> {
 
+    public static final String         DELIVERY_BUFFER   = "Delivery buffer (from critical path tasks)";
     /**
      * List of child tasks in the task hierarchy. ONly used for Stories
      */
     @JsonIgnore
-    private List<Task> childTasks = new ArrayList<>();
-
+    private             List<Task>     childTasks        = new ArrayList<>();
     /**
      * Indicates whether this task is on the critical path of the project.
      */
-    private boolean critical = false;
-
+    private             boolean        critical          = false;
     /**
      * The total duration of the task. Depends on the min estimate and the availability of the assigned resource.
      */
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
-    private Duration duration;
-
+    private             Duration       duration;
     /**
      * The scheduled finish date and time of the task.
      */
-    private LocalDateTime finish;
-
+    private             LocalDateTime  finish;
     /**
      * The unique identifier of the task. Unique within all tasks of the server.
      */
-    private Long id;
-
+    private             Long           id;
     /**
      * Indicates whether this task should be included in cost calculations.
      */
-    private boolean impactOnCost = true;
-
+    private             boolean        impactOnCost      = true;
     /**
      * The maximum estimated person days for the task.
      */
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
-    private Duration maxEstimate = Duration.ZERO;
-
+    private             Duration       maxEstimate       = Duration.ZERO;
     /**
      * Indicates whether this task is a milestone.
      */
-    private boolean milestone;
-
+    private             boolean        milestone;
     /**
      * The minimum estimated person days for the task.
      */
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
-    private Duration minEstimate = Duration.ZERO;
-
+    private             Duration       minEstimate       = Duration.ZERO;
     /**
      * The name of the task.
      */
-    private String name;
-
+    private             String         name;
     /**
      * Additional notes or comments about the task.
      */
-    private String notes;
-
+    private             String         notes;
     /**
      * Zeero based order identifier for sorting tasks. Only unique within one sprint.
      */
-    private Integer orderId = -1;
-
+    private             Integer        orderId           = -1;
     /**
      * Reference to the parent task in the hierarchy. Parent tasks are always Stories.
      */
     @JsonIgnore
     @ToString.Exclude//help intellij debugger not to go into a loop
-    private Task parentTask;
-
+    private             Task           parentTask;
     /**
      * The ID of the parent task. Parent tasks are always Stories.
      */
-    private Long parentTaskId;
-
+    private             Long           parentTaskId;
     /**
      * List of predecessor tasks that this task depends on. This task can only start when all predecessors are completed.
      */
-    private List<Relation> predecessors = new ArrayList<>();
-
+    private             List<Relation> predecessors      = new ArrayList<>();
     /**
      * The completion progress of the task (0-1).
      */
-    private Number progress = 0;
-
+    private             Number         progress          = 0;
     /**
      * The estimated person days remaining to complete the task.
      */
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
-    private Duration remainingEstimate = Duration.ZERO;
-
+    private             Duration       remainingEstimate = Duration.ZERO;
     /**
      * The ID of the resource (user) assigned to this task. Only one resource can be assigned to a task.
      */
-    private Long resourceId;
-
+    private             Long           resourceId;
     /**
      * Reference to the sprint this task belongs to.
      */
     @JsonIgnore
     @ToString.Exclude//help intellij debugger not to go into a loop
-    private Sprint sprint;
-
+    private             Sprint         sprint;
     /**
      * The ID of the sprint this task belongs to.
      */
-    private Long sprintId;
-
+    private             Long           sprintId;
     /**
      * The scheduled start date and time of the task.
      */
-    private LocalDateTime start;
-
+    private             LocalDateTime  start;
     /**
      * The scheduling mode of the task (auto-scheduled or manually scheduled). Only milestones can be manually scheduled.
      */
-    private TaskMode taskMode = TaskMode.AUTO_SCHEDULED;
-
+    private             TaskMode       taskMode          = TaskMode.AUTO_SCHEDULED;
     /**
      * The status of the task in the Scrum board workflow (TODO, IN_PROGRESS, DONE).
      * For stories, this is calculated from child task statuses.
      */
-    private TaskStatus taskStatus = TaskStatus.TODO;
-
+    private             TaskStatus     taskStatus        = TaskStatus.TODO;
     /**
      * The total person days already spent on this task.
      */
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
-    private Duration timeSpent = Duration.ZERO;
-
+    private             Duration       timeSpent         = Duration.ZERO;
     /**
      * List of work log entries recording time spent on this task. Worklogs represent time a resource spent on this task at one time.
      */
     @JsonIgnore
-    private List<Worklog> worklogs = new ArrayList<>();
+    private             List<Worklog>  worklogs          = new ArrayList<>();
 
     /**
      * Adds a child task to this task's hierarchy.
@@ -449,6 +426,15 @@ public class Task implements Comparable<Task> {
     public void initialize() {
     }
 
+    @JsonIgnore
+    public boolean isAllChildTasksDone() {
+        for (Task task : getChildTasks()) {
+            if (task.getTaskStatus() != TaskStatus.DONE)
+                return false;
+        }
+        return true;
+    }
+
     /**
      * Checks if we are an ancestor of the given task in the task hierarchy.
      * A task considered its own ancestor.
@@ -464,6 +450,11 @@ public class Task implements Comparable<Task> {
                 return true;
         }
         return false;
+    }
+
+    @JsonIgnore
+    public boolean isDeliveryBufferTask() {
+        return getName().equalsIgnoreCase(DELIVERY_BUFFER);
     }
 
     /**

@@ -116,6 +116,28 @@ public class TaskApi extends AbstractApi {
         ));
     }
 
+    /**
+     * Batch-updates a list of tasks belonging to the given sprint in a single HTTP call.
+     * <p>
+     * Prefer this over calling {@link #update(Task)} in a loop whenever all tasks share the same sprint.
+     * </p>
+     *
+     * @param tasks    the tasks to update
+     * @param sprintId the sprint all tasks belong to (used for server-side ACL check)
+     */
+    public void updateBatch(List<Task> tasks, Long sprintId) {
+        if (tasks == null || tasks.isEmpty()) {
+            return;
+        }
+        executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/task/sprint/{sprintId}/batch",
+                HttpMethod.PUT,
+                createHttpEntity(tasks),
+                Void.class,
+                sprintId
+        ));
+    }
+
     public void updateTaskStatus(Long taskId, de.bushnaq.abdalla.kassandra.dto.TaskStatus newStatus) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/task/{id}/status/{status}",

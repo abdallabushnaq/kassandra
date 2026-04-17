@@ -19,11 +19,14 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.OffDay;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.json.JsonMapper;
+
+import java.util.List;
 
 @Service
 public class OffDayApi extends AbstractApi {
@@ -60,6 +63,24 @@ public class OffDayApi extends AbstractApi {
                 createHttpEntity(),
                 OffDay.class,
                 id
+        ));
+        return response.getBody();
+    }
+
+    /**
+     * Batch-persists a list of off days for the given user in a single HTTP call.
+     *
+     * @param offDays list of off days to save
+     * @param userId  ID of the owning user
+     * @return the saved off days including server-assigned IDs
+     */
+    public List<OffDay> persistBatch(List<OffDay> offDays, Long userId) {
+        ResponseEntity<List<OffDay>> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/offday/{userId}/batch",
+                HttpMethod.POST,
+                createHttpEntity(offDays),
+                new ParameterizedTypeReference<>() {},
+                userId
         ));
         return response.getBody();
     }

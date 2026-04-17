@@ -38,9 +38,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-//@Transactional
 @TestMethodOrder(MethodOrderer.MethodName.class)
 public class AbstractLegacyGanttTestUtil extends AbstractGanttTestUtil {
     protected Map<String, net.sf.mpxj.Task>     mpxjTaskMap = new HashMap<>();

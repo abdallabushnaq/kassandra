@@ -493,7 +493,7 @@
 | kassandra.ui.view                    | OffDayListViewTest.java                                          | src      |       23 |       77 |       35 |      142 |      277 |
 | kassandra.ui.view                    | ProductListView.java                                             | src      |       41 |        6 |       23 |      334 |      404 |
 | kassandra.ui.view                    | ProductListViewTest.java                                         | src      |       35 |      119 |       24 |      219 |      397 |
-| kassandra.ui.view                    | SprintListView.java                                              | src      |       68 |       47 |       61 |      617 |      793 |
+| kassandra.ui.view                    | SprintListView.java                                              | src      |       68 |       47 |       61 |      618 |      794 |
 | kassandra.ui.view                    | SprintListViewTest.java                                          | src      |       15 |       82 |       24 |      113 |      234 |
 | kassandra.ui.view                    | SprintQualityBoard.java                                          | src      |       64 |       72 |       47 |      587 |      770 |
 | kassandra.ui.view                    | SprintQualityBoardTest.java                                      | src      |       12 |        0 |       18 |      115 |      145 |
@@ -520,7 +520,7 @@
 | kassandra.ui                         | SprintStatus.java                                                | src      |        2 |        0 |       16 |        4 |       22 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.util                       | AbstractEntityGenerator.java                                     | src      |      126 |       70 |       67 |      778 |     1041 |
-| kassandra.util                       | AbstractGanttTestUtil.java                                       | src      |       52 |        6 |       56 |      504 |      618 |
+| kassandra.util                       | AbstractGanttTestUtil.java                                       | src      |       59 |       48 |       58 |      602 |      767 |
 | kassandra.util                       | AbstractLegacyGanttTestUtil.java                                 | src      |       10 |        0 |       21 |       83 |      114 |
 | kassandra.util                       | AbstractTestUtil.java                                            | src      |       26 |        0 |       32 |      130 |      188 |
 | kassandra.util                       | DTOAsserts.java                                                  | src      |       32 |        0 |       25 |      149 |      206 |
@@ -596,5 +596,5 @@
 | util                                 | TaskUtil.java                                                    | src      |        8 |        0 |       31 |       15 |       54 |
 | util                                 | Util.java                                                        | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 63 package(s)                        | 532 file(s)                                                      | java     |    11854 |    11138 |    15815 |    63116 |   101923 |
+| 63 package(s)                        | 532 file(s)                                                      | java     |    11861 |    11180 |    15817 |    63215 |   102073 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

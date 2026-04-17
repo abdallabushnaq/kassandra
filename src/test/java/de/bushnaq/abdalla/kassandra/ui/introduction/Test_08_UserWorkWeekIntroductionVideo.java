@@ -79,7 +79,6 @@ import java.util.List;
 )
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
-//@Transactional
 public class Test_08_UserWorkWeekIntroductionVideo extends AbstractIntroductionVideo {
 
     /**

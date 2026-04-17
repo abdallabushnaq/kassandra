@@ -65,7 +65,6 @@ import java.util.List;
 )
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
-//@Transactional
 public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute        EXCITED = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
     public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.6f).withCfgWeight(.2f).withTemperature(1f);

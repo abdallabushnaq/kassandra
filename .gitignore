@@ -12,6 +12,7 @@
 /references/gantt/*private.*
 /references/test/*.svg
 /references/test/*private.*
+/references/demo
 /legacy-references
 /node_modules
 /src/main/bundles

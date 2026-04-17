@@ -133,6 +133,23 @@ public class TaskController {
         return save;
     }
 
+    /**
+     * Batch-updates a list of tasks belonging to the given sprint in a single transaction.
+     * <p>
+     * Sprint-level access is checked once instead of per-task to keep the operation efficient.
+     * All supplied tasks must belong to the sprint identified by {@code sprintId}.
+     * </p>
+     *
+     * @param tasks    the tasks to update
+     * @param sprintId the sprint all tasks belong to (used for ACL check)
+     */
+    @PutMapping("/sprint/{sprintId}/batch")
+    @PreAuthorize("@aclSecurityService.hasSprintAccess(#sprintId) or hasRole('ADMIN')")
+    @Transactional
+    public void updateBatch(@RequestBody List<TaskDAO> tasks, @PathVariable Long sprintId) {
+        taskRepository.saveAll(tasks);
+    }
+
     @PutMapping()
     @PreAuthorize("@aclSecurityService.hasTaskAccess(#task.id) or hasRole('ADMIN')")
     @Transactional

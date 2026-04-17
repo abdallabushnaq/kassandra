@@ -39,6 +39,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.json.JsonException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
 
 import java.io.File;
@@ -155,6 +156,44 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         }
     }
 
+    /**
+     * Returns the maximum calendar-day overlap among all pairs of same-resource tasks across the two
+     * sprints, or {@code 0} if no overlap exists.
+     *
+     * @param earlier the sprint that starts earlier
+     * @param later   the sprint that starts later
+     * @return the maximum overlap expressed as whole calendar days (always &ge; 1 when overlap exists)
+     */
+    private long computeResourceOverlapDays(Sprint earlier, Sprint later) {
+        long maxDays = 0;
+        for (Task taskA : earlier.getTasks()) {
+            if (!taskA.isTask() || taskA.getResourceId() == null
+                    || taskA.getStart() == null || taskA.getFinish() == null) {
+                continue;
+            }
+            for (Task taskB : later.getTasks()) {
+                if (!taskB.isTask() || taskB.getResourceId() == null
+                        || taskB.getStart() == null || taskB.getFinish() == null) {
+                    continue;
+                }
+                if (!Objects.equals(taskA.getResourceId(), taskB.getResourceId())) {
+                    continue;
+                }
+                LocalDateTime overlapStart = taskA.getStart().isAfter(taskB.getStart()) ? taskA.getStart() : taskB.getStart();
+                LocalDateTime overlapEnd   = taskA.getFinish().isBefore(taskB.getFinish()) ? taskA.getFinish() : taskB.getFinish();
+                if (overlapEnd.isAfter(overlapStart)) {
+                    // +1 so that even a partial-day overlap produces a shift of at least 1 day
+                    long days = Duration.between(
+                            overlapStart.toLocalDate().atStartOfDay(),
+                            overlapEnd.toLocalDate().atStartOfDay()
+                    ).toDays() + 1;
+                    maxDays = Math.max(maxDays, days);
+                }
+            }
+        }
+        return maxDays;
+    }
+
     private RenderDao createRenderDao(Context context, Sprint sprint, String column, LocalDateTime now, int chartWidth, int chartHeight, String link) {
         RenderDao dao = new RenderDao();
         dao.context            = context;
@@ -179,6 +218,25 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         return dao;
     }
 
+//    /**
+//     * Levels resources for a sprint and persists the updated task dates and sprint back to the
+//     * database. Unlike {@link #levelResourcesAndPersist(TestInfo, Sprint, ProjectFile)} this method does
+//     * <em>not</em> write any reference or result JSON files; it is used for intermediate
+//     * iterations during cross-sprint leveling.
+//     *
+//     * @param sprint the fully initialized sprint to level
+//     */
+//    private void doLevelResources(Sprint sprint) throws Exception {
+//        initializeInstances();
+//        GanttUtil         ganttUtil = new GanttUtil();
+//        GanttErrorHandler eh        = new GanttErrorHandler();
+//        ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
+//        try (Profiler pc = new Profiler(SampleType.JPA)) {
+//            sprint.getTasks().forEach(task -> taskApi.update(task));
+//            sprintApi.update(sprint);
+//        }
+//    }
+
     protected void generateBurndownChart(TestInfo testInfo, long sprintId) throws Exception {
         generateBurndownChart(testInfo, sprintId, 0, 36 * 20);
     }
@@ -200,6 +258,34 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testResultFolder);
     }
 
+    //TODO remove
+    private void generateDebugGanttCharts(TestInfo testInfo, String testFolder) throws Exception {
+        for (Sprint sprint : expectedSprints) {
+//            sprint.initialize();
+//            sprint.initUserMap(userApi.getAll(sprint.getId()));
+//            sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
+//            sprint.recalculate(ParameterOptions.getLocalNow());
+            Context context = new Context(null);
+//            context.parameters.setTheme(testTheme);
+            String sprintName = sprint.getName() + "-demo-gantt";
+//            if (testInfo.getDisplayName().indexOf('=') != -1) {
+//                String displayName;
+//                if (testInfo.getDisplayName().indexOf('"') != -1) {
+//                    displayName = testInfo.getDisplayName().substring(testInfo.getDisplayName().indexOf('"') + 1, testInfo.getDisplayName().lastIndexOf('"'));
+//                } else {
+//                    displayName = testInfo.getDisplayName();
+//                }
+//                sprintName = displayName + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
+//            } else {
+//                sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
+//            }
+            GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+//        String     description = testCaseInfo.getDisplayName().replace("_", "-");
+            String description = TestInfoUtil.getTestMethodName(testInfo);
+            chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
+        }
+    }
+
     protected void generateGanttChart(TestInfo testInfo, long sprintId, ProjectFile projectFile) throws Exception {
         Sprint sprint = sprintApi.getById(sprintId);
         sprint.initialize();
@@ -219,7 +305,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
     }
 
     protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase) throws Exception {
-        ParameterOptions.setNow(randomCase.getNow());
+        ParameterOptions.setNow(DateUtil.localDateToOffsetDateTime(randomCase.getStartDate()));
         String testCaseName = this.getClass().getName() + "-" + testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex();
         // Create a snapshot name based on the test case
         String snapshotName = testInfo.getTestClass().get().getSimpleName() + "-" + randomCase.getTestCaseIndex();
@@ -239,6 +325,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         } else {
             logger.info("Successfully loaded test data from snapshot. Skipping data generation.");
         }
+        ParameterOptions.setNow(randomCase.getNow());
     }
 
     private void generateProductsInternal(TestInfo testInfo, RandomCase randomCase) throws Exception {
@@ -268,10 +355,22 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                         }
                     }
                 }
+                levelSprints();
+//                generateDebugGanttCharts(testInfo, "references/demo");
             }
             Profiler.log("generate Products for test case -" + randomCase.getTestCaseIndex());
         }
+        try (Profiler pc = new Profiler(SampleType.JPA)) {
+            for (Sprint sprint : expectedSprints) {
+                taskApi.updateBatch(sprint.getTasks(), sprint.getId());
+                sprintApi.update(sprint);
+            }
+//        printTables();
+//            initializeInstances();
+        }
+        ParameterOptions.setNow(randomCase.getNow());
         generateRandomSickDays();
+        generateWorkLogs();
     }
 
     private int generateRandomValue(int minNumber, int maxNumberExclusive) {
@@ -281,6 +380,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             return minNumber;
     }
 
+    @Transactional
     private void generateSprint(TestInfo testInfo, RandomCase randomCase, Feature project) throws Exception {
         int numberOfUsers = randomCase.getMaxNumberOfUsers();
 //        System.out.println("Number of users=" + numberOfUsers);
@@ -288,10 +388,10 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             // Capture current sprint index before creating the sprint
             int    currentSprintIndex = getCurrentSprintIndex();
             Sprint generatedSprint    = addRandomSprint(project);
-            Sprint sprint             = sprintApi.getById(generatedSprint.getId());
+            Sprint sprint             = generatedSprint;//sprintApi.getById(generatedSprint.getId());
             if (randomCase.getMaxNumberOfStories() > 0) {
                 int           numberOfStories = random.nextInt(randomCase.getMaxNumberOfStories()) + 1;
-                LocalDateTime startDateTime   = randomCase.getMinStartDate().plusDays(random.nextInt((int) randomCase.getMaxStartDateShift().toDays())).atStartOfDay().plusHours(8);
+                LocalDateTime startDateTime   = randomCase.getStartDate().atStartOfDay().plusHours(8);
                 Task          startMilestone  = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
 
                 // Get shuffled story names for this sprint to ensure variety
@@ -305,7 +405,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                         int userIndex = random.nextInt(numberOfUsers);
 //                    System.out.println("User index=" + userIndex);
                         User   user             = expectedUsers.stream().toList().get(userIndex);
-                        float  minHours         = random.nextFloat(randomCase.getMaxDurationDays() * 7.5f) + 1;
+                        float  minHours         = random.nextFloat(randomCase.getMaxTaskDurationDays() * 7.5f) + 1;
                         float  maxHours         = minHours + random.nextFloat() * minHours;
                         String minWork          = String.format("%dh", (int) minHours);
                         String maxWork          = String.format("%dh", (int) maxHours);
@@ -334,9 +434,8 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             sprint.initUserMap(userApi.getAll(sprint.getId()));
             sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
             try (Profiler pc3 = new Profiler(SampleType.CPU)) {
-                levelResources(testInfo, sprint, null);
+                levelResourcesAndPersist(testInfo, sprint, null);
             }
-            generateWorklogs(sprint, ParameterOptions.getLocalNow());
         }
         Profiler.log("generateProductsIfNeeded-" + randomCase.getTestCaseIndex());
     }
@@ -362,12 +461,19 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         }
     }
 
+    private void generateWorkLogs() {
+        for (Sprint sprint : expectedSprints) {
+            generateWorklogs(sprint, ParameterOptions.getLocalNow());
+        }
+    }
+
     /**
      * Generates worklogs for the tasks in the sprint simulating a team of people working.
      *
      * @param sprint
      * @param now
      */
+    @Transactional
     protected void generateWorklogs(Sprint sprint, LocalDateTime now) {
         try (Profiler pc = new Profiler(SampleType.CPU)) {
 
@@ -407,8 +513,19 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                                         task.removeRemainingEstimate(w);
                                         task.recalculate();
                                         task.setTaskStatus(TaskStatus.IN_PROGRESS);
+                                        if (task.getParentTask().getTaskStatus() != TaskStatus.IN_PROGRESS) {
+                                            //set story status to IN_PROGRESS
+                                            task.getParentTask().setTaskStatus(TaskStatus.IN_PROGRESS);
+                                        }
                                     } else {
                                         task.setTaskStatus(TaskStatus.DONE);
+                                        if (task.getParentTask() != null && task.getParentTask().isAllChildTasksDone()) {
+                                            //set story status to IN_PROGRESS
+                                            task.getParentTask().setTaskStatus(TaskStatus.DONE);
+                                            if (sprint.isAllChildTasksDone()) {
+                                                sprint.setStatus(Status.CLOSED);
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -417,13 +534,9 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                     rest = rest.plus(task.getRemainingEstimate());//accumulate the rest
                 }
             }
+            sprint.recalculate(ParameterOptions.getLocalNow());
         }
-        try (Profiler pc = new Profiler(SampleType.JPA)) {
-            sprint.getTasks().forEach(task -> {
-                taskApi.update(task);
-            });
-            sprintApi.update(sprint);
-        }
+        persistTasksAndSprint(sprint);
     }
 
     private int getMaxTaskNameLength(List<Task> taskList) {
@@ -457,27 +570,73 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         return task.getID() != 0 && task.getUniqueID() != null && task.getName() != null && task.getStart() != null && task.getFinish() != null && (task.getID() != 1);
     }
 
-    protected void levelResources(TestInfo testInfo, Sprint sprint, ProjectFile projectFile) throws Exception {
+    private void levelResources(Sprint sprint) throws Exception {
         initializeInstances();
         GanttUtil         ganttUtil = new GanttUtil();
         GanttErrorHandler eh        = new GanttErrorHandler();
-        ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
+        if (sprint.getStart() == null)
+            sprint.setStart(ParameterOptions.getLocalNow());//new sprint always starts today
+        ganttUtil.levelResources(eh, sprint, "", sprint.getStart());
+    }
+
+    protected void levelResourcesAndPersist(TestInfo testInfo, Sprint sprint, ProjectFile projectFile) throws Exception {
+        levelResources(sprint);
 
         //save back to the database
-        try (Profiler pc = new Profiler(SampleType.JPA)) {
-            sprint.getTasks().forEach(task -> {
-                taskApi.update(task);
-            });
-            sprintApi.update(sprint);
-//        printTables();
-//            initializeInstances();
-        }
+        persistTasksAndSprint(sprint);
         if (projectFile == null) {
             try (Profiler pc = new Profiler(SampleType.FILE)) {
                 storeExpectedResult(testInfo, sprint);
                 storeResult(testInfo, sprint);
             }
         }
+    }
+
+    /**
+     * Cross-sprint resource leveling: iteratively detects task overlaps between sprints for the same
+     * resource and shifts the later sprint forward until no overlap remains.
+     * <p>
+     * After each shift the affected sprint is re-leveled (respecting weekends and holidays) before
+     * the next comparison round begins. The loop terminates when a full pass over all sprint pairs
+     * produces no changes.
+     * </p>
+     */
+    private void levelSprints() throws Exception {
+        boolean anyChanged;
+        do {
+            anyChanged = false;
+            outer:
+            for (int i = 0; i < expectedSprints.size(); i++) {
+                for (int j = i + 1; j < expectedSprints.size(); j++) {
+                    Sprint earlier     = expectedSprints.get(i);
+                    Sprint later       = expectedSprints.get(j);
+                    long   overlapDays = computeResourceOverlapDays(earlier, later);
+                    if (overlapDays > 0) {
+                        logger.info("Resource overlap of {} days detected between sprint '{}' and '{}'; shifting '{}' forward.",
+                                overlapDays, earlier.getName(), later.getName(), later.getName());
+                        if (shiftSprintAndRelevel(later, overlapDays)) {
+                            anyChanged = true;
+                            break outer;
+                        }
+                    }
+                }
+            }
+        } while (anyChanged);
+    }
+
+    /**
+     * Loads a sprint from the database and fully initializes it with its users and tasks,
+     * making it ready for overlap detection or resource leveling.
+     *
+     * @param sprintId id of the sprint to load
+     * @return fully initialized {@link Sprint}
+     */
+    private Sprint loadSprintWithTasks(Long sprintId) {
+        Sprint sprint = sprintApi.getById(sprintId);
+        sprint.initialize();
+        sprint.initUserMap(userApi.getAll(sprintId));
+        sprint.initTaskMap(taskApi.getAll(sprintId), worklogApi.getAll(sprintId));
+        return sprint;
     }
 
     private void logProjectTasks(String fileName, Sprint sprint, String referenceFileName, Sprint referenceSprint) {
@@ -567,6 +726,13 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         }
     }
 
+    private void persistTasksAndSprint(Sprint sprint) {
+        try (Profiler pc = new Profiler(SampleType.JPA)) {
+            taskApi.updateBatch(sprint.getTasks(), sprint.getId());
+            sprintApi.update(sprint);
+        }
+    }
+
     @PostConstruct
     protected void postConstruct() {
         super.postConstruct();
@@ -587,6 +753,38 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         new File(testResultFolder).mkdirs();
         testReferenceResultFolder = testReferenceResultFolder + "/" + testClassName;
         new File(testReferenceResultFolder).mkdirs();
+    }
+
+    /**
+     * Shifts the manually-scheduled start milestone(s) of the given sprint forward by
+     * {@code shiftDays} calendar days, then re-levels its resources so that weekends,
+     * holidays, and intra-sprint dependencies are respected.
+     *
+     * @param sprint    the sprint to shift
+     * @param shiftDays number of calendar days to add to the start milestone
+     * @return {@code true} if at least one milestone was shifted and the sprint was re-leveled;
+     * {@code false} if no manually-scheduled milestone was found (overlap cannot be resolved)
+     */
+    private boolean shiftSprintAndRelevel(Sprint sprint, long shiftDays) throws Exception {
+        boolean shifted = false;
+        for (Task task : sprint.getTasks()) {
+            if (task.isMilestone() && task.getTaskMode() == TaskMode.MANUALLY_SCHEDULED && task.getStart() != null) {
+                LocalDateTime shiftedStart = task.getStart().plusDays(shiftDays);
+                logger.debug("Shifting milestone '{}' of sprint '{}' from {} to {} (+{} days)", task.getName(), sprint.getName(), task.getStart(), shiftedStart, shiftDays);
+                task.setStart(shiftedStart);
+//                taskApi.update(task);
+                shifted = true;
+            }
+        }
+        if (!shifted) {
+            //TODO move sprint start
+            logger.warn("Sprint '{}' has no manually-scheduled milestone; cannot resolve resource overlap.", sprint.getName());
+            return false;
+        }
+        // Reload from DB so that the leveler sees the updated milestone date
+//        levelResources(loadSprintWithTasks(sprint.getId()));
+        levelResources(sprint);
+        return true;
     }
 
     private void store(String directory, TestInfo testInfo, Sprint sprint, boolean overwrite) throws IOException {

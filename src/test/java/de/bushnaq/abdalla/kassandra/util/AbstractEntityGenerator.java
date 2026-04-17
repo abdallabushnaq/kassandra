@@ -27,7 +27,6 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
-import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
@@ -83,6 +82,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 //    JsonMapper mapper;
     protected           NameGenerator          nameGenerator             = new NameGenerator();
     protected           OffDayApi              offDayApi;
+    private final       List<OffDay>           offDayBuffer              = new ArrayList<>();
     private             int                    offDaysIterations;
     @LocalServerPort
     private             int                    port;
@@ -167,13 +167,11 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         offDay.setUser(user);
         offDay.setCreated(user.getCreated());
         offDay.setUpdated(user.getUpdated());
-        try (Profiler pc = new Profiler(SampleType.JPA)) {
-            long   time  = System.currentTimeMillis();
-            OffDay saved = offDayApi.persist(offDay, user.getId());
-            user.addOffday(saved);
-            expectedOffDays.add(saved);
-            System.out.println("Adding off day: " + saved.getFirstDay() + " to user: " + user.getName() + " took " + (System.currentTimeMillis() - time) + " ms");
-        }
+        // Add to in-memory state immediately so overlap detection and calendar work during generation.
+        // The actual DB persist is deferred – call flushOffDayBuffer(user) when all off days for the
+        // user have been accumulated.
+        user.addOffday(offDay);
+        offDayBuffer.add(offDay);
         ProjectCalendarException vacation = user.getCalendar().addCalendarException(offDayStart, offDayFinish);
         switch (type) {
             case VACATION -> vacation.setName("vacation");
@@ -651,7 +649,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     public Task createDeliveryBufferTask(Sprint sprint, Duration minWork) {
         //create the buffer task
         Task task = new Task();
-        task.setName(GanttUtil.DELIVERY_BUFFER);
+        task.setName(Task.DELIVERY_BUFFER);
         task.setImpactOnCost(false);//delivery buffer has no impact on cost
         if (sprint != null) {
             task.setSprint(sprint);
@@ -669,6 +667,35 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         return task;
     }
 
+    /**
+     * Flushes all buffered off days for the given user to the database in a single batch HTTP call.
+     * <p>
+     * The temp (ID-less) OffDay objects that were added to {@code user.getOffDays()} during generation
+     * are replaced by the server-returned objects carrying their assigned IDs. The flushed entries are
+     * also added to {@link #expectedOffDays}.
+     * </p>
+     *
+     * @param user the user whose buffered off days should be persisted
+     */
+    protected void flushOffDayBuffer(User user) {
+        List<OffDay> pending = offDayBuffer.stream()
+                .filter(o -> o.getUser() != null && o.getUser().getId() != null && o.getUser().getId().equals(user.getId()))
+                .toList();
+        if (pending.isEmpty()) {
+            return;
+        }
+        try (Profiler pc = new Profiler(SampleType.JPA)) {
+            long         time  = System.currentTimeMillis();
+            List<OffDay> saved = offDayApi.persistBatch(pending, user.getId());
+            log.debug("Batch-persisted {} off days for user '{}' in {} ms", saved.size(), user.getName(), System.currentTimeMillis() - time);
+            // Replace in-memory temp objects with the saved ones (which carry server-assigned IDs).
+            user.getOffDays().removeAll(pending);
+            saved.forEach(user::addOffday);
+            expectedOffDays.addAll(saved);
+        }
+        offDayBuffer.removeAll(pending);
+    }
+
     protected void generateRandomOffDays(User saved, LocalDate employmentDate) {
         try (Profiler pc = new Profiler(SampleType.CPU)) {
 
@@ -680,6 +707,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 addOffDays(saved, employmentDate, 30, year, OffDayType.VACATION, 10, 20);
                 addOffDays(saved, employmentDate, random.nextInt(5), year, OffDayType.TRIP, 1, 5);
             }
+            flushOffDayBuffer(saved);
         }
     }
 
@@ -697,6 +725,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                     random.setSeed(generateUserYearSeed(user, year));
                     addOffDays(user, employmentDate, random.nextInt(20), year, OffDayType.SICK, 1, 5);
                 }
+                flushOffDayBuffer(user);
             }
         }
     }

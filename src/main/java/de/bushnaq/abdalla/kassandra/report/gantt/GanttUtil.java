@@ -38,7 +38,6 @@ import java.util.Set;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class GanttUtil {
-    public static final String DELIVERY_BUFFER = "Delivery buffer (from critical path tasks)";
 
     private static final String    ERROR_103_TASK_IS_MANUALLY_SCHEDULED_AND_CANNOT_FULLFILL_ITS_DEPENDENCY = "Error #103: Task [%d]'%s' is manually scheduled and cannot fullfill its dependency to task [%d]'%s'.";
     private static final String    ERROR_104_TASK_CANNOT_FULLFILL_ITS_DEPENDENCY                           = "Error #104: Task [%d]'%s' start %s cannot fullfill its dependency to task [%d]'%s' finish %s.";
@@ -165,7 +164,7 @@ public class GanttUtil {
     private Task findDeliveryBuffertask(GanttErrorHandler eh, Sprint sprint) {
         Task deliveryBufferTask = null;
         for (Task task : sprint.getTasks()) {
-            if (isDeliveryBufferTask(task)) {
+            if (task.isDeliveryBufferTask()) {
                 deliveryBufferTask = task;
             }
         }
@@ -381,9 +380,6 @@ public class GanttUtil {
 
     }
 
-    private boolean isDeliveryBufferTask(Task task) {
-        return task.getName().equalsIgnoreCase(DELIVERY_BUFFER);
-    }
 
     private boolean isManual(Task task) {
         return task.getTaskMode() == TaskMode.MANUALLY_SCHEDULED;
@@ -397,12 +393,12 @@ public class GanttUtil {
         logger.info("-------------------------------------------------------------------------------------------");
         logger.info(String.format("Leveling resources for sprint %s.", sprint.getName()));
         prepareForLeveling(sprint);
-        for (Task task : sprint.getTasks()) {
-            logger.info(" task={} {} start={} finish={}", task.getName(), task.getKey(), task.getStart(), task.getFinish());
-            for (Relation predecessor : task.getPredecessors()) {
-                logger.info(String.format("  depends on %s", task.getSprint().getTaskById(predecessor.getPredecessorId()).getName()));
-            }
-        }
+//        for (Task task : sprint.getTasks()) {
+//            logger.info(" task={} {} start={} finish={}", task.getName(), task.getKey(), task.getStart(), task.getFinish());
+//            for (Relation predecessor : task.getPredecessors()) {
+//                logger.info(String.format("  depends on %s", task.getSprint().getTaskById(predecessor.getPredecessorId()).getName()));
+//            }
+//        }
         logger.info("-------------------------------------------------------------------------------------------");
         long time = System.currentTimeMillis();
         try {
@@ -599,11 +595,12 @@ public class GanttUtil {
             logger.error("Error leveling resources: " + e.getMessage());
         }
         injectDeliveryBuffer(eh, sprint);
+        logger.info("-------------------------------------------------------------------------------------------");
         sprint.setStart(sprint.getEarliestStartDate());
-        logger.trace("Setting start date of sprint to earliest start date: {}", sprint.getStart());
         sprint.setEnd(sprint.getLatestFinishDate());
-        logger.trace("Setting end date of sprint to latest finish date: {}", sprint.getEnd());
-        logger.trace("Critical path calculated in {} ms", System.currentTimeMillis() - time);
+        logger.info("Sprint {} start: {} end: {}", sprint.getName(), sprint.getStart(), sprint.getEnd());
+        logger.trace("Leveling resources and critical path calculated in {} ms", System.currentTimeMillis() - time);
+        logger.info("-------------------------------------------------------------------------------------------");
     }
 
     private void markCriticalPath(GanttErrorHandler eh, Sprint sprint, LocalDateTime currentStartTime) throws LevelingResourcesException {
@@ -661,7 +658,7 @@ public class GanttUtil {
     }
 
     private void prepareForLeveling(Sprint sprint) {
-        sanitizeTasks(sprint);
+        removeHiddenDependencies(sprint);
         for (Task task : sprint.getTasks()) {
             if (task.getTaskMode() != TaskMode.MANUALLY_SCHEDULED) {
                 task.setStart(null);
@@ -699,7 +696,7 @@ public class GanttUtil {
         return count;
     }
 
-    private void sanitizeTasks(Sprint sprint) {
+    private void removeHiddenDependencies(Sprint sprint) {
         for (Task task : sprint.getTasks()) {
             // Remove all predecessors that are not visible
             task.getPredecessors().removeIf(relation -> !relation.isVisible());
@@ -739,7 +736,7 @@ public class GanttUtil {
                 task.setFinish(finish);
             }
         }
-        logger.info(" task={} start={} finish={}", task.getName(), task.getStart(), task.getFinish());
+//        logger.info(" task={} start={} finish={}", task.getName(), task.getStart(), task.getFinish());
     }
 
     /**

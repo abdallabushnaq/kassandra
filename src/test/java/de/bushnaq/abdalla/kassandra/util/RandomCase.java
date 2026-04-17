@@ -27,7 +27,6 @@ import java.time.OffsetDateTime;
 @Getter
 @ToString(callSuper = false)
 public class RandomCase {
-    private final int            maxDurationDays;
     private final int            maxNumberOfFeatures;
     private final int            maxNumberOfProducts;
     private final int            maxNumberOfSprints;
@@ -35,20 +34,21 @@ public class RandomCase {
     private final int            maxNumberOfTasks;
     private final int            maxNumberOfUsers;
     private final int            maxNumberOfVersions;
-    private final Duration       maxStartDateShift;
+    //    private final Duration       maxStartDateShift;
+    private final int            maxTaskDurationDays;
     private final int            minNumberOfFeatures;
     private final int            minNumberOfProducts;
     private final int            minNumberOfSprints;
     private final int            minNumberOfVersions;
-    private final LocalDate      minStartDate;
     private final OffsetDateTime now;
     private final long           seed;
+    private final LocalDate      startDate;
     private final int            testCaseIndex;
 
-    public RandomCase(int testCaseIndex, int maxDurationDays, int maxNumberOfStories, int maxNumberOfUsers, int maxNumberOfTasks, int seed) {
-        this.testCaseIndex       = testCaseIndex;
-        this.minStartDate        = LocalDate.parse("2024-12-15");
-        this.maxStartDateShift   = Duration.ofDays(1);
+    public RandomCase(int testCaseIndex, int maxTaskDurationDays, int maxNumberOfStories, int maxNumberOfUsers, int maxNumberOfTasks, int seed) {
+        this.testCaseIndex = testCaseIndex;
+        this.startDate     = LocalDate.parse("2024-12-15");
+//        this.maxStartDateShift   = Duration.ofDays(1);
         this.minNumberOfProducts = 1;
         this.maxNumberOfProducts = 1;
         this.minNumberOfVersions = 1;
@@ -57,7 +57,7 @@ public class RandomCase {
         this.maxNumberOfFeatures = 1;
         this.minNumberOfSprints  = 1;
         this.maxNumberOfSprints  = 1;
-        this.maxDurationDays     = maxDurationDays;
+        this.maxTaskDurationDays = maxTaskDurationDays;
         this.maxNumberOfStories  = maxNumberOfStories;
         this.maxNumberOfUsers    = maxNumberOfUsers;
         this.maxNumberOfTasks    = maxNumberOfTasks;
@@ -65,10 +65,10 @@ public class RandomCase {
         this.now                 = OffsetDateTime.parse("2025-05-05T08:00:00+01:00");
     }
 
-    public RandomCase(int testCaseIndex, OffsetDateTime now, LocalDate minStartDate, Duration maxStartDateShift, int minNumberOfProducts, int maxNumberOfProducts, int minNumberOfVersions, int maxNumberOfVersions, int minNumberOfFeatures, int maxNumberOfFeatures, int minNumberOfSprints, int maxNumberOfSprints, int maxDurationDays, int maxNumberOfStories, int maxNumberOfUsers, int maxNumberOfTasks, int seed) {
-        this.testCaseIndex       = testCaseIndex;
-        this.minStartDate        = minStartDate;
-        this.maxStartDateShift   = maxStartDateShift;
+    public RandomCase(int testCaseIndex, OffsetDateTime now, LocalDate startDate, Duration maxStartDateShift, int minNumberOfProducts, int maxNumberOfProducts, int minNumberOfVersions, int maxNumberOfVersions, int minNumberOfFeatures, int maxNumberOfFeatures, int minNumberOfSprints, int maxNumberOfSprints, int maxTaskDurationDays, int maxNumberOfStories, int maxNumberOfUsers, int maxNumberOfTasks, int seed) {
+        this.testCaseIndex = testCaseIndex;
+        this.startDate     = startDate;
+//        this.maxStartDateShift   = maxStartDateShift;
         this.minNumberOfProducts = minNumberOfProducts;
         this.maxNumberOfProducts = maxNumberOfProducts;
         this.minNumberOfVersions = minNumberOfVersions;
@@ -77,7 +77,7 @@ public class RandomCase {
         this.maxNumberOfFeatures = maxNumberOfFeatures;
         this.minNumberOfSprints  = minNumberOfSprints;
         this.maxNumberOfSprints  = maxNumberOfSprints;
-        this.maxDurationDays     = maxDurationDays;
+        this.maxTaskDurationDays = maxTaskDurationDays;
         this.maxNumberOfStories  = maxNumberOfStories;
         this.maxNumberOfUsers    = maxNumberOfUsers;
         this.maxNumberOfTasks    = maxNumberOfTasks;

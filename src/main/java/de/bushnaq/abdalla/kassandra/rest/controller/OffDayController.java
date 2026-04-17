@@ -28,6 +28,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -114,6 +115,34 @@ public class OffDayController {
             offDay.setUser(user);
             OffDayDAO save = offDayRepository.save(offDay);
             return ResponseEntity.ok(save); // Return 200 OK
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Batch-saves a list of off days for the given user in a single transaction.
+     * <p>
+     * The caller (test data generators) is responsible for ensuring that the supplied off days do not
+     * overlap with each other or with existing records. No per-item overlap check is performed here so
+     * that the entire list can be flushed efficiently in one round-trip.
+     * </p>
+     *
+     * @param offDays list of off days to persist
+     * @param userId  ID of the owning user
+     * @return the saved off days including their server-assigned IDs
+     */
+    @PostMapping("/{userId}/batch")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<OffDayDAO>> saveBatch(@RequestBody List<OffDayDAO> offDays, @PathVariable Long userId) {
+        if (!canUserModifyOffDay(userId)) {
+            throw new org.springframework.security.access.AccessDeniedException("You can only modify your own availability");
+        }
+        return userRepository.findById(userId).map(user -> {
+            List<OffDayDAO> saved = new ArrayList<>(offDays.size());
+            for (OffDayDAO offDay : offDays) {
+                offDay.setUser(user);
+                saved.add(offDayRepository.save(offDay));
+            }
+            return ResponseEntity.ok(saved);
         }).orElse(ResponseEntity.notFound().build());
     }
 

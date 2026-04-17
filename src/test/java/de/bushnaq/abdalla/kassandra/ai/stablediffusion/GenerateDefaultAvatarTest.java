@@ -39,7 +39,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Tag("AiUnitTest")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-//@Transactional
 public class GenerateDefaultAvatarTest extends AbstractEntityGenerator {
 
     @Autowired
