@@ -23,19 +23,19 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface ProductRepository extends ListCrudRepository<ProductDAO, Long> {
+public interface ProductRepository extends ListCrudRepository<ProductDAO, UUID> {
     boolean existsByName(String name);
 
     /**
      * Check if a product with the given name exists, excluding the product with the specified ID.
-     * Useful for update operations to check for name conflicts with other products.
      *
      * @param name The product name to check
      * @param id   The ID of the product to exclude from the check
      * @return true if another product with this name exists, false otherwise
      */
-    boolean existsByNameAndIdNot(String name, Long id);
+    boolean existsByNameAndIdNot(String name, UUID id);
 
     ProductDAO findByName(String name);
 

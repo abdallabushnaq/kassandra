@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.rest.ErrorResponse;
 import de.bushnaq.abdalla.kassandra.security.SecurityConfig;
 import jakarta.servlet.http.HttpServletRequest;

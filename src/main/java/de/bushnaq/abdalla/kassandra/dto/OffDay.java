@@ -20,13 +20,16 @@ package de.bushnaq.abdalla.kassandra.dto;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = true)
 @JsonIdentityInfo(
@@ -35,15 +38,20 @@ import java.time.LocalDate;
         property = "id")
 public class OffDay extends AbstractDateRange implements Comparable<OffDay> {
 
-    private Long       id;
+    private UUID       id;
     private OffDayType type;
 
     @ToString.Exclude//help intellij debugger not to go into a loop
     @JsonBackReference
     private User user;
 
+    public OffDay() {
+        this.setId(UUID.randomUUID());
+    }
+
     public OffDay(LocalDate firstDay, LocalDate lastDay, OffDayType offDayType) {
         super();
+        this.setId(UUID.randomUUID());
         this.setFirstDay(firstDay);
         this.setLastDay(lastDay);
         this.type = offDayType;

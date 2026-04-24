@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.report.dao;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import lombok.Getter;
 
@@ -28,7 +29,7 @@ import java.util.Map;
 @Getter
 public class Users /*implements Iterable<User>*/ {
     protected Map<String, User> emailMap = new HashMap<>();
-    protected Map<Long, User>   idMap    = new HashMap<>();
+    protected Map<UUID, User>   idMap    = new HashMap<>();
     protected List<User>        list     = new ArrayList<>();
     protected Map<String, User> nameMap  = new HashMap<>();
 

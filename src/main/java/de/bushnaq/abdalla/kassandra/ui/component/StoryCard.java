@@ -30,6 +30,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -59,7 +60,7 @@ public class StoryCard extends Div {
     private final BiConsumer<Task, TaskStatus> onTaskStatusChange;
     private final Task                         story;
     private       VerticalLayout               todoLane;
-    private final Map<Long, User>              userMap;
+    private final Map<UUID, User>              userMap;
 
     /**
      * Constructs a StoryCard without click handlers.
@@ -69,7 +70,7 @@ public class StoryCard extends Div {
      * @param userMap            user map for avatar display
      * @param onTaskStatusChange callback invoked when a task is dropped into a new status lane
      */
-    public StoryCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+    public StoryCard(Task story, List<Task> childTasks, Map<UUID, User> userMap,
                      BiConsumer<Task, TaskStatus> onTaskStatusChange) {
         this(story, childTasks, userMap, onTaskStatusChange, null, null);
     }
@@ -83,7 +84,7 @@ public class StoryCard extends Div {
      * @param onTaskStatusChange callback for drag-and-drop status changes
      * @param onTaskClick        handler invoked when a task card body is clicked; may be {@code null}
      */
-    public StoryCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+    public StoryCard(Task story, List<Task> childTasks, Map<UUID, User> userMap,
                      BiConsumer<Task, TaskStatus> onTaskStatusChange, Consumer<Task> onTaskClick) {
         this(story, childTasks, userMap, onTaskStatusChange, onTaskClick, null);
     }
@@ -98,7 +99,7 @@ public class StoryCard extends Div {
      * @param onTaskClick         handler invoked when a task card body is clicked; may be {@code null}
      * @param onTaskTitleClick    handler invoked when the task title is clicked; may be {@code null}
      */
-    public StoryCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+    public StoryCard(Task story, List<Task> childTasks, Map<UUID, User> userMap,
                      BiConsumer<Task, TaskStatus> onTaskStatusChange, Consumer<Task> onTaskClick,
                      Consumer<Task> onTaskTitleClick) {
         this.story              = story;

@@ -77,7 +77,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     private final          Logger               logger                     = LoggerFactory.getLogger(this.getClass());
     private final          int                  numberOfLinesPerTask;
     protected              ResourcesUtilization resourcesUtilization       = new ResourcesUtilization();// only used for out of office
-    protected              Map<Long, Integer>   taskHeight                 = new HashMap<>();
+    protected              Map<String, Integer> taskHeight                 = new HashMap<>();
 
     public AbstractGanttRenderer(Context context, String sprintName/*, Map<LocalDate, String> bankHolidays*/, boolean completed/*, int chartWidth, int chartHeight*/, int numberOfLinesPerTask, int preRun, int postRun, Theme kassandraTheme) throws IOException {
         super(sprintName/*, bankHolidays*/, completed/*, chartWidth, chartHeight*/, preRun, postRun, kassandraTheme);
@@ -203,9 +203,9 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
             int         yShift = fm.getAscent() - fm.getHeight() / 2;
 
             if (md != null) {
-                graphics2D.drawString(String.format("%02d", task.getId()), x1 + 4, y + yShift, md.getError(0));
+                graphics2D.drawString(String.format("%s", task.getKey()), x1 + 4, y + yShift, md.getError(0));
             } else {
-                graphics2D.drawString(String.format("%02d", task.getId()), x1 + 4, y + yShift);
+                graphics2D.drawString(String.format("%s", task.getKey()), x1 + 4, y + yShift);
             }
         }
     }
@@ -435,7 +435,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
             if (start != null && stop != null) {
                 int     x1   = calculateX(start, start.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
                 int     x2   = calculateX(stop, stop.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
-                Integer lane = taskHeight.get(gantUniqueId * 10000 + task.getId());
+                Integer lane = taskHeight.get(gantUniqueId + "-" + task.getId());
                 int     y    = lane + getTaskHeight() / 2;
 //            if (drawOutOfOffice) {
 //                drawOutOfOffice(task, y);
@@ -452,8 +452,8 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
                             Task targetTask = task.getSprint().getTaskById(relation.getPredecessorId());
                             //TODO implement this
                             if (relation.isVisible()) {
-                                int y1 = taskHeight.get(gantUniqueId * 10000 + targetTask.getId()) + getTaskHeight() / 2;
-                                int y2 = taskHeight.get(gantUniqueId * 10000 + sourceTask.getId()) + getTaskHeight() / 2;
+                                int y1 = taskHeight.get(gantUniqueId + "-" + targetTask.getId()) + getTaskHeight() / 2;
+                                int y2 = taskHeight.get(gantUniqueId + "-" + sourceTask.getId()) + getTaskHeight() / 2;
                                 drawRelation(sourceTask, y2, targetTask, y1);
                             }
                         }

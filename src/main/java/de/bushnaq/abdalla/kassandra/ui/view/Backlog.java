@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import java.util.UUID;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -104,7 +105,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private final       GanttErrorHandler            eh                         = new GanttErrorHandler();
     private             boolean                      expandAllStories           = true;  // Default to expanded
     private final       FeatureApi                   featureApi;
-    private             Long                         featureId;
+    private UUID featureId;
     //    private final       Svg                          ganttChart                 = new Svg();
     private final       Div                          ganttChartContainer;
     private             CompletableFuture<Void>      ganttGenerationFuture;
@@ -113,10 +114,10 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private final       HorizontalLayout             headerLayout;
     private             boolean                      isRestoringFromUrl         = false;
     private final       JsonMapper                   jsonMapper;
-    private static      Long                         lastShownSprintId          = null;  // Static to persist across navigation
+    private static UUID lastShownSprintId          = null;  // Static to persist across navigation
     private             User                         loggedInUser               = null;
     private final       ProductApi                   productApi;
-    private             Long                         productId;
+    private UUID productId;
     private             String                       requestedUserIds           = null;
     private             Button                       saveButton;
     private             TextField                    searchField;
@@ -126,7 +127,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private             Sprint                       sprint;                             // Current sprint being displayed in grid
     private final       SprintApi                    sprintApi;
     private             Span                         sprintEndValue;                     // Displays end date of the selected sprint
-    private             Long                         sprintId;
+    private UUID sprintId;
     private final       HorizontalLayout             sprintInfoPanel;                    // Header panel showing sprint start, end and status
     private             ComboBox<Sprint>             sprintSelector;
     private             Span                         sprintStartValue;                   // Displays start date of the selected sprint
@@ -137,7 +138,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private             MultiSelectComboBox<User>    userSelector;
     private             List<User>                   users                      = new ArrayList<>();
     private final       VersionApi                   versionApi;
-    private             Long                         versionId;
+    private UUID versionId;
     private final       WorklogApi                   worklogApi;
 
     public Backlog(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock, JsonMapper jsonMapper) {
@@ -261,16 +262,16 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         com.vaadin.flow.router.Location location        = event.getLocation();
         QueryParameters                 queryParameters = location.getQueryParameters();
         if (queryParameters.getParameters().containsKey("product")) {
-            this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
+            this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
         }
         if (queryParameters.getParameters().containsKey("version")) {
-            this.versionId = Long.parseLong(queryParameters.getParameters().get("version").getFirst());
+            this.versionId = UUID.fromString(queryParameters.getParameters().get("version").getFirst());
         }
         if (queryParameters.getParameters().containsKey("feature")) {
-            this.featureId = Long.parseLong(queryParameters.getParameters().get("feature").getFirst());
+            this.featureId = UUID.fromString(queryParameters.getParameters().get("feature").getFirst());
         }
         if (queryParameters.getParameters().containsKey("sprint")) {
-            this.sprintId = Long.parseLong(queryParameters.getParameters().get("sprint").getFirst());
+            this.sprintId = UUID.fromString(queryParameters.getParameters().get("sprint").getFirst());
         }
         // Capture requested users from URL for initial user-selector preselection.
         // Cleared here so each navigation cycle starts fresh.
@@ -395,7 +396,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
         // Extract sprint ID from URL if present
         if (queryParameters.getParameters().containsKey("sprint")) {
-            this.sprintId = Long.parseLong(queryParameters.getParameters().get("sprint").getFirst());
+            this.sprintId = UUID.fromString(queryParameters.getParameters().get("sprint").getFirst());
         }
 
         // Populate the sprint selector after we have the sprint ID
@@ -1303,7 +1304,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                 userSelector.setItems(users);
                 if (!selectedUsers.isEmpty()) {
                     // Preserve the previously selected users (match by ID, since object instances may differ)
-                    java.util.Set<Long> selectedIds = selectedUsers.stream().map(User::getId).collect(java.util.stream.Collectors.toSet());
+                    java.util.Set<UUID> selectedIds = selectedUsers.stream().map(User::getId).collect(java.util.stream.Collectors.toSet());
                     java.util.Set<User> toRestore = users.stream()
                             .filter(u -> selectedIds.contains(u.getId()))
                             .collect(java.util.stream.Collectors.toSet());
@@ -1317,7 +1318,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                         java.util.Set<User> toSelect = new java.util.HashSet<>();
                         for (String idStr : requestedUserIds.split(",")) {
                             try {
-                                Long id = Long.parseLong(idStr.trim());
+                                UUID id = UUID.fromString(idStr.trim());
                                 users.stream().filter(u -> u.getId().equals(id)).findFirst().ifPresent(toSelect::add);
                             } catch (NumberFormatException nfe) {
                                 log.warn("Invalid user ID in URL: {}", idStr);
@@ -1512,7 +1513,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
      */
     private void removeBrokenRelations(List<Task> movedTasks, Sprint sourceSprint, Sprint targetSprint, java.util.Set<Task> modifiedTasks) {
         // Create a set of moved task IDs for quick lookup
-        java.util.Set<Long> movedTaskIds = movedTasks.stream()
+        java.util.Set<UUID> movedTaskIds = movedTasks.stream()
                 .map(Task::getId)
                 .collect(java.util.stream.Collectors.toSet());
 
@@ -1522,7 +1523,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             if (predecessors != null && !predecessors.isEmpty()) {
                 List<Relation> relationsToRemove = new ArrayList<>();
                 for (Relation relation : predecessors) {
-                    Long predecessorTaskId = relation.getPredecessorId();
+                    UUID predecessorTaskId = relation.getPredecessorId();
                     // If the predecessor is NOT in the moved tasks list, it's staying in source sprint
                     // So this relation becomes broken
                     if (!movedTaskIds.contains(predecessorTaskId)) {
@@ -1552,7 +1553,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             if (predecessors != null && !predecessors.isEmpty()) {
                 List<Relation> relationsToRemove = new ArrayList<>();
                 for (Relation relation : predecessors) {
-                    Long predecessorTaskId = relation.getPredecessorId();
+                    UUID predecessorTaskId = relation.getPredecessorId();
                     // If the predecessor is in the moved tasks, this relation becomes broken
                     if (movedTaskIds.contains(predecessorTaskId)) {
                         relationsToRemove.add(relation);

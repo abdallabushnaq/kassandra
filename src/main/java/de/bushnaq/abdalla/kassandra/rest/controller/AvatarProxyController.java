@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
 import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
@@ -50,7 +51,7 @@ public class AvatarProxyController {
     }
 
     @GetMapping("/feature/{featureId}")
-    public ResponseEntity<byte[]> proxyFeatureAvatar(@PathVariable("featureId") Long featureId) {
+    public ResponseEntity<byte[]> proxyFeatureAvatar(@PathVariable("featureId") UUID featureId) {
         AvatarWrapper avatarImage = featureApi.getAvatarImage(featureId);
         if (avatarImage == null || avatarImage.getAvatar() == null) {
             return ResponseEntity.notFound().build();
@@ -62,7 +63,7 @@ public class AvatarProxyController {
     }
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<byte[]> proxyProductAvatar(@PathVariable("productId") Long productId) {
+    public ResponseEntity<byte[]> proxyProductAvatar(@PathVariable("productId") UUID productId) {
         AvatarWrapper avatarImage = productApi.getAvatarImage(productId);
         if (avatarImage == null || avatarImage.getAvatar() == null) {
             return ResponseEntity.notFound().build();
@@ -74,7 +75,7 @@ public class AvatarProxyController {
     }
 
     @GetMapping("/sprint/{sprintId}")
-    public ResponseEntity<byte[]> proxySprintAvatar(@PathVariable("sprintId") Long sprintId) {
+    public ResponseEntity<byte[]> proxySprintAvatar(@PathVariable("sprintId") UUID sprintId) {
         AvatarWrapper avatarImage = sprintApi.getAvatarImage(sprintId);
         if (avatarImage == null || avatarImage.getAvatar() == null) {
             return ResponseEntity.notFound().build();
@@ -86,7 +87,7 @@ public class AvatarProxyController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<byte[]> proxyUserAvatar(@PathVariable("userId") Long userId) {
+    public ResponseEntity<byte[]> proxyUserAvatar(@PathVariable("userId") UUID userId) {
         AvatarWrapper avatarImage = userApi.getAvatarImage(userId);
         if (avatarImage == null || avatarImage.getAvatar() == null) {
             return ResponseEntity.notFound().build();

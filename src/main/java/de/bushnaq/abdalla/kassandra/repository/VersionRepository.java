@@ -21,11 +21,12 @@ import de.bushnaq.abdalla.kassandra.dao.VersionDAO;
 import org.springframework.data.repository.ListCrudRepository;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface VersionRepository extends ListCrudRepository<VersionDAO, Long> {
+public interface VersionRepository extends ListCrudRepository<VersionDAO, UUID> {
     boolean existsByName(String name);
 
-    boolean existsByNameAndProductId(String name, Long productId);
+    boolean existsByNameAndProductId(String name, UUID productId);
 
     /**
      * Check if a version with the given name and productId exists, excluding the version with the specified ID.
@@ -35,11 +36,11 @@ public interface VersionRepository extends ListCrudRepository<VersionDAO, Long> 
      * @param id        The ID of the version to exclude from the check
      * @return true if another version with this name and productId exists, false otherwise
      */
-    boolean existsByNameAndProductIdAndIdNot(String name, Long productId, Long id);
+    boolean existsByNameAndProductIdAndIdNot(String name, UUID productId, UUID id);
 
     VersionDAO findByName(String name);
 
-    VersionDAO findByNameAndProductId(String name, Long productId);
+    VersionDAO findByNameAndProductId(String name, UUID productId);
 
-    List<VersionDAO> findByProductId(Long productId);
+    List<VersionDAO> findByProductId(UUID productId);
 }

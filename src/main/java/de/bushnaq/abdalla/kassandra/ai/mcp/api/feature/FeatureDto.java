@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.feature;
 
+import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,18 +39,18 @@ public class FeatureDto {
     @Schema(description = "Timestamp when the feature was created (ISO 8601)")
     private OffsetDateTime created;
     @Schema(description = "Unique feature identifier; use this ID in subsequent operations")
-    private Long           featureId;
+    private UUID           featureId;
     @Schema(description = "Unique feature name")
     private String         name;
     @Schema(description = "Timestamp when the feature was last updated (ISO 8601)")
     private OffsetDateTime updated;
     @Schema(description = "Version this feature belongs to")
-    private Long           versionId;
+    private UUID           versionId;
 
     /**
      * Custom constructor for FeatureDto with explicit parameter order.
      */
-    public FeatureDto(Long featureId, String name, Long versionId, OffsetDateTime created, OffsetDateTime updated, String avatarPrompt) {
+    public FeatureDto(UUID featureId, String name, UUID versionId, OffsetDateTime created, OffsetDateTime updated, String avatarPrompt) {
         this.featureId    = featureId;
         this.name         = name;
         this.versionId    = versionId;

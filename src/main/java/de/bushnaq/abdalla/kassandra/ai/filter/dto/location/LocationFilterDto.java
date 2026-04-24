@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter.dto.location;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,7 +41,7 @@ public class LocationFilterDto {
 
     private String         country;
     private OffsetDateTime created;
-    private Long           id;
+    private UUID           id;
     private LocalDate      start;
     private String         state;
     private OffsetDateTime updated;

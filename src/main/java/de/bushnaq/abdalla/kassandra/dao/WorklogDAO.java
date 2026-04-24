@@ -20,9 +20,11 @@ package de.bushnaq.abdalla.kassandra.dao;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "worklogs")
@@ -35,29 +37,29 @@ import java.time.OffsetDateTime;
 public class WorklogDAO extends AbstractTimeAwareDAO {
 
     @Column(nullable = false)
-    private Long authorId;
+    private UUID authorId;
 
     @Column(nullable = true)
     private String comment;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    private Long id;
+    private UUID id;
 
     @Column(nullable = false)
-    private Long sprintId;
+    private UUID sprintId;
 
     @Column(nullable = false)
     private OffsetDateTime start;
 
     @Column(nullable = false)
-    private Long taskId;
+    private UUID taskId;
 
     @Column(nullable = false)
     private Duration timeSpent;
 
     @Column(nullable = true)
-    private Long updateAuthorId;
+    private UUID updateAuthorId;
 
 }

@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Service for ACL security checks.
@@ -57,7 +58,7 @@ public class AclSecurityService {
      * @param productId the product ID
      * @return true if user can manage ACL
      */
-    public boolean canManageProductAcl(Long productId) {
+    public boolean canManageProductAcl(UUID productId) {
         if (SecurityUtils.isAdmin()) {
             return true;
         }
@@ -66,12 +67,11 @@ public class AclSecurityService {
 
     /**
      * Get the product ID for a feature
-     * Helper method for ACL checks
      *
      * @param featureId the feature ID
      * @return the product ID, or null if not found
      */
-    public Long getProductIdForFeature(Long featureId) {
+    public UUID getProductIdForFeature(UUID featureId) {
         return featureRepository.findById(featureId)
                 .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
                 .map(VersionDAO::getProductId)
@@ -80,12 +80,11 @@ public class AclSecurityService {
 
     /**
      * Get the product ID for a sprint
-     * Helper method for ACL checks
      *
      * @param sprintId the sprint ID
      * @return the product ID, or null if not found
      */
-    public Long getProductIdForSprint(Long sprintId) {
+    public UUID getProductIdForSprint(UUID sprintId) {
         return sprintRepository.findById(sprintId)
                 .flatMap(sprint -> featureRepository.findById(sprint.getFeatureId()))
                 .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
@@ -95,12 +94,11 @@ public class AclSecurityService {
 
     /**
      * Get the product ID for a task
-     * Helper method for ACL checks
      *
      * @param taskId the task ID
      * @return the product ID, or null if not found
      */
-    public Long getProductIdForTask(Long taskId) {
+    public UUID getProductIdForTask(UUID taskId) {
         return taskRepository.findById(taskId)
                 .flatMap(task -> sprintRepository.findById(task.getSprintId()))
                 .flatMap(sprint -> featureRepository.findById(sprint.getFeatureId()))
@@ -111,12 +109,11 @@ public class AclSecurityService {
 
     /**
      * Get the product ID for a version
-     * Helper method for ACL checks
      *
      * @param versionId the version ID
      * @return the product ID, or null if not found
      */
-    public Long getProductIdForVersion(Long versionId) {
+    public UUID getProductIdForVersion(UUID versionId) {
         return versionRepository.findById(versionId)
                 .map(VersionDAO::getProductId)
                 .orElse(null);
@@ -124,12 +121,11 @@ public class AclSecurityService {
 
     /**
      * Check if current user has access to a feature
-     * Access is inherited from version's product
      *
      * @param featureId the feature ID
      * @return true if user has access
      */
-    public boolean hasFeatureAccess(Long featureId) {
+    public boolean hasFeatureAccess(UUID featureId) {
         return featureRepository.findById(featureId)
                 .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
                 .map(VersionDAO::getProductId)
@@ -139,12 +135,11 @@ public class AclSecurityService {
 
     /**
      * Check if current user has access to a product
-     * Used in @PreAuthorize expressions
      *
      * @param productId the product ID
      * @return true if user has access
      */
-    public boolean hasProductAccess(Long productId) {
+    public boolean hasProductAccess(UUID productId) {
         String userEmail = SecurityUtils.getUserEmail();
         if (SecurityUtils.GUEST.equals(userEmail)) {
             return false;
@@ -162,8 +157,6 @@ public class AclSecurityService {
 
     /**
      * Check if current user has access to a product by its name.
-     * Used in @PreAuthorize expressions for name-based endpoints.
-     * Returns false if the product does not exist.
      *
      * @param name the product name
      * @return true if user has access
@@ -171,7 +164,6 @@ public class AclSecurityService {
     public boolean hasProductAccessByName(String name) {
         var product = productRepository.findByName(name);
         if (product == null) {
-            // Product not found — deny to avoid leaking existence; 404 handled by controller
             return false;
         }
         return hasProductAccess(product.getId());
@@ -179,12 +171,11 @@ public class AclSecurityService {
 
     /**
      * Check if current user has access to a sprint
-     * Access is inherited from feature's version's product
      *
      * @param sprintId the sprint ID
      * @return true if user has access
      */
-    public boolean hasSprintAccess(Long sprintId) {
+    public boolean hasSprintAccess(UUID sprintId) {
         return sprintRepository.findById(sprintId)
                 .flatMap(sprint -> featureRepository.findById(sprint.getFeatureId()))
                 .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
@@ -195,12 +186,11 @@ public class AclSecurityService {
 
     /**
      * Check if current user has access to a task
-     * Access is inherited from sprint's feature's version's product
      *
      * @param taskId the task ID
      * @return true if user has access
      */
-    public boolean hasTaskAccess(Long taskId) {
+    public boolean hasTaskAccess(UUID taskId) {
         return taskRepository.findById(taskId)
                 .flatMap(task -> sprintRepository.findById(task.getSprintId()))
                 .flatMap(sprint -> featureRepository.findById(sprint.getFeatureId()))
@@ -212,12 +202,11 @@ public class AclSecurityService {
 
     /**
      * Check if current user has access to a version
-     * Access is inherited from product
      *
      * @param versionId the version ID
      * @return true if user has access
      */
-    public boolean hasVersionAccess(Long versionId) {
+    public boolean hasVersionAccess(UUID versionId) {
         return versionRepository.findById(versionId)
                 .map(VersionDAO::getProductId)
                 .map(this::hasProductAccess)

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 /**
  * {@code LegalLocation} class
@@ -36,7 +37,7 @@ import java.time.LocalDate;
 public class Location extends AbstractTimeAware implements Comparable<Location> {
 
     private String    country;
-    private Long      id;
+    private UUID      id;
     private LocalDate start;
     private String    state;
 
@@ -45,6 +46,7 @@ public class Location extends AbstractTimeAware implements Comparable<Location> 
     private User user;
 
     public Location(String country, String state, LocalDate start) {
+        this.setId(UUID.randomUUID());
         this.country = country;
         this.state   = state;
         this.setStart(start);
@@ -58,6 +60,5 @@ public class Location extends AbstractTimeAware implements Comparable<Location> 
     String getKey() {
         return "L-" + id;
     }
-
 
 }

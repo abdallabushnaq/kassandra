@@ -25,15 +25,12 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
-public interface OffDayRepository extends ListCrudRepository<OffDayDAO, Long> {
+public interface OffDayRepository extends ListCrudRepository<OffDayDAO, UUID> {
 
     /**
      * Find overlapping OffDays for a specific user.
-     * An OffDay overlaps if its date range (firstDay to lastDay) overlaps with the given date range.
-     * Two ranges overlap when:
-     * - The start of the new range is before or equal to the end of an existing range AND
-     * - The end of the new range is after or equal to the start of an existing range
      *
      * @param user     the user to check for
      * @param firstDay the start date of the range to check
@@ -48,6 +45,6 @@ public interface OffDayRepository extends ListCrudRepository<OffDayDAO, Long> {
             @Param("user") UserDAO user,
             @Param("firstDay") LocalDate firstDay,
             @Param("lastDay") LocalDate lastDay,
-            @Param("offDayId") Long offDayId
+            @Param("offDayId") UUID offDayId
     );
 }

@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Service for managing user groups for ACL.
@@ -56,7 +57,7 @@ public class UserGroupService {
      */
     @Transactional
     @CacheEvict(value = "userGroups", allEntries = true)
-    public void addUserToGroup(Long groupId, Long userId) {
+    public void addUserToGroup(UUID groupId, UUID userId) {
         UserGroupDAO group = userGroupRepository.findById(groupId)
                 .orElseThrow(() -> new EntityNotFoundException("Group not found: " + groupId));
         // Verify user exists
@@ -80,7 +81,7 @@ public class UserGroupService {
      */
     @Transactional
     @CacheEvict(value = "userGroups", allEntries = true)
-    public UserGroupDAO createGroup(String name, String description, Set<Long> memberIds) {
+    public UserGroupDAO createGroup(String name, String description, Set<UUID> memberIds) {
         if (userGroupRepository.existsByName(name)) {
             throw new IllegalArgumentException("Group with name '" + name + "' already exists");
         }
@@ -110,7 +111,7 @@ public class UserGroupService {
      */
     @Transactional
     @CacheEvict(value = "userGroups", allEntries = true)
-    public void deleteGroup(Long groupId) {
+    public void deleteGroup(UUID groupId) {
         userGroupRepository.deleteById(groupId);
         log.info("Deleted user group: {}", groupId);
     }
@@ -134,7 +135,7 @@ public class UserGroupService {
      * @throws EntityNotFoundException if group not found
      */
     @Cacheable(value = "userGroups", key = "'group-' + #groupId")
-    public UserGroupDAO getGroup(Long groupId) {
+    public UserGroupDAO getGroup(UUID groupId) {
         return userGroupRepository.findById(groupId)
                 .orElseThrow(() -> new EntityNotFoundException("Group not found: " + groupId));
     }
@@ -146,7 +147,7 @@ public class UserGroupService {
      * @return list of groups the user belongs to
      */
     @Cacheable(value = "userGroups", key = "'user-' + #userId")
-    public List<UserGroupDAO> getGroupsForUser(Long userId) {
+    public List<UserGroupDAO> getGroupsForUser(UUID userId) {
         return userGroupRepository.findGroupsByUserId(userId);
     }
 
@@ -159,7 +160,7 @@ public class UserGroupService {
      */
     @Transactional
     @CacheEvict(value = "userGroups", allEntries = true)
-    public void removeUserFromGroup(Long groupId, Long userId) {
+    public void removeUserFromGroup(UUID groupId, UUID userId) {
         UserGroupDAO group = userGroupRepository.findById(groupId)
                 .orElseThrow(() -> new EntityNotFoundException("Group not found: " + groupId));
 
@@ -181,7 +182,7 @@ public class UserGroupService {
      */
     @Transactional
     @CacheEvict(value = "userGroups", allEntries = true)
-    public UserGroupDAO updateGroup(Long groupId, String name, String description, Set<Long> memberIds) {
+    public UserGroupDAO updateGroup(UUID groupId, String name, String description, Set<UUID> memberIds) {
         UserGroupDAO group = userGroupRepository.findById(groupId)
                 .orElseThrow(() -> new EntityNotFoundException("Group not found: " + groupId));
 

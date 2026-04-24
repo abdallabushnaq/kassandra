@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -49,7 +50,7 @@ public class UserGroupApi extends AbstractApi {
      * @param groupId the group ID
      * @param userId  the user ID
      */
-    public void addMember(Long groupId, Long userId) {
+    public void addMember(UUID groupId, UUID userId) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user-group/{groupId}/members/{userId}",
                 HttpMethod.POST,
@@ -68,7 +69,7 @@ public class UserGroupApi extends AbstractApi {
      * @param memberIds   the IDs of users to add as members
      * @return the created group
      */
-    public UserGroup create(String name, String description, Set<Long> memberIds) {
+    public UserGroup create(String name, String description, Set<UUID> memberIds) {
         UserGroup userGroup = new UserGroup();
         userGroup.setName(name);
         userGroup.setDescription(description);
@@ -81,7 +82,7 @@ public class UserGroupApi extends AbstractApi {
      *
      * @param id the group ID
      */
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user-group/{id}",
                 HttpMethod.DELETE,
@@ -112,7 +113,7 @@ public class UserGroupApi extends AbstractApi {
      * @param id the group ID
      * @return the group
      */
-    public UserGroup getById(Long id) {
+    public UserGroup getById(UUID id) {
         ResponseEntity<UserGroup> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user-group/{id}",
                 HttpMethod.GET,
@@ -166,7 +167,7 @@ public class UserGroupApi extends AbstractApi {
      * @param groupId the group ID
      * @param userId  the user ID
      */
-    public void removeMember(Long groupId, Long userId) {
+    public void removeMember(UUID groupId, UUID userId) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user-group/{groupId}/members/{userId}",
                 HttpMethod.DELETE,
@@ -206,7 +207,7 @@ public class UserGroupApi extends AbstractApi {
      * @param memberIds   the IDs of users in the group
      * @return the updated group
      */
-    public UserGroup update(Long id, String name, String description, Set<Long> memberIds) {
+    public UserGroup update(UUID id, String name, String description, Set<UUID> memberIds) {
         UserGroup userGroup = getById(id);
         userGroup.setName(name);
         userGroup.setDescription(description);

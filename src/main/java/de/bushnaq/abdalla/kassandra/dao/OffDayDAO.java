@@ -20,27 +20,35 @@ package de.bushnaq.abdalla.kassandra.dao;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
+import java.util.UUID;
+
+/**
+ * Supports client side id generation.
+ */
 @Entity
 @Table(name = "off_days")
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class OffDayDAO extends AbstractDateRangeDAO {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;
-
+    private UUID       id;
     @Column(nullable = false)
     private OffDayType type;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude//help intellij debugger not to go into a loop
     @JsonBackReference
-    private UserDAO user;
+    private UserDAO    user;
+
+    public OffDayDAO() {
+        this.setId(UUID.randomUUID());
+    }
 }

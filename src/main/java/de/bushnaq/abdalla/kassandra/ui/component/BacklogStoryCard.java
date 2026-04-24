@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 
 /**
@@ -56,9 +57,9 @@ public class BacklogStoryCard extends Div {
     private final Sprint                 sprint;
     private final Task                   story;
     private       VerticalLayout         tasksContainer;
-    private final Map<Long, User>        userMap;
+    private final Map<UUID, User>        userMap;
 
-    public BacklogStoryCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+    public BacklogStoryCard(Task story, List<Task> childTasks, Map<UUID, User> userMap,
                             Sprint sprint, BacklogDragDropHandler dragDropHandler) {
         this.story           = story;
         this.childTasks      = childTasks;

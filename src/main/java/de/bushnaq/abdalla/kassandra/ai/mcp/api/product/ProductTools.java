@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
@@ -88,7 +89,7 @@ public class ProductTools {
 
     @Tool(description = "Delete a product and all its ACL entries by productId.", resultConverter = KassandraToolCallResultConverter.class)
     public void deleteProductById(
-            @ToolParam(description = "The productId") Long id) {
+            @ToolParam(description = "The productId") UUID id) {
         Product product = productApi.getById(id);
         if (product == null) {
             throw new IllegalArgumentException("Product not found with ID: " + id);
@@ -122,7 +123,7 @@ public class ProductTools {
 
     @Tool(description = "Get a product by its productId.", resultConverter = KassandraToolCallResultConverter.class)
     public ProductDto getProductById(
-            @ToolParam(description = "The productId") Long productId) {
+            @ToolParam(description = "The productId") UUID productId) {
         Product product = productApi.getById(productId);
         if (product == null) {
             throw new IllegalArgumentException("Product not found with ID: " + productId);
@@ -142,7 +143,7 @@ public class ProductTools {
 
     @Tool(description = "Update an existing product by its productId.", resultConverter = KassandraToolCallResultConverter.class)
     public ProductDto updateProduct(
-            @ToolParam(description = "The productId") Long productId,
+            @ToolParam(description = "The productId") UUID productId,
             @ToolParam(description = "The new product name") String name) {
         Product product = productApi.getById(productId);
         if (product == null) {

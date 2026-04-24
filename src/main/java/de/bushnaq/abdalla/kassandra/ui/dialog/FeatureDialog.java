@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import java.util.UUID;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.button.Button;
@@ -77,7 +78,7 @@ public class FeatureDialog extends Dialog {
     private final       Image                  nameFieldImage;
     private final       StableDiffusionService stableDiffusionService;
     private final       AvatarService          avatarService;
-    private final       Long                   versionId;
+    private final UUID versionId;
 
     /**
      * Creates a dialog for creating or editing a feature.
@@ -87,7 +88,7 @@ public class FeatureDialog extends Dialog {
      * @param featureApi             The feature API for saving feature data
      * @param versionId              The version ID for new features (ignored for edit mode)
      */
-    public FeatureDialog(Feature feature, AvatarService avatarService, StableDiffusionService stableDiffusionService, FeatureApi featureApi, Long versionId) {
+    public FeatureDialog(Feature feature, AvatarService avatarService, StableDiffusionService stableDiffusionService, FeatureApi featureApi, UUID versionId) {
         this.feature                = feature;
         this.featureApi             = featureApi;
         this.avatarService          = avatarService;

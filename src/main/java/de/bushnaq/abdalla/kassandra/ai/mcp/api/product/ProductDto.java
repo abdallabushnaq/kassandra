@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
+import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,12 +44,12 @@ public class ProductDto {
     @Schema(description = "Unique product name")
     private String         name;
     @Schema(description = "Unique product identifier; use this ID in subsequent operations")
-    private Long           productId;
+    private UUID           productId;
     @Schema(description = "Timestamp when the product was last updated (ISO 8601)")
     private OffsetDateTime updated;
 
 
-    public ProductDto(Long productId, String name, OffsetDateTime updated, OffsetDateTime created, String avatarPrompt) {
+    public ProductDto(UUID productId, String name, OffsetDateTime updated, OffsetDateTime created, String avatarPrompt) {
         this.productId    = productId;
         this.name         = name;
         this.updated      = updated;

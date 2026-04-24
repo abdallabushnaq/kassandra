@@ -20,5 +20,7 @@ package de.bushnaq.abdalla.kassandra.repository;
 import de.bushnaq.abdalla.kassandra.dao.AvailabilityDAO;
 import org.springframework.data.repository.ListCrudRepository;
 
-public interface AvailabilityRepository extends ListCrudRepository<AvailabilityDAO, Long> {
+import java.util.UUID;
+
+public interface AvailabilityRepository extends ListCrudRepository<AvailabilityDAO, UUID> {
 }

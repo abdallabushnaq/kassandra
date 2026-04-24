@@ -407,7 +407,7 @@ public class GanttUtil {
             logger.trace(String.format("Calculating critical path for %d tasks.", sprint.getTasks().size()));
             maxLoop = Math.max(sprint.getTasks().size() * sprint.getTasks().size(), sprint.getTasks().size() * 10);
             boolean anythingChanged = false;
-            printCase("#", "ID", "Task Name", "Method", "Start", "Finish", "Duration");
+            printCase("#", "Key", "Task Name", "Method", "Start", "Finish", "Duration");
             //        logger.trace(String.format("[#] [ID][Task Name           ][ Method__ start_______________ finish_______________"));
             do {
                 anythingChanged = false;
@@ -677,7 +677,7 @@ public class GanttUtil {
     }
 
     private void printCase(String caseName, String methodName, Task task) {
-        printCase(caseName, "" + task.getId(), task.getName(), methodName, DateUtil.createDateString(task.getStart(), localDateTimeUtil.dtfymdhms),
+        printCase(caseName, task.getKey(), task.getName(), methodName, DateUtil.createDateString(task.getStart(), localDateTimeUtil.dtfymdhms),
                 DateUtil.createDateString(task.getFinish(), localDateTimeUtil.dtfymdhms),
                 DateUtil.createDurationString(task.getDuration(), true, true, true));
     }
@@ -898,7 +898,7 @@ public class GanttUtil {
 
     private long testForNull(/*GanttErrorHandler eh,*/ Sprint projectFile, long checks) {
         for (Task task : projectFile.getTasks()) {
-            printCase("TS", "testForNull", task);
+            printCase("T", "testForNull", task);
         }
         for (Task task : projectFile.getTasks()) {
             checks++;
@@ -928,7 +928,7 @@ public class GanttUtil {
                 for (Relation relation : task.getPredecessors()) {
                     Task sourceTask = task;
                     Task targetTask = projectFile.getTaskById(relation.getPredecessorId());
-                    if (sourceTask.getId() == task.getId()) {
+                    if (sourceTask.getId().equals(task.getId())) {
 //                        eh.isTrue(
 //                                String.format(ERROR_103_TASK_IS_MANUALLY_SCHEDULED_AND_CANNOT_FULLFILL_ITS_DEPENDENCY, context.getRowIndexByTaskId(task),
 //                                        task.getName(), context.getRowIndexByTaskId(targetTask), targetTask.getName()),
@@ -936,7 +936,7 @@ public class GanttUtil {
                     }
                 }
                 try {
-                    logger.trace(String.format("[M] [%d][%s] %s %s %s test", task.getId(), task.getName(),
+                    logger.trace(String.format("[M] [%s][%s] %s %s %s test", task.getKey(), task.getName(),
                             DateUtil.createDateString(task.getStart(), localDateTimeUtil.dtfymdhms),
                             DateUtil.createDateString(task.getFinish(), localDateTimeUtil.dtfymdhms),
                             DateUtil.createDurationString(task.getDuration(), true, true, true)));
@@ -953,7 +953,7 @@ public class GanttUtil {
                     //                    logger.trace(
                     //                            String.format("targetTask %s %s %s", targetTask.getName(), DateUtil.createDateString(targetTask.getStart(), dateUtil.sdfymdhms),
                     //                                    DateUtil.createDateString(targetTask.getFinish(), dateUtil.sdfymdhms)));
-                    if (sourceTask.getId() == task.getId() && task.getStart() != null && targetTask.getFinish() != null) {
+                    if (task.getStart() != null && targetTask.getFinish() != null) {
 //                        if (eh.isTrue(
 //                                String.format(ERROR_104_TASK_CANNOT_FULLFILL_ITS_DEPENDENCY, context.getRowIndexByTaskId(task), task.getName(),
 //                                        DateUtil.createDateString(task.getStart(), localDateTimeUtil.dtfymdhms), context.getRowIndexByTaskId(targetTask),

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.usergroup;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
@@ -58,8 +59,8 @@ public class UserGroupTools {
 
     @Tool(description = "Add a user to a group (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public void addMemberToGroup(
-            @ToolParam(description = "The groupId") Long groupId,
-            @ToolParam(description = "The userId to add") Long userId) {
+            @ToolParam(description = "The groupId") UUID groupId,
+            @ToolParam(description = "The userId to add") UUID userId) {
         userGroupApi.addMember(groupId, userId);
         ToolActivityContextHolder.reportActivity("Added user " + userId + " to group " + groupId);
     }
@@ -75,7 +76,7 @@ public class UserGroupTools {
 
     @Tool(description = "Delete a user group by its groupId (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public void deleteUserGroup(
-            @ToolParam(description = "The groupId") Long groupId) {
+            @ToolParam(description = "The groupId") UUID groupId) {
         UserGroup group = userGroupApi.getById(groupId);
         if (group == null) {
             throw new IllegalArgumentException("User group not found with ID: " + groupId);
@@ -94,7 +95,7 @@ public class UserGroupTools {
 
     @Tool(description = "Get a user group by its groupId (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public UserGroupDto getUserGroupById(
-            @ToolParam(description = "The groupId") Long groupId) {
+            @ToolParam(description = "The groupId") UUID groupId) {
         UserGroup group = userGroupApi.getById(groupId);
         if (group == null) {
             throw new IllegalArgumentException("User group not found with ID: " + groupId);
@@ -112,22 +113,22 @@ public class UserGroupTools {
 
     @Tool(description = "Remove a user from a group (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public void removeMemberFromGroup(
-            @ToolParam(description = "The groupId") Long groupId,
-            @ToolParam(description = "The userId to remove") Long userId) {
+            @ToolParam(description = "The groupId") UUID groupId,
+            @ToolParam(description = "The userId to remove") UUID userId) {
         userGroupApi.removeMember(groupId, userId);
         ToolActivityContextHolder.reportActivity("Removed user " + userId + " from group " + groupId);
     }
 
     @Tool(description = "Update a user group's name and/or description (requires ADMIN).", resultConverter = KassandraToolCallResultConverter.class)
     public UserGroupDto updateUserGroup(
-            @ToolParam(description = "The groupId") Long groupId,
+            @ToolParam(description = "The groupId") UUID groupId,
             @ToolParam(description = "New group name") String name,
             @ToolParam(description = "New group description", required = false) String description) {
         UserGroup existing = userGroupApi.getById(groupId);
         if (existing == null) {
             throw new IllegalArgumentException("User group not found with ID: " + groupId);
         }
-        Set<Long> memberIds = existing.getMemberIds() != null ? existing.getMemberIds() : new HashSet<>();
+        Set<UUID> memberIds = existing.getMemberIds() != null ? existing.getMemberIds() : new HashSet<>();
         UserGroup updated   = userGroupApi.update(groupId, name, description, memberIds);
         ToolActivityContextHolder.reportActivity("Updated user group '" + updated.getName() + "' (ID: " + groupId + ")");
         return UserGroupDto.from(updated);

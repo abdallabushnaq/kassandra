@@ -30,6 +30,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Tests the JavaScript AI filter generator for Feature entities.
@@ -52,7 +53,7 @@ class FeatureAiFilterTest extends AbstractAiFilterTest<FeatureFilterDto> {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
     }
 
-    private Feature createFeature(Long id, String name, Long versionId, OffsetDateTime created, OffsetDateTime updated) {
+    private Feature createFeature(UUID id, String name, UUID versionId, OffsetDateTime created, OffsetDateTime updated) {
         Feature feature = new Feature();
         feature.setId(id);
         feature.setName(name);
@@ -66,51 +67,51 @@ class FeatureAiFilterTest extends AbstractAiFilterTest<FeatureFilterDto> {
     void setUp() {
         List<Feature> raw = new ArrayList<>();
 
-        raw.add(createFeature(1L, "User Authentication", 1L,
+        raw.add(createFeature(UUID.randomUUID(), "User Authentication", UUID.randomUUID(),
                 OffsetDateTime.of(2023, 6, 15, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 20, 14, 30, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createFeature(2L, "Payment Processing", 1L,
+        raw.add(createFeature(UUID.randomUUID(), "Payment Processing", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 1, 10, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createFeature(3L, "User Profile Management", 2L,
+        raw.add(createFeature(UUID.randomUUID(), "User Profile Management", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 2, 28, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 12, 13, 20, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createFeature(4L, "Shopping Cart", 2L,
+        raw.add(createFeature(UUID.randomUUID(), "Shopping Cart", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 4, 3, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 18, 12, 10, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createFeature(5L, "Email Notifications", 3L,
+        raw.add(createFeature(UUID.randomUUID(), "Email Notifications", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 7, 22, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 12, 1, 10, 25, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createFeature(6L, "Data Analytics Dashboard", 3L,
+        raw.add(createFeature(UUID.randomUUID(), "Data Analytics Dashboard", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 9, 5, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 15, 11, 40, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createFeature(7L, "API Security Enhancement", 4L,
+        raw.add(createFeature(UUID.randomUUID(), "API Security Enhancement", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 11, 12, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 8, 16, 15, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createFeature(8L, "Mobile App Integration", 4L,
+        raw.add(createFeature(UUID.randomUUID(), "Mobile App Integration", UUID.randomUUID(),
                 OffsetDateTime.of(2025, 1, 5, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 20, 15, 50, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createFeature(9L, "Search Functionality", 5L,
+        raw.add(createFeature(UUID.randomUUID(), "Search Functionality", UUID.randomUUID(),
                 OffsetDateTime.of(2025, 2, 10, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 25, 17, 30, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createFeature(10L, "Reporting System", 5L,
+        raw.add(createFeature(UUID.randomUUID(), "Reporting System", UUID.randomUUID(),
                 OffsetDateTime.of(2025, 3, 18, 13, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 4, 2, 9, 20, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createFeature(11L, "Social Media Integration", 6L,
+        raw.add(createFeature(UUID.randomUUID(), "Social Media Integration", UUID.randomUUID(),
                 OffsetDateTime.of(2025, 5, 10, 10, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 6, 15, 14, 45, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createFeature(12L, "Machine Learning Recommendations", 6L,
+        raw.add(createFeature(UUID.randomUUID(), "Machine Learning Recommendations", UUID.randomUUID(),
                 OffsetDateTime.of(2025, 7, 1, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 8, 1, 16, 30, 0, 0, ZoneOffset.UTC)));
 

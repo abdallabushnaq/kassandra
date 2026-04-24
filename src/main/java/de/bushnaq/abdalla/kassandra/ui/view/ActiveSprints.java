@@ -64,7 +64,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private final       VerticalLayout              contentLayout;
     //    private final       DateTimeFormatter           dateFormatter      = DateTimeFormatter.ofPattern("MMM dd, yyyy");
     private final       FeatureApi                  featureApi;
-    private final       Map<Long, Feature>          featureMap                = new HashMap<>();
+    private final       Map<UUID, Feature>          featureMap                = new HashMap<>();
     private             ComboBox<GroupingMode>      groupingModeSelector;
     private             boolean                     hasUrlParameters          = false;
     private             boolean                     isRestoringFromUrl        = false;
@@ -78,7 +78,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private             MultiSelectComboBox<Sprint> sprintSelector;
     private final       TaskApi                     taskApi;
     private final       UserApi                     userApi;
-    private final       Map<Long, User>             userMap                   = new HashMap<>();
+    private final       Map<UUID, User>             userMap                   = new HashMap<>();
     private             MultiSelectComboBox<User>   userSelector;
     private             List<User>                  users                     = new ArrayList<>();
     private final       WorklogApi                  worklogApi;
@@ -378,7 +378,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
 
         // Create a virtual sprint that contains all merged tasks
         Sprint mergedSprint = new Sprint();
-        mergedSprint.setId(-1L); // Virtual ID
+        mergedSprint.setId(UUID.fromString("00000000-0000-0000-0000-000000000001")); // Virtual ID
         mergedSprint.setName("Merged View");
         mergedSprint.getTasks().addAll(allTasks);
 
@@ -425,7 +425,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                     Set<User> usersToSelect = new HashSet<>();
                     for (String idStr : savedUserIds.split(",")) {
                         try {
-                            Long id = Long.parseLong(idStr.trim());
+                            UUID id = UUID.fromString(idStr.trim());
                             users.stream()
                                     .filter(u -> u.getId().equals(id))
                                     .findFirst()
@@ -475,7 +475,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                     Set<Sprint> sprintsToSelect = new HashSet<>();
                     for (String idStr : savedSprintIds.split(",")) {
                         try {
-                            Long id = Long.parseLong(idStr.trim());
+                            UUID id = UUID.fromString(idStr.trim());
                             allSprints.stream()
                                     .filter(s -> s.getId().equals(id))
                                     .findFirst()

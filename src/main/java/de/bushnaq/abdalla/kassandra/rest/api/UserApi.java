@@ -30,6 +30,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 
 @Service
@@ -48,7 +49,7 @@ public class UserApi extends AbstractApi {
 
     }
 
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user/{id}",
                 HttpMethod.DELETE,
@@ -74,7 +75,7 @@ public class UserApi extends AbstractApi {
      * @param sprintId id of the sprint
      * @return list of users
      */
-    public List<User> getAll(Long sprintId) {
+    public List<User> getAll(UUID sprintId) {
         ResponseEntity<User[]> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user/sprint/{sprintId}",
                 HttpMethod.GET,
@@ -91,7 +92,7 @@ public class UserApi extends AbstractApi {
      * @param userId The user ID
      * @return AvatarUpdateRequest containing avatarImage, avatarImageOriginal, and avatarPrompt, or null if not found
      */
-    public AvatarUpdateRequest getAvatarFull(Long userId) {
+    public AvatarUpdateRequest getAvatarFull(UUID userId) {
         try {
             ResponseEntity<AvatarUpdateRequest> response = executeWithErrorHandling(() -> restTemplate.exchange(
                     getBaseUrl() + "/user/{id}/avatar/full",
@@ -112,7 +113,7 @@ public class UserApi extends AbstractApi {
      * @param userId The user ID
      * @return The light avatar image, or null if not found
      */
-    public AvatarWrapper getAvatarImage(Long userId) {
+    public AvatarWrapper getAvatarImage(UUID userId) {
         ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user/{id}/avatar",
                 HttpMethod.GET,
@@ -130,7 +131,7 @@ public class UserApi extends AbstractApi {
      * @param userId The user ID
      * @return The dark avatar image (or light fallback), or null if not found
      */
-    public AvatarWrapper getDarkAvatarImage(Long userId) {
+    public AvatarWrapper getDarkAvatarImage(UUID userId) {
         ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user/{id}/dark-avatar",
                 HttpMethod.GET,
@@ -159,7 +160,7 @@ public class UserApi extends AbstractApi {
         }
     }
 
-    public User getById(Long id) {
+    public User getById(UUID id) {
         ResponseEntity<User> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user/{id}",
                 HttpMethod.GET,
@@ -227,7 +228,7 @@ public class UserApi extends AbstractApi {
      * @param originalImage The original light avatar image bytes (e.g., 512x512)
      * @param prompt        The prompt used to generate the light avatar
      */
-    public void updateAvatarFull(Long userId, byte[] resizedImage, byte[] originalImage, String prompt) {
+    public void updateAvatarFull(UUID userId, byte[] resizedImage, byte[] originalImage, String prompt) {
         updateAvatarFull(userId, resizedImage, originalImage, prompt, null, null, null, null, null);
     }
 
@@ -242,7 +243,7 @@ public class UserApi extends AbstractApi {
      * @param darkResizedImage   Resized dark avatar image bytes (e.g., 64x64), or null to skip
      * @param darkOriginalImage  Original dark avatar image bytes (e.g., 512x512), or null to skip
      */
-    public void updateAvatarFull(Long userId, byte[] resizedImage, byte[] originalImage, String prompt,
+    public void updateAvatarFull(UUID userId, byte[] resizedImage, byte[] originalImage, String prompt,
             byte[] darkResizedImage, byte[] darkOriginalImage) {
         updateAvatarFull(userId, resizedImage, originalImage, prompt, darkResizedImage, darkOriginalImage, null, null, null);
     }
@@ -261,7 +262,7 @@ public class UserApi extends AbstractApi {
      * @param negativePrompt          Negative prompt for the light avatar, or null to skip
      * @param darkNegativePrompt      Negative prompt for the dark avatar, or null to skip
      */
-    public void updateAvatarFull(Long userId, byte[] resizedImage, byte[] originalImage, String prompt,
+    public void updateAvatarFull(UUID userId, byte[] resizedImage, byte[] originalImage, String prompt,
             byte[] darkResizedImage, byte[] darkOriginalImage,
             String darkPrompt, String negativePrompt, String darkNegativePrompt) {
         AvatarUpdateRequest request = new AvatarUpdateRequest();

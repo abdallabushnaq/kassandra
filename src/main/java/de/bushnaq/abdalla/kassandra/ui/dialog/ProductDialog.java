@@ -52,6 +52,7 @@ import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import java.io.ByteArrayInputStream;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -86,8 +87,8 @@ public class ProductDialog extends Dialog {
     private             String                         generatedNegativePrompt;
     private             String                         generatedDarkNegativePrompt;
     private final       Image                          headerIcon;
-    private final       Set<Long>                      initialGroupIds;
-    private final       Set<Long>                      initialUserIds;
+    private final       Set<UUID>                      initialGroupIds;
+    private final       Set<UUID>                      initialUserIds;
     private final       boolean                        isEditMode;
     private final       TextField                      nameField;
     private final       Image                          nameFieldImage;
@@ -374,23 +375,23 @@ public class ProductDialog extends Dialog {
      *
      * @param productId The product ID to set ACL for
      */
-    private void applyInitialAclEntries(Long productId) {
+    private void applyInitialAclEntries(UUID productId) {
         // Get selected users and groups
-        Set<Long> selectedUserIds = aclUsersField.getValue().stream()
+        Set<UUID> selectedUserIds = aclUsersField.getValue().stream()
                 .map(User::getId)
                 .collect(Collectors.toSet());
 
-        Set<Long> selectedGroupIds = aclGroupsField.getValue().stream()
+        Set<UUID> selectedGroupIds = aclGroupsField.getValue().stream()
                 .map(UserGroup::getId)
                 .collect(Collectors.toSet());
 
         // Grant access to selected users
-        for (Long userId : selectedUserIds) {
+        for (UUID userId : selectedUserIds) {
             productAclApi.grantUserAccess(productId, userId);
         }
 
         // Grant access to selected groups
-        for (Long groupId : selectedGroupIds) {
+        for (UUID groupId : selectedGroupIds) {
             productAclApi.grantGroupAccess(productId, groupId);
         }
     }
@@ -564,53 +565,53 @@ public class ProductDialog extends Dialog {
      *
      * @param productId The product ID to update ACL for
      */
-    private void updateAclEntries(Long productId) {
+    private void updateAclEntries(UUID productId) {
         if (!isEditMode) {
             return; // ACL is only managed in edit mode
         }
 
         // Get current selected users and groups
-        Set<Long> currentUserIds = aclUsersField.getValue().stream()
+        Set<UUID> currentUserIds = aclUsersField.getValue().stream()
                 .map(User::getId)
                 .collect(Collectors.toSet());
 
-        Set<Long> currentGroupIds = aclGroupsField.getValue().stream()
+        Set<UUID> currentGroupIds = aclGroupsField.getValue().stream()
                 .map(UserGroup::getId)
                 .collect(Collectors.toSet());
 
         // Find users to add (in current but not in initial)
-        Set<Long> usersToAdd = new HashSet<>(currentUserIds);
+        Set<UUID> usersToAdd = new HashSet<>(currentUserIds);
         usersToAdd.removeAll(initialUserIds);
 
         // Find users to remove (in initial but not in current)
-        Set<Long> usersToRemove = new HashSet<>(initialUserIds);
+        Set<UUID> usersToRemove = new HashSet<>(initialUserIds);
         usersToRemove.removeAll(currentUserIds);
 
         // Find groups to add (in current but not in initial)
-        Set<Long> groupsToAdd = new HashSet<>(currentGroupIds);
+        Set<UUID> groupsToAdd = new HashSet<>(currentGroupIds);
         groupsToAdd.removeAll(initialGroupIds);
 
         // Find groups to remove (in initial but not in current)
-        Set<Long> groupsToRemove = new HashSet<>(initialGroupIds);
+        Set<UUID> groupsToRemove = new HashSet<>(initialGroupIds);
         groupsToRemove.removeAll(currentGroupIds);
 
         // Apply user grants
-        for (Long userId : usersToAdd) {
+        for (UUID userId : usersToAdd) {
             productAclApi.grantUserAccess(productId, userId);
         }
 
         // Apply user revokes
-        for (Long userId : usersToRemove) {
+        for (UUID userId : usersToRemove) {
             productAclApi.revokeUserAccess(productId, userId);
         }
 
         // Apply group grants
-        for (Long groupId : groupsToAdd) {
+        for (UUID groupId : groupsToAdd) {
             productAclApi.grantGroupAccess(productId, groupId);
         }
 
         // Apply group revokes
-        for (Long groupId : groupsToRemove) {
+        for (UUID groupId : groupsToRemove) {
             productAclApi.revokeGroupAccess(productId, groupId);
         }
     }

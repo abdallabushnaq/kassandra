@@ -32,6 +32,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Tests the JavaScript AI filter generator for OffDay entities.
@@ -56,7 +57,7 @@ class OffDayAiFilterTest extends AbstractAiFilterTest<OffDayFilterDto> {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
     }
 
-    private OffDay createOffDay(Long id, LocalDate firstDay, LocalDate lastDay, OffDayType type,
+    private OffDay createOffDay(UUID id, LocalDate firstDay, LocalDate lastDay, OffDayType type,
                                 User user, OffsetDateTime created, OffsetDateTime updated) {
         OffDay offDay = new OffDay();
         offDay.setId(id);
@@ -69,7 +70,7 @@ class OffDayAiFilterTest extends AbstractAiFilterTest<OffDayFilterDto> {
         return offDay;
     }
 
-    private User createUser(Long id, String name) {
+    private User createUser(UUID id, String name) {
         User user = new User();
         user.setId(id);
         user.setName(name);
@@ -78,81 +79,81 @@ class OffDayAiFilterTest extends AbstractAiFilterTest<OffDayFilterDto> {
 
     @BeforeEach
     void setUp() {
-        User johnDoe     = createUser(1L, "John Doe");
-        User janeSmith   = createUser(2L, "Jane Smith");
-        User bobJohnson  = createUser(3L, "Bob Johnson");
-        User aliceWilson = createUser(4L, "Alice Wilson");
-        User mikeBrown   = createUser(5L, "Mike Brown");
+        User johnDoe     = createUser(UUID.randomUUID(), "John Doe");
+        User janeSmith   = createUser(UUID.randomUUID(), "Jane Smith");
+        User bobJohnson  = createUser(UUID.randomUUID(), "Bob Johnson");
+        User aliceWilson = createUser(UUID.randomUUID(), "Alice Wilson");
+        User mikeBrown   = createUser(UUID.randomUUID(), "Mike Brown");
 
         List<OffDay> raw = new ArrayList<>();
 
         // id=1  VACATION  Jan 15–19 2024   (5 days, multi-day)
-        raw.add(createOffDay(1L, LocalDate.of(2024, 1, 15), LocalDate.of(2024, 1, 19), OffDayType.VACATION, johnDoe,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2024, 1, 15), LocalDate.of(2024, 1, 19), OffDayType.VACATION, johnDoe,
                 OffsetDateTime.of(2023, 12, 20, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 1, 10, 14, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=2  SICK      Feb 5–7 2024     (3 days, multi-day)
-        raw.add(createOffDay(2L, LocalDate.of(2024, 2, 5), LocalDate.of(2024, 2, 7), OffDayType.SICK, janeSmith,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2024, 2, 5), LocalDate.of(2024, 2, 7), OffDayType.SICK, janeSmith,
                 OffsetDateTime.of(2024, 1, 15, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 2, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
         // id=3  HOLIDAY   Mar 1 2024       (single day)
-        raw.add(createOffDay(3L, LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 1), OffDayType.HOLIDAY, bobJohnson,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 1), OffDayType.HOLIDAY, bobJohnson,
                 OffsetDateTime.of(2024, 2, 20, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 1, 13, 20, 0, 0, ZoneOffset.UTC)));
 
         // id=4  TRIP      Apr 10–15 2024   (6 days, multi-day)
-        raw.add(createOffDay(4L, LocalDate.of(2024, 4, 10), LocalDate.of(2024, 4, 15), OffDayType.TRIP, aliceWilson,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2024, 4, 10), LocalDate.of(2024, 4, 15), OffDayType.TRIP, aliceWilson,
                 OffsetDateTime.of(2024, 3, 25, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 4, 15, 12, 10, 0, 0, ZoneOffset.UTC)));
 
         // id=5  VACATION  May 20 – Jun 5 2024  (17 days, multi-day)
-        raw.add(createOffDay(5L, LocalDate.of(2024, 5, 20), LocalDate.of(2024, 6, 5), OffDayType.VACATION, mikeBrown,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2024, 5, 20), LocalDate.of(2024, 6, 5), OffDayType.VACATION, mikeBrown,
                 OffsetDateTime.of(2024, 4, 20, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 5, 1, 11, 40, 0, 0, ZoneOffset.UTC)));
 
         // id=6  SICK      Jun 10–12 2024   (3 days, multi-day)
-        raw.add(createOffDay(6L, LocalDate.of(2024, 6, 10), LocalDate.of(2024, 6, 12), OffDayType.SICK, johnDoe,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2024, 6, 10), LocalDate.of(2024, 6, 12), OffDayType.SICK, johnDoe,
                 OffsetDateTime.of(2024, 5, 28, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 10, 16, 15, 0, 0, ZoneOffset.UTC)));
 
         // id=7  HOLIDAY   Jul 4 2024       (single day)
-        raw.add(createOffDay(7L, LocalDate.of(2024, 7, 4), LocalDate.of(2024, 7, 4), OffDayType.HOLIDAY, janeSmith,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2024, 7, 4), LocalDate.of(2024, 7, 4), OffDayType.HOLIDAY, janeSmith,
                 OffsetDateTime.of(2024, 6, 25, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 7, 4, 15, 50, 0, 0, ZoneOffset.UTC)));
 
         // id=8  VACATION  Aug 15–25 2024   (11 days, multi-day)
-        raw.add(createOffDay(8L, LocalDate.of(2024, 8, 15), LocalDate.of(2024, 8, 25), OffDayType.VACATION, bobJohnson,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2024, 8, 15), LocalDate.of(2024, 8, 25), OffDayType.VACATION, bobJohnson,
                 OffsetDateTime.of(2024, 7, 30, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 15, 17, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=9  TRIP      Sep 2–6 2024     (5 days, multi-day)
-        raw.add(createOffDay(9L, LocalDate.of(2024, 9, 2), LocalDate.of(2024, 9, 6), OffDayType.TRIP, aliceWilson,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2024, 9, 2), LocalDate.of(2024, 9, 6), OffDayType.TRIP, aliceWilson,
                 OffsetDateTime.of(2024, 8, 28, 13, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 5, 9, 20, 0, 0, ZoneOffset.UTC)));
 
         // id=10 SICK      Oct 28–30 2024   (3 days, multi-day)
-        raw.add(createOffDay(10L, LocalDate.of(2024, 10, 28), LocalDate.of(2024, 10, 30), OffDayType.SICK, mikeBrown,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2024, 10, 28), LocalDate.of(2024, 10, 30), OffDayType.SICK, mikeBrown,
                 OffsetDateTime.of(2024, 9, 25, 10, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 10, 28, 14, 45, 0, 0, ZoneOffset.UTC)));
 
         // id=11 HOLIDAY   Jan 1 2025       (single day)
-        raw.add(createOffDay(11L, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 1), OffDayType.HOLIDAY, johnDoe,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 1), OffDayType.HOLIDAY, johnDoe,
                 OffsetDateTime.of(2024, 12, 28, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 1, 16, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=12 VACATION  Feb 10–21 2025   (12 days, multi-day)
-        raw.add(createOffDay(12L, LocalDate.of(2025, 2, 10), LocalDate.of(2025, 2, 21), OffDayType.VACATION, janeSmith,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2025, 2, 10), LocalDate.of(2025, 2, 21), OffDayType.VACATION, janeSmith,
                 OffsetDateTime.of(2025, 1, 28, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 10, 12, 20, 0, 0, ZoneOffset.UTC)));
 
         // id=13 SICK      Mar 3–7 2025     (5 days, multi-day)
-        raw.add(createOffDay(13L, LocalDate.of(2025, 3, 3), LocalDate.of(2025, 3, 7), OffDayType.SICK, bobJohnson,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2025, 3, 3), LocalDate.of(2025, 3, 7), OffDayType.SICK, bobJohnson,
                 OffsetDateTime.of(2025, 2, 28, 10, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 3, 3, 11, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=14 TRIP      Apr 14–25 2025   (12 days, multi-day)
-        raw.add(createOffDay(14L, LocalDate.of(2025, 4, 14), LocalDate.of(2025, 4, 25), OffDayType.TRIP, aliceWilson,
+        raw.add(createOffDay(UUID.randomUUID(), LocalDate.of(2025, 4, 14), LocalDate.of(2025, 4, 25), OffDayType.TRIP, aliceWilson,
                 OffsetDateTime.of(2025, 3, 20, 14, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 4, 14, 9, 45, 0, 0, ZoneOffset.UTC)));
 

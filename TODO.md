@@ -5,6 +5,10 @@
 3. add better error handling in api.
 4. remove default test password from AbstractApi.
 5. make sure getAll will filter via alc in db, not in memory.
+6. make all entities client side id generated
+    1. dto and dao need default constructors that set the id
+    2. remove the generator annotation
+    3. use entitymanager to persist
 
 ## Feature
 

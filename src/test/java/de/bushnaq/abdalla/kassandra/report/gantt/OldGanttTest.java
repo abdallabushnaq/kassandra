@@ -34,6 +34,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 
 @Tag("UnitTest")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -68,8 +69,8 @@ public class OldGanttTest extends AbstractGanttTestUtil {
 
         //create tasks
         Sprint sprint         = sprintApi.getAll().getFirst();
-        User   resource1      = expectedUsers.stream().toList().getFirst();
-        User   resource2      = expectedUsers.stream().toList().get(1);
+        User   resource1      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
+        User   resource2      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
         Task   startMilestone = addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), null, Duration.ZERO, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         Task   task1          = addParentTask("[1] Parent Task", sprint, null, startMilestone);
         Task   task2          = addTask("[2] Child Task", "5d", null, resource1, sprint, task1, null);
@@ -108,8 +109,8 @@ public class OldGanttTest extends AbstractGanttTestUtil {
 
         //create tasks
         Sprint sprint         = expectedSprints.getFirst();
-        User   resource1      = expectedUsers.stream().toList().getFirst();
-        User   resource2      = expectedUsers.stream().toList().get(1);
+        User   resource1      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
+        User   resource2      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
         Task   startMilestone = addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         Task   task1          = addParentTask("[1] Parent Task", sprint, null, startMilestone);
         Task   task2          = addTask("[2] Child Task ", "5d", null, resource1, sprint, task1, null);
@@ -154,8 +155,8 @@ public class OldGanttTest extends AbstractGanttTestUtil {
 
         //create tasks
         Sprint sprint         = expectedSprints.getFirst();
-        User   resource1      = expectedUsers.stream().toList().getFirst();
-        User   resource2      = expectedUsers.stream().toList().get(1);
+        User   resource1      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
+        User   resource2      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
         Task   startMilestone = addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         Task   task1          = addParentTask("[1] Parent Task", sprint, null, startMilestone);
         Task   task2          = addTask("[2] Child Task ", "5d", null, resource1, sprint, task1, null);

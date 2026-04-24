@@ -20,10 +20,12 @@ package de.bushnaq.abdalla.kassandra.repository;
 import de.bushnaq.abdalla.kassandra.dao.UserWorkWeekDAO;
 import org.springframework.data.repository.ListCrudRepository;
 
+import java.util.UUID;
+
 /**
  * Spring Data repository for {@link UserWorkWeekDAO}.
  */
-public interface UserWorkWeekRepository extends ListCrudRepository<UserWorkWeekDAO, Long> {
+public interface UserWorkWeekRepository extends ListCrudRepository<UserWorkWeekDAO, UUID> {
 
     /**
      * Returns the number of user work-week assignments that reference the given work week.
@@ -31,6 +33,6 @@ public interface UserWorkWeekRepository extends ListCrudRepository<UserWorkWeekD
      * @param workWeekId the ID of the work week
      * @return assignment count
      */
-    long countByWorkWeekId(Long workWeekId);
+    long countByWorkWeekId(UUID workWeekId);
 }
 

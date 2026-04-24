@@ -20,5 +20,7 @@ package de.bushnaq.abdalla.kassandra.repository;
 import de.bushnaq.abdalla.kassandra.dao.LocationDAO;
 import org.springframework.data.repository.ListCrudRepository;
 
-public interface LocationRepository extends ListCrudRepository<LocationDAO, Long> {
+import java.util.UUID;
+
+public interface LocationRepository extends ListCrudRepository<LocationDAO, UUID> {
 }

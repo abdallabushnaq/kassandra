@@ -27,6 +27,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * REST client stub for the {@code /api/work-week} endpoint.
@@ -60,7 +61,7 @@ public class WorkWeekApi extends AbstractApi {
      *
      * @param id the work week ID
      */
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/work-week/{id}",
                 HttpMethod.DELETE,
@@ -91,7 +92,7 @@ public class WorkWeekApi extends AbstractApi {
      * @param id the work week ID
      * @return the work week
      */
-    public WorkWeek getById(Long id) {
+    public WorkWeek getById(UUID id) {
         ResponseEntity<WorkWeek> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/work-week/{id}",
                 HttpMethod.GET,

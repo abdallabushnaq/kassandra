@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -29,7 +30,7 @@ import java.time.LocalDate;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Availability extends AbstractTimeAware implements Comparable<Availability> {
     private float     availability;
-    private Long      id;
+    private UUID      id;
     private LocalDate start;
 
     @ToString.Exclude//help intellij debugger not to go into a loop
@@ -38,6 +39,7 @@ public class Availability extends AbstractTimeAware implements Comparable<Availa
 
     public Availability(float availability, LocalDate firstDate) {
         super();
+        this.setId(UUID.randomUUID());
         this.availability = availability;
         setStart(firstDate);
     }

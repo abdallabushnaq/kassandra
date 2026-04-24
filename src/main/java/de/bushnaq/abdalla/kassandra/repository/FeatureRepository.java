@@ -21,11 +21,12 @@ import de.bushnaq.abdalla.kassandra.dao.FeatureDAO;
 import org.springframework.data.repository.ListCrudRepository;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface FeatureRepository extends ListCrudRepository<FeatureDAO, Long> {
+public interface FeatureRepository extends ListCrudRepository<FeatureDAO, UUID> {
     boolean existsByName(String name);
 
-    boolean existsByNameAndVersionId(String name, Long versionId);
+    boolean existsByNameAndVersionId(String name, UUID versionId);
 
     /**
      * Check if a feature with the given name and versionId exists, excluding the feature with the specified ID.
@@ -35,11 +36,11 @@ public interface FeatureRepository extends ListCrudRepository<FeatureDAO, Long> 
      * @param id        The ID of the feature to exclude from the check
      * @return true if another feature with this name and versionId exists, false otherwise
      */
-    boolean existsByNameAndVersionIdAndIdNot(String name, Long versionId, Long id);
+    boolean existsByNameAndVersionIdAndIdNot(String name, UUID versionId, UUID id);
 
     FeatureDAO findByName(String name);
 
-    FeatureDAO findByNameAndVersionId(String name, Long versionId);
+    FeatureDAO findByNameAndVersionId(String name, UUID versionId);
 
-    List<FeatureDAO> findByVersionId(Long versionId);
+    List<FeatureDAO> findByVersionId(UUID versionId);
 }

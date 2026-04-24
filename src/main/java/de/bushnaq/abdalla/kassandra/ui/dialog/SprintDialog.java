@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import java.util.UUID;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.UI;
@@ -64,7 +65,7 @@ public class SprintDialog extends Dialog {
     private final       AvatarUpdateRequest    avatarUpdateRequest;
     private final       Binder<Sprint>         binder;
     private final       Span                   errorMessage;
-    private final       Long                   featureId;
+    private final UUID featureId;
     private volatile    byte[]                 generatedDarkImageBytes;
     private volatile    byte[]                 generatedDarkImageBytesOriginal;
     private             String                 generatedDarkImagePrompt;
@@ -90,7 +91,7 @@ public class SprintDialog extends Dialog {
      * @param sprintApi              The sprint API for saving sprint data
      * @param featureId              The feature ID for new sprints (ignored for edit mode)
      */
-    public SprintDialog(Sprint sprint, AvatarService avatarService, StableDiffusionService stableDiffusionService, SprintApi sprintApi, Long featureId) {
+    public SprintDialog(Sprint sprint, AvatarService avatarService, StableDiffusionService stableDiffusionService, SprintApi sprintApi, UUID featureId) {
         this.sprint                 = sprint;
         this.sprintApi              = sprintApi;
         this.avatarService          = avatarService;

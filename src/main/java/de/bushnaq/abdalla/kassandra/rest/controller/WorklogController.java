@@ -24,6 +24,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 
 @RestController
@@ -35,13 +36,13 @@ public class WorklogController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable UUID id) {
         worklogRepository.deleteById(id);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public Optional<WorklogDAO> get(@PathVariable Long id) {
+    public Optional<WorklogDAO> get(@PathVariable UUID id) {
         Optional<WorklogDAO> task = worklogRepository.findById(id);
         return task;
     }
@@ -54,7 +55,7 @@ public class WorklogController {
 
     @GetMapping("/sprint/{sprintId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public List<WorklogDAO> getBySprintId(@PathVariable Long sprintId) {
+    public List<WorklogDAO> getBySprintId(@PathVariable UUID sprintId) {
         return worklogRepository.findBySprintId(sprintId);
     }
 

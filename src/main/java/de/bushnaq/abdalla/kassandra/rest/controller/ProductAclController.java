@@ -27,6 +27,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * REST controller for managing Product Access Control Lists.
@@ -50,7 +51,7 @@ public class ProductAclController {
      */
     @GetMapping
     @PreAuthorize("@aclSecurityService.canManageProductAcl(#productId)")
-    public List<ProductAclEntryDAO> getAcl(@PathVariable Long productId) {
+    public List<ProductAclEntryDAO> getAcl(@PathVariable UUID productId) {
         log.info("Getting ACL for product: {}", productId);
         return productAclService.getProductAcl(productId);
     }
@@ -66,8 +67,8 @@ public class ProductAclController {
     @PreAuthorize("@aclSecurityService.canManageProductAcl(#productId)")
     @Transactional
     public ProductAclEntryDAO grantGroupAccess(
-            @PathVariable Long productId,
-            @PathVariable Long groupId
+            @PathVariable UUID productId,
+            @PathVariable UUID groupId
     ) {
         log.info("Granting group {} access to product {}", groupId, productId);
         return productAclService.grantGroupAccess(productId, groupId);
@@ -84,8 +85,8 @@ public class ProductAclController {
     @PreAuthorize("@aclSecurityService.canManageProductAcl(#productId)")
     @Transactional
     public ProductAclEntryDAO grantUserAccess(
-            @PathVariable Long productId,
-            @PathVariable Long userId
+            @PathVariable UUID productId,
+            @PathVariable UUID userId
     ) {
         log.info("Granting user {} access to product {}", userId, productId);
         return productAclService.grantUserAccess(productId, userId);
@@ -101,8 +102,8 @@ public class ProductAclController {
     @PreAuthorize("@aclSecurityService.canManageProductAcl(#productId)")
     @Transactional
     public void revokeGroupAccess(
-            @PathVariable Long productId,
-            @PathVariable Long groupId
+            @PathVariable UUID productId,
+            @PathVariable UUID groupId
     ) {
         log.info("Revoking group {} access to product {}", groupId, productId);
         productAclService.revokeGroupAccess(productId, groupId);
@@ -118,8 +119,8 @@ public class ProductAclController {
     @PreAuthorize("@aclSecurityService.canManageProductAcl(#productId)")
     @Transactional
     public void revokeUserAccess(
-            @PathVariable Long productId,
-            @PathVariable Long userId
+            @PathVariable UUID productId,
+            @PathVariable UUID userId
     ) {
         log.info("Revoking user {} access to product {}", userId, productId);
         productAclService.revokeUserAccess(productId, userId);

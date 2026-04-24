@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
+import java.util.UUID;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
@@ -50,21 +51,21 @@ public class MergedScrumBoard extends VerticalLayout {
 
     private final List<Task>         allTasks;
     private final VerticalLayout     contentLayout;
-    private final Map<Long, Boolean> expandedFeatures = new HashMap<>();
-    private final Map<Long, Boolean> expandedStories  = new HashMap<>();
-    private final Map<Long, Feature> featureMap;
+    private final Map<UUID, Boolean> expandedFeatures = new HashMap<>();
+    private final Map<UUID, Boolean> expandedStories  = new HashMap<>();
+    private final Map<UUID, Feature> featureMap;
     private       String             filterText       = "";
     private final GroupingMode       groupingMode;
     private final Set<User>          selectedUsers;
     private final List<Sprint>       sprints;
     private final List<StoryCard>    storyCards       = new ArrayList<>();
     private final TaskApi            taskApi;
-    private final Map<Long, User>    userMap;
+    private final Map<UUID, User>    userMap;
     private final WorklogApi         worklogApi;
 
     public MergedScrumBoard(List<Sprint> sprints, List<Task> allTasks, TaskApi taskApi,
-                            Map<Long, User> userMap, String filterText, GroupingMode groupingMode,
-                            Map<Long, Feature> featureMap, Set<User> selectedUsers, WorklogApi worklogApi) {
+                            Map<UUID, User> userMap, String filterText, GroupingMode groupingMode,
+                            Map<UUID, Feature> featureMap, Set<User> selectedUsers, WorklogApi worklogApi) {
         this.sprints       = sprints;
         this.allTasks      = allTasks;
         this.taskApi       = taskApi;
@@ -90,7 +91,7 @@ public class MergedScrumBoard extends VerticalLayout {
         refresh();
     }
 
-    private Task findTaskById(Long taskId) {
+    private Task findTaskById(UUID taskId) {
         return allTasks.stream()
                 .filter(t -> t.getId().equals(taskId))
                 .findFirst()
@@ -150,7 +151,7 @@ public class MergedScrumBoard extends VerticalLayout {
                 .findFirst()
                 .orElse(null);
 
-        Long currentUserId = currentUser != null ? currentUser.getId() : null;
+        UUID currentUserId = currentUser != null ? currentUser.getId() : null;
 
         TaskDialog dialog = new TaskDialog(task, taskApi, worklogApi, userMap, currentUserId, this::refresh);
         dialog.open();
@@ -267,15 +268,15 @@ public class MergedScrumBoard extends VerticalLayout {
         }
 
         // Group sprints by feature
-        Map<Long, List<Sprint>> sprintsByFeature = sprints.stream()
+        Map<UUID, List<Sprint>> sprintsByFeature = sprints.stream()
                 .filter(s -> s.getFeatureId() != null)
                 .collect(Collectors.groupingBy(Sprint::getFeatureId));
 
         // For each feature, get all stories from all sprints belonging to that feature
         Map<Feature, List<Task>> storiesByFeature = new HashMap<>();
 
-        for (Map.Entry<Long, List<Sprint>> entry : sprintsByFeature.entrySet()) {
-            Long         featureId      = entry.getKey();
+        for (Map.Entry<UUID, List<Sprint>> entry : sprintsByFeature.entrySet()) {
+            UUID         featureId      = entry.getKey();
             List<Sprint> featureSprints = entry.getValue();
 
             Feature feature = featureMap.get(featureId);

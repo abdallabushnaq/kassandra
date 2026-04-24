@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.UserWorkWeek;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -58,7 +59,7 @@ public class UserWorkWeekApi extends AbstractApi {
      * @param userId         the owning user ID
      * @param userWorkWeekId the assignment ID
      */
-    public void deleteById(Long userId, Long userWorkWeekId) {
+    public void deleteById(UUID userId, UUID userWorkWeekId) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user-work-week/{userId}/{id}",
                 HttpMethod.DELETE,
@@ -75,7 +76,7 @@ public class UserWorkWeekApi extends AbstractApi {
      * @param id the assignment ID
      * @return the assignment
      */
-    public UserWorkWeek getById(Long id) {
+    public UserWorkWeek getById(UUID id) {
         ResponseEntity<UserWorkWeek> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user-work-week/{id}",
                 HttpMethod.GET,
@@ -93,7 +94,7 @@ public class UserWorkWeekApi extends AbstractApi {
      * @param userId       the owning user ID
      * @return the saved assignment
      */
-    public UserWorkWeek persist(UserWorkWeek userWorkWeek, Long userId) {
+    public UserWorkWeek persist(UserWorkWeek userWorkWeek, UUID userId) {
         ResponseEntity<UserWorkWeek> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user-work-week/{userId}",
                 HttpMethod.POST,
@@ -110,7 +111,7 @@ public class UserWorkWeekApi extends AbstractApi {
      * @param userWorkWeek the assignment with updated fields
      * @param userId       the owning user ID
      */
-    public void update(UserWorkWeek userWorkWeek, Long userId) {
+    public void update(UserWorkWeek userWorkWeek, UUID userId) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user-work-week/{userId}",
                 HttpMethod.PUT,

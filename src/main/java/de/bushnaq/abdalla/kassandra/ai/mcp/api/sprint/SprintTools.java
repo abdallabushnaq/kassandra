@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
@@ -46,7 +47,7 @@ public class SprintTools {
     @Tool(description = "Create a new sprint for a feature.", resultConverter = KassandraToolCallResultConverter.class)
     public SprintDto createSprint(
             @ToolParam(description = "Unique sprint name") String name,
-            @ToolParam(description = "The featureId this sprint belongs to") Long featureId) {
+            @ToolParam(description = "The featureId this sprint belongs to") UUID featureId) {
         Sprint sprint = new Sprint();
         sprint.setName(name);
         sprint.setFeatureId(featureId);
@@ -57,7 +58,7 @@ public class SprintTools {
 
     @Tool(description = "Delete a sprint by its sprintId.", resultConverter = KassandraToolCallResultConverter.class)
     public void deleteSprint(
-            @ToolParam(description = "The sprintId") Long sprintId) {
+            @ToolParam(description = "The sprintId") UUID sprintId) {
         Sprint sprint = sprintApi.getById(sprintId);
         if (sprint == null) {
             throw new IllegalArgumentException("Sprint not found with ID: " + sprintId);
@@ -76,7 +77,7 @@ public class SprintTools {
 
     @Tool(description = "Get all sprints for a feature.", resultConverter = KassandraToolCallResultConverter.class)
     public List<SprintDto> getAllSprintsByFeatureId(
-            @ToolParam(description = "The featureId") Long featureId) {
+            @ToolParam(description = "The featureId") UUID featureId) {
         List<Sprint> sprints = sprintApi.getAll(featureId);
         ToolActivityContextHolder.reportActivity("Found " + sprints.size() + " sprints for feature " + featureId + ".");
         return sprints.stream().map(SprintDto::from).collect(Collectors.toList());
@@ -84,7 +85,7 @@ public class SprintTools {
 
     @Tool(description = "Get a sprint by its sprintId.", resultConverter = KassandraToolCallResultConverter.class)
     public SprintDto getSprintById(
-            @ToolParam(description = "The sprintId") Long sprintId) {
+            @ToolParam(description = "The sprintId") UUID sprintId) {
         Sprint sprint = sprintApi.getById(sprintId);
         if (sprint == null) {
             throw new IllegalArgumentException("Sprint not found with ID: " + sprintId);
@@ -94,7 +95,7 @@ public class SprintTools {
 
     @Tool(description = "Get a sprint by name within a feature.", resultConverter = KassandraToolCallResultConverter.class)
     public SprintDto getSprintByName(
-            @ToolParam(description = "The featureId the sprint belongs to") Long featureId,
+            @ToolParam(description = "The featureId the sprint belongs to") UUID featureId,
             @ToolParam(description = "The sprint name") String name) {
         return sprintApi.getByName(featureId, name)
                 .map(SprintDto::from)
@@ -103,7 +104,7 @@ public class SprintTools {
 
     @Tool(description = "Update a sprint name by its sprintId.", resultConverter = KassandraToolCallResultConverter.class)
     public SprintDto updateSprint(
-            @ToolParam(description = "The sprintId") Long sprintId,
+            @ToolParam(description = "The sprintId") UUID sprintId,
             @ToolParam(description = "The new sprint name") String name) {
         Sprint sprint = sprintApi.getById(sprintId);
         if (sprint == null) {

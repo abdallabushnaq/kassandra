@@ -26,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
 import java.util.Objects;
 
 @RestController
@@ -45,7 +46,7 @@ public class LocationController {
      * @param targetUserId the ID of the user whose availability is being modified
      * @return true if modification is allowed, false otherwise
      */
-    private boolean canUserModifyLocation(Long targetUserId) {
+    private boolean canUserModifyLocation(UUID targetUserId) {
         // Admins can modify any user's availability
         if (SecurityUtils.isAdmin()) {
             return true;
@@ -60,7 +61,7 @@ public class LocationController {
 
     @DeleteMapping("/{userId}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<Object> delete(@PathVariable Long userId, @PathVariable Long id) {
+    public ResponseEntity<Object> delete(@PathVariable UUID userId, @PathVariable UUID id) {
         // Check authorization: Users can only delete their own availability, admins can delete for any user
         if (!canUserModifyLocation(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own location");
@@ -79,7 +80,7 @@ public class LocationController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<LocationDAO> getById(@PathVariable Long id) {
+    public ResponseEntity<LocationDAO> getById(@PathVariable UUID id) {
         return locationRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -87,7 +88,7 @@ public class LocationController {
 
     @PostMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<LocationDAO> save(@RequestBody LocationDAO location, @PathVariable Long userId) {
+    public ResponseEntity<LocationDAO> save(@RequestBody LocationDAO location, @PathVariable UUID userId) {
         // Check authorization: Users can only delete their own availability, admins can delete for any user
         if (!canUserModifyLocation(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own location");
@@ -102,7 +103,7 @@ public class LocationController {
 
     @PutMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<Object> update(@RequestBody LocationDAO location, @PathVariable Long userId) {
+    public ResponseEntity<Object> update(@RequestBody LocationDAO location, @PathVariable UUID userId) {
         // Check authorization: Users can only delete their own availability, admins can delete for any user
         if (!canUserModifyLocation(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own location");

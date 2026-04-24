@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 /**
  * Assignment of a global {@link WorkWeek} to a {@link User} starting on a specific date.
@@ -34,7 +35,7 @@ import java.time.LocalDate;
 public class UserWorkWeek extends AbstractTimeAware implements Comparable<UserWorkWeek> {
 
     /** Primary key. */
-    private Long      id;
+    private UUID      id;
 
     /** Date from which this work-week assignment becomes effective. */
     private LocalDate start;

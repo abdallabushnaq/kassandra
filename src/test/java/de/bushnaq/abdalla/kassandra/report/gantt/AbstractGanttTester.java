@@ -117,7 +117,7 @@ public class AbstractGanttTester extends DTOAsserts {
 
 
         logProjectTasks(fileName, sprint, referenceFileName, referenceSprint);
-        assertSprintEquals(referenceSprint, sprint);
+        assertSprintEquals(referenceSprint, sprint, true);
     }
 
     protected void executeTest(String name, TestInfo testInfo, String testFolder) throws Exception {
@@ -218,7 +218,7 @@ public class AbstractGanttTester extends DTOAsserts {
             }
 
         }
-        buffer += String.format("[%2d] N='%-" + maxNameLength + "s' C=%s%s%s S='%s%20s%s' D='%s%-19s%s' F='%s%20s%s'", task.getId(),//
+        buffer += String.format("[%s] N='%-" + maxNameLength + "s' C=%s%s%s S='%s%20s%s' D='%s%-19s%s' F='%s%20s%s'", task.getKey(),//
                 task.getName(),//
                 criticalFlag, criticalString, ANSI_RESET,//
                 startFlag, startString, ANSI_RESET,//
@@ -240,7 +240,7 @@ public class AbstractGanttTester extends DTOAsserts {
         int maxNameLength = getMaxTaskNameLength(sprint.getTasks());
         for (Task task : sprint.getTasks()) {
             if (GanttUtil.isValidTask(task)) {
-                logTask(task, referenceSprint.getTaskById(task.getId()), maxNameLength);
+                logTask(task, referenceSprint.getTaskByName(task.getName()), maxNameLength);
             }
         }
     }

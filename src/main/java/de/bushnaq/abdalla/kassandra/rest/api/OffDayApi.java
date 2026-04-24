@@ -27,6 +27,7 @@ import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class OffDayApi extends AbstractApi {
@@ -45,7 +46,7 @@ public class OffDayApi extends AbstractApi {
     }
 
     //TODO use ids instead of objects
-    public void deleteById(Long userId, Long offDayId) throws org.springframework.web.client.RestClientException {
+    public void deleteById(UUID userId, UUID offDayId) throws org.springframework.web.client.RestClientException {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/offday/{userId}/{id}",
                 HttpMethod.DELETE,
@@ -56,7 +57,7 @@ public class OffDayApi extends AbstractApi {
         ));
     }
 
-    public OffDay getById(Long id) {
+    public OffDay getById(UUID id) {
         ResponseEntity<OffDay> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/offday/{id}",
                 HttpMethod.GET,
@@ -74,7 +75,7 @@ public class OffDayApi extends AbstractApi {
      * @param userId  ID of the owning user
      * @return the saved off days including server-assigned IDs
      */
-    public List<OffDay> persistBatch(List<OffDay> offDays, Long userId) {
+    public List<OffDay> persistBatch(List<OffDay> offDays, UUID userId) {
         ResponseEntity<List<OffDay>> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/offday/{userId}/batch",
                 HttpMethod.POST,
@@ -85,7 +86,7 @@ public class OffDayApi extends AbstractApi {
         return response.getBody();
     }
 
-    public OffDay persist(OffDay offDay, Long userId) {
+    public OffDay persist(OffDay offDay, UUID userId) {
         ResponseEntity<OffDay> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/offday/{userId}",
                 HttpMethod.POST,
@@ -96,7 +97,7 @@ public class OffDayApi extends AbstractApi {
         return response.getBody();
     }
 
-    public void update(OffDay offDay, Long userId) {
+    public void update(OffDay offDay, UUID userId) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/offday/{userId}",
                 HttpMethod.PUT,

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.version;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.dto.Version;
@@ -56,7 +57,7 @@ public class VersionTools {
     @Tool(description = "Create a new version for a product.", resultConverter = KassandraToolCallResultConverter.class)
     public VersionDto createVersion(
             @ToolParam(description = "Unique version name") String name,
-            @ToolParam(description = "The productId this version belongs to") Long productId) {
+            @ToolParam(description = "The productId this version belongs to") UUID productId) {
         Version version = new Version();
         version.setName(name);
         version.setProductId(productId);
@@ -67,7 +68,7 @@ public class VersionTools {
 
     @Tool(description = "Delete a version by its versionId.", resultConverter = KassandraToolCallResultConverter.class)
     public void deleteVersion(
-            @ToolParam(description = "The versionId") Long versionId) {
+            @ToolParam(description = "The versionId") UUID versionId) {
         Version version = versionApi.getById(versionId);
         if (version == null) {
             throw new IllegalArgumentException("Version not found with ID: " + versionId);
@@ -86,7 +87,7 @@ public class VersionTools {
 
     @Tool(description = "Get all versions for a product.", resultConverter = KassandraToolCallResultConverter.class)
     public List<VersionDto> getAllVersionsByProductId(
-            @ToolParam(description = "The productId") Long productId) {
+            @ToolParam(description = "The productId") UUID productId) {
         List<Version> versions = versionApi.getAll(productId);
         ToolActivityContextHolder.reportActivity("Found " + versions.size() + " versions for product " + productId + ".");
         return versions.stream().map(VersionDto::from).collect(Collectors.toList());
@@ -94,7 +95,7 @@ public class VersionTools {
 
     @Tool(description = "Get a version by its versionId.", resultConverter = KassandraToolCallResultConverter.class)
     public VersionDto getVersionById(
-            @ToolParam(description = "The versionId") Long versionId) {
+            @ToolParam(description = "The versionId") UUID versionId) {
         Version version = versionApi.getById(versionId);
         if (version == null) {
             throw new IllegalArgumentException("Version not found with ID: " + versionId);
@@ -104,7 +105,7 @@ public class VersionTools {
 
     @Tool(description = "Update a version name by its versionId.", resultConverter = KassandraToolCallResultConverter.class)
     public VersionDto updateVersion(
-            @ToolParam(description = "The versionId") Long versionId,
+            @ToolParam(description = "The versionId") UUID versionId,
             @ToolParam(description = "The new version name") String name) {
         Version version = versionApi.getById(versionId);
         if (version == null) {

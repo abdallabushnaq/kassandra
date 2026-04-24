@@ -20,6 +20,8 @@ package de.bushnaq.abdalla.kassandra.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
+import java.util.UUID;
+
 /**
  * DTO representing an Access Control List entry for a product.
  */
@@ -32,11 +34,11 @@ public class ProductAclEntry extends AbstractTimeAware implements Comparable<Pro
 
     // For UI display
     private String       displayName;
-    private Long groupId;
-    private Long id;
-    private Long productId;
+    private UUID groupId;
+    private UUID id;
+    private UUID productId;
     private AclEntryType type;
-    private Long userId;
+    private UUID userId;
 
     @Override
     public int compareTo(ProductAclEntry other) {

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter.dto.user;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,7 +45,7 @@ public class UserFilterDto {
     private OffsetDateTime created;
     private String         email;
     private LocalDate      firstWorkingDay;
-    private Long           id;
+    private UUID           id;
     /**
      * {@code null} means the user is still employed.
      */

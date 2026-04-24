@@ -58,6 +58,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.Set;
 
 @Route(value = "legacy-backlog", layout = MainLayout.class)
@@ -87,7 +88,7 @@ public class LegacyBacklog extends Main implements BeforeEnterObserver, AfterNav
     private             MultiSelectComboBox<Sprint> sprintSelector;
     private final       TaskApi                     taskApi;
     private final       UserApi                     userApi;
-    private final       java.util.Map<Long, User>   userMap            = new java.util.HashMap<>();
+    private final       java.util.Map<UUID, User>   userMap            = new java.util.HashMap<>();
     private             MultiSelectComboBox<User>   userSelector;
     private             List<User>                  users              = new ArrayList<>();
     private final       WorklogApi                  worklogApi;
@@ -250,7 +251,7 @@ public class LegacyBacklog extends Main implements BeforeEnterObserver, AfterNav
      * Falls back to the currently logged-in user.
      */
     private void assignUserToNewTask(Task newTask) {
-        Long assignedUserId = null;
+        UUID assignedUserId = null;
 
         Sprint sprint = getBacklogSprint();
         if (sprint != null && !sprint.getTasks().isEmpty()) {
@@ -719,7 +720,7 @@ public class LegacyBacklog extends Main implements BeforeEnterObserver, AfterNav
                 Set<User> usersToSelect = new java.util.HashSet<>();
                 for (String idStr : savedUserIds.split(",")) {
                     try {
-                        Long id = Long.parseLong(idStr.trim());
+                        UUID id = UUID.fromString(idStr.trim());
                         users.stream()
                                 .filter(u -> u.getId().equals(id))
                                 .findFirst()
@@ -756,7 +757,7 @@ public class LegacyBacklog extends Main implements BeforeEnterObserver, AfterNav
                 Set<Sprint> sprintsToSelect = new java.util.HashSet<>();
                 for (String idStr : savedSprintIds.split(",")) {
                     try {
-                        Long id = Long.parseLong(idStr.trim());
+                        UUID id = UUID.fromString(idStr.trim());
                         selectableSprints.stream()
                                 .filter(s -> s.getId().equals(id))
                                 .findFirst()

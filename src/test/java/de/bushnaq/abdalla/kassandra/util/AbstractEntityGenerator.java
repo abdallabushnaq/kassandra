@@ -41,6 +41,7 @@ import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ServerErrorException;
@@ -53,8 +54,6 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 public class AbstractEntityGenerator extends AbstractTestUtil {
@@ -113,9 +112,9 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         a.setUser(user);
         a.setCreated(user.getCreated());
         a.setUpdated(user.getUpdated());
-        Availability saved = availabilityApi.persist(a, user.getId());
-        user.addAvailability(saved);
-        expectedAvailabilities.add(saved);
+        availabilityApi.persist(a, user.getId());
+        user.addAvailability(a);
+        expectedAvailabilities.add(a);
     }
 
     protected Feature addFeature(Version version, String name) {
@@ -171,7 +170,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         // The actual DB persist is deferred – call flushOffDayBuffer(user) when all off days for the
         // user have been accumulated.
         user.addOffday(offDay);
-        offDayBuffer.add(offDay);
+        offDayApi.persist(offDay, user.getId());
         ProjectCalendarException vacation = user.getCalendar().addCalendarException(offDayStart, offDayFinish);
         switch (type) {
             case VACATION -> vacation.setName("vacation");
@@ -203,7 +202,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
                 // If we've used all the days, add the final block
                 if (daysUsed >= workingDaysCount) {
-                    addOffDay(user, currentStart, currentDate, offDayType);
+                    addOffDayToBuffer(user, currentStart, currentDate, offDayType);
 //                    logger.info(String.format("%s %s %s", currentStart, currentDate, "vacation"));
                     break;
                 }
@@ -211,7 +210,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 // We hit a non-working day, end the current block if there is one
                 if (inBlock) {
                     LocalDate blockEnd = currentDate.minusDays(1);
-                    addOffDay(user, currentStart, blockEnd, offDayType);
+                    addOffDayToBuffer(user, currentStart, blockEnd, offDayType);
 //                    logger.info(String.format("%s %s %s", currentStart, blockEnd, "vacation"));
                     inBlock = false;
                 }
@@ -224,7 +223,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                 if (inBlock) {
                     // End any remaining block
                     LocalDate blockEnd = currentDate.minusDays(1);
-                    addOffDay(user, currentStart, blockEnd, offDayType);
+                    addOffDayToBuffer(user, currentStart, blockEnd, offDayType);
 //                    logger.info(String.format("%s %s %s", currentStart, blockEnd, "vacation"));
                 }
                 break;
@@ -232,6 +231,24 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         }
 
         return daysUsed;
+    }
+
+    protected void addOffDayToBuffer(User user, LocalDate offDayStart, LocalDate offDayFinish, OffDayType type) {
+        OffDay offDay = new OffDay(offDayStart, offDayFinish, type);
+        offDay.setUser(user);
+        offDay.setCreated(user.getCreated());
+        offDay.setUpdated(user.getUpdated());
+        // Add to in-memory state immediately so overlap detection and calendar work during generation.
+        // The actual DB persist is deferred – call flushOffDayBuffer(user) when all off days for the
+        // user have been accumulated.
+        user.addOffday(offDay);
+        offDayBuffer.add(offDay);
+        ProjectCalendarException vacation = user.getCalendar().addCalendarException(offDayStart, offDayFinish);
+        switch (type) {
+            case VACATION -> vacation.setName("vacation");
+            case SICK -> vacation.setName("sick");
+            case TRIP -> vacation.setName("trip");
+        }
     }
 
     private void addOffDays(User saved, LocalDate firstDate, int annualVacationDays, int year, OffDayType offDayType, int summerDurationMin, int summerDurationMax) {
@@ -413,7 +430,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             Profiler.log("generateRandomOffDays");
             System.out.println("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and " + offDaysIterations + " iterations");
         }
-
+        printTables();
         testUsers();
     }
 
@@ -558,17 +575,17 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 //        }
         user.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
 
-        User saved = userApi.persist(user);
-        log.info("Created user: " + saved.getName() + " with email: " + saved.getEmail());
-        addLocation(saved, country, state, start);
-        addAvailability(saved, availability, start);
+        userApi.persist(user);
+        log.info("Created user: " + user.getName() + " with email: " + user.getEmail());
+        addLocation(user, country, state, start);
+        addAvailability(user, availability, start);
 
         // Assign the default Western work week starting on the user's first working day
         WorkWeek defaultWorkWeek = workWeekApi.getAll().stream()
                 .filter(ww -> DefaultEntitiesInitializer.WORK_WEEK_5X8.equals(ww.getName()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Default work week '" + DefaultEntitiesInitializer.WORK_WEEK_5X8 + "' not found"));
-        addWorkWeek(saved, defaultWorkWeek, start);
+        addWorkWeek(user, defaultWorkWeek, start);
 
         GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "user");
 //        try {
@@ -578,14 +595,14 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 //            darkImage = avatarService.generateDefaultDarkAvatar("user");
 //        }
 
-        userApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
+        userApi.updateAvatarFull(user.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
                 darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
                 image.getNegativePrompt(), darkImage.getNegativePrompt());
         System.out.println("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
         userIndex++;
-        expectedUsers.add(saved);
-        return saved;
+        expectedUsers.add(user);
+        return user;
 
     }
 
@@ -659,7 +676,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
         Task saved = taskApi.persist(task);
 //        Task saved = task;
-        saved.setId(9999L);
+        saved.setId(UUID.randomUUID());
         if (sprint != null) {
             saved.setSprint(sprint);
             sprint.addTask(saved);
@@ -777,6 +794,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     }
 
     @PostConstruct
+    @Order(0)
     protected void postConstruct() {
         ParameterOptions.setNow(OffsetDateTime.parse("2025-05-05T08:00:00+01:00"));
 
@@ -804,7 +822,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         expectedAvailabilities.remove(availability);
     }
 
-    protected void removeFeature(Long id) {
+    protected void removeFeature(UUID id) {
         Feature featureToRemove = expectedFeatures.stream().filter(project -> project.getId().equals(id)).findFirst().orElse(null);
         featureApi.deleteById(id);
         if (featureToRemove != null) {
@@ -833,7 +851,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         expectedOffDays.remove(offDay);
     }
 
-    protected void removeProduct(Long id) {
+    protected void removeProduct(UUID id) {
         Product productToRemove = expectedProducts.stream().filter(product -> product.getId().equals(id)).findFirst().orElse(null);
         productApi.deleteById(id);
 
@@ -855,7 +873,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         }
     }
 
-    protected void removeSprint(Long id) {
+    protected void removeSprint(UUID id) {
         Sprint sprintToRemove = expectedSprints.stream().filter(sprint -> sprint.getId().equals(id)).findFirst().orElse(null);
         sprintApi.deleteById(id);
         if (sprintToRemove != null) {
@@ -876,7 +894,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         }
     }
 
-    protected void removeUser(Long id) {
+    protected void removeUser(UUID id) {
         User userToRemove = expectedUsers.stream().filter(user -> user.getId().equals(id)).findFirst().orElse(null);
         userApi.deleteById(id);
 
@@ -893,7 +911,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 
     }
 
-    protected void removeVersion(Long id) {
+    protected void removeVersion(UUID id) {
         Version versionToRemove = expectedVersions.stream().filter(version -> version.getId().equals(id)).findFirst().orElse(null);
         versionApi.deleteById(id);
 
@@ -969,38 +987,113 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         gc.allVersions = versionApi.getAll().stream().sorted().toList();
         gc.allFeatures = featureApi.getAll().stream().sorted().toList();
         gc.allSprints  = sprintApi.getAll().stream().sorted().toList();
-        for (Sprint sprint : gc.allSprints) {
-            sprint.setWorklogs(worklogApi.getAll(sprint.getId()).stream().sorted().toList());
-        }
+//        for (Sprint sprint : gc.allSprints) {
+//            sprint.setWorklogs(worklogApi.getAll(sprint.getId()).stream().sorted().toList());
+//        }
         gc.allTasks = taskApi.getAll().stream().sorted().toList();
         gc.initialize();
 
-        expectedProducts.sort(Comparator.naturalOrder());
-        expectedFeatures.sort(Comparator.naturalOrder());
-        expectedSprints.sort(Comparator.naturalOrder());
-        expectedTasks.sort(Comparator.naturalOrder());
-        expectedVersions.sort(Comparator.naturalOrder());
-        expectedWorklogs.sort(Comparator.naturalOrder());
+        // Add the always-present "Default" product (created by DefaultEntitiesInitializer) to expectedProducts if not already tracked.
+        // Use gc.allProducts as it is already fully populated with versions, features and sprints.
+        boolean defaultProductTracked = expectedProducts.stream().anyMatch(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()));
+        if (!defaultProductTracked) {
+            gc.allProducts.stream()
+                    .filter(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
+                    .findFirst()
+                    .ifPresent(expectedProducts::add);
+        }
+        boolean defaultVersionTracked = expectedVersions.stream().anyMatch(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()));
+        if (!defaultVersionTracked) {
+            gc.allVersions.stream()
+                    .filter(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
+                    .findFirst()
+                    .ifPresent(expectedVersions::add);
+        }
+        boolean defaultFeatureTracked = expectedFeatures.stream().anyMatch(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()));
+        if (!defaultFeatureTracked) {
+            gc.allFeatures.stream()
+                    .filter(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
+                    .findFirst()
+                    .ifPresent(expectedFeatures::add);
+        }
+        boolean defaultSprintTracked = expectedSprints.stream().anyMatch(p -> DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(p.getName()));
+        if (!defaultFeatureTracked) {
+            gc.allSprints.stream()
+                    .filter(p -> DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(p.getName()))
+                    .findFirst()
+                    .ifPresent(expectedSprints::add);
+        }
+        Product defaultProduct = expectedProducts.stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.DEFAULT_NAME)).findFirst().get();
+        Version defaultVersion = expectedVersions.stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.DEFAULT_NAME)).findFirst().get();
+        defaultProduct.getVersions().add(defaultVersion);
+        defaultVersion.setProduct(defaultProduct);
+        Feature defaultFeature = expectedFeatures.stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.DEFAULT_NAME)).findFirst().get();
+        defaultVersion.getFeatures().add(defaultFeature);
+        defaultFeature.setVersion(defaultVersion);
+        Sprint defaultSprint = expectedSprints.stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME)).findFirst().get();
+        defaultFeature.getSprints().add(defaultSprint);
+        defaultSprint.setFeature(defaultFeature);
+
+        //TODO we also need to add the default version to the default product and the default feature to the default version.
+
+        expectedProducts.sort(Comparator.comparing(Product::getName));
+        expectedFeatures.sort(Comparator.comparing(Feature::getName));
+        expectedSprints.sort(Comparator.comparing(Sprint::getName));
+        expectedTasks.sort(Comparator.comparing(Task::getName));
+        expectedVersions.sort(Comparator.comparing(Version::getName));
+        expectedWorklogs.sort(Comparator.comparing(Worklog::getStart));
+
+        GanttContext egc = new GanttContext();
+        egc.allUsers    = expectedUsers.stream().sorted().toList();
+        egc.allProducts = expectedProducts;
+        egc.allVersions = expectedVersions;
+        egc.allFeatures = expectedFeatures;
+        egc.allSprints  = expectedSprints;
+//        for (Sprint sprint : gc.allSprints) {
+//            sprint.setWorklogs(worklogApi.getAll(sprint.getId()).stream().sorted().toList());
+//        }
+        egc.allTasks = taskApi.getAll().stream().sorted().toList();
+        egc.initialize();
 
 
-        List<Product> all = productApi.getAll();
+        //initialize sprints to compare them.
+//        for (Sprint sprint : gc.allSprints) {
+//            sprint.initialize();
+//            sprint.initUserMap(gc.allUsers.stream().toList());
+//            sprint.initTaskMap(gc.allTasks, gc.allWorklogs);
+//            GanttUtil         ganttUtil = new GanttUtil();
+//            GanttErrorHandler eh        = new GanttErrorHandler();
+//            if (sprint.getStart() == null)
+//                sprint.setStart(ParameterOptions.getLocalNow());//new sprint always starts today
+//            ganttUtil.levelResources(eh, sprint, "", sprint.getStart());
+//        }
+//        for (Sprint sprint : expectedSprints) {
+//            sprint.initialize();
+//            sprint.initUserMap(expectedUsers.stream().toList());
+//            sprint.initTaskMap(expectedTasks, expectedWorklogs);
+//            GanttUtil         ganttUtil = new GanttUtil();
+//            GanttErrorHandler eh        = new GanttErrorHandler();
+//            if (sprint.getStart() == null)
+//                sprint.setStart(ParameterOptions.getLocalNow());//new sprint always starts today
+//            ganttUtil.levelResources(eh, sprint, "", sprint.getStart());
+//        }
+
+//        List<Product> actual = productApi.getAll();
         printTables();
 
-        assertEquals(1 + expectedProducts.size(), gc.allProducts.size());// the "Default" Product is always there
-        for (int i = 0; i < expectedProducts.size(); i++) {
-            assertProductEquals(expectedProducts.get(i), gc.allProducts.get(i + 1));
-        }
+//        assertEquals(1 + expectedProducts.size(), gc.allProducts.size());// the "Default" Product is always there
+//        for (int i = 0; i < expectedProducts.size(); i++) {
+//            assertProductEquals(expectedProducts.get(i), gc.allProducts.get(i + 1));
+//        }
+        assertUnorderedListEquals(egc.allProducts, gc.allProducts, Comparator.comparing(Product::getName), "products", DTOAsserts::assertProductEquals);
     }
 
     protected void testUsers() {
         entityManager.clear();//clear the cache to get the latest data from the database
         List<User> actual = userApi.getAll();
 
-        assertEquals(expectedUsers.size(), actual.size());
-        int i = 0;
-        for (User expectedUser : expectedUsers) {
-            assertUserEquals(expectedUser, actual.get(i++));
-        }
+        assertUnorderedListEquals(expectedUsers, actual, Comparator.comparing(User::getId), "users",
+                DTOAsserts::assertUserEquals);
     }
 
     protected void updateAvailability(Availability availability, User user) {

@@ -29,7 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
 import java.util.*;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -53,7 +55,7 @@ public class TaskController {
      * @param taskId the root task ID to start from
      * @param ids    the set to accumulate IDs into
      */
-    private void collectDescendantIds(Long taskId, Set<Long> ids) {
+    private void collectDescendantIds(UUID taskId, Set<UUID> ids) {
         if (!ids.add(taskId)) {
             return; // already processed, avoid infinite loops
         }
@@ -64,9 +66,9 @@ public class TaskController {
     @DeleteMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasTaskAccess(#id) or hasRole('ADMIN')")
     @Transactional
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable UUID id) {
         // 1. Collect the task and all of its descendants
-        Set<Long> idsToDelete = new LinkedHashSet<>();
+        Set<UUID> idsToDelete = new LinkedHashSet<>();
         collectDescendantIds(id, idsToDelete);
 
         // 2. Remove inbound predecessor relations from tasks that are NOT being deleted.
@@ -87,14 +89,14 @@ public class TaskController {
 
     @GetMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasTaskAccess(#id) or hasRole('ADMIN')")
-    public Optional<TaskDAO> get(@PathVariable Long id) {
+    public Optional<TaskDAO> get(@PathVariable UUID id) {
         Optional<TaskDAO> task = taskRepository.findById(id);
         return task;
     }
 
     @GetMapping("/sprint/{sprintId}")
     @PreAuthorize("@aclSecurityService.hasSprintAccess(#sprintId) or hasRole('ADMIN')")
-    public List<TaskDAO> getAll(@PathVariable Long sprintId) {
+    public List<TaskDAO> getAll(@PathVariable UUID sprintId) {
         return taskRepository.findBySprintIdOrderByOrderIdAsc(sprintId);
     }
 
@@ -109,7 +111,7 @@ public class TaskController {
         // Regular users only see tasks of products they have access to
         return taskRepository.findAllByOrderByOrderIdAsc().stream()
                 .filter(task -> {
-                    Long productId = sprintRepository.findById(task.getSprintId())
+                    UUID productId = sprintRepository.findById(task.getSprintId())
                             .flatMap(sprint -> featureRepository.findById(sprint.getFeatureId()))
                             .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
                             .map(version -> version.getProductId())
@@ -146,7 +148,7 @@ public class TaskController {
     @PutMapping("/sprint/{sprintId}/batch")
     @PreAuthorize("@aclSecurityService.hasSprintAccess(#sprintId) or hasRole('ADMIN')")
     @Transactional
-    public void updateBatch(@RequestBody List<TaskDAO> tasks, @PathVariable Long sprintId) {
+    public void updateBatch(@RequestBody List<TaskDAO> tasks, @PathVariable UUID sprintId) {
         taskRepository.saveAll(tasks);
     }
 
@@ -160,7 +162,7 @@ public class TaskController {
     @PutMapping("/{id}/status/{status}")
     @PreAuthorize("@aclSecurityService.hasTaskAccess(#id) or hasRole('ADMIN')")
     @Transactional
-    public void updateStatus(@PathVariable Long id, @PathVariable de.bushnaq.abdalla.kassandra.dto.TaskStatus status) {
+    public void updateStatus(@PathVariable UUID id, @PathVariable de.bushnaq.abdalla.kassandra.dto.TaskStatus status) {
         Optional<TaskDAO> taskOptional = taskRepository.findById(id);
         if (taskOptional.isPresent()) {
             TaskDAO task = taskOptional.get();

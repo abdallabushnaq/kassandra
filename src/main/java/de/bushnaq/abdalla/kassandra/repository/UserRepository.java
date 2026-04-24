@@ -24,8 +24,9 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface UserRepository extends ListCrudRepository<UserDAO, Long> {
+public interface UserRepository extends ListCrudRepository<UserDAO, UUID> {
 
     /**
      * Check if a user with the given email exists, excluding the user with the specified ID.
@@ -34,7 +35,7 @@ public interface UserRepository extends ListCrudRepository<UserDAO, Long> {
      * @param id    The ID of the user to exclude from the check
      * @return true if another user with this email exists, false otherwise
      */
-    boolean existsByEmailAndIdNot(String email, Long id);
+    boolean existsByEmailAndIdNot(String email, UUID id);
 
     /**
      * Check if a user with the given name exists, excluding the user with the specified ID.
@@ -43,7 +44,7 @@ public interface UserRepository extends ListCrudRepository<UserDAO, Long> {
      * @param id   The ID of the user to exclude from the check
      * @return true if another user with this name exists, false otherwise
      */
-    boolean existsByNameAndIdNot(String name, Long id);
+    boolean existsByNameAndIdNot(String name, UUID id);
 
     /**
      * Find user by email address, ignoring case sensitivity.
@@ -67,5 +68,5 @@ public interface UserRepository extends ListCrudRepository<UserDAO, Long> {
 
     @Query("SELECT DISTINCT u FROM UserDAO u WHERE u.id IN " +
             "(SELECT t.resourceId FROM TaskDAO t WHERE t.sprintId = :sprintId AND t.resourceId IS NOT NULL)")
-    List<UserDAO> findBySprintId(@Param("sprintId") Long sprintId);
+    List<UserDAO> findBySprintId(@Param("sprintId") UUID sprintId);
 }

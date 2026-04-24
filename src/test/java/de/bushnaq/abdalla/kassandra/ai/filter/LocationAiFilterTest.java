@@ -31,6 +31,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Tests the JavaScript AI filter generator for Location entities.
@@ -53,7 +54,7 @@ class LocationAiFilterTest extends AbstractAiFilterTest<LocationFilterDto> {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
     }
 
-    private Location createLocation(Long id, String country, String state, LocalDate start,
+    private Location createLocation(UUID id, String country, String state, LocalDate start,
                                     User user, OffsetDateTime created, OffsetDateTime updated) {
         Location location = new Location();
         location.setId(id);
@@ -66,7 +67,7 @@ class LocationAiFilterTest extends AbstractAiFilterTest<LocationFilterDto> {
         return location;
     }
 
-    private User createUser(Long id, String name) {
+    private User createUser(UUID id, String name) {
         User user = new User();
         user.setId(id);
         user.setName(name);
@@ -75,59 +76,59 @@ class LocationAiFilterTest extends AbstractAiFilterTest<LocationFilterDto> {
 
     @BeforeEach
     void setUp() {
-        User johnDoe     = createUser(1L, "John Doe");
-        User janeSmith   = createUser(2L, "Jane Smith");
-        User bobJohnson  = createUser(3L, "Bob Johnson");
-        User aliceWilson = createUser(4L, "Alice Wilson");
-        User mikeBrown   = createUser(5L, "Mike Brown");
+        User johnDoe     = createUser(UUID.randomUUID(), "John Doe");
+        User janeSmith   = createUser(UUID.randomUUID(), "Jane Smith");
+        User bobJohnson  = createUser(UUID.randomUUID(), "Bob Johnson");
+        User aliceWilson = createUser(UUID.randomUUID(), "Alice Wilson");
+        User mikeBrown   = createUser(UUID.randomUUID(), "Mike Brown");
 
         List<Location> raw = new ArrayList<>();
 
-        raw.add(createLocation(1L, "Germany", "Bavaria", LocalDate.of(2024, 1, 15), johnDoe,
+        raw.add(createLocation(UUID.randomUUID(), "Germany", "Bavaria", LocalDate.of(2024, 1, 15), johnDoe,
                 OffsetDateTime.of(2023, 12, 20, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 1, 10, 14, 30, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createLocation(2L, "United States", "California", LocalDate.of(2024, 2, 1), janeSmith,
+        raw.add(createLocation(UUID.randomUUID(), "United States", "California", LocalDate.of(2024, 2, 1), janeSmith,
                 OffsetDateTime.of(2024, 1, 15, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 2, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createLocation(3L, "Australia", "Victoria", LocalDate.of(2024, 3, 1), bobJohnson,
+        raw.add(createLocation(UUID.randomUUID(), "Australia", "Victoria", LocalDate.of(2024, 3, 1), bobJohnson,
                 OffsetDateTime.of(2024, 2, 20, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 16, 13, 20, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createLocation(4L, "United Kingdom", "England", LocalDate.of(2024, 4, 1), aliceWilson,
+        raw.add(createLocation(UUID.randomUUID(), "United Kingdom", "England", LocalDate.of(2024, 4, 1), aliceWilson,
                 OffsetDateTime.of(2024, 3, 25, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 4, 15, 12, 10, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createLocation(5L, "France", "Île-de-France", LocalDate.of(2024, 5, 1), mikeBrown,
+        raw.add(createLocation(UUID.randomUUID(), "France", "Île-de-France", LocalDate.of(2024, 5, 1), mikeBrown,
                 OffsetDateTime.of(2024, 4, 20, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 5, 1, 11, 40, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createLocation(6L, "Germany", "North Rhine-Westphalia", LocalDate.of(2024, 6, 1), johnDoe,
+        raw.add(createLocation(UUID.randomUUID(), "Germany", "North Rhine-Westphalia", LocalDate.of(2024, 6, 1), johnDoe,
                 OffsetDateTime.of(2024, 5, 28, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 10, 16, 15, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createLocation(7L, "Canada", "Ontario", LocalDate.of(2024, 7, 1), janeSmith,
+        raw.add(createLocation(UUID.randomUUID(), "Canada", "Ontario", LocalDate.of(2024, 7, 1), janeSmith,
                 OffsetDateTime.of(2024, 6, 25, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 7, 29, 15, 50, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createLocation(8L, "Netherlands", "North Holland", LocalDate.of(2024, 8, 1), bobJohnson,
+        raw.add(createLocation(UUID.randomUUID(), "Netherlands", "North Holland", LocalDate.of(2024, 8, 1), bobJohnson,
                 OffsetDateTime.of(2024, 7, 30, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 15, 17, 30, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createLocation(9L, "Italy", "Lombardy", LocalDate.of(2024, 9, 1), aliceWilson,
+        raw.add(createLocation(UUID.randomUUID(), "Italy", "Lombardy", LocalDate.of(2024, 9, 1), aliceWilson,
                 OffsetDateTime.of(2024, 8, 28, 13, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 5, 9, 20, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createLocation(10L, "Spain", "Catalonia", LocalDate.of(2024, 10, 1), mikeBrown,
+        raw.add(createLocation(UUID.randomUUID(), "Spain", "Catalonia", LocalDate.of(2024, 10, 1), mikeBrown,
                 OffsetDateTime.of(2024, 9, 25, 10, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 10, 22, 14, 45, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createLocation(11L, "United States", "New York", LocalDate.of(2025, 1, 1), johnDoe,
+        raw.add(createLocation(UUID.randomUUID(), "United States", "New York", LocalDate.of(2025, 1, 1), johnDoe,
                 OffsetDateTime.of(2024, 12, 28, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 10, 16, 30, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createLocation(12L, "Australia", "New South Wales", LocalDate.of(2025, 2, 1), janeSmith,
+        raw.add(createLocation(UUID.randomUUID(), "Australia", "New South Wales", LocalDate.of(2025, 2, 1), janeSmith,
                 OffsetDateTime.of(2025, 1, 28, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 10, 12, 20, 0, 0, ZoneOffset.UTC)));
 

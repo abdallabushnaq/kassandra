@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 public class MPXJGenerator {
@@ -56,7 +57,7 @@ public class MPXJGenerator {
         feature.setName(name);
         feature.setVersion(version);
         feature.setVersionId(version.getId());
-        feature.setId((long) features.size());
+        feature.setId(UUID.randomUUID());
         version.addFeature(feature);
         features.add(feature);
         return feature;
@@ -77,7 +78,7 @@ public class MPXJGenerator {
     protected Product addProduct(String name) {
         Product product = new Product();
         product.setName(name);
-        product.setId((long) products.size());
+        product.setId(UUID.randomUUID());
         products.add(product);
         return product;
     }
@@ -88,7 +89,7 @@ public class MPXJGenerator {
         sprint.setStatus(Status.STARTED);
         sprint.setFeature(feature);
         sprint.setFeatureId(feature.getId());
-        sprint.setId((long) sprints.size());
+//        sprint.setId(UUID.randomUUID());
         feature.addSprint(sprint);
         sprints.add(sprint);
         return sprint;
@@ -152,11 +153,11 @@ public class MPXJGenerator {
             task.setSprint(sprint);
             sprint.addTask(task);
         }
-        task.setId((long) tasks.size());
+        task.setId(UUID.randomUUID());
         task.setOrderId(tasks.size());
         tasks.add(task);
 //        System.out.printf("Adding %s%n", task);
-        System.out.printf("Task ID: %s, Task Name: %s resource id: %d%n", task.getId(), task.getName(), task.getResourceId());
+        System.out.printf("Task ID: %s, Task Name: %s resource id: %s%n", task.getId(), task.getName(), task.getResourceId());
         return task;
     }
 
@@ -165,7 +166,7 @@ public class MPXJGenerator {
         user.setName(name);
         user.setEmail(name);
         user.setColor(colorGenerator.generateUserColor(users.size()));
-        user.setId((long) users.size());
+        user.setId(UUID.randomUUID());
         addAvailability(user, availability, startOfTime);
         addLocation(user, "de", "nw", startOfTime);
         users.add(user);
@@ -177,7 +178,7 @@ public class MPXJGenerator {
         version.setName(versionName);
         version.setProduct(product);
         version.setProductId(product.getId());
-        version.setId((long) versions.size());
+        version.setId(UUID.randomUUID());
         product.addVersion(version);
         versions.add(version);
         return version;
@@ -191,7 +192,7 @@ public class MPXJGenerator {
         worklog.setStart(start);
         worklog.setTimeSpent(timeSpent);
         worklog.setComment(comment);
-        worklog.setId((long) worklogs.size());
+        worklog.setId(UUID.randomUUID());
         task.addWorklog(worklog);
 //        Worklog saved = worklogApi.persist(worklog);
         worklogs.add(worklog);
@@ -212,7 +213,7 @@ public class MPXJGenerator {
         }
         task.setMinEstimate(minWork);
 
-        task.setId((long) tasks.size());
+        task.setId(UUID.randomUUID());
         if (sprint != null) {
             task.setSprint(sprint);
             sprint.addTask(task);

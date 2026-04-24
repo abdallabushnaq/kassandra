@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.version;
 
+import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -40,16 +41,16 @@ public class VersionDto {
     @Schema(description = "Unique version name")
     private String         name;
     @Schema(description = "Product this version belongs to")
-    private Long           productId;
+    private UUID           productId;
     @Schema(description = "Timestamp when the version was last updated (ISO 8601)")
     private OffsetDateTime updated;
     @Schema(description = "Unique version identifier; use this ID in subsequent operations")
-    private Long           versionId;
+    private UUID           versionId;
 
     /**
      * Custom constructor for VersionDto with explicit parameter order.
      */
-    public VersionDto(Long versionId, String name, Long productId, OffsetDateTime created, OffsetDateTime updated) {
+    public VersionDto(UUID versionId, String name, UUID productId, OffsetDateTime created, OffsetDateTime updated) {
         this.versionId = versionId;
         this.name      = name;
         this.productId = productId;

@@ -5,20 +5,20 @@ import lombok.Getter;
 import lombok.ToString;
 
 import java.time.Duration;
+import java.util.UUID;
 
 //TODO do we need this class?
 @Getter
 @ToString(callSuper = false)
 public class WorklogRemaining {
     private final User     author;
-    private final Long     issueId;
+    private final UUID     issueId;
     private final String   key;
-    //    private final Logger   logger = LoggerFactory.getLogger(this.getClass());
     private final Duration remaining;
-    private final Long     sprintId;
+    private final UUID     sprintId;
     private final Duration timeworked;
 
-    public WorklogRemaining(Long sprintId, Long issueId, String key, User author, Duration timeworked, Duration remaining) {
+    public WorklogRemaining(UUID sprintId, UUID issueId, String key, User author, Duration timeworked, Duration remaining) {
         this.sprintId   = sprintId;
         this.issueId    = issueId;
         this.key        = key;

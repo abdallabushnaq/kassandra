@@ -20,6 +20,9 @@ package de.bushnaq.abdalla.kassandra.dao;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "products")
@@ -36,9 +39,9 @@ public class ProductDAO extends AbstractTimeAwareDAO {
     @Column(name = "dark_avatar_hash", length = 16)
     private String darkAvatarHash;
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    private Long   id;
+    private UUID   id;
     @Column(nullable = false, unique = true)
     private String name;
 

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
@@ -56,7 +57,7 @@ public class ProductAclTools {
 
     @Tool(description = "Get all ACL entries for a product (requires admin or existing access).", resultConverter = KassandraToolCallResultConverter.class)
     public List<ProductAclDto> getProductAcl(
-            @ToolParam(description = "The productId") Long productId) {
+            @ToolParam(description = "The productId") UUID productId) {
         List<ProductAclEntry> entries = productAclApi.getAcl(productId);
         ToolActivityContextHolder.reportActivity("read " + entries.size() + " ACL entries for product ID: " + productId);
         return entries.stream().map(ProductAclDto::from).collect(Collectors.toList());
@@ -64,8 +65,8 @@ public class ProductAclTools {
 
     @Tool(description = "Grant a group access to a product (requires admin or existing access).", resultConverter = KassandraToolCallResultConverter.class)
     public ProductAclDto grantGroupAccessToProduct(
-            @ToolParam(description = "The productId") Long productId,
-            @ToolParam(description = "The groupId to grant access") Long groupId) {
+            @ToolParam(description = "The productId") UUID productId,
+            @ToolParam(description = "The groupId to grant access") UUID groupId) {
         ProductAclEntry entry = productAclApi.grantGroupAccess(productId, groupId);
         ToolActivityContextHolder.reportActivity("Granted group " + groupId + " access to product " + productId);
         return ProductAclDto.from(entry);
@@ -73,8 +74,8 @@ public class ProductAclTools {
 
     @Tool(description = "Grant a user access to a product (requires admin or existing access).", resultConverter = KassandraToolCallResultConverter.class)
     public ProductAclDto grantUserAccessToProduct(
-            @ToolParam(description = "The productId") Long productId,
-            @ToolParam(description = "The userId to grant access") Long userId) {
+            @ToolParam(description = "The productId") UUID productId,
+            @ToolParam(description = "The userId to grant access") UUID userId) {
         ProductAclEntry entry = productAclApi.grantUserAccess(productId, userId);
         ToolActivityContextHolder.reportActivity("Granted user " + userId + " access to product " + productId);
         return ProductAclDto.from(entry);
@@ -82,16 +83,16 @@ public class ProductAclTools {
 
     @Tool(description = "Revoke a group's access from a product (requires admin or existing access).", resultConverter = KassandraToolCallResultConverter.class)
     public void revokeGroupAccessFromProduct(
-            @ToolParam(description = "The productId") Long productId,
-            @ToolParam(description = "The groupId to revoke") Long groupId) {
+            @ToolParam(description = "The productId") UUID productId,
+            @ToolParam(description = "The groupId to revoke") UUID groupId) {
         productAclApi.revokeGroupAccess(productId, groupId);
         ToolActivityContextHolder.reportActivity("Revoked group " + groupId + " access from product " + productId);
     }
 
     @Tool(description = "Revoke a user's access from a product (requires admin or existing access).", resultConverter = KassandraToolCallResultConverter.class)
     public void revokeUserAccessFromProduct(
-            @ToolParam(description = "The productId") Long productId,
-            @ToolParam(description = "The userId to revoke") Long userId) {
+            @ToolParam(description = "The productId") UUID productId,
+            @ToolParam(description = "The userId to revoke") UUID userId) {
         productAclApi.revokeUserAccess(productId, userId);
         ToolActivityContextHolder.reportActivity("Revoked user " + userId + " access from product " + productId);
     }

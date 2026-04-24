@@ -21,9 +21,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Entity representing a user group for ACL management.
@@ -43,9 +45,9 @@ public class UserGroupDAO extends AbstractTimeAwareDAO {
     @Column(length = 500)
     private String description;
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    private Long   id;
+    private UUID   id;
 
     /**
      * Member user IDs stored in a join table.
@@ -57,7 +59,7 @@ public class UserGroupDAO extends AbstractTimeAwareDAO {
             joinColumns = @JoinColumn(name = "group_id")
     )
     @Column(name = "user_id")
-    private Set<Long> memberIds = new HashSet<>();
+    private Set<UUID> memberIds = new HashSet<>();
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -68,7 +70,7 @@ public class UserGroupDAO extends AbstractTimeAwareDAO {
      * @param userId the user ID to add
      */
     @JsonIgnore
-    public void addMember(Long userId) {
+    public void addMember(UUID userId) {
         memberIds.add(userId);
     }
 
@@ -88,7 +90,7 @@ public class UserGroupDAO extends AbstractTimeAwareDAO {
      * @param userId the user ID to remove
      */
     @JsonIgnore
-    public void removeMember(Long userId) {
+    public void removeMember(UUID userId) {
         memberIds.remove(userId);
     }
 }

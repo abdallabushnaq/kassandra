@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import java.util.UUID;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
  */
 public class DependencyDialog extends Dialog {
 
-    private final Map<Long, Checkbox> checkboxMap = new HashMap<>();
+    private final Map<UUID, Checkbox> checkboxMap = new HashMap<>();
     private final Logger              logger      = LoggerFactory.getLogger(this.getClass());
     private final SaveCallback        saveCallback;
     private final Sprint              sprint;
@@ -79,7 +80,7 @@ public class DependencyDialog extends Dialog {
         info.getStyle().set("margin-top", "0");
 
         // Get current visible predecessors
-        Set<Long> currentPredecessorIds = task.getPredecessors().stream()
+        Set<UUID> currentPredecessorIds = task.getPredecessors().stream()
                 .filter(Relation::isVisible)
                 .map(Relation::getPredecessorId)
                 .collect(Collectors.toSet());
@@ -192,7 +193,7 @@ public class DependencyDialog extends Dialog {
                     });
                 } else {
                     // Parse comma-separated values
-                    Set<Long> orderIds = parseOrderIds(value);
+                    Set<Integer> orderIds = parseOrderIds(value);
 
                     // Update checkboxes based on parsed IDs
                     for (Task t : taskOrder) {
@@ -272,8 +273,8 @@ public class DependencyDialog extends Dialog {
     /**
      * Parse comma-separated order IDs from a string
      */
-    private Set<Long> parseOrderIds(String input) {
-        Set<Long> orderIds = new HashSet<>();
+    private Set<Integer> parseOrderIds(String input) {
+        Set<Integer> orderIds = new HashSet<>();
         if (input == null || input.trim().isEmpty()) {
             return orderIds;
         }
@@ -281,7 +282,7 @@ public class DependencyDialog extends Dialog {
         String[] parts = input.split(",");
         for (String part : parts) {
             try {
-                Long orderId = Long.parseLong(part.trim());
+                int orderId = Integer.parseInt(part.trim());
                 orderIds.add(orderId);
             } catch (NumberFormatException e) {
                 // Ignore invalid numbers
@@ -296,7 +297,7 @@ public class DependencyDialog extends Dialog {
      */
     private void save() {
         // Get selected task IDs (only from enabled checkboxes)
-        Set<Long> selectedTaskIds = checkboxMap.entrySet().stream()
+        Set<UUID> selectedTaskIds = checkboxMap.entrySet().stream()
                 .filter(entry -> entry.getValue().isEnabled() && entry.getValue().getValue())
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
@@ -313,12 +314,12 @@ public class DependencyDialog extends Dialog {
     /**
      * Update task dependencies based on selected task IDs
      */
-    private void updateTaskDependencies(Set<Long> selectedTaskIds) {
+    private void updateTaskDependencies(Set<UUID> selectedTaskIds) {
         // Remove all visible predecessors
         task.getPredecessors().removeIf(Relation::isVisible);
 
         // Add new visible predecessors
-        for (Long taskId : selectedTaskIds) {
+        for (UUID taskId : selectedTaskIds) {
             Task predecessor = sprint.getTaskById(taskId);
             if (predecessor != null) {
                 task.addPredecessor(predecessor, true); // true = visible
@@ -333,7 +334,7 @@ public class DependencyDialog extends Dialog {
      */
     @FunctionalInterface
     public interface SaveCallback {
-        void save(Task task, Set<Long> selectedTaskIds);
+        void save(Task task, Set<UUID> selectedTaskIds);
     }
 }
 

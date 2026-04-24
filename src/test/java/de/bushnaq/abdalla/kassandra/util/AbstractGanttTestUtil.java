@@ -56,7 +56,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 //@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -97,15 +98,15 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             Map<String, Object> map          = jsonMapper.readValue(actualJson, typeRef);
 
             // Compare users
-            Map<String, User> referenceUsers = jsonMapper.convertValue(referenceMap.get("users"), new TypeReference<Map<String, User>>() {
-            });
-            Map<String, User> users = jsonMapper.convertValue(map.get("users"), new TypeReference<Map<String, User>>() {
-            });
+            List<User> referenceUsers = jsonMapper.convertValue(referenceMap.get("users"), new TypeReference<Collection<User>>() {
+            }).stream().sorted(Comparator.comparing(User::getName)).toList();
+            List<User> users = jsonMapper.convertValue(map.get("users"), new TypeReference<Collection<User>>() {
+            }).stream().sorted(Comparator.comparing(User::getName)).toList();
             assertEquals(referenceUsers.size(), users.size(), "Number of users differs");
 
-            for (String key : referenceUsers.keySet()) {
-                assertTrue(users.containsKey(key), "Missing user: " + referenceUsers.get(key).getName());
-                assertUserEquals(referenceUsers.get(key), users.get(key));
+            for (int i = 0; i < referenceUsers.size(); i++) {
+//                assertTrue(users.containsKey(key), "Missing user: " + referenceUsers.get(key).getName());
+                assertUserEquals(referenceUsers.get(i), users.get(i));
             }
 
             // Compare sprints
@@ -124,14 +125,14 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                 referenceSprint.addTask(task);
             {
                 GanttContext gc = new GanttContext();
-                gc.allUsers   = new ArrayList<>(referenceUsers.values());
+                gc.allUsers   = referenceUsers;
                 gc.allSprints = List.of(referenceSprint);
                 gc.allTasks   = referenceTasks;
                 gc.initialize();
             }
             {
                 GanttContext gc = new GanttContext();
-                gc.allUsers   = new ArrayList<>(users.values());
+                gc.allUsers   = users;
                 gc.allSprints = List.of(sprint);
                 gc.allTasks   = tasks;
                 gc.initialize();
@@ -237,11 +238,11 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
 //        }
 //    }
 
-    protected void generateBurndownChart(TestInfo testInfo, long sprintId) throws Exception {
+    protected void generateBurndownChart(TestInfo testInfo, UUID sprintId) throws Exception {
         generateBurndownChart(testInfo, sprintId, 0, 36 * 20);
     }
 
-    protected void generateBurndownChart(TestInfo testInfo, long sprintId, int width, int height) throws Exception {
+    protected void generateBurndownChart(TestInfo testInfo, UUID sprintId, int width, int height) throws Exception {
 //        initializeInstances();
 //        sprint.initialize();
 //        sprint.initUserMap(userApi.getAll(sprint.getId()));
@@ -286,7 +287,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         }
     }
 
-    protected void generateGanttChart(TestInfo testInfo, long sprintId, ProjectFile projectFile) throws Exception {
+    protected void generateGanttChart(TestInfo testInfo, UUID sprintId, ProjectFile projectFile) throws Exception {
         Sprint sprint = sprintApi.getById(sprintId);
         sprint.initialize();
         sprint.initUserMap(userApi.getAll(sprintId));
@@ -631,7 +632,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
      * @param sprintId id of the sprint to load
      * @return fully initialized {@link Sprint}
      */
-    private Sprint loadSprintWithTasks(Long sprintId) {
+    private Sprint loadSprintWithTasks(UUID sprintId) {
         Sprint sprint = sprintApi.getById(sprintId);
         sprint.initialize();
         sprint.initUserMap(userApi.getAll(sprintId));
@@ -699,7 +700,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             }
 
         }
-        buffer += String.format("[%2d] N='%-" + maxNameLength + "s' C=%s%s%s S='%s%20s%s' D='%s%-19s%s' F='%s%20s%s'", task.getId(),//
+        buffer += String.format("[%s] N='%-" + maxNameLength + "s' C=%s%s%s S='%s%20s%s' D='%s%-19s%s' F='%s%20s%s'", task.getKey(),//
                 task.getName(),//
                 criticalFlag, criticalString, ANSI_RESET,//
                 startFlag, startString, ANSI_RESET,//
@@ -740,13 +741,13 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
 //        new File(testReferenceResultFolder).mkdirs();
     }
 
-    private List<String> readStoredData(String directory, String sprintName) throws IOException {
-        Path filePath = Paths.get(directory, sprintName + ".json");
-        if (Files.exists(filePath)) {
-            return Files.readAllLines(filePath, StandardCharsets.UTF_8);
-        }
-        return new ArrayList<>();
-    }
+//    private List<String> readStoredData(String directory, String sprintName) throws IOException {
+//        Path filePath = Paths.get(directory, sprintName + ".json");
+//        if (Files.exists(filePath)) {
+//            return Files.readAllLines(filePath, StandardCharsets.UTF_8);
+//        }
+//        return new ArrayList<>();
+//    }
 
     protected void setTestCaseName(String testClassName, String testMethodName) {
         testResultFolder = testResultFolder + "/" + testClassName;
@@ -791,7 +792,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         Path filePath = Paths.get(directory, TestInfoUtil.getTestMethodName(testInfo) + ".json");
         if (overwrite || !Files.exists(filePath)) {
             Map<String, Object> container = new LinkedHashMap<>();
-            container.put("users", sprint.getUserMap());
+            container.put("users", sprint.getUserMap().values().stream().sorted(Comparator.comparing(User::getName)).toList());
             container.put("sprint", sprint);
             container.put("tasks", sprint.getTasks());
 

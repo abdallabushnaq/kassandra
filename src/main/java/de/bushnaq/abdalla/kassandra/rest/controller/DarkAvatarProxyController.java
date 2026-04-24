@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
 import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
@@ -72,7 +73,7 @@ public class DarkAvatarProxyController {
      * @return PNG image bytes for the dark avatar, or 404 if no avatar exists at all
      */
     @GetMapping("/feature/{featureId}")
-    public ResponseEntity<byte[]> proxyFeatureDarkAvatar(@PathVariable("featureId") Long featureId) {
+    public ResponseEntity<byte[]> proxyFeatureDarkAvatar(@PathVariable("featureId") UUID featureId) {
         AvatarWrapper avatarImage = featureApi.getDarkAvatarImage(featureId);
         if (avatarImage == null || avatarImage.getAvatar() == null) {
             return ResponseEntity.notFound().build();
@@ -92,7 +93,7 @@ public class DarkAvatarProxyController {
      * @return PNG image bytes for the dark avatar, or 404 if no avatar exists at all
      */
     @GetMapping("/product/{productId}")
-    public ResponseEntity<byte[]> proxyProductDarkAvatar(@PathVariable("productId") Long productId) {
+    public ResponseEntity<byte[]> proxyProductDarkAvatar(@PathVariable("productId") UUID productId) {
         AvatarWrapper avatarImage = productApi.getDarkAvatarImage(productId);
         if (avatarImage == null || avatarImage.getAvatar() == null) {
             return ResponseEntity.notFound().build();
@@ -112,7 +113,7 @@ public class DarkAvatarProxyController {
      * @return PNG image bytes for the dark avatar, or 404 if no avatar exists at all
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<byte[]> proxyUserDarkAvatar(@PathVariable("userId") Long userId) {
+    public ResponseEntity<byte[]> proxyUserDarkAvatar(@PathVariable("userId") UUID userId) {
         AvatarWrapper avatarImage = userApi.getDarkAvatarImage(userId);
         if (avatarImage == null || avatarImage.getAvatar() == null) {
             return ResponseEntity.notFound().build();
@@ -132,7 +133,7 @@ public class DarkAvatarProxyController {
      * @return PNG image bytes for the dark avatar, or 404 if no avatar exists at all
      */
     @GetMapping("/sprint/{sprintId}")
-    public ResponseEntity<byte[]> proxySprintDarkAvatar(@PathVariable("sprintId") Long sprintId) {
+    public ResponseEntity<byte[]> proxySprintDarkAvatar(@PathVariable("sprintId") UUID sprintId) {
         AvatarWrapper avatarImage = sprintApi.getDarkAvatarImage(sprintId);
         if (avatarImage == null || avatarImage.getAvatar() == null) {
             return ResponseEntity.notFound().build();

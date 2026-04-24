@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import java.util.UUID;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -89,8 +90,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     private              boolean                             isRestoringFromUrl                = false;
     private final        JsonMapper                          mapper;
     private final        ProductApi                          productApi;
-    private              Long                                productId;
-    private final        Map<Long, Product>                  productMap                        = new HashMap<>();
+    private UUID productId;
+    private final        Map<UUID, Product>                  productMap                        = new HashMap<>();
     private              MultiSelectComboBox<Product>        productSelector;
     private              String                              requestedProductIds;
     private              Set<Product>                        selectedProducts                  = new HashSet<>();
@@ -144,7 +145,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
         if (queryParameters.getParameters().containsKey("product")) {
-            this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
+            this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
         }
         // Resolve default product when navigated directly from the menu (no URL params)
         if (productId == null) {
@@ -267,7 +268,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
      */
     private void applyVersionFilter() {
         if (!selectedProducts.isEmpty()) {
-            Set<Long> productIds = selectedProducts.stream().map(Product::getId).collect(Collectors.toSet());
+            Set<UUID> productIds = selectedProducts.stream().map(Product::getId).collect(Collectors.toSet());
             getDataProvider().setFilter(v -> productIds.contains(v.getProductId()));
         } else {
             getDataProvider().setFilter(null);
@@ -424,7 +425,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
             productSelector.setItems(freshProducts);
             if (!currentSelection.isEmpty()) {
                 // Preserve the previously selected products (match by ID)
-                Set<Long> selectedIds = currentSelection.stream().map(Product::getId).collect(Collectors.toSet());
+                Set<UUID> selectedIds = currentSelection.stream().map(Product::getId).collect(Collectors.toSet());
                 Set<Product> toRestore = freshProducts.stream()
                         .filter(p -> selectedIds.contains(p.getId()))
                         .collect(Collectors.toSet());
@@ -439,7 +440,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                     Set<Product> toSelect = new HashSet<>();
                     for (String idStr : requestedProductIds.split(",")) {
                         try {
-                            Long id = Long.parseLong(idStr.trim());
+                            UUID id = UUID.fromString(idStr.trim());
                             freshProducts.stream().filter(p -> p.getId().equals(id)).findFirst().ifPresent(toSelect::add);
                         } catch (NumberFormatException e) {
                             log.warn("Invalid product ID in URL: {}", idStr);

@@ -31,6 +31,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Tests the JavaScript AI filter generator for Version entities.
@@ -72,7 +73,7 @@ class VersionAiFilterTest extends AbstractAiFilterTest<VersionFilterDto> {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
     }
 
-    private Version createVersion(Long id, String name, Long productId,
+    private Version createVersion(UUID id, String name, UUID productId,
                                   OffsetDateTime created, OffsetDateTime updated) {
         Version version = new Version();
         version.setId(id);
@@ -88,52 +89,52 @@ class VersionAiFilterTest extends AbstractAiFilterTest<VersionFilterDto> {
         List<Version> raw = new ArrayList<>();
 
         // id=1  "1.0.0"          product=1  stable    created 2023-06-15  updated 2024-03-20
-        raw.add(createVersion(1L, "1.0.0", 1L,
+        raw.add(createVersion(UUID.randomUUID(), "1.0.0", UUID.randomUUID(),
                 OffsetDateTime.of(2023, 6, 15, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 20, 14, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=2  "1.2.3"          product=1  stable    created 2024-01-10  updated 2024-06-05
-        raw.add(createVersion(2L, "1.2.3", 1L,
+        raw.add(createVersion(UUID.randomUUID(), "1.2.3", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 1, 10, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
         // id=3  "2.0.0"          product=2  stable    created 2024-02-28  updated 2024-08-12
-        raw.add(createVersion(3L, "2.0.0", 2L,
+        raw.add(createVersion(UUID.randomUUID(), "2.0.0", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 2, 28, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 12, 13, 20, 0, 0, ZoneOffset.UTC)));
 
         // id=4  "2.1.5"          product=2  stable    created 2024-04-03  updated 2024-09-18
-        raw.add(createVersion(4L, "2.1.5", 2L,
+        raw.add(createVersion(UUID.randomUUID(), "2.1.5", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 4, 3, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 18, 12, 10, 0, 0, ZoneOffset.UTC)));
 
         // id=5  "3.0.0-beta"     product=3  pre-rel   created 2024-07-22  updated 2024-12-01
-        raw.add(createVersion(5L, "3.0.0-beta", 3L,
+        raw.add(createVersion(UUID.randomUUID(), "3.0.0-beta", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 7, 22, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 12, 1, 10, 25, 0, 0, ZoneOffset.UTC)));
 
         // id=6  "3.1.0-alpha"    product=3  pre-rel   created 2024-09-05  updated 2025-01-15
-        raw.add(createVersion(6L, "3.1.0-alpha", 3L,
+        raw.add(createVersion(UUID.randomUUID(), "3.1.0-alpha", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 9, 5, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 15, 11, 40, 0, 0, ZoneOffset.UTC)));
 
         // id=7  "4.0.0-rc1"      product=4  pre-rel   created 2024-11-12  updated 2025-02-08
-        raw.add(createVersion(7L, "4.0.0-rc1", 4L,
+        raw.add(createVersion(UUID.randomUUID(), "4.0.0-rc1", UUID.randomUUID(),
                 OffsetDateTime.of(2024, 11, 12, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 8, 16, 15, 0, 0, ZoneOffset.UTC)));
 
         // id=8  "0.9.0"          product=4  stable    created 2025-01-05  updated 2025-01-20
-        raw.add(createVersion(8L, "0.9.0", 4L,
+        raw.add(createVersion(UUID.randomUUID(), "0.9.0", UUID.randomUUID(),
                 OffsetDateTime.of(2025, 1, 5, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 20, 15, 50, 0, 0, ZoneOffset.UTC)));
 
         // id=9  "1.0.0-SNAPSHOT" product=5  pre-rel   created 2025-02-10  updated 2025-02-25
-        raw.add(createVersion(9L, "1.0.0-SNAPSHOT", 5L,
+        raw.add(createVersion(UUID.randomUUID(), "1.0.0-SNAPSHOT", UUID.randomUUID(),
                 OffsetDateTime.of(2025, 2, 10, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 25, 17, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=10 "5.2.1"          product=5  stable    created 2025-03-18  updated 2025-04-02
-        raw.add(createVersion(10L, "5.2.1", 5L,
+        raw.add(createVersion(UUID.randomUUID(), "5.2.1", UUID.randomUUID(),
                 OffsetDateTime.of(2025, 3, 18, 13, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 4, 2, 9, 20, 0, 0, ZoneOffset.UTC)));
 

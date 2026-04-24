@@ -9,6 +9,8 @@ project effort estimation and progress tracking and release date interpolation o
 
 ## Notice
 
+- some entities support client side id generation, which means that the client can generate an id for the entity before
+  sending it to the server. This is useful to reducing the number of round trips to the server.
 - for the agent tests to run, you need to load ministral-3-8B with 20480 token context and a sed of 42.
 
 ## features

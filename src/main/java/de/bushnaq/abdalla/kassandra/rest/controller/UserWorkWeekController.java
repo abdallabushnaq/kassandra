@@ -27,8 +27,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
 import java.util.Comparator;
+import java.util.UUID;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.Optional;
 
 /**
@@ -52,7 +55,7 @@ public class UserWorkWeekController {
      * @param targetUserId the target user ID
      * @return {@code true} if modification is allowed
      */
-    private boolean canModify(Long targetUserId) {
+    private boolean canModify(UUID targetUserId) {
         if (SecurityUtils.isAdmin()) return true;
         String email = SecurityUtils.getUserEmail();
         return userRepository.findById(targetUserId)
@@ -68,7 +71,7 @@ public class UserWorkWeekController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<UserWorkWeekDAO> getById(@PathVariable Long id) {
+    public ResponseEntity<UserWorkWeekDAO> getById(@PathVariable UUID id) {
         return userWorkWeekRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -84,7 +87,7 @@ public class UserWorkWeekController {
      */
     @PostMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<UserWorkWeekDAO> save(@PathVariable Long userId, @RequestBody UserWorkWeekDAO userWorkWeek) {
+    public ResponseEntity<UserWorkWeekDAO> save(@PathVariable UUID userId, @RequestBody UserWorkWeekDAO userWorkWeek) {
         if (!canModify(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own work week assignments");
         }
@@ -109,7 +112,7 @@ public class UserWorkWeekController {
      */
     @PutMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<Object> update(@PathVariable Long userId, @RequestBody UserWorkWeekDAO userWorkWeek) {
+    public ResponseEntity<Object> update(@PathVariable UUID userId, @RequestBody UserWorkWeekDAO userWorkWeek) {
         if (!canModify(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own work week assignments");
         }
@@ -134,7 +137,7 @@ public class UserWorkWeekController {
      */
     @DeleteMapping("/{userId}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<Object> delete(@PathVariable Long userId, @PathVariable Long id) {
+    public ResponseEntity<Object> delete(@PathVariable UUID userId, @PathVariable UUID id) {
         if (!canModify(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own work week assignments");
         }

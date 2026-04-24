@@ -31,6 +31,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Tests the JavaScript AI filter generator for User entities.
@@ -60,7 +61,7 @@ class UserAiFilterTest extends AbstractAiFilterTest<UserFilterDto> {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
     }
 
-    private User createUser(Long id, String name, String email,
+    private User createUser(UUID id, String name, String email,
                             LocalDate firstWorkingDay, LocalDate lastWorkingDay,
                             Color color, OffsetDateTime created, OffsetDateTime updated) {
         User user = new User();
@@ -80,73 +81,73 @@ class UserAiFilterTest extends AbstractAiFilterTest<UserFilterDto> {
         List<User> raw = new ArrayList<>();
 
         // id=1  John Doe        active  started 2020-03-15  (5+ years at now)
-        raw.add(createUser(1L, "John Doe", "john.doe@company.com",
+        raw.add(createUser(UUID.randomUUID(), "John Doe", "john.doe@company.com",
                 LocalDate.of(2020, 3, 15), null, Color.BLUE,
                 OffsetDateTime.of(2020, 3, 1, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 1, 10, 14, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=2  Jane Smith      active  started 2019-06-01  (6+ years at now)
-        raw.add(createUser(2L, "Jane Smith", "jane.smith@company.com",
+        raw.add(createUser(UUID.randomUUID(), "Jane Smith", "jane.smith@company.com",
                 LocalDate.of(2019, 6, 1), null, Color.RED,
                 OffsetDateTime.of(2019, 5, 15, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 2, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
         // id=3  Bob Johnson     former  started 2021-01-10  left 2024-06-30
-        raw.add(createUser(3L, "Bob Johnson", "bob.johnson@company.com",
+        raw.add(createUser(UUID.randomUUID(), "Bob Johnson", "bob.johnson@company.com",
                 LocalDate.of(2021, 1, 10), LocalDate.of(2024, 6, 30), Color.GREEN,
                 OffsetDateTime.of(2020, 12, 20, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 16, 13, 20, 0, 0, ZoneOffset.UTC)));
 
         // id=4  Alice Wilson    active  started 2022-09-05  (2+ years at now — NOT > 3 years)
-        raw.add(createUser(4L, "Alice Wilson", "alice.wilson@company.com",
+        raw.add(createUser(UUID.randomUUID(), "Alice Wilson", "alice.wilson@company.com",
                 LocalDate.of(2022, 9, 5), null, Color.ORANGE,
                 OffsetDateTime.of(2022, 8, 25, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 4, 15, 12, 10, 0, 0, ZoneOffset.UTC)));
 
         // id=5  Mike Brown      active  started 2018-11-20  (6+ years at now)
-        raw.add(createUser(5L, "Mike Brown", "mike.brown@company.com",
+        raw.add(createUser(UUID.randomUUID(), "Mike Brown", "mike.brown@company.com",
                 LocalDate.of(2018, 11, 20), null, Color.MAGENTA,
                 OffsetDateTime.of(2018, 11, 1, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 5, 1, 11, 40, 0, 0, ZoneOffset.UTC)));
 
         // id=6  Sarah Davis     active  started 2023-02-14  (2+ years at now — NOT > 3 years)
-        raw.add(createUser(6L, "Sarah Davis", "sarah.davis@company.com",
+        raw.add(createUser(UUID.randomUUID(), "Sarah Davis", "sarah.davis@company.com",
                 LocalDate.of(2023, 2, 14), null, Color.PINK,
                 OffsetDateTime.of(2023, 1, 28, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 10, 16, 15, 0, 0, ZoneOffset.UTC)));
 
         // id=7  David Martinez  former  started 2017-04-03  left 2023-12-15
-        raw.add(createUser(7L, "David Martinez", "david.martinez@company.com",
+        raw.add(createUser(UUID.randomUUID(), "David Martinez", "david.martinez@company.com",
                 LocalDate.of(2017, 4, 3), LocalDate.of(2023, 12, 15), Color.CYAN,
                 OffsetDateTime.of(2017, 3, 25, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 7, 29, 15, 50, 0, 0, ZoneOffset.UTC)));
 
         // id=8  Lisa Anderson   active  started 2021-08-16  (3+ years at now — exactly > 3y)
-        raw.add(createUser(8L, "Lisa Anderson", "lisa.anderson@company.com",
+        raw.add(createUser(UUID.randomUUID(), "Lisa Anderson", "lisa.anderson@company.com",
                 LocalDate.of(2021, 8, 16), null, Color.MAGENTA,
                 OffsetDateTime.of(2021, 7, 30, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 15, 17, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=9  Robert Taylor   active  started 2024-01-08  (1+ year at now)
-        raw.add(createUser(9L, "Robert Taylor", "robert.taylor@company.com",
+        raw.add(createUser(UUID.randomUUID(), "Robert Taylor", "robert.taylor@company.com",
                 LocalDate.of(2024, 1, 8), null, Color.YELLOW,
                 OffsetDateTime.of(2023, 12, 28, 13, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 5, 9, 20, 0, 0, ZoneOffset.UTC)));
 
         // id=10 Emily Clark     active  started 2020-10-12  (4+ years at now)
-        raw.add(createUser(10L, "Emily Clark", "emily.clark@company.com",
+        raw.add(createUser(UUID.randomUUID(), "Emily Clark", "emily.clark@company.com",
                 LocalDate.of(2020, 10, 12), null, Color.GRAY,
                 OffsetDateTime.of(2020, 9, 25, 10, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 10, 22, 14, 45, 0, 0, ZoneOffset.UTC)));
 
         // id=11 James White     active  started 2019-12-02  (5+ years at now)
-        raw.add(createUser(11L, "James White", "james.white@company.com",
+        raw.add(createUser(UUID.randomUUID(), "James White", "james.white@company.com",
                 LocalDate.of(2019, 12, 2), null, Color.BLACK,
                 OffsetDateTime.of(2019, 11, 28, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 10, 16, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=12 Maria Garcia    active  started 2025-03-01  (< 6 months at now)
-        raw.add(createUser(12L, "Maria Garcia", "maria.garcia@company.com",
+        raw.add(createUser(UUID.randomUUID(), "Maria Garcia", "maria.garcia@company.com",
                 LocalDate.of(2025, 3, 1), null, Color.LIGHT_GRAY,
                 OffsetDateTime.of(2025, 2, 15, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 3, 10, 12, 20, 0, 0, ZoneOffset.UTC)));

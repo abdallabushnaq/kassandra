@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -46,20 +47,20 @@ public class VersionController {
     @DeleteMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasVersionAccess(#id) or hasRole('ADMIN')")
     @Transactional
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable UUID id) {
         versionRepository.deleteById(id);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasVersionAccess(#id) or hasRole('ADMIN')")
-    public ResponseEntity<VersionDAO> get(@PathVariable Long id) {
+    public ResponseEntity<VersionDAO> get(@PathVariable UUID id) {
         return versionRepository.findById(id).map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/product/{productId}")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
-    public List<VersionDAO> getAll(@PathVariable Long productId) {
+    public List<VersionDAO> getAll(@PathVariable UUID productId) {
         return versionRepository.findByProductId(productId);
     }
 
@@ -79,7 +80,7 @@ public class VersionController {
 
     @GetMapping("/product/{productId}/by-name/{name}")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
-    public ResponseEntity<VersionDAO> getByName(@PathVariable Long productId, @PathVariable String name) {
+    public ResponseEntity<VersionDAO> getByName(@PathVariable UUID productId, @PathVariable String name) {
         VersionDAO version = versionRepository.findByNameAndProductId(name, productId);
         if (version == null) {
             return ResponseEntity.notFound().build();

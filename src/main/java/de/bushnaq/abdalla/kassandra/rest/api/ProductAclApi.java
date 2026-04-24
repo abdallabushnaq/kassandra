@@ -28,6 +28,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ProductAclApi extends AbstractApi {
@@ -44,7 +45,7 @@ public class ProductAclApi extends AbstractApi {
     public ProductAclApi() {
     }
 
-    public List<ProductAclEntry> getAcl(Long productId) {
+    public List<ProductAclEntry> getAcl(UUID productId) {
         return executeWithErrorHandling(() -> {
             ResponseEntity<ProductAclEntry[]> response = restTemplate.exchange(
                     getBaseUrl() + "/product/{productId}/acl",
@@ -58,7 +59,7 @@ public class ProductAclApi extends AbstractApi {
         });
     }
 
-    public ProductAclEntry grantGroupAccess(Long productId, Long groupId) {
+    public ProductAclEntry grantGroupAccess(UUID productId, UUID groupId) {
         return executeWithErrorHandling(() -> {
             ResponseEntity<ProductAclEntry> response = restTemplate.exchange(
                     getBaseUrl() + "/product/{productId}/acl/group/{groupId}",
@@ -72,7 +73,7 @@ public class ProductAclApi extends AbstractApi {
         });
     }
 
-    public ProductAclEntry grantUserAccess(Long productId, Long userId) {
+    public ProductAclEntry grantUserAccess(UUID productId, UUID userId) {
         return executeWithErrorHandling(() -> {
             ResponseEntity<ProductAclEntry> response = restTemplate.exchange(
                     getBaseUrl() + "/product/{productId}/acl/user/{userId}",
@@ -86,7 +87,7 @@ public class ProductAclApi extends AbstractApi {
         });
     }
 
-    public void revokeGroupAccess(Long productId, Long groupId) {
+    public void revokeGroupAccess(UUID productId, UUID groupId) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/product/{productId}/acl/group/{groupId}",
                 HttpMethod.DELETE,
@@ -97,7 +98,7 @@ public class ProductAclApi extends AbstractApi {
         ));
     }
 
-    public void revokeUserAccess(Long productId, Long userId) {
+    public void revokeUserAccess(UUID productId, UUID userId) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/product/{productId}/acl/user/{userId}",
                 HttpMethod.DELETE,

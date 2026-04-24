@@ -28,6 +28,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.util.List;
+import java.util.UUID;
 
 public class AbstractTestUtil extends DTOAsserts {
     @Autowired
@@ -84,6 +85,32 @@ public class AbstractTestUtil extends DTOAsserts {
         return tableNames;
     }
 
+    /**
+     * Formats a single cell value for display. Converts 16-byte arrays to UUID strings;
+     * falls back to {@code toString()} for all other types.
+     *
+     * @param value the raw cell value returned by a native query
+     * @return a human-readable string representation
+     */
+    protected String formatCellValue(Object value) {
+        if (value == null) {
+            return "null";
+        }
+        if (value instanceof byte[] bytes && bytes.length == 16) {
+            // H2 returns UUID columns as raw 16-byte arrays in native queries
+            long msb = 0;
+            long lsb = 0;
+            for (int i = 0; i < 8; i++) {
+                msb = (msb << 8) | (bytes[i] & 0xffL);
+            }
+            for (int i = 8; i < 16; i++) {
+                lsb = (lsb << 8) | (bytes[i] & 0xffL);
+            }
+            return new UUID(msb, lsb).toString();
+        }
+        return value.toString();
+    }
+
     protected void printTables() {
         printTables(null);
     }
@@ -123,15 +150,15 @@ public class AbstractTestUtil extends DTOAsserts {
 
                 // Check data widths
                 for (Object row : results) {
-                    if (row instanceof Object[] cells) {
-                        for (int i = 0; i < cells.length; i++) {
-                            String value;
-                            if (columnTypes.get(i).equalsIgnoreCase("BINARY LARGE OBJECT")) {
-                                value = cells[i] != null ? "<BLOB>" : "null";
-                            } else {
-                                value = cells[i] != null ? cells[i].toString() : "null";
-                            }
-                            maxWidths[i] = Math.max(maxWidths[i], value.length());
+                if (row instanceof Object[] cells) {
+                            for (int i = 0; i < cells.length; i++) {
+                                String value;
+                                if (columnTypes.get(i).equalsIgnoreCase("BINARY LARGE OBJECT")) {
+                                    value = cells[i] != null ? "<BLOB>" : "null";
+                                } else {
+                                    value = formatCellValue(cells[i]);
+                                }
+                                maxWidths[i] = Math.max(maxWidths[i], value.length());
                         }
                     } else {
                         maxWidths[0] = Math.max(maxWidths[0], row != null ? row.toString().length() : 4);
@@ -164,7 +191,7 @@ public class AbstractTestUtil extends DTOAsserts {
                                 if (columnTypes.get(i).equalsIgnoreCase("BINARY LARGE OBJECT")) {
                                     value = cells[i] != null ? "<BLOB>" : "null";
                                 } else {
-                                    value = cells[i] != null ? cells[i].toString() : "null";
+                                    value = formatCellValue(cells[i]);
                                 }
                                 output.append(String.format(" %-" + maxWidths[i] + "s |", value));
                             }

@@ -30,6 +30,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Tests the JavaScript AI filter generator for Product entities.
@@ -53,7 +54,7 @@ public class ProductAiFilterTest extends AbstractAiFilterTest<ProductFilterDto> 
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
     }
 
-    private Product createProduct(Long id, String name, OffsetDateTime created, OffsetDateTime updated) {
+    private Product createProduct(UUID id, String name, OffsetDateTime created, OffsetDateTime updated) {
         Product product = new Product();
         product.setId(id);
         product.setName(name);
@@ -66,35 +67,35 @@ public class ProductAiFilterTest extends AbstractAiFilterTest<ProductFilterDto> 
     void setUp() {
         List<Product> raw = new ArrayList<>();
 
-        raw.add(createProduct(1L, "Orion Space System",
+        raw.add(createProduct(UUID.randomUUID(), "Orion Space System",
                 OffsetDateTime.of(2023, 6, 15, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 20, 14, 30, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createProduct(2L, "Project Apollo",
+        raw.add(createProduct(UUID.randomUUID(), "Project Apollo",
                 OffsetDateTime.of(2024, 1, 10, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createProduct(3L, "Mars Explorer",
+        raw.add(createProduct(UUID.randomUUID(), "Mars Explorer",
                 OffsetDateTime.of(2024, 2, 28, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 12, 13, 20, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createProduct(4L, "Satellite Network",
+        raw.add(createProduct(UUID.randomUUID(), "Satellite Network",
                 OffsetDateTime.of(2024, 4, 3, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 18, 12, 10, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createProduct(5L, "Lunar Base",
+        raw.add(createProduct(UUID.randomUUID(), "Lunar Base",
                 OffsetDateTime.of(2024, 7, 22, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 12, 1, 10, 25, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createProduct(6L, "Deep Space Probe",
+        raw.add(createProduct(UUID.randomUUID(), "Deep Space Probe",
                 OffsetDateTime.of(2024, 9, 5, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 15, 11, 40, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createProduct(7L, "Space Station Alpha",
+        raw.add(createProduct(UUID.randomUUID(), "Space Station Alpha",
                 OffsetDateTime.of(2024, 11, 12, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 2, 8, 16, 15, 0, 0, ZoneOffset.UTC)));
 
-        raw.add(createProduct(8L, "Rocket Engine X",
+        raw.add(createProduct(UUID.randomUUID(), "Rocket Engine X",
                 OffsetDateTime.of(2025, 1, 5, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 20, 15, 50, 0, 0, ZoneOffset.UTC)));
 

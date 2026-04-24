@@ -29,6 +29,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Tests the JavaScript AI filter generator for Sprint entities.
@@ -57,7 +58,7 @@ class SprintAiFilterTest extends AbstractAiFilterTest<SprintFilterDto> {
         super(mapper, aiFilterService, LocalDate.of(2025, 8, 10));
     }
 
-    private Sprint createSprint(Long id, String name, Status status, Long featureId, Long userId,
+    private Sprint createSprint(UUID id, String name, Status status, UUID featureId, UUID userId,
                                 LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate,
                                 Duration originalEstimation, Duration worked, Duration remaining,
                                 OffsetDateTime created, OffsetDateTime updated) {
@@ -83,84 +84,84 @@ class SprintAiFilterTest extends AbstractAiFilterTest<SprintFilterDto> {
         List<Sprint> raw = new ArrayList<>();
 
         // id=1  CREATED  80h est  0h worked  80h remaining  starts 2024-01-15  ends 2024-01-29
-        raw.add(createSprint(1L, "Sprint 1.0.0-Alpha", Status.CREATED, 1L, 1L,
+        raw.add(createSprint(UUID.randomUUID(), "Sprint 1.0.0-Alpha", Status.CREATED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2024, 1, 15, 9, 0), LocalDateTime.of(2024, 1, 29, 17, 0), LocalDateTime.of(2024, 1, 29, 17, 0),
                 Duration.ofHours(80), Duration.ofHours(0), Duration.ofHours(80),
                 OffsetDateTime.of(2023, 12, 20, 10, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 1, 10, 14, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=2  STARTED  120h est  60h worked  60h remaining  starts 2024-02-01  ends 2024-02-14
-        raw.add(createSprint(2L, "Sprint 1.2.3-Beta", Status.STARTED, 1L, 2L,
+        raw.add(createSprint(UUID.randomUUID(), "Sprint 1.2.3-Beta", Status.STARTED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2024, 2, 1, 9, 0), LocalDateTime.of(2024, 2, 14, 17, 0), LocalDateTime.of(2024, 2, 14, 17, 0),
                 Duration.ofHours(120), Duration.ofHours(60), Duration.ofHours(60),
                 OffsetDateTime.of(2024, 1, 15, 11, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 2, 5, 16, 45, 0, 0, ZoneOffset.UTC)));
 
         // id=3  CLOSED   100h est  100h worked  0h remaining  starts 2024-03-01  ends 2024-03-15
-        raw.add(createSprint(3L, "Sprint 2.0.0-RC1", Status.CLOSED, 2L, 1L,
+        raw.add(createSprint(UUID.randomUUID(), "Sprint 2.0.0-RC1", Status.CLOSED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2024, 3, 1, 9, 0), LocalDateTime.of(2024, 3, 15, 17, 0), LocalDateTime.of(2024, 3, 15, 17, 0),
                 Duration.ofHours(100), Duration.ofHours(100), Duration.ofHours(0),
                 OffsetDateTime.of(2024, 2, 20, 8, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 3, 16, 13, 20, 0, 0, ZoneOffset.UTC)));
 
         // id=4  STARTED  160h est  80h worked  80h remaining  starts 2024-04-01  ends 2024-04-30
-        raw.add(createSprint(4L, "Authentication Sprint", Status.STARTED, 3L, 3L,
+        raw.add(createSprint(UUID.randomUUID(), "Authentication Sprint", Status.STARTED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2024, 4, 1, 9, 0), LocalDateTime.of(2024, 4, 30, 17, 0), LocalDateTime.of(2024, 4, 30, 17, 0),
                 Duration.ofHours(160), Duration.ofHours(80), Duration.ofHours(80),
                 OffsetDateTime.of(2024, 3, 25, 15, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 4, 15, 12, 10, 0, 0, ZoneOffset.UTC)));
 
         // id=5  CREATED  140h est  0h worked  140h remaining  starts 2024-05-01  ends 2024-05-21
-        raw.add(createSprint(5L, "Payment Integration Sprint", Status.CREATED, 4L, 2L,
+        raw.add(createSprint(UUID.randomUUID(), "Payment Integration Sprint", Status.CREATED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2024, 5, 1, 9, 0), LocalDateTime.of(2024, 5, 21, 17, 0), LocalDateTime.of(2024, 5, 21, 17, 0),
                 Duration.ofHours(140), Duration.ofHours(0), Duration.ofHours(140),
                 OffsetDateTime.of(2024, 4, 20, 14, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 5, 1, 11, 40, 0, 0, ZoneOffset.UTC)));
 
         // id=6  STARTED  180h est  90h worked  90h remaining  starts 2024-06-03  ends 2024-06-24
-        raw.add(createSprint(6L, "Dashboard Development", Status.STARTED, 5L, 4L,
+        raw.add(createSprint(UUID.randomUUID(), "Dashboard Development", Status.STARTED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2024, 6, 3, 9, 0), LocalDateTime.of(2024, 6, 24, 17, 0), LocalDateTime.of(2024, 6, 24, 17, 0),
                 Duration.ofHours(180), Duration.ofHours(90), Duration.ofHours(90),
                 OffsetDateTime.of(2024, 5, 28, 9, 20, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 6, 10, 16, 15, 0, 0, ZoneOffset.UTC)));
 
         // id=7  CLOSED   200h est  200h worked  0h remaining  starts 2024-07-01  ends 2024-07-28
-        raw.add(createSprint(7L, "Mobile App Sprint", Status.CLOSED, 6L, 1L,
+        raw.add(createSprint(UUID.randomUUID(), "Mobile App Sprint", Status.CLOSED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2024, 7, 1, 9, 0), LocalDateTime.of(2024, 7, 28, 17, 0), LocalDateTime.of(2024, 7, 28, 17, 0),
                 Duration.ofHours(200), Duration.ofHours(200), Duration.ofHours(0),
                 OffsetDateTime.of(2024, 6, 25, 12, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 7, 29, 15, 50, 0, 0, ZoneOffset.UTC)));
 
         // id=8  STARTED  150h est  50h worked  100h remaining  starts 2024-08-05  ends 2024-08-26
-        raw.add(createSprint(8L, "Security Enhancement", Status.STARTED, 7L, 3L,
+        raw.add(createSprint(UUID.randomUUID(), "Security Enhancement", Status.STARTED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2024, 8, 5, 9, 0), LocalDateTime.of(2024, 8, 26, 17, 0), LocalDateTime.of(2024, 8, 26, 17, 0),
                 Duration.ofHours(150), Duration.ofHours(50), Duration.ofHours(100),
                 OffsetDateTime.of(2024, 7, 30, 8, 15, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 8, 15, 17, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=9  CREATED  80h est  0h worked  80h remaining  starts 2024-09-02  ends 2024-09-16
-        raw.add(createSprint(9L, "API Documentation Sprint", Status.CREATED, 8L, 4L,
+        raw.add(createSprint(UUID.randomUUID(), "API Documentation Sprint", Status.CREATED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2024, 9, 2, 9, 0), LocalDateTime.of(2024, 9, 16, 17, 0), LocalDateTime.of(2024, 9, 16, 17, 0),
                 Duration.ofHours(80), Duration.ofHours(0), Duration.ofHours(80),
                 OffsetDateTime.of(2024, 8, 28, 13, 45, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 9, 5, 9, 20, 0, 0, ZoneOffset.UTC)));
 
         // id=10 CLOSED   120h est  120h worked  0h remaining  starts 2024-10-01  ends 2024-10-21
-        raw.add(createSprint(10L, "Performance Optimization", Status.CLOSED, 9L, 2L,
+        raw.add(createSprint(UUID.randomUUID(), "Performance Optimization", Status.CLOSED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2024, 10, 1, 9, 0), LocalDateTime.of(2024, 10, 21, 17, 0), LocalDateTime.of(2024, 10, 21, 17, 0),
                 Duration.ofHours(120), Duration.ofHours(120), Duration.ofHours(0),
                 OffsetDateTime.of(2024, 9, 25, 10, 30, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2024, 10, 22, 14, 45, 0, 0, ZoneOffset.UTC)));
 
         // id=11 CREATED  160h est  0h worked  160h remaining  starts 2025-01-06  ends 2025-01-27
-        raw.add(createSprint(11L, "Sprint 3.0.0-SNAPSHOT", Status.CREATED, 10L, 1L,
+        raw.add(createSprint(UUID.randomUUID(), "Sprint 3.0.0-SNAPSHOT", Status.CREATED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2025, 1, 6, 9, 0), LocalDateTime.of(2025, 1, 27, 17, 0), LocalDateTime.of(2025, 1, 27, 17, 0),
                 Duration.ofHours(160), Duration.ofHours(0), Duration.ofHours(160),
                 OffsetDateTime.of(2024, 12, 28, 9, 0, 0, 0, ZoneOffset.UTC),
                 OffsetDateTime.of(2025, 1, 10, 16, 30, 0, 0, ZoneOffset.UTC)));
 
         // id=12 STARTED  60h est  30h worked  30h remaining  starts 2025-02-03  ends 2025-02-17
-        raw.add(createSprint(12L, "Bug Fix Sprint", Status.STARTED, 11L, 5L,
+        raw.add(createSprint(UUID.randomUUID(), "Bug Fix Sprint", Status.STARTED, UUID.randomUUID(), UUID.randomUUID(),
                 LocalDateTime.of(2025, 2, 3, 9, 0), LocalDateTime.of(2025, 2, 17, 17, 0), LocalDateTime.of(2025, 2, 17, 17, 0),
                 Duration.ofHours(60), Duration.ofHours(30), Duration.ofHours(30),
                 OffsetDateTime.of(2025, 1, 28, 8, 15, 0, 0, ZoneOffset.UTC),

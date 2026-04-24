@@ -21,11 +21,12 @@ import de.bushnaq.abdalla.kassandra.dao.WorkWeekDAO;
 import org.springframework.data.repository.ListCrudRepository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Spring Data repository for {@link WorkWeekDAO}.
  */
-public interface WorkWeekRepository extends ListCrudRepository<WorkWeekDAO, Long> {
+public interface WorkWeekRepository extends ListCrudRepository<WorkWeekDAO, UUID> {
 
     /**
      * Find a work week by its unique name.

@@ -22,6 +22,7 @@ import lombok.*;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * DTO representing a user group for ACL management.
@@ -36,8 +37,8 @@ import java.util.Set;
 public class UserGroup extends AbstractTimeAware implements Comparable<UserGroup> {
 
     private String    description;
-    private Long      id;
-    private Set<Long> memberIds = new HashSet<>();
+    private UUID      id;
+    private Set<UUID> memberIds = new HashSet<>();
     private String    name;
 
     @Override

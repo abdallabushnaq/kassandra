@@ -21,8 +21,10 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 /**
  * Assignment of a global {@link WorkWeekDAO} to a {@link UserDAO} starting on a specific date.
@@ -39,9 +41,9 @@ import java.time.LocalDate;
 public class UserWorkWeekDAO extends AbstractTimeAwareDAO {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    private Long id;
+    private UUID id;
 
     /** The date from which this work-week assignment becomes effective. */
     @Column(nullable = false)

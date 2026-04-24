@@ -40,6 +40,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.Random;
 
 public class GanttGenerator extends MPXJGenerator {
@@ -76,7 +77,7 @@ public class GanttGenerator extends MPXJGenerator {
         return dao;
     }
 
-    public void generateBurndownChart(TestInfo testInfo, Long sprintId, String testFolder) throws Exception {
+    public void generateBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
         Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         sprint.initialize();
         sprint.initUserMap(users);
@@ -97,7 +98,7 @@ public class GanttGenerator extends MPXJGenerator {
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
     }
 
-    public void generateGanttChart(TestInfo testInfo, long sprintId, String testFolder) throws Exception {
+    public void generateGanttChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
         Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         sprint.initialize();
         sprint.initUserMap(users);
@@ -117,7 +118,7 @@ public class GanttGenerator extends MPXJGenerator {
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
     }
 
-    public void generateOverviewChart(TestInfo testInfo, Long sprintId, String testFolder) throws Exception {
+    public void generateOverviewChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
         Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         sprint.initialize();
         sprint.initUserMap(users);
@@ -146,7 +147,7 @@ public class GanttGenerator extends MPXJGenerator {
      * @param sprint
      * @param now
      */
-    public void generateWorklogs(long sprintId, LocalDateTime now) {
+    public void generateWorklogs(UUID sprintId, LocalDateTime now) {
         Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         try (Profiler pc = new Profiler(SampleType.CPU)) {
 

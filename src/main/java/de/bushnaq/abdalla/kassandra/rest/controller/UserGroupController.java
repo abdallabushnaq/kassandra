@@ -30,6 +30,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 import java.util.Set;
 
@@ -56,7 +57,7 @@ public class UserGroupController {
     @PostMapping("/{groupId}/members/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public void addMember(@PathVariable Long groupId, @PathVariable Long userId) {
+    public void addMember(@PathVariable UUID groupId, @PathVariable UUID userId) {
         log.info("Adding user {} to group {}", userId, groupId);
         userGroupService.addUserToGroup(groupId, userId);
     }
@@ -87,7 +88,7 @@ public class UserGroupController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable UUID id) {
         log.info("Deleting user group: {}", id);
         userGroupService.deleteGroup(id);
     }
@@ -100,7 +101,7 @@ public class UserGroupController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public Optional<UserGroupDAO> get(@PathVariable Long id) {
+    public Optional<UserGroupDAO> get(@PathVariable UUID id) {
         return userGroupRepository.findById(id);
     }
 
@@ -138,7 +139,7 @@ public class UserGroupController {
     @DeleteMapping("/{groupId}/members/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public void removeMember(@PathVariable Long groupId, @PathVariable Long userId) {
+    public void removeMember(@PathVariable UUID groupId, @PathVariable UUID userId) {
         log.info("Removing user {} from group {}", userId, groupId);
         userGroupService.removeUserFromGroup(groupId, userId);
     }
@@ -153,7 +154,7 @@ public class UserGroupController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public UserGroupDAO update(@PathVariable Long id, @RequestBody UserGroupRequest request) {
+    public UserGroupDAO update(@PathVariable UUID id, @RequestBody UserGroupRequest request) {
         log.info("Updating user group: {}", id);
         return userGroupService.updateGroup(
                 id,
@@ -170,7 +171,7 @@ public class UserGroupController {
 @Data
 class UserGroupRequest extends AbstractTimeAware {
     private String    description;
-    private Set<Long> memberIds;
+    private Set<UUID> memberIds;
     private String    name;
 }
 

@@ -21,10 +21,11 @@ import de.bushnaq.abdalla.kassandra.dao.ProductAvatarGenerationDataDAO;
 import org.springframework.data.repository.ListCrudRepository;
 
 import java.util.Optional;
+import java.util.UUID;
 
-public interface ProductAvatarGenerationDataRepository extends ListCrudRepository<ProductAvatarGenerationDataDAO, Long> {
-    void deleteByProductId(Long productId);
+public interface ProductAvatarGenerationDataRepository extends ListCrudRepository<ProductAvatarGenerationDataDAO, UUID> {
+    void deleteByProductId(UUID productId);
 
-    Optional<ProductAvatarGenerationDataDAO> findByProductId(Long productId);
+    Optional<ProductAvatarGenerationDataDAO> findByProductId(UUID productId);
 }
 

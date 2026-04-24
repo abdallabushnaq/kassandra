@@ -21,11 +21,12 @@ import de.bushnaq.abdalla.kassandra.dao.SprintDAO;
 import org.springframework.data.repository.ListCrudRepository;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface SprintRepository extends ListCrudRepository<SprintDAO, Long> {
+public interface SprintRepository extends ListCrudRepository<SprintDAO, UUID> {
     boolean existsByName(String name);
 
-    boolean existsByNameAndFeatureId(String name, Long featureId);
+    boolean existsByNameAndFeatureId(String name, UUID featureId);
 
     /**
      * Check if a sprint with the given name and featureId exists, excluding the sprint with the specified ID.
@@ -35,11 +36,11 @@ public interface SprintRepository extends ListCrudRepository<SprintDAO, Long> {
      * @param id        The ID of the sprint to exclude from the check
      * @return true if another sprint with this name and featureId exists, false otherwise
      */
-    boolean existsByNameAndFeatureIdAndIdNot(String name, Long featureId, Long id);
+    boolean existsByNameAndFeatureIdAndIdNot(String name, UUID featureId, UUID id);
 
-    List<SprintDAO> findByFeatureId(Long featureId);
+    List<SprintDAO> findByFeatureId(UUID featureId);
 
     SprintDAO findByName(String name);
 
-    SprintDAO findByNameAndFeatureId(String name, Long featureId);
+    SprintDAO findByNameAndFeatureId(String name, UUID featureId);
 }

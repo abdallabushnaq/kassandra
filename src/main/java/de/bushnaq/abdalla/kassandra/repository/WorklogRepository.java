@@ -21,7 +21,8 @@ import de.bushnaq.abdalla.kassandra.dao.WorklogDAO;
 import org.springframework.data.repository.ListCrudRepository;
 
 import java.util.List;
+import java.util.UUID;
 
-public interface WorklogRepository extends ListCrudRepository<WorklogDAO, Long> {
-    List<WorklogDAO> findBySprintId(Long sprintId);
+public interface WorklogRepository extends ListCrudRepository<WorklogDAO, UUID> {
+    List<WorklogDAO> findBySprintId(UUID sprintId);
 }

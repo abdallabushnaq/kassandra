@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -40,7 +41,7 @@ public class AvailabilityApi extends AbstractApi {
         super(restTemplate, jsonMapper);
     }
 
-    public void deleteById(Long userId, Long availabilityId) throws org.springframework.web.client.RestClientException {
+    public void deleteById(UUID userId, UUID availabilityId) throws org.springframework.web.client.RestClientException {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/availability/{userId}/{id}",
                 HttpMethod.DELETE,
@@ -51,7 +52,7 @@ public class AvailabilityApi extends AbstractApi {
         ));
     }
 
-    public Availability getById(Long id) {
+    public Availability getById(UUID id) {
         ResponseEntity<Availability> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/availability/{id}",
                 HttpMethod.GET,
@@ -62,7 +63,7 @@ public class AvailabilityApi extends AbstractApi {
         return response.getBody();
     }
 
-    public Availability persist(Availability availability, Long userId) {
+    public Availability persist(Availability availability, UUID userId) {
         ResponseEntity<Availability> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/availability/{userId}",
                 HttpMethod.POST,
@@ -73,7 +74,7 @@ public class AvailabilityApi extends AbstractApi {
         return response.getBody();
     }
 
-    public void update(Availability availability, Long userId) {
+    public void update(Availability availability, UUID userId) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/availability/{userId}",
                 HttpMethod.PUT,

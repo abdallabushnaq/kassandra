@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import java.util.UUID;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
@@ -64,7 +65,7 @@ public class WorklogDialog extends Dialog {
     public static final String            TITLE_ID             = "worklog-dialog-title";
     public static final String            WORKLOG_DIALOG       = "worklog-dialog";
     private final       TextArea          commentField;
-    private final       Long              currentUserId;
+    private final UUID currentUserId;
     private final       DateTimePicker    dateTimePicker;
     private final       Worklog           existingWorklog;
     private final       boolean           isEditMode;
@@ -85,7 +86,7 @@ public class WorklogDialog extends Dialog {
      * @param onSave        Callback to execute after successfully saving the worklog
      * @param currentUserId ID of the currently logged-in user
      */
-    public WorklogDialog(Task task, TaskApi taskApi, WorklogApi worklogApi, Consumer<Worklog> onSave, Long currentUserId) {
+    public WorklogDialog(Task task, TaskApi taskApi, WorklogApi worklogApi, Consumer<Worklog> onSave, UUID currentUserId) {
         this(null, task, taskApi, worklogApi, onSave, currentUserId);
     }
 
@@ -99,7 +100,7 @@ public class WorklogDialog extends Dialog {
      * @param onSave          Callback invoked with the saved or updated worklog
      * @param currentUserId   ID of the currently logged-in user
      */
-    public WorklogDialog(Worklog existingWorklog, Task task, TaskApi taskApi, WorklogApi worklogApi, Consumer<Worklog> onSave, Long currentUserId) {
+    public WorklogDialog(Worklog existingWorklog, Task task, TaskApi taskApi, WorklogApi worklogApi, Consumer<Worklog> onSave, UUID currentUserId) {
         this.existingWorklog = existingWorklog;
         this.isEditMode      = existingWorklog != null;
         this.task            = task;

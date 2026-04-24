@@ -109,10 +109,10 @@ public class BurnDownRenderer extends AbstractRenderer {
         }
         if (worklogList != null) {
             for (Worklog work : worklogList) {
-                AuthorContribution ac = authorsContribution.get(sprint.getuser(work.getAuthorId()));
+                AuthorContribution ac = authorsContribution.get(sprint.getUser(work.getAuthorId()));
                 if (ac == null) {
                     ac = new AuthorContribution();
-                    authorsContribution.put(sprint.getuser(work.getAuthorId()), ac);
+                    authorsContribution.put(sprint.getUser(work.getAuthorId()), ac);
                 }
                 ac.addWorked(work.getTimeSpent());
             }
@@ -639,16 +639,16 @@ public class BurnDownRenderer extends AbstractRenderer {
         if (worklog != null) {
             int lastDayIndexWithValue = 0;// the last day any author has data
             for (Worklog work : worklog) {
-                Duration  aws     = authorWorkSum.get(sprint.getuser(work.getAuthorId()));
-                DayWork[] dayWork = usersWorkPerDayAccumulated.get(sprint.getuser(work.getAuthorId()));
+                Duration  aws     = authorWorkSum.get(sprint.getUser(work.getAuthorId()));
+                DayWork[] dayWork = usersWorkPerDayAccumulated.get(sprint.getUser(work.getAuthorId()));
                 if (dayWork == null) {
                     // create a list of work per day for authors that have worked
                     dayWork    = new DayWork[days + 3];// first value is 0
                     dayWork[0] = new DayWork();
-                    usersWorkPerDayAccumulated.put(sprint.getuser(work.getAuthorId()), dayWork);
+                    usersWorkPerDayAccumulated.put(sprint.getUser(work.getAuthorId()), dayWork);
                 }
                 aws = aws.plus(work.getTimeSpent());
-                authorWorkSum.put(sprint.getuser(work.getAuthorId()), aws);
+                authorWorkSum.put(sprint.getUser(work.getAuthorId()), aws);
                 int day = (DateUtil.calculateDays(milestones.firstMilestone, DateUtil.toDayPrecision(work.getStart())));
                 if (day < 0) {
                     // ignore any data before first day of sprint

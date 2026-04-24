@@ -17,10 +17,15 @@
 
 package de.bushnaq.abdalla.kassandra.util;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Task;
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.util.MpxjUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -50,13 +55,13 @@ public class AbstractLegacyGanttTestUtil extends AbstractGanttTestUtil {
     protected void compareResults(ProjectFile projectFile, TestInfo testInfo) throws IOException {
         GanttContext gc              = new GanttContext();
         Sprint       referenceSprint = new Sprint();//fake sprint
-        referenceSprint.setId(1L);//fake sprint id
+        referenceSprint.setId(UUID.randomUUID());//fake sprint id
         gc.allSprints.add(referenceSprint);
-        long taskIdIndex = 1;//fake task id
+        int taskIdIndex = 1;//fake task id counter (not used as entity ID)
         for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
             if (isValidTask(mpxjTask)) {
                 Task referenceTask = new Task();//fake task
-                referenceTask.setId(taskIdIndex++);
+                referenceTask.setId(UUID.randomUUID());
                 referenceTask.setName(mpxjTask.getName());
                 referenceTask.setStart(mpxjTask.getStart());
                 referenceTask.setFinish(mpxjTask.getFinish());

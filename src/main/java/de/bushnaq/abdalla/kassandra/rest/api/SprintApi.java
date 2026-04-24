@@ -31,6 +31,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 
 @Service
@@ -50,7 +51,7 @@ public class SprintApi extends AbstractApi {
 
     }
 
-    public void deleteById(long id) {
+    public void deleteById(UUID id) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/sprint/{id}",
                 HttpMethod.DELETE,
@@ -70,7 +71,7 @@ public class SprintApi extends AbstractApi {
         return Arrays.asList(response.getBody());
     }
 
-    public List<Sprint> getAll(Long featureId) {
+    public List<Sprint> getAll(UUID featureId) {
         ResponseEntity<Sprint[]> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/sprint/feature/{featureId}",
                 HttpMethod.GET,
@@ -87,7 +88,7 @@ public class SprintApi extends AbstractApi {
      * @param sprintId The sprint ID
      * @return AvatarUpdateRequest containing avatarImage, avatarImageOriginal, and avatarPrompt, or null if not found
      */
-    public AvatarUpdateRequest getAvatarFull(Long sprintId) {
+    public AvatarUpdateRequest getAvatarFull(UUID sprintId) {
         try {
             ResponseEntity<AvatarUpdateRequest> response = executeWithErrorHandling(() -> restTemplate.exchange(
                     getBaseUrl() + "/sprint/{id}/avatar/full",
@@ -109,7 +110,7 @@ public class SprintApi extends AbstractApi {
      * @param sprintId The sprint ID
      * @return The avatar image as byte array, or null if not found
      */
-    public AvatarWrapper getAvatarImage(Long sprintId) {
+    public AvatarWrapper getAvatarImage(UUID sprintId) {
         try {
             ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
                     getBaseUrl() + "/sprint/{id}/avatar",
@@ -132,7 +133,7 @@ public class SprintApi extends AbstractApi {
      * @param sprintId The sprint ID
      * @return The dark avatar image (or light fallback), or null if not found
      */
-    public AvatarWrapper getDarkAvatarImage(Long sprintId) {
+    public AvatarWrapper getDarkAvatarImage(UUID sprintId) {
         try {
             ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
                     getBaseUrl() + "/sprint/{id}/dark-avatar",
@@ -163,7 +164,7 @@ public class SprintApi extends AbstractApi {
         return response.getBody();
     }
 
-    public Sprint getById(Long id) {
+    public Sprint getById(UUID id) {
         ResponseEntity<Sprint> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/sprint/{id}",
                 HttpMethod.GET,
@@ -174,7 +175,7 @@ public class SprintApi extends AbstractApi {
         return response.getBody();
     }
 
-    public Optional<Sprint> getByName(Long featureId, String name) {
+    public Optional<Sprint> getByName(UUID featureId, String name) {
         try {
             ResponseEntity<Sprint> response = executeWithErrorHandling(() -> restTemplate.exchange(
                     getBaseUrl() + "/sprint/feature/{featureId}/by-name/{name}",
@@ -221,7 +222,7 @@ public class SprintApi extends AbstractApi {
      * @param originalImage The original light avatar image bytes (e.g., 512x512)
      * @param prompt        The prompt used to generate the light avatar
      */
-    public void updateAvatarFull(Long sprintId, byte[] resizedImage, byte[] originalImage, String prompt) {
+    public void updateAvatarFull(UUID sprintId, byte[] resizedImage, byte[] originalImage, String prompt) {
         updateAvatarFull(sprintId, resizedImage, originalImage, prompt, null, null, null, null, null);
     }
 
@@ -236,7 +237,7 @@ public class SprintApi extends AbstractApi {
      * @param darkResizedImage   Resized dark avatar image bytes (e.g., 64x64), or null to skip
      * @param darkOriginalImage  Original dark avatar image bytes (e.g., 512x512), or null to skip
      */
-    public void updateAvatarFull(Long sprintId, byte[] resizedImage, byte[] originalImage, String prompt,
+    public void updateAvatarFull(UUID sprintId, byte[] resizedImage, byte[] originalImage, String prompt,
             byte[] darkResizedImage, byte[] darkOriginalImage) {
         updateAvatarFull(sprintId, resizedImage, originalImage, prompt, darkResizedImage, darkOriginalImage, null, null, null);
     }
@@ -255,7 +256,7 @@ public class SprintApi extends AbstractApi {
      * @param negativePrompt          Negative prompt for the light avatar, or null to skip
      * @param darkNegativePrompt      Negative prompt for the dark avatar, or null to skip
      */
-    public void updateAvatarFull(Long sprintId, byte[] resizedImage, byte[] originalImage, String prompt,
+    public void updateAvatarFull(UUID sprintId, byte[] resizedImage, byte[] originalImage, String prompt,
             byte[] darkResizedImage, byte[] darkOriginalImage,
             String darkPrompt, String negativePrompt, String darkNegativePrompt) {
         AvatarUpdateRequest request = new AvatarUpdateRequest();

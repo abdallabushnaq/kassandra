@@ -21,10 +21,11 @@ import de.bushnaq.abdalla.kassandra.dao.SprintAvatarDAO;
 import org.springframework.data.repository.ListCrudRepository;
 
 import java.util.Optional;
+import java.util.UUID;
 
-public interface SprintAvatarRepository extends ListCrudRepository<SprintAvatarDAO, Long> {
-    void deleteBySprintId(Long sprintId);
+public interface SprintAvatarRepository extends ListCrudRepository<SprintAvatarDAO, UUID> {
+    void deleteBySprintId(UUID sprintId);
 
-    Optional<SprintAvatarDAO> findBySprintId(Long sprintId);
+    Optional<SprintAvatarDAO> findBySprintId(UUID sprintId);
 }
 

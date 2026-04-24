@@ -28,6 +28,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 
 @Service
@@ -46,7 +47,7 @@ public class VersionApi extends AbstractApi {
 
     }
 
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/version/{id}",
                 HttpMethod.DELETE,
@@ -66,7 +67,7 @@ public class VersionApi extends AbstractApi {
         return Arrays.asList(response.getBody());
     }
 
-    public List<Version> getAll(Long productId) {
+    public List<Version> getAll(UUID productId) {
         ResponseEntity<Version[]> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/version/product/{productId}",
                 HttpMethod.GET,
@@ -77,7 +78,7 @@ public class VersionApi extends AbstractApi {
         return Arrays.asList(response.getBody());
     }
 
-    public Version getById(Long id) {
+    public Version getById(UUID id) {
         ResponseEntity<Version> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/version/{id}",
                 HttpMethod.GET,
@@ -88,7 +89,7 @@ public class VersionApi extends AbstractApi {
         return response.getBody();
     }
 
-    public Optional<Version> getByName(Long productId, String name) {
+    public Optional<Version> getByName(UUID productId, String name) {
         try {
             ResponseEntity<Version> response = executeWithErrorHandling(() -> restTemplate.exchange(
                     getBaseUrl() + "/version/product/{productId}/by-name/{name}",

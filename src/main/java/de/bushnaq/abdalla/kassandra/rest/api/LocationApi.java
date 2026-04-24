@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -42,7 +43,7 @@ public class LocationApi extends AbstractApi {
     }
 
     //TODO use ids instead of objects
-    public void deleteById(Long userId, Long locationId) throws org.springframework.web.client.RestClientException {
+    public void deleteById(UUID userId, UUID locationId) throws org.springframework.web.client.RestClientException {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/location/{userId}/{id}",
                 HttpMethod.DELETE,
@@ -53,7 +54,7 @@ public class LocationApi extends AbstractApi {
         ));
     }
 
-    public Location getById(Long id) {
+    public Location getById(UUID id) {
         ResponseEntity<Location> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/location/{id}",
                 HttpMethod.GET,
@@ -64,7 +65,7 @@ public class LocationApi extends AbstractApi {
         return response.getBody();
     }
 
-    public Location persist(Location location, Long userId) {
+    public Location persist(Location location, UUID userId) {
         ResponseEntity<Location> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/location/{userId}",
                 HttpMethod.POST,
@@ -75,7 +76,7 @@ public class LocationApi extends AbstractApi {
         return response.getBody();
     }
 
-    public void update(Location location, Long userId) {
+    public void update(Location location, UUID userId) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/location/{userId}",
                 HttpMethod.PUT,

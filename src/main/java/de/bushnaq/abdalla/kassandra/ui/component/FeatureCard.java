@@ -32,6 +32,7 @@ import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -66,7 +67,7 @@ public class FeatureCard extends Div {
     private final Set<User>                    selectedUsers;
     private final List<Task>                   stories;
     private       VerticalLayout               todoLane;
-    private final Map<Long, User>              userMap;
+    private final Map<UUID, User>              userMap;
 
     /**
      * Constructs a FeatureCard without click handlers.
@@ -79,7 +80,7 @@ public class FeatureCard extends Div {
      * @param filterText         current search filter text
      * @param selectedUsers      currently selected users for filtering
      */
-    public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<Long, User> userMap,
+    public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<UUID, User> userMap,
                        BiConsumer<Task, TaskStatus> onTaskStatusChange, String filterText, Set<User> selectedUsers) {
         this(feature, stories, allTasks, userMap, onTaskStatusChange, filterText, selectedUsers, null, null);
     }
@@ -96,7 +97,7 @@ public class FeatureCard extends Div {
      * @param selectedUsers      currently selected users for filtering
      * @param onTaskClick        handler invoked when a task card body is clicked; may be {@code null}
      */
-    public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<Long, User> userMap,
+    public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<UUID, User> userMap,
                        BiConsumer<Task, TaskStatus> onTaskStatusChange, String filterText, Set<User> selectedUsers,
                        Consumer<Task> onTaskClick) {
         this(feature, stories, allTasks, userMap, onTaskStatusChange, filterText, selectedUsers, onTaskClick, null);
@@ -115,7 +116,7 @@ public class FeatureCard extends Div {
      * @param onTaskClick         handler for task card body clicks; may be {@code null}
      * @param onTaskTitleClick    handler for task title clicks (opens TaskDialog); may be {@code null}
      */
-    public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<Long, User> userMap,
+    public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<UUID, User> userMap,
                        BiConsumer<Task, TaskStatus> onTaskStatusChange, String filterText, Set<User> selectedUsers,
                        Consumer<Task> onTaskClick, Consumer<Task> onTaskTitleClick) {
         this.feature            = feature;

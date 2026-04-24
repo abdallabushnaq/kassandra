@@ -21,10 +21,11 @@ import de.bushnaq.abdalla.kassandra.dao.FeatureAvatarDAO;
 import org.springframework.data.repository.ListCrudRepository;
 
 import java.util.Optional;
+import java.util.UUID;
 
-public interface FeatureAvatarRepository extends ListCrudRepository<FeatureAvatarDAO, Long> {
-    void deleteByFeatureId(Long featureId);
+public interface FeatureAvatarRepository extends ListCrudRepository<FeatureAvatarDAO, UUID> {
+    void deleteByFeatureId(UUID featureId);
 
-    Optional<FeatureAvatarDAO> findByFeatureId(Long featureId);
+    Optional<FeatureAvatarDAO> findByFeatureId(UUID featureId);
 }
 

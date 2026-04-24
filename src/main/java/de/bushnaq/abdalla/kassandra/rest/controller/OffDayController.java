@@ -30,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 
 @RestController
@@ -49,7 +50,7 @@ public class OffDayController {
      * @param targetUserId the ID of the user whose availability is being modified
      * @return true if modification is allowed, false otherwise
      */
-    private boolean canUserModifyOffDay(Long targetUserId) {
+    private boolean canUserModifyOffDay(UUID targetUserId) {
         // Admins can modify any user's availability
         if (SecurityUtils.isAdmin()) {
             return true;
@@ -64,7 +65,7 @@ public class OffDayController {
 
     @DeleteMapping("/{userId}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<Object> delete(@PathVariable Long userId, @PathVariable Long id) {
+    public ResponseEntity<Object> delete(@PathVariable UUID userId, @PathVariable UUID id) {
         // Check authorization: Users can only delete their own offday, admins can delete for any user
         if (!canUserModifyOffDay(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own availability");
@@ -83,14 +84,14 @@ public class OffDayController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public Optional<OffDayDAO> getById(@PathVariable Long id) {
+    public Optional<OffDayDAO> getById(@PathVariable UUID id) {
         OffDayDAO e = offDayRepository.findById(id).orElseThrow();
         return Optional.of(e);
     }
 
     @PostMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<OffDayDAO> save(@RequestBody OffDayDAO offDay, @PathVariable Long userId) {
+    public ResponseEntity<OffDayDAO> save(@RequestBody OffDayDAO offDay, @PathVariable UUID userId) {
         // Check authorization: Users can only delete their own offday, admins can delete for any user
         if (!canUserModifyOffDay(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own availability");
@@ -132,7 +133,7 @@ public class OffDayController {
      */
     @PostMapping("/{userId}/batch")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<List<OffDayDAO>> saveBatch(@RequestBody List<OffDayDAO> offDays, @PathVariable Long userId) {
+    public ResponseEntity<List<OffDayDAO>> saveBatch(@RequestBody List<OffDayDAO> offDays, @PathVariable UUID userId) {
         if (!canUserModifyOffDay(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own availability");
         }
@@ -148,7 +149,7 @@ public class OffDayController {
 
     @PutMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<Object> update(@RequestBody OffDayDAO offDay, @PathVariable Long userId) {
+    public ResponseEntity<Object> update(@RequestBody OffDayDAO offDay, @PathVariable UUID userId) {
         // Check authorization: Users can only delete their own offday, admins can delete for any user
         if (!canUserModifyOffDay(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own availability");

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import java.util.UUID;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
@@ -106,8 +107,8 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     @Autowired
     protected            Context                      context;
     private final        FeatureApi                   featureApi;
-    private              Long                         featureId;
-    private final        Map<Long, Feature>           featureMap                       = new HashMap<>();
+    private UUID featureId;
+    private final        Map<UUID, Feature>           featureMap                       = new HashMap<>();
     private final        MultiSelectComboBox<Feature> featureSelector;
     private              boolean                      isRestoringFromUrl               = false;
     /** Container for the SprintsOverviewChart SVG placed above the sprint list. */
@@ -117,8 +118,8 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     /** Registration for the ThemeChangedEvent listener that re-renders the overview chart. */
     private              Registration                 overviewThemeChangedRegistration;
     private final        ProductApi                   productApi;
-    private              Long                         productId;
-    private final        Map<Long, Product>           productMap                       = new HashMap<>();
+    private UUID productId;
+    private final        Map<UUID, Product>           productMap                       = new HashMap<>();
     private              String                       requestedFeatureIds;
     private              Set<Feature>                 selectedFeatures                 = new HashSet<>();
     private final        ChatPanelSessionState        sessionState;
@@ -127,8 +128,8 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     private final        StableDiffusionService       stableDiffusionService;
     private final        UserApi                      userApi;
     private final        VersionApi                   versionApi;
-    private              Long                         versionId;
-    private final        Map<Long, Version>           versionMap                       = new HashMap<>();
+    private UUID versionId;
+    private final        Map<UUID, Version>           versionMap                       = new HashMap<>();
 
     public SprintListView(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi,
                           UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
@@ -221,13 +222,13 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
         if (queryParameters.getParameters().containsKey("product")) {
-            this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
+            this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
         }
         if (queryParameters.getParameters().containsKey("version")) {
-            this.versionId = Long.parseLong(queryParameters.getParameters().get("version").getFirst());
+            this.versionId = UUID.fromString(queryParameters.getParameters().get("version").getFirst());
         }
         if (queryParameters.getParameters().containsKey("feature")) {
-            this.featureId = Long.parseLong(queryParameters.getParameters().get("feature").getFirst());
+            this.featureId = UUID.fromString(queryParameters.getParameters().get("feature").getFirst());
         }
         // Resolve defaults when navigated directly from the menu (no URL params)
         if (productId == null) {
@@ -238,7 +239,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                     .orElse(null);
         }
         if (versionId == null && productId != null) {
-            final Long pid = productId;
+            final UUID pid = productId;
             versionId = versionApi.getAll().stream()
                     .filter(v -> pid.equals(v.getProductId()))
                     .map(Version::getId)
@@ -246,7 +247,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                     .orElse(null);
         }
         if (featureId == null && versionId != null) {
-            final Long vid = versionId;
+            final UUID vid = versionId;
             featureId = featureApi.getAll().stream()
                     .filter(f -> vid.equals(f.getVersionId()))
                     .map(Feature::getId)
@@ -340,7 +341,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
      */
     private void applyFeatureFilter() {
         if (!selectedFeatures.isEmpty()) {
-            Set<Long> ids = selectedFeatures.stream().map(Feature::getId).collect(Collectors.toSet());
+            Set<UUID> ids = selectedFeatures.stream().map(Feature::getId).collect(Collectors.toSet());
             getDataProvider().setFilter(sprint -> ids.contains(sprint.getFeatureId()));
         } else {
             getDataProvider().setFilter(null);
@@ -708,7 +709,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             featureSelector.setItems(freshFeatures);
             if (!currentSelection.isEmpty()) {
                 // Preserve the previously selected features (match by ID)
-                Set<Long> selectedIds = currentSelection.stream().map(Feature::getId).collect(Collectors.toSet());
+                Set<UUID> selectedIds = currentSelection.stream().map(Feature::getId).collect(Collectors.toSet());
                 Set<Feature> toRestore = freshFeatures.stream()
                         .filter(f -> selectedIds.contains(f.getId()))
                         .collect(Collectors.toSet());
@@ -723,7 +724,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                     Set<Feature> toSelect = new HashSet<>();
                     for (String idStr : requestedFeatureIds.split(",")) {
                         try {
-                            Long id = Long.parseLong(idStr.trim());
+                            UUID id = UUID.fromString(idStr.trim());
                             freshFeatures.stream().filter(f -> f.getId().equals(id)).findFirst().ifPresent(toSelect::add);
                         } catch (NumberFormatException e) {
                             log.warn("Invalid feature ID in URL: {}", idStr);

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter.dto.offday;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.OffDay;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,7 +42,7 @@ public class OffDayFilterDto {
 
     private OffsetDateTime created;
     private LocalDate      firstDay;
-    private Long           id;
+    private UUID           id;
     private LocalDate      lastDay;
     /**
      * Enum name of the off-day type: VACATION, SICK, TRIP, or HOLIDAY.

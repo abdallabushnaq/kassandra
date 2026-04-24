@@ -30,6 +30,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 
 @Service
@@ -48,7 +49,7 @@ public class ProductApi extends AbstractApi {
 
     }
 
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/product/{id}",
                 HttpMethod.DELETE,
@@ -84,7 +85,7 @@ public class ProductApi extends AbstractApi {
      * @param productId The product ID
      * @return AvatarUpdateRequest containing avatarImage, avatarImageOriginal, and avatarPrompt, or null if not found
      */
-    public AvatarUpdateRequest getAvatarFull(Long productId) {
+    public AvatarUpdateRequest getAvatarFull(UUID productId) {
         try {
             ResponseEntity<AvatarUpdateRequest> response = executeWithErrorHandling(() -> restTemplate.exchange(
                     getBaseUrl() + "/product/{id}/avatar/full",
@@ -105,7 +106,7 @@ public class ProductApi extends AbstractApi {
      * @param productId The product ID
      * @return The avatar image as byte array, or null if not found
      */
-    public AvatarWrapper getAvatarImage(Long productId) {
+    public AvatarWrapper getAvatarImage(UUID productId) {
         try {
             ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
                     getBaseUrl() + "/product/{id}/avatar",
@@ -127,7 +128,7 @@ public class ProductApi extends AbstractApi {
      * @param productId The product ID
      * @return The dark avatar image (or light fallback), or null if not found
      */
-    public AvatarWrapper getDarkAvatarImage(Long productId) {
+    public AvatarWrapper getDarkAvatarImage(UUID productId) {
         try {
             ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
                     getBaseUrl() + "/product/{id}/dark-avatar",
@@ -142,7 +143,7 @@ public class ProductApi extends AbstractApi {
         }
     }
 
-    public Product getById(Long id) {
+    public Product getById(UUID id) {
         ResponseEntity<Product> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/product/{id}",
                 HttpMethod.GET,
@@ -203,7 +204,7 @@ public class ProductApi extends AbstractApi {
      * @param originalImage The original avatar image bytes (e.g., 512x512)
      * @param prompt        The prompt used to generate the avatar
      */
-    public void updateAvatarFull(Long productId, byte[] resizedImage, byte[] originalImage, String prompt) {
+    public void updateAvatarFull(UUID productId, byte[] resizedImage, byte[] originalImage, String prompt) {
         updateAvatarFull(productId, resizedImage, originalImage, prompt, null, null, null, null, null);
     }
 
@@ -218,7 +219,7 @@ public class ProductApi extends AbstractApi {
      * @param darkResizedImage   Resized dark avatar image bytes (e.g., 64x64), or null to skip
      * @param darkOriginalImage  Original dark avatar image bytes (e.g., 512x512), or null to skip
      */
-    public void updateAvatarFull(Long productId, byte[] resizedImage, byte[] originalImage, String prompt,
+    public void updateAvatarFull(UUID productId, byte[] resizedImage, byte[] originalImage, String prompt,
             byte[] darkResizedImage, byte[] darkOriginalImage) {
         updateAvatarFull(productId, resizedImage, originalImage, prompt, darkResizedImage, darkOriginalImage, null, null, null);
     }
@@ -237,7 +238,7 @@ public class ProductApi extends AbstractApi {
      * @param negativePrompt          Negative prompt for the light avatar, or null to skip
      * @param darkNegativePrompt      Negative prompt for the dark avatar, or null to skip
      */
-    public void updateAvatarFull(Long productId, byte[] resizedImage, byte[] originalImage, String prompt,
+    public void updateAvatarFull(UUID productId, byte[] resizedImage, byte[] originalImage, String prompt,
             byte[] darkResizedImage, byte[] darkOriginalImage,
             String darkPrompt, String negativePrompt, String darkNegativePrompt) {
         AvatarUpdateRequest request = new AvatarUpdateRequest();

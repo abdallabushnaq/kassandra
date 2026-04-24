@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter.dto.feature;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,10 +39,10 @@ import java.time.OffsetDateTime;
 public class FeatureFilterDto {
 
     private OffsetDateTime created;
-    private Long           id;
+    private UUID           id;
     private String         name;
     private OffsetDateTime updated;
-    private Long           versionId;
+    private UUID           versionId;
 
     /**
      * Creates a {@code FeatureFilterDto} from a {@link Feature} entity.

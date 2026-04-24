@@ -36,6 +36,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -77,13 +78,13 @@ public class SerializationTest {
     public void deserializeTask(TestInfo testInfo) throws Exception {
 
         TaskDAO t1 = new TaskDAO();
-        t1.setId(2L);
+        t1.setId(UUID.randomUUID());
         t1.setStart(ParameterOptions.getLocalNow());
         t1.setMinEstimate(Duration.ofDays(6));
         t1.setMaxEstimate(Duration.ofDays(0));
         RelationDAO relation = new RelationDAO();
-        relation.setId(1L);
-        relation.setPredecessorId(1L);
+        relation.setId(UUID.randomUUID());
+        relation.setPredecessorId(UUID.randomUUID());
         relation.setVisible(true);
         t1.getPredecessors().add(relation);
         t1.setName("test-1");
@@ -145,7 +146,7 @@ public class SerializationTest {
     @Test
     public void userTest(TestInfo testInfo) throws Exception {
         UserDAO u1 = new UserDAO();
-        u1.setId(1L);
+        u1.setId(UUID.randomUUID());
         u1.setName("test");
         u1.setEmail("test");
         u1.setColor(Color.RED);

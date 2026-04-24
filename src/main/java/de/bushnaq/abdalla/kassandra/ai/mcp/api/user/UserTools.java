@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.user;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -86,7 +87,7 @@ public class UserTools {
 
     @Tool(description = "Delete a user by their userId.", resultConverter = KassandraToolCallResultConverter.class)
     public void deleteUser(
-            @ToolParam(description = "The userId") Long userId) {
+            @ToolParam(description = "The userId") UUID userId) {
         User user = userApi.getById(userId);
         if (user == null) {
             throw new IllegalArgumentException("User not found with ID: " + userId);
@@ -126,7 +127,7 @@ public class UserTools {
 
     @Tool(description = "Get a user by their userId.", resultConverter = KassandraToolCallResultConverter.class)
     public UserDto getUserById(
-            @ToolParam(description = "The userId") Long userId) {
+            @ToolParam(description = "The userId") UUID userId) {
         User user = userApi.getById(userId);
         if (user == null) {
             throw new IllegalArgumentException("User not found with ID: " + userId);
@@ -171,7 +172,7 @@ public class UserTools {
 
     @Tool(description = "Update an existing user by their userId.", resultConverter = KassandraToolCallResultConverter.class)
     public UserDto updateUser(
-            @ToolParam(description = "The userId") Long userId,
+            @ToolParam(description = "The userId") UUID userId,
             @ToolParam(description = "New user name", required = false) String name,
             @ToolParam(description = "New email address", required = false) String email,
             @ToolParam(description = "New color in hex format (e.g. '#FF0000')", required = false) String colorHex,

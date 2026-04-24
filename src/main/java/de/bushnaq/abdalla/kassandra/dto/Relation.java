@@ -19,6 +19,8 @@ package de.bushnaq.abdalla.kassandra.dto;
 
 import lombok.*;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,11 +28,11 @@ import lombok.*;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Relation implements Comparable<Relation> {
 
-    Long    id;
-    Long    predecessorId;
+    UUID    id;
+    UUID    predecessorId;
     boolean visible;
 
-    public Relation(Long taskId, boolean visible) {
+    public Relation(UUID taskId, boolean visible) {
         this.visible  = visible;
         predecessorId = taskId;
     }

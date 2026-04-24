@@ -24,21 +24,21 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repository for managing UserGroup entities
  */
-public interface UserGroupRepository extends ListCrudRepository<UserGroupDAO, Long> {
+public interface UserGroupRepository extends ListCrudRepository<UserGroupDAO, UUID> {
 
     /**
      * Count the number of members in a group
-     * Now works with memberIds collection
      *
      * @param groupId the group ID
      * @return number of members
      */
     @Query("SELECT SIZE(g.memberIds) FROM UserGroupDAO g WHERE g.id = :groupId")
-    long countMembersByGroupId(@Param("groupId") Long groupId);
+    long countMembersByGroupId(@Param("groupId") UUID groupId);
 
     /**
      * Check if a group with the given name exists
@@ -55,7 +55,7 @@ public interface UserGroupRepository extends ListCrudRepository<UserGroupDAO, Lo
      * @param id   the ID of the group to exclude from the check
      * @return true if another group with this name exists
      */
-    boolean existsByNameAndIdNot(String name, Long id);
+    boolean existsByNameAndIdNot(String name, UUID id);
 
     /**
      * Find a group by its name
@@ -67,12 +67,11 @@ public interface UserGroupRepository extends ListCrudRepository<UserGroupDAO, Lo
 
     /**
      * Find all groups that a user belongs to
-     * Uses MEMBER OF to check if userId is in the memberIds collection
      *
      * @param userId the user ID
      * @return list of groups containing this user
      */
     @Query("SELECT g FROM UserGroupDAO g WHERE :userId MEMBER OF g.memberIds")
-    List<UserGroupDAO> findGroupsByUserId(@Param("userId") Long userId);
+    List<UserGroupDAO> findGroupsByUserId(@Param("userId") UUID userId);
 }
 

@@ -86,7 +86,7 @@ public class TaskGrid extends TreeGrid<Task> {
      */
     @Setter
     private             boolean                           expandInitially                     = true; // Control whether to expand all items on first load
-    private final       Set<Long>                         expandedTaskIds                     = new HashSet<>(); // Track expanded task IDs for state preservation
+    private final       Set<UUID>                         expandedTaskIds                     = new HashSet<>(); // Track expanded task IDs for state preservation
     private             String                            externalDragMode;     // Drag mode from external grid
     private             TaskGrid                          externalDragSource;   // Source grid for cross-grid drags
     private             Task                              externalDraggedTask;  // Task being dragged from another grid
@@ -138,7 +138,7 @@ public class TaskGrid extends TreeGrid<Task> {
      *
      * @param taskId The ID of the task being received
      */
-    public void addExpansionState(Long taskId) {
+    public void addExpansionState(UUID taskId) {
         expandedTaskIds.add(taskId);
     }
 
@@ -171,7 +171,7 @@ public class TaskGrid extends TreeGrid<Task> {
      * If not found, assigns the currently logged-in user.
      */
     private void assignUserToNewTask(Task newTask, User loggedInUser) {
-        Long assignedUserId = null;
+        UUID assignedUserId = null;
 
         // Find the index of the new task in the ordered list
         int newTaskIndex = taskOrder.indexOf(newTask);
@@ -365,7 +365,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 // Add tooltip with user name if assigned
                 if (task.getResourceId() != null && sprint != null) {
                     try {
-                        User user = sprint.getuser(task.getResourceId());
+                        User user = sprint.getUser(task.getResourceId());
                         if (user != null) {
                             colorBar.getElement().setProperty("title", "Assigned to: " + user.getName());
                         }
@@ -749,7 +749,7 @@ public class TaskGrid extends TreeGrid<Task> {
                     // Set current value only if task has an assigned user
                     if (task.getResourceId() != null) {
                         try {
-                            User currentUser = sprint.getuser(task.getResourceId());
+                            User currentUser = sprint.getUser(task.getResourceId());
                             if (currentUser != null && allUsers.contains(currentUser)) {
                                 userComboBox.setValue(currentUser);
                             }
@@ -777,7 +777,7 @@ public class TaskGrid extends TreeGrid<Task> {
 
                     if (task.isTask() && task.getResourceId() != null) {
                         try {
-                            User user = sprint.getuser(task.getResourceId());
+                            User user = sprint.getUser(task.getResourceId());
                             if (user != null) {
                                 // Add avatar image
                                 com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
@@ -931,7 +931,7 @@ public class TaskGrid extends TreeGrid<Task> {
     private String getUserColor(Task task) {
         if (task.getResourceId() != null && sprint != null) {
             try {
-                User user = sprint.getuser(task.getResourceId());
+                User user = sprint.getUser(task.getResourceId());
                 if (user != null) {
                     // Use the user's configured color
                     return ColorUtil.colorToHexString(user.getColor());
@@ -1286,7 +1286,7 @@ public class TaskGrid extends TreeGrid<Task> {
         TreeData<Task> treeData = new TreeData<>();
 
         // Create a set of task IDs that are in the filtered taskOrder for fast lookup
-        Set<Long> filteredTaskIds = taskOrder.stream()
+        Set<UUID> filteredTaskIds = taskOrder.stream()
                 .map(Task::getId)
                 .collect(Collectors.toSet());
 
@@ -1357,7 +1357,7 @@ public class TaskGrid extends TreeGrid<Task> {
      * @param taskId The ID of the task being moved
      * @return true if the task was expanded in this grid (should be expanded in target)
      */
-    public boolean removeAndReturnExpansionState(Long taskId) {
+    public boolean removeAndReturnExpansionState(UUID taskId) {
         return expandedTaskIds.remove(taskId);
     }
 
@@ -1668,7 +1668,7 @@ public class TaskGrid extends TreeGrid<Task> {
             String taskIdStr = event.getEventData().get("event.detail.taskId").asText();
             if (taskIdStr != null && !taskIdStr.isEmpty()) {
                 try {
-                    Long taskId = Long.parseLong(taskIdStr);
+                    UUID taskId = UUID.fromString(taskIdStr);
                     Task task = taskOrder.stream()
                             .filter(t -> t.getId().equals(taskId))
                             .findFirst()
@@ -1686,7 +1686,7 @@ public class TaskGrid extends TreeGrid<Task> {
             String taskIdStr = event.getEventData().get("event.detail.taskId").asText();
             if (taskIdStr != null && !taskIdStr.isEmpty()) {
                 try {
-                    Long taskId = Long.parseLong(taskIdStr);
+                    UUID taskId = UUID.fromString(taskIdStr);
                     Task task = taskOrder.stream()
                             .filter(t -> t.getId().equals(taskId))
                             .findFirst()

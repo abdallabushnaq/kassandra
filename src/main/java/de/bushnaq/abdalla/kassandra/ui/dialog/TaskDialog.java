@@ -49,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 
 /**
@@ -73,11 +74,11 @@ public class TaskDialog extends Dialog {
     private static final DateTimeFormatter DATE_FORMATTER     = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
     private static final DateTimeFormatter DATE_ONLY_FMT      = DateTimeFormatter.ofPattern("dd MMM yyyy");
     private final        Binder<Task>      binder             = new Binder<>(Task.class);
-    private final        Long              currentUserId;
+    private final UUID currentUserId;
     private final        Runnable          onRefresh;
     private final        Task              task;
     private final        TaskApi           taskApi;
-    private final        Map<Long, User>   userMap;
+    private final        Map<UUID, User>   userMap;
     private final        WorklogApi        worklogApi;
     /** Container rebuilt whenever the worklog list changes. */
     private              VerticalLayout    worklogContainer;
@@ -101,7 +102,7 @@ public class TaskDialog extends Dialog {
      * @param onRefresh     callback invoked after any change that requires a board refresh
      */
     public TaskDialog(Task task, TaskApi taskApi, WorklogApi worklogApi,
-                      Map<Long, User> userMap, Long currentUserId, Runnable onRefresh) {
+                      Map<UUID, User> userMap, UUID currentUserId, Runnable onRefresh) {
         this.task          = task;
         this.taskApi       = taskApi;
         this.worklogApi    = worklogApi;

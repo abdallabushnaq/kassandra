@@ -19,19 +19,23 @@ package de.bushnaq.abdalla.kassandra.dao;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 /**
  * Represents the availability of a user at a certain time.
+ * Supports client side id generation.
  */
 @Entity
 @Table(name = "availabilities")
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
@@ -40,9 +44,8 @@ public class AvailabilityDAO extends AbstractTimeAwareDAO {
     @Column(nullable = false)
     private float availability;
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long  id;
+    private UUID  id;
 
     @Column(nullable = false)
     private LocalDate start;
@@ -51,5 +54,9 @@ public class AvailabilityDAO extends AbstractTimeAwareDAO {
     @ToString.Exclude//help intellij debugger not to go into a loop
     @JsonBackReference
     private UserDAO user;
+
+    public AvailabilityDAO() {
+        this.setId(UUID.randomUUID());
+    }
 
 }

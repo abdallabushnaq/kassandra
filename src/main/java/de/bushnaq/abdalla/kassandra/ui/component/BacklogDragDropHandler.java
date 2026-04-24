@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
@@ -36,8 +37,8 @@ public class BacklogDragDropHandler {
     private Task   draggedTask;
     private final Runnable              onRefresh;
     private Sprint sourceSprintOfDraggedTask;
-    private final Map<Long, Sprint>     sprintMap;      // sprintId -> sprint
-    private final Map<Long, List<Task>> sprintTasksMap; // sprintId -> ordered tasks
+    private final Map<UUID, Sprint>     sprintMap;      // sprintId -> sprint
+    private final Map<UUID, List<Task>> sprintTasksMap; // sprintId -> ordered tasks
     private final TaskApi               taskApi;
 
     public BacklogDragDropHandler(TaskApi taskApi, Runnable onRefresh) {

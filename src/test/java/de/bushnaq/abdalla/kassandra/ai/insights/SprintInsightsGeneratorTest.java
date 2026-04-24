@@ -52,6 +52,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -244,7 +245,7 @@ public class SprintInsightsGeneratorTest extends AbstractKeycloakUiTestUtil {
         return sprintStatistics;
     }
 
-    private Sprint loadSprintData(Authentication authentication, Long sprintId) {
+    private Sprint loadSprintData(Authentication authentication, UUID sprintId) {
         Sprint sprint = null;
         long   time   = System.currentTimeMillis();
         // Load in parallel with security context propagation

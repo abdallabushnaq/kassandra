@@ -24,6 +24,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -35,12 +36,12 @@ public class Version extends AbstractTimeAware implements Comparable<Version> {
     @JsonIgnore
     @ToString.Exclude//help intellij debugger not to go into a loop
     private List<Feature> features = new ArrayList<>();
-    private Long          id;
+    private UUID          id;
     private String        name;
     @JsonIgnore
     @ToString.Exclude//help intellij debugger not to go into a loop
     private Product       product;
-    private Long          productId;
+    private UUID          productId;
 
     public Feature addFeature(Feature feature) {
         features.add(feature);

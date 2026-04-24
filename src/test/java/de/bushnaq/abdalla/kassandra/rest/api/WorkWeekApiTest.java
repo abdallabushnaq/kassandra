@@ -37,6 +37,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
@@ -56,7 +57,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureMockMvc
 public class WorkWeekApiTest extends AbstractUiTestUtil {
 
-    private static final long FAKE_ID = 999999L;
+    private static final UUID FAKE_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
     // -----------------------------------------------------------------------
     // CRUD
@@ -155,7 +156,7 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void delete() {
         WorkWeek created = workWeekApi.persist(buildWorkWeek("To Delete", "Will be deleted"));
-        Long     id      = created.getId();
+        UUID     id      = created.getId();
 
         workWeekApi.deleteById(id);
 

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.usergroup;
 
+import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,9 +42,9 @@ public class UserGroupDto {
     @Schema(description = "Human-readable description of the group", nullable = true)
     private String         description;
     @Schema(description = "Unique group identifier; use this ID in subsequent operations")
-    private Long           groupId;
+    private UUID           groupId;
     @Schema(description = "Set of user IDs that are members of this group")
-    private Set<Long>      memberIds;
+    private Set<UUID>      memberIds;
     @Schema(description = "Unique group name")
     private String         name;
     @Schema(description = "Timestamp when the group was last updated (ISO 8601)")

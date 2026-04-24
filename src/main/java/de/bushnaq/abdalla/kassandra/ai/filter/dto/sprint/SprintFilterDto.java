@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter.dto.sprint;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,8 +47,8 @@ public class SprintFilterDto {
 
     private OffsetDateTime created;
     private LocalDateTime  end;
-    private Long           featureId;
-    private Long           id;
+    private UUID           featureId;
+    private UUID           id;
     private String         name;
     /**
      * Original estimation in whole hours.
@@ -64,7 +65,7 @@ public class SprintFilterDto {
      */
     private String         status;
     private OffsetDateTime updated;
-    private Long           userId;
+    private UUID           userId;
     /**
      * Hours already worked.
      */

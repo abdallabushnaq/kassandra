@@ -45,6 +45,7 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
@@ -301,15 +302,16 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         setUser(user1.getEmail(), "ROLE_USER");
         List<Product> user1Products = productApi.getAll();
         assertEquals(1 + 1, user1Products.size(), "User1 should only see their own product");// the "Default" Product is always there
-        assertEquals(product1.getId(), user1Products.get(1).getId());
-        assertEquals("User1 Product", user1Products.get(1).getName());
+        assertTrue(user1Products.stream().anyMatch(p -> product1.getId().equals(p.getId())));
+        assertTrue(user1Products.stream().anyMatch(p -> product1.getName().equals(p.getName())));
 
         // User2 should only see their own product
         setUser(user2.getEmail(), "ROLE_USER");
         List<Product> user2Products = productApi.getAll();
         assertEquals(1 + 1, user2Products.size(), "User2 should only see their own product");// the "Default" Product is always there
-        assertEquals(product2.getId(), user2Products.get(1).getId());
-        assertEquals("User2 Product", user2Products.get(1).getName());
+        assertTrue(user2Products.stream().anyMatch(p -> product2.getId().equals(p.getId())));
+        assertTrue(user2Products.stream().anyMatch(p -> product2.getName().equals(p.getName())));
+
 
         // Now grant user1 access to product2
         productAclApi.grantUserAccess(product2.getId(), user1.getId());
@@ -320,7 +322,7 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         assertEquals(1 + 2, user1ProductsAfterGrant.size(), "User1 should see both products after being granted access");// the "Default" Product is always there
 
         // Verify both products are in the list
-        List<Long> productIds = user1ProductsAfterGrant.stream()
+        List<UUID> productIds = user1ProductsAfterGrant.stream()
                 .map(Product::getId)
                 .toList();
         assertTrue(productIds.contains(product1.getId()), "Should contain product1");

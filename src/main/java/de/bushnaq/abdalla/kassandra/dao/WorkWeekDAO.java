@@ -20,6 +20,9 @@ package de.bushnaq.abdalla.kassandra.dao;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 
 /**
  * Entity representing a named, globally-defined work week.
@@ -53,9 +56,9 @@ public class WorkWeekDAO extends AbstractTimeAwareDAO {
     private String description;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    private Long id;
+    private UUID id;
 
     // --- per-day schedules stored as embedded columns ---
 

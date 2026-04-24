@@ -35,6 +35,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -46,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
 public class UserApiTest extends AbstractEntityGenerator {
-    private static final long   FAKE_ID           = 999999L;
+    private static final UUID   FAKE_ID           = UUID.fromString("00000000-0000-0000-0000-000000000001");
     public static final  String FIRST_START_DATE  = "2024-03-14";
     public static final  String SECOND_START_DATE = "2025-07-01";
 
@@ -178,7 +179,7 @@ public class UserApiTest extends AbstractEntityGenerator {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void update() throws Exception {
-        Long id;
+        UUID id;
 
         //create the user with australian locale
         {

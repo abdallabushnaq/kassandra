@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Service for managing user roles stored in the database.
@@ -53,7 +54,7 @@ public class UserRoleService {
      */
     @Transactional
     @CacheEvict(value = "userRoles", allEntries = true) // Clear cache when roles change
-    public void assignRoles(Long userId, List<String> roles) {
+    public void assignRoles(UUID userId, List<String> roles) {
         // Validate roles
         for (String role : roles) {
             if (!VALID_ROLES.contains(role)) {
@@ -103,7 +104,7 @@ public class UserRoleService {
      * @return list of roles
      * @throws IllegalArgumentException if user not found
      */
-    public List<String> getRoles(Long userId) {
+    public List<String> getRoles(UUID userId) {
         UserDAO user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
         return user.getRoleList();

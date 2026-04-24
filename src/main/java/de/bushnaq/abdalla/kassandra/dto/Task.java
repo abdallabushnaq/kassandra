@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Represents a task in a Gantt chart with scheduling, resource allocation, and progress tracking capabilities.
@@ -82,7 +83,7 @@ public class Task implements Comparable<Task> {
     /**
      * The unique identifier of the task. Unique within all tasks of the server.
      */
-    private             Long           id;
+    private             UUID           id;
     /**
      * Indicates whether this task should be included in cost calculations.
      */
@@ -124,7 +125,7 @@ public class Task implements Comparable<Task> {
     /**
      * The ID of the parent task. Parent tasks are always Stories.
      */
-    private             Long           parentTaskId;
+    private             UUID           parentTaskId;
     /**
      * List of predecessor tasks that this task depends on. This task can only start when all predecessors are completed.
      */
@@ -142,7 +143,7 @@ public class Task implements Comparable<Task> {
     /**
      * The ID of the resource (user) assigned to this task. Only one resource can be assigned to a task.
      */
-    private             Long           resourceId;
+    private             UUID           resourceId;
     /**
      * Reference to the sprint this task belongs to.
      */
@@ -152,7 +153,7 @@ public class Task implements Comparable<Task> {
     /**
      * The ID of the sprint this task belongs to.
      */
-    private             Long           sprintId;
+    private             UUID           sprintId;
     /**
      * The scheduled start date and time of the task.
      */
@@ -305,7 +306,7 @@ public class Task implements Comparable<Task> {
      */
     @JsonIgnore
     public User getAssignedUser() {
-        return sprint.getuser(resourceId);
+        return sprint.getUser(resourceId);
     }
 
     @JsonIgnore

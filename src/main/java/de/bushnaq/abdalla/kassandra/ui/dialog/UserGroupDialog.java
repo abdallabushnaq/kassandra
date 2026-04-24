@@ -41,6 +41,7 @@ import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -171,7 +172,7 @@ public class UserGroupDialog extends Dialog {
             // Custom binding for memberIds
             binder.forField(membersField)
                     .bind(
-                            // Getter: Convert memberIds (Set<Long>) to Set<User>
+                            // Getter: Convert memberIds (Set<UUID>) to Set<User>
                             group -> {
                                 if (group.getMemberIds() == null || group.getMemberIds().isEmpty()) {
                                     return new HashSet<>();
@@ -180,12 +181,12 @@ public class UserGroupDialog extends Dialog {
                                         .filter(user -> group.getMemberIds().contains(user.getId()))
                                         .collect(Collectors.toSet());
                             },
-                            // Setter: Convert Set<User> to memberIds (Set<Long>)
+                            // Setter: Convert Set<User> to memberIds (Set<UUID>)
                             (group, selectedUsers) -> {
                                 if (selectedUsers == null || selectedUsers.isEmpty()) {
                                     group.setMemberIds(new HashSet<>());
                                 } else {
-                                    Set<Long> memberIds = selectedUsers.stream()
+                                    Set<UUID> memberIds = selectedUsers.stream()
                                             .map(User::getId)
                                             .collect(Collectors.toSet());
                                     group.setMemberIds(memberIds);

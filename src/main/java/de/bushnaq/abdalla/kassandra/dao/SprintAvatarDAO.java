@@ -19,6 +19,9 @@ package de.bushnaq.abdalla.kassandra.dao;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "sprint_avatars")
@@ -37,10 +40,10 @@ public class SprintAvatarDAO extends AbstractTimeAwareDAO {
     @Column(name = "dark_avatar_image")
     private byte[] darkAvatarImage;
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    private Long   id;
+    private UUID   id;
     @Column(name = "sprint_id", unique = true, nullable = false)
-    private Long   sprintId;
+    private UUID   sprintId;
 }
 

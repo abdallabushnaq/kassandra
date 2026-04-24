@@ -23,13 +23,17 @@ import de.bushnaq.abdalla.util.DurationSerializer;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(
@@ -38,25 +42,23 @@ import java.time.LocalDateTime;
 )
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
 @Hidden
 @Schema(hidden = true)
 public class SprintDAO extends AbstractTimeAwareDAO {
-    @Column(name = "light_avatar_hash", length = 16)
-    private String        lightAvatarHash;
     @Column(name = "dark_avatar_hash", length = 16)
     private String        darkAvatarHash;
     @Column(name = "end_date", nullable = true)  // renamed from 'end' as it is reserved in H2 databases
     private LocalDateTime end;
     @Column(nullable = false)
-    private Long          featureId;
+    private UUID          featureId;
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long          id;
+    private UUID          id;
+    @Column(name = "light_avatar_hash", length = 16)
+    private String        lightAvatarHash;
     @Column(nullable = false)
     private String        name;
     @JsonSerialize(using = DurationSerializer.class)
@@ -73,10 +75,13 @@ public class SprintDAO extends AbstractTimeAwareDAO {
     @Column(nullable = false)
     private Status        status;
     @Column(nullable = true)
-    private Long          userId;
+    private UUID          userId;
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
     @Column(nullable = true)
     private Duration      worked             = Duration.ZERO;
 
+    public SprintDAO() {
+        setId(UUID.randomUUID());
+    }
 }

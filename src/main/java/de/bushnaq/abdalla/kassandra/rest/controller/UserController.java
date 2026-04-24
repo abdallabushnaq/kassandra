@@ -39,6 +39,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 
 @RestController
@@ -86,7 +87,7 @@ public class UserController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable UUID id) {
         // Delete avatars first (cascade delete)
         userAvatarRepository.deleteByUserId(id);
         userAvatarGenerationDataRepository.deleteByUserId(id);
@@ -96,7 +97,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<UserDAO> get(@PathVariable Long id) {
+    public ResponseEntity<UserDAO> get(@PathVariable UUID id) {
         return userRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -104,7 +105,7 @@ public class UserController {
 
     @GetMapping("/sprint/{sprintId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public List<UserDAO> getAll(@PathVariable Long sprintId) {
+    public List<UserDAO> getAll(@PathVariable UUID sprintId) {
         return userRepository.findBySprintId(sprintId);
     }
 
@@ -116,7 +117,7 @@ public class UserController {
 
     @GetMapping("/{id}/avatar")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable Long id) {
+    public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable UUID id) {
         return userAvatarRepository.findByUserId(id)
                 .map(avatar -> {
                     if (avatar.getLightAvatarImage() == null || avatar.getLightAvatarImage().length == 0) {
@@ -136,7 +137,7 @@ public class UserController {
      */
     @GetMapping("/{id}/dark-avatar")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable Long id) {
+    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable UUID id) {
         return userAvatarRepository.findByUserId(id)
                 .map(avatar -> {
                     byte[] imageBytes = avatar.getDarkAvatarImage();
@@ -154,7 +155,7 @@ public class UserController {
 
     @GetMapping("/{id}/avatar/full")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable Long id) {
+    public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable UUID id) {
         AvatarUpdateRequest response = new AvatarUpdateRequest();
 
         // Get avatar images (light + dark)
@@ -202,7 +203,7 @@ public class UserController {
      */
     @GetMapping("/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<String> getRoles(@PathVariable Long id) {
+    public List<String> getRoles(@PathVariable UUID id) {
         return userRoleService.getRoles(id);
     }
 
@@ -220,17 +221,17 @@ public class UserController {
             throw new UniqueConstraintViolationException("User", "email", user.getEmail());
         }
 
-        UserDAO savedUser = userRepository.save(user);
+        entityManager.persist(user);
 
         // Automatically add user to "All" group
         userGroupRepository.findByName(DefaultEntitiesInitializer.ALL_USERS_GROUP_NAME)
                 .ifPresent(allGroup -> {
-                    allGroup.addMember(savedUser.getId());
+                    allGroup.addMember(user.getId());
                     userGroupRepository.save(allGroup);
-                    log.info("Added user {} to 'All' group", savedUser.getName());
+                    log.info("Added user {} to 'All' group", user.getName());
                 });
 
-        return savedUser;
+        return user;
     }
 
     /**
@@ -269,7 +270,7 @@ public class UserController {
     @PutMapping("/{id}/avatar/full")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
-    public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
+    public ResponseEntity<Void> updateAvatarFull(@PathVariable UUID id, @RequestBody AvatarUpdateRequest request) {
         // Verify user exists
         Optional<UserDAO> userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) {
@@ -351,7 +352,7 @@ public class UserController {
      */
     @PutMapping("/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> updateRoles(@PathVariable Long id, @RequestBody List<String> roles) {
+    public ResponseEntity<Void> updateRoles(@PathVariable UUID id, @RequestBody List<String> roles) {
         try {
             userRoleService.assignRoles(id, roles);
             return ResponseEntity.ok().build();

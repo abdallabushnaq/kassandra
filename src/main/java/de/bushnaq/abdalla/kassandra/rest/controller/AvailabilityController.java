@@ -21,12 +21,15 @@ import de.bushnaq.abdalla.kassandra.dao.AvailabilityDAO;
 import de.bushnaq.abdalla.kassandra.repository.AvailabilityRepository;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/availability")
@@ -34,7 +37,8 @@ public class AvailabilityController {
 
     @Autowired
     private AvailabilityRepository availabilityRepository;
-
+    @Autowired
+    EntityManager entityManager;
     @Autowired
     private UserRepository userRepository;
 
@@ -45,7 +49,7 @@ public class AvailabilityController {
      * @param targetUserId the ID of the user whose availability is being modified
      * @return true if modification is allowed, false otherwise
      */
-    private boolean canUserModifyAvailability(Long targetUserId) {
+    private boolean canUserModifyAvailability(UUID targetUserId) {
         // Admins can modify any user's availability
         if (SecurityUtils.isAdmin()) {
             return true;
@@ -60,7 +64,7 @@ public class AvailabilityController {
 
     @DeleteMapping("/{userId}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<Object> delete(@PathVariable Long userId, @PathVariable Long id) {
+    public ResponseEntity<Object> delete(@PathVariable UUID userId, @PathVariable UUID id) {
         // Check authorization: Users can only delete their own availability, admins can delete for any user
         if (!canUserModifyAvailability(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own availability");
@@ -80,13 +84,14 @@ public class AvailabilityController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvailabilityDAO> getById(@PathVariable Long id) {
+    public ResponseEntity<AvailabilityDAO> getById(@PathVariable UUID id) {
         return availabilityRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvailabilityDAO> save(@RequestBody AvailabilityDAO availability, @PathVariable Long userId) {
+    @Transactional
+    public ResponseEntity<AvailabilityDAO> save(@RequestBody AvailabilityDAO availability, @PathVariable UUID userId) {
         // Check authorization: Users can only save their own availability, admins can save for any user
         if (!canUserModifyAvailability(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own availability");
@@ -94,22 +99,26 @@ public class AvailabilityController {
 
         return userRepository.findById(userId).map(user -> {
             availability.setUser(user);
-            AvailabilityDAO save = availabilityRepository.save(availability);
-            return ResponseEntity.ok(save);
+            entityManager.persist(availability); // INSERT, no SELECT, no cascade conflict
+//            AvailabilityDAO save = availabilityRepository.save(availability);
+            return ResponseEntity.ok(availability);
         }).orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<Object> update(@RequestBody AvailabilityDAO availability, @PathVariable Long userId) {
+    public ResponseEntity<Object> update(@RequestBody AvailabilityDAO availability, @PathVariable UUID userId) {
         // Check authorization: Users can only update their own availability, admins can update for any user
         if (!canUserModifyAvailability(userId)) {
             throw new org.springframework.security.access.AccessDeniedException("You can only modify your own availability");
         }
 
         return userRepository.findById(userId).map(user -> {
+//            if (!availabilityRepository.existsById(availability.getId())) {
+//                return ResponseEntity.notFound().build();
+//            }
             availability.setUser(user);
-            AvailabilityDAO save = availabilityRepository.save(availability);
+            availabilityRepository.save(availability);
             return ResponseEntity.ok().build();
         }).orElse(ResponseEntity.notFound().build());
     }

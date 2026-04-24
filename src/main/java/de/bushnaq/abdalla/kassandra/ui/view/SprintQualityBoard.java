@@ -90,7 +90,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     private final       LocalDateTime           created;
     private final       GanttErrorHandler       eh                      = new GanttErrorHandler();
     private final       FeatureApi              featureApi;
-    private             Long                    featureId;
+    private UUID featureId;
     /**
      * Container for the Gantt chart SVG.
      */
@@ -113,10 +113,10 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     private final       LocalDateTime           now;
     private final       H2                      pageTitle;
     private final       ProductApi              productApi;
-    private             Long                    productId;
+    private UUID productId;
     private             Sprint                  sprint;
     private final       SprintApi               sprintApi;
-    private             Long                    sprintId;
+    private UUID sprintId;
     /**
      * Sprint selector ComboBox — lets the user switch sprints without leaving the page.
      */
@@ -129,7 +129,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     private             Registration            themeChangedRegistration;
     private final       UserApi                 userApi;
     private final       VersionApi              versionApi;
-    private             Long                    versionId;
+    private UUID versionId;
     private final       WorklogApi              worklogApi;
 
     public SprintQualityBoard(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock) {
@@ -182,16 +182,16 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
         if (queryParameters.getParameters().containsKey("product")) {
-            this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
+            this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
         }
         if (queryParameters.getParameters().containsKey("version")) {
-            this.versionId = Long.parseLong(queryParameters.getParameters().get("version").getFirst());
+            this.versionId = UUID.fromString(queryParameters.getParameters().get("version").getFirst());
         }
         if (queryParameters.getParameters().containsKey("feature")) {
-            this.featureId = Long.parseLong(queryParameters.getParameters().get("feature").getFirst());
+            this.featureId = UUID.fromString(queryParameters.getParameters().get("feature").getFirst());
         }
         if (queryParameters.getParameters().containsKey("sprint")) {
-            this.sprintId = Long.parseLong(queryParameters.getParameters().get("sprint").getFirst());
+            this.sprintId = UUID.fromString(queryParameters.getParameters().get("sprint").getFirst());
         }
         // Resolve defaults when navigated directly from the menu (no URL params)
         if (productId == null) {
@@ -202,7 +202,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
                     .orElse(null);
         }
         if (versionId == null && productId != null) {
-            final Long pid = productId;
+            final UUID pid = productId;
             versionId = versionApi.getAll().stream()
                     .filter(v -> pid.equals(v.getProductId()))
                     .map(Version::getId)
@@ -210,7 +210,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
                     .orElse(null);
         }
         if (featureId == null && versionId != null) {
-            final Long vid = versionId;
+            final UUID vid = versionId;
             featureId = featureApi.getAll().stream()
                     .filter(f -> vid.equals(f.getVersionId()))
                     .map(Feature::getId)
@@ -218,7 +218,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
                     .orElse(null);
         }
         if (sprintId == null && featureId != null) {
-            final Long fid = featureId;
+            final UUID fid = featureId;
             sprintId = sprintApi.getAll().stream()
                     .filter(s -> fid.equals(s.getFeatureId())
                             && !DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s.getName()))

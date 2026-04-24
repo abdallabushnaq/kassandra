@@ -30,21 +30,22 @@ import de.focus_shift.jollyday.core.Holiday;
 import de.focus_shift.jollyday.core.HolidayManager;
 import de.focus_shift.jollyday.core.ManagerParameters;
 import de.focus_shift.jollyday.core.parameter.UrlManagerParameter;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import net.sf.mpxj.*;
 
 import java.awt.*;
 import java.net.URL;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -57,7 +58,7 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     private String             darkAvatarHash;
     private String             email;
     private LocalDate          firstWorkingDay;
-    private Long               id;
+    private UUID               id;
     private LocalDate          lastWorkingDay;
     private String             lightAvatarHash;
     @JsonManagedReference
@@ -68,6 +69,10 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     private String             roles          = "USER"; // Default role for new users
     @JsonManagedReference
     private List<UserWorkWeek> userWorkWeeks  = new ArrayList<>();
+
+    public User() {
+        setId(UUID.randomUUID());
+    }
 
     public void addAvailability(Availability availability) {
         availabilities.add(availability);
@@ -112,6 +117,70 @@ public class User extends AbstractTimeAware implements Comparable<User> {
         if (userWorkWeek.getWorkWeek() == null)
             throw new IllegalArgumentException("work week is null");
         userWorkWeeks.add(userWorkWeek);
+    }
+
+    /**
+     * Applies the user's {@link UserWorkWeek} assignments to the given MPXJ {@link ProjectCalendar}
+     * as date-range-scoped {@link ProjectCalendarWeek} entries.
+     * <p>
+     * Each assignment governs the half-open interval {@code [start, nextStart)}. The first
+     * assignment is back-dated to {@code 1900-01-01} to ensure correct resolution for any
+     * historical date (the first-assignment start is not guaranteed to equal the hire date).
+     * The last assignment is open-ended ({@code 9999-12-31}).
+     * </p>
+     * <p>
+     * After mapping all intervals, {@code minutesPerDay} and {@code minutesPerWeek} are set on
+     * the calendar from the currently effective work-week so that MPXJ duration arithmetic
+     * reflects the actual schedule rather than the project-level defaults.
+     * </p>
+     *
+     * @param pc the derived calendar for this user
+     */
+    private void applyWorkWeekSchedules(ProjectCalendar pc) {
+        if (userWorkWeeks.isEmpty()) return;
+        List<UserWorkWeek> sorted = userWorkWeeks.stream()
+                .sorted(Comparator.comparing(UserWorkWeek::getStart))
+                .collect(Collectors.toList());
+
+        // Sentinel dates – practical bounds that MPXJ handles without overflow
+        LocalDate FAR_PAST   = LocalDate.of(1900, 1, 1);
+        LocalDate FAR_FUTURE = LocalDate.of(9999, 12, 31);
+
+        for (int i = 0; i < sorted.size(); i++) {
+            UserWorkWeek uww = sorted.get(i);
+            WorkWeek     ww  = uww.getWorkWeek();
+            // First assignment covers from far past; subsequent ones from their own start date
+            LocalDate rangeStart = (i == 0) ? FAR_PAST : uww.getStart();
+            LocalDate rangeEnd = (i + 1 < sorted.size())
+                    ? sorted.get(i + 1).getStart().minusDays(1)
+                    : FAR_FUTURE;
+
+            ProjectCalendarWeek pcw = pc.addWorkWeek();
+            pcw.setDateRange(new LocalDateRange(rangeStart, rangeEnd));
+
+            for (DayOfWeek day : DayOfWeek.values()) {
+                WorkDaySchedule schedule = ww.getScheduleForDay(day);
+                boolean         working  = schedule != null && schedule.isWorkingDay();
+                pcw.setWorkingDay(day, working);
+                if (working) {
+                    ProjectCalendarHours hours = pcw.addCalendarHours(day);
+                    if (schedule.getLunchStart() != null && schedule.getLunchEnd() != null) {
+                        hours.add(new LocalTimeRange(schedule.getWorkStart(), schedule.getLunchStart()));
+                        hours.add(new LocalTimeRange(schedule.getLunchEnd(), schedule.getWorkEnd()));
+                    } else {
+                        hours.add(new LocalTimeRange(schedule.getWorkStart(), schedule.getWorkEnd()));
+                    }
+                }
+            }
+        }
+
+        // Point 2: set per-calendar minutes so MPXJ duration arithmetic reflects this user's schedule
+        UserWorkWeek current = getEffectiveUserWorkWeek(LocalDate.now());
+        if (current != null && current.getWorkWeek() != null) {
+            WorkWeek ww = current.getWorkWeek();
+            pc.setCalendarMinutesPerDay(ww.computeMinutesPerDay());
+            pc.setCalendarMinutesPerWeek(ww.computeMinutesPerWeek());
+        }
     }
 
     @Override
@@ -223,6 +292,29 @@ public class User extends AbstractTimeAware implements Comparable<User> {
         return getDefaultAvatarPrompt(userName) + AvatarService.LIGHT_PROMPT_SUFFIX;
     }
 
+    /**
+     * Returns the {@link UserWorkWeek} assignment that is effective on the given date.
+     * Assignments are sorted by start date; the last one whose start is on or before {@code date}
+     * is returned. Returns {@code null} when no assignment covers the date (e.g., pre-hire).
+     *
+     * @param date the date to look up
+     * @return the effective {@link UserWorkWeek}, or {@code null} if none applies
+     */
+    @JsonIgnore
+    public UserWorkWeek getEffectiveUserWorkWeek(LocalDate date) {
+        if (userWorkWeeks.isEmpty()) return null;
+        List<UserWorkWeek> sorted = userWorkWeeks.stream()
+                .sorted(Comparator.comparing(UserWorkWeek::getStart))
+                .collect(Collectors.toList());
+        UserWorkWeek result = null;
+        for (UserWorkWeek uww : sorted) {
+            if (!uww.getStart().isAfter(date)) {
+                result = uww;
+            }
+        }
+        return result;
+    }
+
     @JsonIgnore
     public String getKey() {
         return "U-" + id;
@@ -298,109 +390,6 @@ public class User extends AbstractTimeAware implements Comparable<User> {
 //        System.out.println("User.initializeLocationsAndOffdays() took " + (System.currentTimeMillis() - time) + " ms for user: " + getName());
     }
 
-    /**
-     * Returns the {@link UserWorkWeek} assignment that is effective on the given date.
-     * Assignments are sorted by start date; the last one whose start is on or before {@code date}
-     * is returned. Returns {@code null} when no assignment covers the date (e.g., pre-hire).
-     *
-     * @param date the date to look up
-     * @return the effective {@link UserWorkWeek}, or {@code null} if none applies
-     */
-    @JsonIgnore
-    public UserWorkWeek getEffectiveUserWorkWeek(LocalDate date) {
-        if (userWorkWeeks.isEmpty()) return null;
-        List<UserWorkWeek> sorted = userWorkWeeks.stream()
-                .sorted(Comparator.comparing(UserWorkWeek::getStart))
-                .collect(Collectors.toList());
-        UserWorkWeek result = null;
-        for (UserWorkWeek uww : sorted) {
-            if (!uww.getStart().isAfter(date)) {
-                result = uww;
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Returns {@code true} when the given date is a structurally working day according to the
-     * user's effective work-week definition for that date, ignoring holidays and off-day exceptions.
-     * Falls back to {@code true} when no work-week assignment covers the date.
-     *
-     * @param date the date to check
-     * @return {@code true} if the day of week is a working day in the applicable work week
-     */
-    @JsonIgnore
-    public boolean isWorkingDay(LocalDate date) {
-        UserWorkWeek uww = getEffectiveUserWorkWeek(date);
-        if (uww == null || uww.getWorkWeek() == null) return true; // no definition → assume working
-        WorkDaySchedule schedule = uww.getWorkWeek().getScheduleForDay(date.getDayOfWeek());
-        return schedule != null && schedule.isWorkingDay();
-    }
-
-    /**
-     * Applies the user's {@link UserWorkWeek} assignments to the given MPXJ {@link ProjectCalendar}
-     * as date-range-scoped {@link ProjectCalendarWeek} entries.
-     * <p>
-     * Each assignment governs the half-open interval {@code [start, nextStart)}. The first
-     * assignment is back-dated to {@code 1900-01-01} to ensure correct resolution for any
-     * historical date (the first-assignment start is not guaranteed to equal the hire date).
-     * The last assignment is open-ended ({@code 9999-12-31}).
-     * </p>
-     * <p>
-     * After mapping all intervals, {@code minutesPerDay} and {@code minutesPerWeek} are set on
-     * the calendar from the currently effective work-week so that MPXJ duration arithmetic
-     * reflects the actual schedule rather than the project-level defaults.
-     * </p>
-     *
-     * @param pc the derived calendar for this user
-     */
-    private void applyWorkWeekSchedules(ProjectCalendar pc) {
-        if (userWorkWeeks.isEmpty()) return;
-        List<UserWorkWeek> sorted = userWorkWeeks.stream()
-                .sorted(Comparator.comparing(UserWorkWeek::getStart))
-                .collect(Collectors.toList());
-
-        // Sentinel dates – practical bounds that MPXJ handles without overflow
-        LocalDate FAR_PAST   = LocalDate.of(1900, 1, 1);
-        LocalDate FAR_FUTURE = LocalDate.of(9999, 12, 31);
-
-        for (int i = 0; i < sorted.size(); i++) {
-            UserWorkWeek uww = sorted.get(i);
-            WorkWeek     ww  = uww.getWorkWeek();
-            // First assignment covers from far past; subsequent ones from their own start date
-            LocalDate rangeStart = (i == 0) ? FAR_PAST : uww.getStart();
-            LocalDate rangeEnd   = (i + 1 < sorted.size())
-                    ? sorted.get(i + 1).getStart().minusDays(1)
-                    : FAR_FUTURE;
-
-            ProjectCalendarWeek pcw = pc.addWorkWeek();
-            pcw.setDateRange(new LocalDateRange(rangeStart, rangeEnd));
-
-            for (DayOfWeek day : DayOfWeek.values()) {
-                WorkDaySchedule schedule = ww.getScheduleForDay(day);
-                boolean         working  = schedule != null && schedule.isWorkingDay();
-                pcw.setWorkingDay(day, working);
-                if (working) {
-                    ProjectCalendarHours hours = pcw.addCalendarHours(day);
-                    if (schedule.getLunchStart() != null && schedule.getLunchEnd() != null) {
-                        hours.add(new LocalTimeRange(schedule.getWorkStart(), schedule.getLunchStart()));
-                        hours.add(new LocalTimeRange(schedule.getLunchEnd(), schedule.getWorkEnd()));
-                    } else {
-                        hours.add(new LocalTimeRange(schedule.getWorkStart(), schedule.getWorkEnd()));
-                    }
-                }
-            }
-        }
-
-        // Point 2: set per-calendar minutes so MPXJ duration arithmetic reflects this user's schedule
-        UserWorkWeek current = getEffectiveUserWorkWeek(LocalDate.now());
-        if (current != null && current.getWorkWeek() != null) {
-            WorkWeek ww = current.getWorkWeek();
-            pc.setCalendarMinutesPerDay(ww.computeMinutesPerDay());
-            pc.setCalendarMinutesPerWeek(ww.computeMinutesPerWeek());
-        }
-    }
-
     private void initializeLocationsAndOffdays() {
         //TODO rethink employee leaving company and coming back
         ProjectCalendar pc = getCalendar();
@@ -430,6 +419,22 @@ public class User extends AbstractTimeAware implements Comparable<User> {
                 pce.setName(String.format("%s (%s/%s)", holiday.getDescription(), location.getCountry(), location.getState()));
             }
         }
+    }
+
+    /**
+     * Returns {@code true} when the given date is a structurally working day according to the
+     * user's effective work-week definition for that date, ignoring holidays and off-day exceptions.
+     * Falls back to {@code true} when no work-week assignment covers the date.
+     *
+     * @param date the date to check
+     * @return {@code true} if the day of week is a working day in the applicable work week
+     */
+    @JsonIgnore
+    public boolean isWorkingDay(LocalDate date) {
+        UserWorkWeek uww = getEffectiveUserWorkWeek(date);
+        if (uww == null || uww.getWorkWeek() == null) return true; // no definition → assume working
+        WorkDaySchedule schedule = uww.getWorkWeek().getScheduleForDay(date.getDayOfWeek());
+        return schedule != null && schedule.isWorkingDay();
     }
 
     public void removeAvailability(Availability availability) {

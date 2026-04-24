@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter.dto.product;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.ai.filter.dto.availability.AvailabilityFilterDto;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import lombok.Getter;
@@ -40,7 +41,7 @@ import java.time.OffsetDateTime;
 public class ProductFilterDto {
 
     private OffsetDateTime created;
-    private Long           id;
+    private UUID           id;
     private String         name;
     private OffsetDateTime updated;
 

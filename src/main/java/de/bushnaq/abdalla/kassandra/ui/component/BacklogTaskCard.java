@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
+import java.util.UUID;
 import com.vaadin.flow.component.dnd.DragSource;
 import com.vaadin.flow.component.dnd.DropEffect;
 import com.vaadin.flow.component.dnd.DropTarget;
@@ -50,9 +51,9 @@ public class BacklogTaskCard extends Div {
     private final BacklogDragDropHandler dragDropHandler;
     private final Sprint                 sprint;
     private final Task                   task;
-    private final Map<Long, User>        userMap;
+    private final Map<UUID, User>        userMap;
 
-    public BacklogTaskCard(Task task, Map<Long, User> userMap, Sprint sprint, BacklogDragDropHandler dragDropHandler) {
+    public BacklogTaskCard(Task task, Map<UUID, User> userMap, Sprint sprint, BacklogDragDropHandler dragDropHandler) {
         this.task            = task;
         this.userMap         = userMap;
         this.sprint          = sprint;

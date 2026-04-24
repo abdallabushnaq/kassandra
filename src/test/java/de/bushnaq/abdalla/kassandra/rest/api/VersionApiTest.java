@@ -35,6 +35,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerErrorException;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
 public class VersionApiTest extends AbstractEntityGenerator {
-    private static final long   FAKE_ID     = 999999L;
+    private static final UUID   FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final String SECOND_NAME = "SECOND_NAME";
 
     @Test
@@ -221,7 +222,7 @@ public class VersionApiTest extends AbstractEntityGenerator {
     public void updateUsingFakeId() throws Exception {
         addRandomProducts(2);
         Version version = expectedVersions.getFirst();
-        Long    id      = version.getId();
+        UUID    id      = version.getId();
         String  name    = version.getName();
         version.setId(FAKE_ID);
         version.setName(SECOND_NAME);

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
@@ -59,7 +60,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @AutoConfigureMockMvc
 @Slf4j
 public class TaskApiTest extends AbstractUiTestUtil {
-    private static final long   FAKE_ID     = 999999L;
+    private static final UUID   FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final String SECOND_NAME = "SECOND_NAME";
 
     private User admin1;
@@ -193,11 +194,11 @@ public class TaskApiTest extends AbstractUiTestUtil {
         Sprint  sprint  = addRandomSprint(feature);
         Task    leaf    = addTask(sprint, null, "Leaf Task", LocalDateTime.now(), Duration.ofDays(3), null, null, null);
 
-        long leafId = leaf.getId();
+        UUID leafId = leaf.getId();
 
         taskApi.deleteById(leafId);
 
-        List<Long> remainingIds = taskApi.getAll().stream().map(Task::getId).toList();
+        List<UUID> remainingIds = taskApi.getAll().stream().map(Task::getId).toList();
         Assertions.assertThat(remainingIds).doesNotContain(leafId);
 
         // Sync local state so @AfterEach validation passes
@@ -223,24 +224,24 @@ public class TaskApiTest extends AbstractUiTestUtil {
         Task    child2     = addTask(sprint, parent, "Child 2", LocalDateTime.now(), Duration.ofDays(3), null, null, null);
         Task    grandchild = addTask(sprint, child1, "Grandchild", LocalDateTime.now(), Duration.ofDays(2), null, null, null);
 
-        long parentId     = parent.getId();
-        long child1Id     = child1.getId();
-        long child2Id     = child2.getId();
-        long grandchildId = grandchild.getId();
+        UUID parentId     = parent.getId();
+        UUID child1Id     = child1.getId();
+        UUID child2Id     = child2.getId();
+        UUID grandchildId = grandchild.getId();
 
         taskApi.deleteById(parentId);
 
-        List<Long> remainingIds = taskApi.getAll().stream().map(Task::getId).toList();
+        List<UUID> remainingIds = taskApi.getAll().stream().map(Task::getId).toList();
         Assertions.assertThat(remainingIds).doesNotContain(parentId, child1Id, child2Id, grandchildId);
 
         // Sync local state so @AfterEach validation passes
         expectedTasks.removeIf(t -> {
-            long id = t.getId();
-            return id == parentId || id == child1Id || id == child2Id || id == grandchildId;
+            UUID id = t.getId();
+            return id.equals(parentId) || id.equals(child1Id) || id.equals(child2Id) || id.equals(grandchildId);
         });
         sprint.getTasks().removeIf(t -> {
-            long id = t.getId();
-            return id == parentId || id == child1Id || id == child2Id || id == grandchildId;
+            UUID id = t.getId();
+            return id.equals(parentId) || id.equals(child1Id) || id.equals(child2Id) || id.equals(grandchildId);
         });
     }
 
@@ -268,8 +269,8 @@ public class TaskApiTest extends AbstractUiTestUtil {
         Task taskA = addTask(sprint, null, "Task A", LocalDateTime.now(), Duration.ofDays(3), null, null, null);
         Task taskB = addTask(sprint, null, "Task B", LocalDateTime.now().plusDays(3), Duration.ofDays(3), null, null, taskA);
 
-        long aId = taskA.getId();
-        long bId = taskB.getId();
+        UUID aId = taskA.getId();
+        UUID bId = taskB.getId();
 
         // Verify the relation exists before deletion
         Assertions.assertThat(taskB.getPredecessors()).anyMatch(r -> r.getPredecessorId().equals(aId));
@@ -323,8 +324,8 @@ public class TaskApiTest extends AbstractUiTestUtil {
         Task taskA = addTask(sprint, null, "Task A", LocalDateTime.now(), Duration.ofDays(3), null, null, null);
         Task taskB = addTask(sprint, null, "Task B", LocalDateTime.now().plusDays(3), Duration.ofDays(3), null, null, taskA);
 
-        long aId = taskA.getId();
-        long bId = taskB.getId();
+        UUID aId = taskA.getId();
+        UUID bId = taskB.getId();
 
         // Verify the relation exists on taskB before deletion
         Assertions.assertThat(taskB.getPredecessors()).anyMatch(r -> r.getPredecessorId().equals(aId));

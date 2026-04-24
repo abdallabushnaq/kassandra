@@ -28,6 +28,7 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -41,7 +42,7 @@ import java.util.Objects;
 public class Product extends AbstractTimeAware implements Comparable<Product> {
 
     private String        darkAvatarHash;
-    private Long          id;
+    private UUID          id;
     private String        lightAvatarHash;
     private String        name;
     @JsonIgnore

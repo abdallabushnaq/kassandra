@@ -19,6 +19,9 @@ package de.bushnaq.abdalla.kassandra.dao;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "feature_avatars")
@@ -37,10 +40,10 @@ public class FeatureAvatarDAO extends AbstractTimeAwareDAO {
     @Column(name = "dark_avatar_image")
     private byte[] darkAvatarImage;
     @Column(name = "feature_id", unique = true, nullable = false)
-    private Long   featureId;
+    private UUID   featureId;
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    private Long   id;
+    private UUID   id;
 }
 

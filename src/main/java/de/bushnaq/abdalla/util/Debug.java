@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 public class Debug {
     public static boolean exportSql = false;
@@ -24,9 +25,9 @@ public class Debug {
     //    public        boolean filterSfps           = false;
 //    public        String  filterSfpsKey;
     public        boolean filterSprint    = false;
-    public        long    filterSprintId;
+    public        UUID    filterSprintId;
     public        boolean filterTask      = false;
-    private       long    filterTaskId;
+    private       UUID    filterTaskId;
     //    public        boolean filterSubtask        = false;
 //    private       long    filterSubtaskId;
     public        boolean hidden          = true;
@@ -83,21 +84,21 @@ public class Debug {
 
     public boolean filterSprint(Sprint sprint) {
         if (sprint.getId() != null) {
-            return sprint.getId() == filterSprintId || !filterSprint;
+            return sprint.getId().equals(filterSprintId) || !filterSprint;
         }
         return false;
     }
 
-    public boolean filterSprint(Long sprintId) {
+    public boolean filterSprint(UUID sprintId) {
         if (sprintId != null) {
-            return sprintId == filterSprintId || !filterSprint;
+            return sprintId.equals(filterSprintId) || !filterSprint;
         }
         return false;
     }
 
     public boolean filterTask(Task issue) {
         if (issue != null) {
-            return issue.getId() == filterTaskId || !filterTask;
+            return issue.getId().equals(filterTaskId) || !filterTask;
         }
         return false;
     }

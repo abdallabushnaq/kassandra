@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint;
 
+import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Status;
@@ -40,7 +41,7 @@ public class SprintDto {
     @Schema(description = "Sprint end datetime (ISO 8601)")
     private LocalDateTime end;
     @Schema(description = "Feature this sprint belongs to")
-    private Long          featureId;
+    private UUID          featureId;
     @Schema(description = "Unique sprint name")
     private String        name;
     @Schema(description = "Original effort estimation (ISO 8601 duration)")
@@ -50,17 +51,17 @@ public class SprintDto {
     @Schema(description = "Remaining effort (ISO 8601 duration)")
     private Duration      remaining;
     @Schema(description = "Unique sprint identifier; use this ID in subsequent operations")
-    private Long          sprintId;
+    private UUID          sprintId;
     @Schema(description = "Sprint start datetime (ISO 8601)")
     private LocalDateTime start;
     @Schema(description = "Sprint status")
     private Status        status;
     @Schema(description = "User assigned to this sprint")
-    private Long          userId;
+    private UUID          userId;
     @Schema(description = "Effort already worked (ISO 8601 duration)")
     private Duration      worked;
 
-    public SprintDto(Long sprintId, String name, Long featureId, LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate, Duration originalEstimation, Duration remaining, Duration worked, String lightAvatarHash, Status status, Long userId) {
+    public SprintDto(UUID sprintId, String name, UUID featureId, LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate, Duration originalEstimation, Duration remaining, Duration worked, String lightAvatarHash, Status status, UUID userId) {
         this.sprintId           = sprintId;
         this.name               = name;
         this.featureId          = featureId;

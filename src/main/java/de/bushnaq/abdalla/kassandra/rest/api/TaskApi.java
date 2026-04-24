@@ -28,6 +28,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class TaskApi extends AbstractApi {
@@ -46,7 +47,7 @@ public class TaskApi extends AbstractApi {
     }
 
 
-    public void deleteById(Long taskId) throws org.springframework.web.client.RestClientException {
+    public void deleteById(UUID taskId) throws org.springframework.web.client.RestClientException {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/task/{id}",
                 HttpMethod.DELETE,
@@ -56,7 +57,7 @@ public class TaskApi extends AbstractApi {
         ));
     }
 
-    public List<Task> getAll(Long sprintId) {
+    public List<Task> getAll(UUID sprintId) {
         ResponseEntity<Task[]> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/task/sprint/{sprintId}",
                 HttpMethod.GET,
@@ -85,7 +86,7 @@ public class TaskApi extends AbstractApi {
         return new ArrayList<>(Arrays.asList(body));
     }
 
-    public Task getById(Long id) {
+    public Task getById(UUID id) {
         ResponseEntity<Task> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/task/{id}",
                 HttpMethod.GET,
@@ -125,7 +126,7 @@ public class TaskApi extends AbstractApi {
      * @param tasks    the tasks to update
      * @param sprintId the sprint all tasks belong to (used for server-side ACL check)
      */
-    public void updateBatch(List<Task> tasks, Long sprintId) {
+    public void updateBatch(List<Task> tasks, UUID sprintId) {
         if (tasks == null || tasks.isEmpty()) {
             return;
         }
@@ -138,7 +139,7 @@ public class TaskApi extends AbstractApi {
         ));
     }
 
-    public void updateTaskStatus(Long taskId, de.bushnaq.abdalla.kassandra.dto.TaskStatus newStatus) {
+    public void updateTaskStatus(UUID taskId, de.bushnaq.abdalla.kassandra.dto.TaskStatus newStatus) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/task/{id}/status/{status}",
                 HttpMethod.PUT,

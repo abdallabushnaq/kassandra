@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.user;
 
+import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.util.ColorUtil;
@@ -50,12 +51,12 @@ public class UserDto {
     @Schema(description = "Comma-separated roles: ROLE_USER or ROLE_ADMIN")
     private String    roles;
     @Schema(description = "Unique user identifier; use this ID in subsequent operations")
-    private Long      userId;
+    private UUID      userId;
 
     /**
      * Custom constructor for UserDto with explicit parameter order.
      */
-    public UserDto(Long userId, String name, String email, String colorHex, String roles, LocalDate firstWorkingDay, LocalDate lastWorkingDay) {
+    public UserDto(UUID userId, String name, String email, String colorHex, String roles, LocalDate firstWorkingDay, LocalDate lastWorkingDay) {
         this.userId          = userId;
         this.name            = name;
         this.email           = email;

@@ -28,7 +28,10 @@ import de.bushnaq.abdalla.util.DurationDeserializer;
 import de.bushnaq.abdalla.util.DurationSerializer;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import de.bushnaq.abdalla.util.date.ReportUtil;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import net.sf.mpxj.*;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
@@ -37,14 +40,10 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
@@ -58,8 +57,8 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     @JsonIgnore
     @ToString.Exclude//help intellij debugger not to go into a loop
     private       Feature         feature;
-    private       Long            featureId;
-    private       Long            id;
+    private       UUID            featureId;
+    private       UUID            id;
     private       String          lightAvatarHash;
     private       String          name;
     @JsonSerialize(using = DurationSerializer.class)
@@ -74,12 +73,12 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     private       LocalDateTime   start;
     private       Status          status      = Status.CREATED;
     @JsonIgnore
-    transient     Map<Long, Task> taskMap     = new HashMap<>();
+    transient     Map<UUID, Task> taskMap     = new HashMap<>();
     @JsonIgnore
     private       List<Task>      tasks       = new ArrayList<>();
-    private       Long            userId;
+    private       UUID            userId;
     @JsonIgnore
-    transient     Map<Long, User> userMap     = new HashMap<>();
+    transient     Map<UUID, User> userMap     = new HashMap<>();
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
     private       Duration        worked;
@@ -87,6 +86,10 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     List<WorklogRemaining> worklogRemaining = new ArrayList<>();
     @JsonIgnore
     private List<Worklog> worklogs = new ArrayList<>();
+
+    public Sprint() {
+        setId(UUID.randomUUID());
+    }
 
     public void addTask(Task task) {
         tasks.add(task);
@@ -236,7 +239,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
 
     @JsonIgnore
     public LocalDateTime getEarliestStartDate() {
-        LocalDateTime earliestDate = LocalDateTime.MAX;//ParameterOptions.getLocalNow();
+        LocalDateTime earliestDate = ParameterOptions.getLocalNow();
         for (Task task : getTasks()) {
             if (task.getStart() == null) {
                 continue;
@@ -251,6 +254,9 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
 //                //ignore milestones
 //            }
         }
+//        if (earliestDate.isAfter(ParameterOptions.getLocalNow())) {
+//            earliestDate = ParameterOptions.getLocalNow();
+//        }
         return earliestDate;
     }
 
@@ -288,16 +294,20 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
                 .orElse(-1) + 1;
     }
 
-    public Task getTaskById(Long predecessorId) {
+    public Task getTaskById(UUID predecessorId) {
         return tasks.stream().filter(task -> task.getId().equals(predecessorId)).findFirst().orElse(null);
+    }
+
+    public Task getTaskByName(String name) {
+        return tasks.stream().filter(task -> task.getName().equals(name)).findFirst().orElse(null);
     }
 
     @JsonIgnore
     public User getUser() {
-        return getuser(userId);
+        return getUser(userId);
     }
 
-    public User getuser(Long resourceId) {
+    public User getUser(UUID resourceId) {
         return userMap.get(resourceId);
     }
 
@@ -306,31 +316,40 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     }
 
     public void initTaskMap(List<Task> tasks, List<Worklog> worklogs) {
-        this.worklogs = worklogs;
+        this.worklogs = new ArrayList<>(worklogs);
         taskMap.clear();
         worklogRemaining.clear();
         for (Task task : tasks) {
-            taskMap.put(task.getId(), task);
+            if (task.getSprintId().equals(id)) {
+                taskMap.put(task.getId(), task);
+            }
         }
         tasks.forEach(task -> {
-            //set the parent task
-            if (task.getParentTaskId() != null) {
-                task.setParentTask(taskMap.get(task.getParentTaskId()));
-                //add the task to the parent task
-                task.getParentTask().addChildTask(task);
-            }
-            if (worklogs != null) {
-                for (Worklog worklog : worklogs) {
-                    if (worklog.getTaskId().equals(task.getId())) {
-                        task.addWorklog(worklog);
+            if (task.getSprintId().equals(id)) {
+                //set the parent task
+                if (task.getParentTaskId() != null) {
+                    task.setParentTask(taskMap.get(task.getParentTaskId()));
+                    //add the task to the parent task
+                    task.getParentTask().addChildTask(task);
+                }
+                if (worklogs != null) {
+                    for (Worklog worklog : worklogs) {
+                        if (worklog.getTaskId().equals(task.getId())) {
+                            task.addWorklog(worklog);
+                        }
                     }
                 }
+                task.setSprint(this);
+                task.initialize();
+                addWorklogRemaining(task);
             }
-            task.setSprint(this);
-            task.initialize();
-            addWorklogRemaining(task);
         });
-        this.tasks = tasks;
+        this.tasks = new ArrayList<>();
+        tasks.forEach(task -> {
+            if (task.getSprintId().equals(id)) {
+                this.tasks.add(task);
+            }
+        });
         setStart(getEarliestStartDate());
     }
 

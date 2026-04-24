@@ -23,6 +23,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "relations")
@@ -35,12 +38,12 @@ import org.hibernate.annotations.BatchSize;
 public class RelationDAO {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    Long id;
+    UUID id;
 
     @Column(nullable = false)
-    Long predecessorId;
+    UUID predecessorId;
 
     @Column(nullable = false)
     Boolean visible;

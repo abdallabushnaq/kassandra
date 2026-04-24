@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
@@ -104,7 +105,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         // Admin creates users
 
         // Admin creates a group
-        Set<Long> memberIds = Set.of(user1.getId(), user2.getId());
+        Set<UUID> memberIds = Set.of(user1.getId(), user2.getId());
         UserGroup group     = userGroupApi.create("Developers", "Development team", memberIds);
 
         assertNotNull(group);

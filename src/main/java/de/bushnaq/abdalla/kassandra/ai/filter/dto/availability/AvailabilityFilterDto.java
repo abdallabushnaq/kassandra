@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter.dto.availability;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,7 +47,7 @@ public class AvailabilityFilterDto {
      */
     private int            availabilityPercent;
     private OffsetDateTime created;
-    private Long           id;
+    private UUID           id;
     private LocalDate      start;
     private OffsetDateTime updated;
 

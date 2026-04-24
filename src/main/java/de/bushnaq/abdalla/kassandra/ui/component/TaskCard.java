@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
+import java.util.UUID;
 import com.vaadin.flow.component.dnd.DragSource;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
@@ -53,7 +54,7 @@ public class TaskCard extends Div {
     private final       Runnable        onTitleClickHandler;
     @Getter
     private final       Task            task;
-    private final       Map<Long, User> userMap;
+    private final       Map<UUID, User> userMap;
 
     /**
      * Constructs a TaskCard with no click handlers.
@@ -61,7 +62,7 @@ public class TaskCard extends Div {
      * @param task    the task to display
      * @param userMap map of user IDs to User objects for avatar display
      */
-    public TaskCard(Task task, Map<Long, User> userMap) {
+    public TaskCard(Task task, Map<UUID, User> userMap) {
         this(task, userMap, null, null);
     }
 
@@ -72,7 +73,7 @@ public class TaskCard extends Div {
      * @param userMap        map of user IDs to User objects for avatar display
      * @param onClickHandler handler invoked when the card body is clicked (e.g. log work); may be {@code null}
      */
-    public TaskCard(Task task, Map<Long, User> userMap, Runnable onClickHandler) {
+    public TaskCard(Task task, Map<UUID, User> userMap, Runnable onClickHandler) {
         this(task, userMap, onClickHandler, null);
     }
 
@@ -84,7 +85,7 @@ public class TaskCard extends Div {
      * @param onClickHandler      handler invoked when the card body (outside the title) is clicked; may be {@code null}
      * @param onTitleClickHandler handler invoked when the task title is clicked; may be {@code null}
      */
-    public TaskCard(Task task, Map<Long, User> userMap, Runnable onClickHandler, Runnable onTitleClickHandler) {
+    public TaskCard(Task task, Map<UUID, User> userMap, Runnable onClickHandler, Runnable onTitleClickHandler) {
         this.task                = task;
         this.userMap             = userMap;
         this.onClickHandler      = onClickHandler;

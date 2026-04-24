@@ -27,6 +27,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class WorklogApi extends AbstractApi {
@@ -44,7 +45,7 @@ public class WorklogApi extends AbstractApi {
 
     }
 
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/worklog/{id}",
                 HttpMethod.DELETE,
@@ -64,7 +65,7 @@ public class WorklogApi extends AbstractApi {
         return Arrays.asList(response.getBody());
     }
 
-    public List<Worklog> getAll(Long sprintId) {
+    public List<Worklog> getAll(UUID sprintId) {
         ResponseEntity<Worklog[]> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/worklog/sprint/{sprintId}",
                 HttpMethod.GET,
@@ -75,7 +76,7 @@ public class WorklogApi extends AbstractApi {
         return Arrays.asList(response.getBody());
     }
 
-    public Worklog getById(Long id) {
+    public Worklog getById(UUID id) {
         ResponseEntity<Worklog> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/worklog/{id}",
                 HttpMethod.GET,

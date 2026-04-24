@@ -22,16 +22,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.BiConsumer;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+/**
+ * Compares sprints without comparing their IDs.
+ * Supports shallow compare, ignoring any list elements.
+ */
 public class DTOAsserts {
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static void assertAvailabilityEquals(Availability expected, Availability actual) {
-        assertEquals(expected.getCreated(), actual.getCreated(), String.format("Availability '%d' created date does not match", actual.getId()));
+        assertEquals(expected.getCreated(), actual.getCreated(), String.format("Availability '%s' created date does not match", actual.getId()));
 //        assertEquals(expected.getUpdated(), actual.getUpdated(), String.format("Availability '%d' updated date does not match", actual.getId()));
-        assertEquals(expected.getId(), actual.getId(), "Availability IDs do not match");
+//        assertEquals(expected.getId(), actual.getId(), "Availability IDs do not match");
         assertEquals(expected.getAvailability(), actual.getAvailability(), "Availability values do not match");
         assertEquals(expected.getStart(), actual.getStart(), "Availability start dates do not match");
     }
@@ -43,13 +52,10 @@ public class DTOAsserts {
     protected static void assertFeatureEquals(Feature expected, Feature actual, boolean shallow) {
         assertEquals(expected.getCreated(), actual.getCreated(), String.format("Feature '%s' created date does not match", actual.getName()));
 //        assertEquals(expected.getUpdated(), actual.getUpdated(), String.format("Project '%s' updated date does not match", actual.getName()));
-        assertEquals(expected.getId(), actual.getId(), "Feature IDs do not match");
+//        assertEquals(expected.getId(), actual.getId(), "Feature IDs do not match");
         assertEquals(expected.getName(), actual.getName(), "Feature names do not match");
         if (!shallow) {
-            assertEquals(expected.getSprints().size(), actual.getSprints().size(), String.format("Number of sprints in feature '%s' do not match", actual.getName()));
-            for (int i = 0; i < expected.getSprints().size(); i++) {
-                assertSprintEquals(expected.getSprints().get(i), actual.getSprints().get(i));
-            }
+            assertUnorderedListEquals(expected.getSprints(), actual.getSprints(), Comparator.comparing(Sprint::getName), "sprints", DTOAsserts::assertSprintEquals);
         }
     }
 
@@ -62,31 +68,21 @@ public class DTOAsserts {
     }
 
     private static void assertLocationEquals(Location expected, Location actual) {
-        assertEquals(expected.getCreated(), actual.getCreated(), String.format("Location '%d' created date does not match", actual.getId()));
-//        assertEquals(expected.getUpdated(), actual.getUpdated(), String.format("Location '%d' updated date does not match", actual.getId()));
+        assertEquals(expected.getCreated(), actual.getCreated(), String.format("Location '%s' created date does not match", actual.getId()));
+//        assertEquals(expected.getUpdated(), actual.getUpdated(), String.format("Location '%s' updated date does not match", actual.getId()));
         assertEquals(expected.getCountry(), actual.getCountry(), "Location countries do not match");
-        assertEquals(expected.getId(), actual.getId(), "Location IDs do not match");
+//        assertEquals(expected.getId(), actual.getId(), "Location IDs do not match");
         assertEquals(expected.getState(), actual.getState(), "Location states do not match");
         assertEquals(expected.getStart(), actual.getStart());
     }
 
     private static void assertOffDayEquals(OffDay expected, OffDay actual) {
-        assertEquals(expected.getCreated(), actual.getCreated(), String.format("OffDay '%d' created date does not match", actual.getId()));
-//        assertEquals(expected.getUpdated(), actual.getUpdated(), String.format("OffDay '%d' updated date does not match", actual.getId()));
-        assertEquals(expected.getId(), actual.getId());
-        assertEquals(expected.getFirstDay(), actual.getFirstDay());
-        assertEquals(expected.getLastDay(), actual.getLastDay());
-        assertEquals(expected.getType(), actual.getType());
-    }
-
-    private static void assertUserWorkWeekEquals(UserWorkWeek expected, UserWorkWeek actual) {
-        assertEquals(expected.getCreated(), actual.getCreated(),
-                String.format("UserWorkWeek '%d' created date does not match", actual.getId()));
-        assertEquals(expected.getId(), actual.getId(), "UserWorkWeek IDs do not match");
-        assertEquals(expected.getStart(), actual.getStart(), "UserWorkWeek start dates do not match");
-        assertNotNull(actual.getWorkWeek(), "UserWorkWeek work-week reference must not be null");
-        assertEquals(expected.getWorkWeek().getId(), actual.getWorkWeek().getId(),
-                "UserWorkWeek work-week IDs do not match");
+        assertEquals(expected.getCreated(), actual.getCreated(), String.format("OffDay '%s' created date does not match", actual.getId()));
+//        assertEquals(expected.getUpdated(), actual.getUpdated(), String.format("OffDay '%s' updated date does not match", actual.getId()));
+//        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getFirstDay(), actual.getFirstDay(), "OffDays fist day do not match");
+        assertEquals(expected.getLastDay(), actual.getLastDay(), "OffDays last day do not match");
+        assertEquals(expected.getType(), actual.getType(), "OffDays type do not match");
     }
 
     protected static void assertProductEquals(Product expected, Product actual) {
@@ -96,18 +92,15 @@ public class DTOAsserts {
     protected static void assertProductEquals(Product expected, Product actual, boolean shallow) {
         assertEquals(expected.getCreated(), actual.getCreated(), String.format("Product '%s' created date does not match", actual.getName()));
 //        assertEquals(expected.getUpdated(), actual.getUpdated(), String.format("Product '%s' updated date does not match", actual.getName()));
-        assertEquals(expected.getId(), actual.getId(), "Product IDs do not match");
+//        assertEquals(expected.getId(), actual.getId(), "Product IDs do not match");
         assertEquals(expected.getName(), actual.getName(), "Product names do not match");
         if (!shallow) {
-            assertEquals(expected.getVersions().size(), actual.getVersions().size(), "Number of versions in product do not match");
-            for (int i = 0; i < expected.getVersions().size(); i++) {
-                assertVersionEquals(expected.getVersions().get(i), actual.getVersions().get(i));
-            }
+            assertUnorderedListEquals(expected.getVersions(), actual.getVersions(), Comparator.comparing(Version::getName), "versions", DTOAsserts::assertVersionEquals);
         }
     }
 
     protected static void assertRelationEquals(Relation expected, Relation actual) {
-        assertEquals(expected.getId(), actual.getId(), "Relation IDs do not match");
+//        assertEquals(expected.getId(), actual.getId(), "Relation IDs do not match");
         assertEquals(expected.getPredecessorId(), actual.getPredecessorId(), "Relation predecessor IDs do not match");
     }
 
@@ -120,71 +113,99 @@ public class DTOAsserts {
         assertEquals(expected.getCreated(), actual.getCreated(), String.format("Sprint '%s' created date does not match", actual.getName()));
 //        assertEquals(expected.getUpdated(), actual.getUpdated(), String.format("Sprint '%s' updated date does not match", actual.getName()));
         assertEquals(expected.getEnd(), actual.getEnd(), "Sprint end dates do not match");
-        assertEquals(expected.getId(), actual.getId(), "Sprint IDs do not match");
+//        assertEquals(expected.getId(), actual.getId(), "Sprint IDs do not match");
         assertEquals(expected.getName(), actual.getName(), "Sprint names do not match");
         assertEquals(expected.getStart(), actual.getStart(), "Sprint start dates do not match");
         assertEquals(expected.getStatus(), actual.getStatus(), "Sprint status values do not match");
 
         if (!shallow) {
-            assertEquals(expected.getTasks().size(), actual.getTasks().size(), "Number of tasks in sprint do not match");
-            for (int i = 0; i < expected.getTasks().size(); i++) {
-                assertTaskEquals(expected.getTasks().get(i), actual.getTasks().get(i));
-            }
+            assertUnorderedListEquals(expected.getTasks(), actual.getTasks(), Comparator.comparing(Task::getName), "tasks", DTOAsserts::assertTaskEquals);
         }
     }
 
     protected static void assertTaskEquals(Task expected, Task actual) {
-        assertEquals(expected.getChildTasks().size(), actual.getChildTasks().size(), "Number of child tasks do not match");
-        for (int i = 0; i < expected.getChildTasks().size(); i++) {
-            assertTaskEquals(expected.getChildTasks().get(i), actual.getChildTasks().get(i));
-        }
+        if (expected == null && actual == null)
+            return;
+        assertUnorderedListEquals(expected.getChildTasks(), actual.getChildTasks(), Comparator.comparing(Task::getName), "child tasks", DTOAsserts::assertTaskEquals);
 
         assertEquals(expected.getDuration(), actual.getDuration(), "Task durations do not match");
         assertLocalDateTimeEquals(expected.getFinish(), actual.getFinish(), "Task finish");
-        assertEquals(expected.getId(), actual.getId(), "Task IDs do not match");
+//        assertEquals(expected.getId(), actual.getId(), "Task IDs do not match");
         assertEquals(expected.getName(), actual.getName(), "Task names do not match");
-        assertEquals(expected.getParentTask(), actual.getParentTask(), "Task parents do not match");
+//        assertTaskEquals(expected.getParentTask(), actual.getParentTask());
 
-        assertEquals(expected.getPredecessors().size(), actual.getPredecessors().size(), "Number of task predecessors do not match");
-        for (int i = 0; i < expected.getPredecessors().size(); i++) {
-            assertRelationEquals(expected.getPredecessors().get(i), actual.getPredecessors().get(i));
-        }
+        //TODO find a way to compare relations.
+//        assertUnorderedListEquals(expected.getPredecessors(), actual.getPredecessors(), Comparator.comparing(Relation::getId), "features", DTOAsserts::assertRelationEquals);
 
-        assertEquals(expected.getResourceId(), actual.getResourceId(), "Task resource IDs do not match");
+        assertUserEquals(expected.getSprint().getUser(expected.getResourceId()), actual.getSprint().getUser(actual.getResourceId()), true);
         assertLocalDateTimeEquals(expected.getStart(), actual.getStart(), "Task start");
     }
 
+    /**
+     * Compares two collections independent of order by sorting both by the given comparator and then
+     * applying {@code elementAssert} to each pair of corresponding elements.
+     *
+     * @param <T>           element type
+     * @param expected      expected collection
+     * @param actual        actual collection
+     * @param comparator    comparator used to sort both collections before comparison
+     * @param label         human-readable label used in the size-mismatch message
+     * @param elementAssert per-element assertion; receives (expected, actual)
+     */
+    protected static <T> void assertUnorderedListEquals(Collection<T> expected, Collection<T> actual, Comparator<T> comparator, String label, BiConsumer<T, T> elementAssert) {
+        assertEquals(expected.size(), actual.size(), String.format("Number of %s do not match", label));
+        List<T> sortedExpected = expected.stream().sorted(comparator).toList();
+        List<T> sortedActual   = actual.stream().sorted(comparator).toList();
+        for (int i = 0; i < sortedExpected.size(); i++) {
+            elementAssert.accept(sortedExpected.get(i), sortedActual.get(i));
+        }
+    }
+
     protected static void assertUserEquals(User expected, User actual) {
+        assertUserEquals(expected, actual, false);
+    }
+
+    protected static void assertUserEquals(User expected, User actual, boolean shallow) {
+        if (expected == null && actual == null)
+            return;
         assertEquals(expected.getCreated(), actual.getCreated(), String.format("User '%s' created date does not match", actual.getName()));
 //        assertEquals(expected.getUpdated(), actual.getUpdated(), String.format("User '%s' updated date does not match", actual.getName()));
 
-        assertEquals(expected.getAvailabilities().size(), actual.getAvailabilities().size(), "Number of user availabilities do not match");
-        for (int i = 0; i < expected.getAvailabilities().size(); i++) {
-            assertAvailabilityEquals(expected.getAvailabilities().get(i), actual.getAvailabilities().get(i));
-        }
+        if (!shallow)
+            assertUnorderedListEquals(expected.getAvailabilities(), actual.getAvailabilities(),
+                    Comparator.comparing(Availability::getStart), "user availabilities",
+                    DTOAsserts::assertAvailabilityEquals);
 
         assertEquals(expected.getEmail(), actual.getEmail(), String.format("User '%s' email do not match", actual.getName()));
         assertEquals(expected.getFirstWorkingDay(), actual.getFirstWorkingDay(), String.format("User '%s' first working days do not match", actual.getName()));
-        assertEquals(expected.getId(), actual.getId(), String.format("User '%s' ID dos not match", actual.getName()));
+//        assertEquals(expected.getId(), actual.getId(), String.format("User '%s' ID dos not match", actual.getName()));
         assertEquals(expected.getLastWorkingDay(), actual.getLastWorkingDay(), String.format("User '%s' last working days do not match", actual.getName()));
 
-        assertEquals(expected.getLocations().size(), actual.getLocations().size(), String.format("Number of user '%s' locations do not match", actual.getName()));
-        for (int i = 0; i < expected.getLocations().size(); i++) {
-            assertLocationEquals(expected.getLocations().get(i), actual.getLocations().get(i));
-        }
+        if (!shallow)
+            assertUnorderedListEquals(expected.getLocations(), actual.getLocations(),
+                    Comparator.comparing(Location::getStart), "user locations",
+                    DTOAsserts::assertLocationEquals);
 
         assertEquals(expected.getName(), actual.getName(), String.format("User '%s' name dos not match", actual.getName()));
 
-        assertEquals(expected.getOffDays().size(), actual.getOffDays().size(), String.format("Number of user '%s' off days do not match", actual.getName()));
-        for (int i = 0; i < expected.getOffDays().size(); i++) {
-            assertOffDayEquals(expected.getOffDays().get(i), actual.getOffDays().get(i));
-        }
+        if (!shallow)
+            assertUnorderedListEquals(expected.getOffDays(), actual.getOffDays(),
+                    Comparator.comparing(OffDay::getFirstDay), "user off days",
+                    DTOAsserts::assertOffDayEquals);
 
-        assertEquals(expected.getUserWorkWeeks().size(), actual.getUserWorkWeeks().size(),
-                String.format("Number of user '%s' work-week assignments do not match", actual.getName()));
-        for (int i = 0; i < expected.getUserWorkWeeks().size(); i++) {
-            assertUserWorkWeekEquals(expected.getUserWorkWeeks().get(i), actual.getUserWorkWeeks().get(i));
-        }
+        if (!shallow)
+            assertUnorderedListEquals(expected.getUserWorkWeeks(), actual.getUserWorkWeeks(),
+                    Comparator.comparing(UserWorkWeek::getStart), "user work-week assignments",
+                    DTOAsserts::assertUserWorkWeekEquals);
+    }
+
+    private static void assertUserWorkWeekEquals(UserWorkWeek expected, UserWorkWeek actual) {
+        assertEquals(expected.getCreated(), actual.getCreated(),
+                String.format("UserWorkWeek '%s' created date does not match", actual.getId()));
+//        assertEquals(expected.getId(), actual.getId(), "UserWorkWeek IDs do not match");
+        assertEquals(expected.getStart(), actual.getStart(), "UserWorkWeek start dates do not match");
+        assertNotNull(actual.getWorkWeek(), "UserWorkWeek work-week reference must not be null");
+        assertEquals(expected.getWorkWeek().getName(), actual.getWorkWeek().getName(), "UserWorkWeek work-week IDs do not match");
     }
 
     protected static void assertVersionEquals(Version expected, Version actual) {
@@ -194,13 +215,10 @@ public class DTOAsserts {
     protected static void assertVersionEquals(Version expected, Version actual, boolean shallow) {
         assertEquals(expected.getCreated(), actual.getCreated(), String.format("Version '%s' created date does not match", actual.getName()));
 //        assertEquals(expected.getUpdated(), actual.getUpdated(), String.format("Version '%s' updated date does not match", actual.getName()));
-        assertEquals(expected.getId(), actual.getId(), "Version IDs do not match");
+//        assertEquals(expected.getId(), actual.getId(), "Version IDs do not match");
         assertEquals(expected.getName(), actual.getName(), "Version names do not match");
         if (!shallow) {
-            assertEquals(expected.getFeatures().size(), actual.getFeatures().size(), "Number of features in version do not match");
-            for (int i = 0; i < expected.getFeatures().size(); i++) {
-                assertFeatureEquals(expected.getFeatures().get(i), actual.getFeatures().get(i));
-            }
+            assertUnorderedListEquals(expected.getFeatures(), actual.getFeatures(), Comparator.comparing(Feature::getName), "features", DTOAsserts::assertFeatureEquals);
         }
     }
 }

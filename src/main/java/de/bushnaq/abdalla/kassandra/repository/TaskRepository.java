@@ -24,13 +24,14 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
-public interface TaskRepository extends ListCrudRepository<TaskDAO, Long> {
+public interface TaskRepository extends ListCrudRepository<TaskDAO, UUID> {
     List<TaskDAO> findAllByOrderByOrderIdAsc();
 
-    List<TaskDAO> findBySprintId(Long sprintId);
+    List<TaskDAO> findBySprintId(UUID sprintId);
 
-    List<TaskDAO> findBySprintIdOrderByOrderIdAsc(Long sprintId);
+    List<TaskDAO> findBySprintIdOrderByOrderIdAsc(UUID sprintId);
 
     /**
      * Find all tasks that are direct children of the given parent task.
@@ -38,18 +39,17 @@ public interface TaskRepository extends ListCrudRepository<TaskDAO, Long> {
      * @param parentTaskId the ID of the parent task
      * @return list of child tasks
      */
-    List<TaskDAO> findByParentTaskId(Long parentTaskId);
+    List<TaskDAO> findByParentTaskId(UUID parentTaskId);
 
     /**
      * Find all tasks that have at least one predecessor relation pointing to one of the given task IDs.
-     * Used to clean up inbound dependency references before deleting a set of tasks.
      *
      * @param ids the set of task IDs that are being deleted
      * @return tasks with at least one matching predecessor entry
      */
     @Query("SELECT DISTINCT t FROM TaskDAO t JOIN t.predecessors r WHERE r.predecessorId IN :ids")
-    List<TaskDAO> findByPredecessorIdIn(@Param("ids") Collection<Long> ids);
+    List<TaskDAO> findByPredecessorIdIn(@Param("ids") Collection<UUID> ids);
 
     @Query("SELECT COALESCE(MAX(t.orderId), -1) FROM TaskDAO t where sprintId=:sprintId")
-    Integer findMaxOrderId(Long sprintId);
+    Integer findMaxOrderId(UUID sprintId);
 }

@@ -35,6 +35,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerErrorException;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
 public class FeatureApiTest extends AbstractEntityGenerator {
-    private static final long   FAKE_ID     = 999999L;
+    private static final UUID   FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final String SECOND_NAME = "SECOND_NAME";
 
     @Test
@@ -68,7 +69,7 @@ public class FeatureApiTest extends AbstractEntityGenerator {
 
         {
             Feature feature = expectedFeatures.getFirst();
-            Long    id      = feature.getId();
+            UUID    id      = feature.getId();
             String  name    = feature.getName();
             feature.setName(SECOND_NAME);
             try {
@@ -119,7 +120,7 @@ public class FeatureApiTest extends AbstractEntityGenerator {
     public void delete() throws Exception {
         //create the users
         addRandomProducts(2);
-        removeFeature(expectedFeatures.getFirst().getId());
+        removeFeature(expectedFeatures.get(1).getId());
     }
 
     @Test
@@ -179,7 +180,7 @@ public class FeatureApiTest extends AbstractEntityGenerator {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void update() throws Exception {
         addRandomProducts(2);
-        Feature feature = expectedFeatures.getFirst();
+        Feature feature = expectedFeatures.get(1);
         feature.setName(SECOND_NAME);
         updateFeature(feature);
     }
@@ -215,7 +216,7 @@ public class FeatureApiTest extends AbstractEntityGenerator {
     public void updateUsingFakeId() throws Exception {
         addRandomProducts(2);
         Feature feature = expectedFeatures.getFirst();
-        Long    id      = feature.getId();
+        UUID    id      = feature.getId();
         String  name    = feature.getName();
         feature.setId(FAKE_ID);
         feature.setName(SECOND_NAME);

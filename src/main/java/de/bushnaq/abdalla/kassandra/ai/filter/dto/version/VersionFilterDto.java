@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.filter.dto.version;
 
+import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,9 +37,9 @@ import java.time.OffsetDateTime;
 public class VersionFilterDto {
 
     private OffsetDateTime created;
-    private Long           id;
+    private UUID           id;
     private String         name;
-    private Long           productId;
+    private UUID           productId;
     private OffsetDateTime updated;
 
     /**

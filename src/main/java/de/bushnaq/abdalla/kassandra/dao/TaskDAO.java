@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.util.DurationSerializer;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.UuidGenerator;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
 
@@ -31,6 +32,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * represents a task in a Gantt chart.
@@ -57,9 +59,9 @@ public class TaskDAO {
     private LocalDateTime finish;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    private Long                                        id;
+    private UUID                                        id;
     @Column(nullable = false)
     private boolean                                     impactOnCost      = true;
     @JsonSerialize(using = DurationSerializer.class)
@@ -77,7 +79,7 @@ public class TaskDAO {
     @Column(nullable = false)
     private Integer                                     orderId           = -1;
     @Column(nullable = true)
-    private Long                                        parentTaskId;
+    private UUID                                        parentTaskId;
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "task_id", referencedColumnName = "id")
     private List<RelationDAO>                           predecessors      = new ArrayList<>();
@@ -88,9 +90,9 @@ public class TaskDAO {
     @JsonDeserialize(using = DurationDeserializer.class)
     private Duration                                    remainingEstimate = Duration.ZERO;
     @Column(nullable = true)
-    private Long                                        resourceId;
+    private UUID                                        resourceId;
     @Column(nullable = false)
-    private Long                                        sprintId;
+    private UUID                                        sprintId;
     @Column(nullable = true)
     private LocalDateTime                               start;
     @Column(nullable = false)

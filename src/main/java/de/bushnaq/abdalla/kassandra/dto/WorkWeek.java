@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.dto;
 import lombok.*;
 
 import java.time.DayOfWeek;
+import java.util.UUID;
 
 /**
  * DTO representing a globally-defined work week.
@@ -40,7 +41,7 @@ public class WorkWeek extends AbstractTimeAware implements Comparable<WorkWeek> 
     private String          description;
 
     /** Primary key. */
-    private Long            id;
+    private UUID            id;
 
     /**
      * Number of {@link UserWorkWeek} assignments that reference this work week.

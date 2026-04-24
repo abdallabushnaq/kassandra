@@ -22,6 +22,7 @@ import lombok.*;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -30,14 +31,14 @@ import java.time.OffsetDateTime;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Worklog extends AbstractTimeAwareDAO implements Comparable<Worklog> {
 
-    private Long           authorId;
+    private UUID           authorId;
     private String         comment;
-    private Long           id;
-    private Long           sprintId;
+    private UUID           id;
+    private UUID           sprintId;
     private OffsetDateTime start;
-    private Long           taskId;
+    private UUID           taskId;
     private Duration       timeSpent;
-    private Long           updateAuthorId;
+    private UUID           updateAuthorId;
 
     @Override
     public int compareTo(Worklog other) {

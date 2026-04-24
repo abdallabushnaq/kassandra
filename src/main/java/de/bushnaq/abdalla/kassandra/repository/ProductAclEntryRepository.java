@@ -23,18 +23,19 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Repository for managing Product ACL entries
  */
-public interface ProductAclEntryRepository extends ListCrudRepository<ProductAclEntryDAO, Long> {
+public interface ProductAclEntryRepository extends ListCrudRepository<ProductAclEntryDAO, UUID> {
 
     /**
      * Delete all ACL entries for a product
      *
      * @param productId the product ID
      */
-    void deleteByProductId(Long productId);
+    void deleteByProductId(UUID productId);
 
     /**
      * Delete a specific group's access to a product
@@ -42,7 +43,7 @@ public interface ProductAclEntryRepository extends ListCrudRepository<ProductAcl
      * @param productId the product ID
      * @param groupId   the group ID
      */
-    void deleteByProductIdAndGroupId(Long productId, Long groupId);
+    void deleteByProductIdAndGroupId(UUID productId, UUID groupId);
 
     /**
      * Delete a specific user's access to a product
@@ -50,7 +51,7 @@ public interface ProductAclEntryRepository extends ListCrudRepository<ProductAcl
      * @param productId the product ID
      * @param userId    the user ID
      */
-    void deleteByProductIdAndUserId(Long productId, Long userId);
+    void deleteByProductIdAndUserId(UUID productId, UUID userId);
 
     /**
      * Check if a specific group has access to a product
@@ -59,7 +60,7 @@ public interface ProductAclEntryRepository extends ListCrudRepository<ProductAcl
      * @param groupId   the group ID
      * @return true if the group has access
      */
-    boolean existsByProductIdAndGroupId(Long productId, Long groupId);
+    boolean existsByProductIdAndGroupId(UUID productId, UUID groupId);
 
     /**
      * Check if a specific user has direct access to a product
@@ -68,7 +69,7 @@ public interface ProductAclEntryRepository extends ListCrudRepository<ProductAcl
      * @param userId    the user ID
      * @return true if the user has direct access
      */
-    boolean existsByProductIdAndUserId(Long productId, Long userId);
+    boolean existsByProductIdAndUserId(UUID productId, UUID userId);
 
     /**
      * Find all ACL entries for a product
@@ -76,7 +77,7 @@ public interface ProductAclEntryRepository extends ListCrudRepository<ProductAcl
      * @param productId the product ID
      * @return list of ACL entries
      */
-    List<ProductAclEntryDAO> findByProductId(Long productId);
+    List<ProductAclEntryDAO> findByProductId(UUID productId);
 
     /**
      * Find all product IDs that a user has access to (either directly or through groups)
@@ -87,7 +88,7 @@ public interface ProductAclEntryRepository extends ListCrudRepository<ProductAcl
     @Query("SELECT DISTINCT acl.productId FROM ProductAclEntryDAO acl " +
             "WHERE acl.userId = :userId OR acl.groupId IN " +
             "(SELECT g.id FROM UserGroupDAO g WHERE :userId MEMBER OF g.memberIds)")
-    List<Long> findProductIdsByUserAccess(@Param("userId") Long userId);
+    List<UUID> findProductIdsByUserAccess(@Param("userId") UUID userId);
 
     /**
      * Check if a user has access to a product (either directly or through groups)
@@ -102,8 +103,7 @@ public interface ProductAclEntryRepository extends ListCrudRepository<ProductAcl
             "(acl.userId = :userId OR acl.groupId IN " +
             "(SELECT g.id FROM UserGroupDAO g WHERE :userId MEMBER OF g.memberIds))")
     boolean hasUserAccessToProduct(
-            @Param("productId") Long productId,
-            @Param("userId") Long userId
+            @Param("productId") UUID productId,
+            @Param("userId") UUID userId
     );
 }
-

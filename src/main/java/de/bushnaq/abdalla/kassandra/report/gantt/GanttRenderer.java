@@ -98,7 +98,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
         int y = yOffset + GANTT_TASK_PRI_SPACE;
         for (Task task : sprint.getTasks()) {
             if (GanttUtil.isValidTask(task)) {
-                taskHeight.put(task.getId(), y);
+                taskHeight.put("0-" + task.getId(), y);
                 y += getTaskHeight() + 1;
             }
         }
@@ -129,7 +129,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
         int ganttUniqueId = 0;
         for (Task task : sprint.getTasks()) {
             ProjectCalendar pc   = task.getEffectiveCalendar();
-            Integer         lane = taskHeight.get(ganttUniqueId * 10000 + task.getId());
+            Integer         lane = taskHeight.get(ganttUniqueId + "-" + task.getId());
             int             y    = lane + getTaskHeight() / 2;
             int             x    = calculateDayX(currentDay);
             int             y1   = y - getTaskHeight() / 2;

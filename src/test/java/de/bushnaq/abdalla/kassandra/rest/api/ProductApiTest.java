@@ -45,6 +45,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
@@ -57,7 +58,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
 public class ProductApiTest extends AbstractUiTestUtil {
-    private static final long   FAKE_ID     = 999999L;
+    private static final UUID   FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final String SECOND_NAME = "SECOND_NAME";
     private              User   admin1;
     private              User   user1;
@@ -300,12 +301,12 @@ public class ProductApiTest extends AbstractUiTestUtil {
         // Each user can only see their own product
         List<Product> user3Products = productApi.getAll();
         assertEquals(1 + 1, user3Products.size());// the "Default" Product is always there
-        assertEquals("Product 3", user3Products.get(1).getName());
+        assertTrue(user3Products.stream().anyMatch(p -> "Product 3".equals(p.getName())));
 
         setUser(user1.getEmail(), "ROLE_USER");
         List<Product> user1Products = productApi.getAll();
         assertEquals(1 + 1, user1Products.size());// the "Default" Product is always there
-        assertEquals("Product 1", user1Products.get(1).getName());
+        assertTrue(user1Products.stream().anyMatch(p -> "Product 1".equals(p.getName())));
 
         // Admin can see all products
         setUser("admin-user", "ROLE_ADMIN");
@@ -378,7 +379,7 @@ public class ProductApiTest extends AbstractUiTestUtil {
     public void updateUsingFakeId() throws Exception {
         addRandomProducts(2);
         Product product = expectedProducts.getFirst();
-        Long    id      = product.getId();
+        UUID    id      = product.getId();
         String  name    = product.getName();
         product.setId(FAKE_ID);
         product.setName(SECOND_NAME);

@@ -20,6 +20,9 @@ package de.bushnaq.abdalla.kassandra.dao;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.util.UUID;
 
 /**
  * Entity representing an Access Control List entry for a product.
@@ -42,15 +45,15 @@ import org.hibernate.annotations.BatchSize;
 public class ProductAclEntryDAO extends AbstractTimeAwareDAO {
 
     @Column(name = "group_id")
-    private Long groupId;
+    private UUID groupId;
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    private Long id;
+    private UUID id;
     @Column(name = "product_id", nullable = false)
-    private Long productId;
+    private UUID productId;
     @Column(name = "user_id")
-    private Long userId;
+    private UUID userId;
 
     /**
      * Check if this entry is for a group

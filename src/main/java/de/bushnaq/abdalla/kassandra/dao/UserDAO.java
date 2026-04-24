@@ -21,7 +21,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
 
 import java.awt.*;
@@ -29,13 +32,16 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Supports client side id generation.
+ */
 @Entity
 @Table(name = "users")
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
@@ -45,22 +51,21 @@ public class UserDAO extends AbstractTimeAwareDAO {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<AvailabilityDAO> availabilities = new ArrayList<>();
-    @Column(name = "light_avatar_hash", length = 16)
-    private String                lightAvatarHash;
-    @Column(name = "dark_avatar_hash", length = 16)
-    private String                darkAvatarHash;
     @Column(nullable = false)
     private Color                 color;
+    @Column(name = "dark_avatar_hash", length = 16)
+    private String                darkAvatarHash;
     @Column(nullable = false, unique = true)
     private String                email;
     @Column(nullable = false)
     private LocalDate             firstWorkingDay;//first working day
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long                  id;
+    private UUID                  id;
     @Column(nullable = true)
     private LocalDate             lastWorkingDay;//last working day
+    @Column(name = "light_avatar_hash", length = 16)
+    private String                lightAvatarHash;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("start ASC")
     @JsonManagedReference
@@ -76,6 +81,10 @@ public class UserDAO extends AbstractTimeAwareDAO {
     @OrderBy("start ASC")
     @JsonManagedReference
     private List<UserWorkWeekDAO> userWorkWeeks  = new ArrayList<>();
+
+    public UserDAO() {
+        setId(UUID.randomUUID());
+    }
 
     /**
      * Add a role to this user

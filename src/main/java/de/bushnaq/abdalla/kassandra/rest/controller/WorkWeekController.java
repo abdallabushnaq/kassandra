@@ -28,6 +28,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * REST controller for managing global work week definitions.
@@ -68,7 +69,7 @@ public class WorkWeekController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Object> delete(@PathVariable Long id) {
+    public ResponseEntity<Object> delete(@PathVariable UUID id) {
         if (!workWeekRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
@@ -104,7 +105,7 @@ public class WorkWeekController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<WorkWeekDAO> getById(@PathVariable Long id) {
+    public ResponseEntity<WorkWeekDAO> getById(@PathVariable UUID id) {
         return workWeekRepository.findById(id)
                 .map(ww -> {
                     ww.setUserCount((int) userWorkWeekRepository.countByWorkWeekId(ww.getId()));
@@ -122,7 +123,7 @@ public class WorkWeekController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Object> update(@PathVariable Long id, @RequestBody WorkWeekDAO workWeek) {
+    public ResponseEntity<Object> update(@PathVariable UUID id, @RequestBody WorkWeekDAO workWeek) {
         if (!workWeekRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }

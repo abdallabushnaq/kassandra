@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -60,9 +61,9 @@ public class SprintCard extends Div {
     private final Sprint                 sprint;
     private final List<Task>             stories;
     private       VerticalLayout         storiesContainer;
-    private final Map<Long, User>        userMap;
+    private final Map<UUID, User>        userMap;
 
-    public SprintCard(Sprint sprint, List<Task> stories, List<Task> allTasks, Map<Long, User> userMap,
+    public SprintCard(Sprint sprint, List<Task> stories, List<Task> allTasks, Map<UUID, User> userMap,
                       String searchText, java.util.Set<User> selectedUsers, BacklogDragDropHandler dragDropHandler) {
         this.sprint          = sprint;
         this.stories         = stories;

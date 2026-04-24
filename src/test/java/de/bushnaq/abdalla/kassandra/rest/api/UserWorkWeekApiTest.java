@@ -47,6 +47,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -65,7 +66,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @AutoConfigureMockMvc
 public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
-    private static final long   FAKE_ID           = 999999L;
+    private static final UUID   FAKE_ID           = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final String FIRST_START_DATE  = "2024-03-14";
     private static final String SECOND_START_DATE = "2025-07-01";
     /**
@@ -242,7 +243,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
         {
             User         user   = expectedUsers.getFirst();
             UserWorkWeek uww    = user.getUserWorkWeeks().get(1);
-            Long         realId = uww.getId();
+            UUID         realId = uww.getId();
             uww.setId(FAKE_ID);
             try {
                 userWorkWeekApi.deleteById(user.getId(), uww.getId());
@@ -277,7 +278,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
         // Try to delete using a fake user ID
         {
             User user       = expectedUsers.getFirst();
-            Long realUserId = user.getId();
+            UUID realUserId = user.getId();
             user.setId(FAKE_ID);
             try {
                 userWorkWeekApi.deleteById(user.getId(), user.getUserWorkWeeks().get(1).getId());
@@ -335,7 +336,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
         {
             User         user      = expectedUsers.getFirst();
             UserWorkWeek uww       = user.getUserWorkWeeks().getFirst();
-            Long         realId    = uww.getId();
+            UUID         realId    = uww.getId();
             LocalDate    realStart = uww.getStart();
             uww.setId(FAKE_ID);
             uww.setStart(LocalDate.parse(SECOND_START_DATE));
@@ -372,7 +373,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
         // Attempt to update using a fake user ID
         {
             User user       = expectedUsers.getFirst();
-            Long realUserId = user.getId();
+            UUID realUserId = user.getId();
             user.setId(FAKE_ID);
             UserWorkWeek uww       = user.getUserWorkWeeks().getFirst();
             LocalDate    realStart = uww.getStart();

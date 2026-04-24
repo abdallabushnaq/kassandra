@@ -27,6 +27,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -51,7 +52,7 @@ public class StoryTaskCard extends VerticalLayout {
     private final Consumer<Task>               onTaskTitleClick;
     private final boolean                      showSimplifiedHeader;
     private final Task                         story;
-    private final Map<Long, User>              userMap;
+    private final Map<UUID, User>              userMap;
 
     /**
      * Constructs a StoryTaskCard without click handlers.
@@ -62,7 +63,7 @@ public class StoryTaskCard extends VerticalLayout {
      * @param onTaskStatusChange   callback invoked when a task is dropped into a new status lane
      * @param showSimplifiedHeader {@code true} to show a compact story header
      */
-    public StoryTaskCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+    public StoryTaskCard(Task story, List<Task> childTasks, Map<UUID, User> userMap,
                          BiConsumer<Task, TaskStatus> onTaskStatusChange, boolean showSimplifiedHeader) {
         this(story, childTasks, userMap, onTaskStatusChange, showSimplifiedHeader, null, null);
     }
@@ -77,7 +78,7 @@ public class StoryTaskCard extends VerticalLayout {
      * @param showSimplifiedHeader {@code true} to show a compact story header
      * @param onTaskClick          handler invoked when a task card body is clicked; may be {@code null}
      */
-    public StoryTaskCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+    public StoryTaskCard(Task story, List<Task> childTasks, Map<UUID, User> userMap,
                          BiConsumer<Task, TaskStatus> onTaskStatusChange, boolean showSimplifiedHeader,
                          Consumer<Task> onTaskClick) {
         this(story, childTasks, userMap, onTaskStatusChange, showSimplifiedHeader, onTaskClick, null);
@@ -94,7 +95,7 @@ public class StoryTaskCard extends VerticalLayout {
      * @param onTaskClick          handler invoked when a task card body is clicked; may be {@code null}
      * @param onTaskTitleClick     handler invoked when the task title is clicked; may be {@code null}
      */
-    public StoryTaskCard(Task story, List<Task> childTasks, Map<Long, User> userMap,
+    public StoryTaskCard(Task story, List<Task> childTasks, Map<UUID, User> userMap,
                          BiConsumer<Task, TaskStatus> onTaskStatusChange, boolean showSimplifiedHeader,
                          Consumer<Task> onTaskClick, Consumer<Task> onTaskTitleClick) {
         this.story                = story;

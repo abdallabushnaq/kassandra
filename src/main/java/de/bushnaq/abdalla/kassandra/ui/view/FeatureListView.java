@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import java.util.UUID;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -90,8 +91,8 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     private final        FeatureApi                   featureApi;
     private              boolean                      isRestoringFromUrl                = false;
     private final        ProductApi                   productApi;
-    private              Long                         productId;
-    private final        Map<Long, Product>           productMap                        = new HashMap<>();
+    private UUID productId;
+    private final        Map<UUID, Product>           productMap                        = new HashMap<>();
     private              String                       requestedVersionIds;
     private              Set<Version>                 selectedVersions                  = new HashSet<>();
     private final        ChatPanelSessionState        sessionState;
@@ -99,8 +100,8 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     private final        StableDiffusionService       stableDiffusionService;
     private final        UserApi                      userApi;
     private final        VersionApi                   versionApi;
-    private              Long                         versionId;
-    private final        Map<Long, Version>           versionMap                        = new HashMap<>();
+    private UUID versionId;
+    private final        Map<UUID, Version>           versionMap                        = new HashMap<>();
     private final        MultiSelectComboBox<Version> versionSelector;
 
     public FeatureListView(FeatureApi featureApi, ProductApi productApi, VersionApi versionApi, UserApi userApi,
@@ -177,10 +178,10 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
         if (queryParameters.getParameters().containsKey("product")) {
-            this.productId = Long.parseLong(queryParameters.getParameters().get("product").getFirst());
+            this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
         }
         if (queryParameters.getParameters().containsKey("version")) {
-            this.versionId = Long.parseLong(queryParameters.getParameters().get("version").getFirst());
+            this.versionId = UUID.fromString(queryParameters.getParameters().get("version").getFirst());
         }
         // Resolve defaults when navigated directly from the menu (no URL params)
         if (productId == null) {
@@ -191,7 +192,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                     .orElse(null);
         }
         if (versionId == null && productId != null) {
-            final Long pid = productId;
+            final UUID pid = productId;
             versionId = versionApi.getAll().stream()
                     .filter(v -> pid.equals(v.getProductId()))
                     .map(Version::getId)
@@ -277,7 +278,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
      */
     private void applyFeatureFilter() {
         if (!selectedVersions.isEmpty()) {
-            Set<Long> versionIds = selectedVersions.stream().map(Version::getId).collect(Collectors.toSet());
+            Set<UUID> versionIds = selectedVersions.stream().map(Version::getId).collect(Collectors.toSet());
             getDataProvider().setFilter(f -> versionIds.contains(f.getVersionId()));
         } else {
             getDataProvider().setFilter(null);
@@ -428,7 +429,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
             versionSelector.setItems(new ArrayList<>(versionMap.values()));
             if (!currentSelection.isEmpty()) {
                 // Preserve the previously selected versions (match by ID)
-                Set<Long> selectedIds = currentSelection.stream().map(Version::getId).collect(Collectors.toSet());
+                Set<UUID> selectedIds = currentSelection.stream().map(Version::getId).collect(Collectors.toSet());
                 Set<Version> toRestore = versionMap.values().stream()
                         .filter(v -> selectedIds.contains(v.getId()))
                         .collect(Collectors.toSet());
@@ -443,7 +444,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                     Set<Version> toSelect = new HashSet<>();
                     for (String idStr : requestedVersionIds.split(",")) {
                         try {
-                            Long id = Long.parseLong(idStr.trim());
+                            UUID id = UUID.fromString(idStr.trim());
                             Optional.ofNullable(versionMap.get(id)).ifPresent(toSelect::add);
                         } catch (NumberFormatException e) {
                             log.warn("Invalid version ID in URL: {}", idStr);

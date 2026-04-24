@@ -39,6 +39,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -61,7 +62,7 @@ public class FeatureController {
     @DeleteMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasFeatureAccess(#id) or hasRole('ADMIN')")
     @Transactional
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable UUID id) {
         // Delete avatars first (cascade delete)
         featureAvatarRepository.deleteByFeatureId(id);
         featureAvatarGenerationDataRepository.deleteByFeatureId(id);
@@ -71,13 +72,13 @@ public class FeatureController {
 
     @GetMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasFeatureAccess(#id) or hasRole('ADMIN')")
-    public ResponseEntity<FeatureDAO> get(@PathVariable Long id) {
+    public ResponseEntity<FeatureDAO> get(@PathVariable UUID id) {
         return featureRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/version/{versionId}")
     @PreAuthorize("@aclSecurityService.hasVersionAccess(#versionId) or hasRole('ADMIN')")
-    public List<FeatureDAO> getAll(@PathVariable Long versionId) {
+    public List<FeatureDAO> getAll(@PathVariable UUID versionId) {
         return featureRepository.findByVersionId(versionId);
     }
 
@@ -92,7 +93,7 @@ public class FeatureController {
         // Regular users only see features of products they have access to
         return featureRepository.findAll().stream()
                 .filter(feature -> {
-                    Long productId = versionRepository.findById(feature.getVersionId())
+                    UUID productId = versionRepository.findById(feature.getVersionId())
                             .map(version -> version.getProductId())
                             .orElse(null);
                     return productId != null && productAclService.hasAccess(productId, SecurityUtils.getUserEmail());
@@ -102,7 +103,7 @@ public class FeatureController {
 
     @GetMapping("/{id}/avatar")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable Long id) {
+    public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable UUID id) {
         return featureAvatarRepository.findByFeatureId(id)
                 .map(avatar -> {
                     if (avatar.getLightAvatarImage() == null || avatar.getLightAvatarImage().length == 0) {
@@ -122,7 +123,7 @@ public class FeatureController {
      */
     @GetMapping("/{id}/dark-avatar")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable Long id) {
+    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable UUID id) {
         return featureAvatarRepository.findByFeatureId(id)
                 .map(avatar -> {
                     byte[] imageBytes = avatar.getDarkAvatarImage();
@@ -140,7 +141,7 @@ public class FeatureController {
 
     @GetMapping("/{id}/avatar/full")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable Long id) {
+    public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable UUID id) {
         AvatarUpdateRequest response = new AvatarUpdateRequest();
 
         // Get avatar images (light + dark)
@@ -166,7 +167,7 @@ public class FeatureController {
 
     @GetMapping("/version/{versionId}/by-name/{name}")
     @PreAuthorize("@aclSecurityService.hasVersionAccess(#versionId) or hasRole('ADMIN')")
-    public ResponseEntity<FeatureDAO> getByName(@PathVariable Long versionId, @PathVariable String name) {
+    public ResponseEntity<FeatureDAO> getByName(@PathVariable UUID versionId, @PathVariable String name) {
         FeatureDAO feature = featureRepository.findByNameAndVersionId(name, versionId);
         if (feature == null) {
             return ResponseEntity.notFound().build();
@@ -202,7 +203,7 @@ public class FeatureController {
     @PutMapping("/{id}/avatar/full")
     @PreAuthorize("@aclSecurityService.hasFeatureAccess(#id) or hasRole('ADMIN')")
     @Transactional
-    public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
+    public ResponseEntity<Void> updateAvatarFull(@PathVariable UUID id, @RequestBody AvatarUpdateRequest request) {
         // Verify feature exists
         Optional<FeatureDAO> featureOpt = featureRepository.findById(id);
         if (featureOpt.isEmpty()) {

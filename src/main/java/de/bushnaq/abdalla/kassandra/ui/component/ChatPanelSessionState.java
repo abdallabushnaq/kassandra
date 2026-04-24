@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Component;

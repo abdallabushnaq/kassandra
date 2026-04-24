@@ -26,6 +26,7 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -34,7 +35,7 @@ import java.util.Objects;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Feature extends AbstractTimeAware implements Comparable<Feature> {
     private String darkAvatarHash;
-    private Long   id;
+    private UUID   id;
     private String lightAvatarHash;
     private String name;
 
@@ -46,7 +47,7 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
     @ToString.Exclude//help intellij debugger not to go into a loop
     private Version version;
 
-    private Long versionId;
+    private UUID versionId;
 
     public void addSprint(Sprint sprint) {
         sprint.setFeature(this);

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
+import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,17 +42,17 @@ public class ProductAclDto {
     @Schema(description = "Human-readable name of the user or group")
     private String                       displayName;
     @Schema(description = "Group ID granted access; null for USER entries")
-    private Long                         groupId;
+    private UUID                         groupId;
     @Schema(description = "Unique ACL entry identifier")
-    private Long                         id;
+    private UUID                         id;
     @Schema(description = "Product this ACL entry belongs to")
-    private Long                         productId;
+    private UUID                         productId;
     @Schema(description = "Entry type: USER or GROUP")
     private ProductAclEntry.AclEntryType type;
     @Schema(description = "Timestamp when the entry was last updated (ISO 8601)")
     private OffsetDateTime               updated;
     @Schema(description = "User ID granted access; null for GROUP entries")
-    private Long                         userId;
+    private UUID                         userId;
 
     public static ProductAclDto from(ProductAclEntry entry) {
         if (entry == null) {

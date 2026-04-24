@@ -39,6 +39,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.Optional;
 
 @RestController
@@ -60,7 +61,7 @@ public class ProductController {
     @DeleteMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     @Transactional
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable UUID id) {
         // Delete ACL entries first
         productAclService.deleteProductAcl(id);
         // Delete avatars
@@ -78,7 +79,7 @@ public class ProductController {
         if (product == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        Long id = product.getId();
+        UUID id = product.getId();
         if (!SecurityUtils.isAdmin() && !productAclService.hasAccess(id, SecurityUtils.getUserEmail())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -94,7 +95,7 @@ public class ProductController {
 
     @GetMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
-    public Optional<ProductDAO> get(@PathVariable Long id) {
+    public Optional<ProductDAO> get(@PathVariable UUID id) {
         ProductDAO productEntity = productRepository.findById(id).orElseThrow();
         return Optional.of(productEntity);
     }
@@ -114,7 +115,7 @@ public class ProductController {
         if (!SecurityUtils.GUEST.equals(userEmail)) {
             return userRepository.findByEmail(userEmail)
                     .map(user -> {
-                        List<Long> accessibleProductIds = productAclService.getAccessibleProductIds(user.getId());
+                        List<UUID> accessibleProductIds = productAclService.getAccessibleProductIds(user.getId());
                         return productRepository.findAllById(accessibleProductIds);
                     })
                     .orElse(List.of());
@@ -125,7 +126,7 @@ public class ProductController {
 
     @GetMapping("/{id}/avatar")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
-    public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable Long id) {
+    public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable UUID id) {
         return productAvatarRepository.findByProductId(id)
                 .map(avatar -> {
                     if (avatar.getLightAvatarImage() == null || avatar.getLightAvatarImage().length == 0) {
@@ -145,7 +146,7 @@ public class ProductController {
      */
     @GetMapping("/{id}/dark-avatar")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
-    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable Long id) {
+    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable UUID id) {
         return productAvatarRepository.findByProductId(id)
                 .map(avatar -> {
                     byte[] imageBytes = avatar.getDarkAvatarImage();
@@ -163,7 +164,7 @@ public class ProductController {
 
     @GetMapping("/{id}/avatar/full")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
-    public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable Long id) {
+    public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable UUID id) {
         AvatarUpdateRequest response = new AvatarUpdateRequest();
 
         // Get avatar images (light + dark)
@@ -207,7 +208,7 @@ public class ProductController {
         if (!SecurityUtils.GUEST.equals(userEmail)) {
             ProductDAO product = productRepository.findByName(name);
             if (product != null) {
-                Long productId = product.getId();
+                UUID productId = product.getId();
                 if (productAclService.hasAccess(productId, userEmail)) {
                     return ResponseEntity.ok(product);
                 }
@@ -265,7 +266,7 @@ public class ProductController {
     @PutMapping("/{id}/avatar/full")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     @Transactional
-    public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
+    public ResponseEntity<Void> updateAvatarFull(@PathVariable UUID id, @RequestBody AvatarUpdateRequest request) {
         // Verify product exists
         Optional<ProductDAO> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty()) {

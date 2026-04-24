@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Service for managing Product Access Control Lists.
@@ -57,7 +58,7 @@ public class ProductAclService {
      */
     @Transactional
     @CacheEvict(value = "productAcl", allEntries = true)
-    public void deleteProductAcl(Long productId) {
+    public void deleteProductAcl(UUID productId) {
         aclRepository.deleteByProductId(productId);
         log.info("Deleted all ACL entries for product {}", productId);
     }
@@ -69,7 +70,7 @@ public class ProductAclService {
      * @return list of accessible product IDs
      */
     @Cacheable(value = "productAcl", key = "'products-' + #userId")
-    public List<Long> getAccessibleProductIds(Long userId) {
+    public List<UUID> getAccessibleProductIds(UUID userId) {
         return aclRepository.findProductIdsByUserAccess(userId);
     }
 
@@ -79,20 +80,19 @@ public class ProductAclService {
      * @param productId the product ID
      * @return list of ACL entries
      */
-    public List<ProductAclEntryDAO> getProductAcl(Long productId) {
+    public List<ProductAclEntryDAO> getProductAcl(UUID productId) {
         return aclRepository.findByProductId(productId);
     }
 
     /**
      * Automatically grant access to product creator
-     * This should be called when a new product is created
      *
      * @param productId     the product ID
      * @param creatorUserId the user ID of the creator
      */
     @Transactional
     @CacheEvict(value = "productAcl", allEntries = true)
-    public void grantCreatorAccess(Long productId, Long creatorUserId) {
+    public void grantCreatorAccess(UUID productId, UUID creatorUserId) {
         if (!aclRepository.existsByProductIdAndUserId(productId, creatorUserId)) {
             ProductAclEntryDAO entry = new ProductAclEntryDAO();
             entry.setProductId(productId);
@@ -113,7 +113,7 @@ public class ProductAclService {
      */
     @Transactional
     @CacheEvict(value = "productAcl", allEntries = true)
-    public ProductAclEntryDAO grantGroupAccess(Long productId, Long groupId) {
+    public ProductAclEntryDAO grantGroupAccess(UUID productId, UUID groupId) {
         validateProductExists(productId);
         validateGroupExists(groupId);
 
@@ -141,7 +141,7 @@ public class ProductAclService {
      */
     @Transactional
     @CacheEvict(value = "productAcl", allEntries = true)
-    public ProductAclEntryDAO grantUserAccess(Long productId, Long userId) {
+    public ProductAclEntryDAO grantUserAccess(UUID productId, UUID userId) {
         validateProductExists(productId);
         validateUserExists(userId);
 
@@ -165,7 +165,7 @@ public class ProductAclService {
      * @param userEmail the user email
      * @return true if user has access
      */
-    public boolean hasAccess(Long productId, String userEmail) {
+    public boolean hasAccess(UUID productId, String userEmail) {
         return userRepository.findByEmail(userEmail)
                 .map(user -> hasUserAccess(productId, user.getId()))
                 .orElse(false);
@@ -179,7 +179,7 @@ public class ProductAclService {
      * @return true if user has access
      */
     @Cacheable(value = "productAcl", key = "'access-' + #productId + '-' + #userId")
-    public boolean hasUserAccess(Long productId, Long userId) {
+    public boolean hasUserAccess(UUID productId, UUID userId) {
         return aclRepository.hasUserAccessToProduct(productId, userId);
     }
 
@@ -191,7 +191,7 @@ public class ProductAclService {
      */
     @Transactional
     @CacheEvict(value = "productAcl", allEntries = true)
-    public void revokeGroupAccess(Long productId, Long groupId) {
+    public void revokeGroupAccess(UUID productId, UUID groupId) {
         aclRepository.deleteByProductIdAndGroupId(productId, groupId);
         log.info("Revoked group {} access to product {}", groupId, productId);
     }
@@ -204,24 +204,24 @@ public class ProductAclService {
      */
     @Transactional
     @CacheEvict(value = "productAcl", allEntries = true)
-    public void revokeUserAccess(Long productId, Long userId) {
+    public void revokeUserAccess(UUID productId, UUID userId) {
         aclRepository.deleteByProductIdAndUserId(productId, userId);
         log.info("Revoked user {} access to product {}", userId, productId);
     }
 
-    private void validateGroupExists(Long groupId) {
+    private void validateGroupExists(UUID groupId) {
         if (!userGroupRepository.existsById(groupId)) {
             throw new EntityNotFoundException("Group not found: " + groupId);
         }
     }
 
-    private void validateProductExists(Long productId) {
+    private void validateProductExists(UUID productId) {
         if (!productRepository.existsById(productId)) {
             throw new EntityNotFoundException("Product not found: " + productId);
         }
     }
 
-    private void validateUserExists(Long userId) {
+    private void validateUserExists(UUID userId) {
         if (!userRepository.existsById(userId)) {
             throw new EntityNotFoundException("User not found: " + userId);
         }

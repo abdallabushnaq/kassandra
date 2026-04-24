@@ -45,6 +45,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import reactor.core.Disposable;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Reusable chat agent panel component.

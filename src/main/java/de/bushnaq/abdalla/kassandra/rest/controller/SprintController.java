@@ -28,6 +28,7 @@ import de.bushnaq.abdalla.kassandra.repository.*;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ProductAclService;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -46,6 +48,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SprintController {
 
+    @Autowired
+    EntityManager entityManager;
     @Autowired
     private FeatureRepository                    featureRepository;
     @Autowired
@@ -62,7 +66,7 @@ public class SprintController {
     @DeleteMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasSprintAccess(#id) or hasRole('ADMIN')")
     @Transactional
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable UUID id) {
         // Prevent deletion of the Backlog sprint
         SprintDAO sprint = sprintRepository.findById(id).orElseThrow();
         if (DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(sprint.getName())) {
@@ -78,7 +82,7 @@ public class SprintController {
 
     @GetMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasSprintAccess(#id) or hasRole('ADMIN')")
-    public SprintDAO get(@PathVariable Long id) {
+    public SprintDAO get(@PathVariable UUID id) {
         SprintDAO sprintEntity = sprintRepository.findById(id).orElseThrow();
         return sprintEntity;
     }
@@ -94,7 +98,7 @@ public class SprintController {
         // Regular users only see sprints of products they have access to
         return sprintRepository.findAll().stream()
                 .filter(sprint -> {
-                    Long productId = featureRepository.findById(sprint.getFeatureId())
+                    UUID productId = featureRepository.findById(sprint.getFeatureId())
                             .flatMap(feature -> versionRepository.findById(feature.getVersionId()))
                             .map(version -> version.getProductId())
                             .orElse(null);
@@ -105,13 +109,13 @@ public class SprintController {
 
     @GetMapping("/feature/{featureId}")
     @PreAuthorize("@aclSecurityService.hasFeatureAccess(#featureId) or hasRole('ADMIN')")
-    public List<SprintDAO> getAll(@PathVariable Long featureId) {
+    public List<SprintDAO> getAll(@PathVariable UUID featureId) {
         return sprintRepository.findByFeatureId(featureId);
     }
 
     @GetMapping("/{id}/avatar")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable Long id) {
+    public ResponseEntity<AvatarWrapper> getAvatar(@PathVariable UUID id) {
         return sprintAvatarRepository.findBySprintId(id)
                 .map(avatar -> {
                     if (avatar.getLightAvatarImage() == null || avatar.getLightAvatarImage().length == 0) {
@@ -122,34 +126,9 @@ public class SprintController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    /**
-     * Return the dark-mode avatar for the given sprint.
-     * Falls back to the light avatar when no dark variant has been stored yet.
-     *
-     * @param id The sprint ID
-     * @return The dark avatar image, or the light avatar as fallback, or 404 if no avatar exists
-     */
-    @GetMapping("/{id}/dark-avatar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable Long id) {
-        return sprintAvatarRepository.findBySprintId(id)
-                .map(avatar -> {
-                    byte[] imageBytes = avatar.getDarkAvatarImage();
-                    if (imageBytes == null || imageBytes.length == 0) {
-                        // Fall back to light image when dark variant not yet generated
-                        imageBytes = avatar.getLightAvatarImage();
-                    }
-                    if (imageBytes == null || imageBytes.length == 0) {
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
-                    }
-                    return ResponseEntity.ok(new AvatarWrapper(imageBytes));
-                })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
-    }
-
     @GetMapping("/{id}/avatar/full")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable Long id) {
+    public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable UUID id) {
         AvatarUpdateRequest response = new AvatarUpdateRequest();
 
         // Get avatar images (light + dark)
@@ -185,12 +164,37 @@ public class SprintController {
 
     @GetMapping("/feature/{featureId}/by-name/{name}")
     @PreAuthorize("@aclSecurityService.hasFeatureAccess(#featureId) or hasRole('ADMIN')")
-    public ResponseEntity<SprintDAO> getByName(@PathVariable Long featureId, @PathVariable String name) {
+    public ResponseEntity<SprintDAO> getByName(@PathVariable UUID featureId, @PathVariable String name) {
         SprintDAO sprint = sprintRepository.findByNameAndFeatureId(name, featureId);
         if (sprint == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(sprint);
+    }
+
+    /**
+     * Return the dark-mode avatar for the given sprint.
+     * Falls back to the light avatar when no dark variant has been stored yet.
+     *
+     * @param id The sprint ID
+     * @return The dark avatar image, or the light avatar as fallback, or 404 if no avatar exists
+     */
+    @GetMapping("/{id}/dark-avatar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable UUID id) {
+        return sprintAvatarRepository.findBySprintId(id)
+                .map(avatar -> {
+                    byte[] imageBytes = avatar.getDarkAvatarImage();
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        // Fall back to light image when dark variant not yet generated
+                        imageBytes = avatar.getLightAvatarImage();
+                    }
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
+                    }
+                    return ResponseEntity.ok(new AvatarWrapper(imageBytes));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @PostMapping()
@@ -209,8 +213,9 @@ public class SprintController {
         if (sprintRepository.existsByNameAndFeatureId(sprintDAO.getName(), sprintDAO.getFeatureId())) {
             throw new UniqueConstraintViolationException("Sprint", "name", sprintDAO.getName());
         }
-        SprintDAO save = sprintRepository.save(sprintDAO);
-        return save;
+        entityManager.persist(sprintDAO);
+//        SprintDAO save = sprintRepository.save(sprintDAO);
+        return sprintDAO;
     }
 
     @PutMapping()
@@ -227,7 +232,7 @@ public class SprintController {
     @PutMapping("/{id}/avatar/full")
     @PreAuthorize("@aclSecurityService.hasSprintAccess(#id) or hasRole('ADMIN')")
     @Transactional
-    public ResponseEntity<Void> updateAvatarFull(@PathVariable Long id, @RequestBody AvatarUpdateRequest request) {
+    public ResponseEntity<Void> updateAvatarFull(@PathVariable UUID id, @RequestBody AvatarUpdateRequest request) {
         // Verify sprint exists
         Optional<SprintDAO> sprintOpt = sprintRepository.findById(id);
         if (sprintOpt.isEmpty()) {
