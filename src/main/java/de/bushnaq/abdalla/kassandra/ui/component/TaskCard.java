@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
-import java.util.UUID;
 import com.vaadin.flow.component.dnd.DragSource;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
@@ -31,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * A card component representing a task in a Scrum board.
@@ -103,21 +103,21 @@ public class TaskCard extends Div {
             getElement().addEventListener("click", e -> onClickHandler.run());
         }
 
-        log.info("Creating TaskCard for task: {} (ID: {})", task.getName(), task.getId());
+        log.info("Creating TaskCard for task: {} (ID: {})", task.getName(), task.getKey());
 
         // Make the card draggable using Vaadin's DragSource API
         DragSource<TaskCard> dragSource = DragSource.create(this);
         dragSource.setDragData(task); // Store the task object for type-safe retrieval
         dragSource.addDragStartListener(event -> {
-            log.info("Drag START for TaskCard: {} (ID: {})", task.getName(), task.getId());
+            log.info("Drag START for TaskCard: {} (ID: {})", task.getName(), task.getKey());
             addClassName("dragging");
         });
         dragSource.addDragEndListener(event -> {
-            log.info("Drag END for TaskCard: {} (ID: {})", task.getName(), task.getId());
+            log.info("Drag END for TaskCard: {} (ID: {})", task.getName(), task.getKey());
             removeClassName("dragging");
         });
 
-        log.info("DragSource created and configured for TaskCard: {}", task.getId());
+        log.info("DragSource created and configured for TaskCard: {}", task.getKey());
     }
 
     private void applyStyling() {
@@ -166,7 +166,7 @@ public class TaskCard extends Div {
         topRow.getStyle().set("min-height", "0"); // prevent Lumo's default row min-height
 
         Span title = new Span(task.getName());
-        title.setId(TASK_CARD_TITLE_ID_PREFIX + task.getId());
+        title.setId(TASK_CARD_TITLE_ID_PREFIX + task.getKey());
         title.addClassName("task-card-title");
         title.getStyle().set("font-size", "var(--lumo-font-size-m)");
         title.getStyle().set("font-weight", "500");
@@ -234,10 +234,7 @@ public class TaskCard extends Div {
     }
 
     private String formatTaskKey(Task task) {
-        if (task.getId() != null) {
-            return "TASK-" + task.getId();
-        }
-        return "TASK-???";
+        return task.getKey();
     }
 
     private com.vaadin.flow.component.Component getAssignedUserComponent() {

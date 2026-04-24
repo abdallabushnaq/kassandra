@@ -239,7 +239,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
 
     @JsonIgnore
     public LocalDateTime getEarliestStartDate() {
-        LocalDateTime earliestDate = ParameterOptions.getLocalNow();
+        LocalDateTime earliestDate = LocalDateTime.MAX;// ParameterOptions.getLocalNow();
         for (Task task : getTasks()) {
             if (task.getStart() == null) {
                 continue;
@@ -257,6 +257,9 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
 //        if (earliestDate.isAfter(ParameterOptions.getLocalNow())) {
 //            earliestDate = ParameterOptions.getLocalNow();
 //        }
+        if (LocalDateTime.MAX.isEqual(earliestDate)) {
+            earliestDate = ParameterOptions.getLocalNow();
+        }
         return earliestDate;
     }
 
@@ -267,7 +270,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
 
     @JsonIgnore
     public LocalDateTime getLatestFinishDate() {
-        LocalDateTime latestDate = ParameterOptions.getLocalNow();
+        LocalDateTime latestDate = LocalDateTime.MIN;// ParameterOptions.getLocalNow();
         for (Task task : getTasks()) {
             if (!task.isMilestone() && (task.getChildTasks().isEmpty()) && (task.getDuration() != null && !task.getDuration().isZero())) {
                 if (task.getFinish().isAfter(latestDate)) {
@@ -276,6 +279,9 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
             } else {
                 //ignore milestones
             }
+        }
+        if (LocalDateTime.MIN.isEqual(latestDate)) {
+            latestDate = ParameterOptions.getLocalNow();
         }
         return latestDate;
     }
@@ -448,8 +454,8 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
 
     public boolean isAllChildTasksDone() {
         for (Task task : getTasks()) {
-            //ignore the delivery buffer task
-            if (!task.isDeliveryBufferTask())
+            //ignore the delivery buffer task and any milestone
+            if (!task.isDeliveryBufferTask() && !task.isMilestone())
                 if (task.getTaskStatus() != TaskStatus.DONE)
                     return false;
         }

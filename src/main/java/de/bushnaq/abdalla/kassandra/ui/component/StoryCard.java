@@ -30,8 +30,8 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -56,8 +56,8 @@ public class StoryCard extends Div {
     private       VerticalLayout               inProgressLane;
     private       HorizontalLayout             lanesContainer;
     private final Consumer<Task>               onTaskClick;
-    private final Consumer<Task>               onTaskTitleClick;
     private final BiConsumer<Task, TaskStatus> onTaskStatusChange;
+    private final Consumer<Task>               onTaskTitleClick;
     private final Task                         story;
     private       VerticalLayout               todoLane;
     private final Map<UUID, User>              userMap;
@@ -92,12 +92,12 @@ public class StoryCard extends Div {
     /**
      * Constructs a StoryCard with separate card-body and title click handlers.
      *
-     * @param story               the story task
-     * @param childTasks          mutable list of child tasks
-     * @param userMap             user map for avatar display
-     * @param onTaskStatusChange  callback for drag-and-drop status changes
-     * @param onTaskClick         handler invoked when a task card body is clicked; may be {@code null}
-     * @param onTaskTitleClick    handler invoked when the task title is clicked; may be {@code null}
+     * @param story              the story task
+     * @param childTasks         mutable list of child tasks
+     * @param userMap            user map for avatar display
+     * @param onTaskStatusChange callback for drag-and-drop status changes
+     * @param onTaskClick        handler invoked when a task card body is clicked; may be {@code null}
+     * @param onTaskTitleClick   handler invoked when the task title is clicked; may be {@code null}
      */
     public StoryCard(Task story, List<Task> childTasks, Map<UUID, User> userMap,
                      BiConsumer<Task, TaskStatus> onTaskStatusChange, Consumer<Task> onTaskClick,
@@ -261,10 +261,7 @@ public class StoryCard extends Div {
     }
 
     private String formatStoryKey(Task story) {
-        if (story.getId() != null) {
-            return "STORY-" + story.getId();
-        }
-        return "STORY-???";
+        return story.getKey();
     }
 
     public Task getStory() {

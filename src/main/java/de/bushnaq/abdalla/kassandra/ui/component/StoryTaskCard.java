@@ -27,8 +27,8 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -300,10 +300,7 @@ public class StoryTaskCard extends VerticalLayout {
     }
 
     private String formatStoryKey(Task story) {
-        if (story.getId() != null) {
-            return "STORY-" + story.getId();
-        }
-        return "STORY-???";
+        return story.getKey();
     }
 
     public Task getStory() {

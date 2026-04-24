@@ -15,15 +15,21 @@
 # Bugs
 
 1. users are retired by their name instead of their email address.
-2. LocationDialog not showing errors in dialog.
-3. AvailabilityTest.userSecurity() generates several exceptions on server side that the test does not catch.
-4. fix resource leveling not handling dependency to later story.
-5. gantt calendar should be using sprint calendar.
-6. many places only reference lightAvatar, but not dark.
-7. editing a worklog messes up the remaining work.
-8. agent is very slow in introduction video.
-9. selecting newly created sprint crashes with: "de.bushnaq.abdalla.kassandra.dto.Sprint.getEnd() is null.
-10. gantt is not using user weekend from calendar.
+2. AvailabilityTest.userSecurity() generates several exceptions on server side that the test does not catch.
+3. fix resource leveling not handling dependency to later story (TestTest).
+4. gantt calendar should be using sprint calendar and user calendar.
+5. many places only reference lightAvatar, but not dark.
+6. editing a worklog messes up the remaining work.
+7. AI agent is very slow in introduction video.
+8. selecting newly created sprint crashes with: "de.bushnaq.abdalla.kassandra.dto.Sprint.getEnd() is null.
+9. gantt is not using user weekend from calendar.
+10. screenshots Tokyo sprint burndown starts too high
+11. Product show id instead of key
+12. Feature shows id instead of key
+13. Version shows id instead of key
+14. Sprint shows id instead of key
+15. User shows id instead of key
+16. charts of closed sprint should not render until now.
 
 # Failing Tests
 

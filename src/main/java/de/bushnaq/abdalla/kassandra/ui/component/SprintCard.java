@@ -33,8 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.UUID;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -196,7 +196,7 @@ public class SprintCard extends Div {
 
     private String formatSprintKey(Sprint sprint) {
         if (sprint.getId() != null) {
-            return "S-" + sprint.getId();
+            return "S-" + sprint.getKey();
         }
         return "S-???";
     }

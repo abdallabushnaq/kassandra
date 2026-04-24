@@ -139,7 +139,7 @@ public class Demo extends AbstractKeycloakUiTestUtil {
         RandomCase[] randomCases = new RandomCase[]{//
 //                new RandomCase(1, LocalDate.parse("2024-12-01"), Duration.ofDays(10), 10, 2, 1, 2, 1),//
 //                new RandomCase(2, LocalDate.parse("2024-12-01"), Duration.ofDays(10), 1, 1, 1, 6, 6, 8, 8, 6, 7)//
-//                new RandomCase(3, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 2, 1, 1, 1, 2, 2, 1, 1, 5, 8, 4, 6, 7)//minimalistic demo data
+//                new RandomCase(3, OffsetDateTime.parse("2026-02-02T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 2, 1, 1, 1, 2, 2, 1, 1, 5, 8, 4, 6, 7)//minimalistic demo data
                 new RandomCase(3, OffsetDateTime.parse("2026-02-02T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 2, 2, 2, 2, 2, 2, 1, 5, 5, 8, 8, 6, 7)//official demo data
 //                new RandomCase(3, LocalDate.parse("2024-12-01"), Duration.ofDays(10), 4, 3, 3, 3, 10, 5, 8, 5, 1)//
         };

@@ -32,9 +32,9 @@ import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -62,8 +62,8 @@ public class FeatureCard extends Div {
     private       VerticalLayout               inProgressLane;
     private       HorizontalLayout             lanesContainer;
     private final Consumer<Task>               onTaskClick;
-    private final Consumer<Task>               onTaskTitleClick;
     private final BiConsumer<Task, TaskStatus> onTaskStatusChange;
+    private final Consumer<Task>               onTaskTitleClick;
     private final Set<User>                    selectedUsers;
     private final List<Task>                   stories;
     private       VerticalLayout               todoLane;
@@ -106,15 +106,15 @@ public class FeatureCard extends Div {
     /**
      * Constructs a FeatureCard with separate card-body and title click handlers.
      *
-     * @param feature             the feature to display
-     * @param stories             the stories belonging to this feature
-     * @param allTasks            all tasks across sprints
-     * @param userMap             user map for avatar display
-     * @param onTaskStatusChange  callback for drag-and-drop status changes
-     * @param filterText          current search filter text
-     * @param selectedUsers       currently selected users for filtering
-     * @param onTaskClick         handler for task card body clicks; may be {@code null}
-     * @param onTaskTitleClick    handler for task title clicks (opens TaskDialog); may be {@code null}
+     * @param feature            the feature to display
+     * @param stories            the stories belonging to this feature
+     * @param allTasks           all tasks across sprints
+     * @param userMap            user map for avatar display
+     * @param onTaskStatusChange callback for drag-and-drop status changes
+     * @param filterText         current search filter text
+     * @param selectedUsers      currently selected users for filtering
+     * @param onTaskClick        handler for task card body clicks; may be {@code null}
+     * @param onTaskTitleClick   handler for task title clicks (opens TaskDialog); may be {@code null}
      */
     public FeatureCard(Feature feature, List<Task> stories, List<Task> allTasks, Map<UUID, User> userMap,
                        BiConsumer<Task, TaskStatus> onTaskStatusChange, String filterText, Set<User> selectedUsers,
@@ -270,7 +270,7 @@ public class FeatureCard extends Div {
 
     private String formatFeatureKey(Feature feature) {
         if (feature.getId() != null) {
-            return "F-" + feature.getId();
+            return "F-" + feature.getKey();
         }
         return "F-???";
     }
@@ -397,17 +397,17 @@ public class FeatureCard extends Div {
 
                 if (source instanceof TaskCard taskCard) {
                     Task task = taskCard.getTask();
-                    log.info("TaskCard found! Task ID: {}, Task Name: {}, Current Status: {}, Target Status: {}",
-                            task.getId(), task.getName(), task.getTaskStatus(), targetStatus);
+                    log.info("TaskCard found! Task Key: {}, Task Name: {}, Current Status: {}, Target Status: {}",
+                            task.getKey(), task.getName(), task.getTaskStatus(), targetStatus);
 
                     // Only process if status actually changed
                     if (task.getTaskStatus() != targetStatus) {
-                        log.info("Status changed, calling onTaskStatusChange for task: {}", task.getId());
+                        log.info("Status changed, calling onTaskStatusChange for task: {}", task.getKey());
                         // The callback will update the task status and refresh the board
                         // Story will only move to IN_PROGRESS when ALL tasks are at least IN_PROGRESS
                         onTaskStatusChange.accept(task, targetStatus);
                     } else {
-                        log.info("Status unchanged, skipping update for task: {}", task.getId());
+                        log.info("Status unchanged, skipping update for task: {}", task.getKey());
                     }
                 } else {
                     log.warn("Drag source is NOT a TaskCard! Type: {}", source.getClass().getName());

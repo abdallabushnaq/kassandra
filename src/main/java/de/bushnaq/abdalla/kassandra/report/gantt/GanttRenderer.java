@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.report.gantt;
 
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
@@ -67,7 +68,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
         milestones.add(now.toLocalDate(), "N", "Now (current date)", Color.blue);
         milestones.add(sprint.getEarliestStartDate().toLocalDate(), "S", "Start (Start of project)", Color.blue);
         milestones.add(sprint.getLatestFinishDate().toLocalDate(), "E", "End (End of project)", Color.blue);
-        if (completed) {
+        if (sprint.getStatus().equals(Status.CLOSED)) {
             //We do not want to keep drawing the graph further and further to include the current date, if it is closed.
             if (now.isAfter(DateUtil.addDay(sprint.getLatestFinishDate(), ONE_WEEK))) {
                 milestones.remove("N");

@@ -230,6 +230,26 @@ public class Task implements Comparable<Task> {
         worklogs.add(worklog);
     }
 
+    public void calculateStatus() {
+        if (getRemainingEstimate().isZero() && !getTaskStatus().equals(TaskStatus.DONE)) {
+            setTaskStatus(TaskStatus.DONE);
+            if (getParentTask() != null && getParentTask().isAllChildTasksDone()) {
+                //set story status to DONE because all child tasks are DONE
+                getParentTask().setTaskStatus(TaskStatus.DONE);
+                if (sprint.isAllChildTasksDone()) {
+                    //set sprint status to CLOSED because all tasks are DONE
+                    sprint.setStatus(Status.CLOSED);
+                }
+            }
+        } else {
+            setTaskStatus(TaskStatus.IN_PROGRESS);
+            if (getParentTask().getTaskStatus() != TaskStatus.IN_PROGRESS) {
+                //set story status to IN_PROGRESS
+                getParentTask().setTaskStatus(TaskStatus.IN_PROGRESS);
+            }
+        }
+    }
+
     /**
      * Calculates the status of a story based on its child tasks.
      * <p>
@@ -430,7 +450,7 @@ public class Task implements Comparable<Task> {
     @JsonIgnore
     public boolean isAllChildTasksDone() {
         for (Task task : getChildTasks()) {
-            if (task.getTaskStatus() != TaskStatus.DONE)
+            if (!task.isMilestone() && task.getTaskStatus() != TaskStatus.DONE)
                 return false;
         }
         return true;

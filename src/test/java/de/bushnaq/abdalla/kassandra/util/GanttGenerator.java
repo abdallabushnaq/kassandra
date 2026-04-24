@@ -20,7 +20,6 @@ package de.bushnaq.abdalla.kassandra.util;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
-import de.bushnaq.abdalla.kassandra.dto.TaskStatus;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
@@ -40,8 +39,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.Random;
+import java.util.UUID;
 
 public class GanttGenerator extends MPXJGenerator {
 
@@ -192,10 +191,12 @@ public class GanttGenerator extends MPXJGenerator {
                                         task.addTimeSpent(w);
                                         task.removeRemainingEstimate(w);
                                         task.recalculate();
-                                        task.setTaskStatus(TaskStatus.IN_PROGRESS);
-                                    } else {
-                                        task.setTaskStatus(TaskStatus.DONE);
+                                        task.calculateStatus();
+//                                        task.setTaskStatus(TaskStatus.IN_PROGRESS);
                                     }
+//                                    else {
+//                                        task.setTaskStatus(TaskStatus.DONE);
+//                                    }
                                 }
                             }
                         }

@@ -513,21 +513,18 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                                         task.addTimeSpent(w);
                                         task.removeRemainingEstimate(w);
                                         task.recalculate();
-                                        task.setTaskStatus(TaskStatus.IN_PROGRESS);
-                                        if (task.getParentTask().getTaskStatus() != TaskStatus.IN_PROGRESS) {
-                                            //set story status to IN_PROGRESS
-                                            task.getParentTask().setTaskStatus(TaskStatus.IN_PROGRESS);
-                                        }
-                                    } else {
-                                        task.setTaskStatus(TaskStatus.DONE);
-                                        if (task.getParentTask() != null && task.getParentTask().isAllChildTasksDone()) {
-                                            //set story status to IN_PROGRESS
-                                            task.getParentTask().setTaskStatus(TaskStatus.DONE);
-                                            if (sprint.isAllChildTasksDone()) {
-                                                sprint.setStatus(Status.CLOSED);
-                                            }
-                                        }
+                                        task.calculateStatus();
                                     }
+//                                    else {
+//                                        task.setTaskStatus(TaskStatus.DONE);
+//                                        if (task.getParentTask() != null && task.getParentTask().isAllChildTasksDone()) {
+//                                            //set story status to IN_PROGRESS
+//                                            task.getParentTask().setTaskStatus(TaskStatus.DONE);
+//                                            if (sprint.isAllChildTasksDone()) {
+//                                                sprint.setStatus(Status.CLOSED);
+//                                            }
+//                                        }
+//                                    }
                                 }
                             }
                         }
@@ -784,6 +781,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         }
         // Reload from DB so that the leveler sees the updated milestone date
 //        levelResources(loadSprintWithTasks(sprint.getId()));
+        //TODO do we need to always reload thewhole spritn from db for leveling?
         levelResources(sprint);
         return true;
     }
