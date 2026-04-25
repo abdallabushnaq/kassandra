@@ -111,8 +111,8 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
             log.info("Task {} {} has worklogs with total duration {}", task.getName(), task.getMinEstimate(), work);
         }
 
-        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
-        g.generateBurndownChart(testInfo, sprint.getId(), testFolder);
+//        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
+//        g.generateBurndownChart(testInfo, sprint.getId(), testFolder);
         g.generateGanttBurndownChart(testInfo, sprint.getId(), testFolder);
 
         assertEquals(task1.getStart(), LocalDateTime.parse("2025-05-05T08:00:00"));

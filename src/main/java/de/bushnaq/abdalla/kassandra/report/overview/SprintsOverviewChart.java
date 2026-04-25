@@ -11,12 +11,14 @@ import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
+
 public class SprintsOverviewChart extends AbstractChart {
 
     public SprintsOverviewChart(Context context, String relateCssPath, String column, String sprintName, Integer limit, LocalDateTime now,
                                 List<Sprint> sprintList, int chartWidth, int chartHeight, String cssClass, Theme graphicsTheme) throws Exception {
         super("Project Overview Chart", "", relateCssPath, column, sprintName + "-projectOverviewChart", "project_overview_map", null, graphicsTheme);
-        RenderDao dao = RenderUtil.createOverviewRenderDao(context, sprintList, "overview", ParameterOptions.getLocalNow(), 3, chartWidth, chartHeight);
+        RenderDao dao = RenderUtil.createOverviewRenderDao(context, sprintList, "overview", ParameterOptions.getLocalNow(), 3, chartWidth, chartHeight, Y_AXIS_WIDTH);
         getRenderers().add(new SprintsOverviewRenderer(dao));
         this.setChartWidth(getRenderers().get(0).chartWidth);
         this.setChartHeight(getRenderers().get(0).chartHeight + captionElement.height + footerElement.height - 1);

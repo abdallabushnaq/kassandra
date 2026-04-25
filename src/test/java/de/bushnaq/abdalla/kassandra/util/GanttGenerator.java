@@ -24,10 +24,12 @@ import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
+import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.report.overview.SprintsOverviewChart;
+import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -43,6 +45,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
+
 public class GanttGenerator extends MPXJGenerator {
 
     protected final Random random    = new Random();
@@ -53,29 +57,29 @@ public class GanttGenerator extends MPXJGenerator {
      */
     public          ETheme testTheme = ETheme.dark;
 
-    private RenderDao createRenderDao(Context context, Sprint sprint, String column, LocalDateTime now, int chartWidth, int chartHeight, String link) {
-        RenderDao dao = new RenderDao();
-        dao.context            = context;
-        dao.column             = column;
-        dao.sprintName         = column + "-burn-down";
-        dao.link               = link;
-        dao.start              = sprint.getStart();
-        dao.now                = now;
-        dao.end                = sprint.getEnd();
-        dao.release            = sprint.getReleaseDate();
-        dao.chartWidth         = chartWidth;
-        dao.chartHeight        = chartHeight;
-        dao.sprint             = sprint;
-        dao.estimatedBestWork  = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
-        dao.estimatedWorstWork = null;
-        dao.maxWorked          = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
-        dao.remaining          = sprint.getRemaining();
-        dao.worklog            = sprint.getWorklogs();
-        dao.worklogRemaining   = sprint.getWorklogRemaining();
-        dao.cssClass           = "scheduleWithMargin";
-        dao.kassandraTheme     = context.parameters.getActiveGraphicsTheme();
-        return dao;
-    }
+//    private RenderDao createRenderDao(Context context, Sprint sprint, String column, LocalDateTime now, int chartWidth, int chartHeight, String link) {
+//        RenderDao dao = new RenderDao();
+//        dao.context            = context;
+//        dao.column             = column;
+//        dao.sprintName         = column + "-burn-down";
+//        dao.link               = link;
+//        dao.start              = sprint.getStart();
+//        dao.now                = now;
+//        dao.end                = sprint.getEnd();
+//        dao.release            = sprint.getReleaseDate();
+//        dao.chartWidth         = chartWidth;
+//        dao.chartHeight        = chartHeight;
+//        dao.sprint             = sprint;
+//        dao.estimatedBestWork  = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
+//        dao.estimatedWorstWork = null;
+//        dao.maxWorked          = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
+//        dao.remaining          = sprint.getRemaining();
+//        dao.worklog            = sprint.getWorklogs();
+//        dao.worklogRemaining   = sprint.getWorklogRemaining();
+//        dao.cssClass           = "scheduleWithMargin";
+//        dao.kassandraTheme     = context.parameters.getActiveGraphicsTheme();
+//        return dao;
+//    }
 
     public void generateBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
         Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
@@ -92,7 +96,7 @@ public class GanttGenerator extends MPXJGenerator {
         } else {
             sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name();
         }
-        RenderDao     dao         = createRenderDao(context, sprint, sprintName, ParameterOptions.getLocalNow(), 0, 36 * 10,  /*urlPrefix +*/ "sprint-" + sprint.getId() + "/sprint.html");
+        RenderDao     dao         = RenderUtil.createBurndownRenderDao(context, sprint, sprintName, ParameterOptions.getLocalNow(), 0, 36 * 10,  /*urlPrefix +*/ "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
         BurnDownChart chart       = new BurnDownChart("/", dao);
         String        description = testInfo.getDisplayName().replace("_", "-");
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
@@ -112,8 +116,9 @@ public class GanttGenerator extends MPXJGenerator {
         } else {
             sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
         }
-        RenderDao          dao   = createRenderDao(context, sprint, "burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
-        GanttBurndownChart chart = new GanttBurndownChart("/", dao);
+        RenderDao          burndownDao = RenderUtil.createBurndownRenderDao(context, sprint, "gannt-burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
+        RenderDao          ganttDao    = RenderUtil.createGanttRenderDao(context, sprint, "gannt-burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH, CalendarSize.DAYS);
+        GanttBurndownChart chart       = new GanttBurndownChart("/", burndownDao, ganttDao);
 //        GanttBurndownChart chart = new GanttBurndownChart(context, "", "/", "Gantt Burndown Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
 //        String     description = testCaseInfo.getDisplayName().replace("_", "-");
         String description = TestInfoUtil.getTestMethodName(testInfo);
@@ -134,7 +139,7 @@ public class GanttGenerator extends MPXJGenerator {
         } else {
             sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
         }
-        RenderDao  dao   = createRenderDao(context, sprint, "gantt", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
+        RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprintName, ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
         GanttChart chart = new GanttChart("/", dao);
 //        GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
 //        String     description = testCaseInfo.getDisplayName().replace("_", "-");

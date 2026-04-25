@@ -64,7 +64,7 @@ public abstract class AbstractRenderer {
         this.theme       = dao.kassandraTheme;
         this.chartWidth  = dao.chartWidth;
         this.chartHeight = dao.chartHeight;
-        milestones       = new Milestones(dao.sprintName);
+        milestones       = new Milestones(dao.sprint.getName());
         calendarXAxes    = new CalendarXAxes(this, dao.preRun, dao.postRun);
     }
 
@@ -286,11 +286,13 @@ public abstract class AbstractRenderer {
         } else {
             calendarXAxes.initPosition(x, y);
             diagram.initPosition(x, calendarXAxes.year.getY() + calendarXAxes.getHeight());
+//            calendarXAxes.initPosition(x, diagram.y + diagram.height + 1);
         }
     }
 
-    protected void initSize(int x, int y, boolean calendarAtBottom) throws IOException {
-        this.calendarAtBottom = calendarAtBottom;
+    protected void initSize(int x, boolean calendarAtBottom, CalendarSize calendarSize) throws IOException {
+        this.calendarAtBottom      = calendarAtBottom;
+        calendarXAxes.calendarSize = calendarSize;
         // this.calendarAtBottom = calendarAtBottom;
         calculateDayWidth();
         chartWidth      = calculateChartWidth();
@@ -299,12 +301,13 @@ public abstract class AbstractRenderer {
         bankHolidayFont = new Font(Font.SANS_SERIF, Font.PLAIN, Math.min(14, (int) (calendarXAxes.dayOfWeek.getWidth() * 1.1)));
 
         if (calendarAtBottom) {
-            calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom);
+            calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
             diagram.initSize(chartWidth - x, chartHeight - calendarXAxes.getHeight());
-            calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom);
+            calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
         } else {
-            calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom);
-            diagram.initSize(chartWidth, chartHeight - calendarXAxes.getHeight());
+            calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+            diagram.initSize(chartWidth - x, chartHeight - calendarXAxes.getHeight());
+            calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
         }
     }
 

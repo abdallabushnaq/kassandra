@@ -67,7 +67,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
             }
         }
         milestones.calculate();
-        processInit(dao.sprint.getName());
+        processInit(dao, dao.sprint.getName());
     }
 
     @Override
@@ -110,7 +110,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
     @Override
     public void draw(ExtendedGraphics2D graphics2D, int x, int y) throws Exception {
         this.graphics2D = graphics2D;
-        initPosition(x, y);
+        initPosition(firstDayX + x, y);
         calculateTaskHeightMap(y + calendarXAxes.getHeight());
         drawCalendar();
         drawMilestones();
@@ -172,8 +172,8 @@ public class GanttRenderer extends AbstractGanttRenderer {
         }
     }
 
-    private void processInit(String ganttFileName) throws Exception {
-        initSize(0, 0, false);
+    private void processInit(RenderDao dao, String ganttFileName) throws Exception {
+        initSize(dao.firstDayX, false, dao.calendarSize);
         for (Task task : sprint.getTasks()) {
             if (GanttUtil.isValidTask(task)) {
                 if (task.getAssignedUser() != null) {
@@ -211,13 +211,6 @@ public class GanttRenderer extends AbstractGanttRenderer {
                 logger.warn(message);
             }
         }
-//TODO reintroduce bank holidays and vacations
-
-//        if (context.parameters.captureOutOfOfficeFromGantt) {
-//            initOutOfOffice(context.ganttInformationList);
-//        } else if (context.parameters.captureOutOfOfficeFromRam) {
-//            initOutOfOffice(timeTracker);
-//        }
     }
 
 }

@@ -41,6 +41,7 @@ public class CalendarXAxes {
     private static final int                      WEEK_MIN_DAY_WIDTH         = 2;
     @Getter
     private              boolean                  calendarAtBottom;
+    public               CalendarSize             calendarSize;
     public               CalendarElement          dayOfMonth;
     public               CalendarElement          dayOfWeek;
     private final        DateTimeFormatter        imageMapSdf                = DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy", Util.locale);
@@ -110,7 +111,7 @@ public class CalendarXAxes {
                 String[]  months   = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
                 LocalDate startCal = currentDay;
 
-                if (phase == 4 && ((startCal.getDayOfMonth() == 1 && startCal.getMonth() == Month.JANUARY) || !yearWasDrawn)) {
+                if (CalendarSize.YEARS.equals(calendarSize) && phase == 4 && ((startCal.getDayOfMonth() == 1 && startCal.getMonth() == Month.JANUARY) || !yearWasDrawn)) {
                     // --year
                     {
                         LocalDate end = startCal.withMonth(12).withDayOfMonth(31);// new years eve
@@ -125,7 +126,7 @@ public class CalendarXAxes {
                                 parent.theme.xAxesTheme.yearBoderColor, year.getFont(), false);
                         yearWasDrawn = true;
                     }
-                } else if (phase == 3 && (startCal.getDayOfMonth() == 1 || !monthWasDrawn) && isMonthVisible()) {
+                } else if (CalendarSize.YEARS.equals(calendarSize) && phase == 3 && (startCal.getDayOfMonth() == 1 || !monthWasDrawn) && isMonthVisible()) {
                     // --month
                     {
                         LocalDate end = startCal.plusMonths(1).withDayOfMonth(1).minusDays(1);
@@ -139,7 +140,7 @@ public class CalendarXAxes {
                                 parent.theme.xAxesTheme.monthBorderColor, month.getFont(), false);
                         monthWasDrawn = true;
                     }
-                } else if (phase == 2 && (startCal.getDayOfWeek() == DayOfWeek.MONDAY || !firstWeekWasDrawn) && isWeekVisible()) {
+                } else if (CalendarSize.YEARS.equals(calendarSize) && phase == 2 && (startCal.getDayOfWeek() == DayOfWeek.MONDAY || !firstWeekWasDrawn) && isWeekVisible()) {
                     // --week of the year
                     {
                         LocalDate end = DateUtil.getWeekSunday(startCal);
@@ -381,25 +382,41 @@ public class CalendarXAxes {
             // dayOfMonth
             // milestone, dayOfWeek
             // flag
-            year.setY(y);
-            month.setY(year.getY() + year.getHeight());
-            week.setY(month.getY() + month.getHeight());
-            dayOfMonth.setY(week.getY() + week.getHeight());
-            if (isDayOfMonthVisible()) {
-                dayOfWeek.setY(dayOfMonth.getY() + dayOfMonth.getHeight());
+            if (CalendarSize.YEARS.equals(calendarSize)) {
+                year.setY(y);
+                month.setY(year.getY() + year.getHeight());
+                week.setY(month.getY() + month.getHeight());
+                dayOfMonth.setY(week.getY() + week.getHeight());
+                if (isDayOfMonthVisible()) {
+                    dayOfWeek.setY(dayOfMonth.getY() + dayOfMonth.getHeight());
+                } else {
+                    dayOfWeek.setY(week.getY() + week.getHeight());
+                }
+                milestone.y     = dayOfWeek.getY();
+                milestone.flagY = dayOfWeek.getY() + milestone.height;
+
             } else {
-                dayOfWeek.setY(week.getY() + week.getHeight());
+                year.setY(y);
+                month.setY(y);
+                week.setY(y);
+                dayOfMonth.setY(week.getY() + week.getHeight());
+                if (isDayOfMonthVisible()) {
+                    dayOfWeek.setY(dayOfMonth.getY() + dayOfMonth.getHeight());
+                } else {
+                    dayOfWeek.setY(week.getY() + week.getHeight());
+                }
+                milestone.y     = dayOfWeek.getY();
+                milestone.flagY = dayOfWeek.getY() + milestone.height;
             }
-            milestone.y     = dayOfWeek.getY();
-            milestone.flagY = dayOfWeek.getY() + milestone.height;
         }
     }
 
-    public void initSize(int width, int dayWidth, boolean calendarAtBottom) {
+    public void initSize(int width, int dayWidth, boolean calendarAtBottom, CalendarSize calendarSize) {
         this.calendarAtBottom = calendarAtBottom;
         this.width            = width;
         dayOfWeek.setWidth(dayWidth);
         dayOfMonth.setWidth(dayWidth);
+        this.calendarSize = calendarSize;
     }
 
     private boolean isDayBarsVisible() {
@@ -415,11 +432,11 @@ public class CalendarXAxes {
     }
 
     private boolean isMonthVisible() {
-        return dayOfWeek.getWidth() >= MONTH_MIN_DAY_WIDTH;
+        return CalendarSize.YEARS.equals(calendarSize) && dayOfWeek.getWidth() >= MONTH_MIN_DAY_WIDTH;
     }
 
     private boolean isWeekVisible() {
-        return dayOfWeek.getWidth() >= WEEK_MIN_DAY_WIDTH;
+        return CalendarSize.YEARS.equals(calendarSize) && dayOfWeek.getWidth() >= WEEK_MIN_DAY_WIDTH;
     }
 
     private boolean milestonesVisible() {

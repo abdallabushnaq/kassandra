@@ -102,7 +102,7 @@ public class SprintsOverviewRenderer extends AbstractRenderer {
         }
 
         milestones.calculate();
-        init();
+        init(dao);
     }
 
     <T extends Comparable<? super T>> List<T> asSortedList(Collection<T> c) {
@@ -145,7 +145,7 @@ public class SprintsOverviewRenderer extends AbstractRenderer {
     @Override
     public void draw(ExtendedGraphics2D graphics2D, int x, int y) throws IOException {
         this.graphics2D = graphics2D;
-        initPosition(x, y);
+        initPosition(firstDayX + x, y);
         drawCalendar(true);
         drawGraph(graphics2D);
         drawMilestones();
@@ -430,7 +430,7 @@ public class SprintsOverviewRenderer extends AbstractRenderer {
         return false;
     }
 
-    public void init() throws Exception {
+    public void init(RenderDao dao) throws Exception {
         for (Sprint sprint : sprintList) {
             if ((sprint.hasValidGanttChart() || sprint.hasValidGanttChart())) {
                 if (isVisible(sprint)) {
@@ -449,7 +449,7 @@ public class SprintsOverviewRenderer extends AbstractRenderer {
                         String.format("Project [%s][%s] does not have valid request dates.", sprint.getKey(), sprint.getName())));
             }
         }
-        initSize(0, 0, false);
+        initSize(dao.firstDayX, false, dao.calendarSize);
     }
 
     private boolean isVisible(Sprint sprint) {

@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
+import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.overview.SprintsOverviewChart;
 import de.bushnaq.abdalla.util.Util;
@@ -37,17 +38,19 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
+
 public class RenderUtil {
     public static final String BURNDOWN_CHART         = "burndown-chart";
     public static final String GANTT_CHART            = "gantt-chart";
     public static final String SPRINTS_OVERVIEW_CHART = "sprints-overview-chart";
     final static        Logger logger                 = LoggerFactory.getLogger(RenderUtil.class);
 
-    private static RenderDao createGanttRenderDao(Context context, Sprint sprint, String column, LocalDateTime now, int chartWidth, int chartHeight, String link) {
+    public static RenderDao createBurndownRenderDao(Context context, Sprint sprint, String column, LocalDateTime now, int chartWidth, int chartHeight, String link, int firstDayX) {
         RenderDao dao = new RenderDao();
-        dao.context            = context;
-        dao.column             = column;
-        dao.sprintName         = column + "-burn-down";
+        dao.context = context;
+        dao.name    = column;
+//        dao.sprintName         = column + "-burn-down";
         dao.link               = link;
         dao.start              = sprint.getStart();
         dao.now                = now;
@@ -64,13 +67,42 @@ public class RenderUtil {
         dao.worklogRemaining   = sprint.getWorklogRemaining();
         dao.cssClass           = "scheduleWithMargin";
         dao.kassandraTheme     = context.parameters.getActiveGraphicsTheme();
+        dao.firstDayX          = firstDayX;
         return dao;
     }
 
-    public static RenderDao createOverviewRenderDao(Context context, List<Sprint> sprintList, String name, LocalDateTime now, int numberOfLines, int chartWidth, int chartHeight) {
+    public static RenderDao createGanttRenderDao(Context context, Sprint sprint, String name, LocalDateTime now, int chartWidth, int chartHeight, String link, int firstDayX, CalendarSize calendarSize) {
         RenderDao dao = new RenderDao();
         dao.context = context;
-        dao.column  = name;
+        dao.name    = name;
+//        dao.sprintName         = name + "-burn-down";
+        dao.link               = link;
+        dao.start              = sprint.getStart();
+        dao.now                = now;
+        dao.end                = sprint.getEnd();
+        dao.release            = sprint.getReleaseDate();
+        dao.chartWidth         = chartWidth;
+        dao.chartHeight        = chartHeight;
+        dao.sprint             = sprint;
+        dao.estimatedBestWork  = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
+        dao.estimatedWorstWork = null;
+        dao.maxWorked          = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
+        dao.remaining          = sprint.getRemaining();
+        dao.worklog            = sprint.getWorklogs();
+        dao.worklogRemaining   = sprint.getWorklogRemaining();
+        dao.cssClass           = "scheduleWithMargin";
+        dao.preRun             = 14;
+        dao.postRun            = 14;
+        dao.kassandraTheme     = context.parameters.getActiveGraphicsTheme();
+        dao.firstDayX          = firstDayX;
+        dao.calendarSize       = calendarSize;
+        return dao;
+    }
+
+    public static RenderDao createOverviewRenderDao(Context context, List<Sprint> sprintList, String name, LocalDateTime now, int numberOfLines, int chartWidth, int chartHeight, int firstDayX) {
+        RenderDao dao = new RenderDao();
+        dao.context = context;
+        dao.name    = name;
 //        dao.sprintName = column + "-burn-down";
 //        dao.link = link;
 //        dao.start              = sprint.getStart();
@@ -90,6 +122,7 @@ public class RenderUtil {
         dao.kassandraTheme = context.parameters.getActiveGraphicsTheme();
         dao.sprintList     = sprintList;
         dao.numberOfLines  = numberOfLines;
+        dao.firstDayX      = firstDayX;
         return dao;
     }
 
@@ -103,16 +136,17 @@ public class RenderUtil {
      */
     public static void generateBurnDownChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
         List<Throwable> exceptions = new ArrayList<>();
-        RenderDao       dao        = createGanttRenderDao(context, sprint, "burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
+        RenderDao       dao        = createBurndownRenderDao(context, sprint, "burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
         BurnDownChart   chart      = new BurnDownChart("/", dao);
         RenderUtil.renderSvg(chart, svg);
         svg.setId(BURNDOWN_CHART);
     }
 
     public static GanttBurndownChart generateGanttBurnChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
-        List<Throwable>    exceptions = new ArrayList<>();
-        RenderDao          dao        = createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
-        GanttBurndownChart chart      = new GanttBurndownChart("/", dao);
+        List<Throwable>    exceptions  = new ArrayList<>();
+        RenderDao          burndownDao = createBurndownRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
+        RenderDao          ganttDao    = createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH, CalendarSize.DAYS);
+        GanttBurndownChart chart       = new GanttBurndownChart("/", burndownDao, ganttDao);
 //        GanttBurndownChart chart      = new GanttBurndownChart(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
         RenderUtil.renderSvg(chart, svg);
         svg.setId(GANTT_CHART);
@@ -129,7 +163,7 @@ public class RenderUtil {
      */
     public static GanttChart generateGanttChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
         List<Throwable> exceptions = new ArrayList<>();
-        RenderDao       dao        = createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
+        RenderDao       dao        = createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
         GanttChart      chart      = new GanttChart("/", dao);
 //        GanttChart      chart      = new GanttChart(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
         RenderUtil.renderSvg(chart, svg);

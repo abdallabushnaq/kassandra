@@ -34,7 +34,10 @@ import org.w3c.dom.Document;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
 
@@ -53,10 +56,9 @@ public abstract class AbstractCanvas extends ReportLink {
     protected            SVGGraphics2D      svgGenerator;
     protected            Theme              theme;
 
-    public AbstractCanvas(String column, String imageName/*, String mapName*/, String link, String cssClass, Theme theme)
-            throws IOException {
-        super(column, generateCellText(cssClass/*, mapName*/, imageName), link);
-        this.imageName = imageName;
+    public AbstractCanvas(String column, String imageName, String link, String cssClass, Theme theme) {
+        super(column, generateCellText(cssClass, imageName), link);
+        this.imageName = imageName;//used to save file
         this.theme     = theme;
     }
 
@@ -83,7 +85,7 @@ public abstract class AbstractCanvas extends ReportLink {
         return String.format("<img class=\"%s\" border=\"0\" src=\"%s.%s\">", cssClass, imageName, extension);
     }
 
-    protected void prepareGraphics(final BufferedImage aImage) throws IOException {
+    protected void prepareGraphics(final BufferedImage aImage) {
         graphics2D = new ExtendedGraphics2D((Graphics2D) aImage.getGraphics());
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -91,7 +93,7 @@ public abstract class AbstractCanvas extends ReportLink {
         graphics2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
     }
 
-    protected void prepareSvgGraphics() throws IOException {
+    protected void prepareSvgGraphics() {
         // Get a DOMImplementation.
         DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
         // Create an instance of org.w3c.dom.Document.
@@ -125,6 +127,14 @@ public abstract class AbstractCanvas extends ReportLink {
 
     }
 
+    /**
+     * render to svg file
+     *
+     * @param copyright
+     * @param description
+     * @param path
+     * @throws Exception
+     */
     public void render(String copyright, String description, String path) throws Exception {
         try (Profiler p1 = new Profiler(SampleType.GPU)) {
             String imageFileName;

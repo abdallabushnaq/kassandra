@@ -18,25 +18,35 @@
 package de.bushnaq.abdalla.kassandra.report.GanttBurndown;
 
 import de.bushnaq.abdalla.kassandra.report.AbstractChart;
+import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttRenderer;
 
 
 public class GanttBurndownChart extends AbstractChart {
+    private final BurnDownRenderer bdr;
+    private final GanttRenderer    gr;
 
-    public GanttBurndownChart(String relativeCssPath, RenderDao dao) throws Exception {
-        super("Gantt Chart", dao.sprint.getName(), relativeCssPath, dao.column, dao.sprint.getName(), null, dao.cssClass, dao.kassandraTheme);
-//        getRenderers().add(new BurnDownRenderer(dao));
-        getRenderers().add(new GanttRenderer(dao));
-        this.setChartWidth(getRenderers().getFirst().chartWidth);
-        this.setChartHeight(getRenderers().getFirst().chartHeight + captionElement.height + footerElement.height - 1);
+    public GanttBurndownChart(String relativeCssPath, RenderDao burndownDao, RenderDao ganttDao) throws Exception {
+        super("Gantt Burndown Chart", ganttDao.sprint.getName(), relativeCssPath, ganttDao.name, ganttDao.name, null, ganttDao.cssClass, ganttDao.kassandraTheme);
+        burndownDao.preRun  = Math.max(burndownDao.preRun, ganttDao.preRun);
+        burndownDao.postRun = Math.max(burndownDao.postRun, ganttDao.postRun);
+        bdr                 = new BurnDownRenderer(burndownDao);
+        gr                  = new GanttRenderer(ganttDao);
+        getRenderers().add(bdr);
+        getRenderers().add(gr);
+        bdr.setDayWidth(gr.getDayWidth());
+        this.setChartWidth(Math.max(bdr.chartWidth, gr.chartWidth));
+//        this.setChartWidth(getRenderers().getFirst().chartWidth);
+        this.setChartHeight(bdr.chartHeight + gr.chartHeight + captionElement.height + footerElement.height - 1);
         captionElement.width = getChartWidth();
-        footerElement.y      = getRenderers().getFirst().chartHeight + captionElement.height;
+        footerElement.y      = captionElement.height + getRenderers().get(0).chartHeight + getRenderers().get(1).chartHeight;
     }
 
     @Override
     protected void createReport() throws Exception {
-        getRenderers().getFirst().draw(graphics2D, 0, captionElement.height);
+        bdr.draw(graphics2D, 0, captionElement.height);
+        gr.draw(graphics2D, 0, captionElement.height + bdr.chartHeight);
     }
 
 }

@@ -32,7 +32,7 @@ import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
+import de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.report.html.util.HtmlUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
@@ -458,8 +458,8 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
             ctx.setAuthentication(authentication);
             SecurityContextHolder.setContext(ctx);
             try {
-                Svg        svg   = new Svg();
-                GanttChart chart = RenderUtil.generateGanttChartSvg(context, sprintSnapshot, svg);
+                Svg                svg   = new Svg();
+                GanttBurndownChart chart = RenderUtil.generateGanttBurnChartSvg(context, sprintSnapshot, svg);
                 return new Object[]{svg, chart};
             } catch (Exception e) {
                 throw new RuntimeException("Error generating Gantt chart", e);
@@ -467,8 +467,8 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
                 SecurityContextHolder.clearContext();
             }
         }).thenAccept(result -> {
-            Svg        svg   = (Svg) result[0];
-            GanttChart chart = (GanttChart) result[1];
+            Svg                svg   = (Svg) result[0];
+            GanttBurndownChart chart = (GanttBurndownChart) result[1];
             ui.access(() -> {
                 ganttChartContainer.removeAll();
                 svg.getStyle().set("margin-top", "var(--lumo-space-m)");
@@ -649,7 +649,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
             return;
         }
         context.syncTheme();
-        generateBurnDownChartAsync();
+//        generateBurnDownChartAsync();
         generateGanttChartAsync();
     }
 

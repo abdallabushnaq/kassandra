@@ -24,7 +24,7 @@ import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 public class GanttChart extends AbstractChart {
 
     public GanttChart(String relativeCssPath, RenderDao dao) throws Exception {
-        super("Gantt Chart", dao.sprint.getName(), relativeCssPath, dao.column, dao.sprint.getName(), null, dao.cssClass, dao.kassandraTheme);
+        super("Gantt Chart", dao.sprint.getName(), relativeCssPath, dao.name, dao.name, null, dao.cssClass, dao.kassandraTheme);
         getRenderers().add(new GanttRenderer(dao));
         this.setChartWidth(getRenderers().getFirst().chartWidth);
         this.setChartHeight(getRenderers().getFirst().chartHeight + captionElement.height + footerElement.height - 1);

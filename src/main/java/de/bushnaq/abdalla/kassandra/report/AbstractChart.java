@@ -32,22 +32,14 @@ import java.util.List;
 public abstract class AbstractChart extends AbstractCanvas {
     public        CaptionElement         captionElement;
     public        FooterElement          footerElement;
-    //    private final String                 mapName;
     @Getter
     private final List<AbstractRenderer> renderers = new ArrayList<>();
 
-    public AbstractChart(String caption, String projectRequestKey, String relateCssPath, String column, String imageName/*, String mapName*/, String link, String cssClass, Theme theme) throws IOException {
-        super(column, imageName/*, mapName*/, link, cssClass, theme);
+    public AbstractChart(String caption, String projectRequestKey, String relateCssPath, String column, String imageName, String link, String cssClass, Theme theme) throws IOException {
+        super(column, imageName, link, cssClass, theme);
         captionElement = new CaptionElement(caption, relateCssPath, theme);
         footerElement  = new FooterElement(Util.generateCopyrightString(ParameterOptions.getLocalNow()), projectRequestKey, theme);
-//        this.mapName   = mapName;
     }
-
-//    @Override
-//    protected void drawBackground() {
-//        graphics2D.setColor(theme.chartTheme.backgroundColor);
-//        graphics2D.fillRect(0, captionElement.height, getChartWidth() - 1, getChartHeight() - captionElement.height - 1);
-//    }
 
     @Override
     protected void drawCaption(ExtendedGraphics2D graphics2d2) {

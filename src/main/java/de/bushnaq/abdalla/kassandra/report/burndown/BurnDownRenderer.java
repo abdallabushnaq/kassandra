@@ -56,7 +56,7 @@ public class BurnDownRenderer extends AbstractRenderer {
     private static final long                   SECONDS_PER_HOUR                                          = 60 * 60;
     private static final long                   SECONDS_PER_WORKING_DAY                                   = 75 * 6 * 60;
     private static final String                 WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED             = "Work outside allowed time boundaries occurred";
-    private static final int                    Y_AXIS_WIDTH                                              = 50;
+    public static final  int                    Y_AXIS_WIDTH                                              = 50;
     private static final float                  fine_LINE_STROKE_WIDTH                                    = 1f;
     private static final DateTimeFormatter      sdfymd                                                    = DateTimeFormatter.ofPattern("yyyy.MMM.dd");
     private              Context                context;
@@ -271,7 +271,7 @@ public class BurnDownRenderer extends AbstractRenderer {
 
         LocalDate firstDay  = milestones.firstMilestone /*- (long) (60 * ONE_DAY_MILLIS / dayWidth)*/;
         int       firstDayX = diagram.x + calendarXAxes.dayOfWeek.getWidth() / 2;
-        int       startX    = firstDayX + DateUtil.calculateDays(firstDay, milestones.get("S").time) * calendarXAxes.dayOfWeek.getWidth();
+        int       startX    = firstDayX + (calendarXAxes.getPriRun() + DateUtil.calculateDays(firstDay, milestones.get("S").time)) * calendarXAxes.dayOfWeek.getWidth();
 
         drawAuthorLegend();
         drawLegend();
@@ -308,7 +308,7 @@ public class BurnDownRenderer extends AbstractRenderer {
                 int x1 = startX - calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
                 int y1 = diagram.y + diagram.height - calculateGraphHight(maxActualWorked);
                 {
-                    int x = firstDayX + DateUtil.calculateDays(firstDay, milestones.get("R").time) * calendarXAxes.dayOfWeek.getWidth();
+                    int x = firstDayX + (calendarXAxes.getPriRun() + DateUtil.calculateDays(firstDay, milestones.get("R").time)) * calendarXAxes.dayOfWeek.getWidth();
                     graphics2D.drawLine(x1, y1, x, diagram.y + diagram.height);
                 }
             }
@@ -346,7 +346,7 @@ public class BurnDownRenderer extends AbstractRenderer {
     @Override
     public void draw(ExtendedGraphics2D graphics2D, int x, int y) throws IOException {
         this.graphics2D = graphics2D;
-        initPosition(Y_AXIS_WIDTH + x, y);
+        initPosition(firstDayX + x, y);
         drawCalendar(true);
         drawMilestones();
         createBurnDownChart();
@@ -400,7 +400,7 @@ public class BurnDownRenderer extends AbstractRenderer {
                         int maxDayIndex = nowDayIndex;// Math.max(authorWorkPerDay.get(user).length, nowDayIndex);
                         // logger.info(DateUtil.createDateString(calculateDayFromIndex(maxDayIndex), sdfMMMdd));
                         for (int dayIndex = 0; dayIndex <= maxDayIndex + 2; dayIndex++) {
-                            x = firstDayX + dayIndex * calendarXAxes.dayOfWeek.getWidth();
+                            x = firstDayX + (calendarXAxes.getPriRun() + dayIndex) * calendarXAxes.dayOfWeek.getWidth();
                             int                currentDayAuthorGraphHeight = 0;
                             List<List<String>> transactions                = null;
                             if (dayIndex <= maxDayIndex + 2) {
@@ -493,8 +493,7 @@ public class BurnDownRenderer extends AbstractRenderer {
         int lastX       = firstDayX + calendarXAxes.dayOfWeek.getWidth() * DateUtil.calculateDays(firstDay, firstDay) - calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
         int lastY       = diagram.y + diagram.height - calculateGraphHight(estimatedWork);
         for (LocalDate currentDay = firstDay; currentDay.isBefore(lastDay) || currentDay.isEqual(lastDay); currentDay = currentDay.plusDays(1)) {
-            int daysX = firstDayX + calendarXAxes.dayOfWeek.getWidth() * DateUtil.calculateDays(firstDay, currentDay) + calendarXAxes.dayOfWeek.getWidth() / 2
-                    - 1;
+            int daysX = firstDayX + calendarXAxes.dayOfWeek.getWidth() * (calendarXAxes.getPriRun() + DateUtil.calculateDays(firstDay, currentDay)) + calendarXAxes.dayOfWeek.getWidth() / 2 - 1;
             if (currentDay.getDayOfWeek() == DayOfWeek.SATURDAY || currentDay.getDayOfWeek() == DayOfWeek.SUNDAY) {
 
             } else {
@@ -527,7 +526,7 @@ public class BurnDownRenderer extends AbstractRenderer {
         graphics2D.setColor(kassandraTheme.burndownTheme.plannedGuideColor);
         for (int i = 0; i < guide.getSize(); i++) {
             Duration r = guide.get(i);
-            int      x = firstDayX + i * calendarXAxes.dayOfWeek.getWidth() - calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
+            int      x = firstDayX + (calendarXAxes.getPriRun() + i) * calendarXAxes.dayOfWeek.getWidth() - calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
             int      y = diagram.y + diagram.height - calculateGraphHight(r);
             if (i != 0) {
                 graphics2D.drawLine(lastX, lastY, x, y);
@@ -619,8 +618,8 @@ public class BurnDownRenderer extends AbstractRenderer {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), 128);
     }
 
-    public void init() throws IOException {
-        initSize(Y_AXIS_WIDTH, 0, true);
+    public void init(RenderDao dao) throws IOException {
+        initSize(dao.firstDayX, true, dao.calendarSize);
         if (milestones.get("R") != null && milestones.get("R").time.isAfter(milestones.get("E").time)) {
             extrapolationColor = kassandraTheme.burndownTheme.delayEventColor;
         } else {
@@ -799,7 +798,7 @@ public class BurnDownRenderer extends AbstractRenderer {
         this.kassandraTheme   = dao.kassandraTheme;
         createMilestones(dao.start, dao.now, dao.end, dao.firstWorklog, dao.lastWorklog, dao.sprint.getReleaseDate(), dao.sprint.isClosed());
 
-        init();
+        init(dao);
         yAxis = new GraphSquare(2, diagram.y, Y_AXIS_WIDTH, diagram.height, new Font("Arial", Font.PLAIN, 12), new Font("Arial", Font.PLAIN, 12));
     }
 
