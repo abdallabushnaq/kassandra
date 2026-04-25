@@ -8,6 +8,7 @@
 /docker/index-tts/checkpoints
 /references/critical/*.svg
 /references/dynamic-gantt/*.svg
+/references/gantt-burndown/*.svg
 /references/gantt/*.svg
 /references/gantt/*private.*
 /references/test/*.svg
