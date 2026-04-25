@@ -491,7 +491,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                 rest = Duration.ZERO;
                 //iterate over all tasks
                 for (Task task : sprint.getTasks()) {
-                    if (task.isTask()) {
+                    if (task.isTask() && task.isImpactOnCost()) {
                         Number availability = task.getAvailability();
                         if (!day.isBefore(task.getStart().toLocalDate())) {
                             // Day is after task start
@@ -510,9 +510,9 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                                             w = task.getRemainingEstimate();
                                         }
                                         Worklog worklog = addWorklog(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
-                                        task.addTimeSpent(w);
-                                        task.removeRemainingEstimate(w);
-                                        task.recalculate();
+//                                        task.addTimeSpent(w);
+//                                        task.removeRemainingEstimate(w);
+//                                        task.recalculate();
                                         task.calculateStatus();
                                     }
 //                                    else {

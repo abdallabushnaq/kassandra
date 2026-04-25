@@ -96,26 +96,29 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     }
 
     public void addWorklogRemaining(Task task) {
-        Duration timeSpentMinutes         = task.getTimeSpent();
-        Duration remainingEstimateMinutes = task.getRemainingEstimate();
-        if (timeSpentMinutes.equals(Duration.ZERO) && remainingEstimateMinutes.equals(Duration.ZERO)) {
-            return;
-        }
-        if (timeSpentMinutes == null && remainingEstimateMinutes == null) {
-            return;
-        }
-        if (timeSpentMinutes == null) {
-            timeSpentMinutes = Duration.ZERO;
-        }
-        if (remainingEstimateMinutes == null) {
-            remainingEstimateMinutes = Duration.ZERO;
-        }
-        if (task.getResourceId() != null) {
-            WorklogRemaining w = new WorklogRemaining(getId(), task.getId(), task.getKey(), task.getAssignedUser(), timeSpentMinutes, remainingEstimateMinutes);
-            worklogRemaining.add(w);
-        } else {
-            WorklogRemaining w = new WorklogRemaining(getId(), task.getId(), task.getKey(), null, timeSpentMinutes, remainingEstimateMinutes);
-            worklogRemaining.add(w);
+        if (task.isImpactOnCost()) {
+            Duration timeSpentMinutes         = task.getTimeSpent();
+            Duration remainingEstimateMinutes = task.getRemainingEstimate();
+            if (timeSpentMinutes.equals(Duration.ZERO) && remainingEstimateMinutes.equals(Duration.ZERO)) {
+                return;
+            }
+            if (timeSpentMinutes == null && remainingEstimateMinutes == null) {
+                return;
+            }
+            if (timeSpentMinutes == null) {
+                timeSpentMinutes = Duration.ZERO;
+            }
+            if (remainingEstimateMinutes == null) {
+                remainingEstimateMinutes = Duration.ZERO;
+            }
+            if (task.getResourceId() != null) {
+                WorklogRemaining w = new WorklogRemaining(getId(), task.getId(), task.getKey(), task.getAssignedUser(), timeSpentMinutes, remainingEstimateMinutes);
+                worklogRemaining.add(w);
+            } else {
+                //TODO we probably should prevent this.
+                WorklogRemaining w = new WorklogRemaining(getId(), task.getId(), task.getKey(), null, timeSpentMinutes, remainingEstimateMinutes);
+                worklogRemaining.add(w);
+            }
         }
     }
 
@@ -330,31 +333,25 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
                 taskMap.put(task.getId(), task);
             }
         }
-        tasks.forEach(task -> {
-            if (task.getSprintId().equals(id)) {
-                //set the parent task
-                if (task.getParentTaskId() != null) {
-                    task.setParentTask(taskMap.get(task.getParentTaskId()));
-                    //add the task to the parent task
-                    task.getParentTask().addChildTask(task);
-                }
-                if (worklogs != null) {
-                    for (Worklog worklog : worklogs) {
-                        if (worklog.getTaskId().equals(task.getId())) {
-                            task.addWorklog(worklog);
-                        }
-                    }
-                }
-                task.setSprint(this);
-                task.initialize();
-                addWorklogRemaining(task);
-            }
-        });
         this.tasks = new ArrayList<>();
         tasks.forEach(task -> {
             if (task.getSprintId().equals(id)) {
                 this.tasks.add(task);
             }
+        });
+        this.tasks.forEach(task -> {
+            //set the parent task
+            if (task.getParentTaskId() != null) {
+                task.setParentTask(taskMap.get(task.getParentTaskId()));
+                //add the task to the parent task
+                task.getParentTask().addChildTask(task);
+            }
+//            if (worklogs != null) {
+            task.add(worklogs);
+//            }
+            task.setSprint(this);
+            task.initialize();
+            addWorklogRemaining(task);
         });
         setStart(getEarliestStartDate());
     }
@@ -472,9 +469,11 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
         originalEstimation = Duration.ZERO;
         remaining          = Duration.ZERO;
         for (Task task : getTasks()) {
-            worked             = worked.plus(task.getTimeSpent());
-            originalEstimation = originalEstimation.plus(task.getMinEstimate());
-            remaining          = remaining.plus(task.getRemainingEstimate());
+            if (task.isImpactOnCost()) {
+                worked             = worked.plus(task.getTimeSpent());
+                originalEstimation = originalEstimation.plus(task.getMinEstimate());
+                remaining          = remaining.plus(task.getRemainingEstimate());
+            }
         }
     }
 

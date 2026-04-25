@@ -366,9 +366,9 @@ public class GanttUtil {
                 LocalDateTime latestFinishDate = sprint.getLatestFinishDate();
                 deliveryBufferTask.setMinEstimate(deliveryBuffer);
                 setStart(eh, deliveryBufferTask, latestFinishDate);
+                //create hidden dependency to every story of this sprint, so that this buffer is the last task in the sprint
                 for (Task story : sprint.getTasks()) {
                     if (story.isStory() && !Objects.equals(story.getId(), deliveryBufferTask.getId())) {
-                        //create hidden dependency to every story of this sprint, so that this buffer is the last task in the sprint
                         if (!GanttUtil.hasDependency(deliveryBufferTask, story)) {
                             deliveryBufferTask.addPredecessor(story, true);
                         }

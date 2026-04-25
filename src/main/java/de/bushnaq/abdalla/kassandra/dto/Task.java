@@ -148,7 +148,8 @@ public class Task implements Comparable<Task> {
      * Reference to the sprint this task belongs to.
      */
     @JsonIgnore
-    @ToString.Exclude//help intellij debugger not to go into a loop
+    @ToString.Exclude//h
+    // elp intellij debugger not to go into a loop
     private             Sprint         sprint;
     /**
      * The ID of the sprint this task belongs to.
@@ -178,6 +179,20 @@ public class Task implements Comparable<Task> {
      */
     @JsonIgnore
     private             List<Worklog>  worklogs          = new ArrayList<>();
+
+    /**
+     * clear all work data, so that we can reinitialize using worklogs
+     */
+    public void add(List<Worklog> worklogs) {
+        this.worklogs.clear();
+        timeSpent         = Duration.ZERO;
+        remainingEstimate = minEstimate;
+        for (Worklog worklog : worklogs) {
+            if (worklog.getTaskId().equals(getId())) {
+                addWorklog(worklog);
+            }
+        }
+    }
 
     /**
      * Adds a child task to this task's hierarchy.
@@ -226,6 +241,7 @@ public class Task implements Comparable<Task> {
      */
     public void addWorklog(Worklog worklog) {
         addTimeSpent(worklog.getTimeSpent());
+        removeRemainingEstimate(worklog.getTimeSpent());
         recalculate();
         worklogs.add(worklog);
     }

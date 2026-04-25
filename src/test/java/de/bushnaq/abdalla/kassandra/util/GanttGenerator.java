@@ -163,7 +163,7 @@ public class GanttGenerator extends MPXJGenerator {
                 rest = java.time.Duration.ZERO;
                 //iterate over all tasks
                 for (de.bushnaq.abdalla.kassandra.dto.Task task : sprint.getTasks()) {
-                    if (task.isTask()) {
+                    if (task.isTask() && task.isImpactOnCost()) {
                         Number availability = task.getAvailability();
                         if (!day.isBefore(task.getStart().toLocalDate())) {
                             // Day is after task start
@@ -188,9 +188,9 @@ public class GanttGenerator extends MPXJGenerator {
 //                                        task.recalculate();
 
 
-                                        task.addTimeSpent(w);
-                                        task.removeRemainingEstimate(w);
-                                        task.recalculate();
+//                                        task.addTimeSpent(w);
+//                                        task.removeRemainingEstimate(w);
+//                                        task.recalculate();
                                         task.calculateStatus();
 //                                        task.setTaskStatus(TaskStatus.IN_PROGRESS);
                                     }
