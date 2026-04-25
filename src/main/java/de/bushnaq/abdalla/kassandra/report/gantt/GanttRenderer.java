@@ -22,12 +22,12 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.report.dao.*;
+import de.bushnaq.abdalla.kassandra.report.dao.AuthorContribution;
+import de.bushnaq.abdalla.kassandra.report.dao.GraphColorUtil;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.ErrorException;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
-import de.bushnaq.abdalla.util.TaskUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
@@ -226,25 +226,6 @@ public class GanttRenderer extends AbstractGanttRenderer {
 //        } else if (context.parameters.captureOutOfOfficeFromRam) {
 //            initOutOfOffice(timeTracker);
 //        }
-    }
-
-    public void setConflictingTasks(ConflictingTasks conflictingTasks) {
-        //        this.conflictingTask = conflictingTasks;
-        for (Task task : sprint.getTasks()) {
-            if (GanttUtil.isValidTask(task)) {
-                List<Conflict> conflicList = conflictingTasks.get(task);
-                if (conflicList != null) {
-                    MetaData md = TaskUtil.getTaskMetaData(task);
-                    if (md == null) {
-                        md = new MetaData();
-                        TaskUtil.putTaskMetaData(task, md);
-                    }
-                    for (Conflict conflict : conflicList) {
-                        md.errors.add(String.format("resource conflict with task '%s'[%s]\n", conflict.task.getName(), conflict.projectName));
-                    }
-                }
-            }
-        }
     }
 
 }

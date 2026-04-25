@@ -31,6 +31,7 @@ import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectFile;
 import org.junit.jupiter.api.MethodOrderer;
@@ -59,9 +60,9 @@ import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.MethodName.class)
+@Slf4j
 public class AbstractGanttTestUtil extends AbstractEntityGenerator {
     @Autowired
     protected       Context                context;
@@ -463,9 +464,13 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
     }
 
     private void generateWorkLogs() {
+        log.info("--------------------------");
+        log.info("Generating work logs start");
         for (Sprint sprint : expectedSprints) {
             generateWorklogs(sprint, ParameterOptions.getLocalNow());
         }
+        log.info("Generating work logs end");
+        log.info("--------------------------");
     }
 
     /**

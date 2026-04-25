@@ -90,7 +90,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     private final       LocalDateTime           created;
     private final       GanttErrorHandler       eh                      = new GanttErrorHandler();
     private final       FeatureApi              featureApi;
-    private UUID featureId;
+    private             UUID                    featureId;
     /**
      * Container for the Gantt chart SVG.
      */
@@ -113,10 +113,10 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     private final       LocalDateTime           now;
     private final       H2                      pageTitle;
     private final       ProductApi              productApi;
-    private UUID productId;
+    private             UUID                    productId;
     private             Sprint                  sprint;
     private final       SprintApi               sprintApi;
-    private UUID sprintId;
+    private             UUID                    sprintId;
     /**
      * Sprint selector ComboBox — lets the user switch sprints without leaving the page.
      */
@@ -129,7 +129,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     private             Registration            themeChangedRegistration;
     private final       UserApi                 userApi;
     private final       VersionApi              versionApi;
-    private UUID versionId;
+    private             UUID                    versionId;
     private final       WorklogApi              worklogApi;
 
     public SprintQualityBoard(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock) {
@@ -292,8 +292,8 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         Div gridContainer = new Div();
         gridContainer.getStyle()
                 .set("display", "grid")
-                .set("grid-template-columns", "repeat(4, 1fr) 2fr repeat(2, 1fr)")  // 4 columns left, 1 middle (wider), 2 right
-                .set("grid-template-rows", "auto auto auto auto")  // 3 rows
+                .set("grid-template-columns", "repeat(4, 1fr) repeat(2, 1fr)")  // 4 columns left, 2 right
+                .set("grid-template-rows", "auto auto auto auto")  // 4 rows
                 .set("gap", "var(--lumo-space-m)")  // spacing between cells
                 .set("width", "100%")
                 .set("height", "auto");
@@ -315,7 +315,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         gridContainer.add(createFieldDisplay("&Sigma; Effort Spent", DateUtil.createDurationString(sprint.getWorked(), false, true, false)));//column 7
 
         // Second row
-        gridContainer.add(createFieldDisplay("", ""));//column 1
+        gridContainer.add(createFieldDisplay("Feature", sprint.getFeature().getName()));//column 1
         gridContainer.add(createFieldDisplay("Sprint End Date", DateUtil.createDateString(sprint.getEnd(), dtfymd)));//column 2
         gridContainer.add(createFieldDisplay("Expected Progress", String.format("%.0f%%", 100 * ReportUtil.calcualteExpectedProgress(sprint.getStart(), now, sprint.getEnd(), sprint.getWorked(), sprint.getOriginalEstimation(), estimation, sprint.getRemaining()))));//column 3
         gridContainer.add(createFieldDisplay("Progress", String.format("%.0f%%", 100 * ReportUtil.calcualteProgress(sprint.getWorked(), estimation)), status));//column 4
@@ -324,7 +324,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
 
 
         // Third row
-        gridContainer.add(createFieldDisplay("3.1", "a"));//column 1
+        gridContainer.add(createFieldDisplay("Version", sprint.getFeature().getVersion().getName()));//column 1
         if (sprint.getRemaining() == null || sprint.getRemaining().equals(Duration.ZERO)) {
             gridContainer.add(createFieldDisplay("Actual Sprint Release Date", DateUtil.createDateString(sprint.getReleaseDate(), dtfymd), status));//column 2
         } else {
@@ -340,27 +340,23 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         gridContainer.add(createFieldDisplay("&Sigma; Remaining Effort Estimate", DateUtil.createDurationString(sprint.getRemaining(), false, true, false)));//column 7
 
 
-        // forth row
-        gridContainer.add(createFieldDisplay("4.1", "a"));//column 1
-        gridContainer.add(createFieldDisplay("4.2", "b"));//column 2
-        gridContainer.add(createFieldDisplay("4.3", "a"));//column 3
-        gridContainer.add(createFieldDisplay("4.4", "b"));//column 4
-        gridContainer.add(createFieldDisplay("4.6", "a"));//column 6
-        gridContainer.add(createFieldDisplay("4.7", "b"));//column 7
-
-        // Create the spanning column (column 5)
-        Div spanningColumn = new Div();
-        spanningColumn.getStyle()
-                .set("grid-column", "5 / 6")  // Column 5
-                .set("grid-row", "1 / 5")     // Span all 4 rows
-                .set("padding", "var(--lumo-space-m)")
-                .set("background-color", "var(--lumo-base-color)");
-
-        // Store reference for async generation and later theme-refresh
-        burnDownContainer = spanningColumn;
-        gridContainer.add(spanningColumn);
+//        // forth row
+//        gridContainer.add(createFieldDisplay("4.1", "a"));//column 1
+//        gridContainer.add(createFieldDisplay("4.2", "b"));//column 2
+//        gridContainer.add(createFieldDisplay("4.3", "a"));//column 3
+//        gridContainer.add(createFieldDisplay("4.4", "b"));//column 4
+//        gridContainer.add(createFieldDisplay("4.6", "a"));//column 6
+//        gridContainer.add(createFieldDisplay("4.7", "b"));//column 7
 
         add(gridContainer);
+
+        // Burndown chart lives below the stats grid
+        burnDownContainer = new Div();
+        burnDownContainer.getStyle()
+                .set("width", "100%")
+                .set("padding", "var(--lumo-space-m)")
+                .set("background-color", "var(--lumo-base-color)");
+        add(burnDownContainer);
     }
 
     private ComponentRenderer<Div, Sprint> createTwoPartRenderer(
@@ -558,6 +554,9 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         // Wait for all futures and combine results
         try {
             sprint = sprintFuture.get();
+            sprint.setFeature(featureApi.getById(sprint.getFeatureId()));
+            sprint.getFeature().setVersion(versionApi.getById(sprint.getFeature().getVersionId()));
+            sprint.getFeature().getVersion().setProduct(productApi.getById(sprint.getFeature().getVersion().getProductId()));
             logger.info("sprint loaded and initialized in {} ms", System.currentTimeMillis() - time);
             time = System.currentTimeMillis();
             sprint.initUserMap(usersFuture.get());
@@ -682,28 +681,28 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();
-                        Product product = productApi.getById(productId);
-                        mainLayout.getBreadcrumbs().addItem("Products (" + product.getName() + ")", ProductListView.class);
+//                        Product product = productApi.getById(productId);
+                        mainLayout.getBreadcrumbs().addItem("Products (" + sprint.getFeature().getVersion().getProduct().getName() + ")", ProductListView.class);
                         {
                             Map<String, String> params = new HashMap<>();
                             params.put("product", String.valueOf(productId));
-                            Version version = versionApi.getById(versionId);
-                            mainLayout.getBreadcrumbs().addItem("Versions (" + version.getName() + ")", VersionListView.class, params);
+//                            Version version = versionApi.getById(versionId);
+                            mainLayout.getBreadcrumbs().addItem("Versions (" + sprint.getFeature().getVersion().getName() + ")", VersionListView.class, params);
                         }
                         {
                             Map<String, String> params = new HashMap<>();
                             params.put("product", String.valueOf(productId));
                             params.put("version", String.valueOf(versionId));
-                            Feature feature = featureApi.getById(featureId);
-                            mainLayout.getBreadcrumbs().addItem("Features (" + feature.getName() + ")", FeatureListView.class, params);
+//                            Feature feature = featureApi.getById(featureId);
+                            mainLayout.getBreadcrumbs().addItem("Features (" + sprint.getFeature().getName() + ")", FeatureListView.class, params);
                         }
                         {
                             Map<String, String> params = new HashMap<>();
                             params.put("product", String.valueOf(productId));
                             params.put("version", String.valueOf(versionId));
                             params.put("feature", String.valueOf(featureId));
-                            Sprint s = sprintApi.getById(sprintId);
-                            mainLayout.getBreadcrumbs().addItem("Sprints (" + s.getName() + ")", SprintListView.class, params);
+//                            Sprint s = sprintApi.getById(sprintId);
+                            mainLayout.getBreadcrumbs().addItem("Sprints (" + sprint.getName() + ")", SprintListView.class, params);
                         }
                         {
                             Map<String, String> params = new HashMap<>();

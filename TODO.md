@@ -23,13 +23,11 @@
 7. AI agent is very slow in introduction video.
 8. selecting newly created sprint crashes with: "de.bushnaq.abdalla.kassandra.dto.Sprint.getEnd() is null.
 9. gantt is not using user weekend from calendar.
-10. screenshots Tokyo sprint burndown starts too high
-11. Product show id instead of key
-12. Feature shows id instead of key
-13. Version shows id instead of key
-14. Sprint shows id instead of key
-15. User shows id instead of key
-16. charts of closed sprint should not render until now.
+10. Product show id instead of key
+11. Feature shows id instead of key
+12. Version shows id instead of key
+13. Sprint shows id instead of key
+14. User shows id instead of key
 
 # Failing Tests
 
