@@ -32,7 +32,7 @@ public class CaptionElement {
     public        int    x      = 3;
     public        int    y      = 0;
 
-    public CaptionElement(String text, String relateCssPath,/*, int chartWidth, int chartHeight*/Theme theme) {
+    public CaptionElement(String text, String relateCssPath, Theme theme) {
         this.text          = text;
         this.relateCssPath = relateCssPath;
         this.theme         = theme;

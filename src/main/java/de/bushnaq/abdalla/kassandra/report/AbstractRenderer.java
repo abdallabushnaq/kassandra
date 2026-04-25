@@ -44,7 +44,6 @@ public abstract class AbstractRenderer {
     protected final        Font               authorFont                 = new Font(Font.SANS_SERIF, Font.BOLD, 12);
     protected              Users              authors                    = new Users();
     protected              Font               bankHolidayFont            = null;
-    //    private                Map<LocalDate, String> bankHolidays;
     private                boolean            calendarAtBottom;
     public                 CalendarXAxes      calendarXAxes;
     public                 int                chartHeight;
@@ -62,7 +61,6 @@ public abstract class AbstractRenderer {
     }
 
     public AbstractRenderer(RenderDao dao) throws IOException {
-//        this.bankHolidays  = dao.context.bankHolidays;
         this.theme       = dao.kassandraTheme;
         this.chartWidth  = dao.chartWidth;
         this.chartHeight = dao.chartHeight;
@@ -70,15 +68,11 @@ public abstract class AbstractRenderer {
         calendarXAxes    = new CalendarXAxes(this, dao.preRun, dao.postRun);
     }
 
-    public AbstractRenderer(String sprintName/*, Map<LocalDate, String> bankHolidays*/, boolean completed/*, int chartWidth, int chartHeight*/, int preRun, int postRun,
-                            Theme theme) throws IOException {
-//        this.bankHolidays  = bankHolidays;
-        this.theme = theme;
-//        this.chartWidth    = chartWidth;
-//        this.chartHeight   = chartHeight;
-        milestones    = new Milestones(sprintName);
-        calendarXAxes = new CalendarXAxes(this, preRun, postRun);
-    }
+//    public AbstractRenderer(String sprintName, boolean completed, int preRun, int postRun, Theme theme) throws IOException {
+//        this.theme    = theme;
+//        milestones    = new Milestones(sprintName);
+//        calendarXAxes = new CalendarXAxes(this, preRun, postRun);
+//    }
 
     protected int calculateChartHeight() {
         return chartHeight;

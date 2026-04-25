@@ -21,6 +21,7 @@ import com.vaadin.flow.component.Svg;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
@@ -37,12 +38,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RenderUtil {
-    public static final String BURNDOWN_CHART        = "burndown-chart";
-    public static final String GANTT_CHART           = "gantt-chart";
+    public static final String BURNDOWN_CHART         = "burndown-chart";
+    public static final String GANTT_CHART            = "gantt-chart";
     public static final String SPRINTS_OVERVIEW_CHART = "sprints-overview-chart";
-    final static        Logger logger                = LoggerFactory.getLogger(RenderUtil.class);
+    final static        Logger logger                 = LoggerFactory.getLogger(RenderUtil.class);
 
-    private static RenderDao createRenderDao(Context context, Sprint sprint, String column, LocalDateTime now, int chartWidth, int chartHeight, String link) {
+    private static RenderDao createGanttRenderDao(Context context, Sprint sprint, String column, LocalDateTime now, int chartWidth, int chartHeight, String link) {
         RenderDao dao = new RenderDao();
         dao.context            = context;
         dao.column             = column;
@@ -66,6 +67,32 @@ public class RenderUtil {
         return dao;
     }
 
+    public static RenderDao createOverviewRenderDao(Context context, List<Sprint> sprintList, String name, LocalDateTime now, int numberOfLines, int chartWidth, int chartHeight) {
+        RenderDao dao = new RenderDao();
+        dao.context = context;
+        dao.column  = name;
+//        dao.sprintName = column + "-burn-down";
+//        dao.link = link;
+//        dao.start              = sprint.getStart();
+        dao.now = now;
+//        dao.end                = sprint.getEnd();
+//        dao.release            = sprint.getReleaseDate();
+        dao.chartWidth  = chartWidth;
+        dao.chartHeight = chartHeight;
+//        dao.sprint             = sprint;
+//        dao.estimatedBestWork  = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
+        dao.estimatedWorstWork = null;
+//        dao.maxWorked          = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
+//        dao.remaining          = sprint.getRemaining();
+//        dao.worklog            = sprint.getWorklogs();
+//        dao.worklogRemaining   = sprint.getWorklogRemaining();
+        dao.cssClass       = "scheduleWithMargin";
+        dao.kassandraTheme = context.parameters.getActiveGraphicsTheme();
+        dao.sprintList     = sprintList;
+        dao.numberOfLines  = numberOfLines;
+        return dao;
+    }
+
     /**
      * Generates a BurnDown chart SVG for the given sprint and updates the provided Svg component.
      *
@@ -76,10 +103,20 @@ public class RenderUtil {
      */
     public static void generateBurnDownChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
         List<Throwable> exceptions = new ArrayList<>();
-        RenderDao       dao        = createRenderDao(context, sprint, "burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
+        RenderDao       dao        = createGanttRenderDao(context, sprint, "burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
         BurnDownChart   chart      = new BurnDownChart("/", dao);
         RenderUtil.renderSvg(chart, svg);
         svg.setId(BURNDOWN_CHART);
+    }
+
+    public static GanttBurndownChart generateGanttBurnChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
+        List<Throwable>    exceptions = new ArrayList<>();
+        RenderDao          dao        = createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
+        GanttBurndownChart chart      = new GanttBurndownChart("/", dao);
+//        GanttBurndownChart chart      = new GanttBurndownChart(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+        RenderUtil.renderSvg(chart, svg);
+        svg.setId(GANTT_CHART);
+        return chart;
     }
 
     /**
@@ -92,10 +129,30 @@ public class RenderUtil {
      */
     public static GanttChart generateGanttChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
         List<Throwable> exceptions = new ArrayList<>();
-        GanttChart      chart      = new GanttChart(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+        RenderDao       dao        = createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
+        GanttChart      chart      = new GanttChart("/", dao);
+//        GanttChart      chart      = new GanttChart(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
         RenderUtil.renderSvg(chart, svg);
         svg.setId(GANTT_CHART);
         return chart;
+    }
+
+    /**
+     * Generates a SprintsOverviewChart SVG for the provided sprint list and updates the given Svg component.
+     * Only sprints with non-null start and end dates are included; sprints without dates are silently skipped.
+     *
+     * @param context the application context (must have its theme synchronised before calling from a background thread)
+     * @param sprints the list of sprints to display; must contain at least one sprint with valid start/end dates
+     * @param svg     the Svg component to populate with the rendered chart
+     * @throws Exception if an error occurs during chart generation
+     */
+    public static void generateSprintsOverviewChartSvg(Context context, List<Sprint> sprints, Svg svg) throws Exception {
+        SprintsOverviewChart chart = new SprintsOverviewChart(
+                context, "", "/", "sprints-overview", null,
+                ParameterOptions.getLocalNow(), sprints,
+                1887, 1000, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+        renderSvg(chart, svg);
+        svg.setId(SPRINTS_OVERVIEW_CHART);
     }
 
     /**
@@ -140,6 +197,42 @@ public class RenderUtil {
         }
     }
 
+    private static ByteArrayOutputStream render(GanttBurndownChart chart) {
+        ByteArrayOutputStream o = new ByteArrayOutputStream(64 * 1024); //begin size 64 KB
+        try {
+            chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), o);
+            return o;
+        } catch (Exception e) {
+            try {
+                o.close(); // Close the stream in case of error
+            } catch (Exception closeException) {
+                logger.warn("Failed to close output stream", closeException);
+            }
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Renders a SprintsOverviewChart to a ByteArrayOutputStream.
+     *
+     * @param chart the SprintsOverviewChart to render
+     * @return ByteArrayOutputStream containing the rendered chart
+     */
+    private static ByteArrayOutputStream render(SprintsOverviewChart chart) {
+        ByteArrayOutputStream o = new ByteArrayOutputStream(64 * 1024);
+        try {
+            chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), o);
+            return o;
+        } catch (Exception e) {
+            try {
+                o.close();
+            } catch (Exception closeException) {
+                logger.warn("Failed to close output stream", closeException);
+            }
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Renders a BurnDownChart to a Svg component.
      *
@@ -172,42 +265,13 @@ public class RenderUtil {
         }
     }
 
-    /**
-     * Generates a SprintsOverviewChart SVG for the provided sprint list and updates the given Svg component.
-     * Only sprints with non-null start and end dates are included; sprints without dates are silently skipped.
-     *
-     * @param context the application context (must have its theme synchronised before calling from a background thread)
-     * @param sprints the list of sprints to display; must contain at least one sprint with valid start/end dates
-     * @param svg     the Svg component to populate with the rendered chart
-     * @throws Exception if an error occurs during chart generation
-     */
-    public static void generateSprintsOverviewChartSvg(Context context, List<Sprint> sprints, Svg svg) throws Exception {
-        SprintsOverviewChart chart = new SprintsOverviewChart(
-                context, "", "/", "sprints-overview", null,
-                ParameterOptions.getLocalNow(), sprints,
-                1887, 1000, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
-        renderSvg(chart, svg);
-        svg.setId(SPRINTS_OVERVIEW_CHART);
-    }
-
-    /**
-     * Renders a SprintsOverviewChart to a ByteArrayOutputStream.
-     *
-     * @param chart the SprintsOverviewChart to render
-     * @return ByteArrayOutputStream containing the rendered chart
-     */
-    private static ByteArrayOutputStream render(SprintsOverviewChart chart) {
-        ByteArrayOutputStream o = new ByteArrayOutputStream(64 * 1024);
-        try {
-            chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), o);
-            return o;
+    private static void renderSvg(GanttBurndownChart chart, Svg svg) {
+        try (ByteArrayOutputStream outputStream = render(chart)) {
+            String svgString = outputStream.toString(StandardCharsets.UTF_8);
+            // Update existing Svg with new content
+            svg.setSvg(svgString);
         } catch (Exception e) {
-            try {
-                o.close();
-            } catch (Exception closeException) {
-                logger.warn("Failed to close output stream", closeException);
-            }
-            throw new RuntimeException(e);
+            logger.error("Error creating gantt chart", e);
         }
     }
 

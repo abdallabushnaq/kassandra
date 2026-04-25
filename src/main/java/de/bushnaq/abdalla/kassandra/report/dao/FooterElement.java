@@ -32,12 +32,10 @@ public class FooterElement {
     public        int    x        = 3;
     public        int    y        = 1;
 
-    public FooterElement(String text, String projectRequestKey,/*, int chartWidth, int chartHeight*/Theme theme) {
+    public FooterElement(String text, String projectRequestKey, Theme theme) {
         this.text              = text;
         this.projectRequestKey = projectRequestKey;
         this.theme             = theme;
-//        this.width             = chartWidth;
-//        y                      = chartHeight;
         if (text == null) {
             height = 0;
         }

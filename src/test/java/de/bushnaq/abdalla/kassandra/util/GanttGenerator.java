@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
+import de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
@@ -97,6 +98,28 @@ public class GanttGenerator extends MPXJGenerator {
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
     }
 
+    public void generateGanttBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
+        Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
+        sprint.initialize();
+        sprint.initUserMap(users);
+        sprint.initTaskMap(tasks, worklogs);
+        sprint.recalculate(ParameterOptions.getLocalNow());
+        Context context = new Context(null);
+        context.parameters.setTheme(testTheme);
+        String sprintName;
+        if (testInfo.getDisplayName().indexOf('=') != -1) {
+            sprintName = testInfo.getDisplayName().substring(testInfo.getDisplayName().indexOf('"') + 1, testInfo.getDisplayName().lastIndexOf('"')) + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-burndown-chart";
+        } else {
+            sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
+        }
+        RenderDao          dao   = createRenderDao(context, sprint, "burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
+        GanttBurndownChart chart = new GanttBurndownChart("/", dao);
+//        GanttBurndownChart chart = new GanttBurndownChart(context, "", "/", "Gantt Burndown Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+//        String     description = testCaseInfo.getDisplayName().replace("_", "-");
+        String description = TestInfoUtil.getTestMethodName(testInfo);
+        chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
+    }
+
     public void generateGanttChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
         Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         sprint.initialize();
@@ -111,7 +134,9 @@ public class GanttGenerator extends MPXJGenerator {
         } else {
             sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
         }
-        GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+        RenderDao  dao   = createRenderDao(context, sprint, "gantt", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
+        GanttChart chart = new GanttChart("/", dao);
+//        GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
 //        String     description = testCaseInfo.getDisplayName().replace("_", "-");
         String description = TestInfoUtil.getTestMethodName(testInfo);
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);

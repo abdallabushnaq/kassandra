@@ -1,13 +1,12 @@
 package de.bushnaq.abdalla.kassandra.report.overview;
 
 
-import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dao.WarnException;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
+import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.svg.util.ExtendedRectangle;
 import de.bushnaq.abdalla.util.StringUtils;
@@ -45,7 +44,7 @@ public class SprintsOverviewRenderer extends AbstractRenderer {
     //    private BufferedImage ganttGreen = null;
     //    private BufferedImage ganttOff = null;
     //    private BufferedImage ganttRed = null;
-    private       Theme                      graphicsTheme;
+//    private       Theme                      graphicsTheme;
     private       LocalDate                  lastDate;
     private       int                        numberOfLines       = 4;
     private final Map<Integer, List<Sprint>> projectScheduleList = new TreeMap<>();
@@ -58,19 +57,19 @@ public class SprintsOverviewRenderer extends AbstractRenderer {
 
     }
 
-    public SprintsOverviewRenderer(Context context, String column, String sprintName, Integer limit, LocalDateTime now, int numberOfLines,
-                                   List<Sprint> sprintList, int chartWidth, int chartHeight, String cssClass, Theme graphicsTheme)
-            throws Exception {
-        super(sprintName + "-projectOverviewChart", false, 7, 14, graphicsTheme);
+    public SprintsOverviewRenderer(RenderDao dao) throws Exception {
+//    public SprintsOverviewRenderer(Context context, String column, String sprintName, Integer limit, LocalDateTime now, int numberOfLines, List<Sprint> sprintList, int chartWidth, int chartHeight, String cssClass, Theme graphicsTheme) throws Exception {
+        super(dao);
+//        super(sprintName + "-projectOverviewChart", false, 7, 14, graphicsTheme);
         //        this.context = context;
-        this.numberOfLines = numberOfLines;
-        this.sprintList    = sprintList;
-        this.graphicsTheme = graphicsTheme;
-        firstDate          = findFirstDate();
-        lastDate           = findLastDate();
+        this.numberOfLines = dao.numberOfLines;
+        this.sprintList    = dao.sprintList;
+//        this.graphicsTheme = dao.graphicsTheme;
+        firstDate = findFirstDate();
+        lastDate  = findLastDate();
         // ---first day should not be earlier than 6 month before now
-        if (limit != null) {
-            LocalDate cutDay = DateUtil.addDay(now.toLocalDate(), -(limit));
+        if (dao.limit != null) {
+            LocalDate cutDay = DateUtil.addDay(dao.now.toLocalDate(), -(dao.limit));
             if (cutDay.isBefore(firstDate)) {
                 firstDate = cutDay;
             }
@@ -90,17 +89,17 @@ public class SprintsOverviewRenderer extends AbstractRenderer {
         //        qcdOff = ImageIO.read(getClass().getResource("image/qcd-off.png"));
 
         //milestones to define start and end of chart
-        milestones.add(now.toLocalDate(), "N", "Now (current date)", Color.blue, true);
+        milestones.add(dao.now.toLocalDate(), "N", "Now (current date)", Color.blue, true);
         int timeFrameMonths = 4;
         if (numberOfLines == 1) {
             timeFrameMonths = 2;
         }
         {
-            LocalDate c = now.toLocalDate().withDayOfMonth(1).minusMonths(timeFrameMonths);
+            LocalDate c = dao.now.toLocalDate().withDayOfMonth(1).minusMonths(timeFrameMonths);
             milestones.add(DateUtil.max(firstDate, c), "S", "Start (Start of project)", Color.blue, true);
         }
         {
-            LocalDate c = now.toLocalDate().withDayOfMonth(1).minusDays(1).plusMonths(timeFrameMonths + 1);
+            LocalDate c = dao.now.toLocalDate().withDayOfMonth(1).minusDays(1).plusMonths(timeFrameMonths + 1);
             milestones.add(DateUtil.min(lastDate, c), "E", "End (End of project)", Color.blue, true);
         }
 

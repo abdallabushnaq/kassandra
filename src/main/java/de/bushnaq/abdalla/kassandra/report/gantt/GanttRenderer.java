@@ -17,14 +17,13 @@
 
 package de.bushnaq.abdalla.kassandra.report.gantt;
 
-import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.AuthorContribution;
 import de.bushnaq.abdalla.kassandra.report.dao.GraphColorUtil;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.util.ErrorException;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -36,9 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 /**
  * renders a gantt chart using ms project mpp file as base
@@ -56,26 +53,47 @@ public class GanttRenderer extends AbstractGanttRenderer {
     private final        Logger            logger                = LoggerFactory.getLogger(this.getClass());
     private final        Sprint            sprint;
 
-    public GanttRenderer(Context context, String sprintName, List<Throwable> exceptions, LocalDateTime now, boolean completed,
-                         Sprint sprint/*, int chartWidth, int chartHeight*/, String cssClass, Theme kassandraTheme)
+//    public GanttRenderer(Context context, String sprintName, List<Throwable> exceptions, LocalDateTime now, boolean completed,
+//                         Sprint sprint/*, int chartWidth, int chartHeight*/, String cssClass, Theme kassandraTheme)
+//            throws Exception {
+//        super(context, sprintName/*, context.bankHolidays*/, completed/*, chartWidth, chartHeight*/, 1, 14, 14, kassandraTheme);
+////        this.ganttFileName = ganttFileName;
+//        this.sprint = sprint;
+////        this.timeTracker   = context.timeTracker;
+//        this.theme = kassandraTheme;
+
+    /// /        geh.exceptions     = exceptions;
+//        milestones.add(now.toLocalDate(), "N", "Now (current date)", Color.blue);
+//        milestones.add(sprint.getEarliestStartDate().toLocalDate(), "S", "Start (Start of project)", Color.blue);
+//        milestones.add(sprint.getLatestFinishDate().toLocalDate(), "E", "End (End of project)", Color.blue);
+//        if (sprint.getStatus().equals(Status.CLOSED)) {
+//            //We do not want to keep drawing the graph further and further to include the current date, if it is closed.
+//            if (now.isAfter(DateUtil.addDay(sprint.getLatestFinishDate(), ONE_WEEK))) {
+//                milestones.remove("N");
+//            }
+//        }
+//        milestones.calculate();
+//        processInit(sprintName);
+//    }
+    public GanttRenderer(RenderDao dao)
             throws Exception {
-        super(context, sprintName/*, context.bankHolidays*/, completed/*, chartWidth, chartHeight*/, 1, 14, 14, kassandraTheme);
+        super(dao);
 //        this.ganttFileName = ganttFileName;
-        this.sprint = sprint;
+        this.sprint = dao.sprint;
 //        this.timeTracker   = context.timeTracker;
-        this.theme = kassandraTheme;
+        this.theme = dao.kassandraTheme;
 //        geh.exceptions     = exceptions;
-        milestones.add(now.toLocalDate(), "N", "Now (current date)", Color.blue);
+        milestones.add(dao.now.toLocalDate(), "N", "Now (current date)", Color.blue);
         milestones.add(sprint.getEarliestStartDate().toLocalDate(), "S", "Start (Start of project)", Color.blue);
         milestones.add(sprint.getLatestFinishDate().toLocalDate(), "E", "End (End of project)", Color.blue);
         if (sprint.getStatus().equals(Status.CLOSED)) {
             //We do not want to keep drawing the graph further and further to include the current date, if it is closed.
-            if (now.isAfter(DateUtil.addDay(sprint.getLatestFinishDate(), ONE_WEEK))) {
+            if (dao.now.isAfter(DateUtil.addDay(sprint.getLatestFinishDate(), ONE_WEEK))) {
                 milestones.remove("N");
             }
         }
         milestones.calculate();
-        processInit(sprintName);
+        processInit(dao.sprint.getName());
     }
 
     @Override

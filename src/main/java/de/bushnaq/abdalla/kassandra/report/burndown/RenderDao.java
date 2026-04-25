@@ -31,7 +31,6 @@ public class RenderDao {
     public int                    chartHeight;
     public int                    chartWidth;//if 0, day width is set to MAX_DAY_WIDTH and cartWidth is calculated from maxDays and dayWidth.
     public String                 column;
-    //    public boolean                    completed;
     public Context                context;
     public String                 cssClass;
     public LocalDateTime          end;
@@ -40,17 +39,17 @@ public class RenderDao {
     public LocalDateTime          firstWorklog;
     public Theme                  kassandraTheme;
     public LocalDateTime          lastWorklog;
+    public Integer                limit = null;
     public String                 link;
     public Duration               maxWorked;
     public LocalDateTime          now;
+    public int                    numberOfLines;
     public int                    postRun;
     public int                    preRun;
-    //    public TimeTrackerProject racProject;
     public LocalDateTime          release;
     public Duration               remaining;
     public Sprint                 sprint;
-    //    public AbstractDevelopmentRequest request;
-//    public int                    sprintClosed;
+    public List<Sprint>           sprintList;
     public String                 sprintName;
     public LocalDateTime          start;
     public List<Worklog>          worklog;

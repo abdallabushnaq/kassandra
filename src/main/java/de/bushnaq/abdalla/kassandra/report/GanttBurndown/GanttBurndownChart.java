@@ -15,34 +15,24 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.report.gantt;
+package de.bushnaq.abdalla.kassandra.report.GanttBurndown;
 
 import de.bushnaq.abdalla.kassandra.report.AbstractChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
+import de.bushnaq.abdalla.kassandra.report.gantt.GanttRenderer;
 
 
-public class GanttChart extends AbstractChart {
+public class GanttBurndownChart extends AbstractChart {
 
-    public GanttChart(String relativeCssPath, RenderDao dao) throws Exception {
+    public GanttBurndownChart(String relativeCssPath, RenderDao dao) throws Exception {
         super("Gantt Chart", dao.sprint.getName(), relativeCssPath, dao.column, dao.sprint.getName(), null, dao.cssClass, dao.kassandraTheme);
+//        getRenderers().add(new BurnDownRenderer(dao));
         getRenderers().add(new GanttRenderer(dao));
         this.setChartWidth(getRenderers().getFirst().chartWidth);
         this.setChartHeight(getRenderers().getFirst().chartHeight + captionElement.height + footerElement.height - 1);
         captionElement.width = getChartWidth();
         footerElement.y      = getRenderers().getFirst().chartHeight + captionElement.height;
     }
-
-//    public GanttChart(Context context, String projectRequestKey, String relateCssPath, String column, String sprintName, List<Throwable> exception,
-//                      LocalDateTime now, boolean completed, Sprint sprint, String cssClass,
-//                      Theme theme) throws Exception {
-//        super("Gantt Chart", projectRequestKey, relateCssPath, column, sprintName, null, cssClass, theme);
-//        getRenderers().add(new GanttRenderer(context, sprintName, exception, now, completed, sprint, cssClass, theme));
-//        this.setChartWidth(getRenderers().getFirst().chartWidth);
-//        this.setChartHeight(getRenderers().getFirst().chartHeight + captionElement.height + footerElement.height - 1);
-//        captionElement.width = getChartWidth();
-//        footerElement.y      = getRenderers().getFirst().chartHeight + captionElement.height;
-//    }
-
 
     @Override
     protected void createReport() throws Exception {

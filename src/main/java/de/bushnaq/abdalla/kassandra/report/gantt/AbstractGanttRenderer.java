@@ -23,8 +23,8 @@ import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
+import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.svg.util.ExtendedRectangle;
 import de.bushnaq.abdalla.svg.util.RectangleWithToolTip;
 import de.bushnaq.abdalla.util.ColorUtil;
@@ -79,10 +79,16 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     protected              ResourcesUtilization resourcesUtilization       = new ResourcesUtilization();// only used for out of office
     protected              Map<String, Integer> taskHeight                 = new HashMap<>();
 
-    public AbstractGanttRenderer(Context context, String sprintName/*, Map<LocalDate, String> bankHolidays*/, boolean completed/*, int chartWidth, int chartHeight*/, int numberOfLinesPerTask, int preRun, int postRun, Theme kassandraTheme) throws IOException {
-        super(sprintName/*, bankHolidays*/, completed/*, chartWidth, chartHeight*/, preRun, postRun, kassandraTheme);
-        this.context              = context;
-        this.numberOfLinesPerTask = numberOfLinesPerTask;
+//    public AbstractGanttRenderer(Context context, String sprintName/*, Map<LocalDate, String> bankHolidays*/, boolean completed/*, int chartWidth, int chartHeight*/, int numberOfLinesPerTask, int preRun, int postRun, Theme kassandraTheme) throws IOException {
+//        super(sprintName/*, bankHolidays*/, completed/*, chartWidth, chartHeight*/, preRun, postRun, kassandraTheme);
+//        this.context              = context;
+//        this.numberOfLinesPerTask = numberOfLinesPerTask;
+//    }
+
+    public AbstractGanttRenderer(RenderDao dao) throws IOException {
+        super(dao);
+        this.context              = dao.context;
+        this.numberOfLinesPerTask = 1;//TODO do we need to keep this flexible in the dao?
     }
 
 //    private int addVacation(ResourceUtilization ru, String resourceName, OffDay pce) {

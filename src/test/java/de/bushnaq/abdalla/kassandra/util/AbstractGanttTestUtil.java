@@ -281,7 +281,9 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
 //            } else {
 //                sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
 //            }
-            GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+            RenderDao  dao   = createRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
+            GanttChart chart = new GanttChart("/", dao);
+//            GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
 //        String     description = testCaseInfo.getDisplayName().replace("_", "-");
             String description = TestInfoUtil.getTestMethodName(testInfo);
             chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
@@ -294,7 +296,9 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         sprint.initUserMap(userApi.getAll(sprintId));
         sprint.initTaskMap(taskApi.getAll(sprintId), worklogApi.getAll(sprintId));
         sprint.recalculate(ParameterOptions.getLocalNow());
-        GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", TestInfoUtil.getTestMethodName(testInfo) + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+        RenderDao  dao   = createRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html");
+        GanttChart chart = new GanttChart("/", dao);
+//        GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", TestInfoUtil.getTestMethodName(testInfo) + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
 //        String     description = testCaseInfo.getDisplayName().replace("_", "-");
         String description = TestInfoUtil.getTestMethodName(testInfo);
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testResultFolder);

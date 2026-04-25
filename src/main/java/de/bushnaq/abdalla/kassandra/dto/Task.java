@@ -259,7 +259,7 @@ public class Task implements Comparable<Task> {
             }
         } else {
             setTaskStatus(TaskStatus.IN_PROGRESS);
-            if (getParentTask().getTaskStatus() != TaskStatus.IN_PROGRESS) {
+            if (getParentTask() != null && getParentTask().getTaskStatus() != TaskStatus.IN_PROGRESS) {
                 //set story status to IN_PROGRESS
                 getParentTask().setTaskStatus(TaskStatus.IN_PROGRESS);
             }
