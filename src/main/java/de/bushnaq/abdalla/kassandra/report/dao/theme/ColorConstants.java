@@ -20,8 +20,15 @@ package de.bushnaq.abdalla.kassandra.report.dao.theme;
 import java.awt.*;
 
 public class ColorConstants {
-    public static final Color COLOR_DARK_GREEN = new Color(0x095c09);
-    public static final Color COLOR_DARK_RED   = new Color(0xcc4a31);
-    public static final Color COLOR_GOLD       = new Color(0xffcc00);
-    public static final Color COLOR_MAGENTA    = new Color(0xe5127d);
+    public static final Color COLOR_DARK_CYAN     = new Color(0x2eb0e8);
+    public static final Color COLOR_DARK_GREEN    = new Color(0x095c09);
+    public static final Color COLOR_DARK_MAGENTA  = new Color(0xfcc741);
+    public static final Color COLOR_DARK_RED      = new Color(0xcc4a31);
+    public static final Color COLOR_DARK_YELLOW   = new Color(0xbb58d6);
+    //    public static final Color COLOR_GOLD       = new Color(0xffcc00);
+    public static final Color COLOR_GREEN         = new Color(0x91cc39);
+    public static final Color COLOR_LIGHT_CYAN    = new Color(0x8adbd5);
+    public static final Color COLOR_LIGHT_GREEN   = new Color(0xb6db8a);
+    public static final Color COLOR_LIGHT_MAGENTA = new Color(0x968adb);
+
 }

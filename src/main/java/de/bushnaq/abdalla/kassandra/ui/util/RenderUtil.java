@@ -42,6 +42,7 @@ import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AX
 
 public class RenderUtil {
     public static final String BURNDOWN_CHART         = "burndown-chart";
+    public static final String GANTT_BURNDOWN_CHART   = "gantt-burndown-chart";
     public static final String GANTT_CHART            = "gantt-chart";
     public static final String SPRINTS_OVERVIEW_CHART = "sprints-overview-chart";
     final static        Logger logger                 = LoggerFactory.getLogger(RenderUtil.class);
@@ -149,7 +150,7 @@ public class RenderUtil {
         GanttBurndownChart chart       = new GanttBurndownChart("/", burndownDao, ganttDao);
 //        GanttBurndownChart chart      = new GanttBurndownChart(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
         RenderUtil.renderSvg(chart, svg);
-        svg.setId(GANTT_CHART);
+        svg.setId(GANTT_BURNDOWN_CHART);
         return chart;
     }
 

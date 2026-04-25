@@ -28,6 +28,7 @@
 12. Version shows id instead of key
 13. Sprint shows id instead of key
 14. User shows id instead of key
+15. navigating to sprint-quality-board will always show first sprint.
 
 # Failing Tests
 

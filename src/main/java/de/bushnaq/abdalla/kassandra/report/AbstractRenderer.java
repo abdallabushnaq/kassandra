@@ -64,8 +64,12 @@ public abstract class AbstractRenderer {
         this.theme       = dao.kassandraTheme;
         this.chartWidth  = dao.chartWidth;
         this.chartHeight = dao.chartHeight;
-        milestones       = new Milestones(dao.sprint.getName());
-        calendarXAxes    = new CalendarXAxes(this, dao.preRun, dao.postRun);
+        if (dao.sprint != null) {
+            milestones = new Milestones(dao.sprint.getName());
+        } else {
+            milestones = new Milestones(dao.name);
+        }
+        calendarXAxes = new CalendarXAxes(this, dao.preRun, dao.postRun);
     }
 
     protected int calculateChartHeight() {

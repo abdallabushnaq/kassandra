@@ -282,7 +282,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     private void createGanttChart() {
         ganttChartContainer = new Div();
         add(ganttChartContainer);
-        generateGanttChartAsync();
+//        generateGanttBurndownChartAsync();
     }
 
     private void createSprintDetailsLayout() {
@@ -440,7 +440,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
      * on the UI thread via {@link UI#access(com.vaadin.flow.server.Command)}.
      * Cancels any in-flight previous generation before starting a new one.
      */
-    private void generateGanttChartAsync() {
+    private void generateGanttBurndownChartAsync() {
         if (sprint == null) {
             return;
         }
@@ -650,7 +650,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         }
         context.syncTheme();
 //        generateBurnDownChartAsync();
-        generateGanttChartAsync();
+        generateGanttBurndownChartAsync();
     }
 
     /**
