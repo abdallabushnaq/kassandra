@@ -53,36 +53,10 @@ public class GanttRenderer extends AbstractGanttRenderer {
     private final        Logger            logger                = LoggerFactory.getLogger(this.getClass());
     private final        Sprint            sprint;
 
-//    public GanttRenderer(Context context, String sprintName, List<Throwable> exceptions, LocalDateTime now, boolean completed,
-//                         Sprint sprint/*, int chartWidth, int chartHeight*/, String cssClass, Theme kassandraTheme)
-//            throws Exception {
-//        super(context, sprintName/*, context.bankHolidays*/, completed/*, chartWidth, chartHeight*/, 1, 14, 14, kassandraTheme);
-////        this.ganttFileName = ganttFileName;
-//        this.sprint = sprint;
-////        this.timeTracker   = context.timeTracker;
-//        this.theme = kassandraTheme;
-
-    /// /        geh.exceptions     = exceptions;
-//        milestones.add(now.toLocalDate(), "N", "Now (current date)", Color.blue);
-//        milestones.add(sprint.getEarliestStartDate().toLocalDate(), "S", "Start (Start of project)", Color.blue);
-//        milestones.add(sprint.getLatestFinishDate().toLocalDate(), "E", "End (End of project)", Color.blue);
-//        if (sprint.getStatus().equals(Status.CLOSED)) {
-//            //We do not want to keep drawing the graph further and further to include the current date, if it is closed.
-//            if (now.isAfter(DateUtil.addDay(sprint.getLatestFinishDate(), ONE_WEEK))) {
-//                milestones.remove("N");
-//            }
-//        }
-//        milestones.calculate();
-//        processInit(sprintName);
-//    }
-    public GanttRenderer(RenderDao dao)
-            throws Exception {
+    public GanttRenderer(RenderDao dao) throws Exception {
         super(dao);
-//        this.ganttFileName = ganttFileName;
         this.sprint = dao.sprint;
-//        this.timeTracker   = context.timeTracker;
-        this.theme = dao.kassandraTheme;
-//        geh.exceptions     = exceptions;
+        this.theme  = dao.kassandraTheme;
         milestones.add(dao.now.toLocalDate(), "N", "Now (current date)", Color.blue);
         milestones.add(sprint.getEarliestStartDate().toLocalDate(), "S", "Start (Start of project)", Color.blue);
         milestones.add(sprint.getLatestFinishDate().toLocalDate(), "E", "End (End of project)", Color.blue);

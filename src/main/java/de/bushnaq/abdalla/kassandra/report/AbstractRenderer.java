@@ -68,12 +68,6 @@ public abstract class AbstractRenderer {
         calendarXAxes    = new CalendarXAxes(this, dao.preRun, dao.postRun);
     }
 
-//    public AbstractRenderer(String sprintName, boolean completed, int preRun, int postRun, Theme theme) throws IOException {
-//        this.theme    = theme;
-//        milestones    = new Milestones(sprintName);
-//        calendarXAxes = new CalendarXAxes(this, preRun, postRun);
-//    }
-
     protected int calculateChartHeight() {
         return chartHeight;
     }
@@ -180,21 +174,6 @@ public abstract class AbstractRenderer {
         //        graphics2D.drawLine(x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y,x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y + diagram.height);
         //        graphics2D.draw(new Line2D.Double(x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y,x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y + diagram.height));
         graphics2D.fillRect(x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxes.dayOfWeek.getWidth() - 1), diagram.y, 1, diagram.height);//right |
-        //TODO: draw bank holiday
-//        if (bankHolidays.get(currentDay) != null) {
-//            x += calendarXAxses.dayOfWeek.getWidth() / 2;
-//            graphics2D.setColor(kassandraTheme.bankHolidayColor);
-//            graphics2D.setFont(bankHolidayFont);
-//            FontMetrics fm     = graphics2D.getFontMetrics();
-//            String      string = bankHolidays.get(currentDay);
-//            int         width  = fm.stringWidth(string);
-//            int         y;
-//            y = diagram.y + width;
-//            AffineTransform transform = graphics2D.getTransform();
-//            graphics2D.rotate(-Math.PI / 2, x, y);
-//            graphics2D.drawString(string, x, y);
-//            graphics2D.setTransform(transform);
-//        }
     }
 
     protected void drawGraphText(int x, int y, String text, Color textColor, Font font, TextAlignment aligned) {

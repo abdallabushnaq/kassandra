@@ -79,49 +79,12 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     protected              ResourcesUtilization resourcesUtilization       = new ResourcesUtilization();// only used for out of office
     protected              Map<String, Integer> taskHeight                 = new HashMap<>();
 
-//    public AbstractGanttRenderer(Context context, String sprintName/*, Map<LocalDate, String> bankHolidays*/, boolean completed/*, int chartWidth, int chartHeight*/, int numberOfLinesPerTask, int preRun, int postRun, Theme kassandraTheme) throws IOException {
-//        super(sprintName/*, bankHolidays*/, completed/*, chartWidth, chartHeight*/, preRun, postRun, kassandraTheme);
-//        this.context              = context;
-//        this.numberOfLinesPerTask = numberOfLinesPerTask;
-//    }
-
     public AbstractGanttRenderer(RenderDao dao) throws IOException {
         super(dao);
         this.context              = dao.context;
         this.numberOfLinesPerTask = 1;//TODO do we need to keep this flexible in the dao?
     }
 
-//    private int addVacation(ResourceUtilization ru, String resourceName, OffDay pce) {
-//        int days = 0;
-
-    /// /        RecurringData recurring = pce.getRecurring();
-    /// /        if (recurring != null) {
-    /// /            LocalDate[] dates = recurring.getDates();
-    /// /            for (int i = 0; i < dates.length; i++) {
-    /// /                LocalDate exceptionDate = dates[i];
-    /// /                int       dayIndex      = calculateDayIndex(exceptionDate);
-    /// /                if (dayIndex > -1) {
-    /// /                    ru.addVacation(dayIndex, 1.0);
-    /// /                    days++;
-    /// /                    // logger.trace(String.format("%s is out of office on %s.", resourceName,
-    /// /                    // dateUtil.createDateString(exceptionDate.getTime())));
-    /// /                }
-    /// /            }
-    /// /        } else
-//        {
-//            LocalDate fromDate = pce.getFirstDay();
-//            while (fromDate.isBefore(pce.getLastDay()) || fromDate.isEqual(pce.getLastDay())) {
-//                //                logger.trace(String.format("%s is out of office on %s.", resourceName, dateUtil.createDateString(fromDate.getTime())));
-//                int dayIndex = calculateDayIndex(fromDate);
-//                if (dayIndex > -1) {
-//                    ru.addVacation(dayIndex, 1.0);
-//                    days++;
-//                }
-//                fromDate = DateUtil.addDay(fromDate, 1);
-//            }
-//        }
-//        return days;
-//    }
     private void drawConflictMarker(int y, List<Conflict> conflict) {
         if (conflict != null) {
             // only used in team planner chart
@@ -262,70 +225,6 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
             graphics2D.drawString(String.format("%s (%s)", taskName, dateTimeString), x1 + 2 + 8 + c + milestoneWidth / 2, y + yShift);
         }
     }
-
-//    private void drawOutOfOffice(Task task, int y) {
-//        //TODO reintroduce bank holidays and vacations
-//
-//        if (task.getAssignedUser() != null) {
-//            for (ProjectCalendarException calendarException : task.getAssignedUser().getCalendar().getCalendarExceptions()) {
-//                for (LocalDate currentDay = calendarException.getFromDate(); currentDay.isBefore(calendarException.getToDate()) || currentDay.isEqual(calendarException.getToDate()); currentDay = currentDay.plusDays(1)) {
-////                    int    dayIndex = calculateDayIndex(calendarException.getFromDate());
-//                    String name = calendarException.getName();
-//                    if (name.equals(OffDayType.VACATION.name()) || name.equals(OffDayType.HOLIDAY.name()) || name.equals(OffDayType.SICK.name()) || name.equals(OffDayType.TRIP.name())) {
-//                        int daysX = calculateDayX(currentDay);
-//                        if (daysX > 0 && daysX < calendarXAxes.getWidth()) {
-//                            graphics2D.setFont(outOfOfficeFont);
-//                            graphics2D.setColor(kassandraTheme.ganttOutOfOfficeColor);
-////                            graphics2D.fillRect(daysX - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1), y - (calendarXAxses.dayOfWeek.getWidth() / 2) + 2, calendarXAxses.dayOfWeek.getWidth() - 1, getTaskHeight());
-//                            graphics2D.setColor(Color.WHITE);
-//                            FontMetrics fm        = graphics2D.getFontMetrics();
-//                            String      text      = "O";
-//                            int         width     = fm.stringWidth(text);
-//                            int         maxAscent = fm.getMaxAscent();
-////                            graphics2D.drawString(text, daysX - width / 2, y + (maxAscent + 1) / 2 - 2);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//
-////        ProjectFile parentFile = task.getParentFile();
-////        LocalDate   start      = parentFile.getEarliestStartDate().toLocalDate();
-////        LocalDate   finish     = parentFile.getLatestFinishDate().toLocalDate();
-////        String resourceName = null;
-////        if (!task.getMilestone() && task.getResourceAssignments().size() == 1) {
-////            for (ResourceAssignment assignment : task.getResourceAssignments()) {
-////                Resource resource = assignment.getResource();
-////                if (resource != null) {
-////                    resourceName = resource.getName();
-////                    break;
-////                }
-////            }
-////        }
-////        if (resourceName != null) {
-////            ResourceUtilization ru = resourcesUtilization.get(Authors.mapToPrimaryLoginName(resourceName));
-////            for (LocalDate currentDay = start; currentDay.isBefore(finish); currentDay = currentDay.plusDays(1)) {
-////                int dayIndex = calculateDayIndex(currentDay);
-////                if (ru != null && (ru.getVacation(dayIndex) != null || ru.getSickness(dayIndex) != null)) {
-////                    int daysX = calculateDayX(currentDay);
-////                    // int x1 = daysX - (calendarXAxses.dayOfWeek.width / 2 - 1);
-////                    // int y1 = y - (calendarXAxses.dayOfWeek.width / 2) + 2;
-////                    // graphics2D.drawImage(outOfOffice, null, x1, y1);
-////                    graphics2D.setFont(outOfOfficeFont);
-////                    graphics2D.setColor(kassandraTheme.ganttOutOfOfficeColor);
-////                    graphics2D.fillRect(daysX - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1), y - (calendarXAxses.dayOfWeek.getWidth() / 2) + 2,
-////                            calendarXAxses.dayOfWeek.getWidth() - 1, getTaskHeight());
-////                    graphics2D.setColor(Color.WHITE);
-////                    FontMetrics fm        = graphics2D.getFontMetrics();
-////                    String      text      = "O";
-////                    int         width     = fm.stringWidth(text);
-////                    int         maxAscent = fm.getMaxAscent();
-////                    graphics2D.drawString(text, daysX - width / 2, y + (maxAscent + 1) / 2 - 2);
-////                }
-////            }
-////        }
-//    }
 
     /**
      * T------------| | | C
@@ -771,67 +670,4 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
         return LINE_HEIGHT * numberOfLinesPerTask;
     }
 
-//    protected void initOutOfOffice(/*GanttInformationList gattInformationList*/) {
-////TODO reintroduce bank holidays and vacations
-//
-////        int vacations = 0;
-////        for (GanttInformation ganttInformation : gattInformationList) {
-////            if (context.debug.filterGantt(ganttInformation)) {
-////                logger.trace("Extracting out-of-Office information from " + ganttInformation.projectFileName);
-////                for (Resource resource : ganttInformation.projectFile.getResources()) {
-////                    String                                                     primaryResourcename = Authors.mapToPrimaryLoginName(resource.getName());
-////                    com.ricoh.sdced.projects.dashboard.dao.ResourceUtilization ru                  = resourcesUtilization.get(primaryResourcename);
-////                    if (ru == null && primaryResourcename != null) {
-////                        ru = new ResourceUtilization(milestones.firstMilestone, days);
-////                        ru.setMaxUnit(0.7);
-////                        resourcesUtilization.put(primaryResourcename, ru);
-////                    }
-////                    ProjectCalendar resourceCalendar = resource.getCalendar();
-////                    if (resourceCalendar != null && ru != null) {
-////                        for (ProjectCalendarException pce : resourceCalendar.getCalendarExceptions()) {
-////                            vacations += addVacation(ru, resource.getName(), pce);
-////                        }
-////                    } else if (resource.getID() == 0) {
-////                        // we do not expect a calendar
-////                    } else {
-////                        logger.trace(resource.getName() + " has no calendar");
-////                    }
-////                }
-////            }
-////        }
-////        logger.info(String.format("Included %d vacation days from %d gantt charts.", vacations, gattInformationList.size()));
-//
-//    }
-
-//    protected void initOutOfOffice(TimeTracker timeTracker) {
-//        if (timeTracker != null) {
-//            for (TimeTrackerUser user : timeTracker.timeTrackerUserList) {
-//                for (TimeTrackerPunch punch : user.racPunchList) {
-//                    String                                                     resourceName        = timeTracker.userIdToUserNameMap.get(punch.userId).name;
-//                    String                                                     primaryResourcename = Authors.mapToPrimaryLoginName(resourceName);
-//                    com.ricoh.sdced.projects.dashboard.dao.ResourceUtilization ru                  = resourcesUtilization.get(primaryResourcename);
-//                    if (ru == null && primaryResourcename != null) {
-//                        ru = new ResourceUtilization(milestones.firstMilestone, days);
-//                        ru.setMaxUnit(0.7);
-//                        resourcesUtilization.put(primaryResourcename, ru);
-//                    }
-//                    if (ru != null) {
-//                        int startDayIndex = calculateDayIndex(punch.in);
-//                        if (startDayIndex > -1) {
-//                            if (punch.projectId == 1) {
-//                                switch (punch.taskId) {
-//                                    case 285:// vacation
-//                                        ru.addVacation(startDayIndex, 1.0);
-//                                        break;
-//                                    case 286:// sickness
-//                                        ru.addSickness(startDayIndex, 1.0);
-//                                        break;
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
 }

@@ -14,13 +14,10 @@ import java.util.List;
 public class SprintsOverviewChart extends AbstractChart {
 
     public SprintsOverviewChart(Context context, String relateCssPath, String column, String sprintName, Integer limit, LocalDateTime now,
-                                List<Sprint> sprintList, int chartWidth, int chartHeight, String cssClass, Theme graphicsTheme)
-            throws Exception {
+                                List<Sprint> sprintList, int chartWidth, int chartHeight, String cssClass, Theme graphicsTheme) throws Exception {
         super("Project Overview Chart", "", relateCssPath, column, sprintName + "-projectOverviewChart", "project_overview_map", null, graphicsTheme);
-
         RenderDao dao = RenderUtil.createOverviewRenderDao(context, sprintList, "overview", ParameterOptions.getLocalNow(), 3, chartWidth, chartHeight);
         getRenderers().add(new SprintsOverviewRenderer(dao));
-//        getRenderers().add(new SprintsOverviewRenderer(context, column, sprintName, limit, now, 3, sprintList, chartWidth, chartHeight, cssClass, graphicsTheme));
         this.setChartWidth(getRenderers().get(0).chartWidth);
         this.setChartHeight(getRenderers().get(0).chartHeight + captionElement.height + footerElement.height - 1);
         captionElement.width = chartWidth;

@@ -58,9 +58,7 @@ public class SprintsOverviewRenderer extends AbstractRenderer {
     }
 
     public SprintsOverviewRenderer(RenderDao dao) throws Exception {
-//    public SprintsOverviewRenderer(Context context, String column, String sprintName, Integer limit, LocalDateTime now, int numberOfLines, List<Sprint> sprintList, int chartWidth, int chartHeight, String cssClass, Theme graphicsTheme) throws Exception {
         super(dao);
-//        super(sprintName + "-projectOverviewChart", false, 7, 14, graphicsTheme);
         //        this.context = context;
         this.numberOfLines = dao.numberOfLines;
         this.sprintList    = dao.sprintList;
