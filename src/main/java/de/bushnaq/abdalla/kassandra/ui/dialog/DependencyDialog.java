@@ -44,6 +44,13 @@ import java.util.stream.Collectors;
  */
 public class DependencyDialog extends Dialog {
 
+    /** Element ID of the Cancel button. */
+    public static final String CANCEL_BUTTON     = "cancel-dependency-button";
+    /** Element ID of the dialog overlay root. */
+    public static final String DEPENDENCY_DIALOG = "dependency-dialog";
+    /** Element ID of the Save button. */
+    public static final String SAVE_BUTTON       = "save-dependency-button";
+
     private final Map<UUID, Checkbox> checkboxMap = new HashMap<>();
     private final Logger              logger      = LoggerFactory.getLogger(this.getClass());
     private final SaveCallback        saveCallback;
@@ -65,6 +72,7 @@ public class DependencyDialog extends Dialog {
         this.taskOrder    = taskOrder;
         this.saveCallback = saveCallback;
 
+        setId(DEPENDENCY_DIALOG);
         setHeaderTitle("Edit Dependencies for Task #" + task.getOrderId());
         setWidth("600px");
         setHeight("500px");
@@ -231,9 +239,11 @@ public class DependencyDialog extends Dialog {
 
         // Footer buttons
         Button saveButton = new Button("Save", event -> save());
+        saveButton.setId(SAVE_BUTTON);
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
 
         Button cancelButton = new Button("Cancel", event -> close());
+        cancelButton.setId(CANCEL_BUTTON);
         cancelButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
 
         getFooter().add(cancelButton, saveButton);
