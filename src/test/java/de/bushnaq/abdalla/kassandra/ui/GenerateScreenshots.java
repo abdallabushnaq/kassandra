@@ -18,10 +18,8 @@
 package de.bushnaq.abdalla.kassandra.ui;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
-import de.bushnaq.abdalla.kassandra.dto.Availability;
-import de.bushnaq.abdalla.kassandra.dto.Location;
-import de.bushnaq.abdalla.kassandra.dto.OffDayType;
-import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
+import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.ui.dialog.*;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
@@ -87,29 +85,32 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
     Availability lastAvailability = null;
     private final LocalDate lastDay        = LocalDate.of(2025, 6, 1);
     private final LocalDate lastDayRecord1 = LocalDate.of(2026, 8, 7);
-    Location lastLocation = null;
+    Location     lastLocation     = null;
+    UserWorkWeek lastUserWorkWeek = null;
     @Autowired
-    private       LocationListViewTester   locationListViewTester;
+    private       LocationListViewTester     locationListViewTester;
     @Autowired
-    private       OffDayListViewTester     offDayListViewTester;
+    private       OffDayListViewTester       offDayListViewTester;
     @Autowired
-    private       ProductListViewTester    productListViewTester;
-    private       String                   productName;
+    private       ProductListViewTester      productListViewTester;
+    private       String                     productName;
     @Autowired
-    private       HumanizedSeleniumHandler seleniumHandler;
+    private       HumanizedSeleniumHandler   seleniumHandler;
     @Autowired
-    private       SprintListViewTester     sprintListViewTester;
-    private       String                   sprintName;
+    private       SprintListViewTester       sprintListViewTester;
+    private       String                     sprintName;
     @Autowired
-    private       TaskListViewTester       taskListViewTester;
-    private       String                   taskName;
-    private final OffDayType               typeRecord1 = OffDayType.VACATION;
+    private       TaskListViewTester         taskListViewTester;
+    private       String                     taskName;
+    private final OffDayType                 typeRecord1 = OffDayType.VACATION;
     @Autowired
-    private       UserListViewTester       userListViewTester;
-    private       String                   userName;
+    private       UserListViewTester         userListViewTester;
+    private       String                     userName;
     @Autowired
-    private       VersionListViewTester    versionListViewTester;
-    private       String                   versionName;
+    private       UserWorkWeekListViewTester userWorkWeekListViewTester;
+    @Autowired
+    private       VersionListViewTester      versionListViewTester;
+    private       String                     versionName;
 
     // Method to get the public-facing URL, fixing potential redirect issues
     private static String getPublicFacingUrl(KeycloakContainer container) {
@@ -158,6 +159,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         User paul = userApi.getByEmail("christopher.paul@kassandra.org").get();
         lastAvailability = paul.getAvailabilities().getLast();
         lastLocation     = paul.getLocations().getLast();
+        lastUserWorkWeek = paul.getUserWorkWeeks().getLast();
     }
 
     /**
@@ -322,94 +324,101 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         seleniumHandler.takeScreenShot(folder + "/about-view.png");
 
         if (false) {
+            //-----------------
+            //ProductListView
+            //-----------------
+            productListViewTester.switchToProductListView();
+            seleniumHandler.takeScreenShot(folder + "/product-list-view.png");
+            takeProductDialogScreenshots(folder);
+            productListViewTester.selectProduct(productName);
+
+            //-----------------
+            //VersionListView
+            //-----------------
+            seleniumHandler.takeScreenShot(folder + "/version-list-view.png");
+            takeVersionDialogScreenshots(folder);
+            versionListViewTester.selectVersion(versionName);
+
+            //-----------------
+            //FeatureListView
+            //-----------------
+            seleniumHandler.takeScreenShot(folder + "/feature-list-view.png");
+            takeFeatureDialogScreenshots(folder);
+            featureListViewTester.selectFeature(featureName);
+
+            //-----------------
+            //SprintListView
+            //-----------------
+            seleniumHandler.waitForElementToBeClickable(RenderUtil.SPRINTS_OVERVIEW_CHART);
+            seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
+            takeSprintDialogScreenshots(folder);
+            sprintListViewTester.selectSprint(sprintName);
+            seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_BURNDOWN_CHART);
+            seleniumHandler.takeScreenShot(folder + "/quality-board.png");
+
+            //-----------------
+            //Backlog
+            //-----------------
+            backlogTester.switchToBacklog();
+            seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, sprintName);
+            seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
+            seleniumHandler.takeScreenShot(folder + "/backlog.png");
+
+            //-----------------
+            //ActiveSprints
+            //-----------------
+            activeSprintsTester.switchToActiveSprints();
+            seleniumHandler.wait(1000);
+            seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Zurich"});//enable
+            seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Oslo"});//enable
+            seleniumHandler.wait(1000);
+            seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
+
+            //-----------------
+            //UserListView
+            //-----------------
+            userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+            seleniumHandler.takeScreenShot(folder + "/user-list-view.png");
+            takeUserDialogScreenshots(folder);
+
+            //-----------------
+            //AvailabilityListView
+            //-----------------
+            availabilityListViewTester.switchToAvailabilityListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+            seleniumHandler.takeScreenShot(folder + "/availability-list-view.png");
+            takeAvailabilityDialogScreenshots(folder);
+
+            //-----------------
+            //LocationListView
+            //-----------------
+            locationListViewTester.switchToLocationListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+            seleniumHandler.takeScreenShot(folder + "/location-list-view.png");
+            takeLocationDialogScreenshots(folder);
+
+            //-----------------
+            //OffdayListView
+            //-----------------
+            offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+            seleniumHandler.takeScreenShot(folder + "/offday-list-view.png");
+            takeOffDayDialogScreenshots(folder);
         }
-        //-----------------
-        //ProductListView
-        //-----------------
-        productListViewTester.switchToProductListView();
-        seleniumHandler.takeScreenShot(folder + "/product-list-view.png");
-        takeProductDialogScreenshots(folder);
-        productListViewTester.selectProduct(productName);
+
 
         //-----------------
-        //VersionListView
+        //UserWorkWeekListView
         //-----------------
-        seleniumHandler.takeScreenShot(folder + "/version-list-view.png");
-        takeVersionDialogScreenshots(folder);
-        versionListViewTester.selectVersion(versionName);
+        userWorkWeekListViewTester.switchToUserWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+        seleniumHandler.takeScreenShot(folder + "/user-work-week-list-view.png");
+        takeUserWorkWeekDialogScreenshots(folder);
 
-        //-----------------
-        //FeatureListView
-        //-----------------
-        seleniumHandler.takeScreenShot(folder + "/feature-list-view.png");
-        takeFeatureDialogScreenshots(folder);
-        featureListViewTester.selectFeature(featureName);
-
-        //-----------------
-        //SprintListView
-        //-----------------
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.SPRINTS_OVERVIEW_CHART);
-        seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
-        takeSprintDialogScreenshots(folder);
-        sprintListViewTester.selectSprint(sprintName);
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_BURNDOWN_CHART);
-        seleniumHandler.takeScreenShot(folder + "/quality-board.png");
-
-        //-----------------
-        //Backlog
-        //-----------------
-        backlogTester.switchToBacklog();
-        seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, sprintName);
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
-        seleniumHandler.takeScreenShot(folder + "/backlog.png");
-
-        //-----------------
-        //ActiveSprints
-        //-----------------
-        activeSprintsTester.switchToActiveSprints();
-        seleniumHandler.wait(1000);
-        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Zurich"});//enable
-        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Oslo"});//enable
-        seleniumHandler.wait(1000);
-        seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
-
-        //-----------------
-        //UserListView
-        //-----------------
-        userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        seleniumHandler.takeScreenShot(folder + "/user-list-view.png");
-        takeUserDialogScreenshots(folder);
-
-        //-----------------
-        //AvailabilityListView
-        //-----------------
-        availabilityListViewTester.switchToAvailabilityListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-        seleniumHandler.takeScreenShot(folder + "/availability-list-view.png");
-        takeAvailabilityDialogScreenshots(folder);
-
-        //-----------------
-        //LocationListView
-        //-----------------
-        locationListViewTester.switchToLocationListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-        seleniumHandler.takeScreenShot(folder + "/location-list-view.png");
-        takeLocationDialogScreenshots(folder);
-
-        //-----------------
-        //OffdayListView
-        //-----------------
-        offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-        seleniumHandler.takeScreenShot(folder + "/offday-list-view.png");
-        takeOffDayDialogScreenshots(folder);
         if (false) {
 
         }
         aboutViewTester.logout();
         //TODO add screenshot of
-        // UserWorkWeekListView,
         // WorkWeekListView,
         // WorkWeekDialog,
         // WorklogDialog,
-        // UserWorkWeekDialog,
         // TaskDialog,
         // ImagePromptDialog,
         // DependencyDialog
@@ -506,7 +515,39 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
     }
 
     /**
-     * Takes screenshots of Version create, edit and delete dialogs
+     * Takes screenshots of UserWorkWeek create, edit and delete dialogs.
+     */
+    private void takeUserWorkWeekDialogScreenshots(String folder) {
+        // Create dialog
+        {
+            seleniumHandler.click(UserWorkWeekListView.CREATE_BUTTON);
+            seleniumHandler.waitForElementToBeClickable(UserWorkWeekDialog.CANCEL_BUTTON);
+            seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(UserWorkWeekDialog.USER_WORK_WEEK_DIALOG), UserWorkWeekDialog.USER_WORK_WEEK_DIALOG, folder + "/user-work-week-create-dialog.png");
+            userWorkWeekListViewTester.closeDialog(UserWorkWeekDialog.CANCEL_BUTTON);
+        }
+
+        // Edit dialog
+        {
+            String dateStr = lastUserWorkWeek.getStart().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            seleniumHandler.click(UserWorkWeekListView.GRID_EDIT_BUTTON_PREFIX + dateStr);
+            seleniumHandler.waitForElementToBeClickable(UserWorkWeekDialog.CANCEL_BUTTON);
+            seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(UserWorkWeekDialog.USER_WORK_WEEK_DIALOG), UserWorkWeekDialog.USER_WORK_WEEK_DIALOG, folder + "/user-work-week-edit-dialog.png");
+            userWorkWeekListViewTester.closeDialog(UserWorkWeekDialog.CANCEL_BUTTON);
+        }
+
+        // Delete dialog – create a temporary extra assignment so the delete button is enabled
+        {
+            userWorkWeekListViewTester.createWorkWeekAssignmentConfirm(firstDay, DefaultEntitiesInitializer.WORK_WEEK_5X8);
+            String dateStr = firstDay.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            seleniumHandler.click(UserWorkWeekListView.GRID_DELETE_BUTTON_PREFIX + dateStr);
+            seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON);
+            seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/user-work-week-delete-dialog.png");
+            userWorkWeekListViewTester.closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
+        }
+    }
+
+    /**
+     * Takes screenshots of Version create, edit and delete dialogs.
      */
     private void takeVersionDialogScreenshots(String folder) {
         // Create version dialog
