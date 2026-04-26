@@ -109,6 +109,8 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
     private       UserListViewTester         userListViewTester;
     private       String                     userName;
     @Autowired
+    private       UserProfileViewTester      userProfileViewTester;
+    @Autowired
     private       UserWorkWeekListViewTester userWorkWeekListViewTester;
     @Autowired
     private       VersionListViewTester      versionListViewTester;
@@ -164,48 +166,6 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         lastAvailability = paul.getAvailabilities().getLast();
         lastLocation     = paul.getLocations().getLast();
         lastUserWorkWeek = paul.getUserWorkWeeks().getLast();
-    }
-
-    /**
-     * Enters Backlog edit mode and takes a screenshot of the {@link DependencyDialog}.
-     * <p>
-     * Requires the Backlog to be already visible with {@code sprintName} selected and the Gantt
-     * chart rendered.  After the screenshot the dialog and edit mode are both cancelled, leaving
-     * the Backlog in read-only state.
-     *
-     * @param folder destination folder for the screenshot file
-     */
-    private void takeDependencyDialogScreenshots(String folder) {
-        // Resolve a leaf task in the currently-selected sprint
-        List<Sprint> allSprints = sprintApi.getAll();
-        Sprint sprint = allSprints.stream()
-                .filter(s -> s.getName().equals(sprintName))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Sprint '" + sprintName + "' not found"));
-        List<Task> tasks = taskApi.getAll(sprint.getId());
-        Task leafTask = tasks.stream()
-                .filter(t -> !t.isMilestone() && t.getParentTaskId() != null)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No leaf task found in sprint '" + sprintName + "'"));
-
-        // Switch to edit mode
-        seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
-        seleniumHandler.waitForElementToBeClickable(Backlog.CANCEL_BUTTON_ID);
-
-        // Click the dependency cell for the leaf task to open DependencyDialog
-        seleniumHandler.click(TaskGrid.TASK_GRID_DEPENDENCY_PREFIX + leafTask.getName());
-        seleniumHandler.waitForElementToBeClickable(DependencyDialog.CANCEL_BUTTON);
-        seleniumHandler.takeElementScreenShot(
-                seleniumHandler.findDialogOverlayElement(DependencyDialog.DEPENDENCY_DIALOG),
-                DependencyDialog.DEPENDENCY_DIALOG,
-                folder + "/dependency-dialog.png");
-
-        // Close dialog and exit edit mode
-        seleniumHandler.wait(200);
-        seleniumHandler.click(DependencyDialog.CANCEL_BUTTON);
-        seleniumHandler.waitForElementToBeClickable(Backlog.CANCEL_BUTTON_ID);
-        seleniumHandler.click(Backlog.CANCEL_BUTTON_ID);
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
     }
 
     /**
@@ -283,6 +243,48 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/availability-delete-dialog.png");
             availabilityListViewTester.closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
         }
+    }
+
+    /**
+     * Enters Backlog edit mode and takes a screenshot of the {@link DependencyDialog}.
+     * <p>
+     * Requires the Backlog to be already visible with {@code sprintName} selected and the Gantt
+     * chart rendered.  After the screenshot the dialog and edit mode are both cancelled, leaving
+     * the Backlog in read-only state.
+     *
+     * @param folder destination folder for the screenshot file
+     */
+    private void takeDependencyDialogScreenshots(String folder) {
+        // Resolve a leaf task in the currently-selected sprint
+        List<Sprint> allSprints = sprintApi.getAll();
+        Sprint sprint = allSprints.stream()
+                .filter(s -> s.getName().equals(sprintName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Sprint '" + sprintName + "' not found"));
+        List<Task> tasks = taskApi.getAll(sprint.getId());
+        Task leafTask = tasks.stream()
+                .filter(t -> !t.isMilestone() && t.getParentTaskId() != null)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No leaf task found in sprint '" + sprintName + "'"));
+
+        // Switch to edit mode
+        seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
+        seleniumHandler.waitForElementToBeClickable(Backlog.CANCEL_BUTTON_ID);
+
+        // Click the dependency cell for the leaf task to open DependencyDialog
+        seleniumHandler.click(TaskGrid.TASK_GRID_DEPENDENCY_PREFIX + leafTask.getName());
+        seleniumHandler.waitForElementToBeClickable(DependencyDialog.CANCEL_BUTTON);
+        seleniumHandler.takeElementScreenShot(
+                seleniumHandler.findDialogOverlayElement(DependencyDialog.DEPENDENCY_DIALOG),
+                DependencyDialog.DEPENDENCY_DIALOG,
+                folder + "/dependency-dialog.png");
+
+        // Close dialog and exit edit mode
+        seleniumHandler.wait(200);
+        seleniumHandler.click(DependencyDialog.CANCEL_BUTTON);
+        seleniumHandler.waitForElementToBeClickable(Backlog.CANCEL_BUTTON_ID);
+        seleniumHandler.click(Backlog.CANCEL_BUTTON_ID);
+        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
     }
 
     /**
@@ -447,18 +449,21 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
 
 
         }
-
         //-----------------
-        //Backlog
+        //UserProfileView
         //-----------------
-        backlogTester.switchToBacklog();
-        seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, sprintName);
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
-        seleniumHandler.takeScreenShot(folder + "/backlog.png");
-        takeDependencyDialogScreenshots(folder);
-
+        takeUserProfileScreenshots(folder);
 
         if (false) {
+            //-----------------
+            //Backlog
+            //-----------------
+            backlogTester.switchToBacklog();
+            seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, sprintName);
+            seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
+            seleniumHandler.takeScreenShot(folder + "/backlog.png");
+            takeDependencyDialogScreenshots(folder);
+
             //-----------------
             //ActiveSprints
             //-----------------
@@ -514,8 +519,6 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
 
         }
         aboutViewTester.logout();
-        //TODO add screenshot of
-        // ImagePromptDialog
     }
 
     @ParameterizedTest
@@ -606,6 +609,39 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/user-delete-dialog.png");
         userListViewTester.closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
+    }
+
+    /**
+     * Navigates to the {@link UserProfileView} via the user menu, takes a full-page screenshot,
+     * and – when Stable Diffusion is available – also opens and screenshots the {@link ImagePromptDialog}.
+     * <p>
+     * The {@link ImagePromptDialog} requires the {@code GENERATE_AVATAR_BUTTON} to be present in the DOM,
+     * which only happens when the Stable Diffusion API is reachable.  When SD is unavailable the dialog
+     * screenshot is silently skipped.
+     *
+     * @param folder destination folder for the screenshot files
+     */
+    private void takeUserProfileScreenshots(String folder) {
+        // Navigate to the profile page via the user menu
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_VIEW_PROFILE);
+        seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
+        seleniumHandler.takeScreenShot(folder + "/user-profile-view.png");
+
+        // ImagePromptDialog is only reachable when Stable Diffusion is running
+        if (seleniumHandler.isElementPresent(UserProfileView.GENERATE_AVATAR_BUTTON)) {
+            seleniumHandler.click(UserProfileView.GENERATE_AVATAR_BUTTON);
+            seleniumHandler.waitForElementToBeClickable(ImagePromptDialog.ID_CANCEL_BUTTON);
+            seleniumHandler.takeElementScreenShot(
+                    seleniumHandler.findDialogOverlayElement(ImagePromptDialog.IMAGE_PROMPT_DIALOG),
+                    ImagePromptDialog.IMAGE_PROMPT_DIALOG,
+                    folder + "/image-prompt-dialog.png");
+            seleniumHandler.wait(200);
+            seleniumHandler.click(ImagePromptDialog.ID_CANCEL_BUTTON);
+            seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
+        } else {
+            log.info("Skipping ImagePromptDialog screenshot: Stable Diffusion is not available");
+        }
     }
 
     /**

@@ -54,6 +54,8 @@ public class ImagePromptDialog extends Dialog {
     // Button ID constants for Selenium tests
     public static final String                 ID_ACCEPT_BUTTON              = "accept-image-button";
     public static final String                 ID_CANCEL_BUTTON              = "cancel-image-button";
+    /** Element ID of the dialog itself, used by Selenium to locate the overlay. */
+    public static final String                 IMAGE_PROMPT_DIALOG           = "image-prompt-dialog";
     public static final String                 ID_DARK_NEGATIVE_PROMPT_FIELD = "dark-negative-prompt-field";
     public static final String                 ID_DARK_PROMPT_FIELD          = "dark-prompt-field";
     public static final String                 ID_DARK_UPDATE_BUTTON         = "dark-update-image-button";
