@@ -86,6 +86,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     private final        ChatAgentPanel                      chatAgentPanel;
     private final        Div                                 chatPane;
     private              com.vaadin.flow.component.Component headerComponent;
+    private              Image                              headerAvatar;
+    private              Product                            headerAvatarProduct;
     private              boolean                             isRestoringFromUrl                = false;
     private final        JsonMapper                          mapper;
     private final        ProductApi                          productApi;
@@ -186,6 +188,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         remove(bodySplit);
 
                         Image avatar = new Image();
+                        headerAvatar        = avatar;
+                        headerAvatarProduct = product;
                         avatar.setWidth("32px");
                         avatar.setHeight("32px");
                         avatar.getStyle()
@@ -216,6 +220,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         productSelector.addValueChangeListener(e -> {
                             if (e.isFromClient()) {
                                 selectedProducts = new HashSet<>(e.getValue());
+                                updateHeaderForSelection();
                                 updateUrlParameters();
                                 applyVersionFilter();
                             }
@@ -473,6 +478,36 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         applyVersionFilter();
 
         getDataProvider().refreshAll();
+
+        // Sync header title/avatar to the current selection (also covers re-navigation via updateUrlParameters)
+        updateHeaderForSelection();
+    }
+
+    /**
+     * Updates the header title text and avatar to reflect the current product-selector state.
+     * <ul>
+     *   <li>Exactly one product selected → show that product's avatar and name.</li>
+     *   <li>Zero or multiple products selected → hide avatar and show "Versions".</li>
+     * </ul>
+     */
+    private void updateHeaderForSelection() {
+        if (getHeaderPageTitle() == null || headerAvatar == null) {
+            return;
+        }
+        if (selectedProducts.size() == 1) {
+            Product single = selectedProducts.iterator().next();
+            getHeaderPageTitle().setText(single.getName());
+            if (single.getLightAvatarHash() != null && !single.getLightAvatarHash().isEmpty()) {
+                boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                headerAvatar.setSrc(single.getAvatarUrl(isDark));
+                headerAvatar.setVisible(true);
+            } else {
+                headerAvatar.setVisible(false);
+            }
+        } else {
+            getHeaderPageTitle().setText("Versions");
+            headerAvatar.setVisible(false);
+        }
     }
 
     /**

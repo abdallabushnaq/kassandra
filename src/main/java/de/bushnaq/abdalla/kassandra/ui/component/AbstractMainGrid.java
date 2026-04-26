@@ -55,6 +55,11 @@ public abstract class AbstractMainGrid<T> extends Main {
      * Holds a reference to the last-built smart-header's right layout so that
      * callers can append extra buttons after construction.
      */
+    /**
+     * Reference to the {@code H2} title element of the most recently built smart header.
+     * Subclasses may call {@code getHeaderPageTitle()} to update the title text dynamically.
+     */
+    private       H2                 headerPageTitle;
     private       HorizontalLayout    lastHeaderRightLayout;
     /**
      * Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}.
@@ -428,6 +433,7 @@ public abstract class AbstractMainGrid<T> extends Main {
         titleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
 
         H2 pageTitle = new H2(title);
+        headerPageTitle = pageTitle;
         pageTitle.setId(titleId);
         pageTitle.addClassNames(LumoUtility.Margin.NONE);
         if (titleIcon != null)
