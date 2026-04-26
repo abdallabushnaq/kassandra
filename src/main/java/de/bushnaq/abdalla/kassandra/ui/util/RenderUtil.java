@@ -29,6 +29,7 @@ import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.overview.SprintsOverviewChart;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ import java.util.List;
 
 import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
 
+@Slf4j
 public class RenderUtil {
     public static final String BURNDOWN_CHART         = "burndown-chart";
     public static final String GANTT_BURNDOWN_CHART   = "gantt-burndown-chart";
@@ -301,6 +303,7 @@ public class RenderUtil {
     }
 
     private static void renderSvg(GanttBurndownChart chart, Svg svg) {
+        log.info("Rendering gantt chart {}.", chart.footerElement.getKey());
         try (ByteArrayOutputStream outputStream = render(chart)) {
             String svgString = outputStream.toString(StandardCharsets.UTF_8);
             // Update existing Svg with new content

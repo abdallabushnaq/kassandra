@@ -28,7 +28,8 @@
 12. Version shows id instead of key
 13. Sprint shows id instead of key
 14. User shows id instead of key
-15. navigating to sprint-quality-board will always show first sprint.
+15. user colors are not predictable in the generation.
+16. gantt task tooltip not accessible on the pprogress number.
 
 # Failing Tests
 

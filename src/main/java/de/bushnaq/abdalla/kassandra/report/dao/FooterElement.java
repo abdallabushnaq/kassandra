@@ -18,24 +18,27 @@
 package de.bushnaq.abdalla.kassandra.report.dao;
 
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
+import lombok.Getter;
 
 import java.awt.*;
 
 public class FooterElement {
     public        int    height   = 14;
     private final String imageMap = "";
-    private final String projectRequestKey;
+    @Getter
+    private final String key;
     private final Font   signFont = new Font(Font.SANS_SERIF, Font.PLAIN, 10);
+    @Getter
     private final String text;
     private final Theme  theme;
     public        int    width;
     public        int    x        = 3;
     public        int    y        = 1;
 
-    public FooterElement(String text, String projectRequestKey, Theme theme) {
-        this.text              = text;
-        this.projectRequestKey = projectRequestKey;
-        this.theme             = theme;
+    public FooterElement(String text, String key, Theme theme) {
+        this.text  = text;
+        this.key   = key;
+        this.theme = theme;
         if (text == null) {
             height = 0;
         }
@@ -51,8 +54,8 @@ public class FooterElement {
             FontMetrics fm        = g2.getFontMetrics();
             int         maxAscent = fm.getMaxAscent();
             g2.drawString(text, x, y + maxAscent - 2);
-            int textWidth = g2.getFontMetrics().stringWidth(projectRequestKey);
-            g2.drawString(projectRequestKey, width - textWidth - 1, y + maxAscent - 2);
+            int textWidth = g2.getFontMetrics().stringWidth(key);
+            g2.drawString(key, width - textWidth - 1, y + maxAscent - 2);
         }
     }
 

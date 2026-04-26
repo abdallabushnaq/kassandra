@@ -60,7 +60,7 @@ import java.util.List;
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class SprintQualityBoardTest extends AbstractKeycloakUiTestUtil {
+public class QualityBoardTest extends AbstractKeycloakUiTestUtil {
     @Autowired
     private FeatureListViewTester    featureListViewTester;
     @Autowired

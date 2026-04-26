@@ -44,6 +44,7 @@ import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import de.bushnaq.abdalla.util.date.ReportUtil;
 import jakarta.annotation.security.PermitAll;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,12 +65,13 @@ import java.util.stream.Collectors;
 // Create a utility method for generating two-part cells
 
 
-@Route(value = "sprint-quality-board", layout = MainLayout.class)
-@PageTitle("Sprint Quality Board")
+@Route(value = "quality-board", layout = MainLayout.class)
+@PageTitle("Quality Board")
 @Menu(order = 8, icon = "vaadin:chart-3d", title = "Quality Board")
 @PermitAll // When security is enabled, allow all authenticated users
-public class SprintQualityBoard extends Main implements AfterNavigationObserver {
-    public static final String                  MENU_ITEM_ID            = "/sprint-quality-board";
+@Slf4j
+public class QualityBoard extends Main implements AfterNavigationObserver {
+    public static final String                  MENU_ITEM_ID            = "/quality-board";
     public static final String                  SPRINT_GRID_NAME_PREFIX = "sprint-grid-name-";
     public static final String                  SPRINT_SELECTOR_ID      = "sprint-selector";
     /**
@@ -80,10 +82,10 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
      * Container for the burndown SVG (the spanning column in the stats grid).
      */
     private             Div                     burnDownContainer;
-    /**
-     * In-flight async burndown generation; cancelled before a new run starts.
-     */
-    private             CompletableFuture<Void> burndownGenerationFuture;
+    //    /**
+//     * In-flight async burndown generation; cancelled before a new run starts.
+//     */
+//    private             CompletableFuture<Void> burndownGenerationFuture;
     private final       Clock                   clock;
     @Autowired
     protected           Context                 context;
@@ -132,7 +134,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     private             UUID                    versionId;
     private final       WorklogApi              worklogApi;
 
-    public SprintQualityBoard(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock) {
+    public QualityBoard(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock) {
         created         = LocalDateTime.now(clock);
         this.worklogApi = worklogApi;
         this.taskApi    = taskApi;
@@ -181,6 +183,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         //- Get query parameters
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
+        log.info("=== afterNavigation called {} parameters", queryParameters.getParameters().size());
         if (queryParameters.getParameters().containsKey("product")) {
             this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
         }
@@ -227,7 +230,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
                     .orElse(null);
         }
         if (sprintId == null) {
-            logger.warn("No sprint found to display in SprintQualityBoard");
+            logger.warn("No sprint found to display in QualityBoard");
         }
 
         populateSprintSelector();
@@ -340,23 +343,15 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         gridContainer.add(createFieldDisplay("&Sigma; Remaining Effort Estimate", DateUtil.createDurationString(sprint.getRemaining(), false, true, false)));//column 7
 
 
-//        // forth row
-//        gridContainer.add(createFieldDisplay("4.1", "a"));//column 1
-//        gridContainer.add(createFieldDisplay("4.2", "b"));//column 2
-//        gridContainer.add(createFieldDisplay("4.3", "a"));//column 3
-//        gridContainer.add(createFieldDisplay("4.4", "b"));//column 4
-//        gridContainer.add(createFieldDisplay("4.6", "a"));//column 6
-//        gridContainer.add(createFieldDisplay("4.7", "b"));//column 7
-
         add(gridContainer);
 
-        // Burndown chart lives below the stats grid
-        burnDownContainer = new Div();
-        burnDownContainer.getStyle()
-                .set("width", "100%")
-                .set("padding", "var(--lumo-space-m)")
-                .set("background-color", "var(--lumo-base-color)");
-        add(burnDownContainer);
+//        // Burndown chart lives below the stats grid
+//        burnDownContainer = new Div();
+//        burnDownContainer.getStyle()
+//                .set("width", "100%")
+//                .set("padding", "var(--lumo-space-m)")
+//                .set("background-color", "var(--lumo-base-color)");
+//        add(burnDownContainer);
     }
 
     private ComponentRenderer<Div, Sprint> createTwoPartRenderer(
@@ -385,55 +380,55 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         });
     }
 
-    /**
-     * Generates the burndown chart SVG asynchronously, then updates {@link #burnDownContainer}
-     * on the UI thread.  Cancels any in-flight previous generation before starting a new one.
-     */
-    private void generateBurnDownChartAsync() {
-        if (sprint == null || burnDownContainer == null) {
-            return;
-        }
-        if (burndownGenerationFuture != null && !burndownGenerationFuture.isDone()) {
-            burndownGenerationFuture.cancel(true);
-        }
-        burnDownContainer.removeAll();
-
-        UI             ui             = UI.getCurrent();
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Sprint         sprintSnapshot = sprint;
-
-        burndownGenerationFuture = CompletableFuture.supplyAsync(() -> {
-            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
-            ctx.setAuthentication(authentication);
-            SecurityContextHolder.setContext(ctx);
-            try {
-                Svg svg = new Svg();
-                RenderUtil.generateBurnDownChartSvg(context, sprintSnapshot, svg);
-                return svg;
-            } catch (Exception e) {
-                throw new RuntimeException("Error generating burndown chart", e);
-            } finally {
-                SecurityContextHolder.clearContext();
-            }
-        }).thenAccept(svg -> {
-            ui.access(() -> {
-                burnDownContainer.removeAll();
-                svg.getStyle().set("object-fit", "contain")
-                        .set("margin-top", "var(--lumo-space-m)");
-                svg.setClassName("qtip-shadow");
-                burnDownContainer.add(svg);
-                ui.push();
-            });
-        }).exceptionally(ex -> {
-            logger.error("Error generating burndown chart", ex);
-            ui.access(() -> {
-                burnDownContainer.removeAll();
-                burnDownContainer.add(new Paragraph("Error loading burndown chart: " + ex.getMessage()));
-                ui.push();
-            });
-            return null;
-        });
-    }
+//    /**
+//     * Generates the burndown chart SVG asynchronously, then updates {@link #burnDownContainer}
+//     * on the UI thread.  Cancels any in-flight previous generation before starting a new one.
+//     */
+//    private void generateBurnDownChartAsync() {
+//        if (sprint == null || burnDownContainer == null) {
+//            return;
+//        }
+//        if (burndownGenerationFuture != null && !burndownGenerationFuture.isDone()) {
+//            burndownGenerationFuture.cancel(true);
+//        }
+//        burnDownContainer.removeAll();
+//
+//        UI             ui             = UI.getCurrent();
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        Sprint         sprintSnapshot = sprint;
+//
+//        burndownGenerationFuture = CompletableFuture.supplyAsync(() -> {
+//            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
+//            ctx.setAuthentication(authentication);
+//            SecurityContextHolder.setContext(ctx);
+//            try {
+//                Svg svg = new Svg();
+//                RenderUtil.generateBurnDownChartSvg(context, sprintSnapshot, svg);
+//                return svg;
+//            } catch (Exception e) {
+//                throw new RuntimeException("Error generating burndown chart", e);
+//            } finally {
+//                SecurityContextHolder.clearContext();
+//            }
+//        }).thenAccept(svg -> {
+//            ui.access(() -> {
+//                burnDownContainer.removeAll();
+//                svg.getStyle().set("object-fit", "contain")
+//                        .set("margin-top", "var(--lumo-space-m)");
+//                svg.setClassName("qtip-shadow");
+//                burnDownContainer.add(svg);
+//                ui.push();
+//            });
+//        }).exceptionally(ex -> {
+//            logger.error("Error generating burndown chart", ex);
+//            ui.access(() -> {
+//                burnDownContainer.removeAll();
+//                burnDownContainer.add(new Paragraph("Error loading burndown chart: " + ex.getMessage()));
+//                ui.push();
+//            });
+//            return null;
+//        });
+//    }
 
     /**
      * Generates the Gantt chart SVG asynchronously, then updates {@link #ganttChartContainer}
@@ -587,8 +582,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        themeChangedRegistration = ComponentUtil.addListener(
-                attachEvent.getUI(), ThemeChangedEvent.class, e -> refreshCharts());
+        themeChangedRegistration = ComponentUtil.addListener(attachEvent.getUI(), ThemeChangedEvent.class, e -> refreshCharts());
     }
 
     /**
@@ -710,7 +704,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
                             params.put("version", String.valueOf(versionId));
                             params.put("feature", String.valueOf(featureId));
                             params.put("sprint", String.valueOf(sprintId));
-                            mainLayout.getBreadcrumbs().addItem("Backlog", Backlog.class, params);
+                            mainLayout.getBreadcrumbs().addItem("Quality Board", Backlog.class, params);
                         }
                     }
                 });
@@ -762,7 +756,7 @@ public class SprintQualityBoard extends Main implements AfterNavigationObserver 
         if (sprintId != null) {
             parts.add("sprint=" + sprintId);
         }
-        String url = "sprint-quality-board" + (parts.isEmpty() ? "" : "?" + String.join("&", parts));
+        String url = "quality-board" + (parts.isEmpty() ? "" : "?" + String.join("&", parts));
         getUI().ifPresent(ui -> ui.getPage().getHistory().replaceState(null, url));
     }
 

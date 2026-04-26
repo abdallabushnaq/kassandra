@@ -17,12 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import java.util.UUID;
-import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.Svg;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
@@ -99,36 +94,44 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     public static final  String                       SPRINT_ROW_COUNTER               = "sprint-row-counter";
     private final        Button                       aiToggleButton;
     private              List<Sprint>                 allSprints                       = new ArrayList<>();
+    private final        AvatarService                avatarService;
     private final        SplitLayout                  bodySplit;
     private final        ChatAgentPanel               chatAgentPanel;
     private final        Div                          chatPane;
     private final        Clock                        clock;
-    /** Application context – injected by Spring after the constructor runs; used for chart rendering. */
+    /**
+     * Application context – injected by Spring after the constructor runs; used for chart rendering.
+     */
     @Autowired
     protected            Context                      context;
     private final        FeatureApi                   featureApi;
-    private UUID featureId;
+    private              UUID                         featureId;
     private final        Map<UUID, Feature>           featureMap                       = new HashMap<>();
     private final        MultiSelectComboBox<Feature> featureSelector;
     private              boolean                      isRestoringFromUrl               = false;
-    /** Container for the SprintsOverviewChart SVG placed above the sprint list. */
+    /**
+     * Container for the SprintsOverviewChart SVG placed above the sprint list.
+     */
     private final        Div                          overviewChartContainer;
-    /** In-flight async overview-chart generation; cancelled if a newer refresh arrives. */
+    /**
+     * In-flight async overview-chart generation; cancelled if a newer refresh arrives.
+     */
     private              CompletableFuture<Void>      overviewChartGenerationFuture;
-    /** Registration for the ThemeChangedEvent listener that re-renders the overview chart. */
+    /**
+     * Registration for the ThemeChangedEvent listener that re-renders the overview chart.
+     */
     private              Registration                 overviewThemeChangedRegistration;
     private final        ProductApi                   productApi;
-    private UUID productId;
+    private              UUID                         productId;
     private final        Map<UUID, Product>           productMap                       = new HashMap<>();
     private              String                       requestedFeatureIds;
     private              Set<Feature>                 selectedFeatures                 = new HashSet<>();
     private final        ChatPanelSessionState        sessionState;
     private final        SprintApi                    sprintApi;
-    private final        AvatarService                avatarService;
     private final        StableDiffusionService       stableDiffusionService;
     private final        UserApi                      userApi;
     private final        VersionApi                   versionApi;
-    private UUID versionId;
+    private              UUID                         versionId;
     private final        Map<UUID, Version>           versionMap                       = new HashMap<>();
 
     public SprintListView(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi,
@@ -218,9 +221,9 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        log.info("=== afterNavigation called ===");
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
+        log.info("=== afterNavigation called {} parameters", queryParameters.getParameters().size());
         if (queryParameters.getParameters().containsKey("product")) {
             this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
         }
@@ -363,12 +366,101 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         dialog.open();
     }
 
+    /**
+     * Generates the SprintsOverviewChart asynchronously and places the resulting SVG in
+     * {@code overviewChartContainer}.  The chart always shows <em>all</em> sprints
+     * (i.e. {@code allSprints}), not just the ones currently visible in the table.
+     * <p>
+     * Sprints without a valid start or end date are filtered out before the chart is
+     * created, because the renderer requires every sprint to have both dates.  If no
+     * sprints with valid dates exist the container is simply cleared.
+     * </p>
+     */
+    private void generateOverviewChart() {
+        // Pre-filter to sprints that have both start and end (required by the renderer).
+        List<Sprint> chartSprints = allSprints.stream()
+                .filter(s -> s.getStart() != null && s.getEnd() != null)
+                .collect(Collectors.toList());
+
+        if (chartSprints.isEmpty()) {
+            overviewChartContainer.removeAll();
+            return;
+        }
+
+        // Capture the current theme on the UI thread before going async.
+        context.syncTheme();
+
+        // Cancel any previous in-flight generation.
+        if (overviewChartGenerationFuture != null && !overviewChartGenerationFuture.isDone()) {
+            overviewChartGenerationFuture.cancel(true);
+            log.debug("Cancelled previous sprints overview chart generation");
+        }
+
+        // Show a loading indicator while the chart renders in the background.
+        overviewChartContainer.removeAll();
+        ProgressBar progressBar = new ProgressBar();
+        progressBar.setIndeterminate(true);
+        progressBar.setWidth("300px");
+
+        Span loadingText = new Span("Generating sprints overview...");
+        loadingText.getStyle()
+                .set("margin-right", "var(--lumo-space-xs)")
+                .set("font-style", "italic")
+                .set("color", "var(--lumo-secondary-text-color)");
+
+        Div loadingContainer = new Div(loadingText, progressBar);
+        loadingContainer.getStyle()
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("padding", "var(--lumo-space-m)");
+        overviewChartContainer.add(loadingContainer);
+
+        UI             ui              = UI.getCurrent();
+        Authentication authentication  = SecurityContextHolder.getContext().getAuthentication();
+        List<Sprint>   sprintsSnapshot = new ArrayList<>(chartSprints);
+
+        overviewChartGenerationFuture = CompletableFuture.supplyAsync(() -> {
+            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
+            ctx.setAuthentication(authentication);
+            SecurityContextHolder.setContext(ctx);
+            try {
+                Svg svg = new Svg();
+                RenderUtil.generateSprintsOverviewChartSvg(context, sprintsSnapshot, svg);
+                return svg;
+            } catch (Exception e) {
+                throw new RuntimeException("Error generating sprints overview chart", e);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        }).thenAccept(svg -> {
+            ui.access(() -> {
+                overviewChartContainer.removeAll();
+                svg.getStyle()
+                        .set("max-width", "100%")
+                        .set("height", "auto")
+                        .set("display", "block");
+                overviewChartContainer.add(svg);
+                ui.push();
+            });
+        }).exceptionally(ex -> {
+            log.error("Error generating sprints overview chart: {}", ex.getMessage(), ex);
+            ui.access(() -> {
+                overviewChartContainer.removeAll();
+                Span errorMsg = new Span("Could not render sprints overview: " + ex.getMessage());
+                errorMsg.getStyle().set("color", "var(--lumo-error-color)");
+                overviewChartContainer.add(errorMsg);
+                ui.push();
+            });
+            return null;
+        });
+    }
+
     protected void initGrid(Clock clock) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
 
         getGrid().setId(SPRINT_GRID);
 
-        // Add click listener to navigate to SprintQualityBoard with the selected sprint ID
+        // Add click listener to navigate to QualityBoard with the selected sprint ID
         getGrid().addItemClickListener(event -> {
             Sprint selectedSprint = event.getItem();
             // Create parameters map
@@ -379,7 +471,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             params.put("sprint", String.valueOf(selectedSprint.getId()));
             // Navigate with query parameters
             UI.getCurrent().navigate(
-                    SprintQualityBoard.class,
+                    QualityBoard.class,
                     QueryParameters.simple(params)
             );
         });
@@ -540,106 +632,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
 
     }
 
-    private void openSprintDialog(Sprint sprint) {
-        SprintDialog dialog = new SprintDialog(sprint, avatarService, stableDiffusionService, sprintApi, featureId);
-        dialog.addOpenedChangeListener(event -> {
-            if (!event.isOpened()) {
-                // Dialog was closed, refresh the grid
-                refreshGrid();
-            }
-        });
-        dialog.open();
-    }
-
-    /**
-     * Generates the SprintsOverviewChart asynchronously and places the resulting SVG in
-     * {@code overviewChartContainer}.  The chart always shows <em>all</em> sprints
-     * (i.e. {@code allSprints}), not just the ones currently visible in the table.
-     * <p>
-     * Sprints without a valid start or end date are filtered out before the chart is
-     * created, because the renderer requires every sprint to have both dates.  If no
-     * sprints with valid dates exist the container is simply cleared.
-     * </p>
-     */
-    private void generateOverviewChart() {
-        // Pre-filter to sprints that have both start and end (required by the renderer).
-        List<Sprint> chartSprints = allSprints.stream()
-                .filter(s -> s.getStart() != null && s.getEnd() != null)
-                .collect(Collectors.toList());
-
-        if (chartSprints.isEmpty()) {
-            overviewChartContainer.removeAll();
-            return;
-        }
-
-        // Capture the current theme on the UI thread before going async.
-        context.syncTheme();
-
-        // Cancel any previous in-flight generation.
-        if (overviewChartGenerationFuture != null && !overviewChartGenerationFuture.isDone()) {
-            overviewChartGenerationFuture.cancel(true);
-            log.debug("Cancelled previous sprints overview chart generation");
-        }
-
-        // Show a loading indicator while the chart renders in the background.
-        overviewChartContainer.removeAll();
-        ProgressBar progressBar = new ProgressBar();
-        progressBar.setIndeterminate(true);
-        progressBar.setWidth("300px");
-
-        Span loadingText = new Span("Generating sprints overview...");
-        loadingText.getStyle()
-                .set("margin-right", "var(--lumo-space-xs)")
-                .set("font-style", "italic")
-                .set("color", "var(--lumo-secondary-text-color)");
-
-        Div loadingContainer = new Div(loadingText, progressBar);
-        loadingContainer.getStyle()
-                .set("display", "flex")
-                .set("align-items", "center")
-                .set("padding", "var(--lumo-space-m)");
-        overviewChartContainer.add(loadingContainer);
-
-        UI             ui              = UI.getCurrent();
-        Authentication authentication  = SecurityContextHolder.getContext().getAuthentication();
-        List<Sprint>   sprintsSnapshot = new ArrayList<>(chartSprints);
-
-        overviewChartGenerationFuture = CompletableFuture.supplyAsync(() -> {
-            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
-            ctx.setAuthentication(authentication);
-            SecurityContextHolder.setContext(ctx);
-            try {
-                Svg svg = new Svg();
-                RenderUtil.generateSprintsOverviewChartSvg(context, sprintsSnapshot, svg);
-                return svg;
-            } catch (Exception e) {
-                throw new RuntimeException("Error generating sprints overview chart", e);
-            } finally {
-                SecurityContextHolder.clearContext();
-            }
-        }).thenAccept(svg -> {
-            ui.access(() -> {
-                overviewChartContainer.removeAll();
-                svg.getStyle()
-                        .set("max-width", "100%")
-                        .set("height", "auto")
-                        .set("display", "block");
-                overviewChartContainer.add(svg);
-                ui.push();
-            });
-        }).exceptionally(ex -> {
-            log.error("Error generating sprints overview chart: {}", ex.getMessage(), ex);
-            ui.access(() -> {
-                overviewChartContainer.removeAll();
-                Span errorMsg = new Span("Could not render sprints overview: " + ex.getMessage());
-                errorMsg.getStyle().set("color", "var(--lumo-error-color)");
-                overviewChartContainer.add(errorMsg);
-                ui.push();
-            });
-            return null;
-        });
-    }
-
     /**
      * Subscribes to {@link ThemeChangedEvent} so the SprintsOverviewChart is re-generated
      * in the new theme.  Calls {@code super.onAttach()} to preserve the data-provider
@@ -668,6 +660,17 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             overviewThemeChangedRegistration = null;
         }
         super.onDetach(detachEvent);
+    }
+
+    private void openSprintDialog(Sprint sprint) {
+        SprintDialog dialog = new SprintDialog(sprint, avatarService, stableDiffusionService, sprintApi, featureId);
+        dialog.addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                // Dialog was closed, refresh the grid
+                refreshGrid();
+            }
+        });
+        dialog.open();
     }
 
     /**

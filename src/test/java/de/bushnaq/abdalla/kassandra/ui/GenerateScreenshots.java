@@ -117,16 +117,25 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(
-                        1,
-                        OffsetDateTime.parse("2025-08-11T08:00:00+01:00"),
+                new RandomCase(3,
+                        OffsetDateTime.parse("2026-02-02T08:00:00+01:00"),
                         LocalDate.parse("2025-08-04"),
                         Duration.ofDays(10),
-                        4, 4,
-                        1, 3,
-                        1, 3,
-                        1, 4,
-                        6, 8, 8, 6, 13)//
+                        2, 2,
+                        2, 2,
+                        2, 2,
+                        1, 5,
+                        5, 8, 8, 6, 7)//official demo data
+//                new RandomCase(
+//                        1,
+//                        OffsetDateTime.parse("2026-02-02T08:00:00+01:00"),
+//                        LocalDate.parse("2025-08-04"),
+//                        Duration.ofDays(10),
+//                        4, 4,
+//                        1, 3,
+//                        1, 3,
+//                        1, 4,
+//                        6, 8, 8, 6, 13)//
         };
         return Arrays.stream(randomCases).toList();
     }
@@ -306,34 +315,43 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
             seleniumHandler.wait(1000);
         }
         seleniumHandler.takeScreenShot(folder + "/product-list-view.png");
-        takeProductDialogScreenshots(folder);
+//        takeProductDialogScreenshots(folder);
         productListViewTester.selectProduct(productName);
         //VersionListView
         seleniumHandler.takeScreenShot(folder + "/version-list-view.png");
-        takeVersionDialogScreenshots(folder);
+//        takeVersionDialogScreenshots(folder);
         versionListViewTester.selectVersion(versionName);
         //FeatureListView
         seleniumHandler.takeScreenShot(folder + "/feature-list-view.png");
-        takeFeatureDialogScreenshots(folder);
+//        takeFeatureDialogScreenshots(folder);
         featureListViewTester.selectFeature(featureName);
         //SprintListView
         seleniumHandler.waitForElementToBeClickable(RenderUtil.SPRINTS_OVERVIEW_CHART);
         seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
-        takeSprintDialogScreenshots(folder);
+//        takeSprintDialogScreenshots(folder);
         sprintListViewTester.selectSprint(sprintName);
         seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_BURNDOWN_CHART);
-        seleniumHandler.takeScreenShot(folder + "/sprint-quality-board.png");
-
+        seleniumHandler.takeScreenShot(folder + "/quality-board.png");
+        seleniumHandler.waitUntilBrowserClosed(0);
 
         //Backlog
         backlogTester.switchToBacklog();
         seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, sprintName);
+        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
         seleniumHandler.takeScreenShot(folder + "/backlog.png");
 
         //ActiveSprints
         activeSprintsTester.switchToActiveSprints();
         seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
-        //TODO add screenshot of task Worklog, WorkWeekDialog, WorklogDialog, UserWorkWeekDialog, TaskDialog, ImagePromptDialog, DependencyDialog
+        //TODO add screenshot of
+        // UserWorkWeekListView,
+        // WorkWeekListView,
+        // WorkWeekDialog,
+        // WorklogDialog,
+        // UserWorkWeekDialog,
+        // TaskDialog,
+        // ImagePromptDialog,
+        // DependencyDialog
 //        seleniumHandler.click(task12TitleId);
 //        seleniumHandler.waitForElementToBeClickable(TaskDialog.CANCEL_BUTTON);
 //        activeSprintsTester.closeDialog(TaskDialog.CANCEL_BUTTON);

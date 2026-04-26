@@ -294,9 +294,9 @@ public class Test_01_KassandraIntroductionVideo extends AbstractIntroductionVide
         logHeader("Sprint Quality Board — Monitoring");
         //---------------------------------------------------------------------------------------
         paul.narrateAsync(NORMAL, "The Sprint Quality Board is where managers and product owners monitor the health of a sprint in real time.");
-        seleniumHandler.click(SprintQualityBoard.MENU_ITEM_ID);
+        seleniumHandler.click(QualityBoard.MENU_ITEM_ID);
         seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
-        seleniumHandler.setComboBoxValue(SprintQualityBoard.SPRINT_SELECTOR_ID, "London");
+        seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, "London");
 
         paul.narrate(NORMAL, "At the top, you see key sprint statistics — total effort, elapsed time, and completion percentage.").pause();
         paul.narrate(NORMAL, "The Gantt chart shows the planned schedule with current progress overlaid. You can see at a glance whether tasks are running on time or slipping.").pause();

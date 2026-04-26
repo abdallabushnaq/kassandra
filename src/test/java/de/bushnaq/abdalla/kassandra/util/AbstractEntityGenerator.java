@@ -419,7 +419,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             if (email.equalsIgnoreCase("christopher.paul@kassandra.org"))
                 saved = addUser(name, email, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
             else
-                saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
+                saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f + ((float) random.nextInt(5)) / 5f);
             System.out.println("Adding user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms");
             saved.initialize();
             time = System.currentTimeMillis();
@@ -430,7 +430,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             Profiler.log("generateRandomOffDays");
             System.out.println("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and " + offDaysIterations + " iterations");
         }
-        printTables();
+//        printTables();
         testUsers();
     }
 
@@ -974,7 +974,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     protected void testAllAndPrintTables() {
         setUser("admin-user", "ROLE_ADMIN");
         testAll();
-        printTables();
+//        printTables();
     }
 
     /**
@@ -1079,7 +1079,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
 //        }
 
 //        List<Product> actual = productApi.getAll();
-        printTables();
+//        printTables();
 
 //        assertEquals(1 + expectedProducts.size(), gc.allProducts.size());// the "Default" Product is always there
 //        for (int i = 0; i < expectedProducts.size(); i++) {

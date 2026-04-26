@@ -413,7 +413,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                     for (int t = 0; t < numberOfTasks; t++) {
                         int userIndex = random.nextInt(numberOfUsers);
 //                    System.out.println("User index=" + userIndex);
-                        User   user             = expectedUsers.stream().toList().get(userIndex);
+                        User   user             = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(userIndex);
                         float  minHours         = random.nextFloat(randomCase.getMaxTaskDurationDays() * 7.5f) + 1;
                         float  maxHours         = minHours + random.nextFloat() * minHours;
                         String minWork          = String.format("%dh", (int) minHours);

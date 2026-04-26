@@ -37,6 +37,7 @@ import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
+import de.bushnaq.abdalla.kassandra.dto.Availability;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.UserWorkWeek;
@@ -56,12 +57,14 @@ import de.bushnaq.abdalla.util.ColorUtil;
 import jakarta.annotation.security.RolesAllowed;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.text.NumberFormat;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 @Route(value = "user-list", layout = MainLayout.class)
 @PageTitle("User List Page")
@@ -297,6 +300,15 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
         }
 
         {
+            NumberFormat percentFormat = NumberFormat.getPercentInstance(Locale.US);
+            Grid.Column<User> availabilityColumn = getGrid().addColumn(user -> {
+                Availability avail = getEffectiveAvailability(user);
+                return avail != null ? percentFormat.format(avail.getAvailability()) : "";
+            });
+            VaadinUtil.addSimpleHeader(availabilityColumn, "Availability", VaadinIcon.CHART);
+        }
+
+        {
             Grid.Column<User> countryColumn = getGrid().addColumn(user -> {
                 Location loc = getEffectiveLocation(user);
                 return loc != null ? loc.getCountry() : "";
@@ -340,6 +352,26 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
                 this::confirmDelete
         );
 
+    }
+
+    /**
+     * Returns the availability that is effective on today's date: the one with the latest start date
+     * that is not after today. Falls back to the earliest future availability if all are in the future.
+     *
+     * @param user the user whose availabilities to inspect
+     * @return the effective {@link Availability}, or {@code null} if the user has none
+     */
+    private Availability getEffectiveAvailability(User user) {
+        List<Availability> avails = user.getAvailabilities();
+        if (avails == null || avails.isEmpty()) return null;
+        LocalDate today = LocalDate.now();
+        return avails.stream()
+                .filter(a -> a.getStart() != null && !a.getStart().isAfter(today))
+                .max(Comparator.comparing(Availability::getStart))
+                .orElseGet(() -> avails.stream()
+                        .filter(a -> a.getStart() != null)
+                        .min(Comparator.comparing(Availability::getStart))
+                        .orElse(null));
     }
 
     /**

@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import java.util.UUID;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -105,7 +104,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private final       GanttErrorHandler            eh                         = new GanttErrorHandler();
     private             boolean                      expandAllStories           = true;  // Default to expanded
     private final       FeatureApi                   featureApi;
-    private UUID featureId;
+    private             UUID                         featureId;
     //    private final       Svg                          ganttChart                 = new Svg();
     private final       Div                          ganttChartContainer;
     private             CompletableFuture<Void>      ganttGenerationFuture;
@@ -114,10 +113,10 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private final       HorizontalLayout             headerLayout;
     private             boolean                      isRestoringFromUrl         = false;
     private final       JsonMapper                   jsonMapper;
-    private static UUID lastShownSprintId          = null;  // Static to persist across navigation
+    private static      UUID                         lastShownSprintId          = null;  // Static to persist across navigation
     private             User                         loggedInUser               = null;
     private final       ProductApi                   productApi;
-    private UUID productId;
+    private             UUID                         productId;
     private             String                       requestedUserIds           = null;
     private             Button                       saveButton;
     private             TextField                    searchField;
@@ -127,7 +126,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private             Sprint                       sprint;                             // Current sprint being displayed in grid
     private final       SprintApi                    sprintApi;
     private             Span                         sprintEndValue;                     // Displays end date of the selected sprint
-    private UUID sprintId;
+    private             UUID                         sprintId;
     private final       HorizontalLayout             sprintInfoPanel;                    // Header panel showing sprint start, end and status
     private             ComboBox<Sprint>             sprintSelector;
     private             Span                         sprintStartValue;                   // Displays start date of the selected sprint
@@ -138,7 +137,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private             MultiSelectComboBox<User>    userSelector;
     private             List<User>                   users                      = new ArrayList<>();
     private final       VersionApi                   versionApi;
-    private UUID versionId;
+    private             UUID                         versionId;
     private final       WorklogApi                   worklogApi;
 
     public Backlog(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock, JsonMapper jsonMapper) {
@@ -261,6 +260,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         //- Get query parameters
         com.vaadin.flow.router.Location location        = event.getLocation();
         QueryParameters                 queryParameters = location.getQueryParameters();
+        log.info("=== afterNavigation called {} parameters", queryParameters.getParameters().size());
         if (queryParameters.getParameters().containsKey("product")) {
             this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
         }

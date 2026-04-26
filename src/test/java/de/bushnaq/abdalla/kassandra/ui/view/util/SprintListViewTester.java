@@ -20,8 +20,8 @@ package de.bushnaq.abdalla.kassandra.ui.view.util;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.SprintDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.QualityBoard;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
-import de.bushnaq.abdalla.kassandra.ui.view.SprintQualityBoard;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -218,6 +218,6 @@ public class SprintListViewTester extends AbstractViewTester {
      * @param name the name of the sprint to select
      */
     public void selectSprint(String name) {
-        seleniumHandler.selectGridRow(SPRINT_GRID_NAME_PREFIX, SprintQualityBoard.class, name);
+        seleniumHandler.selectGridRow(SPRINT_GRID_NAME_PREFIX, QualityBoard.class, name);
     }
 }

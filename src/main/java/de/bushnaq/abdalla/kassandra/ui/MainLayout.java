@@ -86,6 +86,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final       Map<Tab, String>                     tabToPathMap                    = new HashMap<>();
     private             Tabs                                 tabs;
     private final       ThemeSessionState                    themeSessionState;
+    private             boolean                              updatingTabFromNavigation       = false;
     private final       UserApi                              userApi;
     private             com.vaadin.flow.component.html.Image userAvatarImage;
 
@@ -120,14 +121,18 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        // Restore breadcrumbs visibility for every navigation; individual views can hide it via setBreadcrumbsVisible(false)
         setBreadcrumbsVisible(true);
         final String pathToMatch = event.getLocation().getPath();
-        tabToPathMap.forEach((tab, path) -> {
-            if (("/" + pathToMatch).equals(path)) {
-                tabs.setSelectedTab(tab);
-            }
-        });
+        updatingTabFromNavigation = true;
+        try {
+            tabToPathMap.forEach((tab, path) -> {
+                if (("/" + pathToMatch).equals(path)) {
+                    tabs.setSelectedTab(tab);
+                }
+            });
+        } finally {
+            updatingTabFromNavigation = false;
+        }
     }
 
     /**
@@ -229,10 +234,14 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
         // Handle tab selection changes
         tabs.addSelectedChangeListener(event -> {
+            if (updatingTabFromNavigation) {
+                return; // triggered by beforeEnter — don't navigate again
+            }
             Tab selectedTab = event.getSelectedTab();
             if (selectedTab != null) {
                 String path = tabToPathMap.get(selectedTab);
                 if (path != null) {
+                    log.info("Navigating to path '{}' from tab '{}'", path, selectedTab.getId().orElse("unknown"));
                     getUI().ifPresent(ui -> ui.navigate(path));
                 }
             }

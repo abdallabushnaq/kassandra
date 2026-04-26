@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import java.util.UUID;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -90,7 +89,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     private              boolean                             isRestoringFromUrl                = false;
     private final        JsonMapper                          mapper;
     private final        ProductApi                          productApi;
-    private UUID productId;
+    private              UUID                                productId;
     private final        Map<UUID, Product>                  productMap                        = new HashMap<>();
     private              MultiSelectComboBox<Product>        productSelector;
     private              String                              requestedProductIds;
@@ -144,6 +143,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     public void afterNavigation(AfterNavigationEvent event) {
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
+        log.info("=== afterNavigation called {} parameters", queryParameters.getParameters().size());
         if (queryParameters.getParameters().containsKey("product")) {
             this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
         }

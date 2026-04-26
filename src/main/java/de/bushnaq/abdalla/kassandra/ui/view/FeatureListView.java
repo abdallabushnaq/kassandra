@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import java.util.UUID;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -85,22 +84,22 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     public static final  String                       VERSION_SELECTOR                  = "version-selector";
     private final        Button                       aiToggleButton;
     private              List<Feature>                allFeatures                       = new ArrayList<>();
+    private final        AvatarService                avatarService;
     private final        SplitLayout                  bodySplit;
     private final        ChatAgentPanel               chatAgentPanel;
     private final        Div                          chatPane;
     private final        FeatureApi                   featureApi;
     private              boolean                      isRestoringFromUrl                = false;
     private final        ProductApi                   productApi;
-    private UUID productId;
+    private              UUID                         productId;
     private final        Map<UUID, Product>           productMap                        = new HashMap<>();
     private              String                       requestedVersionIds;
     private              Set<Version>                 selectedVersions                  = new HashSet<>();
     private final        ChatPanelSessionState        sessionState;
-    private final        AvatarService                avatarService;
     private final        StableDiffusionService       stableDiffusionService;
     private final        UserApi                      userApi;
     private final        VersionApi                   versionApi;
-    private UUID versionId;
+    private              UUID                         versionId;
     private final        Map<UUID, Version>           versionMap                        = new HashMap<>();
     private final        MultiSelectComboBox<Version> versionSelector;
 
@@ -177,6 +176,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     public void afterNavigation(AfterNavigationEvent event) {
         Location        location        = event.getLocation();
         QueryParameters queryParameters = location.getQueryParameters();
+        log.info("=== afterNavigation called {} parameters", queryParameters.getParameters().size());
         if (queryParameters.getParameters().containsKey("product")) {
             this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
         }
