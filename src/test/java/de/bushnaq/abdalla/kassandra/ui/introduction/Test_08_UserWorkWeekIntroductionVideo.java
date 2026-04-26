@@ -85,28 +85,28 @@ public class Test_08_UserWorkWeekIntroductionVideo extends AbstractIntroductionV
     /**
      * The date from which the narrator switches to the 4-day schedule.
      */
-    private static final LocalDate                  FOUR_DAY_START_DATE       = LocalDate.of(2025, 6, 1);
+    private static final LocalDate         FOUR_DAY_START_DATE       = LocalDate.of(2025, 6, 1);
     /**
      * Narrator style used throughout the video.
      */
-    public static final  NarratorAttribute          NORMAL                    = new NarratorAttribute()
+    public static final  NarratorAttribute NORMAL                    = new NarratorAttribute()
             .withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f);
     /**
      * Description of the custom 4-day work week.
      */
-    private static final String                     WORK_WEEK_4X8_DESCRIPTION = "4-day work week, Monday to Thursday, 8-hour days";
+    private static final String            WORK_WEEK_4X8_DESCRIPTION = "4-day work week, Monday to Thursday, 8-hour days";
     /**
      * Name of the custom 4-day work week created during the video.
      */
-    private static final String                     WORK_WEEK_4X8_NAME        = "Mon-Thu 4x8";
+    private static final String            WORK_WEEK_4X8_NAME        = "Mon-Thu 4x8";
     @Autowired
     AboutViewTester aboutViewTester;
     @Autowired
-    private              ProductListViewTester      productListViewTester;
+    private ProductListViewTester      productListViewTester;
     @Autowired
-    private              UserWorkWeekListViewTester userWorkWeekListViewTester;
+    private UserWorkWeekListViewTester userWorkWeekListViewTester;
     @Autowired
-    private              WorkWeekListViewTester     workWeekListViewTester;
+    private WorkWeekListViewTester     workWeekListViewTester;
 
     @BeforeAll
     static void beforeAll() {
@@ -129,7 +129,7 @@ public class Test_08_UserWorkWeekIntroductionVideo extends AbstractIntroductionV
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createVideo(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT + 150);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_EXTENDED_HEIGHT);
 
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());

@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.ui.dialog.*;
+import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -189,7 +190,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
             seleniumHandler.click(AvailabilityListView.AVAILABILITY_GRID_DELETE_BUTTON_PREFIX + dateStr);
             seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/availability-delete-dialog.png");
-            availabilityListViewTester.closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
+            availabilityListViewTester.closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
         }
     }
 
@@ -245,7 +246,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
             seleniumHandler.click(LocationListView.LOCATION_GRID_DELETE_BUTTON_PREFIX + dateStr);
             seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/location-delete-dialog.png");
-            locationListViewTester.closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
+            locationListViewTester.closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
         }
     }
 
@@ -280,7 +281,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
             offDayListViewTester.clickDeleteButtonForRecord(firstDayRecord1);
             seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/offday-delete-dialog.png");
-            offDayListViewTester.closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
+            offDayListViewTester.closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
         }
     }
 
@@ -320,26 +321,28 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         }
         seleniumHandler.takeScreenShot(folder + "/about-view.png");
 
+        if (false) {
+        }
         //-----------------
         //ProductListView
         //-----------------
         productListViewTester.switchToProductListView();
         seleniumHandler.takeScreenShot(folder + "/product-list-view.png");
-//        takeProductDialogScreenshots(folder);
+        takeProductDialogScreenshots(folder);
         productListViewTester.selectProduct(productName);
 
         //-----------------
         //VersionListView
         //-----------------
         seleniumHandler.takeScreenShot(folder + "/version-list-view.png");
-//        takeVersionDialogScreenshots(folder);
+        takeVersionDialogScreenshots(folder);
         versionListViewTester.selectVersion(versionName);
 
         //-----------------
         //FeatureListView
         //-----------------
         seleniumHandler.takeScreenShot(folder + "/feature-list-view.png");
-//        takeFeatureDialogScreenshots(folder);
+        takeFeatureDialogScreenshots(folder);
         featureListViewTester.selectFeature(featureName);
 
         //-----------------
@@ -347,11 +350,10 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         //-----------------
         seleniumHandler.waitForElementToBeClickable(RenderUtil.SPRINTS_OVERVIEW_CHART);
         seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
-//        takeSprintDialogScreenshots(folder);
+        takeSprintDialogScreenshots(folder);
         sprintListViewTester.selectSprint(sprintName);
         seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_BURNDOWN_CHART);
         seleniumHandler.takeScreenShot(folder + "/quality-board.png");
-//        seleniumHandler.waitUntilBrowserClosed(0);
 
         //-----------------
         //Backlog
@@ -365,12 +367,43 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         //ActiveSprints
         //-----------------
         activeSprintsTester.switchToActiveSprints();
-//        seleniumHandler.setComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, "");//disable
-        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Zurich"});//enable
-//        seleniumHandler.setComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, "Oslo");//disable
         seleniumHandler.wait(1000);
-//        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
+        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Zurich"});//enable
+        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Oslo"});//enable
+        seleniumHandler.wait(1000);
         seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
+
+        //-----------------
+        //UserListView
+        //-----------------
+        userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        seleniumHandler.takeScreenShot(folder + "/user-list-view.png");
+        takeUserDialogScreenshots(folder);
+
+        //-----------------
+        //AvailabilityListView
+        //-----------------
+        availabilityListViewTester.switchToAvailabilityListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+        seleniumHandler.takeScreenShot(folder + "/availability-list-view.png");
+        takeAvailabilityDialogScreenshots(folder);
+
+        //-----------------
+        //LocationListView
+        //-----------------
+        locationListViewTester.switchToLocationListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+        seleniumHandler.takeScreenShot(folder + "/location-list-view.png");
+        takeLocationDialogScreenshots(folder);
+
+        //-----------------
+        //OffdayListView
+        //-----------------
+        offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+        seleniumHandler.takeScreenShot(folder + "/offday-list-view.png");
+        takeOffDayDialogScreenshots(folder);
+        if (false) {
+
+        }
+        aboutViewTester.logout();
         //TODO add screenshot of
         // UserWorkWeekListView,
         // WorkWeekListView,
@@ -380,37 +413,14 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         // TaskDialog,
         // ImagePromptDialog,
         // DependencyDialog
-//        seleniumHandler.click(task12TitleId);
-//        seleniumHandler.waitForElementToBeClickable(TaskDialog.CANCEL_BUTTON);
-//        activeSprintsTester.closeDialog(TaskDialog.CANCEL_BUTTON);
-
-
-        userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        seleniumHandler.takeScreenShot(folder + "/user-list-view.png");
-//        takeUserDialogScreenshots(folder);
-
-        // Navigate to AvailabilityListView for the current user and take screenshots
-        availabilityListViewTester.switchToAvailabilityListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-        seleniumHandler.takeScreenShot(folder + "/availability-list-view.png");
-//        takeAvailabilityDialogScreenshots(folder);
-
-        // Navigate to LocationListView for the current user and take screenshots
-        locationListViewTester.switchToLocationListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-        seleniumHandler.takeScreenShot(folder + "/location-list-view.png");
-//        takeLocationDialogScreenshots(folder);
-
-        // Navigate to OffDayListView for the current user and take screenshots
-        offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-        seleniumHandler.takeScreenShot(folder + "/offday-list-view.png");
-//        takeOffDayDialogScreenshots(folder);
-        aboutViewTester.logout();
     }
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void takeScreenshots(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        seleniumHandler.setWindowSize(1700, 1200);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_EXTENDED_HEIGHT);
+//        seleniumHandler.setWindowSize(1700, 1200);
 
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());

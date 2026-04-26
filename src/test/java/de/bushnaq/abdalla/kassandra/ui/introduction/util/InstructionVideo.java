@@ -33,23 +33,24 @@ public class InstructionVideo {
     /**
      * Subtitle shown on the Apache License end-card overlay.
      */
-    public static final String COPYLEFT_SUBTITLE = "Apache License, version 2.0";
+    public static final String COPYLEFT_SUBTITLE     = "Apache License, version 2.0";
     /**
      * Root sub-folder (relative to {@code test-recordings/}) for all introduction videos.
      */
-    public static final String TARGET_FOLDER     = "introduction";
+    public static final String TARGET_FOLDER         = "introduction";
+    public static final int    VIDEO_EXTENDED_HEIGHT = 1300;
     /**
      * Recording height in pixels.
      */
-    public static final int    VIDEO_HEIGHT      = 1200;
+    public static final int    VIDEO_HEIGHT          = 1200;
     /**
      * Sub-title shown on the intro overlay.
      */
-    public static final String VIDEO_SUBTITLE    = "Introduction Video";
+    public static final String VIDEO_SUBTITLE        = "Introduction Video";
     /**
      * Recording width in pixels.
      */
-    public static final int    VIDEO_WIDTH       = 1750;
+    public static final int    VIDEO_WIDTH           = 1750;
 
     /**
      * YouTube numeric category ID (e.g. {@code "28"} for Science &amp; Technology).

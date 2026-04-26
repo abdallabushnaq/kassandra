@@ -64,31 +64,31 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 public class Test_05_UserOffDaysIntroductionVideo extends AbstractIntroductionVideo {
-    public static final NarratorAttribute          INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final NarratorAttribute          NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
     AboutViewTester aboutViewTester;
     @Autowired
-    private             AvailabilityListViewTester availabilityListViewTester;
+    private AvailabilityListViewTester availabilityListViewTester;
     @Autowired
-    private             FeatureListViewTester      featureListViewTester;
-    private             String                     featureName;
+    private FeatureListViewTester      featureListViewTester;
+    private String                     featureName;
     @Autowired
-    private             LocationListViewTester     locationListViewTester;
+    private LocationListViewTester     locationListViewTester;
     @Autowired
-    private             OffDayListViewTester       offDayListViewTester;
+    private OffDayListViewTester       offDayListViewTester;
     @Autowired
-    private             ProductListViewTester      productListViewTester;
+    private ProductListViewTester      productListViewTester;
     @Autowired
-    private             HumanizedSeleniumHandler   seleniumHandler;
+    private HumanizedSeleniumHandler   seleniumHandler;
     @Autowired
-    private             SprintListViewTester       sprintListViewTester;
+    private SprintListViewTester       sprintListViewTester;
     @Autowired
-    private             TaskListViewTester         taskListViewTester;
+    private TaskListViewTester         taskListViewTester;
     @Autowired
-    private             UserListViewTester         userListViewTester;
+    private UserListViewTester         userListViewTester;
     @Autowired
-    private             VersionListViewTester      versionListViewTester;
+    private VersionListViewTester      versionListViewTester;
 
     @BeforeAll
     static void beforeAll() {
@@ -102,7 +102,7 @@ public class Test_05_UserOffDaysIntroductionVideo extends AbstractIntroductionVi
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createVideo(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_HEIGHT + 150);
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_EXTENDED_HEIGHT);
 
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
