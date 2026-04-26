@@ -632,6 +632,12 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         if (seleniumHandler.isElementPresent(UserProfileView.GENERATE_AVATAR_BUTTON)) {
             seleniumHandler.click(UserProfileView.GENERATE_AVATAR_BUTTON);
             seleniumHandler.waitForElementToBeClickable(ImagePromptDialog.ID_CANCEL_BUTTON);
+
+//            seleniumHandler.click(ImagePromptDialog.ID_GENERATE_BUTTON);
+//            seleniumHandler.pushWaitDuration(Duration.ofSeconds(120));
+//            seleniumHandler.waitForElementToBeInteractable(ImagePromptDialog.ID_GENERATE_BUTTON);
+//            seleniumHandler.popWaitDuration();
+
             seleniumHandler.takeElementScreenShot(
                     seleniumHandler.findDialogOverlayElement(ImagePromptDialog.IMAGE_PROMPT_DIALOG),
                     ImagePromptDialog.IMAGE_PROMPT_DIALOG,

@@ -40,11 +40,11 @@ public class AvatarService {
     /**
      * Prompt suffix appended to every dark-avatar SD call.
      */
-    public static final String                DARK_PROMPT_SUFFIX  = ", only the background is dark gray matching the dark mode of the UI, no gradients, no textures";
+    public static final String                DARK_PROMPT_SUFFIX  = ", simple dark background";
     /**
      * Prompt suffix appended to every light-avatar SD call.
      */
-    public static final String                LIGHT_PROMPT_SUFFIX = ", (background is white), no shadows, no gradients, no textures";
+    public static final String                LIGHT_PROMPT_SUFFIX = ", simple white background";
     /**
      * -- GETTER --
      * Exposes the Stable Diffusion configuration so non-Spring callers (e.g. UI dialogs)

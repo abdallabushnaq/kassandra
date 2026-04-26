@@ -228,7 +228,8 @@ public class User extends AbstractTimeAware implements Comparable<User> {
     }
 
     private static String getDefaultAvatarPrompt(String userName) {
-        return "close-up portrait of '" + userName + "' for a profile picture, photo quality, sharp focus, high resolution, 8k resolution, 50mm lens";
+        return "Professional avatar portrait of '" + userName + "', software developer";
+//        return "close-up portrait of '" + userName + "' for a profile picture, photo quality, sharp focus, high resolution, 8k resolution, 50mm lens";
     }
 
     /**
