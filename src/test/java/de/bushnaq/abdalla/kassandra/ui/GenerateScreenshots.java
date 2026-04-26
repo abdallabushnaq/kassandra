@@ -111,6 +111,8 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       VersionListViewTester      versionListViewTester;
     private       String                     versionName;
+    @Autowired
+    private       WorkWeekListViewTester     workWeekListViewTester;
 
     // Method to get the public-facing URL, fixing potential redirect issues
     private static String getPublicFacingUrl(KeycloakContainer container) {
@@ -401,23 +403,28 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
             offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
             seleniumHandler.takeScreenShot(folder + "/offday-list-view.png");
             takeOffDayDialogScreenshots(folder);
+
+            //-----------------
+            //UserWorkWeekListView
+            //-----------------
+            userWorkWeekListViewTester.switchToUserWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+            seleniumHandler.takeScreenShot(folder + "/user-work-week-list-view.png");
+            takeUserWorkWeekDialogScreenshots(folder);
         }
 
 
         //-----------------
-        //UserWorkWeekListView
+        //WorkWeekListView
         //-----------------
-        userWorkWeekListViewTester.switchToUserWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-        seleniumHandler.takeScreenShot(folder + "/user-work-week-list-view.png");
-        takeUserWorkWeekDialogScreenshots(folder);
+        workWeekListViewTester.switchToWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        seleniumHandler.takeScreenShot(folder + "/work-week-list-view.png");
+        takeWorkWeekDialogScreenshots(folder);
 
         if (false) {
 
         }
         aboutViewTester.logout();
         //TODO add screenshot of
-        // WorkWeekListView,
-        // WorkWeekDialog,
         // WorklogDialog,
         // TaskDialog,
         // ImagePromptDialog,
@@ -568,5 +575,35 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/version-delete-dialog.png");
         versionListViewTester.closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
+    }
+
+    /**
+     * Takes screenshots of WorkWeek create, edit and delete dialogs.
+     */
+    private void takeWorkWeekDialogScreenshots(String folder) {
+        // Create dialog
+        {
+            seleniumHandler.click(WorkWeekListView.CREATE_BUTTON);
+            seleniumHandler.waitForElementToBeClickable(WorkWeekDialog.CANCEL_BUTTON);
+            seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(WorkWeekDialog.WORK_WEEK_DIALOG), WorkWeekDialog.WORK_WEEK_DIALOG, folder + "/work-week-create-dialog.png");
+            workWeekListViewTester.closeDialog(WorkWeekDialog.CANCEL_BUTTON);
+        }
+
+        // Edit dialog – use the always-present default work week
+        {
+            seleniumHandler.click(WorkWeekListView.GRID_EDIT_BUTTON_PREFIX + DefaultEntitiesInitializer.WORK_WEEK_5X8);
+            seleniumHandler.waitForElementToBeClickable(WorkWeekDialog.CANCEL_BUTTON);
+            seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(WorkWeekDialog.WORK_WEEK_DIALOG), WorkWeekDialog.WORK_WEEK_DIALOG, folder + "/work-week-edit-dialog.png");
+            workWeekListViewTester.closeDialog(WorkWeekDialog.CANCEL_BUTTON);
+        }
+
+        // Delete dialog – create a temporary work week first (WORK_WEEK_5X8 cannot be deleted)
+        {
+            workWeekListViewTester.createWorkWeekConfirm("Islamic Sun-Wed 4x8", "Sunday–Wednesday 8-hour 4 day work week with a 1-hour lunch break");
+            seleniumHandler.click(WorkWeekListView.GRID_DELETE_BUTTON_PREFIX + "Islamic Sun-Wed 4x8");
+            seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON);
+            seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/work-week-delete-dialog.png");
+            workWeekListViewTester.closeConfirmDialog(ConfirmDialog.CONFIRM_BUTTON);
+        }
     }
 }
