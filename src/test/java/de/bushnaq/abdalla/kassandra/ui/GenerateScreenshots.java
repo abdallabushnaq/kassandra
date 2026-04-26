@@ -106,6 +106,8 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
     private       String                     taskName;
     private final OffDayType                 typeRecord1 = OffDayType.VACATION;
     @Autowired
+    private       UserGroupListViewTester    userGroupListViewTester;
+    @Autowired
     private       UserListViewTester         userListViewTester;
     private       String                     userName;
     @Autowired
@@ -447,12 +449,22 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
             seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_BURNDOWN_CHART);
             seleniumHandler.takeScreenShot(folder + "/quality-board.png");
 
+            //-----------------
+            //UserProfileView
+            //-----------------
+            takeUserProfileScreenshots(folder);
 
         }
+
         //-----------------
-        //UserProfileView
+        //UserGroupListView
         //-----------------
-        takeUserProfileScreenshots(folder);
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_USER_GROUPS);
+        seleniumHandler.waitForElementToBeClickable(UserGroupListView.GROUP_LIST_PAGE_TITLE);
+        seleniumHandler.takeScreenShot(folder + "/user-group-list-view.png");
+        takeUserGroupDialogScreenshots(folder);
+
 
         if (false) {
             //-----------------
@@ -516,7 +528,6 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
             workWeekListViewTester.switchToWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
             seleniumHandler.takeScreenShot(folder + "/work-week-list-view.png");
             takeWorkWeekDialogScreenshots(folder);
-
         }
         aboutViewTester.logout();
     }
@@ -609,6 +620,49 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/user-delete-dialog.png");
         userListViewTester.closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
+    }
+
+    /**
+     * Takes screenshots of the {@link UserGroupListView} and the UserGroup create, edit, and delete dialogs.
+     * <p>
+     * The edit screenshot uses the always-present "Team" group. The delete screenshot opens the confirm
+     * dialog on the always-present "All" group and then cancels, leaving the data unchanged.
+     *
+     * @param folder destination folder for the screenshot files
+     */
+    private void takeUserGroupDialogScreenshots(String folder) {
+        // Create dialog
+        {
+            seleniumHandler.click(UserGroupListView.CREATE_GROUP_BUTTON);
+            seleniumHandler.waitForElementToBeClickable(UserGroupDialog.CANCEL_BUTTON);
+            seleniumHandler.takeElementScreenShot(
+                    seleniumHandler.findDialogOverlayElement(UserGroupDialog.GROUP_DIALOG),
+                    UserGroupDialog.GROUP_DIALOG,
+                    folder + "/user-group-create-dialog.png");
+            userGroupListViewTester.closeDialog(UserGroupDialog.CANCEL_BUTTON);
+        }
+
+        // Edit dialog – use the always-present "Team" group
+        {
+            seleniumHandler.click(UserGroupListView.GROUP_GRID_EDIT_BUTTON_PREFIX + "Team");
+            seleniumHandler.waitForElementToBeClickable(UserGroupDialog.CANCEL_BUTTON);
+            seleniumHandler.takeElementScreenShot(
+                    seleniumHandler.findDialogOverlayElement(UserGroupDialog.GROUP_DIALOG),
+                    UserGroupDialog.GROUP_DIALOG,
+                    folder + "/user-group-edit-dialog.png");
+            userGroupListViewTester.closeDialog(UserGroupDialog.CANCEL_BUTTON);
+        }
+
+        // Delete dialog – use the always-present "All" group; cancel to leave it intact
+        {
+            seleniumHandler.click(UserGroupListView.GROUP_GRID_DELETE_BUTTON_PREFIX + "All");
+            seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON);
+            seleniumHandler.takeElementScreenShot(
+                    seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG),
+                    ConfirmDialog.CONFIRM_DIALOG,
+                    folder + "/user-group-delete-dialog.png");
+            userGroupListViewTester.closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
+        }
     }
 
     /**

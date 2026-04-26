@@ -23,6 +23,7 @@ import com.vaadin.flow.component.UI;
  * Kept for backwards compatibility.
  * The default landing page is now {@link AboutView}.
  */
+@Deprecated
 public final class MainView {
 
     private MainView() {
