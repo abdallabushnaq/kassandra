@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view.util;
 
+import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.dialog.AvailabilityDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -44,6 +45,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class AvailabilityListViewTester extends AbstractViewTester {
 
 
+    @Autowired
+    AboutViewTester aboutViewTester;
     @Autowired
     private ProductListViewTester productListViewTester;
 
@@ -317,7 +320,7 @@ public class AvailabilityListViewTester extends AbstractViewTester {
     public void switchToAvailabilityListView(String recordingFolderName, String testName, String username) throws Exception {
         //- Check if we need to log in
         if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            productListViewTester.switchToProductListViewWithOidc(
+            aboutViewTester.login(
                     "christopher.paul@kassandra.org",
                     "password",
                     null,
@@ -326,8 +329,11 @@ public class AvailabilityListViewTester extends AbstractViewTester {
             );
         }
         // Navigate to the availability view for the specific user or current user
-        String url = "http://localhost:" + port + "/ui/" + AvailabilityListView.ROUTE;
-        seleniumHandler.getAndCheck(url);
+//        String url = "http://localhost:" + port + "/ui/" + AvailabilityListView.ROUTE;
+//        seleniumHandler.getAndCheck(url);
+//        seleniumHandler.waitForElementToBeClickable(AvailabilityListView.AVAILABILITY_LIST_PAGE_TITLE);
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_AVAILABILITY);
         seleniumHandler.waitForElementToBeClickable(AvailabilityListView.AVAILABILITY_LIST_PAGE_TITLE);
     }
 

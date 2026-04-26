@@ -21,10 +21,7 @@ import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.SprintListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
+import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.NameGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -61,6 +58,8 @@ import java.util.List;
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class QualityBoardTest extends AbstractKeycloakUiTestUtil {
+    @Autowired
+    AboutViewTester aboutViewTester;
     @Autowired
     private FeatureListViewTester    featureListViewTester;
     @Autowired
@@ -103,7 +102,6 @@ public class QualityBoardTest extends AbstractKeycloakUiTestUtil {
         }
     }
 
-
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
                 new RandomCase(1, 10, 2, 1, 2, 1),//
@@ -128,13 +126,14 @@ public class QualityBoardTest extends AbstractKeycloakUiTestUtil {
         levelResourcesAndPersist(testInfo, sprint, null);
         generateWorklogs(sprint, ParameterOptions.getLocalNow());
 //        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        productListViewTester.switchToProductListViewWithOidc(
+        aboutViewTester.login(
                 "christopher.paul@kassandra.org",
                 "password",
                 null,
                 testInfo.getTestClass().get().getSimpleName(),
                 generateTestCaseName(testInfo)
         );
+        productListViewTester.switchToProductListView();
         productListViewTester.selectProduct(nameGenerator.generateProductName(0));
         versionListViewTester.selectVersion(nameGenerator.generateVersionName(0));
         featureListViewTester.selectFeature(nameGenerator.generateFeatureName(0));

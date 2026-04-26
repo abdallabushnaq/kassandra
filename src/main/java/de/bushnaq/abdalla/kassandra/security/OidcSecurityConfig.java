@@ -29,6 +29,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -56,8 +57,14 @@ public class OidcSecurityConfig {
     private OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler() {
         OidcClientInitiatedLogoutSuccessHandler logoutSuccessHandler =
                 new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
-        // Set the URL to redirect to after logout
-        logoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}");
+        // After Keycloak invalidates its session it will redirect the browser here.
+        // Using the explicit login-view path avoids issues with {baseUrl} (bare root) not being
+        // registered as a valid post_logout_redirect_uri in the Keycloak client.
+        logoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}/ui/login");
+        // Fallback redirect when the OIDC provider does not advertise an end_session_endpoint
+        // in its discovery document.  Without this, the parent SimpleUrlLogoutSuccessHandler
+        // would redirect to "/" which has no Vaadin view and causes a NoResourceFoundException.
+        logoutSuccessHandler.setDefaultTargetUrl("/ui/login");
         return logoutSuccessHandler;
     }
 
@@ -84,8 +91,11 @@ public class OidcSecurityConfig {
             }
         }
 
-        // Set up Vaadin specific security configuration
-        http.with(vaadin(), vaadin -> vaadin.loginView("/login", "/"));
+        // Set up Vaadin specific security configuration.
+        // The second argument is the default redirect URL Vaadin uses after successful authentication
+        // when no saved request is present.  "/" has no Vaadin view mapped to it (Vaadin lives under
+        // /ui/*), so we use /ui/login instead — the same destination we use everywhere else.
+        http.with(vaadin(), vaadin -> vaadin.loginView("/login", "/ui/login"));
 
         // Allow access to the login page and static resources without authentication
         http.authorizeHttpRequests(authorize -> authorize
@@ -108,16 +118,31 @@ public class OidcSecurityConfig {
             logger.info("Configuring OAuth2 login with base URI: {}",
                     OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI);
 
+            // Always require credentials on the Keycloak login page, even when Keycloak has an
+            // active SSO session for the user.  Without prompt=login, Keycloak silently
+            // re-authenticates after logout (via its own SSO cookie), making logout appear broken.
+            DefaultOAuth2AuthorizationRequestResolver resolver = new DefaultOAuth2AuthorizationRequestResolver(
+                    clientRegistrationRepository,
+                    OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI);
+            resolver.setAuthorizationRequestCustomizer(
+                    builder -> builder.additionalParameters(params -> params.put("prompt", "login")));
+
             // Configure OAuth2 login with custom OIDC user service
             http.oauth2Login(oauth2Config -> {
                 oauth2Config.loginPage("/" + LoginView.ROUTE)
-                        .defaultSuccessUrl("/ui/", true) // Redirects to AboutView after successful OIDC login
+                        .defaultSuccessUrl("/ui/", true)
+                        .authorizationEndpoint(auth -> auth
+                                .authorizationRequestResolver(resolver))
                         .userInfoEndpoint(userInfo -> userInfo
                                 .oidcUserService(customOidcUserService)); // Load roles ONCE during authentication
             });
-
-            // Configure OAuth2 logout
+            // Configure OAuth2 logout.
+            // Use AntPathRequestMatcher without a method restriction so that the browser
+            // GET issued by ui.getPage().setLocation("/logout") is caught by the LogoutFilter.
+            // The CSRF risk for unauthenticated-GET logout is low: the worst an attacker can do
+            // is log the user out — they cannot gain access to the session.
             http.logout(logout -> logout
+                    .logoutRequestMatcher(request -> "/logout".equals(request.getServletPath()))
                     .logoutSuccessHandler(oidcLogoutSuccessHandler())
             );
 

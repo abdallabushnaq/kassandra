@@ -25,6 +25,7 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.UserProfileView;
+import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -64,6 +65,8 @@ import java.util.List;
 public class Test_04_UserProfileIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute        NORMAL = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private             ProductListViewTester    productListViewTester;
     @Autowired
     private             HumanizedSeleniumHandler seleniumHandler;
@@ -95,7 +98,7 @@ public class Test_04_UserProfileIntroductionVideo extends AbstractIntroductionVi
         seleniumHandler.wait(3000);
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about managing your user profile and creating custom avatar icons using AI in Kassandra. Your profile contains important information about how you're identified in the system and displayed in reports.");
         seleniumHandler.hideOverlay();
-        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 
         //---------------------------------------------------------------------------------------
         // Navigate to Profile Page

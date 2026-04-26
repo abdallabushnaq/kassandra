@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +58,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class VersionListViewTest extends AbstractKeycloakUiTestUtil {
+    @Autowired
+    AboutViewTester aboutViewTester;
     private final String                   newVersionName = "NewVersion-2";
     @Autowired
     private       ProductListViewTester    productListViewTester;
@@ -77,13 +80,14 @@ public class VersionListViewTest extends AbstractKeycloakUiTestUtil {
      */
     @BeforeEach
     public void createProduct(TestInfo testInfo) throws Exception {
-        productListViewTester.switchToProductListViewWithOidc(
+        aboutViewTester.login(
                 "christopher.paul@kassandra.org",
                 "password",
                 null,
                 testInfo.getTestClass().get().getSimpleName(),
                 generateTestCaseName(testInfo)
         );
+        productListViewTester.switchToProductListView();
         productListViewTester.createProductConfirm(productName);
         productListViewTester.selectProduct(productName);
     }

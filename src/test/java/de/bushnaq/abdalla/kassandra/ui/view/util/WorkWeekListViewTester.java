@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view.util;
 
+import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.WorkWeekDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -43,6 +44,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Lazy
 public class WorkWeekListViewTester extends AbstractViewTester {
 
+    @Autowired
+    AboutViewTester aboutViewTester;
     @Autowired
     private ProductListViewTester productListViewTester;
 
@@ -221,7 +224,7 @@ public class WorkWeekListViewTester extends AbstractViewTester {
     public void switchToWorkWeekListView(String recordingFolderName, String testName) throws Exception {
         // Check if we need to log in
         if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            productListViewTester.switchToProductListViewWithOidc(
+            aboutViewTester.login(
                     "christopher.paul@kassandra.org",
                     "password",
                     null,
@@ -230,28 +233,12 @@ public class WorkWeekListViewTester extends AbstractViewTester {
             );
         }
 
-        String url = "http://localhost:" + port + "/ui/" + WorkWeekListView.ROUTE;
-        seleniumHandler.getAndCheck(url);
+//        String url = "http://localhost:" + port + "/ui/" + WorkWeekListView.ROUTE;
+//        seleniumHandler.getAndCheck(url);
+//        seleniumHandler.waitForElementToBeClickable(WorkWeekListView.PAGE_TITLE);
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_WORK_WEEKS);
         seleniumHandler.waitForElementToBeClickable(WorkWeekListView.PAGE_TITLE);
-    }
-
-    /**
-     * Verifies the name and description of a work week by opening its edit dialog,
-     * reading the field values, and then cancelling without saving.
-     *
-     * @param name                the name of the work week whose record to open
-     * @param expectedName        the expected name value
-     * @param expectedDescription the expected description value
-     */
-    private void verifyWorkWeekValues(String name, String expectedName, String expectedDescription) {
-        seleniumHandler.click(WorkWeekListView.GRID_EDIT_BUTTON_PREFIX + name);
-        String actualName        = seleniumHandler.getTextField(WorkWeekDialog.NAME_FIELD);
-        String actualDescription = seleniumHandler.getTextField(WorkWeekDialog.DESCRIPTION_FIELD);
-        closeDialog(WorkWeekDialog.CANCEL_BUTTON);
-        Assertions.assertEquals(expectedName, actualName,
-                "Name mismatch for work week: " + name);
-        Assertions.assertEquals(expectedDescription, actualDescription,
-                "Description mismatch for work week: " + name);
     }
 
     /**
@@ -275,6 +262,25 @@ public class WorkWeekListViewTester extends AbstractViewTester {
         seleniumHandler.waitForElementToBeClickable(WorkWeekListView.PAGE_TITLE);
         // Verify the work week is still in the list
         seleniumHandler.ensureIsInList(WorkWeekListView.GRID_NAME_PREFIX, name);
+    }
+
+    /**
+     * Verifies the name and description of a work week by opening its edit dialog,
+     * reading the field values, and then cancelling without saving.
+     *
+     * @param name                the name of the work week whose record to open
+     * @param expectedName        the expected name value
+     * @param expectedDescription the expected description value
+     */
+    private void verifyWorkWeekValues(String name, String expectedName, String expectedDescription) {
+        seleniumHandler.click(WorkWeekListView.GRID_EDIT_BUTTON_PREFIX + name);
+        String actualName        = seleniumHandler.getTextField(WorkWeekDialog.NAME_FIELD);
+        String actualDescription = seleniumHandler.getTextField(WorkWeekDialog.DESCRIPTION_FIELD);
+        closeDialog(WorkWeekDialog.CANCEL_BUTTON);
+        Assertions.assertEquals(expectedName, actualName,
+                "Name mismatch for work week: " + name);
+        Assertions.assertEquals(expectedDescription, actualDescription,
+                "Description mismatch for work week: " + name);
     }
 }
 

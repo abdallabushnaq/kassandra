@@ -65,6 +65,8 @@ public class Test_07_UserAvailabilityIntroductionVideo extends AbstractIntroduct
     public static final NarratorAttribute          INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute          NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private             AvailabilityListViewTester availabilityListViewTester;
     @Autowired
     private             FeatureListViewTester      featureListViewTester;
@@ -112,7 +114,7 @@ public class Test_07_UserAvailabilityIntroductionVideo extends AbstractIntroduct
         seleniumHandler.wait(3000);
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about User Availability management in Kassandra. User availability defines what percentage of your time you can dedicate to project work. This is essential for accurate sprint planning and capacity calculations.");
         seleniumHandler.hideOverlay();
-        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 
         //---------------------------------------------------------------------------------------
         // Navigate to Availability Page

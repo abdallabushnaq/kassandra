@@ -72,6 +72,8 @@ public class Test_10_StoriesAndTasksIntroductionVideo extends AbstractIntroducti
     public static final String                     NEW_TASK      = "New Task-";
     public static final NarratorAttribute          NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private             AvailabilityListViewTester availabilityListViewTester;
     @Autowired
     private             FeatureListViewTester      featureListViewTester;
@@ -127,7 +129,8 @@ public class Test_10_StoriesAndTasksIntroductionVideo extends AbstractIntroducti
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         paul.setEnabled(true);
         Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
-        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
+        productListViewTester.switchToProductListView();
 
 
         // Demo the natural language search capabilities

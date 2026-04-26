@@ -27,10 +27,7 @@ import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
-import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.UserListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
+import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -78,6 +75,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class Test_14_KassandraAgentIntroductionVideo extends AbstractIntroductionVideo {
     public static final NarratorAttribute     INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute     NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    @Autowired
+    AboutViewTester aboutViewTester;
     //    @Autowired
 //    private             AvailabilityListViewTester availabilityListViewTester;
     private             Feature               feature;
@@ -143,8 +142,9 @@ public class Test_14_KassandraAgentIntroductionVideo extends AbstractIntroductio
 
 
         paul.narrateAsync(NORMAL, "Good morning, my name is Christopher Paul. I am the product manager of Kassandra and I will be demonstrating the AI capability of the latest alpha version of the Kassandra project server to you today.");
-        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         seleniumHandler.setEnabled(true);
+        productListViewTester.switchToProductListView();
 
 
         //---------------------------------------------------------------------------------------

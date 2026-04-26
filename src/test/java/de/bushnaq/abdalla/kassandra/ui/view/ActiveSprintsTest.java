@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
@@ -61,6 +62,8 @@ import java.time.LocalDateTime;
 @Slf4j
 public class ActiveSprintsTest extends AbstractKeycloakUiTestUtil {
 
+    @Autowired
+    AboutViewTester aboutViewTester;
     private String                   featureName;
     @Autowired
     private ProductListViewTester    productListViewTester;
@@ -155,7 +158,8 @@ public class ActiveSprintsTest extends AbstractKeycloakUiTestUtil {
     public void testActiveSprintsView() throws Exception {
         // Generate test data
         Sprint sprint = generateData();
-        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
+        productListViewTester.switchToProductListView();
         seleniumHandler.getAndCheck("http://localhost:" + productListViewTester.getPort() + "/ui/" + ActiveSprints.ROUTE);
         // Navigate to active sprints view
         // TODO: Implement navigation once the view is created

@@ -63,7 +63,9 @@ public class ActiveSprintsTester extends AbstractViewTester {
      * by checking for the presence of the page title element.
      */
     public void switchToActiveSprints() {
-        seleniumHandler.click("/" + ActiveSprints.ROUTE);
-        seleniumHandler.waitForUrl("http://localhost:" + port + "/ui/" + ActiveSprints.ROUTE);
+        seleniumHandler.click(ActiveSprints.MENU_ITEM_ID);
+        seleniumHandler.waitForElementToBeClickable(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
+//        seleniumHandler.click("/" + ActiveSprints.ROUTE);
+//        seleniumHandler.waitForUrl("http://localhost:" + port + "/ui/" + ActiveSprints.ROUTE);
     }
 }

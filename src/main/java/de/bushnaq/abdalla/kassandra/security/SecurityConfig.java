@@ -188,8 +188,9 @@ public class SecurityConfig {
     public SecurityFilterChain vaadinSecurityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
         logger.info(">>> Configuring security chain (4/4) basic authentication for Vaadin");
 
-        // Set up Vaadin specific security configuration
-        http.with(vaadin(), vaadin -> vaadin.loginView("/login", "/"));
+        // Set up Vaadin specific security configuration.
+        // Use /ui/login as the default redirect — "/" has no Vaadin view mapped under /ui/*.
+        http.with(vaadin(), vaadin -> vaadin.loginView("/login", "/ui/login"));
 
         // Allow access to the login page and static resources without authentication
         http.authorizeHttpRequests(authorize -> authorize

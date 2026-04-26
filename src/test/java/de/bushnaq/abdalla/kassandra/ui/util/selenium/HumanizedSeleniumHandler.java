@@ -819,10 +819,10 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
     public void setComboBoxValue(String id, String text) {
         if (!isEnabled())
             return;
-        if (!isHumanize()) {
-            super.setComboBoxValue(id, text);
-            return;
-        }
+//        if (!isHumanize()) {
+//            super.setComboBoxValue(id, text);
+//            return;
+//        }
         waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
         WebElement comboBoxElement = findElement(By.id(id));
         setComboBoxValue(comboBoxElement, text);

@@ -26,10 +26,7 @@ import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.Backlog;
 import de.bushnaq.abdalla.kassandra.ui.view.SprintListView;
-import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.SprintListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
+import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.BeforeAll;
@@ -66,11 +63,13 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 public class Test_12_StoryAndTaskRelationsIntroductionVideo extends AbstractIntroductionVideo {
-    public static final NarratorAttribute     EXCITED = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final NarratorAttribute     NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute EXCITED = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
-    private             FeatureListViewTester featureListViewTester;
-    private             String                featureName;
+    AboutViewTester aboutViewTester;
+    @Autowired
+    private FeatureListViewTester featureListViewTester;
+    private String                featureName;
     User graceMartin;
     @Autowired
     private ProductListViewTester    productListViewTester;
@@ -123,7 +122,8 @@ public class Test_12_StoryAndTaskRelationsIntroductionVideo extends AbstractIntr
 //        Narrator grace = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName(), "grace");
 //        grace.setEnabled(false);
         //seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
-        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, null, null);
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
+        productListViewTester.switchToProductListView();
 
         // navigate to the sprint's task list view
         productListViewTester.selectProduct(productName);

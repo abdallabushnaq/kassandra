@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.util.selenium;
 
-import java.util.UUID;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;

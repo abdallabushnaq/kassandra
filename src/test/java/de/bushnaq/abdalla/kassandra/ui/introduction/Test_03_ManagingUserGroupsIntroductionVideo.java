@@ -25,6 +25,7 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.UserGroupDialog;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.UserGroupListView;
+import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.UserGroupListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
@@ -79,6 +80,8 @@ public class Test_03_ManagingUserGroupsIntroductionVideo extends AbstractIntrodu
     public static final NarratorAttribute        INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
     public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f);
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private             ProductListViewTester    productListViewTester;
     @Autowired
     private             HumanizedSeleniumHandler seleniumHandler;
@@ -92,7 +95,6 @@ public class Test_03_ManagingUserGroupsIntroductionVideo extends AbstractIntrodu
         video.setTitle("03 Managing User Groups in Kassandra");
         video.setDescription("Today we're going to learn about User Groups in Kassandra. User Groups are a powerful feature that lets you control access to products by organizing team members into groups.");
     }
-
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
@@ -117,7 +119,7 @@ public class Test_03_ManagingUserGroupsIntroductionVideo extends AbstractIntrodu
         seleniumHandler.wait(3000);
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today we're going to learn about User Groups in Kassandra. User Groups are a powerful feature that lets you control access to products by organizing team members into groups.");
         seleniumHandler.hideOverlay();
-        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/user-groups-login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/user-groups-login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 
         //---------------------------------------------------------------------------------------
         // Navigate to User Groups Page

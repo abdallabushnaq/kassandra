@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view.util;
 
+import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserWorkWeekDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -44,6 +45,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Lazy
 public class UserWorkWeekListViewTester extends AbstractViewTester {
 
+    @Autowired
+    AboutViewTester aboutViewTester;
     @Autowired
     private ProductListViewTester productListViewTester;
 
@@ -253,7 +256,7 @@ public class UserWorkWeekListViewTester extends AbstractViewTester {
     public void switchToUserWorkWeekListView(String recordingFolderName, String testName, String username) throws Exception {
         // Check if we need to log in
         if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            productListViewTester.switchToProductListViewWithOidc(
+            aboutViewTester.login(
                     "christopher.paul@kassandra.org",
                     "password",
                     null,
@@ -263,12 +266,15 @@ public class UserWorkWeekListViewTester extends AbstractViewTester {
         }
 
         // Navigate to the user work week view for the specific user
-        String url = "http://localhost:" + port + "/ui/" + UserWorkWeekListView.ROUTE;
-        if (username != null) {
-            url += "/" + username;
-        }
-
-        seleniumHandler.getAndCheck(url);
+//        String url = "http://localhost:" + port + "/ui/" + UserWorkWeekListView.ROUTE;
+//        if (username != null) {
+//            url += "/" + username;
+//        }
+//
+//        seleniumHandler.getAndCheck(url);
+//        seleniumHandler.waitForElementToBeClickable(UserWorkWeekListView.PAGE_TITLE);
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_WORK_WEEK);
         seleniumHandler.waitForElementToBeClickable(UserWorkWeekListView.PAGE_TITLE);
     }
 

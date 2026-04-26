@@ -19,10 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.SprintListViewTester;
-import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
+import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -60,6 +57,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private       FeatureListViewTester    featureListViewTester;
     private final String                   newSprintName = "NewSprint-3";
     @Autowired
@@ -88,7 +87,7 @@ public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
     @BeforeEach
     public void createPrerequisites(TestInfo testInfo) throws Exception {
         // Navigate to the product list and create a product
-        productListViewTester.switchToProductListViewWithOidc(
+        aboutViewTester.login(
                 "christopher.paul@kassandra.org",
                 "password",
                 null,

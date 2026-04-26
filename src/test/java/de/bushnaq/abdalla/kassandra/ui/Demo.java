@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
@@ -64,6 +65,8 @@ import java.util.List;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class Demo extends AbstractKeycloakUiTestUtil {
     private static final Logger                   logger = LoggerFactory.getLogger(Demo.class);
+    @Autowired
+    private              AboutViewTester          aboutViewTester;
     @Autowired
     private              FeatureListViewTester    featureListViewTester;
     @Autowired
@@ -174,7 +177,7 @@ public class Demo extends AbstractKeycloakUiTestUtil {
         List<Sprint>  sprints      = sprintApi.getAll(firstFeature.getId());
         Sprint        firstSprint  = sprints.getFirst();
 
-        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 //        productListViewTester.switchToProductListViewWithOidc("jennifer.holleman@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 //        productListViewTester.switchToProductListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
 //        seleniumHandler.getAndCheck("http://localhost:" + productListViewTester.getPort() + "/ui/" + "grid-row-reordering");

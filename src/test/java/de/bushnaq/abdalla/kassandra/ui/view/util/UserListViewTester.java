@@ -42,6 +42,8 @@ import java.time.LocalDate;
 public class UserListViewTester extends AbstractViewTester {
 
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private ProductListViewTester productListViewTester;
 
     /**
@@ -226,7 +228,7 @@ public class UserListViewTester extends AbstractViewTester {
     public void switchToUserListView(String recordingFolderName, String testName, String username, String password) throws Exception {
         //- Check if we need to log in
         if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            productListViewTester.switchToProductListViewWithOidc(username, password, null, recordingFolderName, testName);
+            aboutViewTester.login(username, password, null, recordingFolderName, testName);
         }
         seleniumHandler.click(MainLayout.ID_USER_MENU);
         seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_USERS);

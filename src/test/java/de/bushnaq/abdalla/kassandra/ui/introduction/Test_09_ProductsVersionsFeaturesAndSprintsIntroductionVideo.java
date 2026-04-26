@@ -75,6 +75,8 @@ public class Test_09_ProductsVersionsFeaturesAndSprintsIntroductionVideo extends
     public static final NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     public static final NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private             AvailabilityListViewTester availabilityListViewTester;
     @Autowired
     private             FeatureListViewTester      featureListViewTester;
@@ -110,7 +112,6 @@ public class Test_09_ProductsVersionsFeaturesAndSprintsIntroductionVideo extends
         video.setDescription("Good morning, my name is Christopher Paul. I am the product manager of Kassandra and I will be demonstrating the latest alpha version of the Kassandra project server to you today.");
     }
 
-
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
@@ -135,7 +136,8 @@ public class Test_09_ProductsVersionsFeaturesAndSprintsIntroductionVideo extends
 
 
         paul.narrateAsync(NORMAL, "Good morning, my name is Christopher Paul. I am the product manager of Kassandra and I will be demonstrating the latest alpha version of the Kassandra project server to you today.");
-        productListViewTester.switchToProductListViewWithOidc("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", "../kassandra.wiki/screenshots/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        productListViewTester.switchToProductListView();
 
         seleniumHandler.setEnabled(true);
         //---------------------------------------------------------------------------------------

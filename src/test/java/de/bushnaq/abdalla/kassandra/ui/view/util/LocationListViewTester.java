@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view.util;
 
+import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.LocationDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -43,6 +44,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Component
 @Lazy
 public class LocationListViewTester extends AbstractViewTester {
+    @Autowired
+    AboutViewTester aboutViewTester;
     @Autowired
     private ProductListViewTester productListViewTester;
 
@@ -262,7 +265,7 @@ public class LocationListViewTester extends AbstractViewTester {
     public void switchToLocationListView(String recordingFolderName, String testName, String username) throws Exception {
         //- Check if we need to log in
         if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            productListViewTester.switchToProductListViewWithOidc(
+            aboutViewTester.login(
                     "christopher.paul@kassandra.org",
                     "password",
                     null,
@@ -272,12 +275,15 @@ public class LocationListViewTester extends AbstractViewTester {
         }
 
         // Navigate to the location view for the specific user or current user
-        String url = "http://localhost:" + port + "/ui/" + LocationListView.ROUTE;
-        if (username != null) {
-            url += "/" + username;
-        }
-
-        seleniumHandler.getAndCheck(url);
+//        String url = "http://localhost:" + port + "/ui/" + LocationListView.ROUTE;
+//        if (username != null) {
+//            url += "/" + username;
+//        }
+//
+//        seleniumHandler.getAndCheck(url);
+//        seleniumHandler.waitForElementToBeClickable(LocationListView.LOCATION_LIST_PAGE_TITLE);
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_LOCATION);
         seleniumHandler.waitForElementToBeClickable(LocationListView.LOCATION_LIST_PAGE_TITLE);
     }
 

@@ -66,6 +66,8 @@ import java.util.List;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TaskListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private       FeatureListViewTester    featureListViewTester;
     private final String                   featureName = nameGenerator.generateFeatureName(0);
     //    private final String                newTaskName = "NewTask-3";
@@ -109,7 +111,7 @@ public class TaskListViewTest extends AbstractKeycloakUiTestUtil {
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
 
-        productListViewTester.switchToProductListViewWithOidc(
+        aboutViewTester.login(
                 "christopher.paul@kassandra.org",
                 "password",
                 null,

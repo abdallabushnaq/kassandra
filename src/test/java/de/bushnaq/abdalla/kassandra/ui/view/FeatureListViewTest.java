@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.FeatureListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.VersionListViewTester;
@@ -59,6 +60,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private       FeatureListViewTester    featureListViewTester;
     private final String                   featureName    = "Project-2";
     private final String                   newProjectName = "NewProject-2";
@@ -83,7 +86,7 @@ public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
     @BeforeEach
     public void setupTest(TestInfo testInfo) throws Exception {
         // Navigate to product list and create a product
-        productListViewTester.switchToProductListViewWithOidc(
+        aboutViewTester.login(
                 "christopher.paul@kassandra.org",
                 "password",
                 null,
@@ -91,6 +94,7 @@ public class FeatureListViewTest extends AbstractKeycloakUiTestUtil {
                 generateTestCaseName(testInfo)
         );
 //        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        productListViewTester.switchToProductListView();
         productListViewTester.createProductConfirm(productName);
         productListViewTester.selectProduct(productName);
 

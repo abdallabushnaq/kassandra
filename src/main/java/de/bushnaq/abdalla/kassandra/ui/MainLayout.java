@@ -38,6 +38,7 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
+import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
@@ -49,8 +50,7 @@ import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
 import jakarta.annotation.security.PermitAll;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,37 +62,39 @@ import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 @Slf4j
 public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
-    public static final String                               ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
-    public static final String                               ID_LOGO                         = "main-layout-logo";
-    public static final String                               ID_TAB_BASE                     = "main-layout-tab-";
+    public static final String ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
+    public static final String ID_LOGO                         = "main-layout-logo";
+    public static final String ID_TAB_BASE                     = "main-layout-tab-";
     //    public static final String           ID_TAB_USERS                 = "main-layout-tab-users";
-    public static final String                               ID_THEME_TOGGLE                 = "main-layout-theme-toggle";
-    public static final String                               ID_USER_MENU                    = "main-layout-user-menu";
-    public static final String                               ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
-    public static final String                               ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
-    public static final String                               ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
-    public static final String                               ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
-    public static final String                               ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
-    public static final String                               ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
-    public static final String                               ID_USER_MENU_MANAGE_USER_GROUPS = "main-layout-user-menu-manage-user-groups";
-    public static final String                               ID_USER_MENU_MANAGE_WORK_WEEKS  = "main-layout-user-menu-manage-work-weeks";
-    public static final String                               ID_USER_MENU_OFF_DAYS           = "main-layout-user-menu-off-days";
-    public static final String                               ID_USER_MENU_VIEW_PROFILE       = "main-layout-user-menu-view-profile";
-    public static final String                               ID_USER_MENU_WORK_WEEK          = "main-layout-user-menu-work-week";
-    private final       Div                                  breadcrumbContainer;
+    public static final String ID_THEME_TOGGLE                 = "main-layout-theme-toggle";
+    public static final String ID_USER_MENU                    = "main-layout-user-menu";
+    public static final String ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
+    public static final String ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
+    public static final String ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
+    public static final String ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
+    public static final String ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
+    public static final String ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
+    public static final String ID_USER_MENU_MANAGE_USER_GROUPS = "main-layout-user-menu-manage-user-groups";
+    public static final String ID_USER_MENU_MANAGE_WORK_WEEKS  = "main-layout-user-menu-manage-work-weeks";
+    public static final String ID_USER_MENU_OFF_DAYS           = "main-layout-user-menu-off-days";
+    public static final String ID_USER_MENU_VIEW_PROFILE       = "main-layout-user-menu-view-profile";
+    public static final String ID_USER_MENU_WORK_WEEK          = "main-layout-user-menu-work-week";
+    AuthenticationContext authenticationContext;
+    private final Div                                  breadcrumbContainer;
     @Getter
-    private final       Breadcrumbs                          breadcrumbs                     = new Breadcrumbs();
-    private             Image                                logoImage;
-    private final       Map<Tab, String>                     tabToPathMap                    = new HashMap<>();
-    private             Tabs                                 tabs;
-    private final       ThemeSessionState                    themeSessionState;
-    private             boolean                              updatingTabFromNavigation       = false;
-    private final       UserApi                              userApi;
-    private             com.vaadin.flow.component.html.Image userAvatarImage;
+    private final Breadcrumbs                          breadcrumbs               = new Breadcrumbs();
+    private       Image                                logoImage;
+    private final Map<Tab, String>                     tabToPathMap              = new HashMap<>();
+    private       Tabs                                 tabs;
+    private final ThemeSessionState                    themeSessionState;
+    private       boolean                              updatingTabFromNavigation = false;
+    private final UserApi                              userApi;
+    private       com.vaadin.flow.component.html.Image userAvatarImage;
 
     MainLayout(UserApi userApi, ThemeSessionState themeSessionState) {
-        this.userApi           = userApi;
-        this.themeSessionState = themeSessionState;
+        this.authenticationContext = authenticationContext;
+        this.userApi               = userApi;
+        this.themeSessionState     = themeSessionState;
         UI.getCurrent().getPage().addJavaScript("/js/tooltips.js");
         setPrimarySection(Section.NAVBAR);
         addClassName("main-layout"); // scope CSS to this layout
@@ -371,9 +373,12 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     }
 
     private void logout() {
-        SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
-        logoutHandler.logout(SecurityUtils.getHttpServletRequest(), SecurityUtils.getHttpServletResponse(), SecurityContextHolder.getContext().getAuthentication());
-        getUI().ifPresent(ui -> ui.getPage().setLocation("/ui/login"));
+        // Redirect to Spring Security's /logout endpoint so that the full logout filter chain runs,
+        // including OidcClientInitiatedLogoutSuccessHandler, which calls Keycloak's end_session_endpoint
+        // and invalidates the OIDC session.  A plain SecurityContextLogoutHandler only clears the local
+        // Spring session; the Keycloak session stays alive and the user would be silently re-authenticated
+        // the moment they visit the login page again.
+        getUI().ifPresent(ui -> ui.getPage().setLocation("/logout"));
     }
 
     private void navigateToAvailability(String userEmail) {

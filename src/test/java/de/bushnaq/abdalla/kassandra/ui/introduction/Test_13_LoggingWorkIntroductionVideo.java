@@ -28,6 +28,7 @@ import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.ActiveSprints;
+import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ActiveSprintsTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
@@ -69,6 +70,8 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
     public static final NarratorAttribute        EXCITED = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
     public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.6f).withCfgWeight(.2f).withTemperature(1f);
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private             ActiveSprintsTester      activeSprintsTester;
     private             String                   featureName;
     @Autowired
@@ -99,7 +102,6 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
         video.setDescription("Today I'm going to show you how to log work on your tasks using the Active Sprints view and the Worklog dialog. This is essential for tracking your progress and keeping the team informed about task status.");
     }
 
-
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
@@ -118,7 +120,7 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
 
         // Login as Grace Martin
 //        seleniumHandler.getAndCheck("http://localhost:" + "8080" + "/ui/" + LoginView.ROUTE);
-        productListViewTester.switchToProductListViewWithOidc("grace.martin@kassandra.org", "password", null, null, null);
+        aboutViewTester.login("grace.martin@kassandra.org", "password", null, null, null);
 
         // Navigate directly to Active Sprints view
         seleniumHandler.getAndCheck("http://localhost:" + productListViewTester.getPort() + "/ui/" + ActiveSprints.ROUTE);

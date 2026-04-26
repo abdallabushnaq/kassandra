@@ -40,6 +40,8 @@ import org.springframework.stereotype.Component;
 public class UserGroupListViewTester extends AbstractViewTester {
 
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private ProductListViewTester productListViewTester;
 
     /**
@@ -239,7 +241,7 @@ public class UserGroupListViewTester extends AbstractViewTester {
     public void switchToUserGroupListView(String testClassName, String testCaseName, String userName, String password) throws Exception {
         // Check if we need to log in
         if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            productListViewTester.switchToProductListViewWithOidc(userName, password, null, testClassName, testCaseName);
+            aboutViewTester.login(userName, password, null, testClassName, testCaseName);
         }
 
         // Open user menu and click "Manage User Groups"

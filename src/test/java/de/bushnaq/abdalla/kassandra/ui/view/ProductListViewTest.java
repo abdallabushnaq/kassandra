@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -71,6 +72,8 @@ import java.util.Optional;
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
+    @Autowired
+    AboutViewTester aboutViewTester;
     private       User                     admin1;
     private final String                   name    = "Product-2";
     private final String                   newName = "NewProduct-2";
@@ -108,13 +111,14 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
         Optional<UserDAO> byEmail = userRepository.findByEmail("christopher.paul@kassandra.org");//debugging code
 
 
-        productListViewTester.switchToProductListViewWithOidc(
+        aboutViewTester.login(
                 "christopher.paul@kassandra.org",
                 "password",
                 null,
                 testInfo.getTestClass().get().getSimpleName(),
                 generateTestCaseName(testInfo)
         );
+        productListViewTester.switchToProductListView();
     }
 
     /**

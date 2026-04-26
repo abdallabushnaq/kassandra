@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 @Slf4j
@@ -68,6 +69,23 @@ public class GlobalExceptionHandler {
         log.error("Unexpected error", e);
         ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.APPLICATION_JSON).body(error);
+    }
+
+    /**
+     * Handles requests for paths that have no static resource or controller mapped to them.
+     * Spring Framework 6+ throws {@link NoResourceFoundException} (instead of returning a 404 silently)
+     * when the static-resource handler finds no match.  This is a normal 404 situation — for example,
+     * a browser navigating to "/" which is not mapped to any view — and must NOT be logged as an
+     * unexpected server error.
+     *
+     * @param e the exception raised by {@code ResourceHttpRequestHandler}
+     * @return 404 NOT FOUND with a minimal JSON body
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.debug("No static resource found: {}", e.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND, e.getMessage(), e);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).contentType(MediaType.APPLICATION_JSON).body(error);
     }
 
     @ExceptionHandler(HttpStatusCodeException.class)

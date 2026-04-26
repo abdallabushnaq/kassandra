@@ -20,8 +20,6 @@ package de.bushnaq.abdalla.kassandra.ui.view.util;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
-import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
-import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
 import lombok.extern.log4j.Log4j2;
@@ -305,91 +303,12 @@ public class ProductListViewTester extends AbstractViewTester {
     }
 
     /**
-     * Navigates to the ProductListView using OIDC Authentication with Keycloak.
-     * <p>
-     * Opens the product list URL and handles the OIDC login redirect to Keycloak.
+     * Navigates to the ProductListView.
      *
-     * @param username the username to use for OIDC authentication
-     * @param password the password to use for OIDC authentication
      */
-    public void switchToProductListViewWithOidc(String username, String password, String screenshotFileName, String recordingFolderName, String testName) throws Exception {
-        try {
-            // Navigate to the application login page
-//            System.out.println("OIDC Login: Navigating to login page");
-            seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
-            seleniumHandler.startRecording(recordingFolderName, testName);
-//            System.out.println("OIDC Login: Current URL after navigation: " + seleniumHandler.getCurrentUrl());
-            // Check if the OIDC login button is present
-//            System.out.println("OIDC Login: Checking for OIDC login button with ID: " + LoginView.OIDC_LOGIN_BUTTON);
-            if (seleniumHandler.isElementPresent(By.id(LoginView.OIDC_LOGIN_BUTTON))) {
-//                System.out.println("OIDC Login: OIDC login button found, clicking it now");
-                if (screenshotFileName != null) {
-                    seleniumHandler.takeElementScreenShot(seleniumHandler.findElement(By.id(LoginView.LOGIN_VIEW)), LoginView.LOGIN_VIEW, screenshotFileName);
-                }
-
-                // Click with SeleniumHandler for mouse movement and humanization
-                seleniumHandler.click(LoginView.OIDC_LOGIN_BUTTON);
-//                System.out.println("OIDC Login: Clicked login button with mouse movement");
-
-                // Wait a moment and check the current URL
-//                try {
-//                    Thread.sleep(1000);
-//                } catch (InterruptedException e) {
-//                    Thread.currentThread().interrupt();
-//                }
-//                System.out.println("OIDC Login: URL after clicking button: " + seleniumHandler.getCurrentUrl());
-
-                // Wait longer for Keycloak redirect (up to 10 seconds)
-//                System.out.println("OIDC Login: Waiting for Keycloak login page");
-                seleniumHandler.waitForPageLoaded(10);
-//                System.out.println("OIDC Login: Current URL after waiting: " + seleniumHandler.getCurrentUrl());
-                // Check for username field
-//                System.out.println("OIDC Login: Looking for username field");
-                try {
-                    seleniumHandler.waitForElementToBeLocated("username");
-//                    System.out.println("OIDC Login: Username field found");
-
-                    // Fill in credentials with humanized typing and mouse movement
-//                    System.out.println("OIDC Login: Filling in credentials");
-                    WebElement usernameField = seleniumHandler.findElement(By.id("username"));
-                    WebElement passwordField = seleniumHandler.findElement(By.id("password"));
-
-                    // Type into Keycloak fields with humanization
-                    seleniumHandler.typeIntoElement(usernameField, username);
-                    seleniumHandler.typeIntoElement(passwordField, password);
-
-                    // Click login button with mouse movement
-//                    System.out.println("OIDC Login: Clicking Keycloak login button");
-                    WebElement loginButton = seleniumHandler.findElement(By.id("kc-login"));
-                    seleniumHandler.clickElement(loginButton);
-
-                    // Wait for redirect back
-//                    System.out.println("OIDC Login: Waiting for redirect back to application");
-                    seleniumHandler.waitForElementToBeClickable(AboutView.ABOUT_PAGE_TITLE);
-                    seleniumHandler.click(ProductListView.MENU_ITEM_ID);
-                    seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
-//                    System.out.println("OIDC Login: Successfully logged in with OIDC");
-                } catch (Exception e) {
-                    log.error("OIDC Login: Error during Keycloak login: " + e.getMessage());
-                    throw e;
-                }
-            } else {
-//                System.out.println("OIDC Login: OIDC login button NOT found, falling back to basic auth");
-//                // Fallback to basic authentication if OIDC button isn't present
-//                seleniumHandler.setLoginUser(username);
-//                seleniumHandler.setLoginPassword(password);
-//                seleniumHandler.loginSubmit();
-//                seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(
-//                        By.id(ProductListView.PRODUCT_LIST_PAGE_TITLE)));
-//                System.out.println("OIDC Login: Successfully logged in with basic auth");
-                throw new Exception("OIDC Login: Fatal error in login process: ");
-            }
-        } catch (Exception e) {
-            log.error("OIDC Login: Fatal error in login process: " + e.getMessage(), e);
-//            e.printStackTrace();
-//            seleniumHandler.takeScreenshot("fatal-login-error.png");
-            throw e;
-        }
+    public void switchToProductListView() throws Exception {
+        seleniumHandler.click(ProductListView.MENU_ITEM_ID);
+        seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
     }
 
     /**

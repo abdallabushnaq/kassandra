@@ -38,6 +38,8 @@ import org.springframework.stereotype.Component;
 public class UserProfileViewTester extends AbstractViewTester {
 
     @Autowired
+    AboutViewTester       aboutViewTester;
+    @Autowired
     ProductListViewTester productListViewTester;
 
     /**
@@ -103,7 +105,7 @@ public class UserProfileViewTester extends AbstractViewTester {
      * by checking for the presence of the page title element.
      */
     public void switchToUserProfileView(String recordingFolderName, String testName) throws Exception {
-        productListViewTester.switchToProductListViewWithOidc(
+        aboutViewTester.login(
                 "christopher.paul@kassandra.org",
                 "password",
                 null,
@@ -119,7 +121,10 @@ public class UserProfileViewTester extends AbstractViewTester {
 //            seleniumHandler.loginSubmit();
 //            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
 //        }
-        seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + UserProfileView.ROUTE);
+//        seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + UserProfileView.ROUTE);
+//        seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_VIEW_PROFILE);
         seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
     }
 

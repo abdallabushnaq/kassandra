@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.view.util;
 
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
+import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.OffDayDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
@@ -44,6 +45,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Lazy
 public class OffDayListViewTester extends AbstractViewTester {
 
+    // Helper methods
+    @Autowired
+    AboutViewTester aboutViewTester;
     @Autowired
     private ProductListViewTester productListViewTester;
 
@@ -291,8 +295,6 @@ public class OffDayListViewTester extends AbstractViewTester {
         return fullId.substring(OffDayListView.OFFDAY_GRID_START_DATE_PREFIX.length());
     }
 
-    // Helper methods
-
     /**
      * Navigates to the OffDayListView for a specific user.
      * <p>
@@ -306,7 +308,7 @@ public class OffDayListViewTester extends AbstractViewTester {
     public void switchToOffDayListView(String recordingFolderName, String testName, String username) throws Exception {
         //- Check if we need to log in
         if (!seleniumHandler.getCurrentUrl().contains("/ui/")) {
-            productListViewTester.switchToProductListViewWithOidc(
+            aboutViewTester.login(
                     "christopher.paul@kassandra.org",
                     "password",
                     null,
@@ -316,8 +318,10 @@ public class OffDayListViewTester extends AbstractViewTester {
         }
 
         // Navigate to the off day view for the specific user
-        String url = "http://localhost:" + port + "/ui/" + OffDayListView.ROUTE + (username != null ? "/" + username : "");
-        seleniumHandler.getAndCheck(url);
+//        String url = "http://localhost:" + port + "/ui/" + OffDayListView.ROUTE + (username != null ? "/" + username : "");
+//        seleniumHandler.getAndCheck(url);
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_OFF_DAYS);
         seleniumHandler.waitForElementToBeClickable(OffDayListView.OFFDAY_LIST_PAGE_TITLE);
     }
 

@@ -28,6 +28,7 @@ import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.UserWorkWeekListView;
 import de.bushnaq.abdalla.kassandra.ui.view.WorkWeekListView;
+import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.UserWorkWeekListViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.WorkWeekListViewTester;
@@ -99,6 +100,8 @@ public class Test_08_UserWorkWeekIntroductionVideo extends AbstractIntroductionV
      */
     private static final String                     WORK_WEEK_4X8_NAME        = "Mon-Thu 4x8";
     @Autowired
+    AboutViewTester aboutViewTester;
+    @Autowired
     private              ProductListViewTester      productListViewTester;
     @Autowired
     private              UserWorkWeekListViewTester userWorkWeekListViewTester;
@@ -143,7 +146,7 @@ public class Test_08_UserWorkWeekIntroductionVideo extends AbstractIntroductionV
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Today I'll show you how to manage and use work weeks in Kassandra, and how I switched to a 4-day working week starting June 1st.");
         seleniumHandler.hideOverlay();
 
-        productListViewTester.switchToProductListViewWithOidc(
+        aboutViewTester.login(
                 "christopher.paul@kassandra.org", "password",
                 "../kassandra.wiki/screenshots/login-view.png",
                 testInfo.getTestClass().get().getSimpleName(),

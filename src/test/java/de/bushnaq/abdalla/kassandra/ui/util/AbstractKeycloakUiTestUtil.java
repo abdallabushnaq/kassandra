@@ -181,9 +181,20 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
      *
      * @param port
      */
+    /**
+     * Update Keycloak client redirect URI to match the allocated random port.
+     * Also registers the post-logout redirect URI so that RP-initiated logout
+     * (OIDC end_session_endpoint with post_logout_redirect_uri) is accepted by
+     * Keycloak rather than rejected for an unregistered redirect URI.  Without
+     * this, Keycloak keeps its SSO session alive and the user is silently
+     * re-authenticated after a logout.
+     *
+     * @param port the random server port allocated for this test run
+     */
     private static void updateKeycloakClientRedirectUri(int port) {
-        String redirectUri = "http://localhost:" + port + "/login/oauth2/code/*";
-        String webOrigin   = "http://localhost:" + port;
+        String redirectUri         = "http://localhost:" + port + "/login/oauth2/code/*";
+        String webOrigin           = "http://localhost:" + port;
+        String postLogoutRedirects = "http://localhost:" + port + "/*";
 
         // Use Keycloak Admin API to update client
         var adminClient = org.keycloak.admin.client.KeycloakBuilder.builder()
@@ -201,6 +212,15 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
 
         client.setRedirectUris(List.of(redirectUri));
         client.setWebOrigins(List.of(webOrigin));
+        // Keycloak 18+ validates post_logout_redirect_uri against this list.
+        // Stored via the client attributes map (works with all Keycloak admin client versions).
+        // Registering a wildcard for localhost allows OidcClientInitiatedLogoutSuccessHandler
+        // to redirect back to /ui/login after Keycloak invalidates its session.
+        Map<String, String> attributes = client.getAttributes() != null
+                ? new HashMap<>(client.getAttributes())
+                : new HashMap<>();
+        attributes.put("post.logout.redirect.uris", postLogoutRedirects);
+        client.setAttributes(attributes);
 
         adminClient.realm("project-hub-realm")
                 .clients()
@@ -208,5 +228,6 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
                 .update(client);
 
         System.out.println("=== Updated Keycloak redirect URI to: " + redirectUri + " ===");
+        System.out.println("=== Updated Keycloak post-logout redirect URI to: " + postLogoutRedirects + " ===");
     }
 }

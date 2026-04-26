@@ -90,31 +90,33 @@ public class Test_01_KassandraIntroductionVideo extends AbstractIntroductionVide
     /**
      * Narrator attribute for emphatic, high-energy passages.
      */
-    public static final NarratorAttribute       INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
+    public static final NarratorAttribute INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
     /**
      * Narrator attribute for calm, conversational delivery.
      */
-    public static final NarratorAttribute       NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f);
-    private             Feature                 feature;
+    public static final NarratorAttribute NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f);
     @Autowired
-    private             FeatureListViewTester   featureListViewTester;
-    private             String                  featureName;
-    private             Product                 product;
+    AboutViewTester aboutViewTester;
+    private Feature                 feature;
     @Autowired
-    private             ProductListViewTester   productListViewTester;
-    private             String                  productName;
-    private             Sprint                  sprint;
+    private FeatureListViewTester   featureListViewTester;
+    private String                  featureName;
+    private Product                 product;
     @Autowired
-    private             SprintListViewTester    sprintListViewTester;
-    private             String                  sprintName;
+    private ProductListViewTester   productListViewTester;
+    private String                  productName;
+    private Sprint                  sprint;
     @Autowired
-    private             UserGroupListViewTester userGroupListViewTester;
+    private SprintListViewTester    sprintListViewTester;
+    private String                  sprintName;
     @Autowired
-    private             UserListViewTester      userListViewTester;
-    private             Version                 version;
+    private UserGroupListViewTester userGroupListViewTester;
     @Autowired
-    private             VersionListViewTester   versionListViewTester;
-    private             String                  versionName;
+    private UserListViewTester      userListViewTester;
+    private Version                 version;
+    @Autowired
+    private VersionListViewTester   versionListViewTester;
+    private String                  versionName;
 
     /**
      * Configures the shared {@link InstructionVideo} metadata for this video before any test runs.
@@ -172,7 +174,7 @@ public class Test_01_KassandraIntroductionVideo extends AbstractIntroductionVide
 
         paul.narrateAsync(NORMAL, "Hi everyone, Christopher Paul here from kassandra.org. Welcome to Kassandra — the open-source, self-hosted project management server. In the next few minutes I will take you on a tour of everything Kassandra has to offer.");
         seleniumHandler.hideOverlay();
-        productListViewTester.switchToProductListViewWithOidc(
+        aboutViewTester.login(
                 "christopher.paul@kassandra.org", "password",
                 "../kassandra.wiki/screenshots/login-view.png",
                 testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
@@ -187,6 +189,7 @@ public class Test_01_KassandraIntroductionVideo extends AbstractIntroductionVide
         //---------------------------------------------------------------------------------------
         logHeader("Products, Versions, Features, Sprints hierarchy");
         //---------------------------------------------------------------------------------------
+        productListViewTester.switchToProductListView();
         paul.narrate(NORMAL, "The first page you see after logging in is the Products list. A Product is whatever your team is building — a software service, a firmware release, a mobile application.").pause();
         paul.narrate(NORMAL, "Let us navigate into one of our products.");
         productListViewTester.selectProduct(productName);
