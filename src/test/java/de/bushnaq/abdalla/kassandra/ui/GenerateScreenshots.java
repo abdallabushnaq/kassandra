@@ -21,6 +21,7 @@ import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
+import de.bushnaq.abdalla.kassandra.ui.component.TaskCard;
 import de.bushnaq.abdalla.kassandra.ui.dialog.*;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
@@ -366,16 +367,21 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
             seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
             seleniumHandler.takeScreenShot(folder + "/backlog.png");
 
-            //-----------------
-            //ActiveSprints
-            //-----------------
-            activeSprintsTester.switchToActiveSprints();
-            seleniumHandler.wait(1000);
-            seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Zurich"});//enable
-            seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Oslo"});//enable
-            seleniumHandler.wait(1000);
-            seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
 
+        }
+
+        //-----------------
+        //ActiveSprints
+        //-----------------
+        activeSprintsTester.switchToActiveSprints();
+        seleniumHandler.wait(1000);
+        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Zurich"});//enable
+        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Oslo"});//enable
+        seleniumHandler.wait(1000);
+        seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
+        takeActiveSprintsDialogScreenshots(folder);
+
+        if (false) {
             //-----------------
             //UserListView
             //-----------------
@@ -410,23 +416,17 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
             userWorkWeekListViewTester.switchToUserWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
             seleniumHandler.takeScreenShot(folder + "/user-work-week-list-view.png");
             takeUserWorkWeekDialogScreenshots(folder);
-        }
 
-
-        //-----------------
-        //WorkWeekListView
-        //-----------------
-        workWeekListViewTester.switchToWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        seleniumHandler.takeScreenShot(folder + "/work-week-list-view.png");
-        takeWorkWeekDialogScreenshots(folder);
-
-        if (false) {
+            //-----------------
+            //WorkWeekListView
+            //-----------------
+            workWeekListViewTester.switchToWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+            seleniumHandler.takeScreenShot(folder + "/work-week-list-view.png");
+            takeWorkWeekDialogScreenshots(folder);
 
         }
         aboutViewTester.logout();
         //TODO add screenshot of
-        // WorklogDialog,
-        // TaskDialog,
         // ImagePromptDialog,
         // DependencyDialog
     }
@@ -455,6 +455,49 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         takeScreenshot(testInfo, "../kassandra.wiki/dark-screenshots/", ETheme.dark);
 
         seleniumHandler.waitUntilBrowserClosed(5000);
+    }
+
+    /**
+     * Takes screenshots of {@link WorklogDialog} and {@link TaskDialog} from the Active Sprints view.
+     * <p>
+     * Relies on sprint "Zurich" being present in the generated test data (it is always created with
+     * {@code Status.STARTED} thanks to {@code AbstractEntityGenerator.addSprint}).
+     *
+     * @param folder destination folder for the screenshot files
+     */
+    private void takeActiveSprintsDialogScreenshots(String folder) {
+        // Locate sprint "Zurich" (already visible on the board) and pick any leaf task.
+        List<Sprint> allSprints = sprintApi.getAll();
+        Sprint sprint = allSprints.stream()
+                .filter(s -> s.getName().equals("Zurich"))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Sprint 'Zurich' not found in generated data"));
+        List<Task> tasks = taskApi.getAll(sprint.getId());
+        Task leafTask = tasks.stream()
+                .filter(t -> !t.isMilestone() && t.getParentTaskId() != null)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No leaf task found in sprint 'Zurich'"));
+
+        // WorklogDialog — opened by clicking the task card body
+        String taskCardId = "task-card-" + leafTask.getId();
+        seleniumHandler.click(taskCardId);
+        seleniumHandler.waitForElementToBeClickable(WorklogDialog.TITLE_ID);
+        seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "1h");
+        seleniumHandler.takeElementScreenShot(
+                seleniumHandler.findDialogOverlayElement(WorklogDialog.WORKLOG_DIALOG),
+                WorklogDialog.WORKLOG_DIALOG,
+                folder + "/worklog-create-dialog.png");
+        activeSprintsTester.closeDialog(WorklogDialog.CANCEL_BUTTON);
+
+        // TaskDialog — opened by clicking the task card title link (stops card-click propagation)
+        String taskTitleId = TaskCard.TASK_CARD_TITLE_ID_PREFIX + leafTask.getKey();
+        seleniumHandler.click(taskTitleId);
+        seleniumHandler.waitForElementToBeClickable(TaskDialog.CANCEL_BUTTON);
+        seleniumHandler.takeElementScreenShot(
+                seleniumHandler.findDialogOverlayElement(TaskDialog.TASK_DIALOG),
+                TaskDialog.TASK_DIALOG,
+                folder + "/task-dialog.png");
+        activeSprintsTester.closeDialog(TaskDialog.CANCEL_BUTTON);
     }
 
     /**
