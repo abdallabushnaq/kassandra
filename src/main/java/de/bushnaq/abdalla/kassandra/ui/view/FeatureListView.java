@@ -24,6 +24,7 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
@@ -120,7 +121,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         this.stableDiffusionService = stableDiffusionService;
         this.sessionState           = chatPanelSessionState;
 
-        add(createSmartHeader("Features", FEATURE_LIST_PAGE_TITLE, VaadinIcon.LIGHTBULB,
+        add(createSmartHeader("Features", FEATURE_LIST_PAGE_TITLE, (Image) null,
                 CREATE_FEATURE_BUTTON_ID, () -> openFeatureDialog(null),
                 FEATURE_ROW_COUNTER, FEATURE_GLOBAL_FILTER, aiFilterService, mapper, "Feature"));
 
@@ -138,6 +139,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         versionSelector.addValueChangeListener(e -> {
             if (e.isFromClient()) {
                 selectedVersions = new HashSet<>(e.getValue());
+                updateHeaderForSelection();
                 updateUrlParameters();
                 applyFeatureFilter();
             }
@@ -477,6 +479,28 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         getDataProvider().refreshAll();
         getGrid().getDataProvider().refreshAll();
         getUI().ifPresent(ui -> ui.push());
+
+        // Sync header title to the current version selection
+        updateHeaderForSelection();
+    }
+
+    /**
+     * Updates the header title to reflect the current version-selector state.
+     * <ul>
+     *   <li>Exactly one version selected → show that version's name.</li>
+     *   <li>Zero or multiple versions selected → show "Features".</li>
+     * </ul>
+     * Versions have no custom avatars, so no icon is shown in either case.
+     */
+    private void updateHeaderForSelection() {
+        if (getHeaderPageTitle() == null) {
+            return;
+        }
+        if (selectedVersions.size() == 1) {
+            getHeaderPageTitle().setText(selectedVersions.iterator().next().getName());
+        } else {
+            getHeaderPageTitle().setText("Features");
+        }
     }
 
     /**

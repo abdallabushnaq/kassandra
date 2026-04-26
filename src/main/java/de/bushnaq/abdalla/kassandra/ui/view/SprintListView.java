@@ -24,6 +24,7 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -108,6 +109,12 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     private              UUID                         featureId;
     private final        Map<UUID, Feature>           featureMap                       = new HashMap<>();
     private final        MultiSelectComboBox<Feature> featureSelector;
+    /**
+     * Avatar {@link Image} shown in the page header next to the title.
+     * Displays the selected feature's avatar when exactly one feature is selected;
+     * hidden otherwise.
+     */
+    private              Image                        headerAvatar;
     private              boolean                      isRestoringFromUrl               = false;
     /**
      * Container for the SprintsOverviewChart SVG placed above the sprint list.
@@ -153,7 +160,17 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         this.stableDiffusionService = stableDiffusionService;
         this.sessionState           = chatPanelSessionState;
 
-        add(createSmartHeader("Sprints", SPRINT_LIST_PAGE_TITLE, VaadinIcon.EXIT,
+        headerAvatar = new Image();
+        headerAvatar.setWidth("32px");
+        headerAvatar.setHeight("32px");
+        headerAvatar.getStyle()
+                .set("border-radius", "var(--lumo-border-radius)")
+                .set("object-fit", "cover")
+                .set("display", "inline-block")
+                .set("margin-right", "12px");
+        headerAvatar.setVisible(false);
+
+        add(createSmartHeader("Sprints", SPRINT_LIST_PAGE_TITLE, headerAvatar,
                 CREATE_SPRINT_BUTTON, () -> openSprintDialog(null),
                 SPRINT_ROW_COUNTER, SPRINT_GLOBAL_FILTER, aiFilterService, mapper, "Sprint"));
 
@@ -176,6 +193,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         featureSelector.addValueChangeListener(e -> {
             if (e.isFromClient()) {
                 selectedFeatures = new HashSet<>(e.getValue());
+                updateHeaderForSelection();
                 updateUrlParameters();
                 applyFeatureFilter();
             }
@@ -764,8 +782,38 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         getGrid().getDataProvider().refreshAll();
         getUI().ifPresent(ui -> ui.push());
 
+        // Sync header title/avatar to the current feature selection
+        updateHeaderForSelection();
+
         // Generate or refresh the overview chart after the grid is updated
         generateOverviewChart();
+    }
+
+    /**
+     * Updates the header title text and avatar to reflect the current feature-selector state.
+     * <ul>
+     *   <li>Exactly one feature selected → show that feature's avatar (if available) and name.</li>
+     *   <li>Zero or multiple features selected → hide avatar and show "Sprints".</li>
+     * </ul>
+     */
+    private void updateHeaderForSelection() {
+        if (getHeaderPageTitle() == null || headerAvatar == null) {
+            return;
+        }
+        if (selectedFeatures.size() == 1) {
+            Feature single = selectedFeatures.iterator().next();
+            getHeaderPageTitle().setText(single.getName());
+            if (single.getLightAvatarHash() != null && !single.getLightAvatarHash().isEmpty()) {
+                boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                headerAvatar.setSrc(single.getAvatarUrl(isDark));
+                headerAvatar.setVisible(true);
+            } else {
+                headerAvatar.setVisible(false);
+            }
+        } else {
+            getHeaderPageTitle().setText("Sprints");
+            headerAvatar.setVisible(false);
+        }
     }
 
     /**
