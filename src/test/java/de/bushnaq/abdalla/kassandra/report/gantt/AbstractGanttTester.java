@@ -92,10 +92,10 @@ public class AbstractGanttTester extends DTOAsserts {
     private void evaluate(TestInfo testInfo, String testFolder, String referenceFileName, String fileName) throws Exception {
 
         MPXJReader referenceProject = new MPXJReader(testFolder, true);
-        Sprint     referenceSprint  = referenceProject.load(Path.of(referenceFileName));
+        Sprint     referenceSprint  = referenceProject.load(Path.of(referenceFileName), true);
 
         MPXJReader project = new MPXJReader(testFolder, false);
-        Sprint     sprint  = project.load(Path.of(fileName));
+        Sprint     sprint  = project.load(Path.of(fileName), true);
         project.levelResources(testInfo, sprint, null);
         project.testTheme = testTheme;
 

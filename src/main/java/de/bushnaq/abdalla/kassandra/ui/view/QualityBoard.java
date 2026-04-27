@@ -25,13 +25,12 @@ import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -109,7 +108,8 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     /**
      * Container for the Gantt chart SVG.
      */
-    private             Div                     ganttBurndownChartContainer;    /**
+    private             Div                     ganttBurndownChartContainer;
+    /**
      * In-flight async Gantt generation; cancelled before a new run starts.
      */
     private             CompletableFuture<Void> ganttGenerationFuture;
@@ -134,14 +134,14 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     private             UUID                    productId;
     private             Sprint                  sprint;
     private final       SprintApi               sprintApi;
+    @Autowired
+    private             SprintExportService     sprintExportService;
     private             UUID                    sprintId;
     /**
      * Sprint selector ComboBox — lets the user switch sprints without leaving the page.
      */
     private final       ComboBox<Sprint>        sprintSelector;
     private             SprintStatistics        sprintStatistics;
-    @Autowired
-    private             SprintExportService     sprintExportService;
     private final       TaskApi                 taskApi;
     /**
      * Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}.
@@ -268,61 +268,6 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         logTime();
     }
 
-    private Div createFieldDisplay(String label, String value, String status) {
-        Div container = new Div();
-        container.getStyle()
-                .set("display", "flex")
-                .set("flex-direction", "column")
-                .set("padding", "var(--lumo-space-s)")
-                .set("background", "var(--lumo-base-color)");
-
-        // Create a wrapper div for the value part that doesn't stretch
-        Div valueWrapper = new Div();
-        valueWrapper.getStyle()
-                .set("display", "flex") // Use flex to allow inner content to determine size
-                .set("width", "auto");  // Don't stretch to full width
-
-        // Value part (top)
-        Span valueSpan = new Span(value);
-        if (label != null) {
-            try {
-                valueSpan.setTitle(htmlUtil.getHtmlTipSnippet(label));
-            } catch (Exception e) {
-                logger.warn(e.getMessage(), e);
-            }
-        }
-        // Apply status-based styling if status is provided
-        if (status != null) {
-            valueSpan.setClassName("cell-text " + status.toLowerCase()); // Add a class for potential CSS styling
-        } else {
-            valueSpan.setClassName("cell-text");
-        }
-        valueWrapper.add(valueSpan);
-        // Name part with HTML support for special characters
-        Span nameSpan = new Span();
-        nameSpan.getElement().setProperty("innerHTML", label);
-        nameSpan.setClassName("cell-name");
-        container.add(valueWrapper, nameSpan);
-        return container;
-    }
-
-    // Overload for backward compatibility
-    private Div createFieldDisplay(String label, String value) {
-        return createFieldDisplay(label, value, null);
-    }
-
-    /**
-     * Creates the Gantt/burndown chart container and the download toolbar that appears below it.
-     * The toolbar contains a JSON export anchor and an MSPDI XML export anchor; both use
-     * {@link StreamResource} so the file is generated lazily on the first browser download
-     * request rather than up front.
-     */
-    private void createGanttBurndownChart() {
-        ganttBurndownChartContainer = new Div();
-        add(ganttBurndownChartContainer);
-        add(createDownloadToolbar());
-    }
-
     /**
      * Builds the download toolbar placed below the Gantt/burndown chart.
      * Contains a "Download JSON" and a "Download XML" anchor button, each backed by a
@@ -377,6 +322,61 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
                 .set("padding-left", "var(--lumo-space-xs)");
         toolbar.setSpacing(true);
         return toolbar;
+    }
+
+    private Div createFieldDisplay(String label, String value, String status) {
+        Div container = new Div();
+        container.getStyle()
+                .set("display", "flex")
+                .set("flex-direction", "column")
+                .set("padding", "var(--lumo-space-s)")
+                .set("background", "var(--lumo-base-color)");
+
+        // Create a wrapper div for the value part that doesn't stretch
+        Div valueWrapper = new Div();
+        valueWrapper.getStyle()
+                .set("display", "flex") // Use flex to allow inner content to determine size
+                .set("width", "auto");  // Don't stretch to full width
+
+        // Value part (top)
+        Span valueSpan = new Span(value);
+        if (label != null) {
+            try {
+                valueSpan.setTitle(htmlUtil.getHtmlTipSnippet(label));
+            } catch (Exception e) {
+                logger.warn(e.getMessage(), e);
+            }
+        }
+        // Apply status-based styling if status is provided
+        if (status != null) {
+            valueSpan.setClassName("cell-text " + status.toLowerCase()); // Add a class for potential CSS styling
+        } else {
+            valueSpan.setClassName("cell-text");
+        }
+        valueWrapper.add(valueSpan);
+        // Name part with HTML support for special characters
+        Span nameSpan = new Span();
+        nameSpan.getElement().setProperty("innerHTML", label);
+        nameSpan.setClassName("cell-name");
+        container.add(valueWrapper, nameSpan);
+        return container;
+    }
+
+    // Overload for backward compatibility
+    private Div createFieldDisplay(String label, String value) {
+        return createFieldDisplay(label, value, null);
+    }
+
+    /**
+     * Creates the Gantt/burndown chart container and the download toolbar that appears below it.
+     * The toolbar contains a JSON export anchor and an MSPDI XML export anchor; both use
+     * {@link StreamResource} so the file is generated lazily on the first browser download
+     * request rather than up front.
+     */
+    private void createGanttBurndownChart() {
+        ganttBurndownChartContainer = new Div();
+        add(ganttBurndownChartContainer);
+        add(createDownloadToolbar());
     }
 
     private void createSprintDetailsLayout() {

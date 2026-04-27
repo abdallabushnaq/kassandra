@@ -969,7 +969,7 @@ public class GanttUtil {
     }
 
     private boolean useSameAssignee(Task task1, Task task2) {
-        return task1.getResourceId() != null && task1.getResourceId() == task2.getResourceId();
+        return task1.getResourceId() != null && task1.getResourceId().equals(task2.getResourceId());
     }
 
 }

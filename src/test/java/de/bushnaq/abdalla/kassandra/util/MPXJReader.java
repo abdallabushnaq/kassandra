@@ -52,14 +52,14 @@ public class MPXJReader extends GanttGenerator {
     }
 
 
-    public static boolean isValidTask(net.sf.mpxj.Task task) {
+    public static boolean isValidTask(net.sf.mpxj.Task task, boolean ignoreId1) {
         //ignore task with ID 0
         //ignore tasks that have no name
         //ignore tasks that do not have a start date or finish date
-        return task.getID() != 0 && task.getUniqueID() != null && task.getName() != null && task.getStart() != null && task.getFinish() != null && (task.getID() != 1);
+        return task.getID() != 0 && task.getUniqueID() != null && task.getName() != null && task.getStart() != null && task.getFinish() != null && ((task.getID() != 1) || !ignoreId1);
     }
 
-    public Sprint load(Path mppFileName) throws Exception {
+    public Sprint load(Path mppFileName, boolean ignoreId1) throws Exception {
         Sprint sprint = addSprint();
         File   file   = new File(String.valueOf(mppFileName.toAbsolutePath()));
         try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
@@ -69,7 +69,7 @@ public class MPXJReader extends GanttGenerator {
             ParameterOptions.setNow(DateUtil.localDateTimeToOffsetDateTime(date));
             //populate mpxjTaskMap and resourceMap
             for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
-                if (isValidTask(mpxjTask)) {
+                if (isValidTask(mpxjTask, ignoreId1)) {
                     mpxjTaskMap.put(mpxjTask.getName(), mpxjTask);//store tasks
                     if (!mpxjTask.getResourceAssignments().isEmpty()) {
                         ResourceAssignment resourceAssignment = mpxjTask.getResourceAssignments().get(0);
@@ -101,7 +101,7 @@ public class MPXJReader extends GanttGenerator {
             //populate taskMap
             int anonymousUserIndex = 1;
             for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
-                if (isValidTask(mpxjTask)) {
+                if (isValidTask(mpxjTask, ignoreId1)) {
                     String             name     = mpxjTask.getName();
                     LocalDateTime      start    = null;
                     LocalDateTime      finish   = null;
@@ -173,7 +173,7 @@ public class MPXJReader extends GanttGenerator {
             }
             //add parents and relations
             for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
-                if (isValidTask(mpxjTask)) {
+                if (isValidTask(mpxjTask, ignoreId1)) {
                     String                                name = mpxjTask.getName();
                     de.bushnaq.abdalla.kassandra.dto.Task task = taskMap.get(name);
                     //set parent
