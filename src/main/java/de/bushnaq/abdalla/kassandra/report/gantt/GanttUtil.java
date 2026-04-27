@@ -696,7 +696,7 @@ public class GanttUtil {
         return count;
     }
 
-    private void removeHiddenDependencies(Sprint sprint) {
+    void removeHiddenDependencies(Sprint sprint) {
         for (Task task : sprint.getTasks()) {
             // Remove all predecessors that are not visible
             task.getPredecessors().removeIf(relation -> !relation.isVisible());

@@ -18,9 +18,15 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -34,14 +40,19 @@ import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart;
+import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
+import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
+import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.report.html.util.HtmlUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
+import de.bushnaq.abdalla.kassandra.service.SprintExportService;
 import de.bushnaq.abdalla.kassandra.ui.HtmlColor;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
+import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import de.bushnaq.abdalla.util.date.ReportUtil;
 import jakarta.annotation.security.PermitAll;
@@ -53,6 +64,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.io.ByteArrayInputStream;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -97,8 +109,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     /**
      * Container for the Gantt chart SVG.
      */
-    private             Div                     ganttChartContainer;
-    /**
+    private             Div                     ganttBurndownChartContainer;    /**
      * In-flight async Gantt generation; cancelled before a new run starts.
      */
     private             CompletableFuture<Void> ganttGenerationFuture;
@@ -129,6 +140,8 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
      */
     private final       ComboBox<Sprint>        sprintSelector;
     private             SprintStatistics        sprintStatistics;
+    @Autowired
+    private             SprintExportService     sprintExportService;
     private final       TaskApi                 taskApi;
     /**
      * Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}.
@@ -298,10 +311,72 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         return createFieldDisplay(label, value, null);
     }
 
-    private void createGanttChart() {
-        ganttChartContainer = new Div();
-        add(ganttChartContainer);
-//        generateGanttBurndownChartAsync();
+    /**
+     * Creates the Gantt/burndown chart container and the download toolbar that appears below it.
+     * The toolbar contains a JSON export anchor and an MSPDI XML export anchor; both use
+     * {@link StreamResource} so the file is generated lazily on the first browser download
+     * request rather than up front.
+     */
+    private void createGanttBurndownChart() {
+        ganttBurndownChartContainer = new Div();
+        add(ganttBurndownChartContainer);
+        add(createDownloadToolbar());
+    }
+
+    /**
+     * Builds the download toolbar placed below the Gantt/burndown chart.
+     * Contains a "Download JSON" and a "Download XML" anchor button, each backed by a
+     * {@link StreamResource} that generates the export bytes on demand.
+     *
+     * @return a {@link HorizontalLayout} containing the two download anchors
+     */
+    private HorizontalLayout createDownloadToolbar() {
+        Sprint sprintSnapshot = sprint; // capture before async use
+
+        // JSON anchor
+        StreamResource jsonResource = new StreamResource(
+                sprintSnapshot.getName() + ".json",
+                () -> {
+                    try {
+                        return new ByteArrayInputStream(sprintExportService.exportToJson(sprintSnapshot));
+                    } catch (Exception e) {
+                        log.error("Error generating JSON export for sprint {}", sprintSnapshot.getName(), e);
+                        return new ByteArrayInputStream(new byte[0]);
+                    }
+                });
+        jsonResource.setContentType("application/json");
+        Anchor jsonAnchor = new Anchor(jsonResource, "");
+        jsonAnchor.getElement().setAttribute("download", true);
+        Button jsonButton = new Button("JSON", new Icon(VaadinIcon.DOWNLOAD));
+        jsonButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        jsonButton.getElement().setAttribute("title", "Download sprint data as JSON");
+        jsonAnchor.add(jsonButton);
+
+        // MSPDI XML anchor
+        StreamResource xmlResource = new StreamResource(
+                sprintSnapshot.getName() + ".xml",
+                () -> {
+                    try {
+                        return new ByteArrayInputStream(sprintExportService.exportToMspdiXml(sprintSnapshot));
+                    } catch (Exception e) {
+                        log.error("Error generating XML export for sprint {}", sprintSnapshot.getName(), e);
+                        return new ByteArrayInputStream(new byte[0]);
+                    }
+                });
+        xmlResource.setContentType("application/xml");
+        Anchor xmlAnchor = new Anchor(xmlResource, "");
+        xmlAnchor.getElement().setAttribute("download", true);
+        Button xmlButton = new Button("XML", new Icon(VaadinIcon.DOWNLOAD));
+        xmlButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        xmlButton.getElement().setAttribute("title", "Download sprint data as Microsoft Project XML (MSPDI)");
+        xmlAnchor.add(xmlButton);
+
+        HorizontalLayout toolbar = new HorizontalLayout(jsonAnchor, xmlAnchor);
+        toolbar.getStyle()
+                .set("margin-top", "var(--lumo-space-s)")
+                .set("padding-left", "var(--lumo-space-xs)");
+        toolbar.setSpacing(true);
+        return toolbar;
     }
 
     private void createSprintDetailsLayout() {
@@ -389,7 +464,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     }
 
     /**
-     * Generates the Gantt chart SVG asynchronously, then updates {@link #ganttChartContainer}
+     * Generates the Gantt chart SVG asynchronously, then updates {@link #ganttBurndownChartContainer}
      * on the UI thread via {@link UI#access(com.vaadin.flow.server.Command)}.
      * Cancels any in-flight previous generation before starting a new one.
      */
@@ -400,11 +475,12 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         if (ganttGenerationFuture != null && !ganttGenerationFuture.isDone()) {
             ganttGenerationFuture.cancel(true);
         }
-        ganttChartContainer.removeAll();
+        ganttBurndownChartContainer.removeAll();
 
         UI             ui             = UI.getCurrent();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Sprint         sprintSnapshot = sprint;
+        log.info("created sprint snapshot for chart generation");
 
         ganttGenerationFuture = CompletableFuture.supplyAsync(() -> {
             SecurityContext ctx = SecurityContextHolder.createEmptyContext();
@@ -423,18 +499,18 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             Svg                svg   = (Svg) result[0];
             GanttBurndownChart chart = (GanttBurndownChart) result[1];
             ui.access(() -> {
-                ganttChartContainer.removeAll();
+                ganttBurndownChartContainer.removeAll();
                 svg.getStyle().set("margin-top", "var(--lumo-space-m)");
                 svg.setClassName("qtip-shadow");
-                ganttChartContainer.setWidth(chart.getChartWidth() + "px");
-                ganttChartContainer.add(svg);
+                ganttBurndownChartContainer.setWidth(chart.getChartWidth() + "px");
+                ganttBurndownChartContainer.add(svg);
                 ui.push();
             });
         }).exceptionally(ex -> {
             logger.error("Error generating Gantt chart", ex);
             ui.access(() -> {
-                ganttChartContainer.removeAll();
-                ganttChartContainer.add(new Paragraph("Error generating gantt chart: " + ex.getMessage()));
+                ganttBurndownChartContainer.removeAll();
+                ganttBurndownChartContainer.add(new Paragraph("Error generating gantt chart: " + ex.getMessage()));
                 ui.push();
             });
             return null;
@@ -524,6 +600,17 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             // Handle exception appropriately
         }
         ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
+        {
+            try {
+                RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprint.getName(), ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
+                GanttChart chart = new GanttChart("/", dao);
+                chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), sprint.getName(), "references/debug");
+            } catch (Exception e) {
+                logger.error("Error generating gantt chart", e);
+
+            }
+
+        }
 
     }
 
@@ -686,7 +773,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             add(messageContainer);
         } else {
             createSprintDetailsLayout();
-            createGanttChart();
+            createGanttBurndownChart();
             refreshCharts();
         }
     }

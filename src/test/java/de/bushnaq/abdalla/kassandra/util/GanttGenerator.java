@@ -57,30 +57,6 @@ public class GanttGenerator extends MPXJGenerator {
      */
     public          ETheme testTheme = ETheme.dark;
 
-//    private RenderDao createRenderDao(Context context, Sprint sprint, String column, LocalDateTime now, int chartWidth, int chartHeight, String link) {
-//        RenderDao dao = new RenderDao();
-//        dao.context            = context;
-//        dao.column             = column;
-//        dao.sprintName         = column + "-burn-down";
-//        dao.link               = link;
-//        dao.start              = sprint.getStart();
-//        dao.now                = now;
-//        dao.end                = sprint.getEnd();
-//        dao.release            = sprint.getReleaseDate();
-//        dao.chartWidth         = chartWidth;
-//        dao.chartHeight        = chartHeight;
-//        dao.sprint             = sprint;
-//        dao.estimatedBestWork  = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
-//        dao.estimatedWorstWork = null;
-//        dao.maxWorked          = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
-//        dao.remaining          = sprint.getRemaining();
-//        dao.worklog            = sprint.getWorklogs();
-//        dao.worklogRemaining   = sprint.getWorklogRemaining();
-//        dao.cssClass           = "scheduleWithMargin";
-//        dao.kassandraTheme     = context.parameters.getActiveGraphicsTheme();
-//        return dao;
-//    }
-
     public void generateBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
         Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         sprint.initialize();

@@ -374,8 +374,6 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                 taskApi.updateBatch(sprint.getTasks(), sprint.getId());
                 sprintApi.update(sprint);
             }
-//        printTables();
-//            initializeInstances();
         }
         ParameterOptions.setNow(randomCase.getNow());
         generateRandomSickDays();
@@ -522,21 +520,8 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                                             w = task.getRemainingEstimate();
                                         }
                                         addWorklogToBuffer(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
-//                                        task.addTimeSpent(w);
-//                                        task.removeRemainingEstimate(w);
-//                                        task.recalculate();
                                         task.calculateStatus();
                                     }
-//                                    else {
-//                                        task.setTaskStatus(TaskStatus.DONE);
-//                                        if (task.getParentTask() != null && task.getParentTask().isAllChildTasksDone()) {
-//                                            //set story status to IN_PROGRESS
-//                                            task.getParentTask().setTaskStatus(TaskStatus.DONE);
-//                                            if (sprint.isAllChildTasksDone()) {
-//                                                sprint.setStatus(Status.CLOSED);
-//                                            }
-//                                        }
-//                                    }
                                 }
                             }
                         }

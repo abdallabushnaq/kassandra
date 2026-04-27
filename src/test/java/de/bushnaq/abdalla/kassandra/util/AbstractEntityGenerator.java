@@ -20,7 +20,6 @@ package de.bushnaq.abdalla.kassandra.util;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -77,8 +76,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     @Autowired
     protected           JsonMapper             jsonMapper;
     protected           LocationApi            locationApi;
-    //    @Autowired
-//    JsonMapper mapper;
     protected           NameGenerator          nameGenerator             = new NameGenerator();
     protected           OffDayApi              offDayApi;
     private final       List<OffDay>           offDayBuffer              = new ArrayList<>();
@@ -91,8 +88,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     protected final     Random                 random                    = new Random();
     protected           SprintApi              sprintApi;
     private static      int                    sprintIndex               = 0;
-    @Autowired
-    protected           StableDiffusionConfig  stableDiffusionConfig;
+    //    @Autowired
+//    protected           StableDiffusionConfig  stableDiffusionConfig;
     @Autowired
     protected           StableDiffusionService stableDiffusionService;
     protected           TaskApi                taskApi;
@@ -1087,6 +1084,8 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
                     .findFirst()
                     .ifPresent(expectedSprints::add);
         }
+
+        // add default product, version, feature and backlog sprint
         Product defaultProduct = expectedProducts.stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.DEFAULT_NAME)).findFirst().get();
         Version defaultVersion = expectedVersions.stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.DEFAULT_NAME)).findFirst().get();
         defaultProduct.getVersions().add(defaultVersion);
@@ -1097,8 +1096,6 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         Sprint defaultSprint = expectedSprints.stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME)).findFirst().get();
         defaultFeature.getSprints().add(defaultSprint);
         defaultSprint.setFeature(defaultFeature);
-
-        //TODO we also need to add the default version to the default product and the default feature to the default version.
 
         expectedProducts.sort(Comparator.comparing(Product::getName));
         expectedFeatures.sort(Comparator.comparing(Feature::getName));

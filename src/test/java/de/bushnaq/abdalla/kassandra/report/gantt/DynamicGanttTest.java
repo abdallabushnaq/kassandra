@@ -58,7 +58,7 @@ public class DynamicGanttTest extends AbstractGanttTester {
     }
 
     @Test
-    public void test(TestInfo testInfo) throws Exception {
+    public void gantt_01(TestInfo testInfo) throws Exception {
         GanttGenerator g         = new GanttGenerator();
         User           resource1 = g.addUser("resource1", 0.3f);
         User           resource2 = g.addUser("resource2", 0.7f);
@@ -77,6 +77,33 @@ public class DynamicGanttTest extends AbstractGanttTester {
         g.createDeliveryBufferTask(sprint, Duration.ZERO);
         g.levelResources(testInfo, sprint, null);
 
+        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
+
+        assertEquals(task1.getStart(), LocalDateTime.parse("2025-05-05T08:00:00"));
+    }
+
+    @Test
+    public void gantt_02(TestInfo testInfo) throws Exception {
+
+        GanttGenerator g         = new GanttGenerator();
+        User           resource1 = g.addUser("resource1", 0.3f);
+        Sprint         sprint    = g.addSprint();
+
+        Task task1 = g.addParentTask("[1] Parent Task", sprint, null, null);
+        Task task2 = g.addTask("[2] Child Task ", "5d", null, resource1, sprint, task1, null);
+        Task task3 = g.addTask("[3] Child Task ", "5d", null, resource1, sprint, task1, null);
+
+        g.initializeSprint(sprint);
+        g.levelResources(testInfo, sprint, null);
+
+        Task startMilestone = g.addTask(sprint, null, "Start", LocalDateTime.parse("2025-05-05T08:00:00"), null, Duration.ZERO, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+        task1.getPredecessors().add(new Relation(startMilestone.getId(), true));
+
+        g.createDeliveryBufferTask(sprint, Duration.ZERO);
+        g.levelResources(testInfo, sprint, null);
+
+        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
+        g.testTheme = ETheme.light;
         g.generateGanttChart(testInfo, sprint.getId(), testFolder);
 
         assertEquals(task1.getStart(), LocalDateTime.parse("2025-05-05T08:00:00"));

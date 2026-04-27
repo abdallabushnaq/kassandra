@@ -30,6 +30,7 @@
 14. User shows id instead of key
 15. user colors are not predictable in the generation.
 16. gantt task tooltip not accessible on the pprogress number.
+17. a lot of Gantt charts are not actually resource leveled. Example Demo, testCaseIndex=1, sprint=Paris,
 
 # Failing Tests
 
