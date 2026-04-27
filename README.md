@@ -40,21 +40,21 @@ tbd
 9. ✅ worklog crud
 10. ✅ User availability time-frames
 11. ✅ User location time-frames
-12. ❌ User work week time-frames
+12. ✅ User work week time-frames
 13. ❌ Project work week time-frames
 14. ✅ National Holidays
 15. ✅ vacations
 16. ✅ sick leaves
 17. ✅ Authorization, access control using user groups on project level.
 18. ✅ Gantt chart
-19. ❌ Automatic Gantt buffer calculation
+19. ✅ Automatic Gantt buffer calculation
 20. ✅ Burn down chart
 21. ❌ Close project Release Date.
 22. ✅ Dialog should set curser to edit box
 23. ✅ Dialog confirmation button should react to return
 24. ✅ add dark avatar
-25. ❌ show product, versions, features, in backlog view
-26. ❌ show product, versions, features, in quality view
+25. ❌ show product, versions, features, in backlog
+26. ❌ show product, versions, features, in quality-board
 27. ✅ show Versions, Features, Sprints pages in menu
 28. ✅ add about box.
 29. ✅ optimaze AbstractEntityGenrator avatar generation code.
@@ -110,11 +110,19 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 
 # Screenshots
 
-![gantt-03](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/gantt/gantt_03-3-gant-chart.svg)
+![QualityBoard](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/quality-board.png)
 
-![burn-down-03](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/burn-down/gantt_03-3-burn-down.svg)
+![User Off-Days](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/offday-list-view.png)
 
-![Christopher Paul.de.nw](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/calendar/Christopher%20Paul.de.nw.svg)
+![Generate AI Image](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/image-prompt-dialog.png)
+
+![Dependency Dialog](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/dependency-dialog.png)
+
+![Task Dialog](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/task-dialog.png)
+
+![Log Work Dialog](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/worklog-create-dialog.png)
+
+![Edit Work Week Dialog](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/work-week-edit-dialog.png)
 
 # Design Philosophy
 

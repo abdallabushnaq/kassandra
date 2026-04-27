@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -24,14 +25,18 @@ import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -67,7 +72,15 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private final       Map<UUID, Feature>          featureMap                = new HashMap<>();
     private             ComboBox<GroupingMode>      groupingModeSelector;
     private             boolean                     hasUrlParameters          = false;
+    /**
+     * Avatar image shown in the header when exactly one sprint is selected.
+     */
+    private             Image                       headerAvatar;
     private             boolean                     isRestoringFromUrl        = false;
+    /**
+     * Page title component updated to reflect the current sprint selection.
+     */
+    private             H2                          pageTitle;
     private             String                      savedGroupByValue         = null;
     private             String                      savedSprintIds            = null;
     private             String                      savedUserIds              = null;
@@ -105,13 +118,13 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             contentLayout = new VerticalLayout();
             contentLayout.setWidthFull();
             contentLayout.setPadding(false);
-            contentLayout.setSpacing(true);
+            contentLayout.setSpacing(false);
             contentLayout.addClassName(LumoUtility.Gap.LARGE);
 
             add(headerLayout, contentLayout);
 
-            this.getStyle().set("padding-left", "var(--lumo-space-s)");
-            this.getStyle().set("padding-right", "var(--lumo-space-s)");
+            this.getStyle().set("padding-left", "var(--lumo-space-xs)");
+            this.getStyle().set("padding-right", "var(--lumo-space-xs)");
 
         } catch (Exception e) {
             log.error("Error initializing ActiveSprints", e);
@@ -246,9 +259,24 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private HorizontalLayout createHeader() {
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
-        header.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.END);
-        header.getStyle().set("padding", "var(--lumo-space-m)");
+        header.setAlignItems(FlexComponent.Alignment.END);
+        header.getStyle().set("padding", "var(--lumo-space-xs)");
         header.setSpacing(true);
+        header.setId("page-header");
+
+        // Title and avatar at the left — updated dynamically by updateHeaderForSelection()
+        pageTitle = new H2("Active Sprints");
+        pageTitle.addClassNames(LumoUtility.Margin.NONE);
+
+        headerAvatar = new Image();
+        headerAvatar.setWidth("32px");
+        headerAvatar.setHeight("32px");
+        headerAvatar.getStyle()
+                .set("border-radius", "var(--lumo-border-radius)")
+                .set("object-fit", "cover")
+                .set("display", "inline-block")
+                .set("margin-right", "12px");
+        headerAvatar.setVisible(false);
 
         // 1. Search input box with magnifying glass icon and label for alignment
         TextField searchField = new TextField();
@@ -311,6 +339,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 selectedSprints = new HashSet<>(e.getValue());
                 updateUrlParameters();
                 applyFilters();
+                updateHeaderForSelection();
             }
         });
 
@@ -348,7 +377,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             applyFilters();
         });
 
-        header.add(searchField, userSelector, sprintSelector, groupingModeSelector, clearButton);
+        header.add(headerAvatar, pageTitle, searchField, userSelector, sprintSelector, groupingModeSelector, clearButton);
 
         return header;
     }
@@ -530,6 +559,8 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 applyFilters();
             }
 
+            updateHeaderForSelection();
+
         } catch (Exception e) {
             log.error("Error loading active sprint data", e);
             contentLayout.removeAll();
@@ -539,6 +570,33 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                     .set("padding", "var(--lumo-space-l)")
                     .set("color", "var(--lumo-error-text-color)");
             contentLayout.add(errorMessage);
+        }
+    }
+
+    /**
+     * Updates the header title text and avatar to reflect the current sprint-selector state.
+     * <ul>
+     *   <li>Exactly one sprint selected → show that sprint's avatar and name.</li>
+     *   <li>Zero or multiple sprints selected → hide avatar and show "Active Sprints".</li>
+     * </ul>
+     */
+    private void updateHeaderForSelection() {
+        if (pageTitle == null || headerAvatar == null) {
+            return;
+        }
+        if (selectedSprints.size() == 1) {
+            Sprint single = selectedSprints.iterator().next();
+            pageTitle.setText(single.getName());
+            if (single.getLightAvatarHash() != null && !single.getLightAvatarHash().isEmpty()) {
+                boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                headerAvatar.setSrc(single.getAvatarUrl(isDark));
+                headerAvatar.setVisible(true);
+            } else {
+                headerAvatar.setVisible(false);
+            }
+        } else {
+            pageTitle.setText("Active Sprints");
+            headerAvatar.setVisible(false);
         }
     }
 

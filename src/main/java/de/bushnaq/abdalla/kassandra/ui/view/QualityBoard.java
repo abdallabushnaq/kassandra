@@ -27,6 +27,7 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
 import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
@@ -105,7 +106,11 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     /**
      * Persistent header layout (sprint selector + page title) — survives content reloads.
      */
-    private final       HorizontalLayout        headerLayout;
+    private final       HorizontalLayout        header;
+    /**
+     * Avatar image shown next to the page title — updated to reflect the selected sprint.
+     */
+    private final       Image                   headerAvatar;
     private final       HtmlUtil                htmlUtil                = new HtmlUtil();
     /**
      * Guard flag: prevents {@link #updateUrlParameters()} from firing during programmatic selector restores.
@@ -147,14 +152,22 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         this.now        = ParameterOptions.getLocalNow();
 
         pageTitle = new H2("Sprint Quality Board");
-        pageTitle.addClassNames(
-                LumoUtility.Margin.Top.MEDIUM,
-                LumoUtility.Margin.Bottom.SMALL
-        );
+        pageTitle.addClassNames(LumoUtility.Margin.NONE);
+
+        headerAvatar = new Image();
+        headerAvatar.setWidth("32px");
+        headerAvatar.setHeight("32px");
+        headerAvatar.getStyle()
+                .set("border-radius", "var(--lumo-border-radius)")
+                .set("object-fit", "cover")
+                .set("display", "inline-block")
+                .set("margin-right", "12px");
+        headerAvatar.setVisible(false);
+
         setSizeFull();
         addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
-        this.getStyle().set("padding-left", "var(--lumo-space-m)");
-        this.getStyle().set("padding-right", "var(--lumo-space-m)");
+        this.getStyle().set("padding-left", "var(--lumo-space-xs)");
+        this.getStyle().set("padding-right", "var(--lumo-space-xs)");
 
         // Sprint selector — persists across content reloads triggered by sprint switching
         sprintSelector = new ComboBox<>();
@@ -171,11 +184,14 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             }
         });
 
-        // Persistent header: page title on the left, sprint selector next to it
-        headerLayout = new HorizontalLayout(pageTitle, sprintSelector);
-        headerLayout.setAlignItems(FlexComponent.Alignment.BASELINE);
-        headerLayout.setWidthFull();
-        add(headerLayout);
+        // Persistent header: avatar + page title on the left, sprint selector next to it
+        header = new HorizontalLayout(headerAvatar, pageTitle, sprintSelector);
+        header.setAlignItems(FlexComponent.Alignment.END);
+        header.setWidthFull();
+        header.getStyle().set("padding", "var(--lumo-space-xs)");
+        header.setSpacing(true);
+        header.setId("page-header");
+        add(header);
     }
 
     @Override
@@ -344,14 +360,6 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
 
 
         add(gridContainer);
-
-//        // Burndown chart lives below the stats grid
-//        burnDownContainer = new Div();
-//        burnDownContainer.getStyle()
-//                .set("width", "100%")
-//                .set("padding", "var(--lumo-space-m)")
-//                .set("background-color", "var(--lumo-base-color)");
-//        add(burnDownContainer);
     }
 
     private ComponentRenderer<Div, Sprint> createTwoPartRenderer(
@@ -379,56 +387,6 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             return container;
         });
     }
-
-//    /**
-//     * Generates the burndown chart SVG asynchronously, then updates {@link #burnDownContainer}
-//     * on the UI thread.  Cancels any in-flight previous generation before starting a new one.
-//     */
-//    private void generateBurnDownChartAsync() {
-//        if (sprint == null || burnDownContainer == null) {
-//            return;
-//        }
-//        if (burndownGenerationFuture != null && !burndownGenerationFuture.isDone()) {
-//            burndownGenerationFuture.cancel(true);
-//        }
-//        burnDownContainer.removeAll();
-//
-//        UI             ui             = UI.getCurrent();
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        Sprint         sprintSnapshot = sprint;
-//
-//        burndownGenerationFuture = CompletableFuture.supplyAsync(() -> {
-//            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
-//            ctx.setAuthentication(authentication);
-//            SecurityContextHolder.setContext(ctx);
-//            try {
-//                Svg svg = new Svg();
-//                RenderUtil.generateBurnDownChartSvg(context, sprintSnapshot, svg);
-//                return svg;
-//            } catch (Exception e) {
-//                throw new RuntimeException("Error generating burndown chart", e);
-//            } finally {
-//                SecurityContextHolder.clearContext();
-//            }
-//        }).thenAccept(svg -> {
-//            ui.access(() -> {
-//                burnDownContainer.removeAll();
-//                svg.getStyle().set("object-fit", "contain")
-//                        .set("margin-top", "var(--lumo-space-m)");
-//                svg.setClassName("qtip-shadow");
-//                burnDownContainer.add(svg);
-//                ui.push();
-//            });
-//        }).exceptionally(ex -> {
-//            logger.error("Error generating burndown chart", ex);
-//            ui.access(() -> {
-//                burnDownContainer.removeAll();
-//                burnDownContainer.add(new Paragraph("Error loading burndown chart: " + ex.getMessage()));
-//                ui.push();
-//            });
-//            return null;
-//        });
-//    }
 
     /**
      * Generates the Gantt chart SVG asynchronously, then updates {@link #ganttChartContainer}
@@ -650,25 +608,26 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     /**
      * (Re-)builds the content area for the currently selected sprint.
      * Removes any children added by a previous cycle (keeping the persistent
-     * {@link #headerLayout}), then loads data and recreates the detail grid and charts.
+     * {@link #header}), then loads data and recreates the detail grid and charts.
      * Called both from {@link #afterNavigation} on first load and from the sprint
      * selector listener when the user picks a different sprint.
      */
     private void reloadContent() {
         // Remove children from a previous render cycle, keeping the persistent header.
         getChildren()
-                .filter(c -> c != headerLayout)
+                .filter(c -> c != header)
                 .collect(Collectors.toList())
                 .forEach(this::remove);
 
         ganttUtil = new GanttUtil();
         loadData();
 
+        updateHeaderForSelection();
+
         if (sprint == null) {
             return;
         }
 
-        pageTitle.setText(sprint.getName());
 
         //- update breadcrumbs
         getElement().getParent().getComponent()
@@ -729,6 +688,29 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             createSprintDetailsLayout();
             createGanttChart();
             refreshCharts();
+        }
+    }
+
+    /**
+     * Updates the page title text and avatar to reflect the currently selected sprint.
+     * <ul>
+     *   <li>Sprint loaded → show that sprint's avatar and name.</li>
+     *   <li>No sprint loaded → hide avatar and show "Sprint Quality Board".</li>
+     * </ul>
+     */
+    private void updateHeaderForSelection() {
+        if (sprint != null) {
+            pageTitle.setText(sprint.getName());
+            if (sprint.getLightAvatarHash() != null && !sprint.getLightAvatarHash().isEmpty()) {
+                boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                headerAvatar.setSrc(sprint.getAvatarUrl(isDark));
+                headerAvatar.setVisible(true);
+            } else {
+                headerAvatar.setVisible(false);
+            }
+        } else {
+            pageTitle.setText("Sprint Quality Board");
+            headerAvatar.setVisible(false);
         }
     }
 

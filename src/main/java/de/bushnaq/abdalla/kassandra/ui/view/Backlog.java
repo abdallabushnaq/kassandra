@@ -25,10 +25,7 @@ import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.grid.dnd.GridDropLocation;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Main;
-import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -39,6 +36,7 @@ import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
@@ -110,11 +108,19 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private             CompletableFuture<Void>      ganttGenerationFuture;
     private             GanttUtil                    ganttUtil;
     private final       TaskGrid                     grid;
+    /**
+     * Avatar image shown in the header — updated to reflect the selected sprint.
+     */
+    private             Image                        headerAvatar;
     private final       HorizontalLayout             headerLayout;
     private             boolean                      isRestoringFromUrl         = false;
     private final       JsonMapper                   jsonMapper;
     private static      UUID                         lastShownSprintId          = null;  // Static to persist across navigation
     private             User                         loggedInUser               = null;
+    /**
+     * Page title component updated to reflect the current sprint selection.
+     */
+    private             H2                           pageTitle;
     private final       ProductApi                   productApi;
     private             UUID                         productId;
     private             String                       requestedUserIds           = null;
@@ -434,6 +440,22 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         header.setAlignItems(FlexComponent.Alignment.END);
         header.getStyle().set("padding", "var(--lumo-space-xs)");
         header.setSpacing(true);
+        header.setId("page-header");
+
+        // Title and avatar at the left — updated dynamically by updateHeaderForSelection()
+        pageTitle = new H2("Backlog");
+        pageTitle.setId(BACKLOG_PAGE_TITLE_ID);
+        pageTitle.addClassNames(LumoUtility.Margin.NONE);
+
+        headerAvatar = new Image();
+        headerAvatar.setWidth("32px");
+        headerAvatar.setHeight("32px");
+        headerAvatar.getStyle()
+                .set("border-radius", "var(--lumo-border-radius)")
+                .set("object-fit", "cover")
+                .set("display", "inline-block")
+                .set("margin-right", "12px");
+        headerAvatar.setVisible(false);
 
         // 1. Search input box with magnifying glass icon
         searchField = new TextField();
@@ -570,7 +592,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         cancelButton.addClickListener(e -> cancelEditMode());
 
         // Add all components to header
-        header.add(searchField, userSelector, sprintSelector, clearButton, expandToggleLayout, spacer,
+        header.add(headerAvatar, pageTitle, searchField, userSelector, sprintSelector, clearButton, expandToggleLayout, spacer,
                 createMilestoneButton, createStoryButton, createTaskButton, editButton, saveButton, cancelButton);
         header.setFlexGrow(1, spacer);
 
@@ -1492,6 +1514,8 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             // Clear the Gantt chart container if we're showing Backlog or no sprint
             ganttChartContainer.removeAll();
         }
+
+        updateHeaderForSelection();
     }
 
     /**
@@ -1619,6 +1643,32 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         // Force immediate expand/collapse of all stories
         grid.forceExpandCollapseAll(expandAllStories);
         backlogGrid.forceExpandCollapseAll(expandAllStories);
+    }
+
+    /**
+     * Updates the header title text and avatar to reflect the currently selected sprint.
+     * <ul>
+     *   <li>Sprint loaded → show that sprint's avatar and name.</li>
+     *   <li>No sprint loaded → hide avatar and show "Backlog".</li>
+     * </ul>
+     */
+    private void updateHeaderForSelection() {
+        if (pageTitle == null || headerAvatar == null) {
+            return;
+        }
+        if (sprint != null) {
+            pageTitle.setText(sprint.getName());
+            if (sprint.getLightAvatarHash() != null && !sprint.getLightAvatarHash().isEmpty()) {
+                boolean isDark = com.vaadin.flow.component.UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                headerAvatar.setSrc(sprint.getAvatarUrl(isDark));
+                headerAvatar.setVisible(true);
+            } else {
+                headerAvatar.setVisible(false);
+            }
+        } else {
+            pageTitle.setText("Backlog");
+            headerAvatar.setVisible(false);
+        }
     }
 
     /**
