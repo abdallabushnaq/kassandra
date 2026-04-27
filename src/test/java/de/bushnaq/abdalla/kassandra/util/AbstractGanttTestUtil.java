@@ -521,7 +521,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
                                         } else {
                                             w = task.getRemainingEstimate();
                                         }
-                                        Worklog worklog = addWorklog(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
+                                        addWorklogToBuffer(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
 //                                        task.addTimeSpent(w);
 //                                        task.removeRemainingEstimate(w);
 //                                        task.recalculate();
@@ -546,6 +546,7 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             }
             sprint.recalculate(ParameterOptions.getLocalNow());
         }
+        flushWorklogBuffer(sprint);
         persistTasksAndSprint(sprint);
     }
 

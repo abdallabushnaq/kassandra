@@ -20,12 +20,14 @@ package de.bushnaq.abdalla.kassandra.rest.controller;
 import de.bushnaq.abdalla.kassandra.dao.WorklogDAO;
 import de.bushnaq.abdalla.kassandra.repository.WorklogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/worklog")
@@ -63,6 +65,27 @@ public class WorklogController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public WorklogDAO save(@RequestBody WorklogDAO worklog) {
         return worklogRepository.save(worklog);
+    }
+
+    /**
+     * Batch-saves a list of worklogs in a single transaction.
+     * <p>
+     * The caller (test data generators) is responsible for ensuring the supplied worklogs reference
+     * valid task and sprint IDs. No per-item validation is performed so the entire list can be
+     * flushed efficiently in one round-trip.
+     * </p>
+     *
+     * @param worklogs list of worklogs to persist
+     * @return the saved worklogs including their server-assigned IDs
+     */
+    @PostMapping("/batch")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<WorklogDAO>> saveBatch(@RequestBody List<WorklogDAO> worklogs) {
+        List<WorklogDAO> saved = new ArrayList<>(worklogs.size());
+        for (WorklogDAO worklog : worklogs) {
+            saved.add(worklogRepository.save(worklog));
+        }
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping

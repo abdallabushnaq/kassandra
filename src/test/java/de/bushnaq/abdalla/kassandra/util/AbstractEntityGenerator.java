@@ -106,6 +106,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
     protected static    int                    versionIndex              = 0;
     protected           WorkWeekApi            workWeekApi;
     protected           WorklogApi             worklogApi;
+    private final       List<Worklog>          worklogBuffer             = new ArrayList<>();
 
     protected void addAvailability(User user, float availability, LocalDate start) {
         Availability a = new Availability(availability, start);
@@ -652,6 +653,37 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         return saved;
     }
 
+    /**
+     * Buffers a worklog for deferred batch persistence.
+     * <p>
+     * The worklog is added to the task's in-memory state immediately so that time-spent /
+     * remaining-estimate accounting stays correct during generation. The actual DB persist is
+     * deferred – call {@link #flushWorklogBuffer(Sprint)} once all worklogs for the sprint have
+     * been accumulated.
+     * </p>
+     *
+     * @param task      the owning task
+     * @param user      the worklog author
+     * @param start     the log timestamp
+     * @param timeSpent duration of work logged
+     * @param comment   log comment
+     * @return the buffered (not yet persisted) worklog
+     */
+    protected Worklog addWorklogToBuffer(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
+        Worklog worklog = new Worklog();
+        worklog.setSprintId(task.getSprintId());
+        worklog.setTaskId(task.getId());
+        worklog.setAuthorId(user.getId());
+        worklog.setStart(start);
+        worklog.setTimeSpent(timeSpent);
+        worklog.setComment(comment);
+        // Add to in-memory state immediately so accounting (timeSpent, remainingEstimate) stays correct.
+        // The actual DB persist is deferred – call flushWorklogBuffer(sprint) when done.
+        task.addWorklog(worklog);
+        worklogBuffer.add(worklog);
+        return worklog;
+    }
+
     @BeforeEach
     protected void beforeEach(TestInfo testInfo) {
         super.beforeEach(testInfo);
@@ -711,6 +743,38 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
             expectedOffDays.addAll(saved);
         }
         offDayBuffer.removeAll(pending);
+    }
+
+    /**
+     * Flushes all buffered worklogs for the given sprint to the database in a single batch HTTP call.
+     * <p>
+     * The temp (ID-less) {@link Worklog} objects that were added to each task's worklog list during
+     * generation receive their server-assigned IDs in-place (the response is assumed to be in the same
+     * order as the request). The flushed entries are also added to {@link #expectedWorklogs}.
+     * </p>
+     *
+     * @param sprint the sprint whose buffered worklogs should be persisted
+     */
+    protected void flushWorklogBuffer(Sprint sprint) {
+        List<Worklog> pending = worklogBuffer.stream()
+                .filter(w -> sprint.getId().equals(w.getSprintId()))
+                .toList();
+        if (pending.isEmpty()) {
+            return;
+        }
+        try (Profiler pc = new Profiler(SampleType.JPA)) {
+            long          time  = System.currentTimeMillis();
+            List<Worklog> saved = worklogApi.persistBatch(pending);
+            log.debug("Batch-persisted {} worklogs for sprint '{}' in {} ms", saved.size(), sprint.getName(), System.currentTimeMillis() - time);
+            // Copy server-assigned IDs back to the existing in-memory worklog objects so they can be
+            // referenced by ID going forward. Re-adding via task.addWorklog() is intentionally avoided
+            // because it would double-count time-spent / remaining-estimate accounting.
+            for (int i = 0; i < pending.size(); i++) {
+                pending.get(i).setId(saved.get(i).getId());
+            }
+            expectedWorklogs.addAll(pending);
+        }
+        worklogBuffer.removeAll(pending);
     }
 
     protected void generateRandomOffDays(User saved, LocalDate employmentDate) {

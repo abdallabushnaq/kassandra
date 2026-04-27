@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -93,6 +94,22 @@ public class WorklogApi extends AbstractApi {
                 HttpMethod.POST,
                 createHttpEntity(worklog),
                 Worklog.class
+        ));
+        return response.getBody();
+    }
+
+    /**
+     * Batch-persists a list of worklogs in a single HTTP call.
+     *
+     * @param worklogs list of worklogs to save
+     * @return the saved worklogs including server-assigned IDs
+     */
+    public List<Worklog> persistBatch(List<Worklog> worklogs) {
+        ResponseEntity<List<Worklog>> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/worklog/batch",
+                HttpMethod.POST,
+                createHttpEntity(worklogs),
+                new ParameterizedTypeReference<>() {}
         ));
         return response.getBody();
     }
