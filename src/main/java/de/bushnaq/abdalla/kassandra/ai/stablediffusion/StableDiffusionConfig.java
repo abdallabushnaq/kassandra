@@ -38,7 +38,7 @@ public class StableDiffusionConfig {
      * Used by AvatarService to generate dark avatars with a matching background.
      * Configurable via 'stable-diffusion.avatar-dark-background-color'.
      */
-    private String avatarDarkBackgroundColor  = "#333333";
+    private String avatarDarkBackgroundColor  = "#242323";
     /**
      * Background color for light-theme avatars, as a CSS hex string (e.g., "#FFFFFF").
      * Used by AvatarService to generate light avatars with a matching background.

@@ -15,8 +15,8 @@ body {
 }
 
 [theme~="dark"] {
-    --lumo-base-color: hsl(0, 0%, 20%);
-    --lumo-primary-color: hsl(0, 0%, 70%);
+    --lumo-base-color: #242323;
+    --lumo-primary-color: #505050; /*hsl(0, 0%, 70%);*/
     --lumo-primary-color-50pct: hsla(0, 0%, 70%, 0.5);
     --lumo-primary-color-10pct: hsla(0, 0%, 70%, 0.1);
     --lumo-shade-5pct: hsla(0, 0%, 0%, 0.05);

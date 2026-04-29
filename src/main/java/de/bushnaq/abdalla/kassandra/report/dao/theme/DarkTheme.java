@@ -46,10 +46,10 @@ public class DarkTheme extends Theme {
     public DarkTheme(StableDiffusionConfig stableDiffusionConfig) {
         super(ETheme.dark);
 
-        Color basicTextColor   = Color.white;
+        Color basicTextColor   = new Color(0x7c7a7a);
         Color subtileTextColor = Color.lightGray;
-        Color baseBgColor      = ColorUtil.colorFraction(ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor()), 0.9);
-        Color baseBorderColor  = ColorUtil.colorFraction(ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor()), 1.2);
+        Color baseBgColor      = ColorUtil.colorFraction(ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor()), 1f);
+        Color baseBorderColor  = ColorUtil.colorFraction(ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor()), 1.2f);
 
         //---------------------------------------------------------------------
         //-- ChartTheme
