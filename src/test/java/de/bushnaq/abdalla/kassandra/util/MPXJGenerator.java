@@ -89,7 +89,6 @@ public class MPXJGenerator {
         sprint.setStatus(Status.STARTED);
         sprint.setFeature(feature);
         sprint.setFeatureId(feature.getId());
-//        sprint.setId(UUID.randomUUID());
         feature.addSprint(sprint);
         sprints.add(sprint);
         return sprint;
@@ -191,42 +190,19 @@ public class MPXJGenerator {
         worklog.setAuthorId(user.getId());
         worklog.setStart(start);
         worklog.setTimeSpent(timeSpent);
+        worklog.setTimeRemainingEstimate(task.getRemainingEstimate().minus(timeSpent));
         worklog.setComment(comment);
         worklog.setId(UUID.randomUUID());
         task.addWorklog(worklog);
-//        Worklog saved = worklogApi.persist(worklog);
         worklogs.add(worklog);
         return worklog;
     }
 
-    //    protected Task addParentTask(String name, User user, Sprint sprint, Task parent, Task dependency) {
-//        return addTask(sprint, parent, name, null, Duration.ofDays(0), null, user, dependency);
-//    }
     public Task createDeliveryBufferTask(Sprint sprint, Duration minWork) {
-        //create the buffer task
         Task task = addTask(Task.DELIVERY_BUFFER, null, null, null, sprint, null, null);
-//        Task task = new Task();
-//        task.setName(Task.DELIVERY_BUFFER);
         task.setImpactOnCost(false);//delivery buffer has no impact on cost
-//        if (sprint != null) {
-//            task.setSprint(sprint);
-//            task.setSprintId(sprint.getId());
-//        }
         task.setMinEstimate(minWork);
 
-//        task.setId(UUID.randomUUID());
-//        if (sprint != null) {
-//            task.setSprint(sprint);
-//            sprint.addTask(task);
-//        }
-//        for (Task story : sprint.getTasks()) {
-//            if (story.isStory()) {
-//                //create hidden dependency to every story of this sprint, so that this buffer is the last task in the sprint
-//                if (!GanttUtil.hasDependency(task, story)) {
-//                    task.addPredecessor(story, true);
-//                }
-//            }
-//        }
         return task;
     }
 

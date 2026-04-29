@@ -124,7 +124,7 @@ public class QualityBoardTest extends AbstractKeycloakUiTestUtil {
         sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
 
         levelResourcesAndPersist(testInfo, sprint, null);
-        generateWorklogs(sprint, ParameterOptions.getLocalNow());
+        generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
 //        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         aboutViewTester.login(
                 "christopher.paul@kassandra.org",

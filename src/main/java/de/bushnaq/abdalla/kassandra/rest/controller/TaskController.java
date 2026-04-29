@@ -29,9 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 import java.util.*;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -97,6 +95,18 @@ public class TaskController {
     @GetMapping("/sprint/{sprintId}")
     @PreAuthorize("@aclSecurityService.hasSprintAccess(#sprintId) or hasRole('ADMIN')")
     public List<TaskDAO> getAll(@PathVariable UUID sprintId) {
+//        {
+//            for (TaskDAO task : taskRepository.findAllByOrderByOrderIdAsc()) {
+//                if (task.getName().equals("Data Export - Technical Design")) {
+//                    Duration t = task.getTimeSpent();
+//                }
+//
+//                if (!isDeliveryBufferTask(task) && !isStory(task) && !task.isMilestone() && task.getRemainingEstimate().isZero() && task.getTimeSpent().isZero()) {
+//                    Duration t = task.getTimeSpent();
+//                }
+//            }
+//
+//        }
         return taskRepository.findBySprintIdOrderByOrderIdAsc(sprintId);
     }
 
@@ -121,6 +131,16 @@ public class TaskController {
                 .collect(Collectors.toList());
     }
 
+//    @Deprecated
+//    public boolean isDeliveryBufferTask(TaskDAO task) {
+//        return task.getName().equalsIgnoreCase(DELIVERY_BUFFER);
+//    }
+//
+//    @Deprecated
+//    public boolean isStory(TaskDAO task) {
+//        return !task.isMilestone() && (task.getMinEstimate() == null || task.getMinEstimate().isZero());
+//    }
+
     @PostMapping
     @PreAuthorize("@aclSecurityService.hasSprintAccess(#task.sprintId) or hasRole('ADMIN')")
     @Transactional
@@ -133,6 +153,13 @@ public class TaskController {
         }
         TaskDAO save = taskRepository.save(task);
         return save;
+    }
+
+    @PutMapping()
+    @PreAuthorize("@aclSecurityService.hasTaskAccess(#task.id) or hasRole('ADMIN')")
+    @Transactional
+    public void update(@RequestBody TaskDAO task) {
+        taskRepository.save(task);
     }
 
     /**
@@ -150,13 +177,6 @@ public class TaskController {
     @Transactional
     public void updateBatch(@RequestBody List<TaskDAO> tasks, @PathVariable UUID sprintId) {
         taskRepository.saveAll(tasks);
-    }
-
-    @PutMapping()
-    @PreAuthorize("@aclSecurityService.hasTaskAccess(#task.id) or hasRole('ADMIN')")
-    @Transactional
-    public void update(@RequestBody TaskDAO task) {
-        taskRepository.save(task);
     }
 
     @PutMapping("/{id}/status/{status}")

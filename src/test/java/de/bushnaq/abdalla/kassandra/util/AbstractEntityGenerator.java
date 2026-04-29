@@ -643,6 +643,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         worklog.setAuthorId(user.getId());
         worklog.setStart(start);
         worklog.setTimeSpent(timeSpent);
+        worklog.setTimeRemainingEstimate(task.getRemainingEstimate().minus(timeSpent));
         worklog.setComment(comment);
         task.addWorklog(worklog);
         Worklog saved = worklogApi.persist(worklog);
@@ -673,6 +674,7 @@ public class AbstractEntityGenerator extends AbstractTestUtil {
         worklog.setAuthorId(user.getId());
         worklog.setStart(start);
         worklog.setTimeSpent(timeSpent);
+        worklog.setTimeRemainingEstimate(task.getRemainingEstimate().minus(timeSpent));
         worklog.setComment(comment);
         // Add to in-memory state immediately so accounting (timeSpent, remainingEstimate) stays correct.
         // The actual DB persist is deferred – call flushWorklogBuffer(sprint) when done.

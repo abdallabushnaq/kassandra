@@ -655,6 +655,9 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
         toolTip += String.format("<b>Duration</b> %s<br>", duration);
         toolTip += String.format("<b>Start</b> %s<br>", start);
         toolTip += String.format("<b>Finish</b> %s<br>", finish);
+
+        toolTip += String.format("<b>Time Spent</b> %s<br>", task.getTimeSpent());
+        toolTip += String.format("<b>Time Remaining Estimate</b> %s<br>", task.getRemainingEstimate());
         if (task.getChildTasks().isEmpty() && progress != null) {
             toolTip += String.format("<b>Progress</b> %s<br>", progress);
         }

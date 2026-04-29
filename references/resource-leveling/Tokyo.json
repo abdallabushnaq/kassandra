@@ -1,0 +1,1815 @@
+{
+  "users" : [ {
+    "availabilities" : [ {
+      "availability" : 0.5,
+      "created" : "2023-05-05T08:00:00+02:00",
+      "id" : "65d14422-9623-4632-840d-83a6132ad658",
+      "start" : "2023-05-05",
+      "updated" : "2023-05-05T08:00:00+02:00"
+    } ],
+    "color" : "#FFFF0000",
+    "created" : "2023-05-05T08:00:00+02:00",
+    "darkAvatarHash" : "e08285019d8cee9b",
+    "email" : "christopher.paul@kassandra.org",
+    "firstWorkingDay" : "2023-05-05",
+    "id" : "44f6ee70-606c-4c3d-b8e7-4020e96b38ca",
+    "lightAvatarHash" : "8cd1773a147ba7f1",
+    "locations" : [ {
+      "country" : "de",
+      "state" : "nw",
+      "start" : "2023-05-05",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "id" : "b5520edd-5642-4ddd-84a9-07cc3a6d5b9c",
+      "updated" : "2023-05-05T08:00:00+02:00"
+    } ],
+    "name" : "Christopher Paul",
+    "offDays" : [ {
+      "id" : "bf923248-1439-41eb-a2db-45652f5e758e",
+      "firstDay" : "2023-06-12",
+      "lastDay" : "2023-06-16",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "ac2e951c-5046-47d7-b666-dddeb17afd99",
+      "firstDay" : "2023-06-19",
+      "lastDay" : "2023-06-23",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "683ac348-c5a5-4703-9d05-d614988ac14e",
+      "firstDay" : "2023-06-26",
+      "lastDay" : "2023-06-30",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "75d172c6-f0ea-40ca-b9ac-16028f2bd920",
+      "firstDay" : "2023-07-03",
+      "lastDay" : "2023-07-07",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "1bebd99c-98ab-42a6-9b82-cd82ace81411",
+      "firstDay" : "2023-11-21",
+      "lastDay" : "2023-11-24",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "f767fe37-ee1c-430e-b554-f6621259cd05",
+      "firstDay" : "2023-11-27",
+      "lastDay" : "2023-11-28",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "de599b22-a7c9-426a-8750-638876c751f0",
+      "firstDay" : "2023-07-19",
+      "lastDay" : "2023-07-21",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "ec8102f8-74dd-4e5b-93b4-026ad923d78c",
+      "firstDay" : "2023-05-04",
+      "lastDay" : "2023-05-04",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "eba15b73-61dc-41fd-b1f5-9fd6075f84e7",
+      "firstDay" : "2023-07-18",
+      "lastDay" : "2023-07-18",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "TRIP",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "0b91857b-1bf7-42ba-a092-665b1dae7444",
+      "firstDay" : "2023-11-13",
+      "lastDay" : "2023-11-15",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "TRIP",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "3ba967b2-baf5-4d25-986f-6dce3fc6c10b",
+      "firstDay" : "2024-07-25",
+      "lastDay" : "2024-07-26",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "8e511765-85fc-4909-a918-0678c089c71e",
+      "firstDay" : "2024-07-29",
+      "lastDay" : "2024-08-02",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "f7f9d853-a219-4902-97c3-6be73768e1c4",
+      "firstDay" : "2024-08-05",
+      "lastDay" : "2024-08-08",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "d87add24-8be7-4942-8f82-93b40b7b5da8",
+      "firstDay" : "2024-07-04",
+      "lastDay" : "2024-07-05",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "434aed42-bb45-4474-aede-d6a532051721",
+      "firstDay" : "2024-07-08",
+      "lastDay" : "2024-07-08",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "efda9a11-ff09-4220-ac6b-647e264e6546",
+      "firstDay" : "2024-10-22",
+      "lastDay" : "2024-10-25",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "078b95e7-aa51-4546-aa9a-fe8f32ec82db",
+      "firstDay" : "2024-10-28",
+      "lastDay" : "2024-10-29",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "a8f63496-b3c9-4159-9874-bef4833a0f57",
+      "firstDay" : "2024-08-26",
+      "lastDay" : "2024-08-28",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "d1264e26-1c32-4323-8749-120170f70a7b",
+      "firstDay" : "2024-11-18",
+      "lastDay" : "2024-11-22",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "d82cb998-82a5-40ad-90ce-f0384862c9aa",
+      "firstDay" : "2024-10-30",
+      "lastDay" : "2024-10-31",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "e5aa113d-5d3f-48b3-beb8-d34645105f34",
+      "firstDay" : "2024-07-22",
+      "lastDay" : "2024-07-22",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "TRIP",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "6e3e584c-d66f-47c1-a2a8-ccb62cc58b92",
+      "firstDay" : "2024-07-03",
+      "lastDay" : "2024-07-03",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "82835d27-c5ab-44ef-9f2d-23832cf461b3",
+      "firstDay" : "2024-07-09",
+      "lastDay" : "2024-07-11",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "90cfcc99-c419-4d14-b9f3-38fd6374babe",
+      "firstDay" : "2024-07-16",
+      "lastDay" : "2024-07-19",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "07fad56d-c154-4d1a-8911-15c6f1f6705b",
+      "firstDay" : "2024-04-22",
+      "lastDay" : "2024-04-24",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "27144501-e2b7-4887-9c52-e0d271c263a2",
+      "firstDay" : "2024-12-02",
+      "lastDay" : "2024-12-04",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "77122d61-eead-4d58-b4fb-bf8e659015d6",
+      "firstDay" : "2024-01-30",
+      "lastDay" : "2024-01-31",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "0ec6d16f-3dcc-4aa8-af6d-c38588fd0888",
+      "firstDay" : "2025-06-18",
+      "lastDay" : "2025-06-18",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "ff3208f8-ff79-4030-bbd4-8b4ae19819ff",
+      "firstDay" : "2025-12-08",
+      "lastDay" : "2025-12-10",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "6637143e-dbae-410c-801b-abaae7a2bb04",
+      "firstDay" : "2025-06-27",
+      "lastDay" : "2025-06-27",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "b52d3c9b-e2f5-4780-ac8c-c305d57ce516",
+      "firstDay" : "2025-06-30",
+      "lastDay" : "2025-07-04",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "a4364d09-b299-4266-a73f-5ec2590ec414",
+      "firstDay" : "2025-08-18",
+      "lastDay" : "2025-08-22",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "8b0c1ea9-a0ec-4eeb-b090-fd1ad34f31f7",
+      "firstDay" : "2025-07-24",
+      "lastDay" : "2025-07-25",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    }, {
+      "id" : "948ba697-bff5-4739-b0ea-f97c1167c7b5",
+      "firstDay" : "2025-07-28",
+      "lastDay" : "2025-07-29",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:35:59.452429+02:00"
+    } ],
+    "roles" : "ADMIN,USER",
+    "updated" : "2026-04-27T11:35:59.452429+02:00",
+    "userWorkWeeks" : [ {
+      "workWeek" : {
+        "created" : "2026-04-27T11:35:58.345045+02:00",
+        "description" : "Standard Monday–Friday 8-hour work week with a 1-hour lunch break",
+        "friday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "id" : "70d597da-659a-4e99-b1d5-c73733a66afe",
+        "monday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "name" : "Western 5x8",
+        "saturday" : {
+          "workingDay" : false
+        },
+        "sunday" : {
+          "workingDay" : false
+        },
+        "thursday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "tuesday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "updated" : "2026-04-27T11:35:58.345045+02:00",
+        "userCount" : 0,
+        "wednesday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "workingDaysSummary" : "Mon, Tue, Wed, Thu, Fri"
+      },
+      "start" : "2023-05-05",
+      "created" : "2023-05-05T08:00:00+02:00",
+      "id" : "7ac0f1cf-1499-4d59-9828-ca2a05235c24",
+      "updated" : "2023-05-05T08:00:00+02:00"
+    } ]
+  }, {
+    "availabilities" : [ {
+      "availability" : 0.9,
+      "created" : "2023-08-04T08:00:00+02:00",
+      "id" : "4fd1369c-f4f2-4332-88e8-cab1ece1dd46",
+      "start" : "2023-08-04",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    } ],
+    "color" : "#FF0000FF",
+    "created" : "2023-08-04T08:00:00+02:00",
+    "darkAvatarHash" : "e08285019d8cee9b",
+    "email" : "claudine.fick@kassandra.org",
+    "firstWorkingDay" : "2023-08-04",
+    "id" : "f96c1345-6c8f-4dcf-a9f0-9e9456316af0",
+    "lightAvatarHash" : "8cd1773a147ba7f1",
+    "locations" : [ {
+      "country" : "de",
+      "state" : "nw",
+      "start" : "2023-08-04",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "id" : "e127d124-3497-48a1-88f2-2e774d258f22",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    } ],
+    "name" : "Claudine Fick",
+    "offDays" : [ {
+      "id" : "ae82aeee-e239-448b-9fb7-68da288cadfb",
+      "firstDay" : "2023-07-13",
+      "lastDay" : "2023-07-14",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "72f741ba-de8f-4b0f-974a-f595070cf4ac",
+      "firstDay" : "2023-07-17",
+      "lastDay" : "2023-07-21",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "cf7de9f8-4899-4131-a638-b6c519764f30",
+      "firstDay" : "2023-07-24",
+      "lastDay" : "2023-07-26",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "9415f699-007f-4277-8c31-7541a8382dd0",
+      "firstDay" : "2023-09-14",
+      "lastDay" : "2023-09-15",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "2658742b-6905-4683-991f-9f063ecfc9ca",
+      "firstDay" : "2023-09-18",
+      "lastDay" : "2023-09-19",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "b59f2dd3-0612-4bea-b85e-ac1b65d7f997",
+      "firstDay" : "2023-12-06",
+      "lastDay" : "2023-12-08",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "79c2f2d3-4625-4558-8a0a-df740c67eab4",
+      "firstDay" : "2023-09-22",
+      "lastDay" : "2023-09-22",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "f465a5b6-f01e-4091-b5b4-9ea9710bb925",
+      "firstDay" : "2023-09-25",
+      "lastDay" : "2023-09-26",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "24c43171-0a98-4ec5-b48f-ccb6e78a6881",
+      "firstDay" : "2023-11-13",
+      "lastDay" : "2023-11-17",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "33bc764a-b138-4117-9641-bf2a10072c06",
+      "firstDay" : "2023-08-21",
+      "lastDay" : "2023-08-24",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "0cf73b8a-d34d-4005-8b26-283c247b2950",
+      "firstDay" : "2023-10-20",
+      "lastDay" : "2023-10-20",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "cc8831dc-e8fc-4201-b281-e8fd7b0d45db",
+      "firstDay" : "2023-06-01",
+      "lastDay" : "2023-06-01",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "TRIP",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "fdb65c7a-e133-45fd-a340-4153a5e3bb01",
+      "firstDay" : "2024-06-25",
+      "lastDay" : "2024-06-28",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "8bfa0716-1160-4328-8196-32b0656f5846",
+      "firstDay" : "2024-07-01",
+      "lastDay" : "2024-07-05",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "a5d916d3-e589-4a58-883e-192298387d26",
+      "firstDay" : "2024-07-08",
+      "lastDay" : "2024-07-12",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "fc097cd2-00ef-46d2-98b9-7c90718cfede",
+      "firstDay" : "2024-07-15",
+      "lastDay" : "2024-07-15",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "f47d08ea-3715-4ccd-8ebc-f61a9bf6521e",
+      "firstDay" : "2024-01-02",
+      "lastDay" : "2024-01-05",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "c9e47fa0-e172-45d9-a606-c5090c3b968f",
+      "firstDay" : "2024-01-08",
+      "lastDay" : "2024-01-09",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "66e0cc1d-601f-4bad-90d1-1e300477d3a4",
+      "firstDay" : "2024-04-18",
+      "lastDay" : "2024-04-19",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "4ea5a456-72e6-4e59-9b36-4fc244a7dbbc",
+      "firstDay" : "2024-04-22",
+      "lastDay" : "2024-04-23",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "7261972f-91b6-4649-98a1-44f051412a60",
+      "firstDay" : "2024-12-16",
+      "lastDay" : "2024-12-20",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "d59e4317-16f8-4040-99cc-c9db66d535f1",
+      "firstDay" : "2024-05-31",
+      "lastDay" : "2024-05-31",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "TRIP",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "c0506d8b-acb1-412d-80a8-617e45f63a82",
+      "firstDay" : "2024-06-03",
+      "lastDay" : "2024-06-05",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "TRIP",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "a5b05030-1fe9-449b-8175-16ab91fb6aef",
+      "firstDay" : "2024-07-16",
+      "lastDay" : "2024-07-17",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.164404+02:00"
+    }, {
+      "id" : "3271363b-14ad-48cb-b60d-4e0a98a5ff05",
+      "firstDay" : "2024-09-25",
+      "lastDay" : "2024-09-27",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.164404+02:00"
+    }, {
+      "id" : "b6a4d213-4e5b-4383-b5c4-923138a20426",
+      "firstDay" : "2024-09-30",
+      "lastDay" : "2024-09-30",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.164404+02:00"
+    }, {
+      "id" : "4a9693a6-bc2b-4ae1-b6bc-88034cf73935",
+      "firstDay" : "2025-07-23",
+      "lastDay" : "2025-07-25",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.164404+02:00"
+    }, {
+      "id" : "f2ce7fe1-51c7-4689-93e3-da2c11524e8a",
+      "firstDay" : "2025-07-28",
+      "lastDay" : "2025-07-29",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.164404+02:00"
+    }, {
+      "id" : "505c6fa2-e44d-46f0-8c15-7f539eef645c",
+      "firstDay" : "2025-03-24",
+      "lastDay" : "2025-03-26",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.164404+02:00"
+    }, {
+      "id" : "6752d3c1-09a8-426a-89d7-8273bf93aea6",
+      "firstDay" : "2025-05-14",
+      "lastDay" : "2025-05-16",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.164404+02:00"
+    } ],
+    "roles" : "USER",
+    "updated" : "2026-04-27T11:36:01.164404+02:00",
+    "userWorkWeeks" : [ {
+      "workWeek" : {
+        "created" : "2026-04-27T11:35:58.345045+02:00",
+        "description" : "Standard Monday–Friday 8-hour work week with a 1-hour lunch break",
+        "friday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "id" : "70d597da-659a-4e99-b1d5-c73733a66afe",
+        "monday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "name" : "Western 5x8",
+        "saturday" : {
+          "workingDay" : false
+        },
+        "sunday" : {
+          "workingDay" : false
+        },
+        "thursday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "tuesday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "updated" : "2026-04-27T11:35:58.345045+02:00",
+        "userCount" : 0,
+        "wednesday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "workingDaysSummary" : "Mon, Tue, Wed, Thu, Fri"
+      },
+      "start" : "2023-08-04",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "id" : "b8635674-f51e-42d1-b324-5c5ed549d565",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    } ]
+  }, {
+    "availabilities" : [ {
+      "availability" : 0.9,
+      "created" : "2023-08-04T08:00:00+02:00",
+      "id" : "49a145b2-07a5-4957-b82e-5c7bd60ac07a",
+      "start" : "2023-08-04",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    } ],
+    "color" : "#FF00FF00",
+    "created" : "2023-08-04T08:00:00+02:00",
+    "darkAvatarHash" : "e08285019d8cee9b",
+    "email" : "kristen.hubbell@kassandra.org",
+    "firstWorkingDay" : "2023-08-04",
+    "id" : "d815a48b-0dae-4b6e-977e-cb4898015c61",
+    "lightAvatarHash" : "8cd1773a147ba7f1",
+    "locations" : [ {
+      "country" : "de",
+      "state" : "nw",
+      "start" : "2023-08-04",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "id" : "7382bc10-4e6a-4761-8d2d-020dc0a86537",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    } ],
+    "name" : "Kristen Hubbell",
+    "offDays" : [ {
+      "id" : "3e1258ab-23ab-4b07-a1e3-1e35373a9267",
+      "firstDay" : "2023-07-10",
+      "lastDay" : "2023-07-14",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "f7057b44-c89c-400e-a4da-2a6c4b54dd08",
+      "firstDay" : "2023-07-17",
+      "lastDay" : "2023-07-21",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "f3e826d3-d759-4569-9f47-8f69bde52c87",
+      "firstDay" : "2023-07-24",
+      "lastDay" : "2023-07-28",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "ecb2b09c-98b1-4a72-ae4e-b1a5c69fc9cb",
+      "firstDay" : "2023-07-31",
+      "lastDay" : "2023-08-03",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "29daf537-2c6e-42d8-a959-8f01a76b130c",
+      "firstDay" : "2023-06-20",
+      "lastDay" : "2023-06-23",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "125e7cf3-4c77-46ae-9407-e33c005edf96",
+      "firstDay" : "2023-06-26",
+      "lastDay" : "2023-06-26",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "bd684482-7141-485c-962b-fd6eca4758d0",
+      "firstDay" : "2023-12-15",
+      "lastDay" : "2023-12-15",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "b6823615-0cfd-4851-917c-5998a67d1cce",
+      "firstDay" : "2023-12-18",
+      "lastDay" : "2023-12-21",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "9a19ce81-d60f-477f-b27c-704032538ab0",
+      "firstDay" : "2023-02-10",
+      "lastDay" : "2023-02-10",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "fa4f3977-40cb-4926-8cc5-56ea0b03ebc4",
+      "firstDay" : "2023-08-04",
+      "lastDay" : "2023-08-04",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "TRIP",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "a42c7a8e-af1b-4102-ba80-60d326e345ed",
+      "firstDay" : "2023-08-07",
+      "lastDay" : "2023-08-07",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "TRIP",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "ae4c17a6-868a-4613-8d6a-6f85a3242825",
+      "firstDay" : "2024-06-25",
+      "lastDay" : "2024-06-28",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "f0c0bc89-fc37-4157-917e-69276ffab6ce",
+      "firstDay" : "2024-07-01",
+      "lastDay" : "2024-07-05",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "b53331ed-e212-46cb-8cdc-09d2d443e817",
+      "firstDay" : "2024-07-08",
+      "lastDay" : "2024-07-12",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "2123f4f3-1ec2-427e-b5d6-d03a9f52be9a",
+      "firstDay" : "2024-07-15",
+      "lastDay" : "2024-07-16",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "44c245b1-1bcb-4490-a00b-f40951fb9ee3",
+      "firstDay" : "2024-05-27",
+      "lastDay" : "2024-05-29",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "a32fab2e-ef47-42c2-bfe1-031c5c0ac685",
+      "firstDay" : "2024-05-31",
+      "lastDay" : "2024-05-31",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "b9c15de3-e227-4beb-98dd-0956b476bf47",
+      "firstDay" : "2024-06-03",
+      "lastDay" : "2024-06-03",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "e6a74369-99c1-48ba-b99b-e5d9b3d55c50",
+      "firstDay" : "2024-02-13",
+      "lastDay" : "2024-02-16",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "160e4a71-25c8-42a4-a64f-a5bb4ccf9367",
+      "firstDay" : "2024-05-02",
+      "lastDay" : "2024-05-03",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "2fdde045-8257-4da6-9727-ece71e07329a",
+      "firstDay" : "2024-05-06",
+      "lastDay" : "2024-05-06",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "24831c77-49db-44a3-8166-7c142769d7af",
+      "firstDay" : "2024-04-11",
+      "lastDay" : "2024-04-12",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "960b09a1-816f-432b-bb7a-385db05d0b8e",
+      "firstDay" : "2024-07-17",
+      "lastDay" : "2024-07-18",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "TRIP",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "ca3bd904-ed75-4d59-9b64-7681ac2108e6",
+      "firstDay" : "2024-06-24",
+      "lastDay" : "2024-06-24",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:00.490744+02:00"
+    }, {
+      "id" : "defedb2f-9cc2-4ec0-b597-996c34ca6832",
+      "firstDay" : "2024-07-19",
+      "lastDay" : "2024-07-19",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:00.490744+02:00"
+    }, {
+      "id" : "d383fe69-47e3-45b5-92a8-2b42c0a61fc8",
+      "firstDay" : "2024-07-22",
+      "lastDay" : "2024-07-23",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:00.490744+02:00"
+    }, {
+      "id" : "42fd0546-b697-472a-a034-487254c54c55",
+      "firstDay" : "2024-12-23",
+      "lastDay" : "2024-12-24",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:00.490744+02:00"
+    }, {
+      "id" : "d113cccb-b371-485b-a10c-633927c8cd38",
+      "firstDay" : "2025-06-24",
+      "lastDay" : "2025-06-26",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:00.490744+02:00"
+    }, {
+      "id" : "3a29409f-aad9-4fd7-8634-5f4ffd4e3fc8",
+      "firstDay" : "2025-05-19",
+      "lastDay" : "2025-05-22",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:00.490744+02:00"
+    }, {
+      "id" : "be04b65d-bbad-4e0b-8a72-36accedc1308",
+      "firstDay" : "2025-06-27",
+      "lastDay" : "2025-06-27",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:00.490744+02:00"
+    }, {
+      "id" : "226e06e1-d3fb-42d7-bca3-73693761f8c1",
+      "firstDay" : "2025-06-30",
+      "lastDay" : "2025-07-02",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:00.490744+02:00"
+    } ],
+    "roles" : "USER",
+    "updated" : "2026-04-27T11:36:00.490744+02:00",
+    "userWorkWeeks" : [ {
+      "workWeek" : {
+        "created" : "2026-04-27T11:35:58.345045+02:00",
+        "description" : "Standard Monday–Friday 8-hour work week with a 1-hour lunch break",
+        "friday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "id" : "70d597da-659a-4e99-b1d5-c73733a66afe",
+        "monday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "name" : "Western 5x8",
+        "saturday" : {
+          "workingDay" : false
+        },
+        "sunday" : {
+          "workingDay" : false
+        },
+        "thursday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "tuesday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "updated" : "2026-04-27T11:35:58.345045+02:00",
+        "userCount" : 0,
+        "wednesday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "workingDaysSummary" : "Mon, Tue, Wed, Thu, Fri"
+      },
+      "start" : "2023-08-04",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "id" : "9e1543f1-02b6-47d7-920d-104a3bfdda72",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    } ]
+  }, {
+    "availabilities" : [ {
+      "availability" : 1.1,
+      "created" : "2023-08-04T08:00:00+02:00",
+      "id" : "2b9d0f78-5419-496b-958c-bd4231a5a34f",
+      "start" : "2023-08-04",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    } ],
+    "color" : "#FFFFFF00",
+    "created" : "2023-08-04T08:00:00+02:00",
+    "darkAvatarHash" : "e08285019d8cee9b",
+    "email" : "randy.asmus@kassandra.org",
+    "firstWorkingDay" : "2023-08-04",
+    "id" : "58c494ba-a8e2-4540-b15d-789948a053af",
+    "lightAvatarHash" : "8cd1773a147ba7f1",
+    "locations" : [ {
+      "country" : "de",
+      "state" : "nw",
+      "start" : "2023-08-04",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "id" : "6fe56a72-5902-4431-b058-7a27eac074b2",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    } ],
+    "name" : "Randy Asmus",
+    "offDays" : [ {
+      "id" : "2a93c18c-c593-455d-b912-05dd07746d52",
+      "firstDay" : "2023-06-22",
+      "lastDay" : "2023-06-23",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "3a5bb8a6-e46e-467d-9210-13127ae34330",
+      "firstDay" : "2023-06-26",
+      "lastDay" : "2023-06-30",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "38f835b9-e51b-4bc6-b4ea-614ebc81833f",
+      "firstDay" : "2023-07-03",
+      "lastDay" : "2023-07-07",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "6d109cb2-4d3e-493a-96ba-e2f44c7005ad",
+      "firstDay" : "2023-07-10",
+      "lastDay" : "2023-07-11",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "68610a76-02f7-4c90-bd5a-afb3ca6f1c70",
+      "firstDay" : "2023-05-15",
+      "lastDay" : "2023-05-18",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "348f868b-8dbe-4f37-a7c5-36755516dca4",
+      "firstDay" : "2023-07-12",
+      "lastDay" : "2023-07-14",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "6ef68305-d4a3-4ac7-a7ca-4cd9286861b5",
+      "firstDay" : "2023-07-17",
+      "lastDay" : "2023-07-19",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "d445c713-04c1-44f6-b162-013d5c6184d8",
+      "firstDay" : "2023-01-16",
+      "lastDay" : "2023-01-20",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "2cae1f46-ee96-4b91-a19a-a3c39c153ba9",
+      "firstDay" : "2023-10-16",
+      "lastDay" : "2023-10-16",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "cf0110dd-ab40-4ed3-97e3-d32882b1f59b",
+      "firstDay" : "2024-06-06",
+      "lastDay" : "2024-06-07",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "43e3e75d-8f4a-4f5a-8b3c-61cbe54b5729",
+      "firstDay" : "2024-06-10",
+      "lastDay" : "2024-06-14",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "feacc080-2132-4a41-918b-3525db1e3643",
+      "firstDay" : "2024-06-17",
+      "lastDay" : "2024-06-21",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "1464e88c-19cd-4ea0-b697-45a04fbaacc4",
+      "firstDay" : "2024-06-24",
+      "lastDay" : "2024-06-27",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "dba4e7ff-bf7e-4fd5-910c-5190ba2a4b99",
+      "firstDay" : "2024-12-24",
+      "lastDay" : "2024-12-24",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "7d7774f5-dce1-4189-a2bc-a2dea7040f5c",
+      "firstDay" : "2024-12-27",
+      "lastDay" : "2024-12-27",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "263e8e71-264f-4470-98f6-7a073356ebe4",
+      "firstDay" : "2024-12-30",
+      "lastDay" : "2024-12-31",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "e1c0e993-fa6b-4a6d-8caa-939b4367b0f8",
+      "firstDay" : "2025-01-02",
+      "lastDay" : "2025-01-02",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "45a728eb-7776-4de3-aa6e-6d806aea9aee",
+      "firstDay" : "2024-10-07",
+      "lastDay" : "2024-10-10",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "1b3ff384-1851-4c27-a67f-4301d3c3a54d",
+      "firstDay" : "2024-05-07",
+      "lastDay" : "2024-05-08",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "0b52cc85-8f20-4c64-ad2d-6ce98ff212da",
+      "firstDay" : "2024-05-10",
+      "lastDay" : "2024-05-10",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "7e453fd9-5634-4219-b105-cd9fee48941d",
+      "firstDay" : "2024-05-13",
+      "lastDay" : "2024-05-13",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "0105951a-3d9e-49de-a14e-7c05bebb4c0f",
+      "firstDay" : "2024-03-18",
+      "lastDay" : "2024-03-18",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "VACATION",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "bbec9e0b-1e53-477b-85b8-53da57d1ca7c",
+      "firstDay" : "2024-07-04",
+      "lastDay" : "2024-07-04",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "TRIP",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    }, {
+      "id" : "953b881c-ea38-4476-9efa-11814a1a6543",
+      "firstDay" : "2024-06-28",
+      "lastDay" : "2024-06-28",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.835794+02:00"
+    }, {
+      "id" : "51aa96e7-0885-43fd-ae82-12eac06f80af",
+      "firstDay" : "2024-07-01",
+      "lastDay" : "2024-07-02",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.835794+02:00"
+    }, {
+      "id" : "b4710ec7-cff4-42d2-beaf-686bac369d37",
+      "firstDay" : "2024-11-11",
+      "lastDay" : "2024-11-14",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.835794+02:00"
+    }, {
+      "id" : "361fedfb-b22a-4b43-9a63-df5d7ac76852",
+      "firstDay" : "2025-06-06",
+      "lastDay" : "2025-06-06",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.835794+02:00"
+    }, {
+      "id" : "9e4a8f8b-96c1-4074-bdb5-1ca29af451d1",
+      "firstDay" : "2025-06-10",
+      "lastDay" : "2025-06-10",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.835794+02:00"
+    }, {
+      "id" : "f68bb1fa-28fc-4bed-bfc0-6784c567a640",
+      "firstDay" : "2025-02-03",
+      "lastDay" : "2025-02-05",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.835794+02:00"
+    }, {
+      "id" : "ec90a678-b1f7-4701-842d-ed16f3052662",
+      "firstDay" : "2025-07-11",
+      "lastDay" : "2025-07-11",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.835794+02:00"
+    }, {
+      "id" : "7034ba7a-2f1f-459d-9304-6e989ca7b2c8",
+      "firstDay" : "2025-07-14",
+      "lastDay" : "2025-07-16",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.835794+02:00"
+    }, {
+      "id" : "37a081ca-fd49-4681-9928-8b00a54b5140",
+      "firstDay" : "2025-06-11",
+      "lastDay" : "2025-06-12",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "type" : "SICK",
+      "updated" : "2026-04-27T11:36:01.835794+02:00"
+    } ],
+    "roles" : "USER",
+    "updated" : "2026-04-27T11:36:01.835794+02:00",
+    "userWorkWeeks" : [ {
+      "workWeek" : {
+        "created" : "2026-04-27T11:35:58.345045+02:00",
+        "description" : "Standard Monday–Friday 8-hour work week with a 1-hour lunch break",
+        "friday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "id" : "70d597da-659a-4e99-b1d5-c73733a66afe",
+        "monday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "name" : "Western 5x8",
+        "saturday" : {
+          "workingDay" : false
+        },
+        "sunday" : {
+          "workingDay" : false
+        },
+        "thursday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "tuesday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "updated" : "2026-04-27T11:35:58.345045+02:00",
+        "userCount" : 0,
+        "wednesday" : {
+          "workStart" : "08:00:00",
+          "workEnd" : "17:00:00",
+          "lunchStart" : "12:00:00",
+          "lunchEnd" : "13:00:00",
+          "workingDay" : true
+        },
+        "workingDaysSummary" : "Mon, Tue, Wed, Thu, Fri"
+      },
+      "start" : "2023-08-04",
+      "created" : "2023-08-04T08:00:00+02:00",
+      "id" : "8296b684-b726-478f-b321-31d2fdfe55b4",
+      "updated" : "2023-08-04T08:00:00+02:00"
+    } ]
+  } ],
+  "sprint" : {
+    "allChildTasksDone" : true,
+    "created" : "2025-08-04T00:00:00+02:00",
+    "end" : "2025-09-18T10:05:30",
+    "featureId" : "da0ec111-9a62-4381-af28-25569734eb69",
+    "id" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "lightAvatarHash" : "ea91028962bcf495",
+    "name" : "Tokyo",
+    "originalEstimation" : "11d 5h",
+    "releaseDate" : "2025-08-26T00:00:00",
+    "remaining" : "0s",
+    "start" : "2025-08-04T08:00:00",
+    "status" : "CLOSED",
+    "updated" : "2026-04-27T11:36:24.272514+02:00",
+    "worked" : "11d 5h"
+  },
+  "tasks" : [ {
+    "critical" : true,
+    "duration" : "0s",
+    "finish" : "2025-08-04T08:00:00",
+    "id" : "cdddfcb1-8253-432c-875c-9f0adfc43e26",
+    "impactOnCost" : true,
+    "maxEstimate" : "0s",
+    "milestone" : true,
+    "minEstimate" : "0s",
+    "name" : "Start",
+    "orderId" : 0,
+    "progress" : 0,
+    "remainingEstimate" : "0s",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "MANUALLY_SCHEDULED",
+    "taskStatus" : "TODO",
+    "timeSpent" : "0s"
+  }, {
+    "critical" : false,
+    "duration" : "1d 13h 5m 30s",
+    "finish" : "2025-08-08T16:05:30",
+    "id" : "21729121-8c79-47d7-90d5-22382e18bb60",
+    "impactOnCost" : true,
+    "maxEstimate" : "0s",
+    "milestone" : false,
+    "minEstimate" : "0s",
+    "name" : "Email Verification",
+    "orderId" : 1,
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "8acb6269-ff60-4e98-b198-3d6ae665dd79",
+      "predecessorId" : "cdddfcb1-8253-432c-875c-9f0adfc43e26"
+    } ],
+    "progress" : 0,
+    "remainingEstimate" : "0s",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "0s"
+  }, {
+    "critical" : true,
+    "duration" : "1d 5h 5m 30s",
+    "finish" : "2025-08-07T14:05:30",
+    "id" : "052985b6-f970-40c2-b483-541c50681311",
+    "impactOnCost" : true,
+    "maxEstimate" : "2d 4h",
+    "milestone" : false,
+    "minEstimate" : "1d 8h",
+    "name" : "Email Verification - Requirements Analysis",
+    "orderId" : 2,
+    "parentTaskId" : "21729121-8c79-47d7-90d5-22382e18bb60",
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "58c494ba-a8e2-4540-b15d-789948a053af",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "1d 8h"
+  }, {
+    "critical" : true,
+    "duration" : "10h",
+    "finish" : "2025-08-08T16:05:30",
+    "id" : "a33d960e-f00d-40a1-ba8d-94b272e38337",
+    "impactOnCost" : true,
+    "maxEstimate" : "13h",
+    "milestone" : false,
+    "minEstimate" : "9h",
+    "name" : "Email Verification - Technical Design",
+    "orderId" : 3,
+    "parentTaskId" : "21729121-8c79-47d7-90d5-22382e18bb60",
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "9d4bf193-ac91-4624-ac4c-e073a9540935",
+      "predecessorId" : "052985b6-f970-40c2-b483-541c50681311"
+    } ],
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "d815a48b-0dae-4b6e-977e-cb4898015c61",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-07T14:05:30",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "9h"
+  }, {
+    "critical" : false,
+    "duration" : "2d 14h",
+    "finish" : "2025-08-14T10:00:00",
+    "id" : "d757df03-4fe2-4918-a851-4adf209f7d30",
+    "impactOnCost" : true,
+    "maxEstimate" : "0s",
+    "milestone" : false,
+    "minEstimate" : "0s",
+    "name" : "Audio Streaming",
+    "orderId" : 4,
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "4a34ea1d-3217-43df-acb3-9cbd37a6dd9e",
+      "predecessorId" : "cdddfcb1-8253-432c-875c-9f0adfc43e26"
+    } ],
+    "progress" : 0,
+    "remainingEstimate" : "0s",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "0s"
+  }, {
+    "critical" : false,
+    "duration" : "1d 4h 10m 54s",
+    "finish" : "2025-08-07T13:10:54",
+    "id" : "e71df5d3-0e0f-4fcb-b006-1e426d08650d",
+    "impactOnCost" : true,
+    "maxEstimate" : "1d 17h",
+    "milestone" : false,
+    "minEstimate" : "1d 7h",
+    "name" : "Audio Streaming - Requirements Analysis",
+    "orderId" : 5,
+    "parentTaskId" : "d757df03-4fe2-4918-a851-4adf209f7d30",
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "58c494ba-a8e2-4540-b15d-789948a053af",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "1d 7h"
+  }, {
+    "critical" : false,
+    "duration" : "18h",
+    "finish" : "2025-08-06T10:00:00",
+    "id" : "7a1eb7ab-b9a5-401a-a1f1-a322e3639ee5",
+    "impactOnCost" : true,
+    "maxEstimate" : "16h",
+    "milestone" : false,
+    "minEstimate" : "9h",
+    "name" : "Audio Streaming - Technical Design",
+    "orderId" : 6,
+    "parentTaskId" : "d757df03-4fe2-4918-a851-4adf209f7d30",
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "44f6ee70-606c-4c3d-b8e7-4020e96b38ca",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "9h"
+  }, {
+    "critical" : false,
+    "duration" : "4h 32m 42s",
+    "finish" : "2025-08-04T13:32:42",
+    "id" : "c1aa1b1e-e1db-4592-b0f5-d734d2989909",
+    "impactOnCost" : true,
+    "maxEstimate" : "9h",
+    "milestone" : false,
+    "minEstimate" : "5h",
+    "name" : "Audio Streaming - Database Schema",
+    "orderId" : 7,
+    "parentTaskId" : "d757df03-4fe2-4918-a851-4adf209f7d30",
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "58c494ba-a8e2-4540-b15d-789948a053af",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "5h"
+  }, {
+    "critical" : false,
+    "duration" : "10h",
+    "finish" : "2025-08-08T16:05:30",
+    "id" : "04a58d7b-0c4b-4005-a137-5dcf03adf9fa",
+    "impactOnCost" : true,
+    "maxEstimate" : "9h",
+    "milestone" : false,
+    "minEstimate" : "5h",
+    "name" : "Audio Streaming - Backend Implementation",
+    "orderId" : 8,
+    "parentTaskId" : "d757df03-4fe2-4918-a851-4adf209f7d30",
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "5b35269f-afb8-4779-9dab-0523bd641f58",
+      "predecessorId" : "052985b6-f970-40c2-b483-541c50681311"
+    } ],
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "44f6ee70-606c-4c3d-b8e7-4020e96b38ca",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-07T14:05:30",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "5h"
+  }, {
+    "critical" : false,
+    "duration" : "2d",
+    "finish" : "2025-08-14T10:00:00",
+    "id" : "9663ff21-71ff-4ef3-89e1-3d18f2f6d67b",
+    "impactOnCost" : true,
+    "maxEstimate" : "1d 22h",
+    "milestone" : false,
+    "minEstimate" : "1d",
+    "name" : "Audio Streaming - Frontend Development",
+    "orderId" : 9,
+    "parentTaskId" : "d757df03-4fe2-4918-a851-4adf209f7d30",
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "5c37e673-acd7-4684-9937-5a38e60b0ddd",
+      "predecessorId" : "7a1eb7ab-b9a5-401a-a1f1-a322e3639ee5"
+    } ],
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "44f6ee70-606c-4c3d-b8e7-4020e96b38ca",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-06T10:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "1d"
+  }, {
+    "critical" : false,
+    "duration" : "12h 20m",
+    "finish" : "2025-08-12T13:25:30",
+    "id" : "bbaac68d-8c79-45e2-9ba5-b36b3631256c",
+    "impactOnCost" : true,
+    "maxEstimate" : "0s",
+    "milestone" : false,
+    "minEstimate" : "0s",
+    "name" : "Cache Implementation",
+    "orderId" : 10,
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "6d148ee2-6643-4035-90d5-33222335c96a",
+      "predecessorId" : "cdddfcb1-8253-432c-875c-9f0adfc43e26"
+    } ],
+    "progress" : 0,
+    "remainingEstimate" : "0s",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-08T16:05:30",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "0s"
+  }, {
+    "critical" : false,
+    "duration" : "13h 20m",
+    "finish" : "2025-08-12T13:25:30",
+    "id" : "5ba5f53a-ddf3-4e86-bfb5-6004f6374dcc",
+    "impactOnCost" : true,
+    "maxEstimate" : "20h",
+    "milestone" : false,
+    "minEstimate" : "12h",
+    "name" : "Cache Implementation - Requirements Analysis",
+    "orderId" : 11,
+    "parentTaskId" : "bbaac68d-8c79-45e2-9ba5-b36b3631256c",
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "8096e3fa-fc76-46a9-88e7-07dffbd9a640",
+      "predecessorId" : "a33d960e-f00d-40a1-ba8d-94b272e38337"
+    } ],
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "d815a48b-0dae-4b6e-977e-cb4898015c61",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-08T16:05:30",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "12h"
+  }, {
+    "critical" : false,
+    "duration" : "1d 10h 40m",
+    "finish" : "2025-08-08T13:40:00",
+    "id" : "abae11e9-a363-4c56-b4b3-d14873490b89",
+    "impactOnCost" : true,
+    "maxEstimate" : "0s",
+    "milestone" : false,
+    "minEstimate" : "0s",
+    "name" : "Order History",
+    "orderId" : 12,
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "e882795d-7445-491d-9e90-ad92e9450d79",
+      "predecessorId" : "cdddfcb1-8253-432c-875c-9f0adfc43e26"
+    } ],
+    "progress" : 0,
+    "remainingEstimate" : "0s",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "0s"
+  }, {
+    "critical" : false,
+    "duration" : "1d 12h 40m",
+    "finish" : "2025-08-08T13:40:00",
+    "id" : "5a96010e-e9a1-4423-8784-56504abf9de1",
+    "impactOnCost" : true,
+    "maxEstimate" : "2d 18h",
+    "milestone" : false,
+    "minEstimate" : "1d 9h",
+    "name" : "Order History - Requirements Analysis",
+    "orderId" : 13,
+    "parentTaskId" : "abae11e9-a363-4c56-b4b3-d14873490b89",
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "f96c1345-6c8f-4dcf-a9f0-9e9456316af0",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "1d 9h"
+  }, {
+    "critical" : false,
+    "duration" : "8h",
+    "finish" : "2025-08-04T17:00:00",
+    "id" : "fd96d1eb-2daa-498d-8c6f-ff2248ff9883",
+    "impactOnCost" : true,
+    "maxEstimate" : "4h",
+    "milestone" : false,
+    "minEstimate" : "4h",
+    "name" : "Order History - Technical Design",
+    "orderId" : 14,
+    "parentTaskId" : "abae11e9-a363-4c56-b4b3-d14873490b89",
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "44f6ee70-606c-4c3d-b8e7-4020e96b38ca",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "4h"
+  }, {
+    "critical" : false,
+    "duration" : "1d 6h",
+    "finish" : "2025-08-07T15:00:00",
+    "id" : "b90ffbb7-339a-42c0-a27b-02dde7d55e19",
+    "impactOnCost" : true,
+    "maxEstimate" : "1d 3h",
+    "milestone" : false,
+    "minEstimate" : "15h",
+    "name" : "Order History - Database Schema",
+    "orderId" : 15,
+    "parentTaskId" : "abae11e9-a363-4c56-b4b3-d14873490b89",
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "44f6ee70-606c-4c3d-b8e7-4020e96b38ca",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "15h"
+  }, {
+    "critical" : false,
+    "duration" : "12h 13m 18s",
+    "finish" : "2025-08-05T13:13:18",
+    "id" : "d59df744-d033-4a40-adba-2c0665ba9831",
+    "impactOnCost" : true,
+    "maxEstimate" : "14h",
+    "milestone" : false,
+    "minEstimate" : "11h",
+    "name" : "Order History - Backend Implementation",
+    "orderId" : 16,
+    "parentTaskId" : "abae11e9-a363-4c56-b4b3-d14873490b89",
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "d815a48b-0dae-4b6e-977e-cb4898015c61",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "11h"
+  }, {
+    "critical" : false,
+    "duration" : "16h 21m 48s",
+    "finish" : "2025-08-06T08:21:48",
+    "id" : "e85d2848-4965-4978-809e-ee43e80679eb",
+    "impactOnCost" : true,
+    "maxEstimate" : "1d",
+    "milestone" : false,
+    "minEstimate" : "18h",
+    "name" : "Order History - Frontend Development",
+    "orderId" : 17,
+    "parentTaskId" : "abae11e9-a363-4c56-b4b3-d14873490b89",
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "58c494ba-a8e2-4540-b15d-789948a053af",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "18h"
+  }, {
+    "critical" : false,
+    "duration" : "15h",
+    "finish" : "2025-08-11T14:05:30",
+    "id" : "7432d0cb-3c70-42d7-b839-93d1e7291bcc",
+    "impactOnCost" : true,
+    "maxEstimate" : "0s",
+    "milestone" : false,
+    "minEstimate" : "0s",
+    "name" : "Invoice Generation",
+    "orderId" : 18,
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "b3aea407-fc55-453a-895a-7a0f40356a42",
+      "predecessorId" : "cdddfcb1-8253-432c-875c-9f0adfc43e26"
+    } ],
+    "progress" : 0,
+    "remainingEstimate" : "0s",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-07T14:05:30",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "0s"
+  }, {
+    "critical" : false,
+    "duration" : "16h",
+    "finish" : "2025-08-11T14:05:30",
+    "id" : "bbd86ca4-eaa8-447d-b192-73bb9c7be37e",
+    "impactOnCost" : true,
+    "maxEstimate" : "16h",
+    "milestone" : false,
+    "minEstimate" : "8h",
+    "name" : "Invoice Generation - Requirements Analysis",
+    "orderId" : 19,
+    "parentTaskId" : "7432d0cb-3c70-42d7-b839-93d1e7291bcc",
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "17058a5a-aa77-43d7-8376-eea38f7b24e6",
+      "predecessorId" : "052985b6-f970-40c2-b483-541c50681311"
+    } ],
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "44f6ee70-606c-4c3d-b8e7-4020e96b38ca",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-07T14:05:30",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "8h"
+  }, {
+    "critical" : false,
+    "duration" : "5d 23h 35m 30s",
+    "finish" : "2025-08-29T09:05:30",
+    "id" : "bfc7eb16-7488-46bf-868f-aa91ad81f068",
+    "impactOnCost" : true,
+    "maxEstimate" : "0s",
+    "milestone" : false,
+    "minEstimate" : "0s",
+    "name" : "Activity Log",
+    "orderId" : 20,
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "fb559293-404a-4a5f-adc4-2155b662bf33",
+      "predecessorId" : "cdddfcb1-8253-432c-875c-9f0adfc43e26"
+    } ],
+    "progress" : 0,
+    "remainingEstimate" : "0s",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "0s"
+  }, {
+    "critical" : true,
+    "duration" : "3d 2h",
+    "finish" : "2025-08-29T09:05:30",
+    "id" : "384b3f37-7cd6-486d-9803-b7e6acb3e7c2",
+    "impactOnCost" : true,
+    "maxEstimate" : "2d 18h",
+    "milestone" : false,
+    "minEstimate" : "1d 13h",
+    "name" : "Activity Log - Requirements Analysis",
+    "orderId" : 21,
+    "parentTaskId" : "bfc7eb16-7488-46bf-868f-aa91ad81f068",
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "0d4f109b-c1c3-4187-bd8f-15c08f0920f2",
+      "predecessorId" : "a33d960e-f00d-40a1-ba8d-94b272e38337"
+    } ],
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "44f6ee70-606c-4c3d-b8e7-4020e96b38ca",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-08T16:05:30",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "1d 13h"
+  }, {
+    "critical" : false,
+    "duration" : "1d 2h",
+    "finish" : "2025-08-13T15:40:00",
+    "id" : "3aca7f0d-ab17-4356-9b29-4d36d4abcd22",
+    "impactOnCost" : true,
+    "maxEstimate" : "14h",
+    "milestone" : false,
+    "minEstimate" : "13h",
+    "name" : "Activity Log - Technical Design",
+    "orderId" : 22,
+    "parentTaskId" : "bfc7eb16-7488-46bf-868f-aa91ad81f068",
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "2eb6f979-3a42-4e0f-8f31-2568679e2c60",
+      "predecessorId" : "5a96010e-e9a1-4423-8784-56504abf9de1"
+    } ],
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "44f6ee70-606c-4c3d-b8e7-4020e96b38ca",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-08T13:40:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "13h"
+  }, {
+    "critical" : false,
+    "duration" : "3h 20m",
+    "finish" : "2025-08-04T11:20:00",
+    "id" : "325cd1cd-f7b3-401b-89bf-dc04bcd55e2a",
+    "impactOnCost" : true,
+    "maxEstimate" : "4h",
+    "milestone" : false,
+    "minEstimate" : "3h",
+    "name" : "Activity Log - Database Schema",
+    "orderId" : 23,
+    "parentTaskId" : "bfc7eb16-7488-46bf-868f-aa91ad81f068",
+    "progress" : 1.0,
+    "remainingEstimate" : "0s",
+    "resourceId" : "f96c1345-6c8f-4dcf-a9f0-9e9456316af0",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-08-04T08:00:00",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "DONE",
+    "timeSpent" : "3h"
+  }, {
+    "critical" : true,
+    "duration" : "2d 5h",
+    "finish" : "2025-09-18T10:05:30",
+    "id" : "4e065be5-fab1-4907-88a3-1cb60405865d",
+    "impactOnCost" : false,
+    "maxEstimate" : "0s",
+    "milestone" : false,
+    "minEstimate" : "2d 5h",
+    "name" : "Delivery buffer (from critical path tasks)",
+    "orderId" : 24,
+    "predecessors" : [ {
+      "visible" : true,
+      "id" : "4c0d8e17-4480-4831-9c13-acbdb5e42775",
+      "predecessorId" : "21729121-8c79-47d7-90d5-22382e18bb60"
+    }, {
+      "visible" : true,
+      "id" : "8ad1e428-f415-4132-a35b-1436f5990222",
+      "predecessorId" : "d757df03-4fe2-4918-a851-4adf209f7d30"
+    }, {
+      "visible" : true,
+      "id" : "9d73d964-a998-4104-90be-0b6b3f466e32",
+      "predecessorId" : "bbaac68d-8c79-45e2-9ba5-b36b3631256c"
+    }, {
+      "visible" : true,
+      "id" : "40abaa63-57ab-4f6b-a722-e09f2b77887c",
+      "predecessorId" : "abae11e9-a363-4c56-b4b3-d14873490b89"
+    }, {
+      "visible" : true,
+      "id" : "b18dbc77-5ad3-4877-81b8-d198969e1887",
+      "predecessorId" : "7432d0cb-3c70-42d7-b839-93d1e7291bcc"
+    }, {
+      "visible" : true,
+      "id" : "f417ac0b-afa4-4f46-9e0c-144229359ef5",
+      "predecessorId" : "bfc7eb16-7488-46bf-868f-aa91ad81f068"
+    } ],
+    "progress" : 0,
+    "remainingEstimate" : "2d 5h",
+    "sprintId" : "d5b3e7b4-2524-4ce1-9749-2115ba7bf51b",
+    "start" : "2025-09-09T09:35:30",
+    "taskMode" : "AUTO_SCHEDULED",
+    "taskStatus" : "TODO",
+    "timeSpent" : "0s"
+  } ]
+}

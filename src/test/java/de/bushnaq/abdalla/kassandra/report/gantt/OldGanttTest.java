@@ -80,7 +80,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         sprint.initUserMap(userApi.getAll(sprint.getId()));
         sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
         levelResourcesAndPersist(testInfo, sprint, null);
-        generateWorklogs(sprint, ParameterOptions.getLocalNow());
+        generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
         generateGanttChart(testInfo, sprint.getId(), null);
         generateBurndownChart(testInfo, sprint.getId());
     }
@@ -125,7 +125,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         sprint.initUserMap(userApi.getAll(sprint.getId()));
         sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
         levelResourcesAndPersist(testInfo, sprint, null);
-        generateWorklogs(sprint, ParameterOptions.getLocalNow());
+        generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
         generateGanttChart(testInfo, sprint.getId(), null);
         generateBurndownChart(testInfo, sprint.getId());
     }
@@ -175,7 +175,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         sprint.initUserMap(userApi.getAll(sprint.getId()));
         sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
         levelResourcesAndPersist(testInfo, sprint, null);
-        generateWorklogs(sprint, ParameterOptions.getLocalNow());
+        generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
         generateGanttChart(testInfo, sprint.getId(), null);
         generateBurndownChart(testInfo, sprint.getId());
     }

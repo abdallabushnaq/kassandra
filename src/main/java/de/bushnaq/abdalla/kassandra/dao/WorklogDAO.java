@@ -17,7 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.dao;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.UuidGenerator;
@@ -55,11 +58,10 @@ public class WorklogDAO extends AbstractTimeAwareDAO {
 
     @Column(nullable = false)
     private UUID taskId;
-
+    @Column(nullable = false)
+    private Duration timeRemainingEstimate;
     @Column(nullable = false)
     private Duration timeSpent;
-
     @Column(nullable = true)
     private UUID updateAuthorId;
-
 }

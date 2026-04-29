@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
-import java.util.UUID;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
@@ -44,6 +43,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
@@ -65,7 +65,7 @@ public class WorklogDialog extends Dialog {
     public static final String            TITLE_ID             = "worklog-dialog-title";
     public static final String            WORKLOG_DIALOG       = "worklog-dialog";
     private final       TextArea          commentField;
-    private final UUID currentUserId;
+    private final       UUID              currentUserId;
     private final       DateTimePicker    dateTimePicker;
     private final       Worklog           existingWorklog;
     private final       boolean           isEditMode;
@@ -346,6 +346,7 @@ public class WorklogDialog extends Dialog {
         worklog.setTaskId(task.getId());
         worklog.setSprintId(task.getSprintId());
         worklog.setTimeSpent(timeSpent);
+        worklog.setTimeRemainingEstimate(timeRemaining);
         worklog.setComment(commentField.getValue());
         worklog.setAuthorId(currentUserId);
         worklog.setUpdateAuthorId(currentUserId);
@@ -384,6 +385,7 @@ public class WorklogDialog extends Dialog {
 
         // Mutate the existing worklog in place (same object reference held by task.getWorklogs())
         existingWorklog.setTimeSpent(newTimeSpent);
+        existingWorklog.setTimeRemainingEstimate(timeRemaining);
         existingWorklog.setComment(commentField.getValue());
         existingWorklog.setStart(startDateTime);
         existingWorklog.setUpdateAuthorId(currentUserId);

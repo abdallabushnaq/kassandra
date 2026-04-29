@@ -28,6 +28,7 @@ import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -184,14 +185,24 @@ public class Task implements Comparable<Task> {
      * clear all work data, so that we can reinitialize using worklogs
      */
     public void add(List<Worklog> worklogs) {
+        OffsetDateTime last                  = OffsetDateTime.MIN;
+        Duration       timeRemainingEstimate = null;
         this.worklogs.clear();
-        timeSpent         = Duration.ZERO;
-        remainingEstimate = minEstimate;
+        timeSpent = Duration.ZERO;
         for (Worklog worklog : worklogs) {
             if (worklog.getTaskId().equals(getId())) {
+                if (worklog.getStart().isAfter(last)) {
+                    last                  = worklog.getStart();
+                    timeRemainingEstimate = worklog.getTimeRemainingEstimate();
+                }
                 addWorklog(worklog);
             }
         }
+        if (timeRemainingEstimate == null) {
+            setRemainingEstimate(minEstimate);
+            return;
+        }
+        setRemainingEstimate(timeRemainingEstimate);
     }
 
     /**
@@ -235,13 +246,13 @@ public class Task implements Comparable<Task> {
 
     /**
      * Adds a work log entry to this task.
-     * The work log's task ID will be set to this task's ID.
+     * adds worklog spentTime to the tasks spentTime.
      *
      * @param worklog the work log entry to add
      */
     public void addWorklog(Worklog worklog) {
         addTimeSpent(worklog.getTimeSpent());
-        removeRemainingEstimate(worklog.getTimeSpent());
+        setRemainingEstimate(worklog.getTimeRemainingEstimate());
         recalculate();
         worklogs.add(worklog);
     }
@@ -554,15 +565,4 @@ public class Task implements Comparable<Task> {
         childTask.setParentTaskId(null);
     }
 
-    /**
-     * Subtracts time from the remaining estimate.
-     * If the duration is null, no action is taken.
-     *
-     * @param w the duration to subtract from the remaining estimate
-     */
-    public void removeRemainingEstimate(Duration w) {
-        if (w != null) {
-            remainingEstimate = remainingEstimate.minus(w);
-        }
-    }
 }

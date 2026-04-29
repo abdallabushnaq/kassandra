@@ -67,14 +67,22 @@ import static org.junit.jupiter.api.Assertions.fail;
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @Slf4j
 public class AbstractGanttTestUtil extends AbstractEntityGenerator {
+    /**
+     * Probability that a sprint runs with zero delay (on schedule).
+     */
+    private static final float                  DELAY_PROBABILITY         = 0.4f;
+    /**
+     * Maximum over-run factor applied to {@code maxEstimate} when a sprint is delayed.
+     */
+    private static final float                  MAX_DELAY_FACTOR          = 0.3f;
     @Autowired
-    protected       Context                context;
+    protected            Context                context;
     @Autowired
-    private         H2DatabaseStateManager databaseStateManager;
-    public final    DateTimeFormatter      dtfymdhmss                = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm:ss.SSS");
-    protected final List<Throwable>        exceptions                = new ArrayList<>();
-    protected       String                 testReferenceResultFolder = "test-reference-results";
-    protected       String                 testResultFolder          = "test-results";
+    private              H2DatabaseStateManager databaseStateManager;
+    public final         DateTimeFormatter      dtfymdhmss                = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm:ss.SSS");
+    protected final      List<Throwable>        exceptions                = new ArrayList<>();
+    protected            String                 testReferenceResultFolder = "test-reference-results";
+    protected            String                 testResultFolder          = "test-results";
 
     protected void addOneProduct(String sprintName) {
         int       count         = 1;
@@ -89,6 +97,33 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
             addSprint(feature, sprintName);
         }
         testProducts();
+    }
+
+    /**
+     * Returns {@code true} when all predecessors of the given task—including predecessors
+     * declared on any ancestor task in the parent hierarchy—have a zero
+     * {@code remainingEstimate} (i.e. are done).
+     * <p>
+     * Predecessors that cannot be resolved within the sprint (e.g. cross-sprint relations)
+     * are treated as done so they do not block execution.
+     * </p>
+     *
+     * @param task   the task to check
+     * @param sprint the sprint that owns the task
+     * @return {@code true} if no unfinished predecessors exist; {@code false} otherwise
+     */
+    private boolean areAllPredecessorsDone(Task task, Sprint sprint) {
+        Task cursor = task;
+        while (cursor != null) {
+            for (Relation relation : cursor.getPredecessors()) {
+                Task predecessor = sprint.getTaskById(relation.getPredecessorId());
+                if (predecessor != null && !predecessor.getRemainingEstimate().isZero()) {
+                    return false;
+                }
+            }
+            cursor = cursor.getParentTask();
+        }
+        return true;
     }
 
     private void compareResults(TestInfo testInfo) throws IOException {
@@ -198,49 +233,6 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         }
         return maxDays;
     }
-
-//    private RenderDao createRenderDao(Context context, Sprint sprint, String column, LocalDateTime now, int chartWidth, int chartHeight, String link) {
-//        RenderDao dao = new RenderDao();
-//        dao.context            = context;
-//        dao.column             = column;
-//        dao.sprintName         = column + "-burn-down";
-//        dao.link               = link;
-//        dao.start              = sprint.getStart();
-//        dao.now                = now;
-//        dao.end                = sprint.getEnd();
-//        dao.release            = sprint.getReleaseDate();
-//        dao.chartWidth         = chartWidth;
-//        dao.chartHeight        = chartHeight;
-//        dao.sprint             = sprint;
-//        dao.estimatedBestWork  = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
-//        dao.estimatedWorstWork = null;
-//        dao.maxWorked          = DateUtil.add(sprint.getWorked(), sprint.getRemaining());
-//        dao.remaining          = sprint.getRemaining();
-//        dao.worklog            = sprint.getWorklogs();
-//        dao.worklogRemaining   = sprint.getWorklogRemaining();
-//        dao.cssClass           = "scheduleWithMargin";
-//        dao.kassandraTheme     = context.parameters.getActiveGraphicsTheme();
-//        return dao;
-//    }
-
-//    /**
-//     * Levels resources for a sprint and persists the updated task dates and sprint back to the
-//     * database. Unlike {@link #levelResourcesAndPersist(TestInfo, Sprint, ProjectFile)} this method does
-//     * <em>not</em> write any reference or result JSON files; it is used for intermediate
-//     * iterations during cross-sprint leveling.
-//     *
-//     * @param sprint the fully initialized sprint to level
-//     */
-//    private void doLevelResources(Sprint sprint) throws Exception {
-//        initializeInstances();
-//        GanttUtil         ganttUtil = new GanttUtil();
-//        GanttErrorHandler eh        = new GanttErrorHandler();
-//        ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
-//        try (Profiler pc = new Profiler(SampleType.JPA)) {
-//            sprint.getTasks().forEach(task -> taskApi.update(task));
-//            sprintApi.update(sprint);
-//        }
-//    }
 
     protected void generateBurndownChart(TestInfo testInfo, UUID sprintId) throws Exception {
         generateBurndownChart(testInfo, sprintId, 0, 36 * 20);
@@ -472,61 +464,96 @@ public class AbstractGanttTestUtil extends AbstractEntityGenerator {
         log.info("--------------------------");
         log.info("Generating work logs start");
         for (Sprint sprint : expectedSprints) {
-            generateWorklogs(sprint, ParameterOptions.getLocalNow());
+            // ~60 % of sprints run on schedule; ~40 % carry a delay of up to MAX_DELAY_FACTOR.
+            float delay = random.nextFloat() < (1f - DELAY_PROBABILITY) ? 0.0f : random.nextFloat() * MAX_DELAY_FACTOR;
+            log.debug("Sprint '{}' delay factor: {}", sprint.getName(), delay);
+            generateWorklogs(sprint, delay, ParameterOptions.getLocalNow());
         }
         log.info("Generating work logs end");
         log.info("--------------------------");
     }
 
     /**
-     * Generates worklogs for the tasks in the sprint simulating a team of people working.
+     * Generates worklogs for the tasks in the sprint, simulating a team working day-by-day.
+     * <p>
+     * <b>Estimate inflation (delay &gt; 0):</b> before the day-loop starts, each leaf task's
+     * {@code remainingEstimate} is inflated in-memory to a value sampled from
+     * {@code [maxEstimate, maxEstimate * (1 + delay)]}, so that delayed sprints exceed the
+     * worst-case estimate.  Tasks in sprints with {@code delay == 0} keep their original
+     * {@code minEstimate}.
+     * </p>
+     * <p>
+     * <b>Dependency gate:</b> work is only logged for a task when all of its predecessors—
+     * including predecessors declared on any ancestor task in the hierarchy—have a zero
+     * {@code remainingEstimate} (i.e. are effectively done).
+     * </p>
      *
-     * @param sprint
-     * @param now
+     * @param sprint the sprint to generate worklogs for
+     * @param delay  over-run factor (0 = no over-run; 0.3 = up to 30 % above {@code maxEstimate})
+     * @param now    the simulated current date/time; work is only logged for days before this date
      */
     @Transactional
-    protected void generateWorklogs(Sprint sprint, LocalDateTime now) {
+    protected void generateWorklogs(Sprint sprint, float delay, LocalDateTime now) {
         try (Profiler pc = new Profiler(SampleType.CPU)) {
 
             final long SECONDS_PER_WORKING_DAY = 75 * 6 * 60;
-            final long SECONDS_PER_HOUR        = 60 * 60;
-            long       oneDay                  = 75 * SECONDS_PER_HOUR / 10;
-            Duration   rest                    = Duration.ofSeconds(1);
-            //- iterate over the days of the sprint
+
+            // Step 1: pre-inflate remaining estimates when this sprint is delayed.
+            if (delay > 0f) {
+                for (Task task : sprint.getTasks()) {
+                    if (task.isTask() && task.isImpactOnCost()) {
+                        Duration maxEstimate = task.getMaxEstimate();
+                        if (maxEstimate != null && !maxEstimate.isZero()) {
+                            long     extraSeconds = (long) (delay * maxEstimate.getSeconds() * random.nextFloat());
+                            Duration inflated     = maxEstimate.plusSeconds(extraSeconds);
+                            log.debug("Inflating task '{}': minEstimate={}, inflated remainingEstimate={} (delay={})", task.getName(), task.getMinEstimate(), inflated, delay);
+                            task.setRemainingEstimate(inflated);
+                        }
+                    }
+                }
+            }
+            Duration rest = Duration.ofSeconds(1);
+            // Step 2: iterate over the days of the sprint
             for (LocalDate day = sprint.getStart().toLocalDate(); !rest.equals(Duration.ZERO) && now.toLocalDate().isAfter(day); day = day.plusDays(1)) {
-                LocalDateTime startOfDay     = day.atStartOfDay().plusHours(8);
-                LocalDateTime endOfDay       = day.atStartOfDay().plusHours(16).plusMinutes(30);
-                LocalDateTime lunchStartTime = DateUtil.calculateLunchStartTime(day.atStartOfDay());
-                LocalDateTime lunchStopTime  = DateUtil.calculateLunchStopTime(day.atStartOfDay());
+                LocalDateTime startOfDay = day.atStartOfDay().plusHours(8);
                 rest = Duration.ZERO;
-                //iterate over all tasks
+                // iterate over all tasks
                 for (Task task : sprint.getTasks()) {
                     if (task.isTask() && task.isImpactOnCost()) {
                         Number availability = task.getAvailability();
                         if (!day.isBefore(task.getStart().toLocalDate())) {
-                            // Day is after task start
+                            // Day is on or after task start
                             if (task.getEffectiveCalendar().isWorkingDate(day)) {
-                                //is a working day for this user
+                                // is a working day for this user
                                 if (task.getStart().isBefore(startOfDay) || task.getStart().isEqual(startOfDay)) {
                                     if (!task.getRemainingEstimate().isZero()) {
-                                        // we have the whole day
-                                        double   minPerformance = 0.6f;
-                                        double   fraction       = minPerformance + random.nextFloat() * (1 - minPerformance) * 1.2;
-                                        Duration maxWork        = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
-                                        Duration w              = maxWork;
-                                        Duration delta          = task.getRemainingEstimate().minus(w);
-                                        if (delta.isZero() || delta.isPositive()) {
+                                        if (areAllPredecessorsDone(task, sprint)) {
+                                            // we have the whole day
+                                            double performance = 1f;//daily performance is usually 100% of the resource availability
+                                            if (random.nextFloat() < 0.2f) {
+                                                //in rare cases, performance can be much worse or better than usual, e.g. due to unexpected problems or overtime
+                                                double minPerformance = 0.5f;//minimum performance of a resource (underwork)
+                                                double maxPerformance = 1.2f;//maximum performance of a resource (overwork)
+                                                performance = minPerformance + random.nextFloat() * (maxPerformance - minPerformance);
+                                            }
+                                            Duration maxWork = Duration.ofSeconds((long) ((performance * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                            Duration w       = maxWork;
+                                            Duration delta   = task.getRemainingEstimate().minus(w);
+                                            if (delta.isZero() || delta.isPositive()) {
+                                            } else {
+                                                w = task.getRemainingEstimate();
+                                            }
+                                            addWorklogToBuffer(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
+                                            task.calculateStatus();
                                         } else {
-                                            w = task.getRemainingEstimate();
+                                            log.debug("Task '{}' blocked on {} – predecessor not yet done", task.getName(), day);
                                         }
-                                        addWorklogToBuffer(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
-                                        task.calculateStatus();
                                     }
                                 }
                             }
                         }
                     }
-                    rest = rest.plus(task.getRemainingEstimate());//accumulate the rest
+                    rest = rest.plus(task.getRemainingEstimate()); // accumulate the rest
                 }
             }
             sprint.recalculate(ParameterOptions.getLocalNow());

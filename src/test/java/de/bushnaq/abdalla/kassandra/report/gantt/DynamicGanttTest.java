@@ -128,7 +128,7 @@ public class DynamicGanttTest extends AbstractGanttTester {
         g.testTheme = testTheme;
 
         g.levelResources(testInfo, sprint, null);
-        g.generateWorklogs(sprint.getId(), ParameterOptions.getLocalNow());
+        g.generateWorklogs(sprint, 0.5f, ParameterOptions.getLocalNow());
         for (Task task : sprint.getTasks()) {
             Duration work = Duration.ZERO;
             for (Worklog worklog : task.getWorklogs()) {

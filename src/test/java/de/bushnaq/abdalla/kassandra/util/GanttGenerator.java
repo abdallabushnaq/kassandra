@@ -19,7 +19,9 @@ package de.bushnaq.abdalla.kassandra.util;
 
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.dto.Relation;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownChart;
@@ -35,9 +37,12 @@ import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectFile;
 import org.junit.jupiter.api.TestInfo;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -47,6 +52,7 @@ import java.util.UUID;
 
 import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
 
+@Slf4j
 public class GanttGenerator extends MPXJGenerator {
 
     protected final Random random    = new Random();
@@ -56,6 +62,33 @@ public class GanttGenerator extends MPXJGenerator {
      * Tests that need to switch theme (e.g. {@code CriticalTest}) set this field directly.
      */
     public          ETheme testTheme = ETheme.dark;
+
+    /**
+     * Returns {@code true} when all predecessors of the given task—including predecessors
+     * declared on any ancestor task in the parent hierarchy—have a zero
+     * {@code remainingEstimate} (i.e. are done).
+     * <p>
+     * Predecessors that cannot be resolved within the sprint (e.g. cross-sprint relations)
+     * are treated as done so they do not block execution.
+     * </p>
+     *
+     * @param task   the task to check
+     * @param sprint the sprint that owns the task
+     * @return {@code true} if no unfinished predecessors exist; {@code false} otherwise
+     */
+    private boolean areAllPredecessorsDone(Task task, Sprint sprint) {
+        Task cursor = task;
+        while (cursor != null) {
+            for (Relation relation : cursor.getPredecessors()) {
+                Task predecessor = sprint.getTaskById(relation.getPredecessorId());
+                if (predecessor != null && !predecessor.getRemainingEstimate().isZero()) {
+                    return false;
+                }
+            }
+            cursor = cursor.getParentTask();
+        }
+        return true;
+    }
 
     public void generateBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
         Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
@@ -147,6 +180,97 @@ public class GanttGenerator extends MPXJGenerator {
     }
 
     /**
+     * Generates worklogs for the tasks in the sprint, simulating a team working day-by-day.
+     * <p>
+     * <b>Estimate inflation (delay &gt; 0):</b> before the day-loop starts, each leaf task's
+     * {@code remainingEstimate} is inflated in-memory to a value sampled from
+     * {@code [maxEstimate, maxEstimate * (1 + delay)]}, so that delayed sprints exceed the
+     * worst-case estimate.  Tasks in sprints with {@code delay == 0} keep their original
+     * {@code minEstimate}.
+     * </p>
+     * <p>
+     * <b>Dependency gate:</b> work is only logged for a task when all of its predecessors—
+     * including predecessors declared on any ancestor task in the hierarchy—have a zero
+     * {@code remainingEstimate} (i.e. are effectively done).
+     * </p>
+     *
+     * @param sprint the sprint to generate worklogs for
+     * @param delay  over-run factor (0 = no over-run; 0.3 = up to 30 % above {@code maxEstimate})
+     * @param now    the simulated current date/time; work is only logged for days before this date
+     */
+    @Transactional
+    public void generateWorklogs(Sprint sprint, float delay, LocalDateTime now) {
+        try (Profiler pc = new Profiler(SampleType.CPU)) {
+
+            final long SECONDS_PER_WORKING_DAY = 75 * 6 * 60;
+
+            // Step 1: pre-inflate remaining estimates when this sprint is delayed.
+            if (delay > 0f) {
+                for (Task task : sprint.getTasks()) {
+                    if (task.isTask() && task.isImpactOnCost()) {
+                        Duration maxEstimate = task.getMaxEstimate();
+                        if (maxEstimate != null && !maxEstimate.isZero()) {
+                            long     extraSeconds = (long) (delay * maxEstimate.getSeconds() * random.nextFloat());
+                            Duration inflated     = maxEstimate.plusSeconds(extraSeconds);
+                            log.debug("Inflating task '{}': minEstimate={}, inflated remainingEstimate={} (delay={})", task.getName(), task.getMinEstimate(), inflated, delay);
+                            task.setRemainingEstimate(inflated);
+                        }
+                    }
+                }
+            }
+            printTasks(sprint);
+            Duration rest = Duration.ofSeconds(1);
+            // Step 2: iterate over the days of the sprint
+            for (LocalDate day = sprint.getStart().toLocalDate(); !rest.equals(Duration.ZERO) && now.toLocalDate().isAfter(day); day = day.plusDays(1)) {
+                LocalDateTime startOfDay = day.atStartOfDay().plusHours(8);
+                rest = Duration.ZERO;
+                // iterate over all tasks
+                for (Task task : sprint.getTasks()) {
+                    if (task.isTask() && task.isImpactOnCost()) {
+                        Number availability = task.getAvailability();
+                        if (!day.isBefore(task.getStart().toLocalDate())) {
+                            // Day is on or after task start
+                            if (task.getEffectiveCalendar().isWorkingDate(day)) {
+                                // is a working day for this user
+                                if (task.getStart().isBefore(startOfDay) || task.getStart().isEqual(startOfDay)) {
+                                    if (!task.getRemainingEstimate().isZero()) {
+                                        if (areAllPredecessorsDone(task, sprint)) {
+                                            // we have the whole day
+                                            double performance = 1f;//daily performance is usually 100% of the resource availability
+                                            if (random.nextFloat() < 0.2f) {
+                                                //in rare cases, performance can be much worse or better than usual, e.g. due to unexpected problems or overtime
+                                                double minPerformance = 0.5f;//minimum performance of a resource (underwork)
+                                                double maxPerformance = 1.2f;//maximum performance of a resource (overwork)
+                                                performance = minPerformance + random.nextFloat() * (maxPerformance - minPerformance);
+                                            }
+                                            Duration maxWork = Duration.ofSeconds((long) ((performance * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                            Duration w       = maxWork;
+                                            Duration delta   = task.getRemainingEstimate().minus(w);
+                                            if (delta.isZero() || delta.isPositive()) {
+                                            } else {
+                                                w = task.getRemainingEstimate();
+                                            }
+                                            Worklog worklog = addWorklog(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
+                                            task.calculateStatus();
+                                        } else {
+                                            log.debug("Task '{}' blocked on {} – predecessor not yet done", task.getName(), day);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    rest = rest.plus(task.getRemainingEstimate()); // accumulate the rest
+                }
+            }
+            printTasks(sprint);
+            sprint.recalculate(ParameterOptions.getLocalNow());
+        }
+//        flushWorklogBuffer(sprint);
+//        persistTasksAndSprint(sprint);
+    }
+
+    /**
      * Generates worklogs for the tasks in the sprint simulating a team of people working.
      *
      * @param sprint
@@ -189,20 +313,8 @@ public class GanttGenerator extends MPXJGenerator {
                                         }
                                         Worklog worklog = addWorklog(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
 
-//                                        task.addTimeSpent(savedWorklog.getTimeSpent());
-//                                        task.setRemainingEstimate(timeRemaining);
-//                                        task.recalculate();
-
-
-//                                        task.addTimeSpent(w);
-//                                        task.removeRemainingEstimate(w);
-//                                        task.recalculate();
                                         task.calculateStatus();
-//                                        task.setTaskStatus(TaskStatus.IN_PROGRESS);
                                     }
-//                                    else {
-//                                        task.setTaskStatus(TaskStatus.DONE);
-//                                    }
                                 }
                             }
                         }
@@ -224,28 +336,16 @@ public class GanttGenerator extends MPXJGenerator {
         GanttUtil         ganttUtil = new GanttUtil();
         GanttErrorHandler eh        = new GanttErrorHandler();
         ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
-
-//        if (projectFile == null) {
-//            try (Profiler pc = new Profiler(SampleType.FILE)) {
-//                storeExpectedResult(testInfo, sprint);
-//                storeResult(testInfo, sprint);
-//            }
-//        }
     }
 
+    private void printTasks(Sprint sprint) {
+        log.info("---------------------------");
+        for (Task task : sprint.getTasks()) {
+            if (!task.isStory() && !task.isDeliveryBufferTask() && !task.isMilestone())
+                log.info("Task '{}': minEstimate={}, maxEstimate={}, spent={}, remainingEstimate={}", task.getName(), task.getMinEstimate(), task.getMaxEstimate(), task.getTimeSpent(), task.getRemainingEstimate());
+        }
+        log.info("---------------------------");
+    }
 
-//    protected GanttContext initializeInstances() throws Exception {
-//        GanttContext gc = new GanttContext();
-//        gc.allUsers    = new ArrayList<>(users);
-//        gc.allProducts = new ArrayList<>(products);
-//        gc.allVersions = new ArrayList<>(versions);
-//        gc.allFeatures = new ArrayList<>(features);
-//        gc.allSprints  = new ArrayList<>(sprints);
-//        gc.allTasks    = new ArrayList<>(tasks);
-//        gc.allWorklogs = new ArrayList<>(worklogs);
-//        gc.initialize();
-//
-//        return gc;
-//    }
 
 }

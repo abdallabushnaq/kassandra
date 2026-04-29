@@ -37,6 +37,7 @@ public class Worklog extends AbstractTimeAwareDAO implements Comparable<Worklog>
     private UUID           sprintId;
     private OffsetDateTime start;
     private UUID           taskId;
+    private Duration       timeRemainingEstimate;
     private Duration       timeSpent;
     private UUID           updateAuthorId;
 

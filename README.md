@@ -79,15 +79,16 @@ tbd
 6. ❌ Audit logs
 7. ❌ lock project.
 8. ❌ give project managers ways to control schedule.
-9. ❌ Admin hub
-10. ❌ Performance
-11. ❌ Live updates to your inputs
-12. ❌ Live response to your Input.
-13. ✅ product page.
-14. ❌ GDPR
-15. ❌ undo
-16. ❌ history
-17. ❌ add aura theme
+9. ❌ give project managers ways to control resource leveling.
+10. ❌ Admin hub
+11. ❌ Performance
+12. ❌ Live updates to your inputs
+13. ❌ Live response to your Input.
+14. ✅ product page.
+15. ❌ GDPR
+16. ❌ undo
+17. ❌ history
+18. ❌ add aura theme
 
 # Kassandra Introduction Videos
 

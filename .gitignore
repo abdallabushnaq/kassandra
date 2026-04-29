@@ -13,7 +13,9 @@
 /references/gantt/*private.*
 /references/test/*.svg
 /references/test/*private.*
-/references/demo
+/references/demo/*.svg
+/references/debug/*.svg
+/references/resource-leveling/*.svg
 /legacy-references
 /node_modules
 /src/main/bundles
