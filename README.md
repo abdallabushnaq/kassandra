@@ -115,6 +115,8 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 
 ![User Off-Days](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/offday-list-view.png)
 
+![Active Spints](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/active-sprints.png)
+
 ![Generate AI Image](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/image-prompt-dialog.png)
 
 ![Dependency Dialog](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/dependency-dialog.png)
