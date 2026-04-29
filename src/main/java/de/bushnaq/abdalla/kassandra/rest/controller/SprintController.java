@@ -38,6 +38,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,6 +48,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/sprint")
 @Slf4j
 public class SprintController {
+
+    /** Sorts sprints by start date ascending (nulls last), then by id for a stable secondary order. */
+    private static final Comparator<SprintDAO> BY_START_THEN_ID =
+            Comparator.comparing(SprintDAO::getStart, Comparator.nullsLast(Comparator.naturalOrder()))
+                      .thenComparing(SprintDAO::getId);
 
     @Autowired
     EntityManager entityManager;
@@ -92,7 +98,9 @@ public class SprintController {
     public List<SprintDAO> getAll() {
         // Admin can see all sprints
         if (SecurityUtils.isAdmin()) {
-            return sprintRepository.findAll();
+            return sprintRepository.findAll().stream()
+                    .sorted(BY_START_THEN_ID)
+                    .collect(Collectors.toList());
         }
 
         // Regular users only see sprints of products they have access to
@@ -104,13 +112,16 @@ public class SprintController {
                             .orElse(null);
                     return productId != null && productAclService.hasAccess(productId, SecurityUtils.getUserEmail());
                 })
+                .sorted(BY_START_THEN_ID)
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/feature/{featureId}")
     @PreAuthorize("@aclSecurityService.hasFeatureAccess(#featureId) or hasRole('ADMIN')")
     public List<SprintDAO> getAll(@PathVariable UUID featureId) {
-        return sprintRepository.findByFeatureId(featureId);
+        return sprintRepository.findByFeatureId(featureId).stream()
+                .sorted(BY_START_THEN_ID)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}/avatar")

@@ -179,17 +179,16 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
      * @param folder destination folder for the screenshot files
      */
     private void takeActiveSprintsDialogScreenshots(String folder) {
-        // Locate sprint "Zurich" (already visible on the board) and pick any leaf task.
         List<Sprint> allSprints = sprintApi.getAll();
         Sprint sprint = allSprints.stream()
-                .filter(s -> s.getName().equals("Zurich"))
+                .filter(s -> !s.getStatus().equals(Status.CLOSED))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Sprint 'Zurich' not found in generated data"));
+                .orElseThrow(() -> new IllegalStateException("Could not find a sprint that is not closed"));
         List<Task> tasks = taskApi.getAll(sprint.getId());
         Task leafTask = tasks.stream()
-                .filter(t -> !t.isMilestone() && t.getParentTaskId() != null)
+                .filter(t -> !t.isMilestone() && t.getParentTaskId() != null && t.getTaskStatus().equals(TaskStatus.IN_PROGRESS))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No leaf task found in sprint 'Zurich'"));
+                .orElseThrow(() -> new IllegalStateException("No task found in sprint that has IN_PROGRESS status"));
 
         // WorklogDialog — opened by clicking the task card body
         String taskCardId = "task-card-" + leafTask.getId();
@@ -479,8 +478,8 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         //-----------------
         activeSprintsTester.switchToActiveSprints();
         seleniumHandler.wait(1000);
-        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Zurich"});//enable
-        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Oslo"});//enable
+//        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Zurich"});//enable
+//        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Oslo"});//enable
         seleniumHandler.wait(1000);
         seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
         takeActiveSprintsDialogScreenshots(folder);
