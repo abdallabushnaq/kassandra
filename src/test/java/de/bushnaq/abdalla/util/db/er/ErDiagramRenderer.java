@@ -70,7 +70,7 @@ public class ErDiagramRenderer {
     static final int TABLE_WIDTH            = 300;
     static final int HEADER_HEIGHT          = 28;
     static final int ROW_HEIGHT             = 22;
-    static final int H_GAP                  = 60;  // horizontal gap between table columns (connector routing space)
+    static final int H_GAP                  = 100; // horizontal gap between table columns (connector routing space)
     static final int V_GAP                  = 30;  // vertical gap between table rows
     static final int ISOLATED_V_GAP         = 60;  // extra gap before isolated table section
     static final int BADGE_WIDTH            = 22;
@@ -259,16 +259,29 @@ public class ErDiagramRenderer {
         }
 
         // ── Apply pixel positions to connected tables ────────────────────
-        int maxTableHeight = schema.getTables().stream()
-                .mapToInt(ErTable::getHeight).max().orElse(HEADER_HEIGHT);
-        int rowStep = maxTableHeight + V_GAP;
+        // Compute per-row maximum table height so compact rows are not
+        // inflated to the height of the tallest row in the whole diagram.
+        Map<Integer, Integer> maxHeightPerRow = new HashMap<>();
+        for (Map.Entry<String, Integer> e : rowMap.entrySet()) {
+            ErTable t = byName.get(e.getKey());
+            if (t != null) {
+                maxHeightPerRow.merge(e.getValue(), t.getHeight(), Math::max);
+            }
+        }
+        int maxRowIdx = maxHeightPerRow.keySet().stream()
+                .mapToInt(Integer::intValue).max().orElse(0);
+        int[] rowTopY = new int[maxRowIdx + 1];
+        rowTopY[0] = MARGIN;
+        for (int i = 1; i <= maxRowIdx; i++) {
+            rowTopY[i] = rowTopY[i - 1] + maxHeightPerRow.getOrDefault(i - 1, HEADER_HEIGHT) + V_GAP;
+        }
 
         for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
             ErTable t   = byName.get(entry.getKey());
             Integer row = rowMap.get(entry.getKey());
             if (t != null && row != null) {
                 t.setX(MARGIN + entry.getValue() * (TABLE_WIDTH + H_GAP));
-                t.setY(MARGIN + row * rowStep);
+                t.setY(rowTopY[row]);
             }
         }
 
@@ -480,7 +493,11 @@ public class ErDiagramRenderer {
      * @param schema the fully laid-out schema
      */
     protected void drawConnectors(Graphics2D g, ErSchema schema) {
-        int connectorIndex = 0;
+        // Per-gap connector counter: key = "parentRightX-childLeftX" so that
+        // each column-pair gap has its own stagger sequence.  Global staggering
+        // caused the offset to overshoot the gap width for heavily-connected parents.
+        Map<String, Integer> gapCounters = new HashMap<>();
+
         for (ErForeignKey fk : schema.getForeignKeys()) {
             ErTable fromTable = findTable(schema, fk.getFromTable());
             ErTable toTable   = findTable(schema, fk.getToTable());
@@ -501,12 +518,20 @@ public class ErDiagramRenderer {
             int dotR = 4;
             if (fromTable.getX() > toTable.getX()) {
                 // ── Tree layout: child is to the RIGHT of parent ────────
-                // Exit left from FK table, enter right into PK table.
-                // Route through the inter-column gap (H_GAP wide).
                 int fkLeft  = fromTable.getX();
                 int pkRight = toTable.getX() + TABLE_WIDTH;
-                // Stagger each connector inside the gap to avoid overlap
-                int routeX = pkRight + H_GAP / 2 + connectorIndex * CONNECTOR_STEP;
+
+                // Stagger connectors that share the same gap (same pkRight/fkLeft pair)
+                String gapKey          = pkRight + "-" + fkLeft;
+                int    gapIndex        = gapCounters.getOrDefault(gapKey, 0);
+                gapCounters.put(gapKey, gapIndex + 1);
+
+                // Route through the centre of the gap, offset per connector.
+                // Clamp so the routing line always stays inside the gap.
+                int gapWidth = fkLeft - pkRight;
+                int routeX   = pkRight + gapWidth / 2 + gapIndex * CONNECTOR_STEP;
+                routeX = Math.min(routeX, fkLeft  - CONNECTOR_STEP);
+                routeX = Math.max(routeX, pkRight + CONNECTOR_STEP);
 
                 // Segment 1: horizontal exit left from FK table
                 g.drawLine(fkLeft, fkY, routeX, fkY);
@@ -523,10 +548,14 @@ public class ErDiagramRenderer {
 
             } else {
                 // ── Fallback: FK table is to the left or same column ────
-                // Use original right-side routing (both sides exit right).
                 int fkRight = fromTable.getX() + TABLE_WIDTH;
                 int pkRight = toTable.getX()   + TABLE_WIDTH;
-                int routeX  = Math.max(fkRight, pkRight) + H_GAP / 2 + connectorIndex * CONNECTOR_STEP;
+
+                String gapKey   = fkRight + "-" + pkRight;
+                int    gapIndex = gapCounters.getOrDefault(gapKey, 0);
+                gapCounters.put(gapKey, gapIndex + 1);
+
+                int routeX = Math.max(fkRight, pkRight) + H_GAP / 4 + gapIndex * CONNECTOR_STEP;
 
                 g.drawLine(fkRight, fkY, routeX, fkY);
                 g.drawLine(routeX,  fkY, routeX, pkY);
@@ -535,8 +564,6 @@ public class ErDiagramRenderer {
                 g.fillOval(fkRight - dotR, fkY - dotR, dotR * 2, dotR * 2);
                 drawArrowLeft(g, pkRight, pkY);
             }
-
-            connectorIndex++;
         }
     }
 
