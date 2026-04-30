@@ -31,31 +31,35 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.List;
 
 /**
  * Renders an {@link ErSchema} as an SVG file.
  *
  * <h2>Layout</h2>
- * Tables are arranged in a configurable grid (default {@value #DEFAULT_TABLES_PER_ROW}
- * per row).  Each table box consists of a coloured header row followed by one
- * row per column.  Primary-key columns are highlighted in amber and carry a
- * {@code PK} badge; foreign-key columns are highlighted in cyan and carry an
- * {@code FK} badge.
+ * Tables are placed using a FK-aware forest layout.  Each FK relationship
+ * defines a parent→child edge; BFS assigns a column (depth from root) to
+ * every connected table, and post-order DFS assigns rows so children are
+ * always stacked directly below their parent's row.  Tables with no FK
+ * edges (isolated tables) are packed in a compact grid below the connected
+ * section.
  *
  * <h2>Connectors</h2>
- * Every real FK constraint (those discovered via
- * {@code INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS}) is drawn as an
- * orthogonal three-segment line: a short horizontal exit from the FK column
- * row, a vertical routing segment, and a short horizontal entry into the PK
- * column row on the same (right) side.  A filled arrowhead marks the PK
- * (referenced) end; a small filled circle marks the FK (owning) end.
+ * Because parents are always to the <em>left</em> of their children in the
+ * tree layout, connectors exit from the <strong>left</strong> edge of the FK
+ * (child) table, route through the inter-column gap, and enter the
+ * <strong>right</strong> edge of the PK (parent) table.  A filled arrowhead
+ * marks the PK end; a small filled circle marks the FK end.  When a child is
+ * not directly to the right of its parent (edge connecting non-adjacent
+ * columns, or the legacy right-side path for same-column tables), the
+ * original right-side routing is used as a fallback.
  *
  * <h2>Extensibility</h2>
  * All layout constants are package-private statics, making them easy to
- * override in a subclass.  The three rendering passes (tables, connectors,
- * decorations) are split into separate methods so individual passes can be
- * overridden independently.
+ * override in a subclass.  The rendering passes (tables, connectors) are
+ * split into protected methods so individual passes can be overridden
+ * independently.
  */
 @Slf4j
 public class ErDiagramRenderer {
@@ -66,13 +70,13 @@ public class ErDiagramRenderer {
     static final int TABLE_WIDTH            = 300;
     static final int HEADER_HEIGHT          = 28;
     static final int ROW_HEIGHT             = 22;
-    static final int H_GAP                  = 50;  // horizontal gap between table columns
-    static final int V_GAP                  = 80;  // vertical gap between table rows (space for connectors)
+    static final int H_GAP                  = 60;  // horizontal gap between table columns (connector routing space)
+    static final int V_GAP                  = 30;  // vertical gap between table rows
+    static final int ISOLATED_V_GAP         = 60;  // extra gap before isolated table section
     static final int BADGE_WIDTH            = 22;
     static final int BADGE_HEIGHT           = 13;
     static final int BADGE_MARGIN           = 4;
-    static final int CONNECTOR_EXIT_OFFSET  = 15; // px to the right of a table before routing vertically
-    static final int CONNECTOR_STEP         = 8;  // per-connector horizontal offset to avoid overlaps
+    static final int CONNECTOR_STEP         = 8;  // per-connector x-offset inside the gap to avoid overlaps
 
     // ── Colours ────────────────────────────────────────────────────────────
     private static final Color BG_COLOR         = new Color(245, 247, 250);
@@ -130,7 +134,7 @@ public class ErDiagramRenderer {
         computeLayout(schema);
 
         // ── Step 2: compute canvas dimensions ──────────────────────────
-        int canvasWidth  = computeCanvasWidth();
+        int canvasWidth  = computeCanvasWidth(schema);
         int canvasHeight = computeCanvasHeight(schema);
 
         // ── Step 3: initialise SVG generator ───────────────────────────
@@ -168,52 +172,181 @@ public class ErDiagramRenderer {
 
     /**
      * Assigns pixel coordinates and dimensions to every {@link ErTable} in the
-     * schema using a grid layout.
+     * schema.
+     *
+     * <p>Phase 1 – connected tables (those involved in FK relationships):
+     * <ol>
+     *   <li>Build a directed parent→child graph from {@code schema.getForeignKeys()}.</li>
+     *   <li>BFS from root tables (no incoming FK edges) assigns each table a
+     *       <em>column</em> = {@code max(parent columns) + 1}.</li>
+     *   <li>Post-order DFS assigns each table a <em>row</em> = next available
+     *       slot in its column.  Children are placed before their parent, so
+     *       the parent ends up just below the last child in the same column,
+     *       keeping connectors short.</li>
+     * </ol>
+     *
+     * <p>Phase 2 – isolated tables (no FK edges at all) are packed in a plain
+     * grid of {@code tablesPerRow} columns directly below the connected section.
      *
      * @param schema the schema whose tables will be mutated with layout data
      */
     protected void computeLayout(ErSchema schema) {
-        List<ErTable> tables = schema.getTables();
-        int           rows   = (int) Math.ceil((double) tables.size() / tablesPerRow);
-
-        // Pre-compute each table's pixel height
-        for (ErTable t : tables) {
+        // ── Pre-compute pixel sizes ──────────────────────────────────────
+        Map<String, ErTable> byName = new LinkedHashMap<>();
+        for (ErTable t : schema.getTables()) {
             t.setWidth(TABLE_WIDTH);
             t.setHeight(HEADER_HEIGHT + t.getColumns().size() * ROW_HEIGHT);
+            byName.put(t.getTableName(), t);
         }
 
-        // Assign positions row by row
-        int gridY = MARGIN;
-        for (int row = 0; row < rows; row++) {
-            int maxRowHeight = 0;
-            int startIdx     = row * tablesPerRow;
-            int endIdx       = Math.min(startIdx + tablesPerRow, tables.size());
+        // ── Build FK graph ───────────────────────────────────────────────
+        // Edge direction: parent (toTable) → child (fromTable)
+        Map<String, List<String>> parentToChildren = new LinkedHashMap<>();
+        Map<String, List<String>> childToParents   = new LinkedHashMap<>();
+        for (ErForeignKey fk : schema.getForeignKeys()) {
+            parentToChildren.computeIfAbsent(fk.getToTable(),   k -> new ArrayList<>()).add(fk.getFromTable());
+            childToParents.computeIfAbsent(fk.getFromTable(), k -> new ArrayList<>()).add(fk.getToTable());
+        }
 
-            // Find the tallest table in this grid row
-            for (int i = startIdx; i < endIdx; i++) {
-                maxRowHeight = Math.max(maxRowHeight, tables.get(i).getHeight());
+        // ── Classify tables ──────────────────────────────────────────────
+        // roots    = have children but no parents (never appear as fromTable)
+        // isolated = no FK edges at all
+        // children = appear as fromTable; reached via DFS from their parents
+        List<String> roots    = new ArrayList<>();
+        List<String> isolated = new ArrayList<>();
+        for (ErTable t : schema.getTables()) {
+            String name = t.getTableName();
+            if (!childToParents.containsKey(name)) {
+                if (parentToChildren.containsKey(name)) {
+                    roots.add(name);
+                } else {
+                    isolated.add(name);
+                }
             }
+        }
+        Collections.sort(roots);
+        Collections.sort(isolated);
 
-            // Place tables horizontally
-            int gridX = MARGIN;
-            for (int i = startIdx; i < endIdx; i++) {
-                ErTable t = tables.get(i);
-                t.setX(gridX);
-                t.setY(gridY);
-                gridX += TABLE_WIDTH + H_GAP;
+        // ── BFS: assign columns ──────────────────────────────────────────
+        // column[t] = depth of t from its nearest root
+        Map<String, Integer> colMap = new HashMap<>();
+        Queue<String>        queue  = new LinkedList<>(roots);
+        for (String r : roots) {
+            colMap.put(r, 0);
+        }
+        while (!queue.isEmpty()) {
+            String current    = queue.poll();
+            int    currentCol = colMap.get(current);
+            for (String child : parentToChildren.getOrDefault(current, Collections.emptyList())) {
+                int newCol = currentCol + 1;
+                // Take the maximum column in case a child has multiple parents
+                if (!colMap.containsKey(child) || colMap.get(child) < newCol) {
+                    colMap.put(child, newCol);
+                    queue.add(child);
+                }
             }
-            gridY += maxRowHeight + V_GAP;
+        }
+
+        // ── Post-order DFS: assign rows ──────────────────────────────────
+        // nextRow[col] tracks the next available row slot per column.
+        // Children are placed first so the parent always sits just below its
+        // last child, keeping connectors short.
+        Map<Integer, Integer> nextRow = new HashMap<>();
+        Map<String, Integer>  rowMap  = new HashMap<>();
+        Set<String>           visited = new LinkedHashSet<>();
+        for (String root : roots) {
+            assignRowsDfs(root, parentToChildren, colMap, rowMap, nextRow, visited);
+        }
+
+        // ── Apply pixel positions to connected tables ────────────────────
+        int maxTableHeight = schema.getTables().stream()
+                .mapToInt(ErTable::getHeight).max().orElse(HEADER_HEIGHT);
+        int rowStep = maxTableHeight + V_GAP;
+
+        for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
+            ErTable t   = byName.get(entry.getKey());
+            Integer row = rowMap.get(entry.getKey());
+            if (t != null && row != null) {
+                t.setX(MARGIN + entry.getValue() * (TABLE_WIDTH + H_GAP));
+                t.setY(MARGIN + row * rowStep);
+            }
+        }
+
+        // ── Pack isolated tables in a grid below connected section ───────
+        int connectedBottomY = schema.getTables().stream()
+                .filter(t -> colMap.containsKey(t.getTableName()))
+                .mapToInt(t -> t.getY() + t.getHeight())
+                .max().orElse(MARGIN);
+        int isolatedStartY    = connectedBottomY + ISOLATED_V_GAP;
+        int iCol              = 0;
+        int iRowY             = isolatedStartY;
+        int rowMaxHeight      = 0;
+        for (String name : isolated) {
+            ErTable t = byName.get(name);
+            if (t == null) continue;
+            t.setX(MARGIN + iCol * (TABLE_WIDTH + H_GAP));
+            t.setY(iRowY);
+            rowMaxHeight = Math.max(rowMaxHeight, t.getHeight());
+            iCol++;
+            if (iCol >= tablesPerRow) {
+                iCol      = 0;
+                iRowY    += rowMaxHeight + V_GAP;
+                rowMaxHeight = 0;
+            }
         }
     }
 
     /**
-     * Returns the total pixel width of the SVG canvas.
+     * Post-order DFS helper: places a node's entire subtree before placing the
+     * node itself, so the node's row slot is directly below its last child.
+     * Already-visited nodes are skipped to handle shared-parent (DAG) cases.
      *
+     * @param node             the node to place
+     * @param parentToChildren directed parent→child adjacency map
+     * @param colMap           column assigned to each table name
+     * @param rowMap           output: row assigned to each table name
+     * @param nextRow          mutable next-available-row counter per column
+     * @param visited          set of already-placed table names
+     */
+    private void assignRowsDfs(String node,
+                               Map<String, List<String>> parentToChildren,
+                               Map<String, Integer> colMap,
+                               Map<String, Integer> rowMap,
+                               Map<Integer, Integer> nextRow,
+                               Set<String> visited) {
+        if (visited.contains(node)) {
+            return;
+        }
+        visited.add(node);
+
+        // Recurse on children first (post-order)
+        for (String child : parentToChildren.getOrDefault(node, Collections.emptyList())) {
+            if (!visited.contains(child)) {
+                assignRowsDfs(child, parentToChildren, colMap, rowMap, nextRow, visited);
+            }
+        }
+
+        // Place this node at the next available row in its column
+        int col = colMap.getOrDefault(node, 0);
+        int row = nextRow.getOrDefault(col, 0);
+        rowMap.put(node, row);
+        nextRow.put(col, row + 1);
+    }
+
+    /**
+     * Returns the total pixel width of the SVG canvas, derived from the actual
+     * table positions set by {@link #computeLayout(ErSchema)}.
+     *
+     * @param schema the schema after layout has been computed
      * @return canvas width in pixels
      */
-    protected int computeCanvasWidth() {
-        return MARGIN * 2 + tablesPerRow * TABLE_WIDTH + (tablesPerRow - 1) * H_GAP
-               + tablesPerRow * CONNECTOR_EXIT_OFFSET; // extra room for connectors
+    protected int computeCanvasWidth(ErSchema schema) {
+        int maxRight = schema.getTables().stream()
+                .mapToInt(t -> t.getX() + t.getWidth())
+                .max().orElse(MARGIN);
+        // Reserve extra space to the right for connector routing
+        int extraForConnectors = CONNECTOR_STEP * (schema.getForeignKeys().size() + 1) + H_GAP;
+        return maxRight + extraForConnectors;
     }
 
     /**
@@ -328,18 +461,20 @@ public class ErDiagramRenderer {
     /**
      * Draws all FK connector lines between table boxes.
      *
-     * <p>Each connector uses a three-segment orthogonal path:
-     * <ol>
-     *   <li>Horizontal exit from the FK column row right edge to a routing
-     *       x-coordinate.</li>
-     *   <li>Vertical segment from FK column y to PK column y.</li>
-     *   <li>Horizontal entry into the PK column row right edge from the same
-     *       routing x-coordinate.</li>
-     * </ol>
-     * A filled arrowhead is drawn at the PK (referenced) end; a filled circle
-     * at the FK (owning) end.  Each connector is offset horizontally by
-     * {@value #CONNECTOR_STEP} px relative to the previous one so that
-     * parallel connections do not overlap.
+     * <p>When the FK (child) table is to the <em>right</em> of the PK (parent)
+     * table — as it always is in the tree layout — connectors exit from the
+     * <strong>left</strong> edge of the FK table, route vertically through the
+     * inter-column gap, and re-enter the <strong>right</strong> edge of the PK
+     * table.  This keeps all routing inside the gap, well clear of the table
+     * content.
+     *
+     * <p>When the FK table is to the left of or at the same x-position as the
+     * PK table (should not happen with tree layout but handled for resilience),
+     * the original right-side routing path is used.
+     *
+     * <p>Each connector is offset by {@value #CONNECTOR_STEP} px relative to
+     * the previous one so that parallel connections inside the same gap do not
+     * overlap.
      *
      * @param g      graphics context
      * @param schema the fully laid-out schema
@@ -358,30 +493,48 @@ public class ErDiagramRenderer {
             int toColIdx   = toTable.columnIndex(fk.getToColumn());
 
             int fkY = fromTable.getY() + HEADER_HEIGHT + fromColIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
-            int pkY = toTable.getY() + HEADER_HEIGHT + toColIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
-
-            int fkRight = fromTable.getX() + TABLE_WIDTH;
-            int pkRight = toTable.getX() + TABLE_WIDTH;
-
-            // Route to the right of the further table + per-connector offset
-            int routeX = Math.max(fkRight, pkRight) + CONNECTOR_EXIT_OFFSET + connectorIndex * CONNECTOR_STEP;
+            int pkY = toTable.getY()   + HEADER_HEIGHT + toColIdx   * ROW_HEIGHT + ROW_HEIGHT / 2;
 
             g.setColor(CONNECTOR_COLOR);
             g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 
-            // Segment 1: horizontal exit from FK column right edge
-            g.drawLine(fkRight, fkY, routeX, fkY);
-            // Segment 2: vertical routing
-            g.drawLine(routeX, fkY, routeX, pkY);
-            // Segment 3: horizontal entry into PK column right edge
-            g.drawLine(routeX, pkY, pkRight, pkY);
-
-            // ── FK end: small filled circle ───────────────────────────
             int dotR = 4;
-            g.fillOval(fkRight - dotR, fkY - dotR, dotR * 2, dotR * 2);
+            if (fromTable.getX() > toTable.getX()) {
+                // ── Tree layout: child is to the RIGHT of parent ────────
+                // Exit left from FK table, enter right into PK table.
+                // Route through the inter-column gap (H_GAP wide).
+                int fkLeft  = fromTable.getX();
+                int pkRight = toTable.getX() + TABLE_WIDTH;
+                // Stagger each connector inside the gap to avoid overlap
+                int routeX = pkRight + H_GAP / 2 + connectorIndex * CONNECTOR_STEP;
 
-            // ── PK end: filled arrowhead pointing left (←) ────────────
-            drawArrowLeft(g, pkRight, pkY);
+                // Segment 1: horizontal exit left from FK table
+                g.drawLine(fkLeft, fkY, routeX, fkY);
+                // Segment 2: vertical routing inside the gap
+                g.drawLine(routeX, fkY, routeX, pkY);
+                // Segment 3: horizontal entry into PK table right edge
+                g.drawLine(routeX, pkY, pkRight, pkY);
+
+                // FK end: filled circle on the LEFT edge of child table
+                g.fillOval(fkLeft - dotR, fkY - dotR, dotR * 2, dotR * 2);
+
+                // PK end: arrowhead pointing left (←) at PK table right edge
+                drawArrowLeft(g, pkRight, pkY);
+
+            } else {
+                // ── Fallback: FK table is to the left or same column ────
+                // Use original right-side routing (both sides exit right).
+                int fkRight = fromTable.getX() + TABLE_WIDTH;
+                int pkRight = toTable.getX()   + TABLE_WIDTH;
+                int routeX  = Math.max(fkRight, pkRight) + H_GAP / 2 + connectorIndex * CONNECTOR_STEP;
+
+                g.drawLine(fkRight, fkY, routeX, fkY);
+                g.drawLine(routeX,  fkY, routeX, pkY);
+                g.drawLine(routeX,  pkY, pkRight, pkY);
+
+                g.fillOval(fkRight - dotR, fkY - dotR, dotR * 2, dotR * 2);
+                drawArrowLeft(g, pkRight, pkY);
+            }
 
             connectorIndex++;
         }
@@ -422,6 +575,4 @@ public class ErDiagramRenderer {
         return null;
     }
 }
-
-
 
