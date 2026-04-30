@@ -23,7 +23,7 @@ tbd
 
 [Design](https://github.com/kunterbunt2/project-hub/wiki/Design)
 
-[ER Diagram](https://github.com/kunterbunt2/project-hub/wiki/entity-relationship-diagram)
+[entity-relationship-diagram](https://github.com/kunterbunt2/project-hub/wiki/entity-relationship-diagram)
 
 # Roadmap
 
