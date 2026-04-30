@@ -446,8 +446,16 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
         takeSprintDialogScreenshots(folder);
         sprintListViewTester.selectSprint(sprintName);
+
+
+        //-----------------
+        //QualityBoard
+        //-----------------
         seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_BURNDOWN_CHART);
-        seleniumHandler.takeScreenShot(folder + "/quality-board.png");
+        seleniumHandler.takeScreenShot(folder + "/quality-board-delayed.png");
+        seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, "Lisbon");
+        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_BURNDOWN_CHART);
+        seleniumHandler.takeScreenShot(folder + "/quality-board-in-time.png");
 
         //-----------------
         //UserProfileView

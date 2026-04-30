@@ -4,8 +4,14 @@
 
 # kassandra
 
-tiny project management server.<br>
-project effort estimation and progress tracking and release date interpolation open source server.
+Tiny project management server.<br>
+Project effort estimation and progress tracking and release date interpolation open source server.
+
+# What makes Kassandra different?
+
+1. Self-sufficient project planning and progress tracking in one tiny server.
+2. Minimum and maximum effort estimation guardrail the project execution.
+3. Release date interpolation based on the estimation and progress of the project.
 
 ## Notice
 
@@ -41,7 +47,7 @@ tbd
 10. ✅ User availability time-frames
 11. ✅ User location time-frames
 12. ✅ User work week time-frames
-13. ❌ Project work week time-frames
+13. ❌ Project work week time-frames (for tasks without a resource assigned)
 14. ✅ National Holidays
 15. ✅ vacations
 16. ✅ sick leaves
@@ -49,7 +55,7 @@ tbd
 18. ✅ Gantt chart
 19. ✅ Automatic Gantt buffer calculation
 20. ✅ Burn down chart
-21. ❌ Close project Release Date.
+21. ✅ Close project Release Date.
 22. ✅ Dialog should set curser to edit box
 23. ✅ Dialog confirmation button should react to return
 24. ✅ add dark avatar
@@ -58,9 +64,9 @@ tbd
 27. ✅ show Versions, Features, Sprints pages in menu
 28. ✅ add about box.
 29. ✅ optimaze AbstractEntityGenrator avatar generation code.
-30. ❌ data scenario simulation generator
+30. ✅ data scenario simulation generator
     1. ✅ Simulator Write the use case as a Story in the project or product
-    2. ❌ include closed and delayed sprints.
+    2. ✅ include closed and delayed sprints.
 
 ## Phase 2 (installable version)
 
@@ -130,11 +136,25 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 # Design Philosophy
 
 - As simple as possible, as complex as necessary.
-- backup the development with unit tests.
-- create data generators that can be used in unit tests.
-- written in Java + spring boot + Vaadin.
-- minimalistic project status tracking within one single server.
-- simple local database, but keep option to switch to other databases.
+- Backup the development with unit tests.
+- Create data generators that can be used in unit tests.
+- Written in Java + spring boot + Vaadin.
+- Minimalistic project status tracking within one single server.
+- Simple local database, but keep option to switch to other databases.
+
+# What does this Project do a bit different?
+
+1. API first. Everything is based on an api. Even the Ui is just a client of the API.
+2. Kassandra generates its own Entity Relationship Diagram during the build.
+3. UI is tested using selenium,
+4. All introduction videos are generated using selenium and chatterbox.
+5. Holidays are automatically generated based on the location of the user and the national holidays of that location.
+6. By simplifying some aspects of project management (
+   see [Limitations](https://github.com/kunterbunt2/project-hub/wiki/Limitations)), we can automate many aspects.
+
+# License
+
+[Apache License, version 2.0](https://github.com/kunterbunt2/project-hub/blob/main/LICENSE)
 
 # Ideas
 
@@ -144,6 +164,3 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 - project priority can be changed by moving them within the list
 - sprint priority can be changed by moving them within the list
 
-# License
-
-[Apache License, version 2.0](https://github.com/kunterbunt2/project-hub/blob/main/LICENSE)
