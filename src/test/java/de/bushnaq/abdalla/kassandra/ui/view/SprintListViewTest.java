@@ -95,6 +95,7 @@ public class SprintListViewTest extends AbstractKeycloakUiTestUtil {
                 generateTestCaseName(testInfo)
         );
 //        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        productListViewTester.switchToProductListView();
         productListViewTester.createProductConfirm(productName);
         productListViewTester.selectProduct(productName);
 

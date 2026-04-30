@@ -118,6 +118,7 @@ public class TaskListViewTest extends AbstractKeycloakUiTestUtil {
                 testInfo.getTestClass().get().getSimpleName(),
                 generateTestCaseName(testInfo)
         );
+        productListViewTester.switchToProductListView();
         productListViewTester.selectProduct(productName);
         versionListViewTester.selectVersion(versionName);
         featureListViewTester.selectFeature(featureName);
