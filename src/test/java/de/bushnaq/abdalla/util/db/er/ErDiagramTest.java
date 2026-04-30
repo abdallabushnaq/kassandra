@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Slf4j
 public class ErDiagramTest extends AbstractEntityGenerator {
 
-    private static final String OUTPUT_PATH = "test-results/er-diagram.svg";
+    private static final String OUTPUT_PATH = "../kassandra.wiki/er-diagram.svg";
 
     /**
      * Extracts the H2 schema and renders it as an SVG ER diagram.

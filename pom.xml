@@ -394,6 +394,7 @@
                         <exclude>**/ui/view/TaskListViewTest.java</exclude>
                         <exclude>**/ui/view/SprintQualityBoardTest.java</exclude>
                         <exclude>**/ui/Demo.java</exclude>
+                        <exclude>**/ErDiagramTest.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>

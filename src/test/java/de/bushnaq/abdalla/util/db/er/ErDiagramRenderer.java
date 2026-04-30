@@ -493,69 +493,74 @@ public class ErDiagramRenderer {
      * @param schema the fully laid-out schema
      */
     protected void drawConnectors(Graphics2D g, ErSchema schema) {
-        // Per-gap connector counter: key = "parentRightX-childLeftX" so that
-        // each column-pair gap has its own stagger sequence.  Global staggering
-        // caused the offset to overshoot the gap width for heavily-connected parents.
-        Map<String, Integer> gapCounters = new HashMap<>();
+        // ── Pass 1: resolve tables and Y values for every connector ───────
+        // Using a local record (Java 16+) to carry per-connector state.
+        record Conn(ErForeignKey fk, ErTable from, ErTable to, int fkY, int pkY) {}
 
+        List<Conn> conns = new ArrayList<>();
         for (ErForeignKey fk : schema.getForeignKeys()) {
-            ErTable fromTable = findTable(schema, fk.getFromTable());
-            ErTable toTable   = findTable(schema, fk.getToTable());
-            if (fromTable == null || toTable == null) {
+            ErTable from = findTable(schema, fk.getFromTable());
+            ErTable to   = findTable(schema, fk.getToTable());
+            if (from == null || to == null) {
                 log.warn("Cannot draw connector for FK {} — table not found", fk.getConstraintName());
                 continue;
             }
+            int fkY = from.getY() + HEADER_HEIGHT + from.columnIndex(fk.getFromColumn()) * ROW_HEIGHT + ROW_HEIGHT / 2;
+            int pkY = to.getY()   + HEADER_HEIGHT + to.columnIndex(fk.getToColumn())     * ROW_HEIGHT + ROW_HEIGHT / 2;
+            conns.add(new Conn(fk, from, to, fkY, pkY));
+        }
 
-            int fromColIdx = fromTable.columnIndex(fk.getFromColumn());
-            int toColIdx   = toTable.columnIndex(fk.getToColumn());
+        // ── Pass 2: assign routeX per connector ───────────────────────────
+        // Group connectors that share the same inter-column gap.  Within each
+        // group, sort by fkY DESCENDING so the bottommost child (largest fkY)
+        // gets gapIndex 0 (smallest routeX / shortest horizontal exit) and the
+        // topmost child (smallest fkY) gets the largest routeX.  This produces
+        // the intended fan shape without connector crossings:
+        //
+        //   parent ─────────────────── child1   (topmost,  largest routeX)
+        //              │          │
+        //              │          └── child2   (middle)
+        //              └──────────── child3    (bottommost, smallest routeX)
+        Map<String, List<Conn>> byGap = new LinkedHashMap<>();
+        for (Conn c : conns) {
+            byGap.computeIfAbsent(connectorGapKey(c.from(), c.to()), k -> new ArrayList<>()).add(c);
+        }
+        Map<String, Integer> routeXByConstraint = new HashMap<>();
+        for (List<Conn> group : byGap.values()) {
+            // Bottommost child first (descending fkY) → gapIndex 0 → smallest routeX
+            group.sort((a, b) -> Integer.compare(b.fkY(), a.fkY()));
+            for (int gapIdx = 0; gapIdx < group.size(); gapIdx++) {
+                Conn c = group.get(gapIdx);
+                routeXByConstraint.put(c.fk().getConstraintName(),
+                        computeConnectorRouteX(c.from(), c.to(), gapIdx));
+            }
+        }
 
-            int fkY = fromTable.getY() + HEADER_HEIGHT + fromColIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
-            int pkY = toTable.getY()   + HEADER_HEIGHT + toColIdx   * ROW_HEIGHT + ROW_HEIGHT / 2;
+        // ── Pass 3: draw ─────────────────────────────────────────────────
+        int dotR = 4;
+        for (Conn c : conns) {
+            int fkY    = c.fkY();
+            int pkY    = c.pkY();
+            int routeX = routeXByConstraint.getOrDefault(c.fk().getConstraintName(), 0);
 
             g.setColor(CONNECTOR_COLOR);
             g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 
-            int dotR = 4;
-            if (fromTable.getX() > toTable.getX()) {
-                // ── Tree layout: child is to the RIGHT of parent ────────
-                int fkLeft  = fromTable.getX();
-                int pkRight = toTable.getX() + TABLE_WIDTH;
+            if (c.from().getX() > c.to().getX()) {
+                // Tree layout: child is to the RIGHT of parent
+                int fkLeft  = c.from().getX();
+                int pkRight = c.to().getX() + TABLE_WIDTH;
 
-                // Stagger connectors that share the same gap (same pkRight/fkLeft pair)
-                String gapKey          = pkRight + "-" + fkLeft;
-                int    gapIndex        = gapCounters.getOrDefault(gapKey, 0);
-                gapCounters.put(gapKey, gapIndex + 1);
+                g.drawLine(fkLeft, fkY, routeX, fkY);   // exit left from FK table
+                g.drawLine(routeX, fkY, routeX, pkY);   // vertical in gap
+                g.drawLine(routeX, pkY, pkRight, pkY);  // entry into PK table right edge
 
-                // Route through the centre of the gap, offset per connector.
-                // Clamp so the routing line always stays inside the gap.
-                int gapWidth = fkLeft - pkRight;
-                int routeX   = pkRight + gapWidth / 2 + gapIndex * CONNECTOR_STEP;
-                routeX = Math.min(routeX, fkLeft  - CONNECTOR_STEP);
-                routeX = Math.max(routeX, pkRight + CONNECTOR_STEP);
-
-                // Segment 1: horizontal exit left from FK table
-                g.drawLine(fkLeft, fkY, routeX, fkY);
-                // Segment 2: vertical routing inside the gap
-                g.drawLine(routeX, fkY, routeX, pkY);
-                // Segment 3: horizontal entry into PK table right edge
-                g.drawLine(routeX, pkY, pkRight, pkY);
-
-                // FK end: filled circle on the LEFT edge of child table
-                g.fillOval(fkLeft - dotR, fkY - dotR, dotR * 2, dotR * 2);
-
-                // PK end: arrowhead pointing left (←) at PK table right edge
-                drawArrowLeft(g, pkRight, pkY);
-
+                g.fillOval(fkLeft - dotR, fkY - dotR, dotR * 2, dotR * 2); // FK circle
+                drawArrowLeft(g, pkRight, pkY);                              // PK arrowhead
             } else {
-                // ── Fallback: FK table is to the left or same column ────
-                int fkRight = fromTable.getX() + TABLE_WIDTH;
-                int pkRight = toTable.getX()   + TABLE_WIDTH;
-
-                String gapKey   = fkRight + "-" + pkRight;
-                int    gapIndex = gapCounters.getOrDefault(gapKey, 0);
-                gapCounters.put(gapKey, gapIndex + 1);
-
-                int routeX = Math.max(fkRight, pkRight) + H_GAP / 4 + gapIndex * CONNECTOR_STEP;
+                // Fallback: FK table is to the left or same column
+                int fkRight = c.from().getX() + TABLE_WIDTH;
+                int pkRight = c.to().getX()   + TABLE_WIDTH;
 
                 g.drawLine(fkRight, fkY, routeX, fkY);
                 g.drawLine(routeX,  fkY, routeX, pkY);
@@ -564,6 +569,49 @@ public class ErDiagramRenderer {
                 g.fillOval(fkRight - dotR, fkY - dotR, dotR * 2, dotR * 2);
                 drawArrowLeft(g, pkRight, pkY);
             }
+        }
+    }
+
+    /**
+     * Returns the gap-group key for a connector.  Connectors that share the
+     * same key are routed through the same inter-column channel and receive
+     * staggered {@code routeX} values.
+     *
+     * @param from FK (child) table
+     * @param to   PK (parent) table
+     * @return a stable string key unique to the pixel gap between the two tables
+     */
+    private String connectorGapKey(ErTable from, ErTable to) {
+        if (from.getX() > to.getX()) {
+            // Tree path: key = pkRight "-" fkLeft
+            return (to.getX() + TABLE_WIDTH) + "-" + from.getX();
+        } else {
+            // Fallback path: key = fkRight "R" pkRight
+            return (from.getX() + TABLE_WIDTH) + "R" + (to.getX() + TABLE_WIDTH);
+        }
+    }
+
+    /**
+     * Computes the routing x-coordinate for a single connector inside its gap.
+     * The {@code gapIndex} is 0 for the bottommost child (smallest offset) and
+     * increases toward the topmost child (largest offset).
+     *
+     * @param from     FK (child) table
+     * @param to       PK (parent) table
+     * @param gapIndex zero-based index within the gap group (0 = smallest routeX)
+     * @return clamped routing x-coordinate guaranteed to lie inside the gap
+     */
+    private int computeConnectorRouteX(ErTable from, ErTable to, int gapIndex) {
+        if (from.getX() > to.getX()) {
+            int fkLeft   = from.getX();
+            int pkRight  = to.getX() + TABLE_WIDTH;
+            int gapWidth = fkLeft - pkRight;
+            int routeX   = pkRight + gapWidth / 2 + gapIndex * CONNECTOR_STEP;
+            return Math.min(Math.max(routeX, pkRight + CONNECTOR_STEP), fkLeft - CONNECTOR_STEP);
+        } else {
+            int fkRight = from.getX() + TABLE_WIDTH;
+            int pkRight = to.getX()   + TABLE_WIDTH;
+            return Math.max(fkRight, pkRight) + H_GAP / 4 + gapIndex * CONNECTOR_STEP;
         }
     }
 
