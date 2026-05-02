@@ -24,20 +24,20 @@ import java.util.List;
 
 /**
  * Aggregates the full schema model that is passed from {@link SchemaExtractor}
- * into {@link ErDiagramRenderer}.  Tables are sorted alphabetically by the
+ * into {@link EntityRelationshipDiagramRenderer}.  Tables are sorted alphabetically by the
  * extractor; foreign-key entries reference those table objects by name.
  */
 @Getter
-public class ErSchema {
+public class EntityRelationshipSchema {
 
     /**
      * All real FK constraints discovered via {@code INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS}.
      */
-    private final List<ErForeignKey> foreignKeys = new ArrayList<>();
+    private final List<EntityRelationshipForeignKey> foreignKeys = new ArrayList<>();
 
     /**
      * All base tables in the current H2 schema, in alphabetical order.
      */
-    private final List<ErTable> tables = new ArrayList<>();
+    private final List<EntityRelationshipTable> tables = new ArrayList<>();
 }
 

@@ -503,9 +503,9 @@
 | kassandra.ui.view                    | QualityBoard.java                                                | src      |       68 |       88 |       54 |      622 |      832 |
 | kassandra.ui.view                    | QualityBoardTest.java                                            | src      |       11 |        0 |       18 |      115 |      144 |
 | kassandra.ui.view                    | SprintListView.java                                              | src      |       71 |       71 |       62 |      642 |      846 |
-| kassandra.ui.view                    | SprintListViewTest.java                                          | src      |       15 |       82 |       24 |      112 |      233 |
+| kassandra.ui.view                    | SprintListViewTest.java                                          | src      |       15 |       82 |       24 |      113 |      234 |
 | kassandra.ui.view                    | SprintStatistics.java                                            | src      |       20 |        4 |       26 |       97 |      147 |
-| kassandra.ui.view                    | TaskListViewTest.java                                            | src      |        8 |       16 |       17 |       88 |      129 |
+| kassandra.ui.view                    | TaskListViewTest.java                                            | src      |        8 |       16 |       17 |       89 |      130 |
 | kassandra.ui.view                    | UserGroupListView.java                                           | src      |       29 |        0 |       27 |      157 |      213 |
 | kassandra.ui.view                    | UserGroupListViewTest.java                                       | src      |       21 |      104 |       16 |      152 |      293 |
 | kassandra.ui.view                    | UserListView.java                                                | src      |       47 |       22 |       42 |      334 |      445 |
@@ -520,7 +520,7 @@
 | kassandra.ui.view                    | WorkWeekListViewTest.java                                        | src      |       17 |       80 |       20 |       85 |      202 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui                         | Demo.java                                                        | src      |       15 |        3 |       76 |       99 |      193 |
-| kassandra.ui                         | GenerateScreenshots.java                                         | src      |       79 |       65 |      138 |      508 |      790 |
+| kassandra.ui                         | GenerateScreenshots.java                                         | src      |       81 |       65 |      141 |      511 |      798 |
 | kassandra.ui                         | HtmlColor.java                                                   | src      |        6 |        0 |       36 |       22 |       64 |
 | kassandra.ui                         | MainErrorHandler.java                                            | src      |        5 |        0 |       16 |       28 |       49 |
 | kassandra.ui                         | MainLayout.java                                                  | src      |       69 |       33 |       45 |      316 |      463 |
@@ -582,17 +582,20 @@
 | util.date                            | JollydayTest.java                                                | src      |       10 |        0 |       16 |       28 |       54 |
 | util.date                            | LocalTimeHelper.java                                             | src      |       14 |       46 |       36 |       43 |      139 |
 | util.date                            | ParseDurationStringTest.java                                     | src      |        9 |        0 |       22 |       22 |       53 |
-| util.date                            | ReportUtil.java                                                  | src      |       29 |       56 |       43 |      179 |      307 |
+| util.date                            | ReportUtil.java                                                  | src      |       29 |       56 |       43 |      178 |      306 |
 | util.date                            | UtilCalculateDaysTest.java                                       | src      |       16 |        0 |       36 |       80 |      132 |
 | util.date                            | UtilCalculateProgressTest.java                                   | src      |       11 |        0 |       25 |       45 |       81 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| util.db.er                           | ErColumn.java                                                    | src      |        9 |       19 |       16 |       14 |       58 |
-| util.db.er                           | ErDiagramRenderer.java                                           | src      |       64 |      166 |       83 |      376 |      689 |
-| util.db.er                           | ErDiagramTest.java                                               | src      |       11 |       15 |       16 |       38 |       80 |
-| util.db.er                           | ErForeignKey.java                                                | src      |        9 |       19 |       16 |       12 |       56 |
-| util.db.er                           | ErSchema.java                                                    | src      |        7 |       11 |       16 |        9 |       43 |
-| util.db.er                           | ErTable.java                                                     | src      |       12 |       32 |       16 |       25 |       85 |
-| util.db.er                           | SchemaExtractor.java                                             | src      |       19 |       28 |       20 |       88 |      155 |
+| util.db.er                           | DatabaseType.java                                                | src      |        8 |        8 |       16 |       11 |       43 |
+| util.db.er                           | EntityRelationshipColumn.java                                    | src      |        9 |       19 |       16 |       14 |       58 |
+| util.db.er                           | EntityRelationshipDiagramRenderer.java                           | src      |       61 |      166 |       83 |      379 |      689 |
+| util.db.er                           | EntityRelationshipDiagramTest.java                               | src      |       11 |       15 |       16 |       38 |       80 |
+| util.db.er                           | EntityRelationshipForeignKey.java                                | src      |        9 |       19 |       16 |       12 |       56 |
+| util.db.er                           | EntityRelationshipSchema.java                                    | src      |        7 |       11 |       16 |        9 |       43 |
+| util.db.er                           | EntityRelationshipTable.java                                     | src      |       12 |       32 |       16 |       25 |       85 |
+| util.db.er                           | H2SchemaExtractor.java                                           | src      |       19 |       22 |       20 |       94 |      155 |
+| util.db.er                           | SchemaExtractor.java                                             | src      |        4 |       20 |       16 |        5 |       45 |
+| util.db.er                           | SchemaExtractorFactory.java                                      | src      |       10 |       40 |       16 |       38 |      104 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | util                                 | AnsiColorConstants.java                                          | src      |        2 |        0 |       16 |       24 |       42 |
 | util                                 | ColorUtil.java                                                   | src      |       23 |      156 |       29 |      154 |      362 |
@@ -611,5 +614,5 @@
 | util                                 | TaskUtil.java                                                    | src      |        8 |        0 |       31 |       15 |       54 |
 | util                                 | Util.java                                                        | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 66 package(s)                        | 544 file(s)                                                      | java     |    12116 |    11857 |    16238 |    64923 |   105134 |
+| 66 package(s)                        | 547 file(s)                                                      | java     |    12137 |    11919 |    16289 |    64990 |   105335 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

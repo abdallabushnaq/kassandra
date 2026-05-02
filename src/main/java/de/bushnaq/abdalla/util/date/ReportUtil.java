@@ -234,8 +234,7 @@ public class ReportUtil {
         return null;
     }
 
-    public static String calculateExtrapolatedScheduleDelayString(LocalDateTime start, LocalDateTime now, LocalDateTime end, Duration worked,
-                                                                  Duration estimated) {
+    public static String calculateExtrapolatedScheduleDelayString(LocalDateTime start, LocalDateTime now, LocalDateTime end, Duration worked, Duration estimated) {
         Duration duration = Duration.between(start, end);
         if (!duration.isZero() && estimated != null) {
             LocalDateTime releaseDate = calculateReleaseDate(start, now, worked, estimated);

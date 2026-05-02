@@ -27,18 +27,18 @@ import java.util.List;
 /**
  * Represents a database table in the ER diagram.  The {@code x}, {@code y},
  * {@code width}, and {@code height} fields are populated by
- * {@link ErDiagramRenderer} during the layout pass and have no meaning prior
+ * {@link EntityRelationshipDiagramRenderer} during the layout pass and have no meaning prior
  * to rendering.
  */
 @Getter
 @Setter
 @NoArgsConstructor
-public class ErTable {
+public class EntityRelationshipTable {
 
     /**
      * Columns belonging to this table, in ordinal order.
      */
-    private List<ErColumn> columns = new ArrayList<>();
+    private List<EntityRelationshipColumn> columns = new ArrayList<>();
 
     /**
      * Computed pixel height of the table box (header + all rows). Set by the renderer.

@@ -26,7 +26,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public class ErForeignKey {
+public class EntityRelationshipForeignKey {
 
     /**
      * Name of the constraint as defined in the database.

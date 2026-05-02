@@ -28,7 +28,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ErColumn {
+public class EntityRelationshipColumn {
 
     /**
      * SQL data type of the column (e.g., {@code VARCHAR}, {@code UUID}).

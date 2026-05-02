@@ -50,7 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
-public class ErDiagramTest extends AbstractEntityGenerator {
+public class EntityRelationshipDiagramTest extends AbstractEntityGenerator {
 
     private static final String OUTPUT_PATH = "../kassandra.wiki/entity-relationship-diagram.svg";
 
@@ -65,9 +65,9 @@ public class ErDiagramTest extends AbstractEntityGenerator {
     public void generateErDiagram(TestInfo testInfo) throws Exception {
         log.info("Generating ER diagram → {}", OUTPUT_PATH);
 
-        SchemaExtractor   extractor = new SchemaExtractor();
-        ErSchema          schema    = extractor.extract(entityManager);
-        ErDiagramRenderer renderer  = new ErDiagramRenderer();
+        SchemaExtractor                   extractor = SchemaExtractorFactory.create(entityManager);
+        EntityRelationshipSchema          schema    = extractor.extract(entityManager);
+        EntityRelationshipDiagramRenderer renderer  = new EntityRelationshipDiagramRenderer();
         renderer.render(schema, OUTPUT_PATH);
 
         File outputFile = new File(OUTPUT_PATH);

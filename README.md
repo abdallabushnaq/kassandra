@@ -145,11 +145,14 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 # What does this Project do a bit different?
 
 1. API first. Everything is based on an api. Even the Ui is just a client of the API.
-2. Kassandra generates its own Entity Relationship Diagram during the build.
-3. UI is tested using selenium,
-4. All introduction videos are generated using selenium and chatterbox.
-5. Holidays are automatically generated based on the location of the user and the national holidays of that location.
-6. By simplifying some aspects of project management (
+2. ErDiagramTest is an integration test that generates an Entity Relationship Diagram.
+3. GenerateScreenshots is an integration test that takes screenshots of every screen and dialog both in light and dark
+   mode. All screenshots are stored in github.wiki.
+4. The UI is tested using selenium,
+5. All introduction videos are generated using selenium, chatterbox and ffmpeg. Audio output is captured and fed to the
+   frame grabber.
+6. Holidays are automatically generated based on the location of the user and the national holidays of that location.
+7. By simplifying some aspects of project management (
    see [Limitations](https://github.com/kunterbunt2/project-hub/wiki/Limitations)), we can automate many aspects.
 
 # License

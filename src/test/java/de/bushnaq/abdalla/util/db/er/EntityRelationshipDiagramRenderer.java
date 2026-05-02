@@ -35,9 +35,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
+import java.util.Queue;
 
 /**
- * Renders an {@link ErSchema} as an SVG file.
+ * Renders an {@link EntityRelationshipSchema} as an SVG file.
  *
  * <h2>Layout</h2>
  * Tables are placed using a FK-aware forest layout.  Each FK relationship
@@ -64,48 +65,45 @@ import java.util.List;
  * independently.
  */
 @Slf4j
-public class ErDiagramRenderer {
+public class EntityRelationshipDiagramRenderer {
 
-    // ── Layout constants ───────────────────────────────────────────────────
-    static final int DEFAULT_TABLES_PER_ROW = 5;
-    static final int MARGIN                 = 40;
-    static final int TABLE_WIDTH            = 300;
-    static final int HEADER_HEIGHT          = 28;
-    static final int ROW_HEIGHT             = 22;
-    static final int H_GAP                  = 100; // horizontal gap between table columns (connector routing space)
-    static final int V_GAP                  = 30;  // vertical gap between table rows
-    static final int ISOLATED_V_GAP         = 60;  // extra gap before isolated table section
-    static final int BADGE_WIDTH            = 22;
+    private static final Color ALT_ROW_BG      = new Color(248, 249, 250);
+    private static final Color BADGE_FG        = Color.WHITE;
+    private static final Font BADGE_FONT  = new Font("SansSerif", Font.BOLD, 8);
     static final int BADGE_HEIGHT           = 13;
     static final int BADGE_MARGIN           = 4;
-    static final int CONNECTOR_STEP         = 8;  // per-connector x-offset inside the gap to avoid overlaps
-    static final int FOOTER_HEIGHT          = 30; // reserved height for the footer band
-
+    static final int BADGE_WIDTH            = 22;
     // ── Colours ────────────────────────────────────────────────────────────
-    private static final Color BG_COLOR         = new Color(245, 247, 250);
-    private static final Color HEADER_BG         = new Color(44, 62, 80);
-    private static final Color HEADER_FG         = Color.WHITE;
-    private static final Color PK_ROW_BG         = new Color(255, 243, 205);
-    private static final Color FK_ROW_BG         = new Color(209, 236, 241);
-    private static final Color NORMAL_ROW_BG     = Color.WHITE;
-    private static final Color ALT_ROW_BG        = new Color(248, 249, 250);
-    private static final Color ROW_BORDER        = new Color(222, 226, 230);
-    private static final Color TABLE_BORDER      = new Color(108, 117, 125);
-    private static final Color PK_BADGE_BG       = new Color(230, 169, 0);
-    private static final Color FK_BADGE_BG       = new Color(23, 162, 184);
-    private static final Color BADGE_FG          = Color.WHITE;
-    private static final Color CONNECTOR_COLOR   = new Color(192, 57, 43);
-    private static final Color TYPE_COLOR        = new Color(108, 117, 125);
-    private static final Color FOOTER_BG         = new Color(44, 62, 80);
-    private static final Color FOOTER_FG         = new Color(189, 195, 199);
-
+    private static final Color BG_COLOR        = new Color(245, 247, 250);
+    private static final Font COLUMN_FONT = new Font("SansSerif", Font.PLAIN, 11);
+    private static final Color CONNECTOR_COLOR = new Color(192, 57, 43);
+    static final int CONNECTOR_STEP         = 8;  // per-connector x-offset inside the gap to avoid overlaps
+    // ── Layout constants ───────────────────────────────────────────────────
+    static final int DEFAULT_TABLES_PER_ROW = 5;
+    private static final Color FK_BADGE_BG     = new Color(23, 162, 184);
+    private static final Color FK_ROW_BG       = new Color(209, 236, 241);
+    private static final Color FOOTER_BG       = new Color(44, 62, 80);
+    private static final Color FOOTER_FG       = new Color(189, 195, 199);
+    private static final Font FOOTER_FONT = new Font("SansSerif", Font.PLAIN, 11);
+    static final int FOOTER_HEIGHT          = 30; // reserved height for the footer band
+    private static final Color HEADER_BG       = new Color(44, 62, 80);
+    private static final Color HEADER_FG       = Color.WHITE;
     // ── Fonts ──────────────────────────────────────────────────────────────
     private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
-    private static final Font COLUMN_FONT = new Font("SansSerif", Font.PLAIN, 11);
+    static final int HEADER_HEIGHT          = 28;
+    static final int H_GAP                  = 100; // horizontal gap between table columns (connector routing space)
+    static final int ISOLATED_V_GAP         = 60;  // extra gap before isolated table section
+    static final int MARGIN                 = 40;
+    private static final Color NORMAL_ROW_BG   = Color.WHITE;
+    private static final Color PK_BADGE_BG     = new Color(230, 169, 0);
+    private static final Color PK_ROW_BG       = new Color(255, 243, 205);
+    private static final Color ROW_BORDER      = new Color(222, 226, 230);
+    static final int ROW_HEIGHT             = 22;
+    private static final Color TABLE_BORDER    = new Color(108, 117, 125);
+    static final int TABLE_WIDTH            = 300;
+    private static final Color TYPE_COLOR      = new Color(108, 117, 125);
     private static final Font TYPE_FONT   = new Font("SansSerif", Font.ITALIC, 10);
-    private static final Font BADGE_FONT  = new Font("SansSerif", Font.BOLD, 8);
-    private static final Font FOOTER_FONT = new Font("SansSerif", Font.PLAIN, 11);
-
+    static final int V_GAP                  = 30;  // vertical gap between table rows
     // ── State ──────────────────────────────────────────────────────────────
     private final int tablesPerRow;
 
@@ -113,7 +111,7 @@ public class ErDiagramRenderer {
      * Creates a renderer using the default number of tables per row
      * ({@value #DEFAULT_TABLES_PER_ROW}).
      */
-    public ErDiagramRenderer() {
+    public EntityRelationshipDiagramRenderer() {
         this(DEFAULT_TABLES_PER_ROW);
     }
 
@@ -122,65 +120,106 @@ public class ErDiagramRenderer {
      *
      * @param tablesPerRow how many table boxes to place on each grid row
      */
-    public ErDiagramRenderer(int tablesPerRow) {
+    public EntityRelationshipDiagramRenderer(int tablesPerRow) {
         this.tablesPerRow = tablesPerRow;
     }
 
     /**
-     * Renders the given schema as an SVG file at the specified path.
+     * Post-order DFS helper: places a node's entire subtree before placing the
+     * node itself, so the node's row slot is directly below its last child.
+     * Already-visited nodes are skipped to handle shared-parent (DAG) cases.
      *
-     * @param schema    the schema to render; must not be {@code null}
-     * @param outputPath absolute or relative path to the output {@code .svg} file
-     * @throws Exception if the file cannot be written or SVG generation fails
+     * @param node             the node to place
+     * @param parentToChildren directed parent→child adjacency map
+     * @param colMap           column assigned to each table name
+     * @param rowMap           output: row assigned to each table name
+     * @param nextRow          mutable next-available-row counter per column
+     * @param visited          set of already-placed table names
      */
-    public void render(ErSchema schema, String outputPath) throws Exception {
-        log.info("Rendering ER diagram with {} tables to {}", schema.getTables().size(), outputPath);
+    private void assignRowsDfs(String node,
+                               Map<String, List<String>> parentToChildren,
+                               Map<String, Integer> colMap,
+                               Map<String, Integer> rowMap,
+                               Map<Integer, Integer> nextRow,
+                               Set<String> visited) {
+        if (visited.contains(node)) {
+            return;
+        }
+        visited.add(node);
 
-        // ── Step 1: layout pass ─────────────────────────────────────────
-        computeLayout(schema);
-
-        // ── Step 2: compute canvas dimensions ──────────────────────────
-        int canvasWidth  = computeCanvasWidth(schema);
-        int canvasHeight = computeCanvasHeight(schema);
-
-        // ── Step 3: initialise SVG generator ───────────────────────────
-        DOMImplementation domImpl   = GenericDOMImplementation.getDOMImplementation();
-        String            svgNS     = SVGDOMImplementation.SVG_NAMESPACE_URI;
-        Document          document  = domImpl.createDocument(svgNS, "svg", null);
-        SVGGraphics2D     svg       = new SVGGraphics2D(document);
-        svg.setSVGCanvasSize(new Dimension(canvasWidth, canvasHeight));
-
-        // ── Step 4: background ──────────────────────────────────────────
-        svg.setColor(BG_COLOR);
-        svg.fillRect(0, 0, canvasWidth, canvasHeight);
-
-        // ── Step 5: draw all table boxes ────────────────────────────────
-        for (ErTable table : schema.getTables()) {
-            drawTable(svg, table);
+        // Recurse on children first (post-order)
+        for (String child : parentToChildren.getOrDefault(node, Collections.emptyList())) {
+            if (!visited.contains(child)) {
+                assignRowsDfs(child, parentToChildren, colMap, rowMap, nextRow, visited);
+            }
         }
 
-        // ── Step 6: draw FK connectors ──────────────────────────────────
-        drawConnectors(svg, schema);
-
-        // ── Step 6.5: draw footer ───────────────────────────────────────
-        drawFooter(svg, canvasWidth, canvasHeight);
-
-        // ── Step 7: stream to file ──────────────────────────────────────
-        File parent = new File(outputPath).getParentFile();
-        if (parent != null && !parent.exists() && !parent.mkdirs()) {
-            log.warn("Could not create output directory: {}", parent.getAbsolutePath());
-        }
-        try (FileOutputStream fos = new FileOutputStream(outputPath);
-             Writer out = new OutputStreamWriter(fos, StandardCharsets.UTF_8)) {
-            svg.stream(out, true);
-        }
-        log.info("ER diagram written to {}", outputPath);
+        // Place this node at the next available row in its column
+        int col = colMap.getOrDefault(node, 0);
+        int row = nextRow.getOrDefault(col, 0);
+        rowMap.put(node, row);
+        nextRow.put(col, row + 1);
     }
 
     // ── Layout ─────────────────────────────────────────────────────────────
 
     /**
-     * Assigns pixel coordinates and dimensions to every {@link ErTable} in the
+     * Returns the total pixel height of the SVG canvas based on the laid-out
+     * tables.
+     *
+     * @param schema the schema after {@link #computeLayout(EntityRelationshipSchema)} has run
+     * @return canvas height in pixels
+     */
+    protected int computeCanvasHeight(EntityRelationshipSchema schema) {
+        int maxY = 0;
+        for (EntityRelationshipTable t : schema.getTables()) {
+            maxY = Math.max(maxY, t.getY() + t.getHeight());
+        }
+        return maxY + MARGIN + FOOTER_HEIGHT;
+    }
+
+    /**
+     * Returns the total pixel width of the SVG canvas, derived from the actual
+     * table positions set by {@link #computeLayout(EntityRelationshipSchema)}.
+     *
+     * @param schema the schema after layout has been computed
+     * @return canvas width in pixels
+     */
+    protected int computeCanvasWidth(EntityRelationshipSchema schema) {
+        int maxRight = schema.getTables().stream()
+                .mapToInt(t -> t.getX() + t.getWidth())
+                .max().orElse(MARGIN);
+        // Reserve extra space to the right for connector routing
+        int extraForConnectors = CONNECTOR_STEP * (schema.getForeignKeys().size() + 1) + H_GAP;
+        return maxRight + extraForConnectors;
+    }
+
+    /**
+     * Computes the routing x-coordinate for a single connector inside its gap.
+     * The {@code gapIndex} is 0 for the bottommost child (smallest offset) and
+     * increases toward the topmost child (largest offset).
+     *
+     * @param from     FK (child) table
+     * @param to       PK (parent) table
+     * @param gapIndex zero-based index within the gap group (0 = smallest routeX)
+     * @return clamped routing x-coordinate guaranteed to lie inside the gap
+     */
+    private int computeConnectorRouteX(EntityRelationshipTable from, EntityRelationshipTable to, int gapIndex) {
+        if (from.getX() > to.getX()) {
+            int fkLeft   = from.getX();
+            int pkRight  = to.getX() + TABLE_WIDTH;
+            int gapWidth = fkLeft - pkRight;
+            int routeX   = pkRight + gapWidth / 2 + gapIndex * CONNECTOR_STEP;
+            return Math.min(Math.max(routeX, pkRight + CONNECTOR_STEP), fkLeft - CONNECTOR_STEP);
+        } else {
+            int fkRight = from.getX() + TABLE_WIDTH;
+            int pkRight = to.getX() + TABLE_WIDTH;
+            return Math.max(fkRight, pkRight) + H_GAP / 4 + gapIndex * CONNECTOR_STEP;
+        }
+    }
+
+    /**
+     * Assigns pixel coordinates and dimensions to every {@link EntityRelationshipTable} in the
      * schema.
      *
      * <p>Phase 1 – connected tables (those involved in FK relationships):
@@ -199,10 +238,10 @@ public class ErDiagramRenderer {
      *
      * @param schema the schema whose tables will be mutated with layout data
      */
-    protected void computeLayout(ErSchema schema) {
+    protected void computeLayout(EntityRelationshipSchema schema) {
         // ── Pre-compute pixel sizes ──────────────────────────────────────
-        Map<String, ErTable> byName = new LinkedHashMap<>();
-        for (ErTable t : schema.getTables()) {
+        Map<String, EntityRelationshipTable> byName = new LinkedHashMap<>();
+        for (EntityRelationshipTable t : schema.getTables()) {
             t.setWidth(TABLE_WIDTH);
             t.setHeight(HEADER_HEIGHT + t.getColumns().size() * ROW_HEIGHT);
             byName.put(t.getTableName(), t);
@@ -212,8 +251,8 @@ public class ErDiagramRenderer {
         // Edge direction: parent (toTable) → child (fromTable)
         Map<String, List<String>> parentToChildren = new LinkedHashMap<>();
         Map<String, List<String>> childToParents   = new LinkedHashMap<>();
-        for (ErForeignKey fk : schema.getForeignKeys()) {
-            parentToChildren.computeIfAbsent(fk.getToTable(),   k -> new ArrayList<>()).add(fk.getFromTable());
+        for (EntityRelationshipForeignKey fk : schema.getForeignKeys()) {
+            parentToChildren.computeIfAbsent(fk.getToTable(), k -> new ArrayList<>()).add(fk.getFromTable());
             childToParents.computeIfAbsent(fk.getFromTable(), k -> new ArrayList<>()).add(fk.getToTable());
         }
 
@@ -223,7 +262,7 @@ public class ErDiagramRenderer {
         // children = appear as fromTable; reached via DFS from their parents
         List<String> roots    = new ArrayList<>();
         List<String> isolated = new ArrayList<>();
-        for (ErTable t : schema.getTables()) {
+        for (EntityRelationshipTable t : schema.getTables()) {
             String name = t.getTableName();
             if (!childToParents.containsKey(name)) {
                 if (parentToChildren.containsKey(name)) {
@@ -272,7 +311,7 @@ public class ErDiagramRenderer {
         // inflated to the height of the tallest row in the whole diagram.
         Map<Integer, Integer> maxHeightPerRow = new HashMap<>();
         for (Map.Entry<String, Integer> e : rowMap.entrySet()) {
-            ErTable t = byName.get(e.getKey());
+            EntityRelationshipTable t = byName.get(e.getKey());
             if (t != null) {
                 maxHeightPerRow.merge(e.getValue(), t.getHeight(), Math::max);
             }
@@ -286,8 +325,8 @@ public class ErDiagramRenderer {
         }
 
         for (Map.Entry<String, Integer> entry : colMap.entrySet()) {
-            ErTable t   = byName.get(entry.getKey());
-            Integer row = rowMap.get(entry.getKey());
+            EntityRelationshipTable t   = byName.get(entry.getKey());
+            Integer                 row = rowMap.get(entry.getKey());
             if (t != null && row != null) {
                 t.setX(MARGIN + entry.getValue() * (TABLE_WIDTH + H_GAP));
                 t.setY(rowTopY[row]);
@@ -299,165 +338,64 @@ public class ErDiagramRenderer {
                 .filter(t -> colMap.containsKey(t.getTableName()))
                 .mapToInt(t -> t.getY() + t.getHeight())
                 .max().orElse(MARGIN);
-        int isolatedStartY    = connectedBottomY + ISOLATED_V_GAP;
-        int iCol              = 0;
-        int iRowY             = isolatedStartY;
-        int rowMaxHeight      = 0;
+        int isolatedStartY = connectedBottomY + ISOLATED_V_GAP;
+        int iCol           = 0;
+        int iRowY          = isolatedStartY;
+        int rowMaxHeight   = 0;
         for (String name : isolated) {
-            ErTable t = byName.get(name);
+            EntityRelationshipTable t = byName.get(name);
             if (t == null) continue;
             t.setX(MARGIN + iCol * (TABLE_WIDTH + H_GAP));
             t.setY(iRowY);
             rowMaxHeight = Math.max(rowMaxHeight, t.getHeight());
             iCol++;
             if (iCol >= tablesPerRow) {
-                iCol      = 0;
-                iRowY    += rowMaxHeight + V_GAP;
+                iCol         = 0;
+                iRowY += rowMaxHeight + V_GAP;
                 rowMaxHeight = 0;
             }
         }
     }
 
-    /**
-     * Post-order DFS helper: places a node's entire subtree before placing the
-     * node itself, so the node's row slot is directly below its last child.
-     * Already-visited nodes are skipped to handle shared-parent (DAG) cases.
-     *
-     * @param node             the node to place
-     * @param parentToChildren directed parent→child adjacency map
-     * @param colMap           column assigned to each table name
-     * @param rowMap           output: row assigned to each table name
-     * @param nextRow          mutable next-available-row counter per column
-     * @param visited          set of already-placed table names
-     */
-    private void assignRowsDfs(String node,
-                               Map<String, List<String>> parentToChildren,
-                               Map<String, Integer> colMap,
-                               Map<String, Integer> rowMap,
-                               Map<Integer, Integer> nextRow,
-                               Set<String> visited) {
-        if (visited.contains(node)) {
-            return;
-        }
-        visited.add(node);
-
-        // Recurse on children first (post-order)
-        for (String child : parentToChildren.getOrDefault(node, Collections.emptyList())) {
-            if (!visited.contains(child)) {
-                assignRowsDfs(child, parentToChildren, colMap, rowMap, nextRow, visited);
-            }
-        }
-
-        // Place this node at the next available row in its column
-        int col = colMap.getOrDefault(node, 0);
-        int row = nextRow.getOrDefault(col, 0);
-        rowMap.put(node, row);
-        nextRow.put(col, row + 1);
-    }
-
-    /**
-     * Returns the total pixel width of the SVG canvas, derived from the actual
-     * table positions set by {@link #computeLayout(ErSchema)}.
-     *
-     * @param schema the schema after layout has been computed
-     * @return canvas width in pixels
-     */
-    protected int computeCanvasWidth(ErSchema schema) {
-        int maxRight = schema.getTables().stream()
-                .mapToInt(t -> t.getX() + t.getWidth())
-                .max().orElse(MARGIN);
-        // Reserve extra space to the right for connector routing
-        int extraForConnectors = CONNECTOR_STEP * (schema.getForeignKeys().size() + 1) + H_GAP;
-        return maxRight + extraForConnectors;
-    }
-
-    /**
-     * Returns the total pixel height of the SVG canvas based on the laid-out
-     * tables.
-     *
-     * @param schema the schema after {@link #computeLayout(ErSchema)} has run
-     * @return canvas height in pixels
-     */
-    protected int computeCanvasHeight(ErSchema schema) {
-        int maxY = 0;
-        for (ErTable t : schema.getTables()) {
-            maxY = Math.max(maxY, t.getY() + t.getHeight());
-        }
-        return maxY + MARGIN + FOOTER_HEIGHT;
-    }
-
     // ── Table drawing ───────────────────────────────────────────────────────
 
     /**
-     * Draws a single table box (header + column rows + border).
+     * Returns the gap-group key for a connector.  Connectors that share the
+     * same key are routed through the same inter-column channel and receive
+     * staggered {@code routeX} values.
      *
-     * @param g     the SVG graphics context
-     * @param table the table to draw
+     * @param from FK (child) table
+     * @param to   PK (parent) table
+     * @return a stable string key unique to the pixel gap between the two tables
      */
-    protected void drawTable(Graphics2D g, ErTable table) {
-        int x = table.getX();
-        int y = table.getY();
-        int w = table.getWidth();
-
-        // Header
-        g.setColor(HEADER_BG);
-        g.fillRect(x, y, w, HEADER_HEIGHT);
-        g.setFont(HEADER_FONT);
-        g.setColor(HEADER_FG);
-        g.drawString(table.getTableName(), x + 8, y + HEADER_HEIGHT - 8);
-
-        // Column rows
-        List<ErColumn> columns = table.getColumns();
-        for (int i = 0; i < columns.size(); i++) {
-            ErColumn col    = columns.get(i);
-            int      rowY   = y + HEADER_HEIGHT + i * ROW_HEIGHT;
-
-            // Row background
-            Color bg;
-            if (col.isPrimaryKey()) {
-                bg = PK_ROW_BG;
-            } else if (col.isForeignKey()) {
-                bg = FK_ROW_BG;
-            } else {
-                bg = (i % 2 == 0) ? NORMAL_ROW_BG : ALT_ROW_BG;
-            }
-            g.setColor(bg);
-            g.fillRect(x, rowY, w, ROW_HEIGHT);
-
-            // Row separator
-            g.setColor(ROW_BORDER);
-            g.setStroke(new BasicStroke(0.5f));
-            g.drawLine(x, rowY, x + w, rowY);
-
-            // Badge (PK / FK)
-            int textStartX = x + 6;
-            if (col.isPrimaryKey()) {
-                drawBadge(g, x + 4, rowY + (ROW_HEIGHT - BADGE_HEIGHT) / 2, "PK", PK_BADGE_BG);
-                textStartX = x + BADGE_WIDTH + BADGE_MARGIN + 4;
-            } else if (col.isForeignKey()) {
-                drawBadge(g, x + 4, rowY + (ROW_HEIGHT - BADGE_HEIGHT) / 2, "FK", FK_BADGE_BG);
-                textStartX = x + BADGE_WIDTH + BADGE_MARGIN + 4;
-            }
-
-            // Column name
-            g.setFont(COLUMN_FONT);
-            g.setColor(Color.DARK_GRAY);
-            g.drawString(col.getName(), textStartX, rowY + ROW_HEIGHT - 6);
-
-            // Data type – right-aligned
-            g.setFont(TYPE_FONT);
-            g.setColor(TYPE_COLOR);
-            FontMetrics fm       = g.getFontMetrics();
-            String      typeText = col.isNullable() ? col.getDataType() + "?" : col.getDataType();
-            int         typeW    = fm.stringWidth(typeText);
-            g.drawString(typeText, x + w - typeW - 6, rowY + ROW_HEIGHT - 6);
+    private String connectorGapKey(EntityRelationshipTable from, EntityRelationshipTable to) {
+        if (from.getX() > to.getX()) {
+            // Tree path: key = pkRight "-" fkLeft
+            return (to.getX() + TABLE_WIDTH) + "-" + from.getX();
+        } else {
+            // Fallback path: key = fkRight "R" pkRight
+            return (from.getX() + TABLE_WIDTH) + "R" + (to.getX() + TABLE_WIDTH);
         }
-
-        // Table outer border
-        g.setColor(TABLE_BORDER);
-        g.setStroke(new BasicStroke(1.0f));
-        g.drawRect(x, y, w, table.getHeight());
     }
+
+    /**
+     * Draws a small filled arrowhead pointing left at the given point.
+     *
+     * @param g graphics context
+     * @param x tip x-coordinate (leftmost point of the arrowhead)
+     * @param y tip y-coordinate (vertical centre)
+     */
+    protected void drawArrowLeft(Graphics2D g, int x, int y) {
+        int    size  = 8;
+        Path2D arrow = new Path2D.Float();
+        arrow.moveTo(x, y);
+        arrow.lineTo(x + size, y - size / 2.0);
+        arrow.lineTo(x + size, y + size / 2.0);
+        arrow.closePath();
+        g.fill(arrow);
+    }
+
+    // ── Connector drawing ───────────────────────────────────────────────────
 
     /**
      * Draws a small pill-shaped badge (PK / FK) at the given position.
@@ -477,8 +415,6 @@ public class ErDiagramRenderer {
         int         tw = fm.stringWidth(text);
         g.drawString(text, bx + (BADGE_WIDTH - tw) / 2, by + BADGE_HEIGHT - 3);
     }
-
-    // ── Connector drawing ───────────────────────────────────────────────────
 
     /**
      * Draws all FK connector lines between table boxes.
@@ -501,21 +437,23 @@ public class ErDiagramRenderer {
      * @param g      graphics context
      * @param schema the fully laid-out schema
      */
-    protected void drawConnectors(Graphics2D g, ErSchema schema) {
+    protected void drawConnectors(Graphics2D g, EntityRelationshipSchema schema) {
         // ── Pass 1: resolve tables and Y values for every connector ───────
         // Using a local record (Java 16+) to carry per-connector state.
-        record Conn(ErForeignKey fk, ErTable from, ErTable to, int fkY, int pkY) {}
+        record Conn(EntityRelationshipForeignKey fk, EntityRelationshipTable from, EntityRelationshipTable to, int fkY,
+                    int pkY) {
+        }
 
         List<Conn> conns = new ArrayList<>();
-        for (ErForeignKey fk : schema.getForeignKeys()) {
-            ErTable from = findTable(schema, fk.getFromTable());
-            ErTable to   = findTable(schema, fk.getToTable());
+        for (EntityRelationshipForeignKey fk : schema.getForeignKeys()) {
+            EntityRelationshipTable from = findTable(schema, fk.getFromTable());
+            EntityRelationshipTable to   = findTable(schema, fk.getToTable());
             if (from == null || to == null) {
                 log.warn("Cannot draw connector for FK {} — table not found", fk.getConstraintName());
                 continue;
             }
             int fkY = from.getY() + HEADER_HEIGHT + from.columnIndex(fk.getFromColumn()) * ROW_HEIGHT + ROW_HEIGHT / 2;
-            int pkY = to.getY()   + HEADER_HEIGHT + to.columnIndex(fk.getToColumn())     * ROW_HEIGHT + ROW_HEIGHT / 2;
+            int pkY = to.getY() + HEADER_HEIGHT + to.columnIndex(fk.getToColumn()) * ROW_HEIGHT + ROW_HEIGHT / 2;
             conns.add(new Conn(fk, from, to, fkY, pkY));
         }
 
@@ -569,76 +507,16 @@ public class ErDiagramRenderer {
             } else {
                 // Fallback: FK table is to the left or same column
                 int fkRight = c.from().getX() + TABLE_WIDTH;
-                int pkRight = c.to().getX()   + TABLE_WIDTH;
+                int pkRight = c.to().getX() + TABLE_WIDTH;
 
                 g.drawLine(fkRight, fkY, routeX, fkY);
-                g.drawLine(routeX,  fkY, routeX, pkY);
-                g.drawLine(routeX,  pkY, pkRight, pkY);
+                g.drawLine(routeX, fkY, routeX, pkY);
+                g.drawLine(routeX, pkY, pkRight, pkY);
 
                 g.fillOval(fkRight - dotR, fkY - dotR, dotR * 2, dotR * 2);
                 drawArrowLeft(g, pkRight, pkY);
             }
         }
-    }
-
-    /**
-     * Returns the gap-group key for a connector.  Connectors that share the
-     * same key are routed through the same inter-column channel and receive
-     * staggered {@code routeX} values.
-     *
-     * @param from FK (child) table
-     * @param to   PK (parent) table
-     * @return a stable string key unique to the pixel gap between the two tables
-     */
-    private String connectorGapKey(ErTable from, ErTable to) {
-        if (from.getX() > to.getX()) {
-            // Tree path: key = pkRight "-" fkLeft
-            return (to.getX() + TABLE_WIDTH) + "-" + from.getX();
-        } else {
-            // Fallback path: key = fkRight "R" pkRight
-            return (from.getX() + TABLE_WIDTH) + "R" + (to.getX() + TABLE_WIDTH);
-        }
-    }
-
-    /**
-     * Computes the routing x-coordinate for a single connector inside its gap.
-     * The {@code gapIndex} is 0 for the bottommost child (smallest offset) and
-     * increases toward the topmost child (largest offset).
-     *
-     * @param from     FK (child) table
-     * @param to       PK (parent) table
-     * @param gapIndex zero-based index within the gap group (0 = smallest routeX)
-     * @return clamped routing x-coordinate guaranteed to lie inside the gap
-     */
-    private int computeConnectorRouteX(ErTable from, ErTable to, int gapIndex) {
-        if (from.getX() > to.getX()) {
-            int fkLeft   = from.getX();
-            int pkRight  = to.getX() + TABLE_WIDTH;
-            int gapWidth = fkLeft - pkRight;
-            int routeX   = pkRight + gapWidth / 2 + gapIndex * CONNECTOR_STEP;
-            return Math.min(Math.max(routeX, pkRight + CONNECTOR_STEP), fkLeft - CONNECTOR_STEP);
-        } else {
-            int fkRight = from.getX() + TABLE_WIDTH;
-            int pkRight = to.getX()   + TABLE_WIDTH;
-            return Math.max(fkRight, pkRight) + H_GAP / 4 + gapIndex * CONNECTOR_STEP;
-        }
-    }
-
-    /**
-     * Draws a small filled arrowhead pointing left at the given point.
-     *
-     * @param g graphics context
-     * @param x tip x-coordinate (leftmost point of the arrowhead)
-     * @param y tip y-coordinate (vertical centre)
-     */
-    protected void drawArrowLeft(Graphics2D g, int x, int y) {
-        int size = 8;
-        Path2D arrow = new Path2D.Float();
-        arrow.moveTo(x, y);
-        arrow.lineTo(x + size, y - size / 2.0);
-        arrow.lineTo(x + size, y + size / 2.0);
-        arrow.closePath();
-        g.fill(arrow);
     }
 
     /**
@@ -661,29 +539,151 @@ public class ErDiagramRenderer {
         String text      = "Generated by Kassandra  •  " + timestamp;
         g.setFont(FOOTER_FONT);
         g.setColor(FOOTER_FG);
-        FontMetrics fm = g.getFontMetrics();
-        int textW = fm.stringWidth(text);
-        int textY = footerY + (FOOTER_HEIGHT + fm.getAscent() - fm.getDescent()) / 2;
+        FontMetrics fm    = g.getFontMetrics();
+        int         textW = fm.stringWidth(text);
+        int         textY = footerY + (FOOTER_HEIGHT + fm.getAscent() - fm.getDescent()) / 2;
         // Centre the text horizontally
         g.drawString(text, (canvasWidth - textW) / 2, textY);
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────────────
+    /**
+     * Draws a single table box (header + column rows + border).
+     *
+     * @param g     the SVG graphics context
+     * @param table the table to draw
+     */
+    protected void drawTable(Graphics2D g, EntityRelationshipTable table) {
+        int x = table.getX();
+        int y = table.getY();
+        int w = table.getWidth();
+
+        // Header
+        g.setColor(HEADER_BG);
+        g.fillRect(x, y, w, HEADER_HEIGHT);
+        g.setFont(HEADER_FONT);
+        g.setColor(HEADER_FG);
+        g.drawString(table.getTableName(), x + 8, y + HEADER_HEIGHT - 8);
+
+        // Column rows
+        List<EntityRelationshipColumn> columns = table.getColumns();
+        for (int i = 0; i < columns.size(); i++) {
+            EntityRelationshipColumn col  = columns.get(i);
+            int                      rowY = y + HEADER_HEIGHT + i * ROW_HEIGHT;
+
+            // Row background
+            Color bg;
+            if (col.isPrimaryKey()) {
+                bg = PK_ROW_BG;
+            } else if (col.isForeignKey()) {
+                bg = FK_ROW_BG;
+            } else {
+                bg = (i % 2 == 0) ? NORMAL_ROW_BG : ALT_ROW_BG;
+            }
+            g.setColor(bg);
+            g.fillRect(x, rowY, w, ROW_HEIGHT);
+
+            // Row separator
+            g.setColor(ROW_BORDER);
+            g.setStroke(new BasicStroke(0.5f));
+            g.drawLine(x, rowY, x + w, rowY);
+
+            // Badge (PK / FK)
+            int textStartX = x + 6;
+            if (col.isPrimaryKey()) {
+                drawBadge(g, x + 4, rowY + (ROW_HEIGHT - BADGE_HEIGHT) / 2, "PK", PK_BADGE_BG);
+                textStartX = x + BADGE_WIDTH + BADGE_MARGIN + 4;
+            } else if (col.isForeignKey()) {
+                drawBadge(g, x + 4, rowY + (ROW_HEIGHT - BADGE_HEIGHT) / 2, "FK", FK_BADGE_BG);
+                textStartX = x + BADGE_WIDTH + BADGE_MARGIN + 4;
+            }
+
+            // Column name
+            g.setFont(COLUMN_FONT);
+            g.setColor(Color.DARK_GRAY);
+            g.drawString(col.getName(), textStartX, rowY + ROW_HEIGHT - 6);
+
+            // Data type – right-aligned
+            g.setFont(TYPE_FONT);
+            g.setColor(TYPE_COLOR);
+            FontMetrics fm       = g.getFontMetrics();
+            String      typeText = col.isNullable() ? col.getDataType() + "?" : col.getDataType();
+            int         typeW    = fm.stringWidth(typeText);
+            g.drawString(typeText, x + w - typeW - 6, rowY + ROW_HEIGHT - 6);
+        }
+
+        // Table outer border
+        g.setColor(TABLE_BORDER);
+        g.setStroke(new BasicStroke(1.0f));
+        g.drawRect(x, y, w, table.getHeight());
+    }
 
     /**
-     * Finds an {@link ErTable} by name (case-insensitive).
+     * Finds an {@link EntityRelationshipTable} by name (case-insensitive).
      *
      * @param schema    the schema to search
      * @param tableName the table name to find
      * @return the matching table, or {@code null} if not found
      */
-    protected ErTable findTable(ErSchema schema, String tableName) {
-        for (ErTable t : schema.getTables()) {
+    protected EntityRelationshipTable findTable(EntityRelationshipSchema schema, String tableName) {
+        for (EntityRelationshipTable t : schema.getTables()) {
             if (t.getTableName().equalsIgnoreCase(tableName)) {
                 return t;
             }
         }
         return null;
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+
+    /**
+     * Renders the given schema as an SVG file at the specified path.
+     *
+     * @param schema     the schema to render; must not be {@code null}
+     * @param outputPath absolute or relative path to the output {@code .svg} file
+     * @throws Exception if the file cannot be written or SVG generation fails
+     */
+    public void render(EntityRelationshipSchema schema, String outputPath) throws Exception {
+        log.info("Rendering ER diagram with {} tables to {}", schema.getTables().size(), outputPath);
+
+        // ── Step 1: layout pass ─────────────────────────────────────────
+        computeLayout(schema);
+
+        // ── Step 2: compute canvas dimensions ──────────────────────────
+        int canvasWidth  = computeCanvasWidth(schema);
+        int canvasHeight = computeCanvasHeight(schema);
+
+        // ── Step 3: initialise SVG generator ───────────────────────────
+        DOMImplementation domImpl  = GenericDOMImplementation.getDOMImplementation();
+        String            svgNS    = SVGDOMImplementation.SVG_NAMESPACE_URI;
+        Document          document = domImpl.createDocument(svgNS, "svg", null);
+        SVGGraphics2D     svg      = new SVGGraphics2D(document);
+        svg.setSVGCanvasSize(new Dimension(canvasWidth, canvasHeight));
+
+        // ── Step 4: background ──────────────────────────────────────────
+        svg.setColor(BG_COLOR);
+        svg.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        // ── Step 5: draw all table boxes ────────────────────────────────
+        for (EntityRelationshipTable table : schema.getTables()) {
+            drawTable(svg, table);
+        }
+
+        // ── Step 6: draw FK connectors ──────────────────────────────────
+        drawConnectors(svg, schema);
+
+        // ── Step 6.5: draw footer ───────────────────────────────────────
+        drawFooter(svg, canvasWidth, canvasHeight);
+
+        // ── Step 7: stream to file ──────────────────────────────────────
+        File parent = new File(outputPath).getParentFile();
+        if (parent != null && !parent.exists() && !parent.mkdirs()) {
+            log.warn("Could not create output directory: {}", parent.getAbsolutePath());
+        }
+        try (FileOutputStream fos = new FileOutputStream(outputPath);
+             Writer out = new OutputStreamWriter(fos, StandardCharsets.UTF_8)) {
+            svg.stream(out, true);
+        }
+        log.info("ER diagram written to {}", outputPath);
     }
 }
 
