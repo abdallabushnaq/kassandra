@@ -6,6 +6,7 @@
 /docker/chatterbox/voices
 /docker/index-tts/voices
 /docker/index-tts/checkpoints
+/docs/lm-studio-api
 /references/critical/*.svg
 /references/dynamic-gantt/*.svg
 /references/gantt-burndown/*.svg
@@ -40,7 +41,6 @@ webpack.generated.js
 *.zip
 /.idea
 /public/testCache
-/docs
 *.db
 test-results
 test-recordings
