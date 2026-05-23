@@ -1,0 +1,2769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Kassandra — Project Management Server</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ── Reset & Base ─────────────────────────────────────────────── */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            /* Light-theme palette (matches original PPTX) */
+            --bg: #F8FAFC;
+            --navy: #111D33;
+            --navy2: #1B2B4B;
+            --navy3: #1e3a6e;
+            --slate: #F1F5F9;
+            --border: #CBD5E1;
+            --muted: #64748B;
+            --text: #1E293B;
+            --amber: #F59E0B;
+            --amber2: #FCD34D;
+            --blue: #2563EB;
+            --blue2: #DBEAFE;
+            --green: #16A34A;
+            --red: #DC2626;
+            --white: #ffffff;
+
+            --slide-w: 2560px;
+            --slide-h: 1440px;
+            --ease: cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Slide Container — fixed 2560×1440 canvas, scaled to viewport */
+        #deck {
+            width: 2560px;
+            height: 1440px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: top left;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            width: 2560px;
+            height: 1440px;
+            display: flex;
+            flex-direction: column;
+            padding: 88px 136px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(40px);
+            transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(0);
+        }
+
+        .slide.exit {
+            opacity: 0;
+            transform: translateY(-40px);
+            transition: opacity 0.45s var(--ease), transform 0.45s var(--ease);
+        }
+
+        /* ── Progress Bar ─────────────────────────────────────────────── */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: var(--blue);
+            transition: width 0.5s var(--ease);
+            z-index: 100;
+        }
+
+        /* ── Slide Counter ────────────────────────────────────────────── */
+        #counter {
+            position: fixed;
+            bottom: 28px;
+            right: 36px;
+            font-family: 'Inter', monospace;
+            font-size: 28px;
+            color: var(--muted);
+            letter-spacing: 0.05em;
+            z-index: 100;
+        }
+
+        /* ── Nav Buttons ──────────────────────────────────────────────── */
+        #nav {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--white);
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .nav-btn:hover {
+            border-color: var(--blue);
+            color: var(--blue);
+            background: var(--blue2);
+        }
+
+        /* ── Slide Menu ───────────────────────────────────────────────── */
+        #menu-btn {
+            position: fixed;
+            top: 24px;
+            right: 36px;
+            font-family: 'Inter', sans-serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--muted);
+            background: var(--white);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            z-index: 100;
+            transition: all 0.2s;
+        }
+
+        #menu-btn:hover {
+            color: var(--blue);
+            border-color: var(--blue);
+        }
+
+        #slide-menu {
+            position: fixed;
+            top: 60px;
+            right: 36px;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            z-index: 200;
+            display: none;
+            min-width: 280px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+
+        #slide-menu.open {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 30px;
+            color: var(--muted);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            transition: all 0.15s;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: var(--slate);
+            color: var(--text);
+        }
+
+        .menu-item .num {
+            color: var(--blue);
+            font-size: 24px;
+            width: 24px;
+            flex-shrink: 0;
+        }
+
+        /* ── Typography Helpers ───────────────────────────────────────── */
+        .eyebrow {
+            font-family: 'Inter', sans-serif;
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--blue);
+            margin-bottom: 20px;
+            background: var(--blue2);
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 3px;
+        }
+
+        .display {
+            font-family: 'Inter', sans-serif;
+            font-size: 224px;
+            line-height: 1.0;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 24px;
+        }
+
+        .display-sm {
+            font-family: 'Inter', sans-serif;
+            font-size: 96px;
+            line-height: 1.1;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .lead {
+            font-size: 42px;
+            color: var(--muted);
+            line-height: 1.6;
+            font-weight: 400;
+            max-width: 1200px;
+        }
+
+        .label {
+            font-family: 'Inter', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        /* ── Decorative ───────────────────────────────────────────────── */
+        .rule {
+            width: 60px;
+            height: 3px;
+            background: var(--blue);
+            margin-bottom: 32px;
+            border-radius: 2px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 14px;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 26px;
+            letter-spacing: 0.04em;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            background: var(--slate);
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 32px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        /* ── Card ─────────────────────────────────────────────────────── */
+        .card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 28px 32px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .card.blue::before {
+            background: var(--blue);
+        }
+
+        .card.amber::before {
+            background: var(--amber);
+        }
+
+        .card.green::before {
+            background: var(--green);
+        }
+
+        .card.red::before {
+            background: var(--red);
+        }
+
+        .card.purple::before {
+            background: #7C3AED;
+        }
+
+        .card.teal::before {
+            background: #0D9488;
+        }
+
+        .card.pink::before {
+            background: #DB2777;
+        }
+
+        .card-title {
+            font-size: 38px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .card-body {
+            font-size: 28px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        /* ── Grid helpers ─────────────────────────────────────────────── */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+        }
+
+        .grid-5 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+        }
+
+        /* ── Screenshot frame ─────────────────────────────────────────── */
+        .screenshot-frame {
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            background: var(--slate);
+        }
+
+        .screenshot-frame img {
+            width: 100%;
+            display: block;
+        }
+
+        /* ── Remove noise overlay (was for dark slides) ───────────────── */
+        .slide::after {
+            display: none;
+        }
+
+        .slide > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 1 — TITLE
+        ═══════════════════════════════════════════════════════════════ */
+        #s1 {
+            background: var(--navy);
+            justify-content: center;
+        }
+
+        #s1 .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 120px 120px;
+            opacity: 0.4;
+            mask-image: radial-gradient(ellipse 80% 80% at 20% 50%, black 20%, transparent 80%);
+        }
+
+        #s1 .glow {
+            position: absolute;
+            width: 1200px;
+            height: 1200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+            pointer-events: none;
+        }
+
+        #s1 .glow2 {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.07) 0%, transparent 70%);
+            bottom: 100px;
+            right: 200px;
+            pointer-events: none;
+        }
+
+        #s1 .kas {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 360px;
+            letter-spacing: -0.03em;
+            line-height: 0.9;
+            color: var(--white);
+        }
+
+        #s1 .kas span {
+            color: var(--amber);
+        }
+
+        #s1 .sub {
+            font-family: 'Inter', sans-serif;
+            font-size: 84px;
+            color: #93C5FD;
+            margin-top: 32px;
+            font-weight: 400;
+        }
+
+        #s1 .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 56px;
+        }
+
+        #s1 .chip {
+            font-family: 'Inter', sans-serif;
+            font-size: 36px;
+            letter-spacing: 0.04em;
+            padding: 10px 22px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: #93C5FD;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        #s1 .github {
+            margin-top: 64px;
+            font-family: 'Inter', sans-serif;
+            font-size: 40px;
+            color: #60A5FA;
+            letter-spacing: 0.03em;
+        }
+
+        #s1 .side-art {
+            position: absolute;
+            right: 160px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        #s1 .art-line {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15));
+            border-radius: 1px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 2 — AGENDA
+        ═══════════════════════════════════════════════════════════════ */
+        #s2 {
+            background: var(--bg);
+            justify-content: center;
+        }
+
+        #s2 .agenda-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-top: 48px;
+        }
+
+        #s2 .agenda-item {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 32px;
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        #s2 .agenda-num {
+            font-family: 'Inter', sans-serif;
+            font-size: 96px;
+            font-weight: 800;
+            color: var(--blue);
+            line-height: 1;
+            flex-shrink: 0;
+            width: 56px;
+        }
+
+        #s2 .agenda-title {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        #s2 .agenda-desc {
+            font-size: 32px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 3 — THE PROBLEM
+        ═══════════════════════════════════════════════════════════════ */
+        #s3 {
+            background: var(--bg);
+        }
+
+        #s3 .timeline {
+            display: flex;
+            gap: 0;
+            margin-top: 48px;
+            flex: 1;
+            align-items: stretch;
+        }
+
+        #s3 .step {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #s3 .step:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -20px;
+            top: 36px;
+            color: var(--border);
+            font-size: 64px;
+            z-index: 3;
+        }
+
+        #s3 .step-inner {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 28px 24px;
+            margin: 0 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        #s3 .step:last-child .step-inner {
+            border-color: #FCA5A5;
+            background: #FEF2F2;
+        }
+
+        #s3 .step-n {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--blue);
+            color: var(--white);
+            font-size: 36px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        #s3 .step:last-child .step-n {
+            background: var(--red);
+        }
+
+        #s3 .step-title {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        #s3 .step-desc {
+            font-size: 32px;
+            color: var(--muted);
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        #s3 .callout {
+            margin-top: 28px;
+            background: #FEF2F2;
+            border: 1px solid #FCA5A5;
+            border-radius: 6px;
+            padding: 20px 28px;
+            font-size: 32px;
+            color: #991B1B;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 4 — FIRST ITERATION
+        ═══════════════════════════════════════════════════════════════ */
+        #s4 {
+            background: var(--bg);
+        }
+
+        #s4 .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            margin-top: 40px;
+            flex: 1;
+        }
+
+        #s4 .pipeline {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        #s4 .pipe-step {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px 26px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        #s4 .pipe-icon {
+            font-size: 64px;
+            flex-shrink: 0;
+            width: 48px;
+            text-align: center;
+            padding-right: 12px;
+        }
+
+        #s4 .pipe-arrow {
+            text-align: center;
+            color: var(--border);
+            font-size: 48px;
+            margin: -4px 0;
+        }
+
+        #s4 .pro-con {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding-top: 8px;
+        }
+
+        #s4 .pro-con-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        #s4 .pro-con-title.pro {
+            color: var(--green);
+        }
+
+        #s4 .pro-con-title.con {
+            color: var(--red);
+        }
+
+        #s4 .pro-con-item {
+            font-size: 32px;
+            color: black;
+            line-height: 1.5;
+            display: flex;
+            gap: 10px;
+        }
+
+        #s4 .pro-con-item::before {
+            flex-shrink: 0;
+            font-size: 36px;
+        }
+
+        #s4 .pro-con-item.pro::before {
+            content: '✓';
+            color: var(--green);
+        }
+
+        #s4 .pro-con-item.con::before {
+            content: '✕';
+            color: var(--red);
+        }
+
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 5 — PROJECTS.DASHBOARD
+        ═══════════════════════════════════════════════════════════════ */
+        #s5 {
+            background: var(--bg);
+        }
+
+        #s5 .dash-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        #s5 .infra-box {
+            grid-column: 1 / -1;
+            background: #FFFBEB;
+            border: 1px solid #FCD34D;
+            border-radius: 8px;
+            padding: 24px 28px;
+        }
+
+        #s5 .infra-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #92400E;
+            margin-bottom: 14px;
+            letter-spacing: 0.05em;
+        }
+
+        #s5 .infra-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        #s5 .infra-chip {
+            font-family: 'Inter', sans-serif;
+            font-size: 32px;
+            padding: 6px 14px;
+            background: #FEF3C7;
+            border: 1px solid #FCD34D;
+            border-radius: 4px;
+            color: #92400E;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 6 — INTRODUCING KASSANDRA
+        ═══════════════════════════════════════════════════════════════ */
+        #s6 {
+            background: var(--navy);
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        #s6 .bg-lines {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+        }
+
+        #s6 .bg-lines span {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        #s6 .hero-word {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 400px;
+            letter-spacing: -0.04em;
+            line-height: 0.85;
+            color: #ffffff;
+            margin: 24px 0;
+        }
+
+        #s6 .hero-sub {
+            font-family: 'Inter', sans-serif;
+            font-size: 80px;
+            color: #93C5FD;
+            margin-bottom: 48px;
+            font-weight: 400;
+        }
+
+        #s6 .features-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            justify-content: center;
+            max-width: 1400px;
+        }
+
+        #s6 .feat-pill {
+            font-family: 'Inter', sans-serif;
+            font-size: 36px;
+            padding: 10px 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            color: #E2E8F0;
+            background: rgba(255, 255, 255, 0.06);
+            letter-spacing: 0.02em;
+        }
+
+        #s6 .license {
+            margin-top: 48px;
+            font-family: 'Inter', sans-serif;
+            font-size: 36px;
+            color: #64748B;
+            letter-spacing: 0.05em;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 7 — DIFFERENTIATORS
+        ═══════════════════════════════════════════════════════════════ */
+        #s7 {
+            background: var(--bg);
+        }
+
+        #s7 .diff-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+            flex: 1;
+        }
+
+        #s7 .diff-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        #s7 .diff-n {
+            font-family: 'Inter', sans-serif;
+            font-size: 80px;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--blue);
+        }
+
+        #s7 .diff-title {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        #s7 .diff-desc {
+            font-size: 32px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        #s7 .diff-card:last-child {
+            grid-column: span 1;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SCREENSHOT SLIDES
+        ═══════════════════════════════════════════════════════════════ */
+        .screenshot-slide {
+            background: var(--bg);
+        }
+
+        .screenshot-slide .ss-layout {
+            display: grid;
+            gap: 32px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .screenshot-slide .ss-layout.full {
+            grid-template-columns: 1fr;
+        }
+
+        .screenshot-slide .ss-layout.split {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .screenshot-slide .ss-layout.center {
+            grid-template-columns: 1fr;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .ss-frame {
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            background: #fff;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .ss-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .ss-frame .ss-label {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Inter', sans-serif;
+            font-size: 26px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--muted);
+            padding: 5px 14px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE — PROJECT HIERARCHY (canonical — defined later)
+        ═══════════════════════════════════════════════════════════════ */
+
+        /* Pipeline flow */
+        #s-hierarchy .hier-flow {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 0;
+            margin-top: 36px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Individual node */
+        #s-hierarchy .hier-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            max-width: 130px;
+            opacity: 0;
+            transform: translateY(22px);
+            transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+        }
+
+        .slide.active #s-hierarchy .hier-node:nth-child(1) {
+            opacity: 1;
+            transform: none;
+            transition-delay: 0.08s;
+        }
+
+        .slide.active #s-hierarchy .hier-node:nth-child(3) {
+            opacity: 1;
+            transform: none;
+            transition-delay: 0.18s;
+        }
+
+        .slide.active #s-hierarchy .hier-node:nth-child(5) {
+            opacity: 1;
+            transform: none;
+            transition-delay: 0.28s;
+        }
+
+        .slide.active #s-hierarchy .hier-node:nth-child(7) {
+            opacity: 1;
+            transform: none;
+            transition-delay: 0.38s;
+        }
+
+        .slide.active #s-hierarchy .hier-node:nth-child(9) {
+            opacity: 1;
+            transform: none;
+            transition-delay: 0.48s;
+        }
+
+        .slide.active #s-hierarchy .hier-node:nth-child(11) {
+            opacity: 1;
+            transform: none;
+            transition-delay: 0.58s;
+        }
+
+        /* Icon badge */
+        #s-hierarchy .hier-badge {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 52px;
+            position: relative;
+            border: 1.5px solid;
+            flex-shrink: 0;
+            cursor: default;
+            transition: transform 0.25s, box-shadow 0.25s;
+        }
+
+        #s-hierarchy .hier-badge:hover {
+            transform: scale(1.12);
+        }
+
+        #s-hierarchy .hier-badge::before {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 1px solid currentColor;
+            opacity: 0.2;
+        }
+
+        #s-hierarchy .hier-badge::after {
+            content: '';
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            border: 1px solid currentColor;
+            opacity: 0.07;
+        }
+
+        #s-hierarchy .hier-name {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--text);
+            margin-top: 14px;
+            text-align: center;
+        }
+
+        #s-hierarchy .hier-desc {
+            font-size: 36px;
+            color: var(--muted);
+            text-align: center;
+            line-height: 1.45;
+            margin-top: 6px;
+        }
+
+        /* Animated connector between nodes */
+        #s-hierarchy .hier-conn {
+            display: flex;
+            align-items: center;
+            padding-top: 44px;
+            flex-shrink: 0;
+            width: 80px;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .slide.active #s-hierarchy .hier-conn {
+            opacity: 1;
+        }
+
+        .slide.active #s-hierarchy .hier-conn:nth-child(2) {
+            transition-delay: 0.13s;
+        }
+
+        .slide.active #s-hierarchy .hier-conn:nth-child(4) {
+            transition-delay: 0.23s;
+        }
+
+        .slide.active #s-hierarchy .hier-conn:nth-child(6) {
+            transition-delay: 0.33s;
+        }
+
+        .slide.active #s-hierarchy .hier-conn:nth-child(8) {
+            transition-delay: 0.43s;
+        }
+
+        .slide.active #s-hierarchy .hier-conn:nth-child(10) {
+            transition-delay: 0.53s;
+        }
+
+        #s-hierarchy .hier-conn-line {
+            flex: 1;
+            height: 1px;
+            position: relative;
+            overflow: hidden;
+            background: var(--border);
+        }
+
+        #s-hierarchy .hier-conn-line::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            width: 40%;
+            background: linear-gradient(90deg, transparent, rgba(56, 139, 253, 0.9), transparent);
+            animation: conn-flow 1.8s linear infinite;
+        }
+
+        @keyframes conn-flow {
+            from {
+                transform: translateX(-200%);
+            }
+            to {
+                transform: translateX(400%);
+            }
+        }
+
+        #s-hierarchy .hier-conn-tip {
+            font-size: 18px;
+            color: rgba(56, 139, 253, 0.7);
+            margin-left: -1px;
+            flex-shrink: 0;
+        }
+
+        /* Bottom info cards */
+        #s-hierarchy .hier-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-top: 32px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE — AI ASSISTANT
+        ═══════════════════════════════════════════════════════════════ */
+        #s-ai {
+            background: var(--bg);
+        }
+
+        #s-ai .ai-layout {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 32px;
+            flex: 1;
+            min-height: 0;
+            margin-top: 24px;
+        }
+
+        /* Chat window chrome */
+        #s-ai .ai-chat-wrap {
+            display: flex;
+            flex-direction: column;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            min-height: 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        #s-ai .ai-titlebar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--slate);
+            flex-shrink: 0;
+        }
+
+        #s-ai .win-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+
+        #s-ai .ai-title-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--text);
+            flex: 1;
+            text-align: center;
+        }
+
+        #s-ai .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 28px;
+            color: var(--green);
+        }
+
+        #s-ai .ai-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: blink-status 2s ease-in-out infinite;
+        }
+
+        @keyframes blink-status {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.25;
+            }
+        }
+
+        /* Chat body */
+        #s-ai .ai-chat-body {
+            flex: 1;
+            padding: 20px 20px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        /* Individual message rows */
+        .ai-msg {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
+        }
+
+        .ai-msg.show {
+            opacity: 1;
+            transform: none;
+        }
+
+        .ai-msg.usr-msg {
+            flex-direction: row-reverse;
+        }
+
+        .ai-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            border: 1px solid;
+        }
+
+        .ai-msg.bot-msg .ai-avatar {
+            background: var(--blue2);
+            border-color: #BFDBFE;
+        }
+
+        .ai-msg.usr-msg .ai-avatar {
+            background: var(--slate);
+            border-color: var(--border);
+        }
+
+        .ai-bubble {
+            padding: 14px 18px;
+            font-size: 38px;
+            line-height: 1.55;
+            max-width: 82%;
+            border: 1px solid;
+        }
+
+        .ai-msg.bot-msg .ai-bubble {
+            background: var(--slate);
+            border-color: var(--border);
+            color: var(--text);
+            border-radius: 2px 12px 12px 12px;
+        }
+
+        .ai-msg.usr-msg .ai-bubble {
+            background: var(--blue2);
+            border-color: #BFDBFE;
+            color: #1E40AF;
+            border-radius: 12px 2px 12px 12px;
+        }
+
+        /* "Thinking" indicator row */
+        .ai-think {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 2px 0 2px 52px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .ai-think.show {
+            opacity: 1;
+        }
+
+        .ai-think-text {
+            font-family: 'Inter', monospace;
+            font-size: 28px;
+            color: var(--muted);
+            border-left: 3px solid var(--amber);
+            padding-left: 10px;
+            line-height: 1.4;
+        }
+
+        .ai-think-dots {
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .ai-think-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--amber);
+            opacity: 0;
+            animation: dot-pop 1.2s ease-in-out infinite;
+        }
+
+        .ai-think-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .ai-think-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes dot-pop {
+            0%, 80%, 100% {
+                opacity: 0;
+                transform: scale(0.6);
+            }
+            40% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Footer model badge */
+        #s-ai .ai-footer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-top: 1px solid var(--border);
+            font-family: 'Inter', sans-serif;
+            font-size: 30px;
+            color: var(--muted);
+            background: var(--slate);
+            flex-shrink: 0;
+        }
+
+        #s-ai .ai-footer em {
+            color: var(--blue);
+            font-style: normal;
+        }
+
+        /* ── Slide-in animation for inner elements ────────────────────── */
+        .slide.active .anim {
+            animation: fadeUp 0.6s var(--ease) both;
+        }
+
+        .slide.active .anim:nth-child(1) {
+            animation-delay: 0.05s;
+        }
+
+        .slide.active .anim:nth-child(2) {
+            animation-delay: 0.12s;
+        }
+
+        .slide.active .anim:nth-child(3) {
+            animation-delay: 0.19s;
+        }
+
+        .slide.active .anim:nth-child(4) {
+            animation-delay: 0.26s;
+        }
+
+        .slide.active .anim:nth-child(5) {
+            animation-delay: 0.33s;
+        }
+
+        .slide.active .anim:nth-child(6) {
+            animation-delay: 0.40s;
+        }
+
+        .slide.active .anim:nth-child(7) {
+            animation-delay: 0.47s;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 14 — ROADMAP
+        ═══════════════════════════════════════════════════════════════ */
+        #s14 {
+            background: var(--bg);
+        }
+
+        #s14 .phases {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-top: 40px;
+            flex: 1;
+        }
+
+        #s14 .phase {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        #s14 .phase-header {
+            padding: 20px 28px;
+            font-weight: 700;
+            font-size: 52px;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+        }
+
+        #s14 .phase-body {
+            padding: 24px 28px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #s14 .phase-section {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+
+        #s14 .phase-item {
+            font-size: 40px;
+            color: var(--muted);
+            line-height: 1.4;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        #s14 .phase-item .tick {
+            flex-shrink: 0;
+            font-size: 32px;
+        }
+
+        #s14 .tick-done {
+            color: var(--green);
+        }
+
+        #s14 .tick-todo {
+            color: var(--blue);
+        }
+
+        #s14 .section-done {
+            color: var(--green);
+        }
+
+        #s14 .section-todo {
+            color: var(--blue);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 15 — TECH STACK
+        ═══════════════════════════════════════════════════════════════ */
+        #s15 {
+            background: var(--bg);
+        }
+
+        #s15 .tech-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        #s15 .quote {
+            grid-column: 1 / -1;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--blue);
+            padding: 24px 28px;
+            border-radius: 0 8px 8px 0;
+            font-family: 'Inter', sans-serif;
+            font-size: 52px;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        #s15 .quote em {
+            color: var(--blue);
+            font-style: normal;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 16 — CTA
+        ═══════════════════════════════════════════════════════════════ */
+        #s16 {
+            background: var(--navy);
+            justify-content: center;
+        }
+
+        #s16 .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 120px 120px;
+            opacity: 0.3;
+            mask-image: radial-gradient(ellipse 70% 70% at 80% 50%, black 20%, transparent 80%);
+        }
+
+        #s16 .cta-links {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            margin-top: 56px;
+            max-width: 900px;
+        }
+
+        #s16 .cta-link {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 28px 36px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: inherit;
+            cursor: default;
+        }
+
+        #s16 .cta-link:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        #s16 .cta-icon {
+            width: 104px;
+            height: 104px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            flex-shrink: 0;
+        }
+
+        #s16 .cta-title {
+            font-size: 44px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        #s16 .cta-url {
+            font-size: 36px;
+            color: #60A5FA;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Progress bar -->
+<div id="progress-bar"></div>
+
+<!-- Counter -->
+<div id="counter">01 / 20</div>
+
+<!-- Menu button -->
+<button id="menu-btn" onclick="toggleMenu()">SLIDES</button>
+<div id="slide-menu"></div>
+
+<!-- Nav -->
+<div id="nav">
+    <button class="nav-btn" onclick="go(-1)">←</button>
+    <button class="nav-btn" onclick="go(1)">→</button>
+</div>
+
+<div id="deck">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 1 — TITLE
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="Title" id="s1">
+        <div class="bg-grid"></div>
+        <div class="glow"></div>
+        <div class="glow2"></div>
+
+        <div aria-hidden="true" class="side-art">
+            <div class="art-line" style="width:280px"></div>
+            <div class="art-line" style="width:180px; opacity:.5"></div>
+            <div class="art-line" style="width:220px; opacity:.3"></div>
+            <div class="art-line" style="width:120px; opacity:.2"></div>
+            <div style="margin-top:16px; font-family:'Inter',sans-serif; font-size: 30px; color:rgba(255,255,255,0.3); letter-spacing:.1em">
+                v 0.1.0 · alpha
+            </div>
+        </div>
+
+        <div class="anim" style="margin-bottom:auto; padding-top:72px">
+            <div class="eyebrow" style="margin-bottom:24px">Open Source Project Management</div>
+            <div class="kas"><span>Kas</span>sandra</div>
+            <div class="sub">One server to rule the planning chaos</div>
+            <div class="chips">
+                <span class="chip">Effort Estimation</span>
+                <span class="chip">Gantt Charts</span>
+                <span class="chip">Burndown</span>
+                <span class="chip">Sprint Tracking</span>
+                <span class="chip">AI Avatars</span>
+                <span class="chip">OIDC Auth</span>
+            </div>
+            <div class="github">github.com/abdallabushnaq/kassandra</div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 2 — AGENDA
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="Agenda" id="s2">
+        <div class="eyebrow anim">Overview</div>
+        <div class="display-sm anim">What we'll cover</div>
+        <div class="agenda-grid anim">
+            <div class="agenda-item">
+                <div class="agenda-num">1</div>
+                <div>
+                    <div class="agenda-title">History</div>
+                    <div class="agenda-desc">How fragmented tooling caused repeated planning failures and what we tried
+                        first
+                    </div>
+                </div>
+            </div>
+            <div class="agenda-item">
+                <div class="agenda-num">2</div>
+                <div>
+                    <div class="agenda-title">Introducing Kassandra</div>
+                    <div class="agenda-desc">One tiny server to replace five separate tools — and what makes it
+                        different
+                    </div>
+                </div>
+            </div>
+            <div class="agenda-item">
+                <div class="agenda-num">3</div>
+                <div>
+                    <div class="agenda-title">Security &amp; Architecture</div>
+                    <div class="agenda-desc">OIDC single sign-on, group-based ACL, and the full data model hierarchy
+                    </div>
+                </div>
+            </div>
+            <div class="agenda-item">
+                <div class="agenda-num">4</div>
+                <div>
+                    <div class="agenda-title">Feature Tour</div>
+                    <div class="agenda-desc">Products, versions, features, sprints, tasks, users, work logging — the
+                        full stack
+                    </div>
+                </div>
+            </div>
+            <div class="agenda-item">
+                <div class="agenda-num">5</div>
+                <div>
+                    <div class="agenda-title">AI Features</div>
+                    <div class="agenda-desc">Built-in LLM assistant, natural language filters, avatar generation, sprint
+                        insights
+                    </div>
+                </div>
+            </div>
+            <div class="agenda-item">
+                <div class="agenda-num">6</div>
+                <div>
+                    <div class="agenda-title">Roadmap & Tech Stack</div>
+                    <div class="agenda-desc">Three phases to production, and the technology powering it all</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 3 — THE PROBLEM
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="The Problem" id="s3">
+        <div class="eyebrow anim">History</div>
+        <div class="display-sm anim">The Problem</div>
+        <div class="lead anim" style="margin-bottom:0">Classic project planning — and where it broke down</div>
+        <div class="timeline anim">
+            <div class="step">
+                <div class="step-inner">
+                    <div class="step-n">1</div>
+                    <div class="step-title">Developers</div>
+                    <div class="step-desc">Break down work into tasks. No visibility into the overall plan or
+                        timeline.
+                    </div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-inner">
+                    <div class="step-n">2</div>
+                    <div class="step-title">Project Manager</div>
+                    <div class="step-desc">Types tasks into MS Project, manually assigns developers — no validation.
+                    </div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-inner">
+                    <div class="step-n">3</div>
+                    <div class="step-title">Gantt Created</div>
+                    <div class="step-desc">Developers have no MS Project license. They cannot review or give feedback.
+                    </div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-inner">
+                    <div class="step-n">4</div>
+                    <div class="step-title">Errors Surface Late</div>
+                    <div class="step-desc">Missing dependencies and wrong assignments found mid-project, too late to fix
+                        cleanly.
+                    </div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-inner">
+                    <div class="step-n" style="background:var(--red)">5</div>
+                    <div class="step-title">Customer Impact</div>
+                    <div class="step-desc">Two incidents where the delivered schedule was a full month too optimistic.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="callout anim">
+            <span>⚠</span>
+            <span>The feedback loop was broken. Developers could not see or validate the plan until it was far too late.</span>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 4 — FIRST ITERATION
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="First Iteration: Excel + qcd-tool" id="s4">
+        <div class="eyebrow anim">History</div>
+        <div class="display-sm anim">First Iteration: The Excel + qcd-tool Pipeline</div>
+        <div class="two-col anim">
+            <div>
+                <div class="label" style="margin-bottom:14px">The pipeline</div>
+                <div class="pipeline">
+                    <div class="pipe-step">
+                        <div class="pipe-icon">📄</div>
+                        <div>
+                            <div class="card-title">Excel Sheet</div>
+                            <div class="card-body">Tasks, assignments & dependencies filled in by developers</div>
+                        </div>
+                    </div>
+                    <div class="pipe-arrow">↓</div>
+                    <div class="pipe-step">
+                        <div class="pipe-icon">⚙️</div>
+                        <div>
+                            <div class="card-title">qcd-tool</div>
+                            <div class="card-body">Reads Excel, generates intermediate Gantt chart for developer
+                                review
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pipe-arrow">↓</div>
+                    <div class="pipe-step">
+                        <div class="pipe-icon">📊</div>
+                        <div>
+                            <div class="card-title">Microsoft Project</div>
+                            <div class="card-body">Final Gantt generated after conflict check with other projects</div>
+                        </div>
+                    </div>
+                    <div class="pipe-arrow">↓</div>
+                    <div class="pipe-step">
+                        <div class="pipe-icon">🎯</div>
+                        <div>
+                            <div class="card-title">Jira Sprint</div>
+                            <div class="card-body">CSV exported from qcd-tool imported into Jira to create the sprint
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pro-con">
+                <div>
+                    <div class="pro-con-title pro">✓ What improved</div>
+                    <div class="pro-con-item pro">Developers validated the plan before it was finalised</div>
+                    <div class="pro-con-item pro">Dependencies checked in Excel before any import</div>
+                    <div class="pro-con-item pro">Jira sprint auto-created from the same source</div>
+                </div>
+                <div style="margin-top:8px">
+                    <div class="pro-con-title con">✕ Still missing</div>
+                    <div class="pro-con-item con">Five separate tools to install, license, and keep in sync</div>
+                    <div class="pro-con-item con">qcd-tool breaking after library updates</div>
+                    <div class="pro-con-item con">SMB shared drive required for all Excel files</div>
+                    <div class="pro-con-item con">No real-time progress monitoring whatsoever</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 5 — PROJECTS.DASHBOARD
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="Second Iteration: projects.dashboard" id="s5">
+        <div class="eyebrow anim">History</div>
+        <div class="display-sm anim">Second Iteration: projects.dashboard</div>
+        <div class="lead anim" style="margin-bottom:0">Hourly monitoring server — better visibility, even more moving
+            parts
+        </div>
+        <div class="dash-grid anim">
+            <div class="card blue">
+                <div class="card-title">📡 Reads open Jira sprints</div>
+                <div class="card-body">Task progress polled and compared against plan every hour</div>
+            </div>
+            <div class="card purple">
+                <div class="card-title">📄 Reads Excel sheets</div>
+                <div class="card-body">Planned effort per project from the SMB-hosted workbooks</div>
+            </div>
+            <div class="card teal">
+                <div class="card-title">📊 Reads Gantt XML</div>
+                <div class="card-body">Planned schedule exported from Microsoft Project</div>
+            </div>
+            <div class="card green">
+                <div class="card-title">📈 Generates Gantt chart</div>
+                <div class="card-body">Visual timeline computed and published per project</div>
+            </div>
+            <div class="card amber">
+                <div class="card-title">🔥 Generates Burndown</div>
+                <div class="card-body">Sprint velocity tracking with remaining-effort curve</div>
+            </div>
+            <div class="card red">
+                <div class="card-title">⚠ Still required</div>
+                <div class="card-body">Excel · qcd-tool · MS Project server · Jira server · projects.dashboard server ·
+                    SMB drive
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 6 — INTRODUCING KASSANDRA
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="Introducing Kassandra" id="s6">
+        <div aria-hidden="true" class="bg-lines">
+            <span style="top:20%"></span><span style="top:40%"></span>
+            <span style="top:60%"></span><span style="top:80%"></span>
+        </div>
+        <div class="eyebrow anim">Introducing</div>
+        <div class="hero-word anim">Kassandra</div>
+        <div class="hero-sub anim">One tiny server to replace them all</div>
+        <div class="features-row anim">
+            <span class="feat-pill">Planning</span>
+            <span class="feat-pill">Gantt Charts</span>
+            <span class="feat-pill">Burndown</span>
+            <span class="feat-pill">Sprint Tracking</span>
+            <span class="feat-pill">AI Avatars</span>
+            <span class="feat-pill">OIDC Auth</span>
+            <span class="feat-pill">National Holidays</span>
+            <span class="feat-pill">Work Logging</span>
+            <span class="feat-pill">Dependency Graph</span>
+            <span class="feat-pill">Release Interpolation</span>
+        </div>
+        <div class="license anim">Self-hosted · Open Source · Apache 2.0</div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 7 — DIFFERENTIATORS
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="What Makes It Different?" id="s7">
+        <div class="eyebrow anim">Key Differentiators</div>
+        <div class="display-sm anim">What makes Kassandra different?</div>
+        <div class="diff-grid anim">
+            <div class="diff-card">
+                <div class="diff-n">01</div>
+                <div class="diff-title">API First</div>
+                <div class="diff-desc">Everything runs on a REST API. The UI is just a client — so integrations are
+                    first-class citizens.
+                </div>
+            </div>
+            <div class="diff-card">
+                <div class="diff-n">02</div>
+                <div class="diff-title">ER Diagram from Tests</div>
+                <div class="diff-desc">ErDiagramTest is an integration test that auto-generates the Entity Relationship
+                    Diagram on every run.
+                </div>
+            </div>
+            <div class="diff-card">
+                <div class="diff-n">03</div>
+                <div class="diff-title">Screenshots from Tests</div>
+                <div class="diff-desc">GenerateScreenshots captures every screen in light and dark mode automatically —
+                    including this presentation's images.
+                </div>
+            </div>
+            <div class="diff-card">
+                <div class="diff-n">04</div>
+                <div class="diff-title">Selenium UI Testing</div>
+                <div class="diff-desc">Full UI test coverage using Selenium, including automated introduction videos
+                    generated by the test suite.
+                </div>
+            </div>
+            <div class="diff-card">
+                <div class="diff-n">05</div>
+                <div class="diff-title">AI-Generated Videos</div>
+                <div class="diff-desc">Intro videos produced with Selenium + Chatterbox TTS + ffmpeg. Browser audio
+                    captured and merged with video frames.
+                </div>
+            </div>
+            <div class="diff-card">
+                <div class="diff-n">06</div>
+                <div class="diff-title">Auto National Holidays</div>
+                <div class="diff-desc">Holidays computed automatically from each user's location. No manual entry, no
+                    missed bank holidays.
+                </div>
+            </div>
+            <div class="diff-card">
+                <div class="diff-n">07</div>
+                <div class="diff-title">Min/Max Effort Guardrails</div>
+                <div class="diff-desc">Estimate tasks with min/max bounds. Release date interpolated from actual
+                    progress against the confidence range.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE — PROJECT HIERARCHY (new)
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="Project Architecture" id="s-hierarchy">
+        <div class="bg-dots"></div>
+
+        <div class="eyebrow anim">Architecture</div>
+        <div class="display-sm anim">How projects are structured</div>
+        <div class="lead anim" style="margin-bottom:0">Every entity flows from Products down to individual work-log
+            entries
+        </div>
+
+        <!-- Pipeline nodes + animated connectors -->
+        <div class="hier-flow">
+
+            <div class="hier-node">
+                <div class="hier-badge"
+                     style="background:rgba(56,139,253,0.1); border-color:var(--blue); color:var(--blue)">📦
+                </div>
+                <div class="hier-name">Product</div>
+                <div class="hier-desc">Top-level project or software product</div>
+            </div>
+
+            <div class="hier-conn">
+                <div class="hier-conn-line"></div>
+                <div class="hier-conn-tip">▶</div>
+            </div>
+
+            <div class="hier-node">
+                <div class="hier-badge" style="background:rgba(163,113,247,0.1); border-color:#a371f7; color:#a371f7">
+                    🏷️
+                </div>
+                <div class="hier-name">Version</div>
+                <div class="hier-desc">A planned release or milestone</div>
+            </div>
+
+            <div class="hier-conn">
+                <div class="hier-conn-line"></div>
+                <div class="hier-conn-tip">▶</div>
+            </div>
+
+            <div class="hier-node">
+                <div class="hier-badge" style="background:rgba(57,211,187,0.1); border-color:#39d3bb; color:#39d3bb">⭐
+                </div>
+                <div class="hier-name">Feature</div>
+                <div class="hier-desc">Functional area or epic</div>
+            </div>
+
+            <div class="hier-conn">
+                <div class="hier-conn-line"></div>
+                <div class="hier-conn-tip">▶</div>
+            </div>
+
+            <div class="hier-node">
+                <div class="hier-badge"
+                     style="background:rgba(240,165,0,0.1); border-color:var(--amber); color:var(--amber)">🏃
+                </div>
+                <div class="hier-name">Sprint</div>
+                <div class="hier-desc">Time-boxed iteration with a team</div>
+            </div>
+
+            <div class="hier-conn">
+                <div class="hier-conn-line"></div>
+                <div class="hier-conn-tip">▶</div>
+            </div>
+
+            <div class="hier-node">
+                <div class="hier-badge"
+                     style="background:rgba(63,185,80,0.1); border-color:var(--green); color:var(--green)">📋
+                </div>
+                <div class="hier-name">Task / Story</div>
+                <div class="hier-desc">Work item with min/max estimate</div>
+            </div>
+
+            <div class="hier-conn">
+                <div class="hier-conn-line"></div>
+                <div class="hier-conn-tip">▶</div>
+            </div>
+
+            <div class="hier-node">
+                <div class="hier-badge"
+                     style="background:rgba(248,81,73,0.1); border-color:var(--red); color:var(--red)">⏱️
+                </div>
+                <div class="hier-name">Worklog</div>
+                <div class="hier-desc">Actual hours logged per developer</div>
+            </div>
+
+        </div>
+
+        <!-- Info cards -->
+        <div class="hier-cards anim">
+            <div class="card blue">
+                <div class="card-title">📐 Min / Max Estimation</div>
+                <div class="card-body">Each task carries an optimistic and a pessimistic effort bound. The Gantt buffer
+                    and release date confidence range are computed from both values automatically.
+                </div>
+            </div>
+            <div class="card green">
+                <div class="card-title">🔗 Dependency Graph</div>
+                <div class="card-body">Stories and tasks can depend on each other across sprints. The scheduler respects
+                    the full dependency graph when building the Gantt chart — no manual reordering needed.
+                </div>
+            </div>
+            <div class="card purple">
+                <div class="card-title">📅 Client-side IDs</div>
+                <div class="card-body">Clients may generate entity IDs before sending to the server, reducing round
+                    trips during bulk planning sessions and sprint import workflows.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE — OIDC AUTHENTICATION
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide screenshot-slide" data-title="OIDC Authentication" id="s-login">
+        <div class="eyebrow anim">Security</div>
+        <div class="display-sm anim">OIDC Authentication</div>
+        <div class="lead anim" style="margin-bottom:12px">Keycloak-backed single sign-on — every API call is scoped to
+            the logged-in user's permissions
+        </div>
+        <div class="ss-layout split anim" style="flex:1; min-height:0">
+            <div class="ss-frame">
+                <img alt="Login view"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/login-view.png">
+                <div class="ss-label">OIDC Login</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px; justify-content:center;">
+                <div class="card blue">
+                    <div class="card-title">🔐 Keycloak Integration</div>
+                    <div class="card-body">Full OIDC/OAuth2 single sign-on. Supports any Keycloak realm — or any
+                        OpenID-compatible identity provider.
+                    </div>
+                </div>
+                <div class="card green">
+                    <div class="card-title">👥 Group-based ACL</div>
+                    <div class="card-body">Access is controlled per-project via user groups. Members see only the
+                        products they are granted access to.
+                    </div>
+                </div>
+                <div class="card purple">
+                    <div class="card-title">🛡 API Security</div>
+                    <div class="card-body">Every REST endpoint is secured with Spring Security + <code
+                            style="font-family:'Inter',monospace;font-size: 32px;background:#F1F5F9;padding:2px 6px;border-radius:3px">@PreAuthorize</code>.
+                        The AI assistant also operates within the current user's OIDC token scope.
+                    </div>
+                </div>
+                <div class="card amber">
+                    <div class="card-title">🧪 Testcontainers Keycloak</div>
+                    <div class="card-body">Integration tests spin up a real Keycloak container automatically — no manual
+                        setup needed for CI.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE — PRODUCTS & VERSIONS
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide screenshot-slide" data-title="Products & Versions" id="s-products">
+        <div class="eyebrow anim">Feature Tour</div>
+        <div class="display-sm anim">Products &amp; Versions</div>
+        <div class="lead anim" style="margin-bottom:12px">Top-level planning hierarchy — products group all versions,
+            features and sprints for a deliverable
+        </div>
+        <div class="ss-layout split anim" style="flex:1; min-height:0">
+            <div class="ss-frame">
+                <img alt="Product list"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/product-list-view.png">
+                <div class="ss-label">Products</div>
+            </div>
+            <div class="ss-frame">
+                <img alt="Version list"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/version-list-view.png">
+                <div class="ss-label">Versions / Releases</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE — FEATURES & SPRINTS
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide screenshot-slide" data-title="Features & Sprints" id="s-features">
+        <div class="eyebrow anim">Feature Tour</div>
+        <div class="display-sm anim">Features &amp; Sprints</div>
+        <div class="lead anim" style="margin-bottom:12px">Group work into functional areas (features) then slice into
+            time-boxed sprints — each with a dedicated team
+        </div>
+        <div class="ss-layout split anim" style="flex:1; min-height:0">
+            <div class="ss-frame">
+                <img alt="Feature list"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/feature-list-view.png">
+                <div class="ss-label">Features (Epics)</div>
+            </div>
+            <div class="ss-frame">
+                <img alt="Sprint list"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/sprint-list-view.png">
+                <div class="ss-label">Sprints</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 8 — QUALITY BOARD
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide screenshot-slide" data-title="Quality Board" id="s8">
+        <div class="eyebrow anim">Feature Tour</div>
+        <div class="display-sm anim">Quality Board</div>
+        <div class="lead anim" style="margin-bottom:12px">Gantt burndown chart + sprint KPIs — progress, delays, and
+            efficiency in one view
+        </div>
+        <div class="ss-layout split anim" style="flex:1; min-height:0">
+            <div class="ss-frame">
+                <img alt="Quality Board — on track"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/quality-board-in-time.png">
+                <div class="ss-label">On Track</div>
+            </div>
+            <div class="ss-frame">
+                <img alt="Quality Board — delayed"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/quality-board-delayed.png">
+                <div class="ss-label">Delayed</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 9 — ACTIVE SPRINTS
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide screenshot-slide" data-title="Active Sprints" id="s9">
+        <div class="eyebrow anim">Feature Tour</div>
+        <div class="display-sm anim">Active Sprints</div>
+        <div class="lead anim" style="margin-bottom:12px">Kanban-style board — click any task to log work, edit
+            estimates, or view dependencies
+        </div>
+        <div class="ss-layout full anim" style="flex:1; min-height:0">
+            <div class="ss-frame">
+                <img alt="Active Sprints screenshot"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/active-sprints.png">
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE — BACKLOG & SPRINT PLANNING (new)
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide screenshot-slide" data-title="Backlog & Sprint Planning" id="s-backlog">
+        <div class="eyebrow anim">Feature Tour</div>
+        <div class="display-sm anim">Backlog & Sprint Planning</div>
+        <div class="lead anim" style="margin-bottom:12px">Organize stories and tasks across products, versions, and
+            features before sprints begin
+        </div>
+        <div class="ss-layout split anim" style="flex:1; min-height:0">
+            <div class="ss-frame">
+                <img alt="Backlog view"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/backlog.png">
+                <div class="ss-label">Backlog</div>
+            </div>
+            <div class="ss-frame">
+                <img alt="Sprint list"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/sprint-list-view.png">
+                <div class="ss-label">Sprint List</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 10 — TASK & DEPENDENCIES
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide screenshot-slide" data-title="Task Management & Dependencies" id="s10">
+        <div class="eyebrow anim">Feature Tour</div>
+        <div class="display-sm anim">Task Management & Dependencies</div>
+        <div class="lead anim" style="margin-bottom:12px">Min/max estimates, work logs, status, scheduling — and a
+            quick-edit dependency tree
+        </div>
+        <div class="ss-layout split anim" style="flex:1; min-height:0">
+            <div class="ss-frame">
+                <img alt="Task dialog"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/task-dialog.png">
+                <div class="ss-label">Task Dialog</div>
+            </div>
+            <div class="ss-frame">
+                <img alt="Dependency dialog"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/dependency-dialog.png">
+                <div class="ss-label">Dependency Dialog</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 11 — USER OFF-DAYS
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide screenshot-slide" data-title="Off-days &amp; Availability" id="s11">
+        <div class="eyebrow anim">Feature Tour</div>
+        <div class="display-sm anim">Off-days &amp; Availability</div>
+        <div class="lead anim" style="margin-bottom:12px">Vacation, sick leave, and national holidays auto-computed from
+            location; availability windows constrain scheduling
+        </div>
+        <div class="ss-layout split anim" style="flex:1; min-height:0">
+            <div class="ss-frame">
+                <img alt="Off-days calendar"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/offday-list-view.png">
+                <div class="ss-label">Off-days &amp; Public Holidays</div>
+            </div>
+            <div class="ss-frame">
+                <img alt="Availability windows"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/availability-list-view.png">
+                <div class="ss-label">Availability Windows</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE — USER PROFILES & TEAMS (new)
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide screenshot-slide" data-title="User Profiles & Teams" id="s-users">
+        <div class="eyebrow anim">Feature Tour</div>
+        <div class="display-sm anim">User Profiles & Teams</div>
+        <div class="lead anim" style="margin-bottom:12px">Detailed user profiles with AI-generated avatars, and
+            group-based access control per project
+        </div>
+        <div class="ss-layout split anim" style="flex:1; min-height:0">
+            <div class="ss-frame">
+                <img alt="User profile view"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/user-profile-view.png">
+                <div class="ss-label">User Profile</div>
+            </div>
+            <div class="ss-frame">
+                <img alt="User groups"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/user-group-list-view.png">
+                <div class="ss-label">User Groups</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 12 — WORK LOGGING
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide screenshot-slide" data-title="Work Logging" id="s12">
+        <div class="eyebrow anim">Feature Tour</div>
+        <div class="display-sm anim">Work Logging</div>
+        <div class="lead anim" style="margin-bottom:12px">Log time spent on any task directly from the board — remaining
+            estimate auto-calculated
+        </div>
+        <div class="ss-layout center anim" style="flex:1; min-height:0">
+            <div class="ss-frame" style="max-width:520px; width:100%">
+                <img alt="Work log dialog"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/worklog-create-dialog.png">
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 13 — AI AVATAR
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide screenshot-slide" data-title="AI Avatar Generation" id="s13">
+        <div class="eyebrow anim">Feature Tour</div>
+        <div class="display-sm anim">AI Avatar Generation</div>
+        <div class="lead anim" style="margin-bottom:12px">Generate professional user avatars using local Stable
+            Diffusion — light and dark variants in one prompt
+        </div>
+        <div class="ss-layout center anim" style="flex:1; min-height:0">
+            <div class="ss-frame" style="max-width:580px; width:100%">
+                <img alt="AI avatar generation dialog"
+                     loading="lazy"
+                     src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/image-prompt-dialog.png">
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE — AI ASSISTANT (new)
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="AI Assistant" id="s-ai">
+        <div class="eyebrow anim">AI Features</div>
+        <div class="display-sm anim">Built-in AI Assistant</div>
+        <div class="lead anim" style="margin-bottom:0">Natural language queries over your project data — local LLM, zero
+            cloud, full context
+        </div>
+
+        <div class="ai-layout anim">
+
+            <!-- ── Mock chat window ── -->
+            <div class="ai-chat-wrap">
+
+                <!-- window chrome / title bar -->
+                <div class="ai-titlebar">
+                    <div class="win-dot" style="background:#f85149"></div>
+                    <div class="win-dot" style="background:#f0a500"></div>
+                    <div class="win-dot" style="background:#3fb950"></div>
+                    <div class="ai-title-text">Kassandra AI · Insights</div>
+                    <div class="ai-status">
+                        <div class="ai-status-dot"></div>
+                        ministral-3-8b
+                    </div>
+                </div>
+
+                <!-- messages — revealed sequentially by JS -->
+                <div class="ai-chat-body">
+                    <div class="ai-msg usr-msg" id="aim1">
+                        <div class="ai-avatar">👤</div>
+                        <div class="ai-bubble">Show me all overdue tasks in the mobile sprint</div>
+                    </div>
+                    <div class="ai-think" id="ait1">
+                        <div class="ai-think-text">SprintTools.getSprints() → filtering by status &amp; deadline</div>
+                        <div class="ai-think-dots"><span></span><span></span><span></span></div>
+                    </div>
+                    <div class="ai-msg bot-msg" id="aim2">
+                        <div class="ai-avatar">🤖</div>
+                        <div class="ai-bubble">Found <strong>3 overdue tasks</strong> in <em>Sprint 4 – Mobile</em>:<br><br>•
+                            <strong>Login screen</strong> — 2 days behind (Alice)<br>• <strong>Push
+                                notifications</strong> — blocked by cert (Bob)<br>• <strong>Offline sync</strong> — no
+                            worklog, unassigned
+                        </div>
+                    </div>
+                    <div class="ai-msg usr-msg" id="aim3">
+                        <div class="ai-avatar">👤</div>
+                        <div class="ai-bubble">Who has capacity for the unassigned task?</div>
+                    </div>
+                    <div class="ai-think" id="ait2">
+                        <div class="ai-think-text">UserTools.getUsers() → checking availability &amp; workload</div>
+                        <div class="ai-think-dots"><span></span><span></span><span></span></div>
+                    </div>
+                    <div class="ai-msg bot-msg" id="aim4">
+                        <div class="ai-avatar">🤖</div>
+                        <div class="ai-bubble"><strong>Carol</strong> has ~6 h free this sprint and no conflicting tasks
+                            — she'd be a great fit.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- model footer -->
+                <div class="ai-footer">
+                    🧠 <em>LM Studio</em> &nbsp;·&nbsp; OpenAI-compatible &nbsp;·&nbsp; data stays on your server
+                </div>
+            </div>
+
+            <!-- ── Feature cards ── -->
+            <div style="display:flex; flex-direction:column; gap:11px;">
+                <div class="card purple">
+                    <div class="card-title">🛠 Spring AI MCP Tools</div>
+                    <div class="card-body">One typed tool bean per domain (<code
+                            style="font-family:'Inter',monospace;font-size: 32px;background:#F1F5F9;padding:2px 6px;border-radius:3px">ProductTools</code>,
+                        <code style="font-family:'Inter',monospace;font-size: 32px;background:#F1F5F9;padding:2px 6px;border-radius:3px">SprintTools</code>,
+                        <code style="font-family:'Inter',monospace;font-size: 32px;background:#F1F5F9;padding:2px 6px;border-radius:3px">UserTools</code>…).
+                        Inner reasoning steps stream live to the UI as the model thinks.
+                    </div>
+                </div>
+                <div class="card teal">
+                    <div class="card-title">🔐 OIDC-scoped calls</div>
+                    <div class="card-body">Each tool call authenticates with the logged-in user's OIDC token — the
+                        assistant can only see and modify what you're permitted to access.
+                    </div>
+                </div>
+                <div class="card green">
+                    <div class="card-title">💡 Sprint Insights</div>
+                    <div class="card-body">Automated analysis on demand: at-risk tasks, velocity summary, blockers — one
+                        click from any sprint view.
+                    </div>
+                </div>
+                <div class="card amber">
+                    <div class="card-title">🤖 AI Filter</div>
+                    <div class="card-body">Natural language grid filters across every entity list. Describe what you
+                        want; the model generates the query. Tested per entity type in <code
+                                style="font-family:'Inter',monospace;font-size: 32px;background:#F1F5F9;padding:2px 6px;border-radius:3px">AiFilterTest</code>.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 14 — ROADMAP
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="Roadmap" id="s14">
+        <div class="eyebrow anim">Roadmap</div>
+        <div class="display-sm anim">Three phases to production</div>
+        <div class="phases anim">
+            <div class="phase">
+                <div class="phase-header"
+                     style="background: rgba(63,185,80,0.15); border-bottom:1px solid var(--border);">
+                    Phase 1 — <span style="color:var(--green)">MVP</span>
+                </div>
+                <div class="phase-body">
+                    <div class="phase-section section-done">Completed</div>
+                    <div class="phase-item"><span class="tick tick-done">✓</span> OIDC Authentication</div>
+                    <div class="phase-item"><span class="tick tick-done">✓</span> Product / Version / Feature / Sprint
+                        CRUD
+                    </div>
+                    <div class="phase-item"><span class="tick tick-done">✓</span> Task & Worklog CRUD</div>
+                    <div class="phase-item"><span class="tick tick-done">✓</span> User availability & off-days</div>
+                    <div class="phase-item"><span class="tick tick-done">✓</span> National holidays (auto by location)
+                    </div>
+                    <div class="phase-item"><span class="tick tick-done">✓</span> Gantt chart + buffer calculation</div>
+                    <div class="phase-item"><span class="tick tick-done">✓</span> Burn-down chart</div>
+                    <div class="phase-item"><span class="tick tick-done">✓</span> Release date interpolation</div>
+                    <div class="phase-item"><span class="tick tick-done">✓</span> Product page</div>
+                    <div class="phase-section section-todo" style="margin-top:12px">In Progress</div>
+                    <div class="phase-item"><span class="tick tick-todo">○</span> Product & features in backlog /
+                        quality board
+                    </div>
+                </div>
+            </div>
+            <div class="phase">
+                <div class="phase-header"
+                     style="background: rgba(56,139,253,0.15); border-bottom:1px solid var(--border);">
+                    Phase 2 — <span style="color:var(--blue)">Installable</span>
+                </div>
+                <div class="phase-body">
+                    <div class="phase-section section-todo">Planned</div>
+                    <div class="phase-item"><span class="tick tick-todo">○</span> Alpha release (0.1.0)</div>
+                    <div class="phase-item"><span class="tick tick-todo">○</span> Docker container image</div>
+                    <div class="phase-item"><span class="tick tick-todo">○</span> First-run initialization wizard</div>
+                    <div class="phase-item"><span class="tick tick-todo">○</span> Server settings panel</div>
+                </div>
+            </div>
+            <div class="phase">
+                <div class="phase-header"
+                     style="background: rgba(240,165,0,0.12); border-bottom:1px solid var(--border);">
+                    Phase 3 — <span style="color:var(--amber)">Optimizations</span>
+                </div>
+                <div class="phase-body">
+                    <div class="phase-section section-todo">Planned</div>
+                    <div class="phase-item"><span class="tick tick-todo">○</span> Gantt resource conflict visualization
+                    </div>
+                    <div class="phase-item"><span class="tick tick-todo">○</span> Admin hub</div>
+                    <div class="phase-item"><span class="tick tick-todo">○</span> Live updates (WebSocket)</div>
+                    <div class="phase-item"><span class="tick tick-todo">○</span> Audit logs</div>
+                    <div class="phase-item"><span class="tick tick-todo">○</span> GDPR compliance</div>
+                    <div class="phase-item"><span class="tick tick-todo">○</span> Undo / history</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 15 — TECH STACK
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="Tech Stack" id="s15">
+        <div class="eyebrow anim">Technical</div>
+        <div class="display-sm anim">Tech Stack & Design Philosophy</div>
+        <div class="tech-grid anim">
+            <div class="card blue">
+                <div class="card-title">Java + Spring Boot</div>
+                <div class="card-body">Robust, well-supported backend ecosystem. ~98% of the codebase is Java.</div>
+            </div>
+            <div class="card purple">
+                <div class="card-title">Vaadin UI</div>
+                <div class="card-body">Server-side Java UI framework. The frontend is just another API client — no JS
+                    framework needed.
+                </div>
+            </div>
+            <div class="card teal">
+                <div class="card-title">Selenium</div>
+                <div class="card-body">Full UI test coverage. Also powers the automated intro video generation
+                    pipeline.
+                </div>
+            </div>
+            <div class="card amber">
+                <div class="card-title">Chatterbox TTS + ffmpeg</div>
+                <div class="card-body">Browser audio output captured and merged with video frames to produce intro
+                    videos.
+                </div>
+            </div>
+            <div class="card green">
+                <div class="card-title">Docker <span style="color:var(--muted); font-weight:400">(Phase 2)</span></div>
+                <div class="card-body">Planned containerization for easy self-hosting. One command to start
+                    everything.
+                </div>
+            </div>
+            <div class="card pink">
+                <div class="card-title">Stable Diffusion</div>
+                <div class="card-body">Local AI image generation for user avatars. No cloud, no data leaves your
+                    server.
+                </div>
+            </div>
+            <div class="quote">
+                "As simple as possible, as complex as <em>necessary</em>." — Kassandra Design Philosophy
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SLIDE 16 — CTA
+    ═══════════════════════════════════════════════════════════════ -->
+    <section class="slide" data-title="Get Started" id="s16">
+        <div class="bg-grid"></div>
+        <div style="padding-top:60px">
+            <div class="eyebrow anim">Get Started</div>
+            <div class="display anim">Try Kassandra</div>
+            <div class="rule anim"></div>
+            <div class="cta-links anim">
+                <div class="cta-link">
+                    <div class="cta-icon">⌥</div>
+                    <div>
+                        <div class="cta-title">GitHub Repository</div>
+                        <div class="cta-url">github.com/abdallabushnaq/kassandra</div>
+                    </div>
+                </div>
+                <div class="cta-link">
+                    <div class="cta-icon">📖</div>
+                    <div>
+                        <div class="cta-title">Wiki & Screenshots</div>
+                        <div class="cta-url">github.com/abdallabushnaq/kassandra/wiki</div>
+                    </div>
+                </div>
+                <div class="cta-link">
+                    <div class="cta-icon">▶</div>
+                    <div>
+                        <div class="cta-title">Introduction Videos</div>
+                        <div class="cta-url">YouTube — Kassandra Intro playlist</div>
+                    </div>
+                </div>
+                <div class="cta-link">
+                    <div class="cta-icon">⚖</div>
+                    <div>
+                        <div class="cta-title">Apache 2.0 License</div>
+                        <div class="cta-url">Free for personal and commercial use</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div><!-- /deck -->
+
+<script>
+    // ── Fixed-canvas scaling ──────────────────────────────────────
+    // The deck is designed at 1280×720. Scale it uniformly to fill
+    // the viewport, preserving the aspect ratio (letterboxed if needed).
+    const DESIGN_W = 2560;
+    const DESIGN_H = 1440;
+    const deck = document.getElementById('deck');
+
+    function scalePresentation() {
+        const scaleX = window.innerWidth / DESIGN_W;
+        const scaleY = window.innerHeight / DESIGN_H;
+        const scale = Math.min(scaleX, scaleY);
+        const offsetX = Math.round((window.innerWidth - DESIGN_W * scale) / 2);
+        const offsetY = Math.round((window.innerHeight - DESIGN_H * scale) / 2);
+        deck.style.transform = `scale(${scale})`;
+        deck.style.left = offsetX + 'px';
+        deck.style.top = offsetY + 'px';
+    }
+
+    window.addEventListener('resize', scalePresentation);
+    scalePresentation();
+
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const total = slides.length;
+    let current = 0;
+    let animating = false;
+
+    // Build menu
+    const menu = document.getElementById('slide-menu');
+    slides.forEach((s, i) => {
+        const item = document.createElement('div');
+        item.className = 'menu-item' + (i === 0 ? ' active' : '');
+        item.innerHTML = `<span class="num">${String(i + 1).padStart(2, '0')}</span><span>${s.dataset.title}</span>`;
+        item.onclick = () => {
+            goTo(i);
+            toggleMenu(false);
+        };
+        menu.appendChild(item);
+    });
+
+    function updateUI() {
+        document.getElementById('counter').textContent =
+            String(current + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+        document.getElementById('progress-bar').style.width =
+            ((current + 1) / total * 100) + '%';
+        document.querySelectorAll('.menu-item').forEach((el, i) =>
+            el.classList.toggle('active', i === current));
+    }
+
+    function goTo(idx) {
+        if (idx < 0 || idx >= total || idx === current || animating) return;
+        animating = true;
+        const prev = slides[current];
+        const next = slides[idx];
+        prev.classList.add('exit');
+        setTimeout(() => {
+            prev.classList.remove('active', 'exit');
+            next.classList.add('active');
+            current = idx;
+            updateUI();
+            setTimeout(() => animating = false, 700);
+        }, 450);
+    }
+
+    function go(dir) {
+        goTo(current + dir);
+    }
+
+    function toggleMenu(forceState) {
+        const open = typeof forceState === 'boolean' ? forceState : !menu.classList.contains('open');
+        menu.classList.toggle('open', open);
+    }
+
+    document.addEventListener('click', e => {
+        if (!menu.contains(e.target) && e.target.id !== 'menu-btn') toggleMenu(false);
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            go(1);
+        }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            go(-1);
+        }
+        if (e.key === 'Escape') toggleMenu(false);
+        if (e.key === 'Home') goTo(0);
+        if (e.key === 'End') goTo(total - 1);
+    });
+
+    // Touch swipe
+    let tx = 0;
+    document.addEventListener('touchstart', e => {
+        tx = e.touches[0].clientX;
+    }, {passive: true});
+    document.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - tx;
+        if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+    }, {passive: true});
+
+    // ── AI chat sequential reveal ─────────────────────────────────
+    // Each entry: [elementId, delayMs, 'show'] — messages slide in,
+    // thinking rows fade in with animated dots
+    const chatScript = [
+        ['aim1', 350],
+        ['ait1', 950],
+        ['aim2', 2200],
+        ['aim3', 3500],
+        ['ait2', 4100],
+        ['aim4', 5300],
+    ];
+
+    const aiSlide = document.getElementById('s-ai');
+    let aiPlayed = false;
+    let aiTimers = [];
+
+    function playAiChat() {
+        if (aiPlayed) return;
+        aiPlayed = true;
+        aiTimers = chatScript.map(([id, delay]) =>
+            setTimeout(() => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('show');
+            }, delay)
+        );
+    }
+
+    function resetAiChat() {
+        aiTimers.forEach(clearTimeout);
+        aiTimers = [];
+        aiPlayed = false;
+        chatScript.forEach(([id]) => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('show');
+        });
+    }
+
+    // Watch for slide activation via class mutation
+    new MutationObserver(() => {
+        if (aiSlide.classList.contains('active')) playAiChat();
+        else resetAiChat();
+    }).observe(aiSlide, {attributes: true, attributeFilter: ['class']});
+
+    // Init
+    slides[0].classList.add('active');
+    updateUI();
+</script>
+</body>
+</html>
