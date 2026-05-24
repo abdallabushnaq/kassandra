@@ -142,31 +142,27 @@
 
         /* ── Screenshot frame ──────────────────────────────────────── */
         .ss-frame {
-            /*border-radius: 8px;*/
-            /*border: 1px solid #CBD5E1;*/
-            /*box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);*/
-            /*background: #fff;*/
             overflow: hidden;
-            position: relative; /* positioned ancestor for the abs-pos img */
-            flex: 1; /* equal width shares in the row           */
-            min-width: 0; /* prevent flex blowout                    */
-            min-height: 0; /* prevent flex blowout                    */
+            position: relative;
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .ss-frame img {
             /*
-             * Absolutely positioned so width/height resolve against the
-             * frame's USED pixel dimensions (not a percentage containing-block),
-             * which guarantees object-fit: contain can do its job even when
-             * the frame height comes from flexbox rather than an explicit CSS value.
+             * Width is capped to the frame so wide images shrink proportionally.
+             * Height is unconstrained here — the JS below sets max-height per image
+             * to naturalHeight / revealScale so images never upscale beyond 1:1.
              */
-            /*position: absolute;*/
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border: 1px solid #CBD5E1;
+            max-width: 100%;
+            width: auto;
+            height: auto;
             display: block;
+            border: 1px solid #CBD5E1;
         }
 
         .ss-frame figcaption {
@@ -1680,7 +1676,7 @@
             <p style="margin-bottom:0">Log time spent on any task directly from the board — remaining estimate
                 auto-calculated</p>
             <div class="ss-center">
-                <div class="ss-frame" style="max-width:260px; width:100%">
+                <div class="ss-frame">
                     <img alt="Work log dialog" loading="lazy"
                          src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/worklog-create-dialog.png">
                 </div>
@@ -1696,7 +1692,7 @@
             <p style="margin-bottom:0">Generate professional user avatars using local Stable Diffusion — light and dark
                 variants in one prompt</p>
             <div class="ss-center">
-                <div class="ss-frame" style="max-width:290px; width:100%">
+                <div class="ss-frame">
                     <img alt="AI avatar generation dialog" loading="lazy"
                          src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/image-prompt-dialog.png">
                 </div>
@@ -1972,6 +1968,32 @@
     Reveal.on('ready', ({currentSlide}) => {
         if (currentSlide?.id === 's-ai') playAiChat();
     });
+
+    // ── Cap screenshot images: scale down if too large, never scale up ──
+    // Reveal applies transform:scale(S) to the whole canvas.
+    // naturalCssPx  = naturalHeight / S  →  the "1:1 physical pixel" size in CSS coords.
+    // We allow the image to be at most min(naturalCssPx, frameSize) so that:
+    //   • large screenshots shrink to fit their frame (scale down)
+    //   • small dialogs stay at their natural size (never upscale)
+    function capImagesToNaturalSize() {
+        const S = Reveal.getScale();
+        document.querySelectorAll('.ss-frame img').forEach(img => {
+            const apply = () => {
+                if (!img.naturalHeight) return;
+                const frame = img.closest('.ss-frame');
+                const frameH = frame.clientHeight;  // actual layout px (CSS coords)
+                const frameW = frame.clientWidth;
+                const naturalH = img.naturalHeight / S;
+                const naturalW = img.naturalWidth / S;
+                img.style.maxHeight = Math.round(Math.min(naturalH, frameH)) + 'px';
+                img.style.maxWidth = Math.round(Math.min(naturalW, frameW)) + 'px';
+            };
+            img.complete ? apply() : img.addEventListener('load', apply, {once: true});
+        });
+    }
+
+    Reveal.on('ready', capImagesToNaturalSize);
+    Reveal.on('resize', capImagesToNaturalSize);
 </script>
 </body>
 </html>
