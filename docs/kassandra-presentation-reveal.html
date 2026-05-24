@@ -1,0 +1,1977 @@
+<!--
+  ~
+  ~ Copyright (C) 2025-2026 Abdalla Bushnaq
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  ~
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Kassandra — Project Management Server</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet">
+    <!-- Reveal.js core + white theme -->
+    <link href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.min.css" rel="stylesheet">
+    <style>
+        /* ── Override Reveal white theme tokens ────────────────────────
+           Using --r-* vars keeps full theme compatibility.
+           Base font-size 20px on a 1280×720 canvas gives:
+             h2  = 2.4 × 20 = 48 px  (slide titles)
+             p   = 1.0 × 20 = 20 px  (body / lead text)
+        ─────────────────────────────────────────────────────────────── */
+        .reveal-viewport {
+            --r-background-color: #F8FAFC;
+            --r-main-font: 'Inter', sans-serif;
+            --r-main-font-size: 20px;
+            --r-main-color: #1E293B;
+            --r-block-margin: 10px;
+            --r-heading-font: 'Inter', sans-serif;
+            --r-heading-color: #1E293B;
+            --r-heading-line-height: 1.1;
+            --r-heading-letter-spacing: -0.01em;
+            --r-heading-text-transform: none;
+            --r-heading-font-weight: 700;
+            --r-heading1-size: 3.5em; /* 70 px — overridden per-slide when needed */
+            --r-heading2-size: 2.4em; /* 48 px — standard slide title             */
+            --r-heading3-size: 1.9em; /* 38 px — sub-heading                      */
+            --r-link-color: #2563EB;
+            --r-link-color-hover: #1D4ED8;
+        }
+
+        /* ── Slide shell ───────────────────────────────────────────── */
+        /* !important ensures Reveal.js JS/CSS cannot override display  */
+        .reveal .slides section {
+            display: flex !important;
+            flex-direction: column;
+            text-align: left;
+            padding: 44px 68px;
+            box-sizing: border-box;
+            height: 100%; /* explicit: ensures flex children can use flex:1 */
+        }
+
+        /* ── Eyebrow badge (small labelled chip above slide title) ──── */
+        .eyebrow {
+            display: inline-block;
+            font-size: 0.75em;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #2563EB !important;
+            background: #DBEAFE;
+            padding: 2px 7px;
+            border-radius: 3px;
+            margin: 0 0 4px;
+        }
+
+        /* ── Card ──────────────────────────────────────────────────── */
+        .card {
+            background: #fff;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 14px 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .card.blue::before {
+            background: #2563EB;
+        }
+
+        .card.amber::before {
+            background: #F59E0B;
+        }
+
+        .card.green::before {
+            background: #16A34A;
+        }
+
+        .card.red::before {
+            background: #DC2626;
+        }
+
+        .card.purple::before {
+            background: #7C3AED;
+        }
+
+        .card.teal::before {
+            background: #0D9488;
+        }
+
+        .card.pink::before {
+            background: #DB2777;
+        }
+
+        .card h4, .card-title {
+            font-size: 0.95em;
+            font-weight: 700;
+            color: #1E293B;
+            margin: 0 0 5px;
+        }
+
+        .card p, .card-body {
+            font-size: 0.70em;
+            color: #64748B;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* ── Screenshot frame ──────────────────────────────────────── */
+        .ss-frame {
+            /*border-radius: 8px;*/
+            /*border: 1px solid #CBD5E1;*/
+            /*box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);*/
+            /*background: #fff;*/
+            overflow: hidden;
+            position: relative; /* positioned ancestor for the abs-pos img */
+            flex: 1; /* equal width shares in the row           */
+            min-width: 0; /* prevent flex blowout                    */
+            min-height: 0; /* prevent flex blowout                    */
+        }
+
+        .ss-frame img {
+            /*
+             * Absolutely positioned so width/height resolve against the
+             * frame's USED pixel dimensions (not a percentage containing-block),
+             * which guarantees object-fit: contain can do its job even when
+             * the frame height comes from flexbox rather than an explicit CSS value.
+             */
+            /*position: absolute;*/
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border: 1px solid #CBD5E1;
+            display: block;
+        }
+
+        .ss-frame figcaption {
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.65em;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            padding: 3px 7px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.92);
+            color: #64748B;
+            border: 1px solid #CBD5E1;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 1 — TITLE  (dark navy background)
+        ═══════════════════════════════════════════════════════════════ */
+        #s1 {
+            justify-content: center;
+        }
+
+        #s1 .bg-grid {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            opacity: 0.4;
+            mask-image: radial-gradient(ellipse 80% 80% at 20% 50%, black 20%, transparent 80%);
+        }
+
+        #s1 .glow, #s1 .glow2 {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        #s1 .glow {
+            width: 600px;
+            height: 600px;
+            top: -100px;
+            left: -100px;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, transparent 70%);
+        }
+
+        #s1 .glow2 {
+            width: 400px;
+            height: 400px;
+            bottom: 50px;
+            right: 100px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.07) 0%, transparent 70%);
+        }
+
+        #s1 aside {
+            position: absolute;
+            right: 80px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: flex-end;
+        }
+
+        #s1 aside .line {
+            height: 2px;
+            border-radius: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15));
+        }
+
+        #s1 h1 {
+            font-size: 9em;
+            letter-spacing: -0.03em;
+            line-height: 0.9;
+            color: #fff;
+            margin: 0;
+            font-weight: 800;
+        }
+
+        #s1 h1 span {
+            color: #F59E0B;
+        }
+
+        #s1 .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 14px;
+        }
+
+        #s1 .chip {
+            font-size: 0.9em;
+            padding: 5px 11px;
+            border-radius: 4px;
+            color: #93C5FD;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 2 — AGENDA
+        ═══════════════════════════════════════════════════════════════ */
+        #s2 .agenda-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+            flex: 1;
+        }
+
+        #s2 .agenda-item {
+            background: #fff;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        #s2 .agenda-num {
+            font-size: 2.4em;
+            font-weight: 800;
+            color: #2563EB;
+            line-height: 1;
+            flex-shrink: 0;
+            width: 28px;
+        }
+
+        #s2 .agenda-item h4 {
+            font-size: 1.05em;
+            margin: 0 0 4px;
+            color: #1E293B;
+        }
+
+        #s2 .agenda-item p {
+            font-size: 0.80em;
+            margin: 0;
+            color: #64748B;
+            line-height: 1.5;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 3 — THE PROBLEM
+        ═══════════════════════════════════════════════════════════════ */
+        #s3 .timeline {
+            display: flex;
+            gap: 0;
+            margin-top: 16px;
+            flex: 1;
+            align-items: stretch;
+        }
+
+        #s3 .step {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #s3 .step:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -10px;
+            top: 20px;
+            color: #CBD5E1;
+            font-size: 1.6em;
+            z-index: 3;
+        }
+
+        #s3 .step-inner {
+            background: #fff;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 14px 12px;
+            margin: 0 5px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        #s3 .step:last-child .step-inner {
+            border-color: #FCA5A5;
+            background: #FEF2F2;
+        }
+
+        #s3 .step-n {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: #2563EB;
+            color: #fff;
+            font-size: 0.9em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #s3 .step-inner h4 {
+            font-size: 1.05em;
+            margin: 0;
+            color: #1E293B;
+        }
+
+        #s3 .step-inner p {
+            font-size: 0.80em;
+            margin: 0;
+            color: #64748B;
+            line-height: 1.5;
+        }
+
+        #s3 .callout {
+            margin-top: 16px;
+            border-radius: 6px;
+            padding: 10px 14px;
+            background: #FEF2F2;
+            border: 1px solid #FCA5A5;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        #s3 .callout p {
+            font-size: 0.8em;
+            color: #991B1B;
+            margin: 0;
+        }
+
+        /* ── Shared: small uppercase label ────────────────────────── */
+        .label {
+            font-size: 0.65em;
+            font-weight: 700;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: #64748B;
+            margin-bottom: 8px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 4 — FIRST ITERATION
+        ═══════════════════════════════════════════════════════════════ */
+        #s4 .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            flex: 1;
+            margin-top: 16px;
+            align-items: start;
+        }
+
+        #s4 ol.pipeline {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #s4 ol.pipeline li {
+            background: #fff;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 0.85em;
+        }
+
+        #s4 ol.pipeline li strong {
+            display: block;
+            font-weight: 700;
+            color: #1E293B;
+            margin-bottom: 2px;
+        }
+
+        #s4 ol.pipeline li span {
+            color: #64748B;
+            font-size: 0.9em;
+        }
+
+        /* Arrow connectors between steps */
+        #s4 ol.pipeline li:not(:last-child) {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        #s4 ol.pipeline li:not(:last-child)::after {
+            content: '↓';
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #CBD5E1;
+            font-size: 1.4em;
+            line-height: 1;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 5 — PROJECTS.DASHBOARD
+        ═══════════════════════════════════════════════════════════════ */
+        #s5 .dash-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+            flex: 1;
+        }
+
+        /* Last card (warning) spans all three columns */
+        #s5 .dash-grid .card:last-child {
+            grid-column: 1 / -1;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 6 — INTRODUCING KASSANDRA  (dark)
+        ═══════════════════════════════════════════════════════════════ */
+        #s6 {
+            align-items: center;
+            text-align: center;
+            justify-content: center;
+        }
+
+        #s6 .bg-lines {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        #s6 .bg-lines span {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        #s6 h1 {
+            font-size: 10em;
+            letter-spacing: -0.04em;
+            line-height: 0.85;
+            color: #fff;
+            margin: 12px 0;
+            font-weight: 800;
+        }
+
+        #s6 .feat-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            justify-content: center;
+            max-width: 700px;
+            margin: 24px auto 0;
+        }
+
+        #s6 .feat-pill {
+            font-size: 0.9em;
+            padding: 5px 12px;
+            border-radius: 24px;
+            color: #E2E8F0;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 7 — DIFFERENTIATORS
+        ═══════════════════════════════════════════════════════════════ */
+        #s7 .diff-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+            flex: 1;
+        }
+
+        #s7 .diff-num {
+            font-size: 2em;
+            font-weight: 800;
+            color: #2563EB;
+            line-height: 1;
+            margin: 0 0 4px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SHARED — Screenshot layouts (reused by many slides)
+        ═══════════════════════════════════════════════════════════════ */
+        .ss-split {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            flex: 1;
+            margin-top: 16px;
+            min-height: 0;
+        }
+
+        .ss-full {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            flex: 1;
+            margin-top: 16px;
+            min-height: 0;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 8 — PROJECT ARCHITECTURE
+        ═══════════════════════════════════════════════════════════════ */
+        #s-hierarchy .hier-flow {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 0;
+        }
+
+        #s-hierarchy .hier-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        #s-hierarchy .hier-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            border: 1.5px solid;
+        }
+
+        #s-hierarchy .hier-conn {
+            display: flex;
+            align-items: center;
+            padding-top: 24px;
+            flex-shrink: 0;
+            width: 40px;
+        }
+
+        #s-hierarchy .hier-conn-line {
+            flex: 1;
+            height: 1px;
+            background: #CBD5E1;
+        }
+
+        #s-hierarchy .hier-conn-tip {
+            font-size: 0.6em;
+            color: rgba(56, 139, 253, 0.7);
+            margin-left: 1px;
+        }
+
+        #s-hierarchy .hier-name {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #1E293B;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        #s-hierarchy .hier-desc {
+            font-size: 0.7em;
+            color: #64748B;
+            text-align: center;
+            line-height: 1.4;
+            margin-top: 4px;
+        }
+
+        #s-hierarchy .hier-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 9 — OIDC AUTHENTICATION
+        ═══════════════════════════════════════════════════════════════ */
+        #s-login .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            flex: 1;
+            margin-top: 16px;
+            min-height: 0;
+        }
+
+        #s-login .cards-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* ── Shared: centered screenshot (dialogs, portraits) ──────── */
+        .ss-center {
+            display: flex;
+            flex: 1;
+            margin-top: 16px;
+            min-height: 0;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE — AI ASSISTANT
+        ═══════════════════════════════════════════════════════════════ */
+        #s-ai .ai-layout {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 16px;
+            flex: 1;
+            min-height: 0;
+            margin-top: 12px;
+        }
+
+        #s-ai .ai-chat-wrap {
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            overflow: hidden;
+            min-height: 0;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        #s-ai .ai-titlebar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 7px 10px;
+            border-bottom: 1px solid #CBD5E1;
+            background: #F1F5F9;
+            flex-shrink: 0;
+        }
+
+        #s-ai .win-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        #s-ai .ai-title-text {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #1E293B;
+            flex: 1;
+            text-align: center;
+        }
+
+        #s-ai .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.7em;
+            color: #16A34A;
+        }
+
+        #s-ai .ai-status-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #16A34A;
+            animation: blink-status 2s ease-in-out infinite;
+        }
+
+        @keyframes blink-status {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.25;
+            }
+        }
+
+        #s-ai .ai-chat-body {
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow: hidden;
+        }
+
+        .ai-msg {
+            display: flex;
+            gap: 6px;
+            align-items: flex-end;
+            opacity: 0;
+            transition: opacity 0.35s;
+        }
+
+        .ai-msg.show {
+            opacity: 1;
+        }
+
+        .ai-msg.usr-msg {
+            flex-direction: row-reverse;
+        }
+
+        .ai-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1em;
+            border: 1px solid;
+        }
+
+        .ai-msg.bot-msg .ai-avatar {
+            background: #DBEAFE;
+            border-color: #BFDBFE;
+        }
+
+        .ai-msg.usr-msg .ai-avatar {
+            background: #F1F5F9;
+            border-color: #CBD5E1;
+        }
+
+        .ai-bubble {
+            padding: 7px 9px;
+            font-size: 0.95em;
+            line-height: 1.55;
+            max-width: 82%;
+            border: 1px solid;
+        }
+
+        .ai-msg.bot-msg .ai-bubble {
+            background: #F1F5F9;
+            border-color: #CBD5E1;
+            color: #1E293B;
+            border-radius: 2px 6px 6px 6px;
+        }
+
+        .ai-msg.usr-msg .ai-bubble {
+            background: #DBEAFE;
+            border-color: #BFDBFE;
+            color: #1E40AF;
+            border-radius: 6px 2px 6px 6px;
+        }
+
+        .ai-think {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 1px 0 1px 26px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .ai-think.show {
+            opacity: 1;
+        }
+
+        .ai-think-text {
+            font-size: 0.7em;
+            color: #64748B;
+            border-left: 2px solid #F59E0B;
+            padding-left: 5px;
+            line-height: 1.4;
+            font-style: italic;
+        }
+
+        .ai-think-dots {
+            display: flex;
+            gap: 2px;
+            margin-left: 4px;
+        }
+
+        .ai-think-dots span {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #F59E0B;
+            opacity: 0;
+            animation: dot-pop 1.2s ease-in-out infinite;
+        }
+
+        .ai-think-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .ai-think-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes dot-pop {
+            0%, 80%, 100% {
+                opacity: 0;
+                transform: scale(0.6);
+            }
+            40% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        #s-ai .ai-footer {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-top: 1px solid #CBD5E1;
+            font-size: 0.75em;
+            color: #64748B;
+            background: #F1F5F9;
+            flex-shrink: 0;
+        }
+
+        #s-ai .ai-footer em {
+            color: #2563EB;
+            font-style: normal;
+        }
+
+        #s-ai .cards-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 14 — ROADMAP
+        ═══════════════════════════════════════════════════════════════ */
+        #s14 .phases {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+            flex: 1;
+        }
+
+        #s14 .phase {
+            background: #fff;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        #s14 .phase-header {
+            padding: 10px 14px;
+            font-weight: 700;
+            font-size: 1.3em;
+            color: #1E293B;
+            border-bottom: 1px solid #CBD5E1;
+        }
+
+        #s14 .phase-body {
+            padding: 12px 14px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        #s14 .phase-label {
+            font-size: 0.7em;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin: 6px 0 2px;
+        }
+
+        #s14 .phase-item {
+            font-size: 0.9em;
+            color: #64748B;
+            line-height: 1.4;
+            display: flex;
+            gap: 5px;
+            align-items: flex-start;
+            margin: 0;
+        }
+
+        .tick-done {
+            color: #16A34A;
+            flex-shrink: 0;
+        }
+
+        .tick-todo {
+            color: #2563EB;
+            flex-shrink: 0;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 15 — TECH STACK
+        ═══════════════════════════════════════════════════════════════ */
+        #s15 .tech-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+            flex: 1;
+        }
+
+        #s15 blockquote {
+            grid-column: 1 / -1;
+            font-size: 1.3em;
+            color: #64748B;
+            margin: 0;
+        }
+
+        #s15 blockquote em {
+            color: #2563EB;
+            font-style: normal;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SLIDE 16 — GET STARTED  (dark)
+        ═══════════════════════════════════════════════════════════════ */
+        #s16 {
+            justify-content: center;
+        }
+
+        #s16 .bg-grid {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            opacity: 0.3;
+            mask-image: radial-gradient(ellipse 70% 70% at 80% 50%, black 20%, transparent 80%);
+        }
+
+        #s16 h1 {
+            font-size: 5.6em;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        #s16 hr {
+            width: 30px;
+            border: none;
+            border-top: 2px solid #2563EB;
+            margin: 0 0 14px;
+        }
+
+        #s16 .cta-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 500px;
+        }
+
+        #s16 .cta-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+        }
+
+        #s16 .cta-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+
+        #s16 .cta-link h4 {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0 2px;
+        }
+
+        #s16 .cta-link p {
+            font-size: 0.9em;
+            color: #60A5FA;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="reveal">
+    <div class="slides">
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 1 — TITLE
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#111D33" id="s1">
+            <div class="bg-grid"></div>
+            <div class="glow"></div>
+            <div class="glow2"></div>
+
+            <aside aria-hidden="true">
+                <div class="line" style="width:140px"></div>
+                <div class="line" style="width:90px;  opacity:.5"></div>
+                <div class="line" style="width:110px; opacity:.3"></div>
+                <div class="line" style="width:60px;  opacity:.2"></div>
+                <small style="color:rgba(255,255,255,0.3); letter-spacing:.1em; margin-top:8px">v 0.1.0 · alpha</small>
+            </aside>
+
+            <p class="eyebrow" style="color:#F59E0B !important; background:rgba(245,158,11,0.15)">
+                Open Source Project Management
+            </p>
+            <h1><span>Kas</span>sandra</h1>
+            <p style="font-size:2.1em; color:#93C5FD; margin-top:0">One server to rule the planning chaos</p>
+            <div class="chips">
+                <span class="chip">Effort Estimation</span>
+                <span class="chip">Gantt Charts</span>
+                <span class="chip">Burndown</span>
+                <span class="chip">Sprint Tracking</span>
+                <span class="chip">AI Avatars</span>
+                <span class="chip">OIDC Auth</span>
+            </div>
+            <p style="font-size:1em; color:#60A5FA; margin-top:16px; letter-spacing:0.03em">
+                github.com/abdallabushnaq/kassandra
+            </p>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 2 — AGENDA
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s2">
+            <p class="eyebrow">Overview</p>
+            <h2>What we'll cover</h2>
+            <div class="agenda-grid">
+                <div class="agenda-item">
+                    <div class="agenda-num">1</div>
+                    <div>
+                        <h4>History</h4>
+                        <p>How fragmented tooling caused repeated planning failures and what we tried first</p>
+                    </div>
+                </div>
+                <div class="agenda-item">
+                    <div class="agenda-num">2</div>
+                    <div>
+                        <h4>Introducing Kassandra</h4>
+                        <p>One tiny server to replace five separate tools — and what makes it different</p>
+                    </div>
+                </div>
+                <div class="agenda-item">
+                    <div class="agenda-num">3</div>
+                    <div>
+                        <h4>Security &amp; Architecture</h4>
+                        <p>OIDC single sign-on, group-based ACL, and the full data model hierarchy</p>
+                    </div>
+                </div>
+                <div class="agenda-item">
+                    <div class="agenda-num">4</div>
+                    <div>
+                        <h4>Feature Tour</h4>
+                        <p>Products, versions, features, sprints, tasks, users, work logging — the full stack</p>
+                    </div>
+                </div>
+                <div class="agenda-item">
+                    <div class="agenda-num">5</div>
+                    <div>
+                        <h4>AI Features</h4>
+                        <p>Built-in LLM assistant, natural language filters, avatar generation, sprint insights</p>
+                    </div>
+                </div>
+                <div class="agenda-item">
+                    <div class="agenda-num">6</div>
+                    <div>
+                        <h4>Roadmap &amp; Tech Stack</h4>
+                        <p>Three phases to production, and the technology powering it all</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 3 — THE PROBLEM
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s3">
+            <p class="eyebrow">History</p>
+            <h2>The Problem</h2>
+            <p>Classic project planning — and where it broke down</p>
+            <div class="timeline">
+                <div class="step">
+                    <div class="step-inner">
+                        <div class="step-n">1</div>
+                        <h4>Developers</h4>
+                        <p>Break down work into tasks. No visibility into the overall plan or timeline.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-inner">
+                        <div class="step-n">2</div>
+                        <h4>Project Manager</h4>
+                        <p>Types tasks into MS Project, manually assigns developers — no validation.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-inner">
+                        <div class="step-n">3</div>
+                        <h4>Gantt Created</h4>
+                        <p>Developers have no MS Project license. They cannot review or give feedback.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-inner">
+                        <div class="step-n">4</div>
+                        <h4>Errors Surface Late</h4>
+                        <p>Missing dependencies and wrong assignments found mid-project, too late to fix cleanly.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-inner">
+                        <div class="step-n" style="background:#DC2626">5</div>
+                        <h4>Customer Impact</h4>
+                        <p>Two incidents where the delivered schedule was a full month too optimistic.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="callout">
+                <span>⚠</span>
+                <p>The feedback loop was broken. Developers could not see or validate the plan until it was far too
+                    late.</p>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 4 — FIRST ITERATION: EXCEL + QCD-TOOL
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s4">
+            <p class="eyebrow">History</p>
+            <h2>First Iteration: The Excel + qcd-tool Pipeline</h2>
+            <div class="two-col">
+                <div>
+                    <p class="label">The pipeline</p>
+                    <ol class="pipeline">
+                        <li>
+                            <strong>📄 Excel Sheet</strong>
+                            <span>Tasks, assignments &amp; dependencies filled in by developers</span>
+                        </li>
+                        <li>
+                            <strong>⚙️ qcd-tool</strong>
+                            <span>Reads Excel, generates intermediate Gantt chart for developer review</span>
+                        </li>
+                        <li>
+                            <strong>📊 Microsoft Project</strong>
+                            <span>Final Gantt generated after conflict check with other projects</span>
+                        </li>
+                        <li>
+                            <strong>🎯 Jira Sprint</strong>
+                            <span>CSV exported from qcd-tool imported into Jira to create the sprint</span>
+                        </li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 style="color:#16A34A; font-size:1.1em">✓ What improved</h3>
+                    <ul style="font-size:0.8em">
+                        <li>Developers validated the plan before it was finalised</li>
+                        <li>Dependencies checked in Excel before any import</li>
+                        <li>Jira sprint auto-created from the same source</li>
+                    </ul>
+                    <h3 style="color:#DC2626; font-size:1.1em; margin-top:20px">✕ Still missing</h3>
+                    <ul style="font-size:0.8em; color:#64748B">
+                        <li>Five separate tools to install, license, and keep in sync</li>
+                        <li>qcd-tool breaking after library updates</li>
+                        <li>SMB shared drive required for all Excel files</li>
+                        <li>jira's real-time progress monitoring makes it difficult to estimate delay</li>
+                        <li>very difficult to update the plan after work was already logged</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 5 — SECOND ITERATION: PROJECTS.DASHBOARD
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s5">
+            <p class="eyebrow">History</p>
+            <h2>Second Iteration: projects.dashboard</h2>
+            <p>Hourly monitoring server — better visibility, even more moving parts</p>
+            <div class="dash-grid">
+                <div class="card blue">
+                    <h4>📡 Reads open Jira sprints</h4>
+                    <p>Task progress polled and compared against plan every hour</p>
+                </div>
+                <div class="card purple">
+                    <h4>📄 Reads Excel sheets</h4>
+                    <p>Planned effort per project from the SMB-hosted workbooks</p>
+                </div>
+                <div class="card teal">
+                    <h4>📊 Reads Gantt XML</h4>
+                    <p>Planned schedule exported from Microsoft Project</p>
+                </div>
+                <div class="card green">
+                    <h4>📈 Generates Gantt chart</h4>
+                    <p>Visual timeline computed and published per project</p>
+                </div>
+                <div class="card amber">
+                    <h4>🔥 Generates Burndown</h4>
+                    <p>Sprint velocity tracking with remaining-effort curve</p>
+                </div>
+                <div class="card red">
+                    <h4>⚠ Still required</h4>
+                    <p>Excel · qcd-tool · MS Project server · Jira server · projects.dashboard server · SMB drive</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 6 — INTRODUCING KASSANDRA
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#111D33" id="s6">
+            <div aria-hidden="true" class="bg-lines">
+                <span style="top:20%"></span><span style="top:40%"></span>
+                <span style="top:60%"></span><span style="top:80%"></span>
+            </div>
+            <p class="eyebrow" style="color:#93C5FD !important; background:rgba(147,197,253,0.15)">Introducing</p>
+            <h1>Kassandra</h1>
+            <p style="font-size:2em; color:#93C5FD; margin:0">One tiny server to replace them all</p>
+            <div class="feat-pills">
+                <span class="feat-pill">Planning</span>
+                <span class="feat-pill">Gantt Charts</span>
+                <span class="feat-pill">Burndown</span>
+                <span class="feat-pill">Sprint Tracking</span>
+                <span class="feat-pill">AI Avatars</span>
+                <span class="feat-pill">OIDC Auth</span>
+                <span class="feat-pill">National Holidays</span>
+                <span class="feat-pill">Work Logging</span>
+                <span class="feat-pill">Dependency Graph</span>
+                <span class="feat-pill">Release Interpolation</span>
+                <span class="feat-pill">International teams</span>
+            </div>
+            <p style="font-size:0.9em; color:#64748B; margin-top:24px; letter-spacing:0.05em">
+                Self-hosted · Open Source · Apache 2.0
+            </p>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 7 — WHAT MAKES IT DIFFERENT?
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s7">
+            <p class="eyebrow">Key Differentiators</p>
+            <h2>What makes Kassandra different?</h2>
+            <div class="diff-grid">
+                <div class="card">
+                    <p class="diff-num">01</p>
+                    <h4>API First</h4>
+                    <p>Everything runs on a REST API. The UI is just a client — so integrations are first-class
+                        citizens.</p>
+                </div>
+                <div class="card">
+                    <p class="diff-num">02</p>
+                    <h4>ER Diagram from Tests</h4>
+                    <p>ErDiagramTest is an integration test that auto-generates the Entity Relationship Diagram on every
+                        run.</p>
+                </div>
+                <div class="card">
+                    <p class="diff-num">03</p>
+                    <h4>Screenshots from Tests</h4>
+                    <p>GenerateScreenshots captures every screen in light and dark mode automatically — including this
+                        presentation's images.</p>
+                </div>
+                <div class="card">
+                    <p class="diff-num">04</p>
+                    <h4>Selenium UI Testing</h4>
+                    <p>Full UI test coverage using Selenium, including automated introduction videos generated by the
+                        test suite.</p>
+                </div>
+                <div class="card">
+                    <p class="diff-num">05</p>
+                    <h4>AI-Generated Videos</h4>
+                    <p>Intro videos produced with Selenium + Chatterbox TTS + ffmpeg. Browser audio captured and merged
+                        with video frames.</p>
+                </div>
+                <div class="card">
+                    <p class="diff-num">06</p>
+                    <h4>Auto National Holidays</h4>
+                    <p>Holidays computed automatically from each user's location. No manual entry, no missed bank
+                        holidays.</p>
+                </div>
+                <div class="card">
+                    <p class="diff-num">07</p>
+                    <h4>Min/Max Effort Guardrails</h4>
+                    <p>Estimate tasks with min/max bounds. Release date interpolated from actual progress against the
+                        confidence range.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 8 — PROJECT ARCHITECTURE
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s-hierarchy">
+            <p class="eyebrow">Architecture</p>
+            <h2>How projects are structured</h2>
+            <p style="margin-bottom:0">Every entity flows from Products down to individual work-log entries</p>
+
+            <div class="hier-flow">
+                <div class="hier-node">
+                    <div class="hier-badge" style="background:rgba(37,99,235,0.1); border-color:#2563EB; color:#2563EB">
+                        📦
+                    </div>
+                    <div class="hier-name">Product</div>
+                    <div class="hier-desc">Top-level project or software product</div>
+                </div>
+                <div class="hier-conn">
+                    <div class="hier-conn-line"></div>
+                    <div class="hier-conn-tip">▶</div>
+                </div>
+                <div class="hier-node">
+                    <div class="hier-badge"
+                         style="background:rgba(163,113,247,0.1); border-color:#a371f7; color:#a371f7">🏷️
+                    </div>
+                    <div class="hier-name">Version</div>
+                    <div class="hier-desc">A planned release or milestone</div>
+                </div>
+                <div class="hier-conn">
+                    <div class="hier-conn-line"></div>
+                    <div class="hier-conn-tip">▶</div>
+                </div>
+                <div class="hier-node">
+                    <div class="hier-badge"
+                         style="background:rgba(57,211,187,0.1); border-color:#39d3bb; color:#39d3bb">⭐
+                    </div>
+                    <div class="hier-name">Feature</div>
+                    <div class="hier-desc">Functional area or epic</div>
+                </div>
+                <div class="hier-conn">
+                    <div class="hier-conn-line"></div>
+                    <div class="hier-conn-tip">▶</div>
+                </div>
+                <div class="hier-node">
+                    <div class="hier-badge"
+                         style="background:rgba(245,158,11,0.1); border-color:#F59E0B; color:#F59E0B">🏃
+                    </div>
+                    <div class="hier-name">Sprint</div>
+                    <div class="hier-desc">Time-boxed iteration with a team</div>
+                </div>
+                <div class="hier-conn">
+                    <div class="hier-conn-line"></div>
+                    <div class="hier-conn-tip">▶</div>
+                </div>
+                <div class="hier-node">
+                    <div class="hier-badge" style="background:rgba(22,163,74,0.1); border-color:#16A34A; color:#16A34A">
+                        📋
+                    </div>
+                    <div class="hier-name">Task / Story</div>
+                    <div class="hier-desc">Work item with min/max estimate</div>
+                </div>
+                <div class="hier-conn">
+                    <div class="hier-conn-line"></div>
+                    <div class="hier-conn-tip">▶</div>
+                </div>
+                <div class="hier-node">
+                    <div class="hier-badge" style="background:rgba(220,38,38,0.1); border-color:#DC2626; color:#DC2626">
+                        ⏱️
+                    </div>
+                    <div class="hier-name">Worklog</div>
+                    <div class="hier-desc">Actual hours logged per developer</div>
+                </div>
+            </div>
+
+            <div class="hier-cards">
+                <div class="card blue">
+                    <h4>📐 Min / Max Estimation</h4>
+                    <p>Each task carries an optimistic and a pessimistic effort bound. The Gantt buffer and release date
+                        confidence range are computed from both values automatically.</p>
+                </div>
+                <div class="card green">
+                    <h4>🔗 Dependency Graph</h4>
+                    <p>Stories and tasks can depend on each other across sprints. The scheduler respects the full
+                        dependency graph when building the Gantt chart — no manual reordering needed.</p>
+                </div>
+                <div class="card purple">
+                    <h4>📅 Client-side IDs</h4>
+                    <p>Clients may generate entity IDs before sending to the server, reducing round trips during bulk
+                        planning sessions and sprint import workflows.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 9 — OIDC AUTHENTICATION
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s-login">
+            <p class="eyebrow">Security</p>
+            <h2>OIDC Authentication</h2>
+            <p style="margin-bottom:0">Keycloak-backed single sign-on — every API call is scoped to the logged-in user's
+                permissions</p>
+            <div class="split-layout">
+                <div class="ss-frame">
+                    <img alt="Login view" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/login-view.png">
+                    <figcaption>OIDC Login</figcaption>
+                </div>
+                <div class="cards-col">
+                    <div class="card blue">
+                        <h4>🔐 Keycloak Integration</h4>
+                        <p>Full OIDC/OAuth2 single sign-on. Supports any Keycloak realm — or any OpenID-compatible
+                            identity provider.</p>
+                    </div>
+                    <div class="card green">
+                        <h4>👥 Group-based ACL</h4>
+                        <p>Access is controlled per-project via user groups. Members see only the products they are
+                            granted access to.</p>
+                    </div>
+                    <div class="card purple">
+                        <h4>🛡 API Security</h4>
+                        <p>Every REST endpoint is secured with Spring Security + <code>@PreAuthorize</code>. The AI
+                            assistant also operates within the current user's OIDC token scope.</p>
+                    </div>
+                    <div class="card amber">
+                        <h4>🧪 Testcontainers Keycloak</h4>
+                        <p>Integration tests spin up a real Keycloak container automatically — no manual setup needed
+                            for CI.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 10 — PRODUCTS & VERSIONS
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s-products">
+            <p class="eyebrow">Feature Tour</p>
+            <h2>Products &amp; Versions</h2>
+            <p style="margin-bottom:0">Top-level planning hierarchy — products group all versions, features and sprints
+                for a deliverable</p>
+            <div class="ss-split">
+                <div class="ss-frame">
+                    <img alt="Product list" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/product-list-view.png">
+                    <figcaption>Products</figcaption>
+                </div>
+                <div class="ss-frame">
+                    <img alt="Version list" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/version-list-view.png">
+                    <figcaption>Versions / Releases</figcaption>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 11 — FEATURES & SPRINTS
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s-features">
+            <p class="eyebrow">Feature Tour</p>
+            <h2>Features &amp; Sprints</h2>
+            <p style="margin-bottom:0">Group work into functional areas (features) then slice into time-boxed sprints —
+                each with a dedicated team</p>
+            <div class="ss-split">
+                <div class="ss-frame">
+                    <img alt="Feature list" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/feature-list-view.png">
+                    <figcaption>Features (Epics)</figcaption>
+                </div>
+                <div class="ss-frame">
+                    <img alt="Sprint list" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/sprint-list-view.png">
+                    <figcaption>Sprints</figcaption>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 12 — QUALITY BOARD
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s8">
+            <p class="eyebrow">Feature Tour</p>
+            <h2>Quality Board</h2>
+            <p style="margin-bottom:0">Gantt burndown chart + sprint KPIs — progress, delays, and efficiency in one
+                view</p>
+            <div class="ss-split">
+                <div class="ss-frame">
+                    <img alt="Quality Board — on track" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/quality-board-in-time.png">
+                    <figcaption>On Track</figcaption>
+                </div>
+                <div class="ss-frame">
+                    <img alt="Quality Board — delayed" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/quality-board-delayed.png">
+                    <figcaption>Delayed</figcaption>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 13 — ACTIVE SPRINTS
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s9">
+            <p class="eyebrow">Feature Tour</p>
+            <h2>Active Sprints</h2>
+            <p style="margin-bottom:0">Kanban-style board — click any task to log work, edit estimates, or view
+                dependencies</p>
+            <div class="ss-full">
+                <div class="ss-frame">
+                    <img alt="Active Sprints" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/active-sprints.png">
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 14 — BACKLOG & SPRINT PLANNING
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s-backlog">
+            <p class="eyebrow">Feature Tour</p>
+            <h2>Backlog &amp; Sprint Planning</h2>
+            <p style="margin-bottom:0">Organize stories and tasks across products, versions, and features before sprints
+                begin</p>
+            <div class="ss-split">
+                <div class="ss-frame">
+                    <img alt="Backlog view" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/backlog.png">
+                    <figcaption>Backlog</figcaption>
+                </div>
+                <div class="ss-frame">
+                    <img alt="Sprint list" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/sprint-list-view.png">
+                    <figcaption>Sprint List</figcaption>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 15 — TASK MANAGEMENT & DEPENDENCIES
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s10">
+            <p class="eyebrow">Feature Tour</p>
+            <h2>Task Management &amp; Dependencies</h2>
+            <p style="margin-bottom:0">Min/max estimates, work logs, status, scheduling — and a quick-edit dependency
+                tree</p>
+            <div class="ss-split">
+                <div class="ss-frame">
+                    <img alt="Task dialog" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/task-dialog.png">
+                    <figcaption>Task Dialog</figcaption>
+                </div>
+                <div class="ss-frame">
+                    <img alt="Dependency dialog" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/dependency-dialog.png">
+                    <figcaption>Dependency Dialog</figcaption>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 16 — OFF-DAYS & AVAILABILITY
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s11">
+            <p class="eyebrow">Feature Tour</p>
+            <h2>Off-days &amp; Availability</h2>
+            <p style="margin-bottom:0">Vacation, sick leave, and national holidays auto-computed from location;
+                availability windows constrain scheduling</p>
+            <div class="ss-split">
+                <div class="ss-frame">
+                    <img alt="Off-days calendar" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/offday-list-view.png">
+                    <figcaption>Off-days &amp; Public Holidays</figcaption>
+                </div>
+                <div class="ss-frame">
+                    <img alt="Availability windows" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/availability-list-view.png">
+                    <figcaption>Availability Windows</figcaption>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 17 — USER PROFILES & TEAMS
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s-users">
+            <p class="eyebrow">Feature Tour</p>
+            <h2>User Profiles &amp; Teams</h2>
+            <p style="margin-bottom:0">Detailed user profiles with AI-generated avatars, and group-based access control
+                per project</p>
+            <div class="ss-split">
+                <div class="ss-frame">
+                    <img alt="User profile view" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/user-profile-view.png">
+                    <figcaption>User Profile</figcaption>
+                </div>
+                <div class="ss-frame">
+                    <img alt="User groups" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/user-group-list-view.png">
+                    <figcaption>User Groups</figcaption>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 18 — WORK LOGGING
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s12">
+            <p class="eyebrow">Feature Tour</p>
+            <h2>Work Logging</h2>
+            <p style="margin-bottom:0">Log time spent on any task directly from the board — remaining estimate
+                auto-calculated</p>
+            <div class="ss-center">
+                <div class="ss-frame" style="max-width:260px; width:100%">
+                    <img alt="Work log dialog" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/worklog-create-dialog.png">
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 19 — AI AVATAR GENERATION
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s13">
+            <p class="eyebrow">Feature Tour</p>
+            <h2>AI Avatar Generation</h2>
+            <p style="margin-bottom:0">Generate professional user avatars using local Stable Diffusion — light and dark
+                variants in one prompt</p>
+            <div class="ss-center">
+                <div class="ss-frame" style="max-width:290px; width:100%">
+                    <img alt="AI avatar generation dialog" loading="lazy"
+                         src="https://raw.githubusercontent.com/wiki/abdallabushnaq/kassandra/light-screenshots/image-prompt-dialog.png">
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 20 — AI ASSISTANT
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s-ai">
+            <p class="eyebrow">AI Features</p>
+            <h2>Built-in AI Assistant</h2>
+            <p style="margin-bottom:0">Natural language queries over your project data — local LLM, zero cloud, full
+                context</p>
+
+            <div class="ai-layout">
+                <!-- Mock chat window -->
+                <div class="ai-chat-wrap">
+                    <div class="ai-titlebar">
+                        <div class="win-dot" style="background:#f85149"></div>
+                        <div class="win-dot" style="background:#f0a500"></div>
+                        <div class="win-dot" style="background:#3fb950"></div>
+                        <div class="ai-title-text">Kassandra AI · Insights</div>
+                        <div class="ai-status">
+                            <div class="ai-status-dot"></div>
+                            ministral-3-8b
+                        </div>
+                    </div>
+                    <div class="ai-chat-body">
+                        <div class="ai-msg usr-msg" id="aim1">
+                            <div class="ai-avatar">👤</div>
+                            <div class="ai-bubble">Show me all overdue tasks in the mobile sprint</div>
+                        </div>
+                        <div class="ai-think" id="ait1">
+                            <div class="ai-think-text">SprintTools.getSprints() → filtering by status &amp; deadline
+                            </div>
+                            <div class="ai-think-dots"><span></span><span></span><span></span></div>
+                        </div>
+                        <div class="ai-msg bot-msg" id="aim2">
+                            <div class="ai-avatar">🤖</div>
+                            <div class="ai-bubble">Found <strong>3 overdue tasks</strong> in <em>Sprint 4 – Mobile</em>:<br><br>
+                                • <strong>Login screen</strong> — 2 days behind (Alice)<br>
+                                • <strong>Push notifications</strong> — blocked by cert (Bob)<br>
+                                • <strong>Offline sync</strong> — no worklog, unassigned
+                            </div>
+                        </div>
+                        <div class="ai-msg usr-msg" id="aim3">
+                            <div class="ai-avatar">👤</div>
+                            <div class="ai-bubble">Who has capacity for the unassigned task?</div>
+                        </div>
+                        <div class="ai-think" id="ait2">
+                            <div class="ai-think-text">UserTools.getUsers() → checking availability &amp; workload</div>
+                            <div class="ai-think-dots"><span></span><span></span><span></span></div>
+                        </div>
+                        <div class="ai-msg bot-msg" id="aim4">
+                            <div class="ai-avatar">🤖</div>
+                            <div class="ai-bubble"><strong>Carol</strong> has ~6 h free this sprint and no conflicting
+                                tasks — she'd be a great fit.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-footer">
+                        🧠 <em>LM Studio</em> &nbsp;·&nbsp; OpenAI-compatible &nbsp;·&nbsp; data stays on your server
+                    </div>
+                </div>
+
+                <!-- Feature cards -->
+                <div class="cards-col">
+                    <div class="card purple">
+                        <h4>🛠 Spring AI MCP Tools</h4>
+                        <p>One typed tool bean per domain (<code>ProductTools</code>, <code>SprintTools</code>, <code>UserTools</code>…).
+                            Inner reasoning steps stream live to the UI as the model thinks.</p>
+                    </div>
+                    <div class="card teal">
+                        <h4>🔐 OIDC-scoped calls</h4>
+                        <p>Each tool call authenticates with the logged-in user's OIDC token — the assistant can only
+                            see and modify what you're permitted to access.</p>
+                    </div>
+                    <div class="card green">
+                        <h4>💡 Sprint Insights</h4>
+                        <p>Automated analysis on demand: at-risk tasks, velocity summary, blockers — one click from any
+                            sprint view.</p>
+                    </div>
+                    <div class="card amber">
+                        <h4>🤖 AI Filter</h4>
+                        <p>Natural language grid filters across every entity list. Describe what you want; the model
+                            generates the query.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 21 — ROADMAP
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s14">
+            <p class="eyebrow">Roadmap</p>
+            <h2>Three phases to production</h2>
+            <div class="phases">
+                <div class="phase">
+                    <div class="phase-header" style="background:rgba(22,163,74,0.1)">
+                        Phase 1 — <span style="color:#16A34A">MVP</span>
+                    </div>
+                    <div class="phase-body">
+                        <p class="phase-label" style="color:#16A34A">Completed</p>
+                        <p class="phase-item"><span class="tick-done">✓</span> OIDC Authentication</p>
+                        <p class="phase-item"><span class="tick-done">✓</span> Product / Version / Feature / Sprint CRUD
+                        </p>
+                        <p class="phase-item"><span class="tick-done">✓</span> Task &amp; Worklog CRUD</p>
+                        <p class="phase-item"><span class="tick-done">✓</span> User availability &amp; off-days</p>
+                        <p class="phase-item"><span class="tick-done">✓</span> National holidays (auto by location)</p>
+                        <p class="phase-item"><span class="tick-done">✓</span> Gantt chart + buffer calculation</p>
+                        <p class="phase-item"><span class="tick-done">✓</span> Burn-down chart</p>
+                        <p class="phase-item"><span class="tick-done">✓</span> Release date interpolation</p>
+                        <p class="phase-item"><span class="tick-done">✓</span> Product page</p>
+                        <p class="phase-label" style="color:#2563EB; margin-top:8px">In Progress</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> Product &amp; features in backlog /
+                            quality board</p>
+                    </div>
+                </div>
+                <div class="phase">
+                    <div class="phase-header" style="background:rgba(37,99,235,0.1)">
+                        Phase 2 — <span style="color:#2563EB">Installable</span>
+                    </div>
+                    <div class="phase-body">
+                        <p class="phase-label" style="color:#2563EB">Planned</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> Alpha release (0.1.0)</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> Docker container image</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> First-run initialization wizard</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> Server settings panel</p>
+                    </div>
+                </div>
+                <div class="phase">
+                    <div class="phase-header" style="background:rgba(245,158,11,0.1)">
+                        Phase 3 — <span style="color:#F59E0B">Optimizations</span>
+                    </div>
+                    <div class="phase-body">
+                        <p class="phase-label" style="color:#2563EB">Planned</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> Gantt resource conflict visualization</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> Admin hub</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> Live updates (WebSocket)</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> Audit logs</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> GDPR compliance</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> Undo / history</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 22 — TECH STACK
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#F8FAFC" id="s15">
+            <p class="eyebrow">Technical</p>
+            <h2>Tech Stack &amp; Design Philosophy</h2>
+            <div class="tech-grid">
+                <div class="card blue">
+                    <h4>Java + Spring Boot</h4>
+                    <p>Robust, well-supported backend ecosystem. ~98% of the codebase is Java.</p>
+                </div>
+                <div class="card purple">
+                    <h4>Vaadin UI</h4>
+                    <p>Server-side Java UI framework. The frontend is just another API client — no JS framework
+                        needed.</p>
+                </div>
+                <div class="card teal">
+                    <h4>Selenium</h4>
+                    <p>Full UI test coverage. Also powers the automated intro video generation pipeline.</p>
+                </div>
+                <div class="card amber">
+                    <h4>Chatterbox TTS + ffmpeg</h4>
+                    <p>Browser audio output captured and merged with video frames to produce intro videos.</p>
+                </div>
+                <div class="card green">
+                    <h4>Docker <span style="color:#64748B; font-weight:400">(Phase 2)</span></h4>
+                    <p>Planned containerization for easy self-hosting. One command to start everything.</p>
+                </div>
+                <div class="card pink">
+                    <h4>Stable Diffusion</h4>
+                    <p>Local AI image generation for user avatars. No cloud, no data leaves your server.</p>
+                </div>
+                <blockquote>
+                    "As simple as possible, as complex as <em>necessary</em>." — Kassandra Design Philosophy
+                </blockquote>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 23 — GET STARTED
+        ═══════════════════════════════════════════════════════════════ -->
+        <section data-background-color="#111D33" id="s16">
+            <div class="bg-grid"></div>
+            <p class="eyebrow">Get Started</p>
+            <h1>Try Kassandra</h1>
+            <hr>
+            <div class="cta-links">
+                <div class="cta-link">
+                    <div class="cta-icon">⌥</div>
+                    <div>
+                        <h4>GitHub Repository</h4>
+                        <p>github.com/abdallabushnaq/kassandra</p>
+                    </div>
+                </div>
+                <div class="cta-link">
+                    <div class="cta-icon">📖</div>
+                    <div>
+                        <h4>Wiki &amp; Screenshots</h4>
+                        <p>github.com/abdallabushnaq/kassandra/wiki</p>
+                    </div>
+                </div>
+                <div class="cta-link">
+                    <div class="cta-icon">▶</div>
+                    <div>
+                        <h4>Introduction Videos</h4>
+                        <p>YouTube — Kassandra Intro playlist</p>
+                    </div>
+                </div>
+                <div class="cta-link">
+                    <div class="cta-icon">⚖</div>
+                    <div>
+                        <h4>Apache 2.0 License</h4>
+                        <p>Free for personal and commercial use</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div><!-- /slides -->
+</div><!-- /reveal -->
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.min.js"></script>
+<script>
+    Reveal.initialize({
+        width: 1280,
+        height: 720,
+        margin: 0.04,
+        minScale: 0.1,
+        maxScale: 3.0,
+        controls: true,
+        progress: true,
+        slideNumber: 'c/t',
+        hash: true,
+        transition: 'fade',
+        transitionSpeed: 'fast',
+    });
+
+    // ── AI chat sequential reveal ─────────────────────────────────
+    const chatScript = [
+        ['aim1', 350], ['ait1', 950], ['aim2', 2200],
+        ['aim3', 3500], ['ait2', 4100], ['aim4', 5300],
+    ];
+    let aiPlayed = false, aiTimers = [];
+
+    function playAiChat() {
+        if (aiPlayed) return;
+        aiPlayed = true;
+        aiTimers = chatScript.map(([id, delay]) =>
+            setTimeout(() => document.getElementById(id)?.classList.add('show'), delay)
+        );
+    }
+
+    function resetAiChat() {
+        aiTimers.forEach(clearTimeout);
+        aiTimers = [];
+        aiPlayed = false;
+        chatScript.forEach(([id]) => document.getElementById(id)?.classList.remove('show'));
+    }
+
+    Reveal.on('slidechanged', ({currentSlide}) => {
+        if (currentSlide.id === 's-ai') playAiChat(); else resetAiChat();
+    });
+
+    Reveal.on('ready', ({currentSlide}) => {
+        if (currentSlide?.id === 's-ai') playAiChat();
+    });
+</script>
+</body>
+</html>
