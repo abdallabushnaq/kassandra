@@ -7,6 +7,8 @@
 Tiny project management server.<br>
 Project effort estimation and progress tracking and release date interpolation open source server.
 
+see [Kassandra presentation](https://abdallabushnaq.github.io/kassandra/#/s1)
+
 # What makes Kassandra different?
 
 1. Self-sufficient project planning and progress tracking in one tiny server.
@@ -145,13 +147,17 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 # What does this Project do a bit different?
 
 1. API first. Everything is based on an api. Even the Ui is just a client of the API.
-2. ErDiagramTest is an integration test that generates an Entity Relationship Diagram.
+2. ErDiagramTest is an integration test that generates
+   an [Entity Relationship Diagram](https://github.com/kunterbunt2/project-hub/wiki/entity-relationship-diagram).
 3. GenerateScreenshots is an integration test that takes screenshots of every screen and dialog both in light and dark
    mode. All screenshots are stored in github.wiki.
+   Example: [active sprints](https://github.com/kunterbunt2/project-hub/wiki/active-sprints).
 4. The UI is tested using selenium,
-5. All introduction videos are generated using selenium, chatterbox and ffmpeg. Audio output is captured and fed to the
+5. All [introduction videos](https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs) are generated
+   using selenium, chatterbox and ffmpeg. Audio output is captured and fed to the
    frame grabber.
 6. Holidays are automatically generated based on the location of the user and the national holidays of that location.
+   Example: [offday-list-view](https://github.com/abdallabushnaq/kassandra/wiki/offday%E2%80%90list%E2%80%90view).
 7. By simplifying some aspects of project management (
    see [Limitations](https://github.com/kunterbunt2/project-hub/wiki/Limitations)), we can automate many aspects.
 
@@ -159,10 +165,9 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 
 [Apache License, version 2.0](https://github.com/kunterbunt2/project-hub/blob/main/LICENSE)
 
-# Ideas
+# Future Ideas
 
-- introduce ai summary for all projects.
-- Take a look how jira is sending fields to the client and replicate if it is good.
+- introduce AI summary for all projects.
 - Projects can be locked for change, which will lock start/end dates and all milestones
 - project priority can be changed by moving them within the list
 - sprint priority can be changed by moving them within the list
