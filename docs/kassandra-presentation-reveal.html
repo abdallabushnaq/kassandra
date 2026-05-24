@@ -239,6 +239,31 @@
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15));
         }
 
+        #s1 .eyebrow {
+            color: #F59E0B !important;
+            background: rgba(245, 158, 11, 0.15);
+        }
+
+        #s1 .title-sub {
+            font-size: 2.1em;
+            color: #93C5FD;
+            margin-top: 0;
+        }
+
+        #s1 .repo-url {
+            font-size: 1em;
+            color: #60A5FA;
+            margin-top: 16px;
+            letter-spacing: 0.03em;
+        }
+
+        #s1 aside small {
+            display: block;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 0.1em;
+            margin-top: 8px;
+        }
+
         #s1 h1 {
             font-size: 9em;
             letter-spacing: -0.03em;
@@ -469,6 +494,17 @@
             line-height: 1;
         }
 
+        /* Last step number is red to signal failure */
+        #s3 .step:last-child .step-n {
+            background: #DC2626;
+        }
+
+        /* Pros / cons comparison (slide 4) */
+        #s4 .pros h3 { color: #16A34A; font-size: 1.1em; }
+        #s4 .pros ul  { font-size: 0.8em; }
+        #s4 .cons h3  { color: #DC2626; font-size: 1.1em; margin-top: 20px; }
+        #s4 .cons ul  { font-size: 0.8em; color: #64748B; }
+
         /* ═══════════════════════════════════════════════════════════════
            SLIDE 5 — PROJECTS.DASHBOARD
         ═══════════════════════════════════════════════════════════════ */
@@ -507,6 +543,24 @@
             right: 0;
             height: 1px;
             background: rgba(255, 255, 255, 0.07);
+        }
+
+        #s6 .eyebrow {
+            color: #93C5FD !important;
+            background: rgba(147, 197, 253, 0.15);
+        }
+
+        #s6 .dark-sub {
+            font-size: 2em;
+            color: #93C5FD;
+            margin: 0;
+        }
+
+        #s6 .license-line {
+            font-size: 0.9em;
+            color: #64748B;
+            margin-top: 24px;
+            letter-spacing: 0.05em;
         }
 
         #s6 h1 {
@@ -605,6 +659,14 @@
             font-size: 1.3em;
             border: 1.5px solid;
         }
+
+        /* Per-entity badge colours — matches the data model hierarchy */
+        #s-hierarchy .hier-node:nth-child(1)  .hier-badge { background:rgba(37,99,235,0.1);   border-color:#2563EB; color:#2563EB; }
+        #s-hierarchy .hier-node:nth-child(3)  .hier-badge { background:rgba(163,113,247,0.1); border-color:#a371f7; color:#a371f7; }
+        #s-hierarchy .hier-node:nth-child(5)  .hier-badge { background:rgba(57,211,187,0.1);  border-color:#39d3bb; color:#39d3bb; }
+        #s-hierarchy .hier-node:nth-child(7)  .hier-badge { background:rgba(245,158,11,0.1);  border-color:#F59E0B; color:#F59E0B; }
+        #s-hierarchy .hier-node:nth-child(9)  .hier-badge { background:rgba(22,163,74,0.1);   border-color:#16A34A; color:#16A34A; }
+        #s-hierarchy .hier-node:nth-child(11) .hier-badge { background:rgba(220,38,38,0.1);   border-color:#DC2626; color:#DC2626; }
 
         #s-hierarchy .hier-conn {
             display: flex;
@@ -1059,6 +1121,38 @@
             color: #60A5FA;
             margin: 0;
         }
+
+        /* ── Shared utilities ─────────────────────────────────────────── */
+
+        /* Remove bottom margin from the lead-in paragraph in every slide
+           so it doesn't push the content area down. */
+        .reveal .slides section > p {
+            margin-bottom: 0;
+        }
+
+        /* Muted secondary text (e.g. "(Phase 2)" labels) */
+        .muted {
+            color: #64748B;
+            font-weight: 400;
+        }
+
+        /* ── AI chat window — traffic-light dots ─────────────────────── */
+        .ai-titlebar .win-dot:nth-child(1) { background: #f85149; }
+        .ai-titlebar .win-dot:nth-child(2) { background: #f0a500; }
+        .ai-titlebar .win-dot:nth-child(3) { background: #3fb950; }
+
+        /* ── Roadmap phases — per-phase colour tokens ────────────────── */
+        .phase.mvp      .phase-header                    { background: rgba(22,163,74,0.1);   }
+        .phase.mvp      .phase-header span               { color: #16A34A; }
+        .phase.mvp      .phase-label.done                { color: #16A34A; }
+        .phase.mvp      .phase-label.in-progress         { color: #2563EB; margin-top: 8px;  }
+        .phase.install  .phase-header                    { background: rgba(37,99,235,0.1);   }
+        .phase.install  .phase-header span               { color: #2563EB; }
+        .phase.install  .phase-label.planned             { color: #2563EB; }
+        .phase.opt      .phase-header                    { background: rgba(245,158,11,0.1);  }
+        .phase.opt      .phase-header span               { color: #F59E0B; }
+        .phase.opt      .phase-label.planned             { color: #2563EB; }
+
     </style>
 </head>
 <body>
@@ -1079,14 +1173,12 @@
                 <div class="line" style="width:90px;  opacity:.5"></div>
                 <div class="line" style="width:110px; opacity:.3"></div>
                 <div class="line" style="width:60px;  opacity:.2"></div>
-                <small style="color:rgba(255,255,255,0.3); letter-spacing:.1em; margin-top:8px">v 0.1.0 · alpha</small>
+                <small>v 0.1.0 · alpha</small>
             </aside>
 
-            <p class="eyebrow" style="color:#F59E0B !important; background:rgba(245,158,11,0.15)">
-                Open Source Project Management
-            </p>
+            <p class="eyebrow">Open Source Project Management</p>
             <h1><span>Kas</span>sandra</h1>
-            <p style="font-size:2.1em; color:#93C5FD; margin-top:0">One server to rule the planning chaos</p>
+            <p class="title-sub">One server to rule the planning chaos</p>
             <div class="chips">
                 <span class="chip">Effort Estimation</span>
                 <span class="chip">Gantt Charts</span>
@@ -1095,9 +1187,7 @@
                 <span class="chip">AI Avatars</span>
                 <span class="chip">OIDC Auth</span>
             </div>
-            <p style="font-size:1em; color:#60A5FA; margin-top:16px; letter-spacing:0.03em">
-                github.com/abdallabushnaq/kassandra
-            </p>
+            <p class="repo-url">github.com/abdallabushnaq/kassandra</p>
         </section>
 
         <!-- ═══════════════════════════════════════════════════════════
@@ -1190,7 +1280,7 @@
                 </div>
                 <div class="step">
                     <div class="step-inner">
-                        <div class="step-n" style="background:#DC2626">5</div>
+                        <div class="step-n">5</div>
                         <h4>Customer Impact</h4>
                         <p>Two incidents where the delivered schedule was a full month too optimistic.</p>
                     </div>
@@ -1232,20 +1322,24 @@
                     </ol>
                 </div>
                 <div>
-                    <h3 style="color:#16A34A; font-size:1.1em">✓ What improved</h3>
-                    <ul style="font-size:0.8em">
-                        <li>Developers validated the plan before it was finalised</li>
-                        <li>Dependencies checked in Excel before any import</li>
-                        <li>Jira sprint auto-created from the same source</li>
-                    </ul>
-                    <h3 style="color:#DC2626; font-size:1.1em; margin-top:20px">✕ Still missing</h3>
-                    <ul style="font-size:0.8em; color:#64748B">
-                        <li>Five separate tools to install, license, and keep in sync</li>
-                        <li>qcd-tool breaking after library updates</li>
-                        <li>SMB shared drive required for all Excel files</li>
-                        <li>jira's real-time progress monitoring makes it difficult to estimate delay</li>
-                        <li>very difficult to update the plan after work was already logged</li>
-                    </ul>
+                    <div class="pros">
+                        <h3>✓ What improved</h3>
+                        <ul>
+                            <li>Developers validated the plan before it was finalised</li>
+                            <li>Dependencies checked in Excel before any import</li>
+                            <li>Jira sprint auto-created from the same source</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h3>✕ Still missing</h3>
+                        <ul>
+                            <li>Five separate tools to install, license, and keep in sync</li>
+                            <li>qcd-tool breaking after library updates</li>
+                            <li>SMB shared drive required for all Excel files</li>
+                            <li>jira's real-time progress monitoring makes it difficult to estimate delay</li>
+                            <li>very difficult to update the plan after work was already logged</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1293,9 +1387,9 @@
                 <span style="top:20%"></span><span style="top:40%"></span>
                 <span style="top:60%"></span><span style="top:80%"></span>
             </div>
-            <p class="eyebrow" style="color:#93C5FD !important; background:rgba(147,197,253,0.15)">Introducing</p>
+            <p class="eyebrow">Introducing</p>
             <h1>Kassandra</h1>
-            <p style="font-size:2em; color:#93C5FD; margin:0">One tiny server to replace them all</p>
+            <p class="dark-sub">One tiny server to replace them all</p>
             <div class="feat-pills">
                 <span class="feat-pill">Planning</span>
                 <span class="feat-pill">Gantt Charts</span>
@@ -1309,9 +1403,7 @@
                 <span class="feat-pill">Release Interpolation</span>
                 <span class="feat-pill">International teams</span>
             </div>
-            <p style="font-size:0.9em; color:#64748B; margin-top:24px; letter-spacing:0.05em">
-                Self-hosted · Open Source · Apache 2.0
-            </p>
+            <p class="license-line">Self-hosted · Open Source · Apache 2.0</p>
         </section>
 
         <!-- ═══════════════════════════════════════════════════════════
@@ -1372,13 +1464,11 @@
         <section data-background-color="#F8FAFC" id="s-hierarchy">
             <p class="eyebrow">Architecture</p>
             <h2>How projects are structured</h2>
-            <p style="margin-bottom:0">Every entity flows from Products down to individual work-log entries</p>
+            <p>Every entity flows from Products down to individual work-log entries</p>
 
             <div class="hier-flow">
                 <div class="hier-node">
-                    <div class="hier-badge" style="background:rgba(37,99,235,0.1); border-color:#2563EB; color:#2563EB">
-                        📦
-                    </div>
+                    <div class="hier-badge">📦</div>
                     <div class="hier-name">Product</div>
                     <div class="hier-desc">Top-level project or software product</div>
                 </div>
@@ -1387,9 +1477,7 @@
                     <div class="hier-conn-tip">▶</div>
                 </div>
                 <div class="hier-node">
-                    <div class="hier-badge"
-                         style="background:rgba(163,113,247,0.1); border-color:#a371f7; color:#a371f7">🏷️
-                    </div>
+                    <div class="hier-badge">🏷️</div>
                     <div class="hier-name">Version</div>
                     <div class="hier-desc">A planned release or milestone</div>
                 </div>
@@ -1398,9 +1486,7 @@
                     <div class="hier-conn-tip">▶</div>
                 </div>
                 <div class="hier-node">
-                    <div class="hier-badge"
-                         style="background:rgba(57,211,187,0.1); border-color:#39d3bb; color:#39d3bb">⭐
-                    </div>
+                    <div class="hier-badge">⭐</div>
                     <div class="hier-name">Feature</div>
                     <div class="hier-desc">Functional area or epic</div>
                 </div>
@@ -1409,9 +1495,7 @@
                     <div class="hier-conn-tip">▶</div>
                 </div>
                 <div class="hier-node">
-                    <div class="hier-badge"
-                         style="background:rgba(245,158,11,0.1); border-color:#F59E0B; color:#F59E0B">🏃
-                    </div>
+                    <div class="hier-badge">🏃</div>
                     <div class="hier-name">Sprint</div>
                     <div class="hier-desc">Time-boxed iteration with a team</div>
                 </div>
@@ -1420,9 +1504,7 @@
                     <div class="hier-conn-tip">▶</div>
                 </div>
                 <div class="hier-node">
-                    <div class="hier-badge" style="background:rgba(22,163,74,0.1); border-color:#16A34A; color:#16A34A">
-                        📋
-                    </div>
+                    <div class="hier-badge">📋</div>
                     <div class="hier-name">Task / Story</div>
                     <div class="hier-desc">Work item with min/max estimate</div>
                 </div>
@@ -1431,9 +1513,7 @@
                     <div class="hier-conn-tip">▶</div>
                 </div>
                 <div class="hier-node">
-                    <div class="hier-badge" style="background:rgba(220,38,38,0.1); border-color:#DC2626; color:#DC2626">
-                        ⏱️
-                    </div>
+                    <div class="hier-badge">⏱️</div>
                     <div class="hier-name">Worklog</div>
                     <div class="hier-desc">Actual hours logged per developer</div>
                 </div>
@@ -1464,7 +1544,7 @@
         <section data-background-color="#F8FAFC" id="s-login">
             <p class="eyebrow">Security</p>
             <h2>OIDC Authentication</h2>
-            <p style="margin-bottom:0">Keycloak-backed single sign-on — every API call is scoped to the logged-in user's
+            <p>Keycloak-backed single sign-on — every API call is scoped to the logged-in user's
                 permissions</p>
             <div class="split-layout">
                 <div class="ss-frame">
@@ -1503,7 +1583,7 @@
         <section data-background-color="#F8FAFC" id="s-products">
             <p class="eyebrow">Feature Tour</p>
             <h2>Products &amp; Versions</h2>
-            <p style="margin-bottom:0">Top-level planning hierarchy — products group all versions, features and sprints
+            <p>Top-level planning hierarchy — products group all versions, features and sprints
                 for a deliverable</p>
             <div class="ss-split">
                 <div class="ss-frame">
@@ -1525,7 +1605,7 @@
         <section data-background-color="#F8FAFC" id="s-features">
             <p class="eyebrow">Feature Tour</p>
             <h2>Features &amp; Sprints</h2>
-            <p style="margin-bottom:0">Group work into functional areas (features) then slice into time-boxed sprints —
+            <p>Group work into functional areas (features) then slice into time-boxed sprints —
                 each with a dedicated team</p>
             <div class="ss-split">
                 <div class="ss-frame">
@@ -1547,7 +1627,7 @@
         <section data-background-color="#F8FAFC" id="s8">
             <p class="eyebrow">Feature Tour</p>
             <h2>Quality Board</h2>
-            <p style="margin-bottom:0">Gantt burndown chart + sprint KPIs — progress, delays, and efficiency in one
+            <p>Gantt burndown chart + sprint KPIs — progress, delays, and efficiency in one
                 view</p>
             <div class="ss-split">
                 <div class="ss-frame">
@@ -1569,7 +1649,7 @@
         <section data-background-color="#F8FAFC" id="s9">
             <p class="eyebrow">Feature Tour</p>
             <h2>Active Sprints</h2>
-            <p style="margin-bottom:0">Kanban-style board — click any task to log work, edit estimates, or view
+            <p>Kanban-style board — click any task to log work, edit estimates, or view
                 dependencies</p>
             <div class="ss-full">
                 <div class="ss-frame">
@@ -1585,7 +1665,7 @@
         <section data-background-color="#F8FAFC" id="s-backlog">
             <p class="eyebrow">Feature Tour</p>
             <h2>Backlog &amp; Sprint Planning</h2>
-            <p style="margin-bottom:0">Organize stories and tasks across products, versions, and features before sprints
+            <p>Organize stories and tasks across products, versions, and features before sprints
                 begin</p>
             <div class="ss-split">
                 <div class="ss-frame">
@@ -1607,7 +1687,7 @@
         <section data-background-color="#F8FAFC" id="s10">
             <p class="eyebrow">Feature Tour</p>
             <h2>Task Management &amp; Dependencies</h2>
-            <p style="margin-bottom:0">Min/max estimates, work logs, status, scheduling — and a quick-edit dependency
+            <p>Min/max estimates, work logs, status, scheduling — and a quick-edit dependency
                 tree</p>
             <div class="ss-split">
                 <div class="ss-frame">
@@ -1629,7 +1709,7 @@
         <section data-background-color="#F8FAFC" id="s11">
             <p class="eyebrow">Feature Tour</p>
             <h2>Off-days &amp; Availability</h2>
-            <p style="margin-bottom:0">Vacation, sick leave, and national holidays auto-computed from location;
+            <p>Vacation, sick leave, and national holidays auto-computed from location;
                 availability windows constrain scheduling</p>
             <div class="ss-split">
                 <div class="ss-frame">
@@ -1651,7 +1731,7 @@
         <section data-background-color="#F8FAFC" id="s-users">
             <p class="eyebrow">Feature Tour</p>
             <h2>User Profiles &amp; Teams</h2>
-            <p style="margin-bottom:0">Detailed user profiles with AI-generated avatars, and group-based access control
+            <p>Detailed user profiles with AI-generated avatars, and group-based access control
                 per project</p>
             <div class="ss-split">
                 <div class="ss-frame">
@@ -1673,7 +1753,7 @@
         <section data-background-color="#F8FAFC" id="s12">
             <p class="eyebrow">Feature Tour</p>
             <h2>Work Logging</h2>
-            <p style="margin-bottom:0">Log time spent on any task directly from the board — remaining estimate
+            <p>Log time spent on any task directly from the board — remaining estimate
                 auto-calculated</p>
             <div class="ss-center">
                 <div class="ss-frame">
@@ -1689,7 +1769,7 @@
         <section data-background-color="#F8FAFC" id="s13">
             <p class="eyebrow">Feature Tour</p>
             <h2>AI Avatar Generation</h2>
-            <p style="margin-bottom:0">Generate professional user avatars using local Stable Diffusion — light and dark
+            <p>Generate professional user avatars using local Stable Diffusion — light and dark
                 variants in one prompt</p>
             <div class="ss-center">
                 <div class="ss-frame">
@@ -1705,16 +1785,16 @@
         <section data-background-color="#F8FAFC" id="s-ai">
             <p class="eyebrow">AI Features</p>
             <h2>Built-in AI Assistant</h2>
-            <p style="margin-bottom:0">Natural language queries over your project data — local LLM, zero cloud, full
+            <p>Natural language queries over your project data — local LLM, zero cloud, full
                 context</p>
 
             <div class="ai-layout">
                 <!-- Mock chat window -->
                 <div class="ai-chat-wrap">
                     <div class="ai-titlebar">
-                        <div class="win-dot" style="background:#f85149"></div>
-                        <div class="win-dot" style="background:#f0a500"></div>
-                        <div class="win-dot" style="background:#3fb950"></div>
+                        <div class="win-dot"></div>
+                        <div class="win-dot"></div>
+                        <div class="win-dot"></div>
                         <div class="ai-title-text">Kassandra AI · Insights</div>
                         <div class="ai-status">
                             <div class="ai-status-dot"></div>
@@ -1792,12 +1872,12 @@
             <p class="eyebrow">Roadmap</p>
             <h2>Three phases to production</h2>
             <div class="phases">
-                <div class="phase">
-                    <div class="phase-header" style="background:rgba(22,163,74,0.1)">
-                        Phase 1 — <span style="color:#16A34A">MVP</span>
+                <div class="phase mvp">
+                    <div class="phase-header">
+                        Phase 1 — <span>MVP</span>
                     </div>
                     <div class="phase-body">
-                        <p class="phase-label" style="color:#16A34A">Completed</p>
+                        <p class="phase-label done">Completed</p>
                         <p class="phase-item"><span class="tick-done">✓</span> OIDC Authentication</p>
                         <p class="phase-item"><span class="tick-done">✓</span> Product / Version / Feature / Sprint CRUD
                         </p>
@@ -1808,29 +1888,29 @@
                         <p class="phase-item"><span class="tick-done">✓</span> Burn-down chart</p>
                         <p class="phase-item"><span class="tick-done">✓</span> Release date interpolation</p>
                         <p class="phase-item"><span class="tick-done">✓</span> Product page</p>
-                        <p class="phase-label" style="color:#2563EB; margin-top:8px">In Progress</p>
+                        <p class="phase-label in-progress">In Progress</p>
                         <p class="phase-item"><span class="tick-todo">○</span> Product &amp; features in backlog /
                             quality board</p>
                     </div>
                 </div>
-                <div class="phase">
-                    <div class="phase-header" style="background:rgba(37,99,235,0.1)">
-                        Phase 2 — <span style="color:#2563EB">Installable</span>
+                <div class="phase install">
+                    <div class="phase-header">
+                        Phase 2 — <span>Installable</span>
                     </div>
                     <div class="phase-body">
-                        <p class="phase-label" style="color:#2563EB">Planned</p>
+                        <p class="phase-label planned">Planned</p>
                         <p class="phase-item"><span class="tick-todo">○</span> Alpha release (0.1.0)</p>
                         <p class="phase-item"><span class="tick-todo">○</span> Docker container image</p>
                         <p class="phase-item"><span class="tick-todo">○</span> First-run initialization wizard</p>
                         <p class="phase-item"><span class="tick-todo">○</span> Server settings panel</p>
                     </div>
                 </div>
-                <div class="phase">
-                    <div class="phase-header" style="background:rgba(245,158,11,0.1)">
-                        Phase 3 — <span style="color:#F59E0B">Optimizations</span>
+                <div class="phase opt">
+                    <div class="phase-header">
+                        Phase 3 — <span>Optimizations</span>
                     </div>
                     <div class="phase-body">
-                        <p class="phase-label" style="color:#2563EB">Planned</p>
+                        <p class="phase-label planned">Planned</p>
                         <p class="phase-item"><span class="tick-todo">○</span> Gantt resource conflict visualization</p>
                         <p class="phase-item"><span class="tick-todo">○</span> Admin hub</p>
                         <p class="phase-item"><span class="tick-todo">○</span> Live updates (WebSocket)</p>
@@ -1867,7 +1947,7 @@
                     <p>Browser audio output captured and merged with video frames to produce intro videos.</p>
                 </div>
                 <div class="card green">
-                    <h4>Docker <span style="color:#64748B; font-weight:400">(Phase 2)</span></h4>
+                    <h4>Docker <span class="muted">(Phase 2)</span></h4>
                     <p>Planned containerization for easy self-hosting. One command to start everything.</p>
                 </div>
                 <div class="card pink">
