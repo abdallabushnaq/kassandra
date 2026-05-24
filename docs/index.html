@@ -500,10 +500,25 @@
         }
 
         /* Pros / cons comparison (slide 4) */
-        #s4 .pros h3 { color: #16A34A; font-size: 1.1em; }
-        #s4 .pros ul  { font-size: 0.8em; }
-        #s4 .cons h3  { color: #DC2626; font-size: 1.1em; margin-top: 20px; }
-        #s4 .cons ul  { font-size: 0.8em; color: #64748B; }
+        #s4 .pros h3 {
+            color: #16A34A;
+            font-size: 1.1em;
+        }
+
+        #s4 .pros ul {
+            font-size: 0.8em;
+        }
+
+        #s4 .cons h3 {
+            color: #DC2626;
+            font-size: 1.1em;
+            margin-top: 20px;
+        }
+
+        #s4 .cons ul {
+            font-size: 0.8em;
+            color: #64748B;
+        }
 
         /* ═══════════════════════════════════════════════════════════════
            SLIDE 5 — PROJECTS.DASHBOARD
@@ -661,12 +676,41 @@
         }
 
         /* Per-entity badge colours — matches the data model hierarchy */
-        #s-hierarchy .hier-node:nth-child(1)  .hier-badge { background:rgba(37,99,235,0.1);   border-color:#2563EB; color:#2563EB; }
-        #s-hierarchy .hier-node:nth-child(3)  .hier-badge { background:rgba(163,113,247,0.1); border-color:#a371f7; color:#a371f7; }
-        #s-hierarchy .hier-node:nth-child(5)  .hier-badge { background:rgba(57,211,187,0.1);  border-color:#39d3bb; color:#39d3bb; }
-        #s-hierarchy .hier-node:nth-child(7)  .hier-badge { background:rgba(245,158,11,0.1);  border-color:#F59E0B; color:#F59E0B; }
-        #s-hierarchy .hier-node:nth-child(9)  .hier-badge { background:rgba(22,163,74,0.1);   border-color:#16A34A; color:#16A34A; }
-        #s-hierarchy .hier-node:nth-child(11) .hier-badge { background:rgba(220,38,38,0.1);   border-color:#DC2626; color:#DC2626; }
+        #s-hierarchy .hier-node:nth-child(1) .hier-badge {
+            background: rgba(37, 99, 235, 0.1);
+            border-color: #2563EB;
+            color: #2563EB;
+        }
+
+        #s-hierarchy .hier-node:nth-child(3) .hier-badge {
+            background: rgba(163, 113, 247, 0.1);
+            border-color: #a371f7;
+            color: #a371f7;
+        }
+
+        #s-hierarchy .hier-node:nth-child(5) .hier-badge {
+            background: rgba(57, 211, 187, 0.1);
+            border-color: #39d3bb;
+            color: #39d3bb;
+        }
+
+        #s-hierarchy .hier-node:nth-child(7) .hier-badge {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: #F59E0B;
+            color: #F59E0B;
+        }
+
+        #s-hierarchy .hier-node:nth-child(9) .hier-badge {
+            background: rgba(22, 163, 74, 0.1);
+            border-color: #16A34A;
+            color: #16A34A;
+        }
+
+        #s-hierarchy .hier-node:nth-child(11) .hier-badge {
+            background: rgba(220, 38, 38, 0.1);
+            border-color: #DC2626;
+            color: #DC2626;
+        }
 
         #s-hierarchy .hier-conn {
             display: flex;
@@ -741,9 +785,9 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════
-           SLIDE — AI ASSISTANT
+           SLIDE — AI ASSISTANT (shared by s-ai and s-ai-future)
         ═══════════════════════════════════════════════════════════════ */
-        #s-ai .ai-layout {
+        .ai-slide .ai-layout {
             display: grid;
             grid-template-columns: 1.15fr 0.85fr;
             gap: 16px;
@@ -752,7 +796,7 @@
             margin-top: 12px;
         }
 
-        #s-ai .ai-chat-wrap {
+        .ai-slide .ai-chat-wrap {
             display: flex;
             flex-direction: column;
             background: #fff;
@@ -763,7 +807,7 @@
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
 
-        #s-ai .ai-titlebar {
+        .ai-slide .ai-titlebar {
             display: flex;
             align-items: center;
             gap: 4px;
@@ -773,13 +817,13 @@
             flex-shrink: 0;
         }
 
-        #s-ai .win-dot {
+        .ai-slide .win-dot {
             width: 7px;
             height: 7px;
             border-radius: 50%;
         }
 
-        #s-ai .ai-title-text {
+        .ai-slide .ai-title-text {
             font-size: 0.8em;
             font-weight: 600;
             color: #1E293B;
@@ -787,7 +831,7 @@
             text-align: center;
         }
 
-        #s-ai .ai-status {
+        .ai-slide .ai-status {
             display: flex;
             align-items: center;
             gap: 3px;
@@ -795,7 +839,7 @@
             color: #16A34A;
         }
 
-        #s-ai .ai-status-dot {
+        .ai-slide .ai-status-dot {
             width: 4px;
             height: 4px;
             border-radius: 50%;
@@ -812,7 +856,7 @@
             }
         }
 
-        #s-ai .ai-chat-body {
+        .ai-slide .ai-chat-body {
             flex: 1;
             padding: 10px;
             display: flex;
@@ -937,7 +981,7 @@
             }
         }
 
-        #s-ai .ai-footer {
+        .ai-slide .ai-footer {
             display: flex;
             align-items: center;
             gap: 5px;
@@ -949,12 +993,12 @@
             flex-shrink: 0;
         }
 
-        #s-ai .ai-footer em {
+        .ai-slide .ai-footer em {
             color: #2563EB;
             font-style: normal;
         }
 
-        #s-ai .cards-col {
+        .ai-slide .cards-col {
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -1137,21 +1181,59 @@
         }
 
         /* ── AI chat window — traffic-light dots ─────────────────────── */
-        .ai-titlebar .win-dot:nth-child(1) { background: #f85149; }
-        .ai-titlebar .win-dot:nth-child(2) { background: #f0a500; }
-        .ai-titlebar .win-dot:nth-child(3) { background: #3fb950; }
+        .ai-titlebar .win-dot:nth-child(1) {
+            background: #f85149;
+        }
+
+        .ai-titlebar .win-dot:nth-child(2) {
+            background: #f0a500;
+        }
+
+        .ai-titlebar .win-dot:nth-child(3) {
+            background: #3fb950;
+        }
 
         /* ── Roadmap phases — per-phase colour tokens ────────────────── */
-        .phase.mvp      .phase-header                    { background: rgba(22,163,74,0.1);   }
-        .phase.mvp      .phase-header span               { color: #16A34A; }
-        .phase.mvp      .phase-label.done                { color: #16A34A; }
-        .phase.mvp      .phase-label.in-progress         { color: #2563EB; margin-top: 8px;  }
-        .phase.install  .phase-header                    { background: rgba(37,99,235,0.1);   }
-        .phase.install  .phase-header span               { color: #2563EB; }
-        .phase.install  .phase-label.planned             { color: #2563EB; }
-        .phase.opt      .phase-header                    { background: rgba(245,158,11,0.1);  }
-        .phase.opt      .phase-header span               { color: #F59E0B; }
-        .phase.opt      .phase-label.planned             { color: #2563EB; }
+        .phase.mvp .phase-header {
+            background: rgba(22, 163, 74, 0.1);
+        }
+
+        .phase.mvp .phase-header span {
+            color: #16A34A;
+        }
+
+        .phase.mvp .phase-label.done {
+            color: #16A34A;
+        }
+
+        .phase.mvp .phase-label.in-progress {
+            color: #2563EB;
+            margin-top: 8px;
+        }
+
+        .phase.install .phase-header {
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .phase.install .phase-header span {
+            color: #2563EB;
+        }
+
+        .phase.install .phase-label.planned {
+            color: #2563EB;
+        }
+
+        .phase.opt .phase-header {
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .phase.opt .phase-header span {
+            color: #F59E0B;
+        }
+
+        .phase.opt .phase-label.planned {
+            color: #2563EB;
+        }
 
     </style>
 </head>
@@ -1780,13 +1862,13 @@
         </section>
 
         <!-- ═══════════════════════════════════════════════════════════
-             SLIDE 20 — AI ASSISTANT
+             SLIDE 20 — AI ASSISTANT (current capabilities)
         ═══════════════════════════════════════════════════════════════ -->
-        <section data-background-color="#F8FAFC" id="s-ai">
+        <section class="ai-slide" data-background-color="#F8FAFC" id="s-ai">
             <p class="eyebrow">AI Features</p>
             <h2>Built-in AI Assistant</h2>
-            <p>Natural language queries over your project data — local LLM, zero cloud, full
-                context</p>
+            <p>Natural language commands over your project data — create, update and delete entities in plain
+                English</p>
 
             <div class="ai-layout">
                 <!-- Mock chat window -->
@@ -1795,7 +1877,7 @@
                         <div class="win-dot"></div>
                         <div class="win-dot"></div>
                         <div class="win-dot"></div>
-                        <div class="ai-title-text">Kassandra AI · Insights</div>
+                        <div class="ai-title-text">Kassandra AI · Agent</div>
                         <div class="ai-status">
                             <div class="ai-status-dot"></div>
                             ministral-3-8b
@@ -1804,33 +1886,37 @@
                     <div class="ai-chat-body">
                         <div class="ai-msg usr-msg" id="aim1">
                             <div class="ai-avatar">👤</div>
-                            <div class="ai-bubble">Show me all overdue tasks in the mobile sprint</div>
+                            <div class="ai-bubble">Add Andromeda, Maestro and Hannibal — give the Team group access to
+                                all three
+                            </div>
                         </div>
                         <div class="ai-think" id="ait1">
-                            <div class="ai-think-text">SprintTools.getSprints() → filtering by status &amp; deadline
+                            <div class="ai-think-text">ProductTools.createProduct() × 3 · UserGroupTools.grantAccess() ×
+                                3
                             </div>
                             <div class="ai-think-dots"><span></span><span></span><span></span></div>
                         </div>
                         <div class="ai-msg bot-msg" id="aim2">
                             <div class="ai-avatar">🤖</div>
-                            <div class="ai-bubble">Found <strong>3 overdue tasks</strong> in <em>Sprint 4 – Mobile</em>:<br><br>
-                                • <strong>Login screen</strong> — 2 days behind (Alice)<br>
-                                • <strong>Push notifications</strong> — blocked by cert (Bob)<br>
-                                • <strong>Offline sync</strong> — no worklog, unassigned
+                            <div class="ai-bubble">Done — created <strong>Andromeda</strong>, <strong>Maestro</strong>
+                                and
+                                <strong>Hannibal</strong>. Team group access granted to all three.
                             </div>
                         </div>
                         <div class="ai-msg usr-msg" id="aim3">
                             <div class="ai-avatar">👤</div>
-                            <div class="ai-bubble">Who has capacity for the unassigned task?</div>
+                            <div class="ai-bubble">Delete the 3 products you just created</div>
                         </div>
                         <div class="ai-think" id="ait2">
-                            <div class="ai-think-text">UserTools.getUsers() → checking availability &amp; workload</div>
+                            <div class="ai-think-text">ProductTools.deleteProduct() × 3 — resolving by name from prior
+                                context
+                            </div>
                             <div class="ai-think-dots"><span></span><span></span><span></span></div>
                         </div>
                         <div class="ai-msg bot-msg" id="aim4">
                             <div class="ai-avatar">🤖</div>
-                            <div class="ai-bubble"><strong>Carol</strong> has ~6 h free this sprint and no conflicting
-                                tasks — she'd be a great fit.
+                            <div class="ai-bubble">Removed <strong>Andromeda</strong>, <strong>Maestro</strong> and
+                                <strong>Hannibal</strong>. The product list is back to its previous state.
                             </div>
                         </div>
                     </div>
@@ -1842,24 +1928,25 @@
                 <!-- Feature cards -->
                 <div class="cards-col">
                     <div class="card purple">
-                        <h4>🛠 Spring AI MCP Tools</h4>
-                        <p>One typed tool bean per domain (<code>ProductTools</code>, <code>SprintTools</code>, <code>UserTools</code>…).
-                            Inner reasoning steps stream live to the UI as the model thinks.</p>
+                        <h4>🛠 Full CRUD via AI</h4>
+                        <p>Create, rename and delete <strong>Products, Versions, Features, Sprints, Users</strong> and
+                            <strong>User Groups</strong> using plain English.</p>
                     </div>
                     <div class="card teal">
-                        <h4>🔐 OIDC-scoped calls</h4>
-                        <p>Each tool call authenticates with the logged-in user's OIDC token — the assistant can only
-                            see and modify what you're permitted to access.</p>
+                        <h4>📍 Context-aware</h4>
+                        <p>The agent knows which page you're on. Say <em>"add version 2.0.0"</em> on the Version list —
+                            no
+                            need to specify the product name.</p>
                     </div>
                     <div class="card green">
-                        <h4>💡 Sprint Insights</h4>
-                        <p>Automated analysis on demand: at-risk tasks, velocity summary, blockers — one click from any
-                            sprint view.</p>
+                        <h4>🔐 Runs as you</h4>
+                        <p>Every tool call uses your OIDC token. The assistant can only read or modify what you are
+                            permitted to access.</p>
                     </div>
                     <div class="card amber">
-                        <h4>🤖 AI Filter</h4>
-                        <p>Natural language grid filters across every entity list. Describe what you want; the model
-                            generates the query.</p>
+                        <h4>🔗 Multi-step reasoning</h4>
+                        <p>Inner reasoning steps stream live to the UI, showing which tools are called and why — full
+                            transparency into the agent's decisions.</p>
                     </div>
                 </div>
             </div>
@@ -1917,13 +2004,100 @@
                         <p class="phase-item"><span class="tick-todo">○</span> Audit logs</p>
                         <p class="phase-item"><span class="tick-todo">○</span> GDPR compliance</p>
                         <p class="phase-item"><span class="tick-todo">○</span> Undo / history</p>
+                        <p class="phase-item"><span class="tick-todo">○</span> next level of ai agent capability</p>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- ═══════════════════════════════════════════════════════════
-             SLIDE 22 — TECH STACK
+             SLIDE 22 — AI VISION (phase 3)
+        ═══════════════════════════════════════════════════════════════ -->
+        <section class="ai-slide" data-background-color="#F8FAFC" id="s-ai-future">
+            <p class="eyebrow">Phase 3 Vision</p>
+            <h2>AI Assistant — What's Coming</h2>
+            <p>Planned query and analytics capabilities — natural language intelligence over your project data</p>
+
+            <div class="ai-layout">
+                <!-- Mock chat window -->
+                <div class="ai-chat-wrap">
+                    <div class="ai-titlebar">
+                        <div class="win-dot"></div>
+                        <div class="win-dot"></div>
+                        <div class="win-dot"></div>
+                        <div class="ai-title-text">Kassandra AI · Insights</div>
+                        <div class="ai-status">
+                            <div class="ai-status-dot"></div>
+                            ministral-3-8b
+                        </div>
+                    </div>
+                    <div class="ai-chat-body">
+                        <div class="ai-msg usr-msg" id="afm1">
+                            <div class="ai-avatar">👤</div>
+                            <div class="ai-bubble">Show me all overdue tasks in the mobile sprint</div>
+                        </div>
+                        <div class="ai-think" id="aft1">
+                            <div class="ai-think-text">SprintTools.getSprints() → filtering by status &amp; deadline
+                            </div>
+                            <div class="ai-think-dots"><span></span><span></span><span></span></div>
+                        </div>
+                        <div class="ai-msg bot-msg" id="afm2">
+                            <div class="ai-avatar">🤖</div>
+                            <div class="ai-bubble">Found <strong>3 overdue tasks</strong> in <em>Sprint 4 – Mobile</em>:<br><br>
+                                • <strong>Login screen</strong> — 2 days behind (Alice)<br>
+                                • <strong>Push notifications</strong> — blocked by cert (Bob)<br>
+                                • <strong>Offline sync</strong> — no worklog, unassigned
+                            </div>
+                        </div>
+                        <div class="ai-msg usr-msg" id="afm3">
+                            <div class="ai-avatar">👤</div>
+                            <div class="ai-bubble">Who has capacity for the unassigned task?</div>
+                        </div>
+                        <div class="ai-think" id="aft2">
+                            <div class="ai-think-text">UserTools.getUsers() → checking availability &amp; workload</div>
+                            <div class="ai-think-dots"><span></span><span></span><span></span></div>
+                        </div>
+                        <div class="ai-msg bot-msg" id="afm4">
+                            <div class="ai-avatar">🤖</div>
+                            <div class="ai-bubble"><strong>Carol</strong> has ~6 h free this sprint and no conflicting
+                                tasks — she'd be a great fit.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-footer">
+                        🧠 <em>LM Studio</em> &nbsp;·&nbsp; OpenAI-compatible &nbsp;·&nbsp; data stays on your server
+                    </div>
+                </div>
+
+                <!-- Feature cards -->
+                <div class="cards-col">
+                    <div class="card purple">
+                        <h4>🛠 Spring AI MCP Tools</h4>
+                        <p>One typed tool bean per domain (<code>ProductTools</code>, <code>SprintTools</code>,
+                            <code>UserTools</code>…). Inner reasoning steps stream live to the UI as the model thinks.
+                        </p>
+                    </div>
+                    <div class="card teal">
+                        <h4>🔐 OIDC-scoped queries</h4>
+                        <p>Read-only analytics will respect the same OIDC token — the assistant can only surface data
+                            you are permitted to see.</p>
+                    </div>
+                    <div class="card green">
+                        <h4>💡 Sprint Insights</h4>
+                        <p>Automated analysis on demand: at-risk tasks, velocity summary, blockers — one click from any
+                            sprint view.</p>
+                    </div>
+                    <div class="card amber">
+                        <h4>🤖 AI Filter</h4>
+                        <p>Natural language grid filters across every entity list. Describe what you want; the model
+                            generates the query.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             SLIDE 23 — TECH STACK
         ═══════════════════════════════════════════════════════════════ -->
         <section data-background-color="#F8FAFC" id="s15">
             <p class="eyebrow">Technical</p>
@@ -1961,7 +2135,7 @@
         </section>
 
         <!-- ═══════════════════════════════════════════════════════════
-             SLIDE 23 — GET STARTED
+             SLIDE 24 — GET STARTED
         ═══════════════════════════════════════════════════════════════ -->
         <section data-background-color="#111D33" id="s16">
             <div class="bg-grid"></div>
@@ -2024,7 +2198,12 @@
         ['aim1', 350], ['ait1', 950], ['aim2', 2200],
         ['aim3', 3500], ['ait2', 4100], ['aim4', 5300],
     ];
+    const futureChatScript = [
+        ['afm1', 350], ['aft1', 950], ['afm2', 2200],
+        ['afm3', 3500], ['aft2', 4100], ['afm4', 5300],
+    ];
     let aiPlayed = false, aiTimers = [];
+    let aiFuturePlayed = false, aiFutureTimers = [];
 
     function playAiChat() {
         if (aiPlayed) return;
@@ -2041,12 +2220,37 @@
         chatScript.forEach(([id]) => document.getElementById(id)?.classList.remove('show'));
     }
 
+    function playAiFutureChat() {
+        if (aiFuturePlayed) return;
+        aiFuturePlayed = true;
+        aiFutureTimers = futureChatScript.map(([id, delay]) =>
+            setTimeout(() => document.getElementById(id)?.classList.add('show'), delay)
+        );
+    }
+
+    function resetAiFutureChat() {
+        aiFutureTimers.forEach(clearTimeout);
+        aiFutureTimers = [];
+        aiFuturePlayed = false;
+        futureChatScript.forEach(([id]) => document.getElementById(id)?.classList.remove('show'));
+    }
+
     Reveal.on('slidechanged', ({currentSlide}) => {
-        if (currentSlide.id === 's-ai') playAiChat(); else resetAiChat();
+        if (currentSlide.id === 's-ai') {
+            playAiChat();
+            resetAiFutureChat();
+        } else if (currentSlide.id === 's-ai-future') {
+            playAiFutureChat();
+            resetAiChat();
+        } else {
+            resetAiChat();
+            resetAiFutureChat();
+        }
     });
 
     Reveal.on('ready', ({currentSlide}) => {
         if (currentSlide?.id === 's-ai') playAiChat();
+        if (currentSlide?.id === 's-ai-future') playAiFutureChat();
     });
 
     // ── Cap screenshot images: scale down if too large, never scale up ──

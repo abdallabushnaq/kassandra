@@ -97,6 +97,11 @@ tbd
 16. ❌ undo
 17. ❌ history
 18. ❌ add aura theme
+19. ❌ next level of ai agent capability
+    1. ❌ list problematic sprints.
+    2. ❌ determine reason for the problem (e.g. estimation, resource availability, etc.).
+    3. ❌ suggest developers with capacity to help out.
+    4. ❌ assign tasks to these developers.
 
 # Kassandra Introduction Videos
 
