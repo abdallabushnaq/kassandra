@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Slf4j
-public class MPXJGenerator {
+public class EntityGenerator {
     private final   ColorGenerator  colorGenerator = new ColorGenerator();
     protected final List<Throwable> exceptions     = new ArrayList<>();
     protected       List<Feature>   features       = new ArrayList<>();

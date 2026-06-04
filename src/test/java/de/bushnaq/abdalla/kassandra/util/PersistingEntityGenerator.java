@@ -55,7 +55,7 @@ import java.util.*;
 import java.util.List;
 
 @Slf4j
-public class AbstractEntityGenerator extends AbstractTestUtil {
+public class PersistingEntityGenerator extends AbstractTestUtil {
     public static final String                 FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
     public static final String                 FIRST_OFF_DAY_START_DATE  = "2024-04-01";
     protected           AvailabilityApi        availabilityApi;

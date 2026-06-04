@@ -53,7 +53,7 @@ import java.util.UUID;
 import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
 
 @Slf4j
-public class GanttGenerator extends MPXJGenerator {
+public class GanttGenerator extends EntityGenerator {
 
     protected final Random random    = new Random();
     /**

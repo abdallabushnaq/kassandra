@@ -19,7 +19,7 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.rest.debug.DebugUtil;
-import de.bushnaq.abdalla.kassandra.util.AbstractEntityGenerator;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +42,7 @@ import java.time.OffsetDateTime;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
-public class WorklogApiTest extends AbstractEntityGenerator {
+public class WorklogApiTest extends PersistingEntityGenerator {
     @Autowired
     DebugUtil debugUtil;
 

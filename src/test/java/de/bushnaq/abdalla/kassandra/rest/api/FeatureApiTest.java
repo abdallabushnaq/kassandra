@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.Feature;
-import de.bushnaq.abdalla.kassandra.util.AbstractEntityGenerator;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
-public class FeatureApiTest extends AbstractEntityGenerator {
+public class FeatureApiTest extends PersistingEntityGenerator {
     private static final UUID   FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final String SECOND_NAME = "SECOND_NAME";
 

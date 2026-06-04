@@ -66,7 +66,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @Slf4j
-public class AbstractGanttTestUtil extends AbstractEntityGenerator {
+public class AbstractGanttTestUtil extends PersistingEntityGenerator {
     /**
      * Probability that a sprint runs with zero delay (on schedule).
      */

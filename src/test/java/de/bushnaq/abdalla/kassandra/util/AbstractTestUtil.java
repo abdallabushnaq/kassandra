@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.util;
 
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
+import de.bushnaq.abdalla.kassandra.service.DatabaseDebugService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,9 +29,10 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.util.List;
-import java.util.UUID;
 
 public class AbstractTestUtil extends DTOAsserts {
+    @Autowired
+    private   DatabaseDebugService       databaseDebugService;
     @Autowired
     private   DefaultEntitiesInitializer defaultEntitiesInitializer;
     @Autowired
@@ -76,140 +78,39 @@ public class AbstractTestUtil extends DTOAsserts {
         defaultEntitiesInitializer.run(null);
     }
 
-    protected List<String> getAllTableNames() {
-        // Get all table names
-        @SuppressWarnings("unchecked") List<String> tableNames = entityManager.createNativeQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = SCHEMA()").getResultList();
+    /**
+     * Returns all user-table names in the current H2 schema, excluding H2 system tables.
+     *
+     * <p><em>Note:</em> {@link DatabaseDebugService} contains an identical private copy of this
+     * query used solely for printing.  Keep both in sync if the filter list changes.
+     */
+    private List<String> getAllTableNames() {
+        @SuppressWarnings("unchecked")
+        List<String> tableNames = entityManager
+                .createNativeQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = SCHEMA()")
+                .getResultList();
 
-        // Filter out system tables
-        tableNames = tableNames.stream().filter(name -> !name.equals("SPATIAL_REF_SYS") && !name.equals("GEOMETRY_COLUMNS")).toList();
-        return tableNames;
+        return tableNames.stream()
+                .filter(name -> !name.equals("SPATIAL_REF_SYS") && !name.equals("GEOMETRY_COLUMNS"))
+                .toList();
     }
 
     /**
-     * Formats a single cell value for display. Converts 16-byte arrays to UUID strings;
-     * falls back to {@code toString()} for all other types.
-     *
-     * @param value the raw cell value returned by a native query
-     * @return a human-readable string representation
+     * Prints all non-empty tables in the current schema to the test log.
      */
-    protected String formatCellValue(Object value) {
-        if (value == null) {
-            return "null";
-        }
-        if (value instanceof byte[] bytes && bytes.length == 16) {
-            // H2 returns UUID columns as raw 16-byte arrays in native queries
-            long msb = 0;
-            long lsb = 0;
-            for (int i = 0; i < 8; i++) {
-                msb = (msb << 8) | (bytes[i] & 0xffL);
-            }
-            for (int i = 8; i < 16; i++) {
-                lsb = (lsb << 8) | (bytes[i] & 0xffL);
-            }
-            return new UUID(msb, lsb).toString();
-        }
-        return value.toString();
-    }
-
     protected void printTables() {
-        printTables(null);
+        databaseDebugService.printTables();
     }
 
+    /**
+     * Prints the specified tables (or all non-empty tables when {@code filterTableNames} is
+     * {@code null}) to {@link System#out}.
+     *
+     * @param filterTableNames optional array of table names to include; pass {@code null} to print
+     *                         every non-empty table
+     */
     protected void printTables(String[] filterTableNames) {
-        System.out.println("\n\n\n");
-        try {
-            String        separator = "+";
-            StringBuilder output    = new StringBuilder("\n=== Database Content ===\n");
-
-            List<String> tableNames = getAllTableNames();
-
-            // Apply filter if provided
-            if (filterTableNames != null && filterTableNames.length > 0) {
-                List<String> filterList = List.of(filterTableNames);
-                tableNames = tableNames.stream()
-                        .filter(filterList::contains)
-                        .toList();
-            }
-
-            for (String tableName : tableNames) {
-                // Get column names and types
-                @SuppressWarnings("unchecked") List<String> columnNames = entityManager.createNativeQuery("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " + "WHERE TABLE_SCHEMA = SCHEMA() AND TABLE_NAME = '" + tableName + "' " + "ORDER BY ORDINAL_POSITION").getResultList();
-
-                @SuppressWarnings("unchecked") List<String> columnTypes = entityManager.createNativeQuery("SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS " + "WHERE TABLE_SCHEMA = SCHEMA() AND TABLE_NAME = '" + tableName + "' " + "ORDER BY ORDINAL_POSITION").getResultList();
-
-                // Get all data
-                String  dataQuery = "SELECT * FROM " + tableName;
-                List<?> results   = entityManager.createNativeQuery(dataQuery).getResultList();
-
-                // Calculate max width for each column
-                int[] maxWidths = new int[columnNames.size()];
-                // Initialize with column name lengths
-                for (int i = 0; i < columnNames.size(); i++) {
-                    maxWidths[i] = columnNames.get(i).length();
-                }
-
-                // Check data widths
-                for (Object row : results) {
-                if (row instanceof Object[] cells) {
-                            for (int i = 0; i < cells.length; i++) {
-                                String value;
-                                if (columnTypes.get(i).equalsIgnoreCase("BINARY LARGE OBJECT")) {
-                                    value = cells[i] != null ? "<BLOB>" : "null";
-                                } else {
-                                    value = formatCellValue(cells[i]);
-                                }
-                                maxWidths[i] = Math.max(maxWidths[i], value.length());
-                        }
-                    } else {
-                        maxWidths[0] = Math.max(maxWidths[0], row != null ? row.toString().length() : 4);
-                    }
-                }
-
-                // Create dynamic separator
-                separator = "+";
-                for (int width : maxWidths) {
-                    separator += "-".repeat(width + 2) + "+";
-                }
-                separator += "\n";
-
-
-                if (!results.isEmpty()) {
-                    // Print table
-                    output.append("\n").append(tableName).append(":\n").append(separator);
-                    // Print header
-                    output.append("|");
-                    for (int i = 0; i < columnNames.size(); i++) {
-                        output.append(String.format(" %-" + maxWidths[i] + "s |", columnNames.get(i)));
-                    }
-                    output.append("\n").append(separator);
-                    // Print data
-                    for (Object row : results) {
-                        output.append("|");
-                        if (row instanceof Object[] cells) {
-                            for (int i = 0; i < cells.length; i++) {
-                                String value;
-                                if (columnTypes.get(i).equalsIgnoreCase("BINARY LARGE OBJECT")) {
-                                    value = cells[i] != null ? "<BLOB>" : "null";
-                                } else {
-                                    value = formatCellValue(cells[i]);
-                                }
-                                output.append(String.format(" %-" + maxWidths[i] + "s |", value));
-                            }
-                        } else {
-                            output.append(String.format(" %-" + maxWidths[0] + "s |", row != null ? row.toString() : "null"));
-                        }
-                        output.append("\n");
-                    }
-                    output.append(separator);
-                }
-
-            }
-
-            System.out.println(output);
-        } catch (Exception e) {
-            System.err.println("Error printing tables: " + e.getMessage());
-            e.printStackTrace();
-        }
+        databaseDebugService.printTables(filterTableNames);
     }
 
 }

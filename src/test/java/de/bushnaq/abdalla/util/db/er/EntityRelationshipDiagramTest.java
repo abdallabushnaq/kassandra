@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.util.db.er;
 
 import de.bushnaq.abdalla.kassandra.Application;
-import de.bushnaq.abdalla.kassandra.util.AbstractEntityGenerator;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * to {@code test-results/er-diagram.svg}.
  *
  * <p>The test is tagged {@code UnitTest} so it participates in the standard
- * fast-test suite.  It extends {@link AbstractEntityGenerator} so the full
+ * fast-test suite.  It extends {@link PersistingEntityGenerator} so the full
  * entity hierarchy is seeded before the diagram is produced, giving a
  * representative view of the schema.
  */
@@ -50,7 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
-public class EntityRelationshipDiagramTest extends AbstractEntityGenerator {
+public class EntityRelationshipDiagramTest extends PersistingEntityGenerator {
 
     private static final String OUTPUT_PATH = "../kassandra.wiki/entity-relationship-diagram.svg";
 

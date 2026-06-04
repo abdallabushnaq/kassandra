@@ -174,7 +174,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
      * Takes screenshots of {@link WorklogDialog} and {@link TaskDialog} from the Active Sprints view.
      * <p>
      * Relies on sprint "Zurich" being present in the generated test data (it is always created with
-     * {@code Status.STARTED} thanks to {@code AbstractEntityGenerator.addSprint}).
+     * {@code Status.STARTED} thanks to {@code PersistingEntityGenerator.addSprint}).
      *
      * @param folder destination folder for the screenshot files
      */
