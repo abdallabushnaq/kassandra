@@ -165,13 +165,13 @@ public class Demo extends AbstractKeycloakUiTestUtil {
         printTables();
 
 
-        List<Product> products     = productApi.getAll();
+        List<Product> products     = peg.productApi.getAll();
         Product       firstProduct = products.getFirst();
-        List<Version> versions     = versionApi.getAll(firstProduct.getId());
+        List<Version> versions     = peg.versionApi.getAll(firstProduct.getId());
         Version       firstVersion = versions.getFirst();
-        List<Feature> features     = featureApi.getAll(firstVersion.getId());
+        List<Feature> features     = peg.featureApi.getAll(firstVersion.getId());
         Feature       firstFeature = features.getFirst();
-        List<Sprint>  sprints      = sprintApi.getAll(firstFeature.getId());
+        List<Sprint>  sprints      = peg.sprintApi.getAll(firstFeature.getId());
         Sprint        firstSprint  = sprints.getFirst();
 
         aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));

@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.TtsCacheManager;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -162,10 +163,10 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     public void setupTestUser() {
         String    testUserEmail = "christopher.paul@kassandra.org";
         LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
-        addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
+        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(PersistingEntityGenerator.userIndex), 0.5f);
         //ensure tests that generate more users will find the correct expectations.
-        expectedUsers.clear();
-        userIndex--;//ensure Christopher Paul is always the first user created
+        peg.expectedUsers.clear();
+        PersistingEntityGenerator.userIndex--;//ensure Christopher Paul is always the first user created
     }
 
     @AfterAll

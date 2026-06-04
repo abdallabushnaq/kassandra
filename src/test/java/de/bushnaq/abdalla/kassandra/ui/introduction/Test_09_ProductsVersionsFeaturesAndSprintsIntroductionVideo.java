@@ -72,37 +72,37 @@ import java.util.List;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class Test_09_ProductsVersionsFeaturesAndSprintsIntroductionVideo extends AbstractIntroductionVideo {
-    public static final NarratorAttribute          INTENSE     = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final NarratorAttribute          NORMAL      = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
     AboutViewTester aboutViewTester;
     @Autowired
-    private             AvailabilityListViewTester availabilityListViewTester;
+    private       AvailabilityListViewTester availabilityListViewTester;
     @Autowired
-    private             FeatureListViewTester      featureListViewTester;
-    private             String                     featureName;
+    private       FeatureListViewTester      featureListViewTester;
+    private       String                     featureName;
     @Autowired
-    private             LocationListViewTester     locationListViewTester;
+    private       LocationListViewTester     locationListViewTester;
     @Autowired
-    private             OffDayListViewTester       offDayListViewTester;
+    private       OffDayListViewTester       offDayListViewTester;
     @Autowired
-    private             ProductListViewTester      productListViewTester;
-    private             String                     productName;
+    private       ProductListViewTester      productListViewTester;
+    private       String                     productName;
     @Autowired
-    private             HumanizedSeleniumHandler   seleniumHandler;
+    private       HumanizedSeleniumHandler   seleniumHandler;
     @Autowired
-    private             SprintListViewTester       sprintListViewTester;
-    private             String                     sprintName;
+    private       SprintListViewTester       sprintListViewTester;
+    private       String                     sprintName;
     @Autowired
-    private             TaskListViewTester         taskListViewTester;
-    private             String                     taskName;
-    private final       OffDayType                 typeRecord1 = OffDayType.VACATION;
+    private       TaskListViewTester         taskListViewTester;
+    private       String                     taskName;
+    private final OffDayType                 typeRecord1 = OffDayType.VACATION;
     @Autowired
-    private             UserListViewTester         userListViewTester;
-    private             String                     userName;
+    private       UserListViewTester         userListViewTester;
+    private       String                     userName;
     @Autowired
-    private             VersionListViewTester      versionListViewTester;
-    private             String                     versionName;
+    private       VersionListViewTester      versionListViewTester;
+    private       String                     versionName;
 
     @BeforeAll
     static void beforeAll() {
@@ -132,7 +132,7 @@ public class Test_09_ProductsVersionsFeaturesAndSprintsIntroductionVideo extends
         versionName = "1.0.0";
         featureName = "Config server";
         sprintName  = "Minimum Viable Product";
-        taskName    = nameGenerator.generateSprintName(0);
+        taskName    = peg.nameGenerator.generateSprintName(0);
 
 
         paul.narrateAsync(NORMAL, "Good morning, my name is Christopher Paul. I am the product manager of Kassandra and I will be demonstrating the latest alpha version of the Kassandra project server to you today.");

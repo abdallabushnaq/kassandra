@@ -275,28 +275,28 @@ public class Test_11_RearrangeStoriesAndTasksIntroductionVideo extends AbstractI
         versionName = "1.0.0";
         featureName = "Property request api";
         sprintName  = "Minimum Viable Product";
-        Product product = addProduct(productName);
-        Version version = addVersion(product, versionName);
-        Feature feature = addFeature(version, featureName);
-        Sprint  sprint  = addSprint(feature, sprintName);
+        Product product = peg.addProduct(productName);
+        Version version = peg.addVersion(product, versionName);
+        Feature feature = peg.addFeature(version, featureName);
+        Sprint  sprint  = peg.addSprint(feature, sprintName);
 
-        User christopherPaul = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        User graceMartin     = userApi.getByEmail("grace.martin@kassandra.org").get();
+        User christopherPaul = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        User graceMartin     = peg.userApi.getByEmail("grace.martin@kassandra.org").get();
         {
             LocalDateTime startDateTime  = LocalDateTime.parse("2025-08-18T08:00");
-            Task          startMilestone = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+            Task          startMilestone = peg.addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         }
         {
-            story1 = addParentTask("Config api implementation", sprint, null, null);
-            task11 = addTask("create controller", "4h", "6h", graceMartin, sprint, story1, null);
-            task12 = addTask("api documentation", "2h", "3h", graceMartin, sprint, story1, null);
-            task13 = addTask("api error handling", "5h", "7h", graceMartin, sprint, story1, null);
+            story1 = peg.addParentTask("Config api implementation", sprint, null, null);
+            task11 = peg.addTask("create controller", "4h", "6h", graceMartin, sprint, story1, null);
+            task12 = peg.addTask("api documentation", "2h", "3h", graceMartin, sprint, story1, null);
+            task13 = peg.addTask("api error handling", "5h", "7h", graceMartin, sprint, story1, null);
         }
         {
-            story2 = addParentTask("Config persistence implementation", sprint, null, null);
-            task21 = addTask("create repository", "4h", "6h", graceMartin, sprint, story2, null);
-            task22 = addTask("schema documentation", "2h", "3h", graceMartin, sprint, story2, null);
-            task23 = addTask("persistence error handling", "5h", "7h", graceMartin, sprint, story2, null);
+            story2 = peg.addParentTask("Config persistence implementation", sprint, null, null);
+            task21 = peg.addTask("create repository", "4h", "6h", graceMartin, sprint, story2, null);
+            task22 = peg.addTask("schema documentation", "2h", "3h", graceMartin, sprint, story2, null);
+            task23 = peg.addTask("persistence error handling", "5h", "7h", graceMartin, sprint, story2, null);
         }
 
 

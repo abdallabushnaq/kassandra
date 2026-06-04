@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -86,17 +87,17 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
     private       User                     user3;
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -180,8 +181,8 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
     public void testCreateProductWithGroupAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         String    productName = "Product-WithGroupAcl";
-        UserGroup ug1         = userGroupApi.create("Developers", "well, what do you think?", new HashSet<>(List.of(user1.getId(), user2.getId())));
-        UserGroup ug2         = userGroupApi.create("QA Team", "well, what do you think?", new HashSet<>(List.of(user2.getId(), user3.getId())));
+        UserGroup ug1         = peg.userGroupApi.create("Developers", "well, what do you think?", new HashSet<>(List.of(user1.getId(), user2.getId())));
+        UserGroup ug2         = peg.userGroupApi.create("QA Team", "well, what do you think?", new HashSet<>(List.of(user2.getId(), user3.getId())));
         String[]  groups      = {ug1.getName(), ug2.getName()};
 
         productListViewTester.createProductWithAcl(productName, null, groups);
@@ -202,7 +203,7 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
     public void testCreateProductWithMixedAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         String    productName = "Product-WithMixedAcl";
-        UserGroup ug1         = userGroupApi.create("Developers", "well, what do you think?", new HashSet<>(List.of(user1.getId(), user2.getId())));
+        UserGroup ug1         = peg.userGroupApi.create("Developers", "well, what do you think?", new HashSet<>(List.of(user1.getId(), user2.getId())));
         String[]  users       = {user3.getName()};
         String[]  groups      = {ug1.getName()};
 
@@ -329,7 +330,7 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
     public void testEditProductAddAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         String    productName = "Product-ToAddAcl";
-        UserGroup ug1         = userGroupApi.create("Developers", "well, what do you think?", new HashSet<>(List.of(user1.getId(), user2.getId())));
+        UserGroup ug1         = peg.userGroupApi.create("Developers", "well, what do you think?", new HashSet<>(List.of(user1.getId(), user2.getId())));
         String[]  groups      = {ug1.getName()};
         String[]  users       = {user3.getName()};
 
@@ -385,7 +386,7 @@ public class ProductListViewTest extends AbstractKeycloakUiTestUtil {
     public void testEditProductRemoveAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         String    productName = "Product-ToRemoveAcl";
-        UserGroup ug1         = userGroupApi.create("Developers", "well, what do you think?", new HashSet<>(List.of(user1.getId(), user2.getId())));
+        UserGroup ug1         = peg.userGroupApi.create("Developers", "well, what do you think?", new HashSet<>(List.of(user1.getId(), user2.getId())));
         String[]  users       = {user3.getName()};
         String[]  groups      = {ug1.getName()};
 

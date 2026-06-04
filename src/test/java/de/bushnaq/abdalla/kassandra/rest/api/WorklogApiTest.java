@@ -19,9 +19,12 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.rest.debug.DebugUtil;
+import de.bushnaq.abdalla.kassandra.util.AbstractTestUtil;
 import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
@@ -42,67 +45,75 @@ import java.time.OffsetDateTime;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
-public class WorklogApiTest extends PersistingEntityGenerator {
+public class WorklogApiTest extends AbstractTestUtil {
     @Autowired
     DebugUtil debugUtil;
+    @Autowired
+    protected PersistingEntityGenerator peg;
+
+    @BeforeEach
+    protected void beforeEach(TestInfo testInfo) {
+        super.beforeEach(testInfo);
+        peg.init();
+    }
 
     //TODO add missing test cases
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void create() throws Exception {
-        User user1 = addRandomUser();
+        User user1 = peg.addRandomUser();
 
         for (int i = 0; i < 1; i++) {
-            Product product = addProduct("Product " + i);
-            Version version = addVersion(product, String.format("1.%d.0", i));
-            Feature feature = addRandomFeature(version);
-            Sprint  sprint  = addRandomSprint(feature);
+            Product product = peg.addProduct("Product " + i);
+            Version version = peg.addVersion(product, String.format("1.%d.0", i));
+            Feature feature = peg.addRandomFeature(version);
+            Sprint  sprint  = peg.addRandomSprint(feature);
 
-            Task    task1    = addTask(sprint, null, "Project Phase 1", LocalDateTime.now(), Duration.ofDays(10), null, null, null);
-            Task    task2    = addTask(sprint, task1, "Design", LocalDateTime.now(), Duration.ofDays(4), null, user1, null);
-            Worklog worklog1 = addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
+            Task    task1    = peg.addTask(sprint, null, "Project Phase 1", LocalDateTime.now(), Duration.ofDays(10), null, null, null);
+            Task    task2    = peg.addTask(sprint, task1, "Design", LocalDateTime.now(), Duration.ofDays(4), null, user1, null);
+            Worklog worklog1 = peg.addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
             debugUtil.logJson(worklog1);
-            Worklog worklog2 = addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
-            Task    task3    = addTask(sprint, task1, "Implementation", LocalDateTime.now().plusDays(4), Duration.ofDays(6), null, user1, task1);
-            Worklog worklog3 = addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 1");
-            Worklog worklog4 = addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 2");
+            Worklog worklog2 = peg.addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
+            Task    task3    = peg.addTask(sprint, task1, "Implementation", LocalDateTime.now().plusDays(4), Duration.ofDays(6), null, user1, task1);
+            Worklog worklog3 = peg.addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 1");
+            Worklog worklog4 = peg.addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 2");
         }
 
         printTables();
-        testAllAndPrintTables();
+        peg.testAllAndPrintTables();
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void update() throws Exception {
-        User user1 = addRandomUser();
+        User user1 = peg.addRandomUser();
 
         for (int i = 0; i < 1; i++) {
-            Product product  = addProduct("Product " + i);
-            Version version  = addVersion(product, String.format("1.%d.0", i));
-            Feature feature  = addRandomFeature(version);
-            Sprint  sprint   = addRandomSprint(feature);
-            Task    task1    = addTask(sprint, null, "Project Phase 1", LocalDateTime.now(), Duration.ofDays(10), null, null, null);
-            Task    task2    = addTask(sprint, task1, "Design", LocalDateTime.now(), Duration.ofDays(4), null, user1, null);
-            Worklog worklog1 = addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
-            Worklog worklog2 = addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
-            Task    task3    = addTask(sprint, task1, "Implementation", LocalDateTime.now().plusDays(4), Duration.ofDays(6), null, user1, task1);
-            Worklog worklog3 = addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 1");
-            Worklog worklog4 = addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 2");
+            Product product  = peg.addProduct("Product " + i);
+            Version version  = peg.addVersion(product, String.format("1.%d.0", i));
+            Feature feature  = peg.addRandomFeature(version);
+            Sprint  sprint   = peg.addRandomSprint(feature);
+            Task    task1    = peg.addTask(sprint, null, "Project Phase 1", LocalDateTime.now(), Duration.ofDays(10), null, null, null);
+            Task    task2    = peg.addTask(sprint, task1, "Design", LocalDateTime.now(), Duration.ofDays(4), null, user1, null);
+            Worklog worklog1 = peg.addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
+            Worklog worklog2 = peg.addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
+            Task    task3    = peg.addTask(sprint, task1, "Implementation", LocalDateTime.now().plusDays(4), Duration.ofDays(6), null, user1, task1);
+            Worklog worklog3 = peg.addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 1");
+            Worklog worklog4 = peg.addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 2");
         }
 
-        testAllAndPrintTables();
+        peg.testAllAndPrintTables();
 
         //update
         {
-            Worklog worklog1 = expectedWorklogs.getFirst();
+            Worklog worklog1 = peg.expectedWorklogs.getFirst();
             worklog1.setComment("Design work 1 - updated");
             worklog1.setTimeSpent(Duration.ofHours(3));
-            worklogApi.persist(worklog1);
+            peg.worklogApi.persist(worklog1);
         }
 
         printTables();
-        testAllAndPrintTables();
+        peg.testAllAndPrintTables();
 
     }
 

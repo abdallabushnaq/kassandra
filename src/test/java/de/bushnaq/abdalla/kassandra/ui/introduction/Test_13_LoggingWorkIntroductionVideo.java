@@ -67,32 +67,32 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVideo {
-    public static final NarratorAttribute        EXCITED = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
-    public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.6f).withCfgWeight(.2f).withTemperature(1f);
+    public static final NarratorAttribute EXCITED = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
+    public static final NarratorAttribute NORMAL  = new NarratorAttribute().withExaggeration(.6f).withCfgWeight(.2f).withTemperature(1f);
     @Autowired
     AboutViewTester aboutViewTester;
     @Autowired
-    private             ActiveSprintsTester      activeSprintsTester;
-    private             String                   featureName;
+    private ActiveSprintsTester      activeSprintsTester;
+    private String                   featureName;
     @Autowired
-    private             ProductListViewTester    productListViewTester;
-    private             String                   productName;
+    private ProductListViewTester    productListViewTester;
+    private String                   productName;
     @Autowired
-    private             HumanizedSeleniumHandler seleniumHandler;
-    private             String                   sprintName;
-    private             Task                     story1;
-    private             Task                     story2;
-    private             Task                     story3;
-    private             Task                     task11;
-    private             Task                     task12;
-    private             Task                     task13;
-    private             Task                     task21;
-    private             Task                     task22;
-    private             Task                     task23;
-    private             Task                     task31;
-    private             Task                     task32;
-    private             Task                     task33;
-    private             String                   versionName;
+    private HumanizedSeleniumHandler seleniumHandler;
+    private String                   sprintName;
+    private Task                     story1;
+    private Task                     story2;
+    private Task                     story3;
+    private Task                     task11;
+    private Task                     task12;
+    private Task                     task13;
+    private Task                     task21;
+    private Task                     task22;
+    private Task                     task23;
+    private Task                     task31;
+    private Task                     task32;
+    private Task                     task33;
+    private String                   versionName;
 
     @BeforeAll
     static void beforeAll() {
@@ -406,49 +406,49 @@ public class Test_13_LoggingWorkIntroductionVideo extends AbstractIntroductionVi
     }
 
     private Sprint generateData() {
-        UserGroup group = userGroupApi.getAll().getFirst();
+        UserGroup group = peg.userGroupApi.getAll().getFirst();
         productName = "Jupiter";
         versionName = "1.0.0";
         featureName = "Property request api";
         sprintName  = "Minimum Viable Product";
 
-        Product product = addProduct(productName);
-        productAclApi.grantGroupAccess(product.getId(), group.getId());
-        Version version = addVersion(product, versionName);
-        Feature feature = addFeature(version, featureName);
-        Sprint  sprint  = addSprint(feature, sprintName);
+        Product product = peg.addProduct(productName);
+        peg.productAclApi.grantGroupAccess(product.getId(), group.getId());
+        Version version = peg.addVersion(product, versionName);
+        Feature feature = peg.addFeature(version, featureName);
+        Sprint  sprint  = peg.addSprint(feature, sprintName);
 
         // Set sprint status to STARTED to make it active
         sprint.setStatus(Status.STARTED);
         // Ensure sprint has feature reference for lane ID generation
         sprint.setFeature(feature);
-        sprintApi.update(sprint);
+        peg.sprintApi.update(sprint);
 
-        User graceMartin = userApi.getByEmail("grace.martin@kassandra.org").get();
+        User graceMartin = peg.userApi.getByEmail("grace.martin@kassandra.org").get();
 
         // Create a start milestone
         {
             LocalDateTime startDateTime  = LocalDateTime.parse("2025-05-05T08:00");
-            Task          startMilestone = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+            Task          startMilestone = peg.addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         }
 
         {
-            story1 = addParentTask("Config api implementation", sprint, null, null);
-            task11 = addTask("create controller", "4h", "6h", graceMartin, sprint, story1, null);
-            task12 = addTask("api documentation", "2h", "3h", graceMartin, sprint, story1, null);
-            task13 = addTask("api error handling", "5h", "7h", graceMartin, sprint, story1, null);
+            story1 = peg.addParentTask("Config api implementation", sprint, null, null);
+            task11 = peg.addTask("create controller", "4h", "6h", graceMartin, sprint, story1, null);
+            task12 = peg.addTask("api documentation", "2h", "3h", graceMartin, sprint, story1, null);
+            task13 = peg.addTask("api error handling", "5h", "7h", graceMartin, sprint, story1, null);
         }
         {
-            story2 = addParentTask("Config persistence implementation", sprint, null, null);
-            task21 = addTask("create repository", "4h", "6h", graceMartin, sprint, story2, null);
-            task22 = addTask("schema documentation", "2h", "3h", graceMartin, sprint, story2, null);
-            task23 = addTask("persistence error handling", "5h", "7h", graceMartin, sprint, story2, null);
+            story2 = peg.addParentTask("Config persistence implementation", sprint, null, null);
+            task21 = peg.addTask("create repository", "4h", "6h", graceMartin, sprint, story2, null);
+            task22 = peg.addTask("schema documentation", "2h", "3h", graceMartin, sprint, story2, null);
+            task23 = peg.addTask("persistence error handling", "5h", "7h", graceMartin, sprint, story2, null);
         }
         {
-            story3 = addParentTask("Config security implementation", sprint, null, null);
-            task31 = addTask("implement authentication", "6h", "8h", graceMartin, sprint, story3, null);
-            task32 = addTask("security documentation", "1h", "2h", graceMartin, sprint, story3, null);
-            task33 = addTask("security audit", "8h", "10h", graceMartin, sprint, story3, null);
+            story3 = peg.addParentTask("Config security implementation", sprint, null, null);
+            task31 = peg.addTask("implement authentication", "6h", "8h", graceMartin, sprint, story3, null);
+            task32 = peg.addTask("security documentation", "1h", "2h", graceMartin, sprint, story3, null);
+            task33 = peg.addTask("security audit", "8h", "10h", graceMartin, sprint, story3, null);
         }
 
 

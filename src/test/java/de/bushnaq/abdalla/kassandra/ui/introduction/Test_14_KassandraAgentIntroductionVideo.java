@@ -73,39 +73,39 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class Test_14_KassandraAgentIntroductionVideo extends AbstractIntroductionVideo {
-    public static final NarratorAttribute     INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final NarratorAttribute     NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
     AboutViewTester aboutViewTester;
     //    @Autowired
 //    private             AvailabilityListViewTester availabilityListViewTester;
-    private             Feature               feature;
+    private Feature               feature;
     @Autowired
-    private             FeatureListViewTester featureListViewTester;
-    private             String                featureName;
+    private FeatureListViewTester featureListViewTester;
+    private String                featureName;
     //    @Autowired
 //    private             LocationListViewTester     locationListViewTester;
 //    @Autowired
 //    private             OffDayListViewTester       offDayListViewTester;
-    private             Product               product;
+    private Product               product;
     @Autowired
-    private             ProductListViewTester productListViewTester;
-    private             String                productName;
-    private             Sprint                sprint;
+    private ProductListViewTester productListViewTester;
+    private String                productName;
+    private Sprint                sprint;
     //    @Autowired
 //    private             SprintListViewTester       sprintListViewTester;
-    private             String                sprintName;
+    private String                sprintName;
     //    @Autowired
 //    private             TaskListViewTester         taskListViewTester;
 //    private             String                     taskName;
 //    private final       OffDayType                 typeRecord1 = OffDayType.VACATION;
     @Autowired
-    private             UserListViewTester    userListViewTester;
+    private UserListViewTester    userListViewTester;
     //    private             String                     userName;
-    private             Version               version;
+    private Version               version;
     @Autowired
-    private             VersionListViewTester versionListViewTester;
-    private             String                versionName;
+    private VersionListViewTester versionListViewTester;
+    private String                versionName;
 
     @BeforeAll
     static void beforeAll() {
@@ -130,13 +130,13 @@ public class Test_14_KassandraAgentIntroductionVideo extends AbstractIntroductio
         startRecording();
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         paul.setEnabled(true);
-        product     = productApi.getAll().get(1);
+        product     = peg.productApi.getAll().get(1);
         productName = product.getName();
-        version     = versionApi.getAll(product.getId()).getFirst();
+        version     = peg.versionApi.getAll(product.getId()).getFirst();
         versionName = version.getName();
-        feature     = featureApi.getAll(version.getId()).getFirst();
+        feature     = peg.featureApi.getAll(version.getId()).getFirst();
         featureName = feature.getName();
-        sprint      = sprintApi.getAll(feature.getId()).getFirst();
+        sprint      = peg.sprintApi.getAll(feature.getId()).getFirst();
         sprintName  = sprint.getName();
 //        taskName    = nameGenerator.generateSprintName(0);
 
@@ -165,30 +165,30 @@ public class Test_14_KassandraAgentIntroductionVideo extends AbstractIntroductio
         paul.narrate(NORMAL, "The user interface is updated automatically. It will always show what Kassandra changed").pause();
 
         if (seleniumHandler.isEnabled()) {
-            assertTrue(productApi.getByName("Andromeda").isPresent());//test
-            assertTrue(productApi.getByName("Maestro").isPresent());//test
-            assertTrue(productApi.getByName("Hannibal").isPresent());//test
+            assertTrue(peg.productApi.getByName("Andromeda").isPresent());//test
+            assertTrue(peg.productApi.getByName("Maestro").isPresent());//test
+            assertTrue(peg.productApi.getByName("Hannibal").isPresent());//test
         }
 
         paul.narrate(NORMAL, "Good, lets see if Kassandra can remember what it did. Lets delete the last 3 products.").pause();
         processQueryAndWaitForAnswer("Please delete the last 3 products you just created.");
-        if (productApi.getByName("Hannibal").isPresent()) {
+        if (peg.productApi.getByName("Hannibal").isPresent()) {
             //nothing was done
             approveAiPlan();//assuming the ai has a question
         }
         if (seleniumHandler.isEnabled()) {
-            assertTrue(productApi.getByName("Andromeda").isEmpty());//test
-            assertTrue(productApi.getByName("Maestro").isEmpty());//test
-            assertTrue(productApi.getByName("Hannibal").isEmpty());//test
+            assertTrue(peg.productApi.getByName("Andromeda").isEmpty());//test
+            assertTrue(peg.productApi.getByName("Maestro").isEmpty());//test
+            assertTrue(peg.productApi.getByName("Hannibal").isEmpty());//test
         }
 
         paul.narrate(NORMAL, "Lets ask for something a little bit more complex involving reformatting.").pause();
         String        response    = processQueryAndWaitForAnswer("List all products with their versions and features in a table so that every row has only one feature.");
-        List<Product> allProducts = productApi.getAll();
+        List<Product> allProducts = peg.productApi.getAll();
         log.info("Total products in system: {}", allProducts.size());
-        List<Version> allVersions = versionApi.getAll();
+        List<Version> allVersions = peg.versionApi.getAll();
         log.info("Total versions in system: {}", allVersions.size());
-        List<Feature> allFeatures = featureApi.getAll();
+        List<Feature> allFeatures = peg.featureApi.getAll();
         log.info("Total features in system: {}", allFeatures.size());
 
         // remove Andromeda and Maestro from allProducts, as they have no versions or features, so they would not be listed in the table
@@ -213,7 +213,7 @@ public class Test_14_KassandraAgentIntroductionVideo extends AbstractIntroductio
         paul.narrateAsync(NORMAL, "Kassandra AI knows the context of where you are and therefore knows that we are currently looking at the versions of Product " + productName + ". I do not need to add that information to my question.");
         processQueryAndWaitForAnswer("Add version 2.0.0.");
         if (seleniumHandler.isEnabled()) {
-            assertTrue(versionApi.getByName(product.getId(), "2.0.0").isPresent()); //test
+            assertTrue(peg.versionApi.getByName(product.getId(), "2.0.0").isPresent()); //test
         }
         paul.narrate(NORMAL, "Lets go to the Features page.");
         versionListViewTester.selectVersion(versionName);
@@ -225,7 +225,7 @@ public class Test_14_KassandraAgentIntroductionVideo extends AbstractIntroductio
 
         processQueryAndWaitForAnswer("please rename 'dashboard' to 'Game Dashboard'.");
         if (seleniumHandler.isEnabled()) {
-            assertTrue(featureApi.getByName(version.getId(), "Game Dashboard").isPresent()); //test
+            assertTrue(peg.featureApi.getByName(version.getId(), "Game Dashboard").isPresent()); //test
         }
         paul.narrate(NORMAL, "Again, context aware agent.");
         paul.narrate(NORMAL, "Lets visit the Sprints page...");
@@ -238,7 +238,7 @@ public class Test_14_KassandraAgentIntroductionVideo extends AbstractIntroductio
 
         processQueryAndWaitForAnswer("add sprint 'Muenchen'.");
         if (seleniumHandler.isEnabled()) {
-            assertTrue(sprintApi.getByName(feature.getId(), "Muenchen").isPresent()); //test
+            assertTrue(peg.sprintApi.getByName(feature.getId(), "Muenchen").isPresent()); //test
         }
 
         //---------------------------------------------------------------------------------------
@@ -248,20 +248,20 @@ public class Test_14_KassandraAgentIntroductionVideo extends AbstractIntroductio
         if (seleniumHandler.isEnabled()) {
             userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), "christopher.paul@kassandra.org", "password");
             processQueryAndWaitForAnswer("please add the users Ahmet Mustafa, ahmet.mustafa@kassandra.org and Elke Mueller, elke.mueller@kassandra.org and add them to the Team group.");
-            assertTrue(userApi.getByEmail("ahmet.mustafa@kassandra.org").isPresent(), "User ahmet.mustafa@kassandra.org should exist");
-            assertEquals("Ahmet Mustafa", userApi.getByEmail("ahmet.mustafa@kassandra.org").get().getName(), "User ahmet.mustafa@kassandra.org should have name = Ahmet Mustafa");
-            assertTrue(userApi.getByEmail("elke.mueller@kassandra.org").isPresent(), "User elke.mueller@kassandra.org should exist");
-            assertEquals("Elke Mueller", userApi.getByEmail("elke.mueller@kassandra.org").get().getName(), "User elke.mueller@kassandra.org should have name =Elke Mueller");
+            assertTrue(peg.userApi.getByEmail("ahmet.mustafa@kassandra.org").isPresent(), "User ahmet.mustafa@kassandra.org should exist");
+            assertEquals("Ahmet Mustafa", peg.userApi.getByEmail("ahmet.mustafa@kassandra.org").get().getName(), "User ahmet.mustafa@kassandra.org should have name = Ahmet Mustafa");
+            assertTrue(peg.userApi.getByEmail("elke.mueller@kassandra.org").isPresent(), "User elke.mueller@kassandra.org should exist");
+            assertEquals("Elke Mueller", peg.userApi.getByEmail("elke.mueller@kassandra.org").get().getName(), "User elke.mueller@kassandra.org should have name =Elke Mueller");
         }
 
         paul.narrateAsync(NORMAL, "Next we ask Kassandra to update a user.");
         if (seleniumHandler.isEnabled()) {
             processQueryAndWaitForAnswer("please rename Elke Mueller to Elke Mustafa, her email address has also changed to elke.mustafa@kassandra.org.");
-            assertTrue(userApi.getByEmail("elke.mustafa@kassandra.org").isPresent(), "User elke.mustafa@kassandra.org should exist");
-            assertEquals("Elke Mustafa", userApi.getByEmail("elke.mustafa@kassandra.org").get().getName(), "User elke.mueller@kassandra.org should have name =Elke Mustafa");
+            assertTrue(peg.userApi.getByEmail("elke.mustafa@kassandra.org").isPresent(), "User elke.mustafa@kassandra.org should exist");
+            assertEquals("Elke Mustafa", peg.userApi.getByEmail("elke.mustafa@kassandra.org").get().getName(), "User elke.mueller@kassandra.org should have name =Elke Mustafa");
 
             processQueryAndWaitForAnswer("delete Elke Mustafa she is no longer working with us.");
-            assertTrue(userApi.getByEmail("elke.mustafa@kassandra.org").isEmpty(), "User elke.mustafa@kassandra.org should not exist");
+            assertTrue(peg.userApi.getByEmail("elke.mustafa@kassandra.org").isEmpty(), "User elke.mustafa@kassandra.org should not exist");
         }
         //---------------------------------------------------------------------------------------
 

@@ -110,7 +110,7 @@ public class LocationListViewTest extends AbstractKeycloakUiTestUtil {
     }
 
     protected void read() {
-        User paul = userApi.getByEmail("christopher.paul@kassandra.org").get();
+        User paul = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
         lastLocation = paul.getLocations().getLast();
         String countryCode = lastLocation.getCountry();
         Locale locale      = new Locale("", countryCode);

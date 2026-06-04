@@ -18,10 +18,14 @@
 package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.util.AbstractTestUtil;
 import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -46,33 +50,35 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
-public class UserApiTest extends PersistingEntityGenerator {
-    private static final UUID   FAKE_ID           = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    public static final  String FIRST_START_DATE  = "2024-03-14";
-    public static final  String SECOND_START_DATE = "2025-07-01";
+public class UserApiTest extends AbstractTestUtil {
+    private static final UUID                      FAKE_ID           = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    public static final  String                    FIRST_START_DATE  = "2024-03-14";
+    public static final  String                    SECOND_START_DATE = "2025-07-01";
+    @Autowired
+    protected            PersistingEntityGenerator peg;
 
     @Test
     public void anonymousSecurity() {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomUsers(1);
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomUsers(1);
             SecurityContextHolder.clearContext();
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            List<User> allUsers = userApi.getAll();
+            List<User> allUsers = peg.userApi.getAll();
         });
 
         {
-            User      user           = expectedUsers.getFirst();
+            User      user           = peg.expectedUsers.getFirst();
             LocalDate lastWorkingDay = user.getLastWorkingDay();
             try {
                 user.setLastWorkingDay(LocalDate.parse(SECOND_START_DATE));
-                updateUser(user);
+                peg.updateUser(user);
                 fail("should not be able to update");
             } catch (AuthenticationCredentialsNotFoundException e) {
                 //restore fields to match db for later tests in @AfterEach
@@ -81,21 +87,27 @@ public class UserApiTest extends PersistingEntityGenerator {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            removeUser(expectedUsers.getFirst().getId());
+            peg.removeUser(peg.expectedUsers.getFirst().getId());
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User user = userApi.getById(expectedUsers.getFirst().getId());
+            User user = peg.userApi.getById(peg.expectedUsers.getFirst().getId());
         });
+    }
+
+    @BeforeEach
+    protected void beforeEach(TestInfo testInfo) {
+        super.beforeEach(testInfo);
+        peg.init();
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void create() throws Exception {
         //create the users
-        addRandomUsers(1);
+        peg.addRandomUsers(1);
 
-        testUsers();
+        peg.testUsers();
         printTables();
     }
 
@@ -103,76 +115,76 @@ public class UserApiTest extends PersistingEntityGenerator {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void delete() throws Exception {
         //create the users
-        addRandomUsers(2);
-        removeUser(expectedUsers.getFirst().getId());
+        peg.addRandomUsers(2);
+        peg.removeUser(peg.expectedUsers.getFirst().getId());
 
     }
 
     @Test
     public void getAllEmpty() throws Exception {
         //get empty list
-        setUser("admin-user", "ROLE_ADMIN");
-        List<User> allUsers = userApi.getAll();
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        List<User> allUsers = peg.userApi.getAll();
         assertEquals(0, allUsers.size());
     }
 
     @Test
     public void getById() throws Exception {
         {
-            setUser("admin-user", "ROLE_ADMIN");
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
             //create the users
-            addRandomUsers(1);
-            setUser("user", "ROLE_USER");
+            peg.addRandomUsers(1);
+            PersistingEntityGenerator.setUser("user", "ROLE_USER");
         }
 
         //get user by id
         {
-            User user = userApi.getById(expectedUsers.first().getId());
-            assertUserEquals(expectedUsers.first(), user);
+            User user = peg.userApi.getById(peg.expectedUsers.first().getId());
+            assertUserEquals(peg.expectedUsers.first(), user);
         }
 
-        testUsers();
+        peg.testUsers();
         printTables();
     }
 
     @Test
     public void getByUnknownId() throws Exception {
         {
-            setUser("admin-user", "ROLE_ADMIN");
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
             //create the users
-            addRandomUsers(1);
-            setUser("user", "ROLE_USER");
+            peg.addRandomUsers(1);
+            PersistingEntityGenerator.setUser("user", "ROLE_USER");
         }
 
         //get by unknown id
         {
             try {
-                User user = userApi.getById(FAKE_ID);
+                User user = peg.userApi.getById(FAKE_ID);
                 fail("User should not exist");
             } catch (ResponseStatusException e) {
                 //expected
             }
         }
-        testUsers();
+        peg.testUsers();
         printTables();
     }
 
     @Test
     public void search() throws Exception {
         {
-            setUser("admin-user", "ROLE_ADMIN");
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
             //create the users
-            addRandomUsers(10);
-            setUser("user", "ROLE_USER");
+            peg.addRandomUsers(10);
+            PersistingEntityGenerator.setUser("user", "ROLE_USER");
         }
 
         //get user by id
         {
-            List<User> users = userApi.searchByName("ri");
+            List<User> users = peg.userApi.searchByName("ri");
             assertEquals(3, users.size());
         }
 
-        testUsers();
+        peg.testUsers();
         printTables();
     }
 
@@ -183,13 +195,13 @@ public class UserApiTest extends PersistingEntityGenerator {
 
         //create the user with australian locale
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
             id = user.getId();
         }
 
         //test if the location was persisted correctly
         {
-            User user = userApi.getById(id);
+            User user = peg.userApi.getById(id);
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getLocations().getFirst().getStart());
         }
 
@@ -197,33 +209,33 @@ public class UserApiTest extends PersistingEntityGenerator {
 
         //user leaves the company
         {
-            User user = userApi.getById(id);
+            User user = peg.userApi.getById(id);
             user.setLastWorkingDay(LocalDate.parse(SECOND_START_DATE));
-            updateUser(user);
+            peg.updateUser(user);
         }
 
-        testUsers();
+        peg.testUsers();
         printTables();
     }
 
     @Test
     public void userSecurity() {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomUsers(1);
-            setUser("user", "ROLE_USER");
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomUsers(1);
+            PersistingEntityGenerator.setUser("user", "ROLE_USER");
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         });
 
         {
-            User      user           = expectedUsers.getFirst();
+            User      user           = peg.expectedUsers.getFirst();
             LocalDate lastWorkingDay = user.getLastWorkingDay();
             try {
                 user.setLastWorkingDay(LocalDate.parse(SECOND_START_DATE));
-                updateUser(user);
+                peg.updateUser(user);
                 fail("should not be able to update");
             } catch (AccessDeniedException e) {
                 //restore fields to match db for later tests in @AfterEach
@@ -232,7 +244,7 @@ public class UserApiTest extends PersistingEntityGenerator {
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            removeUser(expectedUsers.getFirst().getId());
+            peg.removeUser(peg.expectedUsers.getFirst().getId());
         });
     }
 }

@@ -66,13 +66,13 @@ public class CalendarTest extends AbstractGanttTestUtil {
         generateProductsIfNeeded(testInfo, randomCase);
 
         GanttContext gc = new GanttContext();
-        gc.allUsers    = userApi.getAll();
-        gc.allProducts = productApi.getAll();
-        gc.allVersions = versionApi.getAll();
-        gc.allFeatures = featureApi.getAll();
-        gc.allSprints  = sprintApi.getAll();
-        gc.allTasks    = taskApi.getAll();
-        gc.allWorklogs = worklogApi.getAll();
+        gc.allUsers    = peg.userApi.getAll();
+        gc.allProducts = peg.productApi.getAll();
+        gc.allVersions = peg.versionApi.getAll();
+        gc.allFeatures = peg.featureApi.getAll();
+        gc.allSprints  = peg.sprintApi.getAll();
+        gc.allTasks    = peg.taskApi.getAll();
+        gc.allWorklogs = peg.worklogApi.getAll();
         gc.initialize();
 
         for (User user : gc.allUsers) {

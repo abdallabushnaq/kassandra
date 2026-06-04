@@ -59,10 +59,10 @@ public class BurndownTest extends AbstractGanttTestUtil {
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        Sprint savedSprint = sprintApi.getAll().getFirst();
+        Sprint savedSprint = peg.sprintApi.getAll().getFirst();
         savedSprint.initialize();
-        savedSprint.initUserMap(userApi.getAll(savedSprint.getId()));
-        savedSprint.initTaskMap(taskApi.getAll(savedSprint.getId()), worklogApi.getAll(savedSprint.getId()));
+        savedSprint.initUserMap(peg.userApi.getAll(savedSprint.getId()));
+        savedSprint.initTaskMap(peg.taskApi.getAll(savedSprint.getId()), peg.worklogApi.getAll(savedSprint.getId()));
         {
             levelResourcesAndPersist(testInfo, savedSprint, null);
             generateBurndownChart(testInfo, savedSprint.getId());

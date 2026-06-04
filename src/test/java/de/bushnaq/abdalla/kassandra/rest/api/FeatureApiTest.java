@@ -18,10 +18,14 @@
 package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.Feature;
+import de.bushnaq.abdalla.kassandra.util.AbstractTestUtil;
 import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -47,33 +51,35 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
-public class FeatureApiTest extends PersistingEntityGenerator {
-    private static final UUID   FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    private static final String SECOND_NAME = "SECOND_NAME";
+public class FeatureApiTest extends AbstractTestUtil {
+    private static final UUID                      FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final String                    SECOND_NAME = "SECOND_NAME";
+    @Autowired
+    protected            PersistingEntityGenerator peg;
 
     @Test
     public void anonymousSecurity() {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomProducts(1);
             SecurityContextHolder.clearContext();
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            addRandomFeature(expectedVersions.getFirst());
+            peg.addRandomFeature(peg.expectedVersions.getFirst());
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            List<Feature> allFeatures = featureApi.getAll();
+            List<Feature> allFeatures = peg.featureApi.getAll();
         });
 
         {
-            Feature feature = expectedFeatures.getFirst();
+            Feature feature = peg.expectedFeatures.getFirst();
             UUID    id      = feature.getId();
             String  name    = feature.getName();
             feature.setName(SECOND_NAME);
             try {
-                updateFeature(feature);
+                peg.updateFeature(feature);
                 fail("should not be able to update");
             } catch (AuthenticationCredentialsNotFoundException e) {
                 //restore fields to match db for later tests in @AfterEach
@@ -82,32 +88,39 @@ public class FeatureApiTest extends PersistingEntityGenerator {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            removeFeature(expectedFeatures.get(0).getId());
+            peg.removeFeature(peg.expectedFeatures.get(0).getId());
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            Feature feature = featureApi.getById(expectedFeatures.getFirst().getId());
+            Feature feature = peg.featureApi.getById(peg.expectedFeatures.getFirst().getId());
         });
+    }
+
+    @BeforeEach
+    protected void beforeEach(TestInfo testInfo) {
+        super.beforeEach(testInfo);
+        peg.init();
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void create() throws Exception {
-        addRandomProducts(1);
+        printTables();
+        peg.addRandomProducts(1);
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createDuplicateNameFails() throws Exception {
         // Create product and version first
-        addRandomProducts(1);
+        peg.addRandomProducts(1);
 
         // Create first feature
-        Feature feature1 = addFeature(expectedVersions.get(0), "Feature1");
+        Feature feature1 = peg.addFeature(peg.expectedVersions.get(0), "Feature1");
 
         try {
             // Try to create a second feature with the same name
-            Feature feature2 = addFeature(expectedVersions.get(0), "Feature1");
+            Feature feature2 = peg.addFeature(peg.expectedVersions.get(0), "Feature1");
             fail("Should not be able to create a feature with duplicate name");
         } catch (Exception e) {
             // Expected exception for duplicate name
@@ -119,16 +132,16 @@ public class FeatureApiTest extends PersistingEntityGenerator {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void delete() throws Exception {
         //create the users
-        addRandomProducts(2);
-        removeFeature(expectedFeatures.get(1).getId());
+        peg.addRandomProducts(2);
+        peg.removeFeature(peg.expectedFeatures.get(1).getId());
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void deleteUsingFakeId() throws Exception {
-        addRandomProducts(2);
+        peg.addRandomProducts(2);
         try {
-            removeFeature(FAKE_ID);
+            peg.removeFeature(FAKE_ID);
         } catch (ServerErrorException e) {
             //expected
         }
@@ -137,14 +150,14 @@ public class FeatureApiTest extends PersistingEntityGenerator {
     @Test
     public void getAll() throws Exception {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(3);
-            List<Feature> allFeatures = featureApi.getAll();
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomProducts(3);
+            List<Feature> allFeatures = peg.featureApi.getAll();
             assertEquals(1 + 3, allFeatures.size());// the "Default" Feature is always there
         }
         {
-            setUser("user", "ROLE_USER");
-            List<Feature> allFeatures = featureApi.getAll();
+            PersistingEntityGenerator.setUser("user", "ROLE_USER");
+            List<Feature> allFeatures = peg.featureApi.getAll();
             assertEquals(0, allFeatures.size());
         }
     }
@@ -152,16 +165,16 @@ public class FeatureApiTest extends PersistingEntityGenerator {
     @Test
     @WithMockUser(roles = "USER")
     public void getAllEmpty() throws Exception {
-        List<Feature> allFeatures = featureApi.getAll();
+        List<Feature> allFeatures = peg.featureApi.getAll();
         assertEquals(0, allFeatures.size());
     }
 
     @Test
     public void getByFakeId() throws Exception {
-        setUser("admin-user", "ROLE_ADMIN");
-        addRandomProducts(1);
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        peg.addRandomProducts(1);
         try {
-            featureApi.getById(FAKE_ID);
+            peg.featureApi.getById(FAKE_ID);
             fail("Feature should not exist");
         } catch (ResponseStatusException e) {
             //expected
@@ -170,37 +183,37 @@ public class FeatureApiTest extends PersistingEntityGenerator {
 
     @Test
     public void getById() throws Exception {
-        setUser("admin-user", "ROLE_ADMIN");
-        addRandomProducts(1);
-        Feature feature = featureApi.getById(expectedFeatures.getFirst().getId());
-        assertFeatureEquals(expectedFeatures.getFirst(), feature, true); // shallow test
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        peg.addRandomProducts(1);
+        Feature feature = peg.featureApi.getById(peg.expectedFeatures.getFirst().getId());
+        assertFeatureEquals(peg.expectedFeatures.getFirst(), feature, true); // shallow test
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void update() throws Exception {
-        addRandomProducts(2);
-        Feature feature = expectedFeatures.get(1);
+        peg.addRandomProducts(2);
+        Feature feature = peg.expectedFeatures.get(1);
         feature.setName(SECOND_NAME);
-        updateFeature(feature);
+        peg.updateFeature(feature);
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateToDuplicateNameFails() throws Exception {
         // Create product and version first
-        addRandomProducts(1);
+        peg.addRandomProducts(1);
 
         // Create two features
-        Feature feature1 = addFeature(expectedVersions.get(0), "Feature1");
-        Feature feature2 = addFeature(expectedVersions.get(0), "Feature2");
+        Feature feature1 = peg.addFeature(peg.expectedVersions.get(0), "Feature1");
+        Feature feature2 = peg.addFeature(peg.expectedVersions.get(0), "Feature2");
 
         // Try to update feature2 to have the same name as feature1
         String originalName = feature2.getName();
         feature2.setName(feature1.getName());
 
         try {
-            updateFeature(feature2);
+            peg.updateFeature(feature2);
             fail("Should not be able to update a feature to have a duplicate name");
         } catch (Exception e) {
             // Expected exception for duplicate name
@@ -214,14 +227,14 @@ public class FeatureApiTest extends PersistingEntityGenerator {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateUsingFakeId() throws Exception {
-        addRandomProducts(2);
-        Feature feature = expectedFeatures.getFirst();
+        peg.addRandomProducts(2);
+        Feature feature = peg.expectedFeatures.getFirst();
         UUID    id      = feature.getId();
         String  name    = feature.getName();
         feature.setId(FAKE_ID);
         feature.setName(SECOND_NAME);
         try {
-            updateFeature(feature);
+            peg.updateFeature(feature);
             fail("should not be able to update");
         } catch (ServerErrorException e) {
             //expected
@@ -233,21 +246,21 @@ public class FeatureApiTest extends PersistingEntityGenerator {
     @Test
     public void userSecurity() {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
-            setUser("user", "ROLE_USER");
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomProducts(1);
+            PersistingEntityGenerator.setUser("user", "ROLE_USER");
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            addRandomFeature(expectedVersions.getFirst());
+            peg.addRandomFeature(peg.expectedVersions.getFirst());
         });
 
         {
-            Feature feature = expectedFeatures.getFirst();
+            Feature feature = peg.expectedFeatures.getFirst();
             String  name    = feature.getName();
             feature.setName(SECOND_NAME);
             try {
-                updateFeature(feature);
+                peg.updateFeature(feature);
                 fail("should not be able to update");
             } catch (AccessDeniedException e) {
                 //restore fields to match db for later tests in @AfterEach
@@ -256,7 +269,7 @@ public class FeatureApiTest extends PersistingEntityGenerator {
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            removeFeature(expectedFeatures.get(0).getId());
+            peg.removeFeature(peg.expectedFeatures.get(0).getId());
         });
     }
 }

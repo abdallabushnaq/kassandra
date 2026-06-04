@@ -18,10 +18,14 @@
 package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.Version;
+import de.bushnaq.abdalla.kassandra.util.AbstractTestUtil;
 import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -47,31 +51,33 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
-public class VersionApiTest extends PersistingEntityGenerator {
-    private static final UUID   FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    private static final String SECOND_NAME = "SECOND_NAME";
+public class VersionApiTest extends AbstractTestUtil {
+    private static final UUID                      FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final String                    SECOND_NAME = "SECOND_NAME";
+    @Autowired
+    protected            PersistingEntityGenerator peg;
 
     @Test
     public void anonymousSecurity() {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomProducts(1);
             SecurityContextHolder.clearContext();
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            addRandomVersion(expectedProducts.getFirst());
+            peg.addRandomVersion(peg.expectedProducts.getFirst());
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            List<Version> allVersions = versionApi.getAll();
+            List<Version> allVersions = peg.versionApi.getAll();
         });
         {
-            Version version = expectedVersions.getFirst();
+            Version version = peg.expectedVersions.getFirst();
             String  name    = version.getName();
             version.setName(SECOND_NAME);
             try {
-                updateVersion(version);
+                peg.updateVersion(version);
                 fail("should not be able to update");
             } catch (AuthenticationCredentialsNotFoundException e) {
                 //restore fields to match db for later tests in @AfterEach
@@ -80,32 +86,38 @@ public class VersionApiTest extends PersistingEntityGenerator {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            removeVersion(expectedVersions.get(0).getId());
+            peg.removeVersion(peg.expectedVersions.get(0).getId());
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            Version version = versionApi.getById(expectedVersions.getFirst().getId());
+            Version version = peg.versionApi.getById(peg.expectedVersions.getFirst().getId());
         });
+    }
+
+    @BeforeEach
+    protected void beforeEach(TestInfo testInfo) {
+        super.beforeEach(testInfo);
+        peg.init();
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void create() throws Exception {
-        addRandomProducts(1);
+        peg.addRandomProducts(1);
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createDuplicateNameFails() throws Exception {
         // Create product first
-        addRandomProducts(1);
+        peg.addRandomProducts(1);
 
         // Create first version
-        Version version1 = addVersion(expectedProducts.get(0), "Version1");
+        Version version1 = peg.addVersion(peg.expectedProducts.get(0), "Version1");
 
         try {
             // Try to create a second version with the same name
-            Version version2 = addVersion(expectedProducts.get(0), "Version1");
+            Version version2 = peg.addVersion(peg.expectedProducts.get(0), "Version1");
             fail("Should not be able to create a version with duplicate name");
         } catch (Exception e) {
             // Expected exception for duplicate name
@@ -117,16 +129,16 @@ public class VersionApiTest extends PersistingEntityGenerator {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void delete() throws Exception {
         //create the users
-        addRandomProducts(2);
-        removeVersion(expectedVersions.getFirst().getId());
+        peg.addRandomProducts(2);
+        peg.removeVersion(peg.expectedVersions.getFirst().getId());
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void deleteUsingFakeId() throws Exception {
-        addRandomProducts(2);
+        peg.addRandomProducts(2);
         try {
-            removeVersion(FAKE_ID);
+            peg.removeVersion(FAKE_ID);
         } catch (ServerErrorException e) {
             //expected
         }
@@ -135,39 +147,39 @@ public class VersionApiTest extends PersistingEntityGenerator {
     @Test
     public void getAll() throws Exception {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(3);
-            List<Version> allVersions = versionApi.getAll();
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomProducts(3);
+            List<Version> allVersions = peg.versionApi.getAll();
             assertEquals(1 + 3, allVersions.size());// including the "Default" Version
         }
         {
-            setUser("user", "ROLE_USER");
-            List<Version> allVersions = versionApi.getAll();
+            PersistingEntityGenerator.setUser("user", "ROLE_USER");
+            List<Version> allVersions = peg.versionApi.getAll();
             assertEquals(0, allVersions.size());// no acl
         }
     }
 
     @Test
     public void getAllByProductId() throws Exception {
-        setUser("admin-user", "ROLE_ADMIN");
-        addRandomProducts(3);
-        List<Version> allVersions = versionApi.getAll(expectedProducts.getFirst().getId());
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        peg.addRandomProducts(3);
+        List<Version> allVersions = peg.versionApi.getAll(peg.expectedProducts.getFirst().getId());
         assertEquals(1, allVersions.size());
     }
 
     @Test
     @WithMockUser(roles = "USER")
     public void getAllEmpty() throws Exception {
-        List<Version> allVersions = versionApi.getAll();
+        List<Version> allVersions = peg.versionApi.getAll();
         assertEquals(0, allVersions.size());
     }
 
     @Test
     public void getByFakeId() throws Exception {
-        setUser("admin-user", "ROLE_ADMIN");
-        addRandomProducts(1);
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        peg.addRandomProducts(1);
         try {
-            versionApi.getById(FAKE_ID);
+            peg.versionApi.getById(FAKE_ID);
             fail("Version should not exist");
         } catch (ResponseStatusException e) {
             //expected
@@ -176,37 +188,37 @@ public class VersionApiTest extends PersistingEntityGenerator {
 
     @Test
     public void getById() throws Exception {
-        setUser("admin-user", "ROLE_ADMIN");
-        addRandomProducts(1);
-        Version version = versionApi.getById(expectedVersions.getFirst().getId());
-        assertEquals(expectedVersions.getFirst().getId(), version.getId());
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        peg.addRandomProducts(1);
+        Version version = peg.versionApi.getById(peg.expectedVersions.getFirst().getId());
+        assertEquals(peg.expectedVersions.getFirst().getId(), version.getId());
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void update() throws Exception {
-        addRandomProducts(2);
-        Version version = expectedVersions.getFirst();
+        peg.addRandomProducts(2);
+        Version version = peg.expectedVersions.getFirst();
         version.setName(SECOND_NAME);
-        updateVersion(version);
+        peg.updateVersion(version);
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateToDuplicateNameFails() throws Exception {
         // Create product first
-        addRandomProducts(1);
+        peg.addRandomProducts(1);
 
         // Create two versions
-        Version version1 = addVersion(expectedProducts.get(0), "Version1");
-        Version version2 = addVersion(expectedProducts.get(0), "Version2");
+        Version version1 = peg.addVersion(peg.expectedProducts.get(0), "Version1");
+        Version version2 = peg.addVersion(peg.expectedProducts.get(0), "Version2");
 
         // Try to update version2 to have the same name as version1
         String originalName = version2.getName();
         version2.setName(version1.getName());
 
         try {
-            updateVersion(version2);
+            peg.updateVersion(version2);
             fail("Should not be able to update a version to have a duplicate name");
         } catch (ResponseStatusException e) {
             // Expected exception for duplicate name
@@ -220,14 +232,14 @@ public class VersionApiTest extends PersistingEntityGenerator {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateUsingFakeId() throws Exception {
-        addRandomProducts(2);
-        Version version = expectedVersions.getFirst();
+        peg.addRandomProducts(2);
+        Version version = peg.expectedVersions.getFirst();
         UUID    id      = version.getId();
         String  name    = version.getName();
         version.setId(FAKE_ID);
         version.setName(SECOND_NAME);
         try {
-            updateVersion(version);
+            peg.updateVersion(version);
             fail("should not be able to update");
         } catch (ServerErrorException e) {
             //restore fields to match db for later tests in @AfterEach
@@ -239,21 +251,21 @@ public class VersionApiTest extends PersistingEntityGenerator {
     @Test
     public void userSecurity() {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
-            setUser("user", "ROLE_USER");
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomProducts(1);
+            PersistingEntityGenerator.setUser("user", "ROLE_USER");
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            addRandomVersion(expectedProducts.getFirst());
+            peg.addRandomVersion(peg.expectedProducts.getFirst());
         });
 
         {
-            Version testVersion = expectedVersions.getFirst();
+            Version testVersion = peg.expectedVersions.getFirst();
             String  name        = testVersion.getName();
             testVersion.setName(SECOND_NAME);
             try {
-                updateVersion(testVersion);
+                peg.updateVersion(testVersion);
             } catch (AccessDeniedException e) {
                 //restore fields to match db for later tests in @AfterEach
                 testVersion.setName(name);
@@ -261,7 +273,7 @@ public class VersionApiTest extends PersistingEntityGenerator {
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            removeVersion(expectedVersions.get(0).getId());
+            peg.removeVersion(peg.expectedVersions.get(0).getId());
         });
     }
 }

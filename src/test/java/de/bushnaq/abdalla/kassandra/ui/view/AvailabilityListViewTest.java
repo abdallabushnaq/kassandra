@@ -89,7 +89,7 @@ public class AvailabilityListViewTest extends AbstractKeycloakUiTestUtil {
     private final String                     testUsername           = "christopher.paul@kassandra.org";
 
     protected void read() {
-        User paul = userApi.getByEmail("christopher.paul@kassandra.org").get();
+        User paul = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
         lastAvailability = paul.getAvailabilities().getLast();
 //        lastLocation     = paul.getLocations().getLast();
 

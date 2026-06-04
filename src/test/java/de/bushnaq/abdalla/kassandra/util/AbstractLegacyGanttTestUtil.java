@@ -17,15 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.util;
 
-import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
-import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Task;
-import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.User;
-import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
-import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.util.MpxjUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -39,12 +34,14 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.MethodName.class)
+@Deprecated
 public class AbstractLegacyGanttTestUtil extends AbstractGanttTestUtil {
     protected Map<String, net.sf.mpxj.Task>     mpxjTaskMap = new HashMap<>();
     protected Map<String, net.sf.mpxj.Resource> resourceMap = new HashMap<>();
@@ -72,10 +69,10 @@ public class AbstractLegacyGanttTestUtil extends AbstractGanttTestUtil {
             }
         }
         gc.initialize();
-        Sprint readSprint = sprintApi.getById(expectedSprints.getFirst().getId());
+        Sprint readSprint = peg.sprintApi.getById(peg.expectedSprints.getFirst().getId());
         readSprint.initialize();
-        readSprint.initUserMap(userApi.getAll(readSprint.getId()));
-        readSprint.initTaskMap(taskApi.getAll(readSprint.getId()), worklogApi.getAll(readSprint.getId()));
+        readSprint.initUserMap(peg.userApi.getAll(readSprint.getId()));
+        readSprint.initTaskMap(peg.taskApi.getAll(readSprint.getId()), peg.worklogApi.getAll(readSprint.getId()));
 
 //        Sprint sprint = expectedSprints.getFirst();
         logTasks(readSprint, gc.allSprints.getFirst());

@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
@@ -68,17 +69,17 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
     UserRepository userRepository;
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -104,35 +105,35 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
 
         // User2 creates a product with a version
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product2 = addProduct("User2 Product");
-        Version version2 = addVersion(product2, "Version 2.0");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = peg.addProduct("User2 Product");
+        Version version2 = peg.addVersion(product2, "Version 2.0");
 
         // Admin can access all versions
-        setUser(admin1.getEmail(), "ROLE_ADMIN");
-        List<Version> allVersions = versionApi.getAll();
+        PersistingEntityGenerator.setUser(admin1.getEmail(), "ROLE_ADMIN");
+        List<Version> allVersions = peg.versionApi.getAll();
         assertEquals(1 + 2, allVersions.size(), "Admin should see all versions");// the "Default" Version is always there
 
         // Admin can get specific versions
-        Version retrieved1 = versionApi.getById(version1.getId());
+        Version retrieved1 = peg.versionApi.getById(version1.getId());
         assertNotNull(retrieved1);
         assertEquals(version1.getId(), retrieved1.getId());
 
-        Version retrieved2 = versionApi.getById(version2.getId());
+        Version retrieved2 = peg.versionApi.getById(version2.getId());
         assertNotNull(retrieved2);
         assertEquals(version2.getId(), retrieved2.getId());
 
         // Admin can update any version
         version1.setName("Updated by Admin");
-        versionApi.update(version1);
+        peg.versionApi.update(version1);
 
         // Admin can delete any version
-        versionApi.deleteById(version2.getId());
+        peg.versionApi.deleteById(version2.getId());
     }
 
     /**
@@ -149,27 +150,27 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with multiple versions
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1  = addProduct("User1 Product");
-        Version version1a = addVersion(product1, "Version 1.0");
-        Version version1b = addVersion(product1, "Version 1.1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1  = peg.addProduct("User1 Product");
+        Version version1a = peg.addVersion(product1, "Version 1.0");
+        Version version1b = peg.addVersion(product1, "Version 1.1");
 
         // User1 can get all versions for their product
-        List<Version> versions = versionApi.getAll(product1.getId());
+        List<Version> versions = peg.versionApi.getAll(product1.getId());
         assertEquals(2, versions.size(), "User1 should see all versions of their product");
 
         // User2 cannot get versions for user1's product
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            versionApi.getAll(product1.getId());
+            peg.versionApi.getAll(product1.getId());
         });
 
         // After granting access, user2 can get versions
-        setUser(user1.getEmail(), "ROLE_USER");
-        productAclApi.grantUserAccess(product1.getId(), user2.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        peg.productAclApi.grantUserAccess(product1.getId(), user2.getId());
 
-        setUser(user2.getEmail(), "ROLE_USER");
-        List<Version> versionsAfterGrant = versionApi.getAll(product1.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        List<Version> versionsAfterGrant = peg.versionApi.getAll(product1.getId());
         assertEquals(2, versionsAfterGrant.size(), "User2 should see all versions after being granted access");
     }
 
@@ -188,32 +189,32 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // Admin creates a group with user1
-        setUser(admin1.getEmail(), "ROLE_ADMIN");
-        var group = userGroupApi.create("Dev Team", "Development Team", java.util.Set.of(user1.getId()));
+        PersistingEntityGenerator.setUser(admin1.getEmail(), "ROLE_ADMIN");
+        var group = peg.userGroupApi.create("Dev Team", "Development Team", java.util.Set.of(user1.getId()));
 
         // User2 creates a product with a version
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product = addProduct("Team Product");
-        Version version = addVersion(product, "Version 1.0");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product = peg.addProduct("Team Product");
+        Version version = peg.addVersion(product, "Version 1.0");
 
         // User1 cannot access the version
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            versionApi.getById(version.getId());
+            peg.versionApi.getById(version.getId());
         });
 
         // User2 grants group access to the product
-        setUser(user2.getEmail(), "ROLE_USER");
-        productAclApi.grantGroupAccess(product.getId(), group.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        peg.productAclApi.grantGroupAccess(product.getId(), group.getId());
 
         // Now user1 can access the version (via group membership)
-        setUser(user1.getEmail(), "ROLE_USER");
-        Version retrieved = versionApi.getById(version.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Version retrieved = peg.versionApi.getById(version.getId());
         assertNotNull(retrieved);
         assertEquals(version.getId(), retrieved.getId());
 
         // User1 can also see it in getAll()
-        List<Version> allVersions = versionApi.getAll();
+        List<Version> allVersions = peg.versionApi.getAll();
         assertTrue(allVersions.stream().anyMatch(v -> v.getId().equals(version.getId())), "User1 should see the version via group access");
     }
 
@@ -231,26 +232,26 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product = addProduct("User1 Product");
-        Version version = addVersion(product, "Version 1.0");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product = peg.addProduct("User1 Product");
+        Version version = peg.addVersion(product, "Version 1.0");
 
         // User1 grants user2 access to the product
-        productAclApi.grantUserAccess(product.getId(), user2.getId());
+        peg.productAclApi.grantUserAccess(product.getId(), user2.getId());
 
         // User2 can access the version
-        setUser(user2.getEmail(), "ROLE_USER");
-        Version retrieved = versionApi.getById(version.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Version retrieved = peg.versionApi.getById(version.getId());
         assertNotNull(retrieved);
 
         // User1 revokes user2's access
-        setUser(user1.getEmail(), "ROLE_USER");
-        productAclApi.revokeUserAccess(product.getId(), user2.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        peg.productAclApi.revokeUserAccess(product.getId(), user2.getId());
 
         // User2 can no longer access the version
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            versionApi.getById(version.getId());
+            peg.versionApi.getById(version.getId());
         });
     }
 
@@ -267,28 +268,28 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
 
         // User2 creates a product with a version
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product2 = addProduct("User2 Product");
-        Version version2 = addVersion(product2, "Version 2.0");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = peg.addProduct("User2 Product");
+        Version version2 = peg.addVersion(product2, "Version 2.0");
 
         // User1 cannot access version2
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            versionApi.getById(version2.getId());
+            peg.versionApi.getById(version2.getId());
         });
 
         // User2 grants user1 access to product2
-        setUser(user2.getEmail(), "ROLE_USER");
-        productAclApi.grantUserAccess(product2.getId(), user1.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        peg.productAclApi.grantUserAccess(product2.getId(), user1.getId());
 
         // Now user1 can access version2
-        setUser(user1.getEmail(), "ROLE_USER");
-        Version retrieved = versionApi.getById(version2.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Version retrieved = peg.versionApi.getById(version2.getId());
         assertNotNull(retrieved);
         assertEquals(version2.getId(), retrieved.getId());
     }
@@ -307,40 +308,40 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
 
         // User2 creates a product with a version
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product2 = addProduct("User2 Product");
-        Version version2 = addVersion(product2, "Version 2.0");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = peg.addProduct("User2 Product");
+        Version version2 = peg.addVersion(product2, "Version 2.0");
 
         // User1 can access their own version
-        setUser(user1.getEmail(), "ROLE_USER");
-        Version retrieved1 = versionApi.getById(version1.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Version retrieved1 = peg.versionApi.getById(version1.getId());
         assertNotNull(retrieved1);
         assertEquals(version1.getId(), retrieved1.getId());
 
         // User1 cannot access user2's version
         assertThrows(AccessDeniedException.class, () -> {
-            versionApi.getById(version2.getId());
+            peg.versionApi.getById(version2.getId());
         });
 
         // User1 can only see their own versions in getAll()
-        List<Version> user1Versions = versionApi.getAll();
+        List<Version> user1Versions = peg.versionApi.getAll();
         assertEquals(1 + 1, user1Versions.size(), "User1 should only see their own versions");// the "Default" Version is always there
         assertEquals(version1.getId(), user1Versions.get(1).getId());
 
         // User2 can access their own version
-        setUser(user2.getEmail(), "ROLE_USER");
-        Version retrieved2 = versionApi.getById(version2.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Version retrieved2 = peg.versionApi.getById(version2.getId());
         assertNotNull(retrieved2);
         assertEquals(version2.getId(), retrieved2.getId());
 
         // User2 cannot access user1's version
         assertThrows(AccessDeniedException.class, () -> {
-            versionApi.getById(version1.getId());
+            peg.versionApi.getById(version1.getId());
         });
     }
 
@@ -357,13 +358,13 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
 
         // User2 tries to create a version for user1's product - should fail
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            addVersion(product1, "Unauthorized Version");
+            peg.addVersion(product1, "Unauthorized Version");
         });
     }
 
@@ -380,14 +381,14 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
 
         // User2 tries to delete user1's version - should fail
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            versionApi.deleteById(version1.getId());
+            peg.versionApi.deleteById(version1.getId());
         });
     }
 
@@ -404,15 +405,15 @@ public class VersionAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
 
         // User2 tries to update user1's version - should fail
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         version1.setName("Hacked Version");
         assertThrows(AccessDeniedException.class, () -> {
-            versionApi.update(version1);
+            peg.versionApi.update(version1);
         });
     }
 }

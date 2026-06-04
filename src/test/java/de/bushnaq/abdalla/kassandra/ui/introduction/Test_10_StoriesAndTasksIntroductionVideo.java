@@ -66,37 +66,37 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 public class Test_10_StoriesAndTasksIntroductionVideo extends AbstractIntroductionVideo {
-    public static final NarratorAttribute          EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
-    public static final String                     NEW_MILESTONE = "New Milestone-";
-    public static final String                     NEW_STORY     = "New Story-";
-    public static final String                     NEW_TASK      = "New Task-";
-    public static final NarratorAttribute          NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final NarratorAttribute EXCITED       = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f)/*.withVoice("chatterbox")*/;
+    public static final String            NEW_MILESTONE = "New Milestone-";
+    public static final String            NEW_STORY     = "New Story-";
+    public static final String            NEW_TASK      = "New Task-";
+    public static final NarratorAttribute NORMAL        = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f)/*.withVoice("chatterbox")*/;
     @Autowired
     AboutViewTester aboutViewTester;
     @Autowired
-    private             AvailabilityListViewTester availabilityListViewTester;
+    private AvailabilityListViewTester availabilityListViewTester;
     @Autowired
-    private             FeatureListViewTester      featureListViewTester;
-    private             String                     featureName;
+    private FeatureListViewTester      featureListViewTester;
+    private String                     featureName;
     @Autowired
-    private             LocationListViewTester     locationListViewTester;
+    private LocationListViewTester     locationListViewTester;
     @Autowired
-    private             OffDayListViewTester       offDayListViewTester;
+    private OffDayListViewTester       offDayListViewTester;
     @Autowired
-    private             ProductListViewTester      productListViewTester;
-    private             String                     productName;
+    private ProductListViewTester      productListViewTester;
+    private String                     productName;
     @Autowired
-    private             HumanizedSeleniumHandler   seleniumHandler;
+    private HumanizedSeleniumHandler   seleniumHandler;
     @Autowired
-    private             SprintListViewTester       sprintListViewTester;
-    private             String                     sprintName;
+    private SprintListViewTester       sprintListViewTester;
+    private String                     sprintName;
     @Autowired
-    private             TaskListViewTester         taskListViewTester;
+    private TaskListViewTester         taskListViewTester;
     @Autowired
-    private             UserListViewTester         userListViewTester;
+    private UserListViewTester         userListViewTester;
     @Autowired
-    private             VersionListViewTester      versionListViewTester;
-    private             String                     versionName;
+    private VersionListViewTester      versionListViewTester;
+    private String                     versionName;
 
     @BeforeAll
     static void beforeAll() {
@@ -121,10 +121,10 @@ public class Test_10_StoriesAndTasksIntroductionVideo extends AbstractIntroducti
         versionName = "1.0.0";
         featureName = "Property request api";
         sprintName  = "Minimum Viable Product";
-        Product product = addProduct(productName);
-        Version version = addVersion(product, versionName);
-        Feature feature = addFeature(version, featureName);
-        Sprint  sprint  = addSprint(feature, sprintName);
+        Product product = peg.addProduct(productName);
+        Version version = peg.addVersion(product, versionName);
+        Feature feature = peg.addFeature(version, featureName);
+        Sprint  sprint  = peg.addSprint(feature, sprintName);
 
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         paul.setEnabled(true);

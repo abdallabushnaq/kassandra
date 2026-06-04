@@ -32,10 +32,10 @@ import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectFile;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -66,37 +66,39 @@ import static org.junit.jupiter.api.Assertions.fail;
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @Slf4j
-public class AbstractGanttTestUtil extends PersistingEntityGenerator {
+public class AbstractGanttTestUtil extends AbstractTestUtil {
     /**
      * Probability that a sprint runs with zero delay (on schedule).
      */
-    private static final float                  DELAY_PROBABILITY         = 0.4f;
+    private static final float                     DELAY_PROBABILITY         = 0.4f;
     /**
      * Maximum over-run factor applied to {@code maxEstimate} when a sprint is delayed.
      */
-    private static final float                  MAX_DELAY_FACTOR          = 0.3f;
+    private static final float                     MAX_DELAY_FACTOR          = 0.3f;
     @Autowired
-    protected            Context                context;
+    protected            Context                   context;
     @Autowired
-    private              H2DatabaseStateManager databaseStateManager;
-    public final         DateTimeFormatter      dtfymdhmss                = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm:ss.SSS");
-    protected final      List<Throwable>        exceptions                = new ArrayList<>();
-    protected            String                 testReferenceResultFolder = "test-reference-results";
-    protected            String                 testResultFolder          = "test-results";
+    private              H2DatabaseStateManager    databaseStateManager;
+    public final         DateTimeFormatter         dtfymdhmss                = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm:ss.SSS");
+    protected final      List<Throwable>           exceptions                = new ArrayList<>();
+    @Autowired
+    protected            PersistingEntityGenerator peg;
+    protected            String                    testReferenceResultFolder = "test-reference-results";
+    protected            String                    testResultFolder          = "test-results";
 
     protected void addOneProduct(String sprintName) {
         int       count         = 1;
         String    testUserEmail = "christopher.paul@kassandra.org";
         LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
-        addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
+        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(PersistingEntityGenerator.userIndex), 0.5f);
 
         for (int i = 0; i < count; i++) {
-            Product product = addProduct(nameGenerator.generateProductName(i));
-            Version version = addVersion(product, nameGenerator.generateVersionName(i));
-            Feature feature = addFeature(version, nameGenerator.generateFeatureName(i));
-            addSprint(feature, sprintName);
+            Product product = peg.addProduct(peg.nameGenerator.generateProductName(i));
+            Version version = peg.addVersion(product, peg.nameGenerator.generateVersionName(i));
+            Feature feature = peg.addFeature(version, peg.nameGenerator.generateFeatureName(i));
+            peg.addSprint(feature, sprintName);
         }
-        testProducts();
+        peg.testProducts();
     }
 
     /**
@@ -126,6 +128,13 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
         return true;
     }
 
+    @BeforeEach
+    protected void beforeEach(TestInfo testInfo) {
+        super.beforeEach(testInfo);
+        peg.init();
+    }
+
+
     private void compareResults(TestInfo testInfo) throws IOException {
         String expectedJson = Files.readString(Paths.get(testReferenceResultFolder, TestInfoUtil.getTestMethodName(testInfo) + ".json"));
         String actualJson   = Files.readString(Paths.get(testResultFolder, TestInfoUtil.getTestMethodName(testInfo) + ".json"));
@@ -133,13 +142,13 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
         try {
             TypeReference<Map<String, Object>> typeRef = new TypeReference<>() {
             };
-            Map<String, Object> referenceMap = jsonMapper.readValue(expectedJson, typeRef);
-            Map<String, Object> map          = jsonMapper.readValue(actualJson, typeRef);
+            Map<String, Object> referenceMap = peg.jsonMapper.readValue(expectedJson, typeRef);
+            Map<String, Object> map          = peg.jsonMapper.readValue(actualJson, typeRef);
 
             // Compare users
-            List<User> referenceUsers = jsonMapper.convertValue(referenceMap.get("users"), new TypeReference<Collection<User>>() {
+            List<User> referenceUsers = peg.jsonMapper.convertValue(referenceMap.get("users"), new TypeReference<Collection<User>>() {
             }).stream().sorted(Comparator.comparing(User::getName)).toList();
-            List<User> users = jsonMapper.convertValue(map.get("users"), new TypeReference<Collection<User>>() {
+            List<User> users = peg.jsonMapper.convertValue(map.get("users"), new TypeReference<Collection<User>>() {
             }).stream().sorted(Comparator.comparing(User::getName)).toList();
             assertEquals(referenceUsers.size(), users.size(), "Number of users differs");
 
@@ -149,14 +158,14 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
             }
 
             // Compare sprints
-            Sprint referenceSprint = jsonMapper.convertValue(referenceMap.get("sprint"), Sprint.class);
-            Sprint sprint          = jsonMapper.convertValue(map.get("sprint"), Sprint.class);
+            Sprint referenceSprint = peg.jsonMapper.convertValue(referenceMap.get("sprint"), Sprint.class);
+            Sprint sprint          = peg.jsonMapper.convertValue(map.get("sprint"), Sprint.class);
             assertSprintEquals(referenceSprint, sprint);
 
             // Compare tasks
-            List<Task> referenceTasks = jsonMapper.convertValue(referenceMap.get("tasks"), new TypeReference<List<Task>>() {
+            List<Task> referenceTasks = peg.jsonMapper.convertValue(referenceMap.get("tasks"), new TypeReference<List<Task>>() {
             });
-            List<Task> tasks = jsonMapper.convertValue(map.get("tasks"), new TypeReference<List<Task>>() {
+            List<Task> tasks = peg.jsonMapper.convertValue(map.get("tasks"), new TypeReference<List<Task>>() {
             });
             for (Task task : tasks)
                 sprint.addTask(task);
@@ -243,10 +252,10 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
 //        sprint.initialize();
 //        sprint.initUserMap(userApi.getAll(sprint.getId()));
 //        sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
-        Sprint sprint = sprintApi.getById(sprintId);
+        Sprint sprint = peg.sprintApi.getById(sprintId);
         sprint.initialize();
-        sprint.initUserMap(userApi.getAll(sprintId));
-        sprint.initTaskMap(taskApi.getAll(sprintId), worklogApi.getAll(sprintId));
+        sprint.initUserMap(peg.userApi.getAll(sprintId));
+        sprint.initTaskMap(peg.taskApi.getAll(sprintId), peg.worklogApi.getAll(sprintId));
         sprint.recalculate(ParameterOptions.getLocalNow());
 //        sprint.recalculate(ParameterOptions.getLocalNow());
         RenderDao     dao         = RenderUtil.createBurndownRenderDao(context, sprint, TestInfoUtil.getTestMethodName(testInfo), ParameterOptions.getLocalNow(), width, height,  /*urlPrefix +*/ "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
@@ -257,7 +266,7 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
 
     //TODO remove
     private void generateDebugGanttCharts(TestInfo testInfo, String testFolder) throws Exception {
-        for (Sprint sprint : expectedSprints) {
+        for (Sprint sprint : peg.expectedSprints) {
 //            sprint.initialize();
 //            sprint.initUserMap(userApi.getAll(sprint.getId()));
 //            sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
@@ -286,10 +295,10 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
     }
 
     protected void generateGanttChart(TestInfo testInfo, UUID sprintId, ProjectFile projectFile) throws Exception {
-        Sprint sprint = sprintApi.getById(sprintId);
+        Sprint sprint = peg.sprintApi.getById(sprintId);
         sprint.initialize();
-        sprint.initUserMap(userApi.getAll(sprintId));
-        sprint.initTaskMap(taskApi.getAll(sprintId), worklogApi.getAll(sprintId));
+        sprint.initUserMap(peg.userApi.getAll(sprintId));
+        sprint.initTaskMap(peg.taskApi.getAll(sprintId), peg.worklogApi.getAll(sprintId));
         sprint.recalculate(ParameterOptions.getLocalNow());
         RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
         GanttChart chart = new GanttChart("/", dao);
@@ -330,25 +339,25 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
     }
 
     private void generateProductsInternal(TestInfo testInfo, RandomCase randomCase) throws Exception {
-        random.setSeed(randomCase.getSeed());
-        expectedUsers.clear();
+        peg.random.setSeed(randomCase.getSeed());
+        peg.expectedUsers.clear();
         try (Profiler pc = new Profiler(SampleType.JPA)) {
-            addRandomUsers(randomCase.getMaxNumberOfUsers());
+            peg.addRandomUsers(randomCase.getMaxNumberOfUsers());
         }
-        UserGroup group = userGroupApi.create("Team", "Dev team", new HashSet<>(expectedUsers.stream().map(User::getId).toList()));
+        UserGroup group = peg.userGroupApi.create("Team", "Dev team", new HashSet<>(peg.expectedUsers.stream().map(User::getId).toList()));
         Profiler.log("generating users for test case " + randomCase.getTestCaseIndex());
         {
             int numberOfProducts = generateRandomValue(randomCase.getMinNumberOfProducts(), randomCase.getMaxNumberOfProducts());
             try (Profiler pc = new Profiler(SampleType.JPA)) {
                 for (int p = 0; p < numberOfProducts; p++) {
-                    Product product = addProduct(nameGenerator.generateProductName(productIndex));
-                    productAclApi.grantGroupAccess(product.getId(), group.getId());
+                    Product product = peg.addProduct(peg.nameGenerator.generateProductName(PersistingEntityGenerator.productIndex));
+                    peg.productAclApi.grantGroupAccess(product.getId(), group.getId());
                     int numberOfVersions = generateRandomValue(randomCase.getMinNumberOfVersions(), randomCase.getMaxNumberOfVersions());
                     for (int v = 0; v < numberOfVersions; v++) {
-                        Version version          = addVersion(product, nameGenerator.generateVersionName(v));
+                        Version version          = peg.addVersion(product, peg.nameGenerator.generateVersionName(v));
                         int     numberOfFeatures = generateRandomValue(randomCase.getMinNumberOfFeatures(), randomCase.getMaxNumberOfFeatures());
                         for (int f = 0; f < numberOfFeatures; f++) {
-                            Feature feature         = addFeature(version, nameGenerator.generateFeatureName(featureIndex));
+                            Feature feature         = peg.addFeature(version, peg.nameGenerator.generateFeatureName(PersistingEntityGenerator.featureIndex));
                             int     numberOfSprints = generateRandomValue(randomCase.getMinNumberOfSprints(), randomCase.getMaxNumberOfSprints());
                             for (int s = 0; s < numberOfSprints; s++) {
                                 generateSprint(testInfo, randomCase, feature);
@@ -362,19 +371,19 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
             Profiler.log("generate Products for test case -" + randomCase.getTestCaseIndex());
         }
         try (Profiler pc = new Profiler(SampleType.JPA)) {
-            for (Sprint sprint : expectedSprints) {
-                taskApi.updateBatch(sprint.getTasks(), sprint.getId());
-                sprintApi.update(sprint);
+            for (Sprint sprint : peg.expectedSprints) {
+                peg.taskApi.updateBatch(sprint.getTasks(), sprint.getId());
+                peg.sprintApi.update(sprint);
             }
         }
         ParameterOptions.setNow(randomCase.getNow());
-        generateRandomSickDays();
+        peg.generateRandomSickDays();
         generateWorkLogs();
     }
 
     private int generateRandomValue(int minNumber, int maxNumberExclusive) {
         if (maxNumberExclusive - minNumber > 0)
-            return random.nextInt(maxNumberExclusive - minNumber) + minNumber;
+            return peg.random.nextInt(maxNumberExclusive - minNumber) + minNumber;
         else
             return minNumber;
     }
@@ -385,35 +394,35 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
 //        System.out.println("Number of users=" + numberOfUsers);
         try (Profiler pc1 = new Profiler(SampleType.JPA)) {
             // Capture current sprint index before creating the sprint
-            int    currentSprintIndex = getCurrentSprintIndex();
-            Sprint generatedSprint    = addRandomSprint(project);
+            int    currentSprintIndex = peg.getCurrentSprintIndex();
+            Sprint generatedSprint    = peg.addRandomSprint(project);
             Sprint sprint             = generatedSprint;//sprintApi.getById(generatedSprint.getId());
             if (randomCase.getMaxNumberOfStories() > 0) {
-                int           numberOfStories = random.nextInt(randomCase.getMaxNumberOfStories()) + 1;
+                int           numberOfStories = peg.random.nextInt(randomCase.getMaxNumberOfStories()) + 1;
                 LocalDateTime startDateTime   = randomCase.getStartDate().atStartOfDay().plusHours(8);
-                Task          startMilestone  = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+                Task          startMilestone  = peg.addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
 
                 // Get shuffled story names for this sprint to ensure variety
-                List<String> sprintStoryNames = nameGenerator.getShuffledStoryNames(currentSprintIndex, numberOfStories);
+                List<String> sprintStoryNames = peg.nameGenerator.getShuffledStoryNames(currentSprintIndex, numberOfStories);
 
                 for (int f = 0; f < numberOfStories; f++) {
                     String storyName     = sprintStoryNames.get(f);
-                    Task   story         = addParentTask(storyName, sprint, null, startMilestone);
-                    int    numberOfTasks = random.nextInt(randomCase.getMaxNumberOfTasks()) + 1;
+                    Task   story         = peg.addParentTask(storyName, sprint, null, startMilestone);
+                    int    numberOfTasks = peg.random.nextInt(randomCase.getMaxNumberOfTasks()) + 1;
                     for (int t = 0; t < numberOfTasks; t++) {
-                        int userIndex = random.nextInt(numberOfUsers);
+                        int userIndex = peg.random.nextInt(numberOfUsers);
 //                    System.out.println("User index=" + userIndex);
-                        User   user             = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(userIndex);
-                        float  minHours         = random.nextFloat(randomCase.getMaxTaskDurationDays() * 7.5f) + 1;
-                        float  maxHours         = minHours + random.nextFloat() * minHours;
+                        User   user             = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(userIndex);
+                        float  minHours         = peg.random.nextFloat(randomCase.getMaxTaskDurationDays() * 7.5f) + 1;
+                        float  maxHours         = minHours + peg.random.nextFloat() * minHours;
                         String minWork          = String.format("%dh", (int) minHours);
                         String maxWork          = String.format("%dh", (int) maxHours);
                         String workName         = NameGenerator.generateWorkName(storyName, t);
                         Task   depenedenycyTask = null;
-                        if (random.nextFloat(1) > 0.5f) {
+                        if (peg.random.nextFloat(1) > 0.5f) {
                             int tries = 8;
                             do {
-                                depenedenycyTask = sprint.getTasks().get(random.nextInt(sprint.getTasks().size()));
+                                depenedenycyTask = sprint.getTasks().get(peg.random.nextInt(sprint.getTasks().size()));
                                 //make sure this task is not a parent of our parent and not a milestone
                                 if (depenedenycyTask.isMilestone() || depenedenycyTask.isAncestorOf(story)) {
                                     depenedenycyTask = null;
@@ -422,16 +431,16 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
                             }
                             while (depenedenycyTask == null && tries > 0);
                         }
-                        addTask(workName, minWork, maxWork, user, sprint, story, depenedenycyTask);
+                        peg.addTask(workName, minWork, maxWork, user, sprint, story, depenedenycyTask);
                     }
                 }
             }
-            createDeliveryBufferTask(sprint, Duration.ZERO);
+            peg.createDeliveryBufferTask(sprint, Duration.ZERO);
             try (Profiler pc2 = new Profiler(SampleType.CPU)) {
                 sprint.initialize();
             }
-            sprint.initUserMap(userApi.getAll(sprint.getId()));
-            sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
+            sprint.initUserMap(peg.userApi.getAll(sprint.getId()));
+            sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));
             try (Profiler pc3 = new Profiler(SampleType.CPU)) {
                 levelResourcesAndPersist(testInfo, sprint, null);
             }
@@ -463,9 +472,9 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
     private void generateWorkLogs() {
         log.info("--------------------------");
         log.info("Generating work logs start");
-        for (Sprint sprint : expectedSprints) {
+        for (Sprint sprint : peg.expectedSprints) {
             // ~60 % of sprints run on schedule; ~40 % carry a delay of up to MAX_DELAY_FACTOR.
-            float delay = random.nextFloat() < (1f - DELAY_PROBABILITY) ? 0.0f : random.nextFloat() * MAX_DELAY_FACTOR;
+            float delay = peg.random.nextFloat() < (1f - DELAY_PROBABILITY) ? 0.0f : peg.random.nextFloat() * MAX_DELAY_FACTOR;
             log.debug("Sprint '{}' delay factor: {}", sprint.getName(), delay);
             generateWorklogs(sprint, delay, ParameterOptions.getLocalNow());
         }
@@ -504,7 +513,7 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
                     if (task.isTask() && task.isImpactOnCost()) {
                         Duration maxEstimate = task.getMaxEstimate();
                         if (maxEstimate != null && !maxEstimate.isZero()) {
-                            long     extraSeconds = (long) (delay * maxEstimate.getSeconds() * random.nextFloat());
+                            long     extraSeconds = (long) (delay * maxEstimate.getSeconds() * peg.random.nextFloat());
                             Duration inflated     = maxEstimate.plusSeconds(extraSeconds);
                             log.debug("Inflating task '{}': minEstimate={}, inflated remainingEstimate={} (delay={})", task.getName(), task.getMinEstimate(), inflated, delay);
                             task.setRemainingEstimate(inflated);
@@ -530,11 +539,11 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
                                         if (areAllPredecessorsDone(task, sprint)) {
                                             // we have the whole day
                                             double performance = 1f;//daily performance is usually 100% of the resource availability
-                                            if (random.nextFloat() < 0.2f) {
+                                            if (peg.random.nextFloat() < 0.2f) {
                                                 //in rare cases, performance can be much worse or better than usual, e.g. due to unexpected problems or overtime
                                                 double minPerformance = 0.5f;//minimum performance of a resource (underwork)
                                                 double maxPerformance = 1.2f;//maximum performance of a resource (overwork)
-                                                performance = minPerformance + random.nextFloat() * (maxPerformance - minPerformance);
+                                                performance = minPerformance + peg.random.nextFloat() * (maxPerformance - minPerformance);
                                             }
                                             Duration maxWork = Duration.ofSeconds((long) ((performance * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
                                             Duration w       = maxWork;
@@ -543,7 +552,7 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
                                             } else {
                                                 w = task.getRemainingEstimate();
                                             }
-                                            addWorklogToBuffer(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
+                                            peg.addWorklogToBuffer(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
                                             task.calculateStatus();
                                         } else {
                                             log.debug("Task '{}' blocked on {} – predecessor not yet done", task.getName(), day);
@@ -558,7 +567,7 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
             }
             sprint.recalculate(ParameterOptions.getLocalNow());
         }
-        flushWorklogBuffer(sprint);
+        peg.flushWorklogBuffer(sprint);
         persistTasksAndSprint(sprint);
     }
 
@@ -574,13 +583,13 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
 
     protected GanttContext initializeInstances() throws Exception {
         GanttContext gc = new GanttContext();
-        gc.allUsers    = userApi.getAll();
-        gc.allProducts = productApi.getAll();
-        gc.allVersions = versionApi.getAll();
-        gc.allFeatures = featureApi.getAll();
-        gc.allSprints  = sprintApi.getAll();
-        gc.allTasks    = taskApi.getAll();
-        gc.allWorklogs = worklogApi.getAll();
+        gc.allUsers    = peg.userApi.getAll();
+        gc.allProducts = peg.productApi.getAll();
+        gc.allVersions = peg.versionApi.getAll();
+        gc.allFeatures = peg.featureApi.getAll();
+        gc.allSprints  = peg.sprintApi.getAll();
+        gc.allTasks    = peg.taskApi.getAll();
+        gc.allWorklogs = peg.worklogApi.getAll();
         gc.initialize();
 
         return gc;
@@ -629,10 +638,10 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
         do {
             anyChanged = false;
             outer:
-            for (int i = 0; i < expectedSprints.size(); i++) {
-                for (int j = i + 1; j < expectedSprints.size(); j++) {
-                    Sprint earlier     = expectedSprints.get(i);
-                    Sprint later       = expectedSprints.get(j);
+            for (int i = 0; i < peg.expectedSprints.size(); i++) {
+                for (int j = i + 1; j < peg.expectedSprints.size(); j++) {
+                    Sprint earlier     = peg.expectedSprints.get(i);
+                    Sprint later       = peg.expectedSprints.get(j);
                     long   overlapDays = computeResourceOverlapDays(earlier, later);
                     if (overlapDays > 0) {
                         logger.info("Resource overlap of {} days detected between sprint '{}' and '{}'; shifting '{}' forward.",
@@ -655,10 +664,10 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
      * @return fully initialized {@link Sprint}
      */
     private Sprint loadSprintWithTasks(UUID sprintId) {
-        Sprint sprint = sprintApi.getById(sprintId);
+        Sprint sprint = peg.sprintApi.getById(sprintId);
         sprint.initialize();
-        sprint.initUserMap(userApi.getAll(sprintId));
-        sprint.initTaskMap(taskApi.getAll(sprintId), worklogApi.getAll(sprintId));
+        sprint.initUserMap(peg.userApi.getAll(sprintId));
+        sprint.initTaskMap(peg.taskApi.getAll(sprintId), peg.worklogApi.getAll(sprintId));
         return sprint;
     }
 
@@ -751,25 +760,10 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
 
     private void persistTasksAndSprint(Sprint sprint) {
         try (Profiler pc = new Profiler(SampleType.JPA)) {
-            taskApi.updateBatch(sprint.getTasks(), sprint.getId());
-            sprintApi.update(sprint);
+            peg.taskApi.updateBatch(sprint.getTasks(), sprint.getId());
+            peg.sprintApi.update(sprint);
         }
     }
-
-    @PostConstruct
-    protected void postConstruct() {
-        super.postConstruct();
-//        new File(testResultFolder).mkdirs();
-//        new File(testReferenceResultFolder).mkdirs();
-    }
-
-//    private List<String> readStoredData(String directory, String sprintName) throws IOException {
-//        Path filePath = Paths.get(directory, sprintName + ".json");
-//        if (Files.exists(filePath)) {
-//            return Files.readAllLines(filePath, StandardCharsets.UTF_8);
-//        }
-//        return new ArrayList<>();
-//    }
 
     protected void setTestCaseName(String testClassName, String testMethodName) {
         testResultFolder = testResultFolder + "/" + testClassName;
@@ -819,7 +813,7 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
             container.put("sprint", sprint);
             container.put("tasks", sprint.getTasks());
 
-            String json = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(container);
+            String json = peg.jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(container);
             Files.writeString(filePath, json, StandardCharsets.UTF_8);
         }
     }
@@ -832,9 +826,9 @@ public class AbstractGanttTestUtil extends PersistingEntityGenerator {
         store(testReferenceResultFolder, testCaseInfo, sprint, false);
     }
 
-    @Override
-    protected void testAllAndPrintTables() {
-        //we do not want to test gantt charts same way as the other tests
-    }
+//    @Override
+//    protected void testAllAndPrintTables() {
+//        //we do not want to test gantt charts same way as the other tests
+//    }
 
 }

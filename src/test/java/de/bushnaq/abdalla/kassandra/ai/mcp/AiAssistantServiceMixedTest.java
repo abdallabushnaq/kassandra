@@ -114,11 +114,11 @@ public class AiAssistantServiceMixedTest extends AbstractMcpTest {
 
         String response = processQuery("List all products with their versions and features in a table so that every row has only one feature.");
 
-        List<Product> allProducts = productApi.getAll();
+        List<Product> allProducts = peg.productApi.getAll();
         log.info("Total products in system: {}", allProducts.size());
-        List<Version> allVersions = versionApi.getAll();
+        List<Version> allVersions = peg.versionApi.getAll();
         log.info("Total versions in system: {}", allVersions.size());
-        List<Feature> allFeatures = featureApi.getAll();
+        List<Feature> allFeatures = peg.featureApi.getAll();
         log.info("Total features in system: {}", allFeatures.size());
         allProducts.forEach(product -> assertTrue(response.toLowerCase(Locale.ROOT).contains(product.getName().toLowerCase()), "Product name missing: " + product.getName()));
         allVersions.forEach(version -> assertTrue(response.toLowerCase(Locale.ROOT).contains(version.getName().toLowerCase()), "Version name missing: " + version.getName()));
@@ -136,7 +136,7 @@ public class AiAssistantServiceMixedTest extends AbstractMcpTest {
         String response = processQuery("List all sprints in a table.");
 
         // Verify that the response contains sprint information
-        List<Sprint> allSprints = sprintApi.getAll();
+        List<Sprint> allSprints = peg.sprintApi.getAll();
         allSprints.forEach(sprint -> assertTrue(response.toLowerCase(Locale.ROOT).contains(sprint.getName().toLowerCase()), "Sprint name missing: " + sprint.getName()));
     }
 

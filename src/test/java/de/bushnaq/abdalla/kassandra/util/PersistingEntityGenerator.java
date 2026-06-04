@@ -30,19 +30,19 @@ import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.date.DateUtil;
-import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.core.annotation.Order;
+import org.springframework.boot.web.server.context.WebServerInitializedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ServerErrorException;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -55,57 +55,59 @@ import java.util.*;
 import java.util.List;
 
 @Slf4j
-public class PersistingEntityGenerator extends AbstractTestUtil {
+@Component
+@ActiveProfiles("test")
+public class PersistingEntityGenerator {
     public static final String                 FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
     public static final String                 FIRST_OFF_DAY_START_DATE  = "2024-04-01";
-    protected           AvailabilityApi        availabilityApi;
+    public              AvailabilityApi        availabilityApi;
     @Autowired
     protected           AvatarService          avatarService;
+    @Autowired
+    protected           EntityManager          entityManager;
     protected final     TreeSet<Availability>  expectedAvailabilities    = new TreeSet<>();
-    protected           List<Feature>          expectedFeatures          = new ArrayList<>();
+    public              List<Feature>          expectedFeatures          = new ArrayList<>();
     protected final     TreeSet<Location>      expectedLocations         = new TreeSet<>();
     protected           TreeSet<OffDay>        expectedOffDays           = new TreeSet<>();
-    protected           List<Product>          expectedProducts          = new ArrayList<>();
-    protected           List<Sprint>           expectedSprints           = new ArrayList<>();
-    protected           List<Task>             expectedTasks             = new ArrayList<>();
-    protected           TreeSet<User>          expectedUsers             = new TreeSet<>();
-    protected           List<Version>          expectedVersions          = new ArrayList<>();
-    protected           List<Worklog>          expectedWorklogs          = new ArrayList<>();
-    protected           FeatureApi             featureApi;
+    public              List<Product>          expectedProducts          = new ArrayList<>();
+    public              List<Sprint>           expectedSprints           = new ArrayList<>();
+    public              List<Task>             expectedTasks             = new ArrayList<>();
+    public              TreeSet<User>          expectedUsers             = new TreeSet<>();
+    public              List<Version>          expectedVersions          = new ArrayList<>();
+    public              List<Worklog>          expectedWorklogs          = new ArrayList<>();
+    public              FeatureApi             featureApi;
     protected static    int                    featureIndex              = 0;
     @Autowired
     protected           JsonMapper             jsonMapper;
-    protected           LocationApi            locationApi;
-    protected           NameGenerator          nameGenerator             = new NameGenerator();
+    public              LocationApi            locationApi;
+    public              NameGenerator          nameGenerator             = new NameGenerator();
     protected           OffDayApi              offDayApi;
     private final       List<OffDay>           offDayBuffer              = new ArrayList<>();
     private             int                    offDaysIterations;
-    @LocalServerPort
-    private             int                    port;
-    protected           ProductAclApi          productAclApi;
-    protected           ProductApi             productApi;
+    public              ProductAclApi          productAclApi;
+    public              ProductApi             productApi;
     protected static    int                    productIndex              = 0;
-    protected final     Random                 random                    = new Random();
-    protected           SprintApi              sprintApi;
+    public final        Random                 random                    = new Random();
+    public              SprintApi              sprintApi;
     private static      int                    sprintIndex               = 0;
     //    @Autowired
 //    protected           StableDiffusionConfig  stableDiffusionConfig;
     @Autowired
     protected           StableDiffusionService stableDiffusionService;
-    protected           TaskApi                taskApi;
+    public              TaskApi                taskApi;
     @Autowired
     private             TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
-    protected           UserApi                userApi;
-    protected           UserGroupApi           userGroupApi;
-    protected static    int                    userIndex                 = 0;
-    protected           UserWorkWeekApi        userWorkWeekApi;
-    protected           VersionApi             versionApi;
+    public              UserApi                userApi;
+    public              UserGroupApi           userGroupApi;
+    public static       int                    userIndex                 = 0;
+    public              UserWorkWeekApi        userWorkWeekApi;
+    public              VersionApi             versionApi;
     protected static    int                    versionIndex              = 0;
-    protected           WorkWeekApi            workWeekApi;
-    protected           WorklogApi             worklogApi;
+    public              WorkWeekApi            workWeekApi;
+    public              WorklogApi             worklogApi;
     private final       List<Worklog>          worklogBuffer             = new ArrayList<>();
 
-    protected void addAvailability(User user, float availability, LocalDate start) {
+    public void addAvailability(User user, float availability, LocalDate start) {
         Availability a = new Availability(availability, start);
         a.setUser(user);
         a.setCreated(user.getCreated());
@@ -115,7 +117,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         expectedAvailabilities.add(a);
     }
 
-    protected Feature addFeature(Version version, String name) {
+    public Feature addFeature(Version version, String name) {
         Feature feature = new Feature();
         feature.setName(name);
 
@@ -149,7 +151,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         return saved;
     }
 
-    protected void addLocation(User user, String country, String state, LocalDate start) {
+    public void addLocation(User user, String country, String state, LocalDate start) {
         Location location = new Location(country, state, start);
         location.setUser(user);
         location.setCreated(user.getCreated());
@@ -159,7 +161,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         expectedLocations.add(saved);
     }
 
-    protected void addOffDay(User user, LocalDate offDayStart, LocalDate offDayFinish, OffDayType type) {
+    public void addOffDay(User user, LocalDate offDayStart, LocalDate offDayFinish, OffDayType type) {
         OffDay offDay = new OffDay(offDayStart, offDayFinish, type);
         offDay.setUser(user);
         offDay.setCreated(user.getCreated());
@@ -285,11 +287,11 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         }
     }
 
-    protected Task addParentTask(String name, Sprint sprint, Task parent, Task dependency) {
+    public Task addParentTask(String name, Sprint sprint, Task parent, Task dependency) {
         return addTask(sprint, parent, name, null, Duration.ofDays(0), null, null, dependency);
     }
 
-    protected Product addProduct(String name) {
+    public Product addProduct(String name) {
         Product product = new Product();
         product.setName(name);
         product.setCreated(ParameterOptions.getNow());
@@ -317,11 +319,11 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         return saved;
     }
 
-    protected Feature addRandomFeature(Version version) {
+    public Feature addRandomFeature(Version version) {
         return addFeature(version, nameGenerator.generateFeatureName(featureIndex));
     }
 
-    protected void addRandomProducts(int count) {
+    public void addRandomProducts(int count) {
         User user1 = addRandomUser();
 
         for (int i = 0; i < count; i++) {
@@ -336,7 +338,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         testProducts();
     }
 
-    protected Sprint addRandomSprint(Feature feature) {
+    public Sprint addRandomSprint(Feature feature) {
         return addSprint(feature, nameGenerator.generateSprintName(sprintIndex));
     }
 
@@ -347,7 +349,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
      *
      * @return the created User object
      */
-    protected User addRandomUser(LocalDate firstDate) {
+    public User addRandomUser(LocalDate firstDate) {
         String       name  = nameGenerator.generateUserName(userIndex);
         String       email = nameGenerator.generateUserEmail(userIndex);
         User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.7f);
@@ -365,7 +367,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
      *
      * @return the created User object
      */
-    protected User addRandomUser() {
+    public User addRandomUser() {
         String    name      = nameGenerator.generateUserName(userIndex);
         String    email     = nameGenerator.generateUserEmail(userIndex);
         LocalDate firstDate = ParameterOptions.getNow().toLocalDate();
@@ -387,7 +389,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
      *
      * @return the created User object
      */
-    protected User addRandomUser(int index, float availability) {
+    public User addRandomUser(int index, float availability) {
         String       name      = nameGenerator.generateUserName(index);
         String       email     = nameGenerator.generateUserEmail(userIndex);
         LocalDate    firstDate = ParameterOptions.getNow().toLocalDate().minusYears(1);
@@ -407,7 +409,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
      *
      * @param count the number of users to add
      */
-    protected void addRandomUsers(int count) {
+    public void addRandomUsers(int count) {
         for (int i = 0; i < count; i++) {
             long      time      = System.currentTimeMillis();
             String    name      = nameGenerator.generateUserName(userIndex);
@@ -438,11 +440,11 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
      * @param product the product to add the version to
      * @return the created Version object
      */
-    protected Version addRandomVersion(Product product) {
+    public Version addRandomVersion(Product product) {
         return addVersion(product, nameGenerator.generateVersionName(versionIndex));
     }
 
-    protected Sprint addSprint(Feature feature, String name) {
+    public Sprint addSprint(Feature feature, String name) {
         Sprint sprint = new Sprint();
         sprint.setName(name);
         sprint.setStatus(Status.STARTED);
@@ -476,15 +478,15 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         return saved;
     }
 
-    protected Task addTask(String name, String minWorkString, String maxWorkString, User user, Sprint sprint, Task parent, Task dependency) {
+    public Task addTask(String name, String minWorkString, String maxWorkString, User user, Sprint sprint, Task parent, Task dependency) {
         return addTask(sprint, parent, name, null, DateUtil.parseWorkDayDurationString(minWorkString), DateUtil.parseWorkDayDurationString(maxWorkString), user, dependency, null, false);
     }
 
-    protected Task addTask(Sprint sprint, Task parent, String name, LocalDateTime start, Duration minWork, Duration maxWork, User user, Task dependency) {
+    public Task addTask(Sprint sprint, Task parent, String name, LocalDateTime start, Duration minWork, Duration maxWork, User user, Task dependency) {
         return addTask(sprint, parent, name, start, minWork, maxWork, user, dependency, null, false);
     }
 
-    protected Task addTask(Sprint sprint, Task parent, String name, LocalDateTime start, Duration minWork, Duration maxWork, User user, Task dependency, TaskMode taskMode, boolean milestone) {
+    public Task addTask(Sprint sprint, Task parent, String name, LocalDateTime start, Duration minWork, Duration maxWork, User user, Task dependency, TaskMode taskMode, boolean milestone) {
         Task task = new Task();
         task.setName(name);
         task.setStart(start);
@@ -532,7 +534,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         return saved;
     }
 
-    protected User addUser(String name, String email, String roles, String country, String state, LocalDate start, Color color, float availability) {
+    public User addUser(String name, String email, String roles, String country, String state, LocalDate start, Color color, float availability) {
         // Check if user already exists by email
         User existingUser = null;
         try {
@@ -604,7 +606,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
 
     }
 
-    protected Version addVersion(Product product, String versionName) {
+    public Version addVersion(Product product, String versionName) {
         Version version = new Version();
         version.setName(versionName);
         version.setProduct(product);
@@ -627,7 +629,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
      * @param workWeek the work-week definition to assign
      * @param start    the effective start date of the assignment
      */
-    protected void addWorkWeek(User user, WorkWeek workWeek, LocalDate start) {
+    public void addWorkWeek(User user, WorkWeek workWeek, LocalDate start) {
         UserWorkWeek uww = new UserWorkWeek(workWeek, start);
         uww.setUser(user);
         uww.setCreated(user.getCreated());
@@ -636,7 +638,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         user.addUserWorkWeek(saved);
     }
 
-    protected Worklog addWorklog(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
+    public Worklog addWorklog(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
         Worklog worklog = new Worklog();
         worklog.setSprintId(task.getSprintId());
         worklog.setTaskId(task.getId());
@@ -681,17 +683,6 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         task.addWorklog(worklog);
         worklogBuffer.add(worklog);
         return worklog;
-    }
-
-    @BeforeEach
-    protected void beforeEach(TestInfo testInfo) {
-        super.beforeEach(testInfo);
-        productIndex = 0;
-        featureIndex = 0;
-        sprintIndex  = 0;
-        userIndex    = 0;
-        versionIndex = 0;
-        nameGenerator.resetStoryPool(); // Reset story pool for each test
     }
 
     public Task createDeliveryBufferTask(Sprint sprint, Duration minWork) {
@@ -810,7 +801,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         }
     }
 
-    protected Color generateUserColor(int userIndex) {
+    public Color generateUserColor(int userIndex) {
         int index = userIndex % LightTheme.KELLY_COLORS.length;
         return LightTheme.KELLY_COLORS[index];
     }
@@ -837,6 +828,25 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         return current;
     }
 
+    public void init() {
+        productIndex = 0;
+        featureIndex = 0;
+        sprintIndex  = 0;
+        userIndex    = 0;
+        versionIndex = 0;
+        nameGenerator.resetStoryPool(); // Reset story pool for each test
+        expectedUsers.clear();
+        expectedOffDays.clear();
+        expectedAvailabilities.clear();
+        expectedLocations.clear();
+        expectedVersions.clear();
+        expectedProducts.clear();
+        expectedFeatures.clear();
+        expectedSprints.clear();
+        expectedTasks.clear();
+        expectedWorklogs.clear();
+    }
+
     private boolean isOverlapping(List<OffDay> offDays, LocalDate start, LocalDate end) {
         return offDays.stream().anyMatch(offDay -> !(end.isBefore(offDay.getFirstDay()) || start.isAfter(offDay.getLastDay())));
     }
@@ -847,7 +857,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
      * @param task      the task to move
      * @param newParent the new parent
      */
-    protected void move(Sprint sprint, Task task, Task newParent) {
+    public void move(Sprint sprint, Task task, Task newParent) {
         Task oldParent = task.getParentTask();
         newParent.addChildTask(task);
 
@@ -856,13 +866,21 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         taskApi.persist(oldParent);
     }
 
-    @PostConstruct
-    @Order(0)
-    protected void postConstruct() {
+    /**
+     * Initialises all REST API adapter instances once the embedded web server has started and its
+     * port is known. Using {@link EventListener} instead of {@code @PostConstruct} is necessary
+     * because {@code local.server.port} is registered in the {@link org.springframework.core.env.Environment}
+     * only during {@code finishRefresh()} — after all singleton beans have already been created.
+     *
+     * @param event the event carrying the started {@link org.springframework.boot.web.server.WebServer}
+     */
+    @EventListener
+    public void onWebServerInitialized(WebServerInitializedEvent event) {
+        init();
         ParameterOptions.setNow(OffsetDateTime.parse("2025-05-05T08:00:00+01:00"));
 
-        // Set the correct port after injection
-        String baseUrl = "http://localhost:" + port + "/api";
+        // Obtain the actual random port from the event — available only after the server has bound.
+        String baseUrl = "http://localhost:" + event.getWebServer().getPort() + "/api";
         productApi      = new ProductApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
         featureApi      = new FeatureApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
         userApi         = new UserApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
@@ -879,13 +897,13 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         userWorkWeekApi = new UserWorkWeekApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
     }
 
-    protected void removeAvailability(Availability availability, User user) {
+    public void removeAvailability(Availability availability, User user) {
         availabilityApi.deleteById(user.getId(), availability.getId());
         user.removeAvailability(availability);
         expectedAvailabilities.remove(availability);
     }
 
-    protected void removeFeature(UUID id) {
+    public void removeFeature(UUID id) {
         Feature featureToRemove = expectedFeatures.stream().filter(project -> project.getId().equals(id)).findFirst().orElse(null);
         featureApi.deleteById(id);
         if (featureToRemove != null) {
@@ -902,19 +920,19 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         }
     }
 
-    protected void removeLocation(Location location, User user) {
+    public void removeLocation(Location location, User user) {
         locationApi.deleteById(user.getId(), location.getId());
         user.removeLocation(location);
         expectedLocations.remove(location);
     }
 
-    protected void removeOffDay(OffDay offDay, User user) {
+    public void removeOffDay(OffDay offDay, User user) {
         offDayApi.deleteById(user.getId(), offDay.getId());
         user.removeOffDay(offDay);
         expectedOffDays.remove(offDay);
     }
 
-    protected void removeProduct(UUID id) {
+    public void removeProduct(UUID id) {
         Product productToRemove = expectedProducts.stream().filter(product -> product.getId().equals(id)).findFirst().orElse(null);
         productApi.deleteById(id);
 
@@ -936,7 +954,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         }
     }
 
-    protected void removeSprint(UUID id) {
+    public void removeSprint(UUID id) {
         Sprint sprintToRemove = expectedSprints.stream().filter(sprint -> sprint.getId().equals(id)).findFirst().orElse(null);
         sprintApi.deleteById(id);
         if (sprintToRemove != null) {
@@ -949,7 +967,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         }
     }
 
-    protected void removeTaskTree(Task task) {
+    public void removeTaskTree(Task task) {
         expectedTasks.remove(task);
         taskApi.deleteById(task.getId());
         for (Task childTask : task.getChildTasks()) {
@@ -957,7 +975,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
         }
     }
 
-    protected void removeUser(UUID id) {
+    public void removeUser(UUID id) {
         User userToRemove = expectedUsers.stream().filter(user -> user.getId().equals(id)).findFirst().orElse(null);
         userApi.deleteById(id);
 
@@ -974,7 +992,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
 
     }
 
-    protected void removeVersion(UUID id) {
+    public void removeVersion(UUID id) {
         Version versionToRemove = expectedVersions.stream().filter(version -> version.getId().equals(id)).findFirst().orElse(null);
         versionApi.deleteById(id);
 
@@ -1002,16 +1020,16 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
      * @param userWorkWeek the assignment to remove
      * @param user         the owning user
      */
-    protected void removeWorkWeek(UserWorkWeek userWorkWeek, User user) {
+    public void removeWorkWeek(UserWorkWeek userWorkWeek, User user) {
         userWorkWeekApi.deleteById(user.getId(), userWorkWeek.getId());
         user.removeUserWorkWeek(userWorkWeek);
     }
 
-    protected static void setUser(Authentication authentication) {
+    public static void setUser(Authentication authentication) {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    protected static Authentication setUser(String email, String role) {
+    public static Authentication setUser(String email, String role) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         // If both email and role are null, clear the security context (anonymous user)
@@ -1034,7 +1052,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
     }
 
     @AfterEach
-    protected void testAllAndPrintTables() {
+    public void testAllAndPrintTables() {
         setUser("admin-user", "ROLE_ADMIN");
         testAll();
 //        printTables();
@@ -1148,66 +1166,66 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
 //        for (int i = 0; i < expectedProducts.size(); i++) {
 //            assertProductEquals(expectedProducts.get(i), gc.allProducts.get(i + 1));
 //        }
-        assertUnorderedListEquals(egc.allProducts, gc.allProducts, Comparator.comparing(Product::getName), "products", DTOAsserts::assertProductEquals);
+        DTOAsserts.assertUnorderedListEquals(egc.allProducts, gc.allProducts, Comparator.comparing(Product::getName), "products", DTOAsserts::assertProductEquals);
     }
 
-    protected void testUsers() {
+    public void testUsers() {
         entityManager.clear();//clear the cache to get the latest data from the database
         List<User> actual = userApi.getAll();
 
-        assertUnorderedListEquals(expectedUsers, actual, Comparator.comparing(User::getId), "users",
+        DTOAsserts.assertUnorderedListEquals(expectedUsers, actual, Comparator.comparing(User::getId), "users",
                 DTOAsserts::assertUserEquals);
     }
 
-    protected void updateAvailability(Availability availability, User user) {
+    public void updateAvailability(Availability availability, User user) {
         availabilityApi.update(availability, user.getId());
         expectedAvailabilities.remove(availability);
         expectedAvailabilities.add(availability);
     }
 
-    protected void updateFeature(Feature feature) {
+    public void updateFeature(Feature feature) {
         featureApi.update(feature);
         expectedFeatures.remove(feature);
         expectedFeatures.add(feature);//replace old products with the updated one
     }
 
-    protected void updateLocation(Location location, User user) throws ServerErrorException {
+    public void updateLocation(Location location, User user) throws ServerErrorException {
         locationApi.update(location, user.getId());
         expectedLocations.remove(location);
         expectedLocations.add(location);
     }
 
-    protected void updateOffDay(OffDay offDay, User user) throws ServerErrorException {
+    public void updateOffDay(OffDay offDay, User user) throws ServerErrorException {
         offDayApi.update(offDay, user.getId());
         expectedOffDays.remove(offDay);
         expectedOffDays.add(offDay);
     }
 
-    protected void updateProduct(Product product) throws ServerErrorException {
+    public void updateProduct(Product product) throws ServerErrorException {
         productApi.update(product);
         expectedProducts.remove(product);
         expectedProducts.add(product);//replace old products with the updated one
     }
 
-    protected void updateSprint(Sprint sprint) throws ServerErrorException {
+    public void updateSprint(Sprint sprint) throws ServerErrorException {
         sprintApi.update(sprint);
         expectedSprints.remove(sprint);
         expectedSprints.add(sprint); // Replace old sprint with the updated one
     }
 
-    protected void updateTask(Task task) {
+    public void updateTask(Task task) {
         taskApi.update(task);
         expectedTasks.remove(task);
         expectedTasks.add(task);//replace old products with the updated one
     }
 
-    protected void updateUser(User user) throws ServerErrorException {
+    public void updateUser(User user) throws ServerErrorException {
         userApi.update(user);
         expectedUsers.remove(user);
         expectedUsers.add(user);//replace old user with the updated one
     }
 
-    protected void updateVersion(Version version) {
+    public void updateVersion(Version version) {
         versionApi.update(version);
         expectedVersions.remove(version);
         expectedVersions.add(version);//replace old products with the updated one
@@ -1219,7 +1237,7 @@ public class PersistingEntityGenerator extends AbstractTestUtil {
      * @param userWorkWeek the assignment with updated fields (must have a non-null ID)
      * @param user         the owning user
      */
-    protected void updateWorkWeek(UserWorkWeek userWorkWeek, User user) {
+    public void updateWorkWeek(UserWorkWeek userWorkWeek, User user) {
         userWorkWeekApi.update(userWorkWeek, user.getId());
     }
 

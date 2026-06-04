@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.WorkDaySchedule;
 import de.bushnaq.abdalla.kassandra.dto.WorkWeek;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,8 +73,8 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
         // Obtain an existing work week ID while authenticated, then drop the context.
         final WorkWeek existingWorkWeek;
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            List<WorkWeek> all = workWeekApi.getAll();
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            List<WorkWeek> all = peg.workWeekApi.getAll();
             assertFalse(all.isEmpty());
             existingWorkWeek = all.getFirst();
             SecurityContextHolder.clearContext();
@@ -81,20 +82,20 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
 
         // Read operations require at least USER role.
         assertThrows(AuthenticationCredentialsNotFoundException.class,
-                () -> workWeekApi.getAll());
+                () -> peg.workWeekApi.getAll());
 
         assertThrows(AuthenticationCredentialsNotFoundException.class,
-                () -> workWeekApi.getById(existingWorkWeek.getId()));
+                () -> peg.workWeekApi.getById(existingWorkWeek.getId()));
 
         // Write operations require ADMIN role; anonymous is rejected even earlier.
         assertThrows(AuthenticationCredentialsNotFoundException.class,
-                () -> workWeekApi.persist(buildWorkWeek("Anon create", "Should fail")));
+                () -> peg.workWeekApi.persist(buildWorkWeek("Anon create", "Should fail")));
 
         assertThrows(AuthenticationCredentialsNotFoundException.class,
-                () -> workWeekApi.update(existingWorkWeek));
+                () -> peg.workWeekApi.update(existingWorkWeek));
 
         assertThrows(AuthenticationCredentialsNotFoundException.class,
-                () -> workWeekApi.deleteById(existingWorkWeek.getId()));
+                () -> peg.workWeekApi.deleteById(existingWorkWeek.getId()));
     }
 
     /**
@@ -134,7 +135,7 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void create() {
-        WorkWeek created = workWeekApi.persist(buildWorkWeek("Custom 4x8", "Four-day 8-hour work week"));
+        WorkWeek created = peg.workWeekApi.persist(buildWorkWeek("Custom 4x8", "Four-day 8-hour work week"));
 
         assertNotNull(created);
         assertNotNull(created.getId());
@@ -155,13 +156,13 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void delete() {
-        WorkWeek created = workWeekApi.persist(buildWorkWeek("To Delete", "Will be deleted"));
+        WorkWeek created = peg.workWeekApi.persist(buildWorkWeek("To Delete", "Will be deleted"));
         UUID     id      = created.getId();
 
-        workWeekApi.deleteById(id);
+        peg.workWeekApi.deleteById(id);
 
         // Confirm the entry is gone
-        assertThrows(ResponseStatusException.class, () -> workWeekApi.getById(id));
+        assertThrows(ResponseStatusException.class, () -> peg.workWeekApi.getById(id));
     }
 
     /**
@@ -171,7 +172,7 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void deleteUsingFakeId() {
-        assertThrows(ResponseStatusException.class, () -> workWeekApi.deleteById(FAKE_ID));
+        assertThrows(ResponseStatusException.class, () -> peg.workWeekApi.deleteById(FAKE_ID));
     }
 
     /**
@@ -181,7 +182,7 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void getAll() {
-        List<WorkWeek> all = workWeekApi.getAll();
+        List<WorkWeek> all = peg.workWeekApi.getAll();
 
         assertFalse(all.isEmpty());
         assertTrue(all.stream().anyMatch(ww -> DefaultEntitiesInitializer.WORK_WEEK_5X8.equals(ww.getName())),
@@ -194,9 +195,9 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void getById() {
-        WorkWeek created = workWeekApi.persist(buildWorkWeek("Get-by-ID test", "Description"));
+        WorkWeek created = peg.workWeekApi.persist(buildWorkWeek("Get-by-ID test", "Description"));
 
-        WorkWeek fetched = workWeekApi.getById(created.getId());
+        WorkWeek fetched = peg.workWeekApi.getById(created.getId());
 
         assertNotNull(fetched);
         assertEquals(created.getId(), fetched.getId());
@@ -211,7 +212,7 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void getByIdNotFound() {
-        assertThrows(ResponseStatusException.class, () -> workWeekApi.getById(FAKE_ID));
+        assertThrows(ResponseStatusException.class, () -> peg.workWeekApi.getById(FAKE_ID));
     }
 
     // -----------------------------------------------------------------------
@@ -225,7 +226,7 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void update() {
-        WorkWeek created = workWeekApi.persist(buildWorkWeek("Old name", "Old description"));
+        WorkWeek created = peg.workWeekApi.persist(buildWorkWeek("Old name", "Old description"));
 
         created.setName("New name");
         created.setDescription("New description");
@@ -233,9 +234,9 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
         created.setFriday(new WorkDaySchedule(
                 LocalTime.of(8, 0), LocalTime.of(17, 0),
                 LocalTime.of(12, 0), LocalTime.of(13, 0)));
-        workWeekApi.update(created);
+        peg.workWeekApi.update(created);
 
-        WorkWeek fetched = workWeekApi.getById(created.getId());
+        WorkWeek fetched = peg.workWeekApi.getById(created.getId());
         assertEquals("New name", fetched.getName());
         assertEquals("New description", fetched.getDescription());
         assertTrue(fetched.getFriday().isWorkingDay());
@@ -255,7 +256,7 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
         WorkWeek workWeek = buildWorkWeek("Fake update", "Should fail");
         workWeek.setId(FAKE_ID);
 
-        assertThrows(ResponseStatusException.class, () -> workWeekApi.update(workWeek));
+        assertThrows(ResponseStatusException.class, () -> peg.workWeekApi.update(workWeek));
     }
 
     // -----------------------------------------------------------------------
@@ -270,23 +271,23 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "user", roles = "USER")
     public void userSecurity() {
         // USER can read all work weeks
-        List<WorkWeek> all = workWeekApi.getAll();
+        List<WorkWeek> all = peg.workWeekApi.getAll();
         assertFalse(all.isEmpty());
 
         // USER can read a single work week by ID
         WorkWeek existing = all.getFirst();
-        WorkWeek fetched  = workWeekApi.getById(existing.getId());
+        WorkWeek fetched  = peg.workWeekApi.getById(existing.getId());
         assertNotNull(fetched);
 
         // USER cannot create a new work week
         assertThrows(AccessDeniedException.class,
-                () -> workWeekApi.persist(buildWorkWeek("User created", "Should fail")));
+                () -> peg.workWeekApi.persist(buildWorkWeek("User created", "Should fail")));
 
         // USER cannot update an existing work week
         String originalName = existing.getName();
         try {
             existing.setName("Hacked");
-            workWeekApi.update(existing);
+            peg.workWeekApi.update(existing);
             fail("USER should not be able to update a work week");
         } catch (AccessDeniedException e) {
             // expected – restore name so the object stays consistent
@@ -296,7 +297,7 @@ public class WorkWeekApiTest extends AbstractUiTestUtil {
 
         // USER cannot delete a work week
         assertThrows(AccessDeniedException.class,
-                () -> workWeekApi.deleteById(existing.getId()));
+                () -> peg.workWeekApi.deleteById(existing.getId()));
     }
 }
 

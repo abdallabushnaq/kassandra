@@ -62,11 +62,11 @@ public class AiAssistantServiceProductTest extends AbstractMcpTest {
 
         //add
         processQuery("Add a new product with the name Andromsda.");
-        if (productApi.getByName("Andromsda").isEmpty()) {
+        if (peg.productApi.getByName("Andromsda").isEmpty()) {
             processQuery("You mistyped the product name, it should be Andromsda.");
         }
-        assertTrue(productApi.getByName("Andromsda").isPresent(), "Product should be created");
-        assertFalse(productApi.getByName("Andromsda").get().getLightAvatarHash().isEmpty(), "Product avatar URL should not be empty");
+        assertTrue(peg.productApi.getByName("Andromsda").isPresent(), "Product should be created");
+        assertFalse(peg.productApi.getByName("Andromsda").get().getLightAvatarHash().isEmpty(), "Product avatar URL should not be empty");
     }
 
     @ParameterizedTest
@@ -77,15 +77,15 @@ public class AiAssistantServiceProductTest extends AbstractMcpTest {
 
         //---create
         processQuery("Add a new product with the name Andromeda.");
-        assertTrue(productApi.getByName("Andromeda").isPresent(), "Product should be created before deletion test");
-        log.info("Product ID: {}.", productApi.getByName("Andromeda").get().getId());
+        assertTrue(peg.productApi.getByName("Andromeda").isPresent(), "Product should be created before deletion test");
+        log.info("Product ID: {}.", peg.productApi.getByName("Andromeda").get().getId());
 
         //---delete
         String response = processQuery("Please delete the product you created.");
-        if (productApi.getByName("Andromeda").isEmpty() && (response.toLowerCase().contains("are you sure") || response.toLowerCase().contains("would you like me to delete it now?"))) {
+        if (peg.productApi.getByName("Andromeda").isEmpty() && (response.toLowerCase().contains("are you sure") || response.toLowerCase().contains("would you like me to delete it now?"))) {
             processQuery("I am sure.");
         }
-        assertTrue(productApi.getByName("Andromeda").isEmpty(), "Product 'Andromeda' should be deleted");
+        assertTrue(peg.productApi.getByName("Andromeda").isEmpty(), "Product 'Andromeda' should be deleted");
 
     }
 
@@ -97,7 +97,7 @@ public class AiAssistantServiceProductTest extends AbstractMcpTest {
 
         //---get all
         String response = processQuery("list all products.");
-        productApi.getAll().forEach(product -> assertTrue(response.toLowerCase(Locale.ROOT).contains(product.getName().toLowerCase()), "Product name missing: " + product.getName()));
+        peg.productApi.getAll().forEach(product -> assertTrue(response.toLowerCase(Locale.ROOT).contains(product.getName().toLowerCase()), "Product name missing: " + product.getName()));
     }
 
     @ParameterizedTest
@@ -108,16 +108,16 @@ public class AiAssistantServiceProductTest extends AbstractMcpTest {
 
         //---create
         processQuery("Add a new product with the name Andromsda.");
-        Optional<Product> product = productApi.getByName("Andromsda");
-        if (productApi.getByName("Andromsda").isPresent()) {
-            log.info("Product ID: {}.", productApi.getByName("Andromsda").get().getId());
+        Optional<Product> product = peg.productApi.getByName("Andromsda");
+        if (peg.productApi.getByName("Andromsda").isPresent()) {
+            log.info("Product ID: {}.", peg.productApi.getByName("Andromsda").get().getId());
             processQuery("Please fix the name in the product you created to Andromsda.");
         } else {
-            log.info("Product ID: {}.", productApi.getByName("Andromeda").get().getId());
+            log.info("Product ID: {}.", peg.productApi.getByName("Andromeda").get().getId());
             //---update
             processQuery("Please fix the typo in the product you created to Andromeda.");
-            assertTrue(productApi.getByName("Andromeda").isPresent(), "Product should be renamed");
-            assertTrue(productApi.getByName("Andromsda").isEmpty(), "Mistyped product should not exist");
+            assertTrue(peg.productApi.getByName("Andromeda").isPresent(), "Product should be renamed");
+            assertTrue(peg.productApi.getByName("Andromsda").isEmpty(), "Mistyped product should not exist");
         }
     }
 }

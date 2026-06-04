@@ -235,7 +235,7 @@ public class SprintInsightsGeneratorTest extends AbstractKeycloakUiTestUtil {
         // Capture the security context from the current thread
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        List<Sprint> sprintIds = sprintApi.getAll();
+        List<Sprint> sprintIds = peg.sprintApi.getAll();
 
         for (Sprint sprint : sprintIds) {
             if (!sprint.getName().equals(DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME)) {
@@ -255,7 +255,7 @@ public class SprintInsightsGeneratorTest extends AbstractKeycloakUiTestUtil {
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);
             try {
-                Sprint s = sprintApi.getById(sprintId);
+                Sprint s = peg.sprintApi.getById(sprintId);
                 s.initialize();
                 return s;
             } finally {
@@ -269,7 +269,7 @@ public class SprintInsightsGeneratorTest extends AbstractKeycloakUiTestUtil {
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);
             try {
-                return userApi.getAll(sprintId);
+                return peg.userApi.getAll(sprintId);
             } finally {
                 SecurityContextHolder.clearContext();// Clear the security context after execution
             }
@@ -281,7 +281,7 @@ public class SprintInsightsGeneratorTest extends AbstractKeycloakUiTestUtil {
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);
             try {
-                return taskApi.getAll(sprintId);
+                return peg.taskApi.getAll(sprintId);
             } finally {
                 SecurityContextHolder.clearContext();// Clear the security context after execution
             }
@@ -293,7 +293,7 @@ public class SprintInsightsGeneratorTest extends AbstractKeycloakUiTestUtil {
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);
             try {
-                return worklogApi.getAll(sprintId);
+                return peg.worklogApi.getAll(sprintId);
             } finally {
                 SecurityContextHolder.clearContext();// Clear the security context after execution
             }

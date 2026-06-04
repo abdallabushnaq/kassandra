@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.util.AbstractGanttTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
@@ -62,23 +63,23 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
-        userIndex++;
-        addRandomUser(2, 0.3f);
-        addRandomUser(1, 0.7f);
+        PersistingEntityGenerator.userIndex++;
+        peg.addRandomUser(2, 0.3f);
+        peg.addRandomUser(1, 0.7f);
         initializeInstances();
 
         //create tasks
-        Sprint sprint         = sprintApi.getAll().getFirst();
-        User   resource1      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
-        User   resource2      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
-        Task   startMilestone = addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), null, Duration.ZERO, null, null, TaskMode.MANUALLY_SCHEDULED, true);
-        Task   task1          = addParentTask("[1] Parent Task", sprint, null, startMilestone);
-        Task   task2          = addTask("[2] Child Task", "5d", null, resource1, sprint, task1, null);
-        Task   task3          = addTask("[3] Child Task", "5d", null, resource2, sprint, task1, task2);
+        Sprint sprint         = peg.sprintApi.getAll().getFirst();
+        User   resource1      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
+        User   resource2      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
+        Task   startMilestone = peg.addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), null, Duration.ZERO, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+        Task   task1          = peg.addParentTask("[1] Parent Task", sprint, null, startMilestone);
+        Task   task2          = peg.addTask("[2] Child Task", "5d", null, resource1, sprint, task1, null);
+        Task   task3          = peg.addTask("[3] Child Task", "5d", null, resource2, sprint, task1, task2);
 //        TestInfoUtil.setTestCaseIndex(testInfo, 1);
         sprint.initialize();
-        sprint.initUserMap(userApi.getAll(sprint.getId()));
-        sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
+        sprint.initUserMap(peg.userApi.getAll(sprint.getId()));
+        sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));
         levelResourcesAndPersist(testInfo, sprint, null);
         generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
         generateGanttChart(testInfo, sprint.getId(), null);
@@ -102,28 +103,28 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
-        userIndex++;
-        addRandomUser(2, 0.5f);
-        addRandomUser(3, 0.7f);
+        PersistingEntityGenerator.userIndex++;
+        peg.addRandomUser(2, 0.5f);
+        peg.addRandomUser(3, 0.7f);
         initializeInstances();
 
         //create tasks
-        Sprint sprint         = expectedSprints.getFirst();
-        User   resource1      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
-        User   resource2      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
-        Task   startMilestone = addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
-        Task   task1          = addParentTask("[1] Parent Task", sprint, null, startMilestone);
-        Task   task2          = addTask("[2] Child Task ", "5d", null, resource1, sprint, task1, null);
-        Task   task3          = addTask("[3] Child Task ", "5d", null, resource2, sprint, task1, task2);
+        Sprint sprint         = peg.expectedSprints.getFirst();
+        User   resource1      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
+        User   resource2      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
+        Task   startMilestone = peg.addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+        Task   task1          = peg.addParentTask("[1] Parent Task", sprint, null, startMilestone);
+        Task   task2          = peg.addTask("[2] Child Task ", "5d", null, resource1, sprint, task1, null);
+        Task   task3          = peg.addTask("[3] Child Task ", "5d", null, resource2, sprint, task1, task2);
 
-        Task task4 = addParentTask("[4] Parent Task", sprint, null, task1);
-        Task task5 = addTask("[5] Child Task ", "5d", null, resource1, sprint, task4, null);
-        Task task6 = addTask("[6] Child Task ", "5d", null, resource2, sprint, task4, task5);
+        Task task4 = peg.addParentTask("[4] Parent Task", sprint, null, task1);
+        Task task5 = peg.addTask("[5] Child Task ", "5d", null, resource1, sprint, task4, null);
+        Task task6 = peg.addTask("[6] Child Task ", "5d", null, resource2, sprint, task4, task5);
 
 //        TestInfoUtil.setTestCaseIndex(testInfo, 2);
         sprint.initialize();
-        sprint.initUserMap(userApi.getAll(sprint.getId()));
-        sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
+        sprint.initUserMap(peg.userApi.getAll(sprint.getId()));
+        sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));
         levelResourcesAndPersist(testInfo, sprint, null);
         generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
         generateGanttChart(testInfo, sprint.getId(), null);
@@ -147,33 +148,33 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
-        userIndex++;
+        PersistingEntityGenerator.userIndex++;
 
-        addRandomUser(2, 0.5f);
-        addRandomUser(4, 0.7f);
+        peg.addRandomUser(2, 0.5f);
+        peg.addRandomUser(4, 0.7f);
         initializeInstances();
 
         //create tasks
-        Sprint sprint         = expectedSprints.getFirst();
-        User   resource1      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
-        User   resource2      = expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
-        Task   startMilestone = addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
-        Task   task1          = addParentTask("[1] Parent Task", sprint, null, startMilestone);
-        Task   task2          = addTask("[2] Child Task ", "5d", null, resource1, sprint, task1, null);
-        Task   task3          = addTask("[3] Child Task ", "5d", null, resource2, sprint, task1, task2);
+        Sprint sprint         = peg.expectedSprints.getFirst();
+        User   resource1      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
+        User   resource2      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
+        Task   startMilestone = peg.addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+        Task   task1          = peg.addParentTask("[1] Parent Task", sprint, null, startMilestone);
+        Task   task2          = peg.addTask("[2] Child Task ", "5d", null, resource1, sprint, task1, null);
+        Task   task3          = peg.addTask("[3] Child Task ", "5d", null, resource2, sprint, task1, task2);
 
-        Task task4 = addParentTask("[4] Parent Task", sprint, null, task1);
-        Task task5 = addTask("[5] Child Task ", "5d", null, resource1, sprint, task4, null);
-        Task task6 = addTask("[6] Child Task ", "5d", null, resource2, sprint, task4, task5);
+        Task task4 = peg.addParentTask("[4] Parent Task", sprint, null, task1);
+        Task task5 = peg.addTask("[5] Child Task ", "5d", null, resource1, sprint, task4, null);
+        Task task6 = peg.addTask("[6] Child Task ", "5d", null, resource2, sprint, task4, task5);
 
-        Task task7 = addParentTask("[7] Parent Task", sprint, null, task4);
-        Task task8 = addTask("[8] Child Task ", "5d", null, resource1, sprint, task7, null);
-        Task task9 = addTask("[9] Child Task ", "5d", null, resource2, sprint, task7, null);
+        Task task7 = peg.addParentTask("[7] Parent Task", sprint, null, task4);
+        Task task8 = peg.addTask("[8] Child Task ", "5d", null, resource1, sprint, task7, null);
+        Task task9 = peg.addTask("[9] Child Task ", "5d", null, resource2, sprint, task7, null);
 
 //        TestInfoUtil.setTestCaseIndex(testInfo, 3);
         sprint.initialize();
-        sprint.initUserMap(userApi.getAll(sprint.getId()));
-        sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
+        sprint.initUserMap(peg.userApi.getAll(sprint.getId()));
+        sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));
         levelResourcesAndPersist(testInfo, sprint, null);
         generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
         generateGanttChart(testInfo, sprint.getId(), null);

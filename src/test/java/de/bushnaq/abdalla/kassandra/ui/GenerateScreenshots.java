@@ -164,7 +164,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
     }
 
     private void read() {
-        User paul = userApi.getByEmail("christopher.paul@kassandra.org").get();
+        User paul = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
         lastAvailability = paul.getAvailabilities().getLast();
         lastLocation     = paul.getLocations().getLast();
         lastUserWorkWeek = paul.getUserWorkWeeks().getLast();
@@ -179,12 +179,12 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
      * @param folder destination folder for the screenshot files
      */
     private void takeActiveSprintsDialogScreenshots(String folder) {
-        List<Sprint> allSprints = sprintApi.getAll();
+        List<Sprint> allSprints = peg.sprintApi.getAll();
         Sprint sprint = allSprints.stream()
                 .filter(s -> !s.getStatus().equals(Status.CLOSED))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Could not find a sprint that is not closed"));
-        List<Task> tasks = taskApi.getAll(sprint.getId());
+        List<Task> tasks = peg.taskApi.getAll(sprint.getId());
         Task leafTask = tasks.stream()
                 .filter(t -> !t.isMilestone() && t.getParentTaskId() != null && t.getTaskStatus().equals(TaskStatus.IN_PROGRESS))
                 .findFirst()
@@ -257,12 +257,12 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
      */
     private void takeDependencyDialogScreenshots(String folder) {
         // Resolve a leaf task in the currently-selected sprint
-        List<Sprint> allSprints = sprintApi.getAll();
+        List<Sprint> allSprints = peg.sprintApi.getAll();
         Sprint sprint = allSprints.stream()
                 .filter(s -> s.getName().equals(sprintName))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Sprint '" + sprintName + "' not found"));
-        List<Task> tasks = taskApi.getAll(sprint.getId());
+        List<Task> tasks = peg.taskApi.getAll(sprint.getId());
         Task leafTask = tasks.stream()
                 .filter(t -> !t.isMilestone() && t.getParentTaskId() != null)
                 .findFirst()
@@ -552,10 +552,10 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
         read();
         seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         userName    = "Christopher Paul";
-        productName = nameGenerator.generateProductName(0);
-        versionName = nameGenerator.generateVersionName(0);
-        featureName = nameGenerator.generateFeatureName(0);
-        sprintName  = nameGenerator.generateSprintName(1);
+        productName = peg.nameGenerator.generateProductName(0);
+        versionName = peg.nameGenerator.generateVersionName(0);
+        featureName = peg.nameGenerator.generateFeatureName(0);
+        sprintName  = peg.nameGenerator.generateSprintName(1);
 
 
         takeScreenshot(testInfo, "../kassandra.wiki/light-screenshots/", ETheme.light);

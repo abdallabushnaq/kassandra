@@ -17,10 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
-import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
@@ -41,10 +41,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.*;
@@ -65,17 +62,17 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     private User user3;
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);// creates "Team" group in addition to the "All" default group
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -92,7 +89,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // Create group with all users
-        UserGroup group = userGroupApi.getAll().getFirst();
+        UserGroup group = peg.userGroupApi.getAll().getFirst();
         assertEquals(4, group.getMemberCount());
 
     }
@@ -106,7 +103,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
 
         // Admin creates a group
         Set<UUID> memberIds = Set.of(user1.getId(), user2.getId());
-        UserGroup group     = userGroupApi.create("Developers", "Development team", memberIds);
+        UserGroup group     = peg.userGroupApi.create("Developers", "Development team", memberIds);
 
         assertNotNull(group);
         assertNotNull(group.getId());
@@ -121,15 +118,15 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     public void testAdminCanDeleteGroup(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
 
-        UserGroup group = userGroupApi.create("To Delete", "Will be deleted", Set.of(user1.getId()));
+        UserGroup group = peg.userGroupApi.create("To Delete", "Will be deleted", Set.of(user1.getId()));
         assertNotNull(group.getId());
 
-        assertEquals(1 + 2, userGroupApi.getAll().size());
+        assertEquals(1 + 2, peg.userGroupApi.getAll().size());
         // Delete the group
-        userGroupApi.deleteById(group.getId());
+        peg.userGroupApi.deleteById(group.getId());
 
         // Verify it's gone
-        assertEquals(1 + 1, userGroupApi.getAll().size());//  default "All" group
+        assertEquals(1 + 1, peg.userGroupApi.getAll().size());//  default "All" group
     }
 
     @ParameterizedTest
@@ -139,11 +136,11 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // Create multiple groups
-        userGroupApi.create("Group 1", "First group", Set.of(user1.getId()));
-        userGroupApi.create("Group 2", "Second group", new HashSet<>());
-        userGroupApi.create("Group 3", "Third group", Set.of(user1.getId()));
+        peg.userGroupApi.create("Group 1", "First group", Set.of(user1.getId()));
+        peg.userGroupApi.create("Group 2", "Second group", new HashSet<>());
+        peg.userGroupApi.create("Group 3", "Third group", Set.of(user1.getId()));
         printTables();
-        List<UserGroup> groups = userGroupApi.getAll();
+        List<UserGroup> groups = peg.userGroupApi.getAll();
         assertEquals(1 + 4, groups.size());//default Team group + 3 created
     }
 
@@ -154,14 +151,14 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // Create group with both users
-        UserGroup group = userGroupApi.getAll().getFirst();
+        UserGroup group = peg.userGroupApi.getAll().getFirst();
         assertEquals(4, group.getMemberCount());
 
         // Remove user1
-        userGroupApi.removeMember(group.getId(), user1.getId());
+        peg.userGroupApi.removeMember(group.getId(), user1.getId());
 
         // Verify user1 was removed
-        UserGroup updated = userGroupApi.getById(group.getId());
+        UserGroup updated = peg.userGroupApi.getById(group.getId());
         assertEquals(3, updated.getMemberCount());
     }
 
@@ -172,10 +169,10 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // Create group with user1
-        UserGroup group = userGroupApi.create("Original", "Original desc", Set.of(user1.getId()));
+        UserGroup group = peg.userGroupApi.create("Original", "Original desc", Set.of(user1.getId()));
 
         // Update group
-        UserGroup updated = userGroupApi.update(
+        UserGroup updated = peg.userGroupApi.update(
                 group.getId(),
                 "Updated Name",
                 "Updated description",
@@ -193,7 +190,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
         // Anonymous user tries to create a group - should fail
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            userGroupApi.create("Anonymous Group", "No auth", new HashSet<>());
+            peg.userGroupApi.create("Anonymous Group", "No auth", new HashSet<>());
         });
     }
 
@@ -204,11 +201,11 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // Create first group
-        userGroupApi.create("Developers", "Dev team", Set.of(user1.getId()));
+        peg.userGroupApi.create("Developers", "Dev team", Set.of(user1.getId()));
 
         // Try to create second group with same name - should fail
         try {
-            userGroupApi.create("Developers", "Another dev team", new HashSet<>());
+            peg.userGroupApi.create("Developers", "Another dev team", new HashSet<>());
             fail("Should not be able to create group with duplicate name");
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("already exists") || e.getMessage().contains("Developers"));
@@ -221,7 +218,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     public void testCreateEmptyGroup(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Create group with no members
-        UserGroup group = userGroupApi.create("Empty Group", "No members yet", new HashSet<>());
+        UserGroup group = peg.userGroupApi.create("Empty Group", "No members yet", new HashSet<>());
 
         assertNotNull(group);
         assertEquals("Empty Group", group.getName());
@@ -235,7 +232,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
         // Regular user tries to create a group - should fail
         assertThrows(AccessDeniedException.class, () -> {
-            userGroupApi.create("Hackers", "Trying to create group", new HashSet<>());
+            peg.userGroupApi.create("Hackers", "Trying to create group", new HashSet<>());
         });
     }
 
@@ -245,7 +242,7 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     public void testRegularUserCannotGetAllGroups(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         assertThrows(AccessDeniedException.class, () -> {
-            userGroupApi.getAll();
+            peg.userGroupApi.getAll();
         });
     }
 
@@ -254,10 +251,10 @@ public class UserGroupApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testUpdateGroupName(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        UserGroup group = userGroupApi.create("Old Name", "Description", Set.of(user1.getId()));
+        UserGroup group = peg.userGroupApi.create("Old Name", "Description", Set.of(user1.getId()));
 
         // Update only the name
-        UserGroup updated = userGroupApi.update(
+        UserGroup updated = peg.userGroupApi.update(
                 group.getId(),
                 "New Name",
                 group.getDescription(),

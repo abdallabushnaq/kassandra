@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
@@ -73,14 +74,14 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
         //create a user with australian locale
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         //add an availability
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //moving to Germany
-            addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
+            peg.addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         }
 
         printTables();
@@ -91,7 +92,7 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
     public void anonymousSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            addAvailability(user1, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
+            peg.addAvailability(user1, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         });
 
         {
@@ -99,7 +100,7 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
             float        originalAvailability = availability.getAvailability();
             availability.setAvailability(SECOND_AVAILABILITY);
             try {
-                updateAvailability(availability, user1);
+                peg.updateAvailability(availability, user1);
                 fail("should not be able to update");
             } catch (AuthenticationCredentialsNotFoundException e) {
                 //restore fields to match db for later tests in @AfterEach
@@ -107,13 +108,13 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
             }
         }
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            Availability availability = availabilityApi.getById(user1.getAvailabilities().getFirst().getId());
+            Availability availability = peg.availabilityApi.getById(user1.getAvailabilities().getFirst().getId());
 
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
             Availability availability = user1.getAvailabilities().getFirst();
-            removeAvailability(availability, user1);
+            peg.removeAvailability(availability, user1);
         });
     }
 
@@ -124,15 +125,15 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
         //create a user with australian locale
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         //try to delete the first location
         {
-            User         user         = expectedUsers.getFirst();
+            User         user         = peg.expectedUsers.getFirst();
             Availability availability = user.getAvailabilities().getFirst();
             try {
-                removeAvailability(availability, user);
+                peg.removeAvailability(availability, user);
                 fail("should not be able to delete the first availability");
             } catch (ServerErrorException e) {
                 //expected
@@ -147,21 +148,21 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
         //create a user with australian locale
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         //add an availability
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //moving to Germany
-            addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
+            peg.addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         }
 
         //try to delete the second availability
         {
-            User         user         = expectedUsers.getFirst();
+            User         user         = peg.expectedUsers.getFirst();
             Availability availability = user.getAvailabilities().getLast();
-            removeAvailability(availability, user);
+            peg.removeAvailability(availability, user);
         }
     }
 
@@ -172,24 +173,24 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
         //create a user with australian locale
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         //add an availability
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //moving to Germany
-            addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
+            peg.addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         }
 
         //try to delete the second availability with fake availability id
         {
-            User         user         = expectedUsers.getFirst();
+            User         user         = peg.expectedUsers.getFirst();
             Availability availability = user.getAvailabilities().getLast();
             UUID         id           = availability.getId();
             availability.setId(FAKE_ID);
             try {
-                removeAvailability(availability, user);
+                peg.removeAvailability(availability, user);
                 fail("should not be able to delete");
             } catch (ResponseStatusException e) {
                 availability.setId(id);
@@ -205,24 +206,24 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
         //create a user with australian locale
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         //add an availability
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //moving to Germany
-            addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
+            peg.addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         }
 
         //try to delete the second availability with fake user id
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             UUID id   = user.getId();
             user.setId(FAKE_ID);
             Availability availability = user.getAvailabilities().getLast();
             try {
-                removeAvailability(availability, user);
+                peg.removeAvailability(availability, user);
                 fail("should not be able to delete");
             } catch (ResponseStatusException e) {
                 user.setId(id);
@@ -232,17 +233,17 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
     }
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -259,15 +260,15 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
         //create the user with australian locale
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         //user availability is fixed
         {
-            User         user         = expectedUsers.getFirst();
+            User         user         = peg.expectedUsers.getFirst();
             Availability availability = user.getAvailabilities().getFirst();
             availability.setAvailability(SECOND_AVAILABILITY);
-            updateAvailability(availability, user);
+            peg.updateAvailability(availability, user);
         }
     }
 
@@ -307,19 +308,19 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
         //create the user with australian locale
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         //update availability using unknown user id
         {
-            User user   = expectedUsers.getFirst();
+            User user   = peg.expectedUsers.getFirst();
             UUID userId = user.getId();
             user.setId(FAKE_ID);
             Availability availability = user.getAvailabilities().getFirst();
             float        a            = availability.getAvailability();
             availability.setAvailability(SECOND_AVAILABILITY);
             try {
-                updateAvailability(availability, user);
+                peg.updateAvailability(availability, user);
                 fail("should not be able to update");
             } catch (ResponseStatusException e) {
                 //expected
@@ -333,10 +334,10 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
     @MethodSource("listRandomCases")
     public void userSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
 
         assertThrows(AccessDeniedException.class, () -> {
-            addAvailability(user2, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
+            peg.addAvailability(user2, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         });
 
         {
@@ -344,7 +345,7 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
             float        originalAvailability = availability.getAvailability();
             try {
                 availability.setAvailability(SECOND_AVAILABILITY);
-                updateAvailability(availability, user2);
+                peg.updateAvailability(availability, user2);
                 fail("Should not be able to update availability");
             } catch (AccessDeniedException e) {
                 // Restore original values
@@ -354,7 +355,7 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
 
         assertThrows(AccessDeniedException.class, () -> {
             Availability availability = user2.getAvailabilities().getFirst();
-            removeAvailability(availability, user2);
+            peg.removeAvailability(availability, user2);
         });
     }
 }

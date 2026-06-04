@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.UserGroupListViewTester;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -89,17 +90,17 @@ public class UserGroupListViewTest extends AbstractKeycloakUiTestUtil {
     private       UserGroupListViewTester  userGroupListViewTester;
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {

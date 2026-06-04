@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.util.AbstractGanttTestUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
@@ -52,7 +53,8 @@ public class AbstractUiTestUtil extends AbstractGanttTestUtil {
 
 
     @AfterEach
-    public void tearDownTest() throws InterruptedException {
+    public void tearDownTest(TestInfo testInfo) throws InterruptedException {
+        super.beforeEach(testInfo);
         if (seleniumHandler.isRecording())
             seleniumHandler.wait(1000); // Wait for any pending actions to complete for the recording
         seleniumHandler.destroy();

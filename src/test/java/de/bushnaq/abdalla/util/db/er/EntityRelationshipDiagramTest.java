@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.util.db.er;
 
 import de.bushnaq.abdalla.kassandra.Application;
+import de.bushnaq.abdalla.kassandra.util.AbstractTestUtil;
 import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
@@ -50,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
-public class EntityRelationshipDiagramTest extends PersistingEntityGenerator {
+public class EntityRelationshipDiagramTest extends AbstractTestUtil {
 
     private static final String OUTPUT_PATH = "../kassandra.wiki/entity-relationship-diagram.svg";
 

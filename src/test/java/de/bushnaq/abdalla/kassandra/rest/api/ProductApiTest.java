@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
@@ -68,24 +69,24 @@ public class ProductApiTest extends AbstractUiTestUtil {
     @Test
     public void anonymousSecurity() {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomProducts(1);
             SecurityContextHolder.clearContext();
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            addRandomProducts(1);
+            peg.addRandomProducts(1);
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            List<Product> allProducts = productApi.getAll();
+            List<Product> allProducts = peg.productApi.getAll();
         });
         {
-            Product product = expectedProducts.getFirst();
+            Product product = peg.expectedProducts.getFirst();
             String  name    = product.getName();
             product.setName(SECOND_NAME);
             try {
-                updateProduct(product);
+                peg.updateProduct(product);
                 fail("should not be able to update");
             } catch (AuthenticationCredentialsNotFoundException e) {
                 //expected
@@ -94,25 +95,25 @@ public class ProductApiTest extends AbstractUiTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            removeProduct(expectedProducts.get(0).getId());
+            peg.removeProduct(peg.expectedProducts.get(0).getId());
         });
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            Product product = productApi.getById(expectedProducts.getFirst().getId());
+            Product product = peg.productApi.getById(peg.expectedProducts.getFirst().getId());
         });
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")//works
     public void create() throws Exception {
-        addRandomProducts(1);
+        peg.addRandomProducts(1);
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createDuplicateNameFails() throws Exception {
-        Product product1 = addProduct("Product1");
+        Product product1 = peg.addProduct("Product1");
         try {
-            Product product2 = addProduct("Product1");
+            Product product2 = peg.addProduct("Product1");
             fail("Should not be able to create a product with duplicate name");
         } catch (Exception e) {
             // Expected exception for duplicate name
@@ -123,16 +124,16 @@ public class ProductApiTest extends AbstractUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void delete() throws Exception {
-        addRandomProducts(2);
-        removeProduct(expectedProducts.get(0).getId());
+        peg.addRandomProducts(2);
+        peg.removeProduct(peg.expectedProducts.get(0).getId());
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void deleteUsingFakeId() throws Exception {
-        addRandomProducts(2);
+        peg.addRandomProducts(2);
         try {
-            removeProduct(FAKE_ID);
+            peg.removeProduct(FAKE_ID);
         } catch (ServerErrorException e) {
             //expected
         }
@@ -142,27 +143,27 @@ public class ProductApiTest extends AbstractUiTestUtil {
     @MethodSource("listRandomCases")
     public void getAll(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        setUser(user1.getEmail(), "ROLE_USER");
-        addProduct("Product A");
-        addProduct("Product B");
-        addProduct("Product C");
-        List<Product> allProducts = productApi.getAll();
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        peg.addProduct("Product A");
+        peg.addProduct("Product B");
+        peg.addProduct("Product C");
+        List<Product> allProducts = peg.productApi.getAll();
         assertEquals(1 + 3, allProducts.size());// the "Default" Product is always there
     }
 
     @Test
     @WithMockUser(roles = "USER")
     public void getAllEmpty() throws Exception {
-        List<Product> allProducts = productApi.getAll();
+        List<Product> allProducts = peg.productApi.getAll();
     }
 
     @Test
     public void getByFakeId() throws Exception {
-        setUser("admin-user", "ROLE_ADMIN");
-        addRandomProducts(1 + 1);// the "Default" Product is always there
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        peg.addRandomProducts(1 + 1);// the "Default" Product is always there
         // Try to get non-existent product (admin)
         try {
-            productApi.getById(FAKE_ID);
+            peg.productApi.getById(FAKE_ID);
             fail("Product should not exist");
         } catch (ServerErrorException e) {
             //expected
@@ -173,24 +174,24 @@ public class ProductApiTest extends AbstractUiTestUtil {
     @MethodSource("listRandomCases")
     public void getById(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        setUser(user1.getEmail(), "ROLE_USER");
-        addProduct("Product A");
-        Product product = productApi.getById(expectedProducts.getFirst().getId());
-        assertProductEquals(expectedProducts.getFirst(), product, true);//shallow test
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        peg.addProduct("Product A");
+        Product product = peg.productApi.getById(peg.expectedProducts.getFirst().getId());
+        assertProductEquals(peg.expectedProducts.getFirst(), product, true);//shallow test
     }
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -204,18 +205,18 @@ public class ProductApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testAdminCanAccessAnyProduct() throws Exception {
         // Create product as one user
-        Product product = addProduct("Admin Access Test");
+        Product product = peg.addProduct("Admin Access Test");
 
         // Admin should always have access regardless of ACL
-        Product retrieved = productApi.getById(product.getId());
+        Product retrieved = peg.productApi.getById(product.getId());
         assertNotNull(retrieved);
 
         // Admin can update
         product.setName("Admin Updated");
-        updateProduct(product);
+        peg.updateProduct(product);
 
         // Admin can delete
-        removeProduct(product.getId());
+        peg.removeProduct(product.getId());
     }
 
     @ParameterizedTest
@@ -224,19 +225,19 @@ public class ProductApiTest extends AbstractUiTestUtil {
     public void testCreatorAutoGrantedAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // When a user creates a product, they should automatically get access
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product = addProduct("Creator Test Product");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product = peg.addProduct("Creator Test Product");
 
         // Creator should be able to access their own product
-        Product retrieved = productApi.getById(product.getId());
+        Product retrieved = peg.productApi.getById(product.getId());
         assertNotNull(retrieved);
         assertEquals(product.getName(), retrieved.getName());
 
         // Creator should be able to update their product
         product.setName("Updated Creator Product");
-        updateProduct(product);
+        peg.updateProduct(product);
 
-        Product updated = productApi.getById(product.getId());
+        Product updated = peg.productApi.getById(product.getId());
         assertEquals("Updated Creator Product", updated.getName());
     }
 
@@ -246,19 +247,19 @@ public class ProductApiTest extends AbstractUiTestUtil {
     public void testDeleteProductRemovesAclEntries(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Create product as user
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product = addProduct("Product To Delete");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product = peg.addProduct("Product To Delete");
 
         // Verify creator has access
-        Product retrieved = productApi.getById(product.getId());
+        Product retrieved = peg.productApi.getById(product.getId());
         assertNotNull(retrieved);
 
         // Delete product
-        removeProduct(product.getId());
+        peg.removeProduct(product.getId());
 
         // Product should no longer exist
         assertThrows(AccessDeniedException.class, () -> {
-            productApi.getById(product.getId());
+            peg.productApi.getById(product.getId());
         });
     }
 
@@ -267,18 +268,18 @@ public class ProductApiTest extends AbstractUiTestUtil {
     // todo  no suitable HttpMessageConverter found
     public void testGetAllOnlyReturnsAccessibleProducts(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        setUser("admin-user", "ROLE_ADMIN");
-        addProduct("product 1");
-        addProduct("product 2");
-        addProduct("product 3");
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        peg.addProduct("product 1");
+        peg.addProduct("product 2");
+        peg.addProduct("product 3");
 
         // Admin sees all products
-        List<Product> adminProducts = productApi.getAll();
+        List<Product> adminProducts = peg.productApi.getAll();
         assertEquals(1 + 3, adminProducts.size());// the "Default" Product is always there
 
         // Regular user without any ACL entries sees no products
-        setUser(user1.getEmail(), "ROLE_USER");
-        List<Product> userProducts = productApi.getAll();
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        List<Product> userProducts = peg.productApi.getAll();
         assertEquals(1, userProducts.size());// the "Default" Product is always there
     }
 
@@ -287,30 +288,30 @@ public class ProductApiTest extends AbstractUiTestUtil {
     public void testMultipleUsersCreateProducts(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // User 1 creates product
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product p1 = addProduct("Product 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product p1 = peg.addProduct("Product 1");
 
         // User 2 creates product
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product p2 = addProduct("Product 2");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product p2 = peg.addProduct("Product 2");
 
         // User 3 creates product
-        setUser(user3.getEmail(), "ROLE_USER");
-        Product p3 = addProduct("Product 3");
+        PersistingEntityGenerator.setUser(user3.getEmail(), "ROLE_USER");
+        Product p3 = peg.addProduct("Product 3");
 
         // Each user can only see their own product
-        List<Product> user3Products = productApi.getAll();
+        List<Product> user3Products = peg.productApi.getAll();
         assertEquals(1 + 1, user3Products.size());// the "Default" Product is always there
         assertTrue(user3Products.stream().anyMatch(p -> "Product 3".equals(p.getName())));
 
-        setUser(user1.getEmail(), "ROLE_USER");
-        List<Product> user1Products = productApi.getAll();
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        List<Product> user1Products = peg.productApi.getAll();
         assertEquals(1 + 1, user1Products.size());// the "Default" Product is always there
         assertTrue(user1Products.stream().anyMatch(p -> "Product 1".equals(p.getName())));
 
         // Admin can see all products
-        setUser("admin-user", "ROLE_ADMIN");
-        List<Product> adminProducts = productApi.getAll();
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        List<Product> adminProducts = peg.productApi.getAll();
         assertEquals(1 + 3, adminProducts.size());// the "Default" Product is always there
     }
 
@@ -319,51 +320,51 @@ public class ProductApiTest extends AbstractUiTestUtil {
     public void testProductCreatorGetsAutomaticAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // User 1 creates a product
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
 
         // User 1 should be able to access their product
-        Product retrieved = productApi.getById(product1.getId());
+        Product retrieved = peg.productApi.getById(product1.getId());
         assertNotNull(retrieved);
         assertEquals("User1 Product", retrieved.getName());
 
         // User 2 creates a different product
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product2 = addProduct("User2 Product");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = peg.addProduct("User2 Product");
 
         // User 2 can access their own product
-        Product retrieved2 = productApi.getById(product2.getId());
+        Product retrieved2 = peg.productApi.getById(product2.getId());
         assertNotNull(retrieved2);
 
         // User 2 cannot access User 1's product
         assertThrows(AccessDeniedException.class, () -> {
-            productApi.getById(product1.getId());
+            peg.productApi.getById(product1.getId());
         });
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void update() throws Exception {
-        addRandomProducts(2);
-        Product product = expectedProducts.getFirst();
+        peg.addRandomProducts(2);
+        Product product = peg.expectedProducts.getFirst();
         product.setName(SECOND_NAME);
-        updateProduct(product);
+        peg.updateProduct(product);
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateToDuplicateNameFails() throws Exception {
         // Create two products
-        addRandomProducts(2);
-        Product product1 = expectedProducts.get(0);
-        Product product2 = expectedProducts.get(1);
+        peg.addRandomProducts(2);
+        Product product1 = peg.expectedProducts.get(0);
+        Product product2 = peg.expectedProducts.get(1);
 
         // Try to update product2 to have the same name as product1
         String originalName = product2.getName();
         product2.setName(product1.getName());
 
         try {
-            updateProduct(product2);
+            peg.updateProduct(product2);
             fail("Should not be able to update a product to have a duplicate name");
         } catch (Exception e) {
             // Expected exception for duplicate name
@@ -377,14 +378,14 @@ public class ProductApiTest extends AbstractUiTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateUsingFakeId() throws Exception {
-        addRandomProducts(2);
-        Product product = expectedProducts.getFirst();
+        peg.addRandomProducts(2);
+        Product product = peg.expectedProducts.getFirst();
         UUID    id      = product.getId();
         String  name    = product.getName();
         product.setId(FAKE_ID);
         product.setName(SECOND_NAME);
         try {
-            updateProduct(product);
+            peg.updateProduct(product);
             fail("should not be able to update");
         } catch (ServerErrorException e) {
             //restore fields to match db for later tests in @AfterEach
@@ -396,24 +397,24 @@ public class ProductApiTest extends AbstractUiTestUtil {
     @Test
     public void userSecurity() {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomProducts(1);
         }
-        setUser("user", "ROLE_USER");
+        PersistingEntityGenerator.setUser("user", "ROLE_USER");
         // User without ACL cannot access products
         assertThrows(AccessDeniedException.class, () -> {
-            productApi.getById(expectedProducts.getFirst().getId());
+            peg.productApi.getById(peg.expectedProducts.getFirst().getId());
         });
 
         assertThrows(AccessDeniedException.class, () -> {
-            Product product = expectedProducts.getFirst();
+            Product product = peg.expectedProducts.getFirst();
             String  name    = product.getName();
             product.setName(SECOND_NAME);
-            updateProduct(product);
+            peg.updateProduct(product);
         });
 
         assertThrows(AccessDeniedException.class, () -> {
-            removeProduct(expectedProducts.get(0).getId());
+            peg.removeProduct(peg.expectedProducts.get(0).getId());
         });
     }
 }

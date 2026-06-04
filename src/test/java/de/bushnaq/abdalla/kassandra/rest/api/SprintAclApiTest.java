@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
@@ -66,17 +67,17 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
     UserRepository userRepository;
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -102,39 +103,39 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version, feature, and sprint
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
-        Sprint  sprint1  = addSprint(feature1, "Sprint 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
+        Sprint  sprint1  = peg.addSprint(feature1, "Sprint 1");
 
         // User2 creates a product with a version, feature, and sprint
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product2 = addProduct("User2 Product");
-        Version version2 = addVersion(product2, "Version 2.0");
-        Feature feature2 = addFeature(version2, "Feature 2");
-        Sprint  sprint2  = addSprint(feature2, "Sprint 2");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = peg.addProduct("User2 Product");
+        Version version2 = peg.addVersion(product2, "Version 2.0");
+        Feature feature2 = peg.addFeature(version2, "Feature 2");
+        Sprint  sprint2  = peg.addSprint(feature2, "Sprint 2");
 
         // Admin can access all sprints
-        setUser(admin1.getEmail(), "ROLE_ADMIN");
-        List<Sprint> allSprints = sprintApi.getAll();
+        PersistingEntityGenerator.setUser(admin1.getEmail(), "ROLE_ADMIN");
+        List<Sprint> allSprints = peg.sprintApi.getAll();
         assertEquals(1 + 2, allSprints.size(), "Admin should see all sprints");// the "Backlog" Sprint is always there
 
         // Admin can get specific sprints
-        Sprint retrieved1 = sprintApi.getById(sprint1.getId());
+        Sprint retrieved1 = peg.sprintApi.getById(sprint1.getId());
         assertNotNull(retrieved1);
         assertEquals(sprint1.getId(), retrieved1.getId());
 
-        Sprint retrieved2 = sprintApi.getById(sprint2.getId());
+        Sprint retrieved2 = peg.sprintApi.getById(sprint2.getId());
         assertNotNull(retrieved2);
         assertEquals(sprint2.getId(), retrieved2.getId());
 
         // Admin can update any sprint
         sprint1.setName("Updated by Admin");
-        sprintApi.update(sprint1);
+        peg.sprintApi.update(sprint1);
 
         // Admin can delete any sprint
-        sprintApi.deleteById(sprint2.getId());
+        peg.sprintApi.deleteById(sprint2.getId());
     }
 
     /**
@@ -151,29 +152,29 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version, feature, and multiple sprints
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
-        Sprint  sprint1a = addSprint(feature1, "Sprint 1A");
-        Sprint  sprint1b = addSprint(feature1, "Sprint 1B");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
+        Sprint  sprint1a = peg.addSprint(feature1, "Sprint 1A");
+        Sprint  sprint1b = peg.addSprint(feature1, "Sprint 1B");
 
         // User1 can get all sprints for their feature
-        List<Sprint> sprints = sprintApi.getAll(feature1.getId());
+        List<Sprint> sprints = peg.sprintApi.getAll(feature1.getId());
         assertEquals(2, sprints.size(), "User1 should see all sprints of their feature");
 
         // User2 cannot get sprints for user1's feature
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            sprintApi.getAll(feature1.getId());
+            peg.sprintApi.getAll(feature1.getId());
         });
 
         // After granting access, user2 can get sprints
-        setUser(user1.getEmail(), "ROLE_USER");
-        productAclApi.grantUserAccess(product1.getId(), user2.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        peg.productAclApi.grantUserAccess(product1.getId(), user2.getId());
 
-        setUser(user2.getEmail(), "ROLE_USER");
-        List<Sprint> sprintsAfterGrant = sprintApi.getAll(feature1.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        List<Sprint> sprintsAfterGrant = peg.sprintApi.getAll(feature1.getId());
         assertEquals(2, sprintsAfterGrant.size(), "User2 should see all sprints after being granted access");
     }
 
@@ -192,34 +193,34 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // Admin creates a group with user1
-        setUser(admin1.getEmail(), "ROLE_ADMIN");
-        var group = userGroupApi.create("Dev Team", "Development Team", java.util.Set.of(user1.getId()));
+        PersistingEntityGenerator.setUser(admin1.getEmail(), "ROLE_ADMIN");
+        var group = peg.userGroupApi.create("Dev Team", "Development Team", java.util.Set.of(user1.getId()));
 
         // User2 creates a product with a version, feature, and sprint
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product = addProduct("Team Product");
-        Version version = addVersion(product, "Version 1.0");
-        Feature feature = addFeature(version, "Feature 1");
-        Sprint  sprint  = addSprint(feature, "Sprint 1");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product = peg.addProduct("Team Product");
+        Version version = peg.addVersion(product, "Version 1.0");
+        Feature feature = peg.addFeature(version, "Feature 1");
+        Sprint  sprint  = peg.addSprint(feature, "Sprint 1");
 
         // User1 cannot access the sprint
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            sprintApi.getById(sprint.getId());
+            peg.sprintApi.getById(sprint.getId());
         });
 
         // User2 grants group access to the product
-        setUser(user2.getEmail(), "ROLE_USER");
-        productAclApi.grantGroupAccess(product.getId(), group.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        peg.productAclApi.grantGroupAccess(product.getId(), group.getId());
 
         // Now user1 can access the sprint (via group membership)
-        setUser(user1.getEmail(), "ROLE_USER");
-        Sprint retrieved = sprintApi.getById(sprint.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Sprint retrieved = peg.sprintApi.getById(sprint.getId());
         assertNotNull(retrieved);
         assertEquals(sprint.getId(), retrieved.getId());
 
         // User1 can also see it in getAll()
-        List<Sprint> allSprints = sprintApi.getAll();
+        List<Sprint> allSprints = peg.sprintApi.getAll();
         assertTrue(allSprints.stream().anyMatch(s -> s.getId().equals(sprint.getId())), "User1 should see the sprint via group access");
     }
 
@@ -237,28 +238,28 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version, feature, and sprint
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product = addProduct("User1 Product");
-        Version version = addVersion(product, "Version 1.0");
-        Feature feature = addFeature(version, "Feature 1");
-        Sprint  sprint  = addSprint(feature, "Sprint 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product = peg.addProduct("User1 Product");
+        Version version = peg.addVersion(product, "Version 1.0");
+        Feature feature = peg.addFeature(version, "Feature 1");
+        Sprint  sprint  = peg.addSprint(feature, "Sprint 1");
 
         // User1 grants user2 access to the product
-        productAclApi.grantUserAccess(product.getId(), user2.getId());
+        peg.productAclApi.grantUserAccess(product.getId(), user2.getId());
 
         // User2 can access the sprint
-        setUser(user2.getEmail(), "ROLE_USER");
-        Sprint retrieved = sprintApi.getById(sprint.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Sprint retrieved = peg.sprintApi.getById(sprint.getId());
         assertNotNull(retrieved);
 
         // User1 revokes user2's access
-        setUser(user1.getEmail(), "ROLE_USER");
-        productAclApi.revokeUserAccess(product.getId(), user2.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        peg.productAclApi.revokeUserAccess(product.getId(), user2.getId());
 
         // User2 can no longer access the sprint
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            sprintApi.getById(sprint.getId());
+            peg.sprintApi.getById(sprint.getId());
         });
     }
 
@@ -275,32 +276,32 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version, feature, and sprint
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
-        Sprint  sprint1  = addSprint(feature1, "Sprint 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
+        Sprint  sprint1  = peg.addSprint(feature1, "Sprint 1");
 
         // User2 creates a product with a version, feature, and sprint
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product2 = addProduct("User2 Product");
-        Version version2 = addVersion(product2, "Version 2.0");
-        Feature feature2 = addFeature(version2, "Feature 2");
-        Sprint  sprint2  = addSprint(feature2, "Sprint 2");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = peg.addProduct("User2 Product");
+        Version version2 = peg.addVersion(product2, "Version 2.0");
+        Feature feature2 = peg.addFeature(version2, "Feature 2");
+        Sprint  sprint2  = peg.addSprint(feature2, "Sprint 2");
 
         // User1 cannot access sprint2
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            sprintApi.getById(sprint2.getId());
+            peg.sprintApi.getById(sprint2.getId());
         });
 
         // User2 grants user1 access to product2
-        setUser(user2.getEmail(), "ROLE_USER");
-        productAclApi.grantUserAccess(product2.getId(), user1.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        peg.productAclApi.grantUserAccess(product2.getId(), user1.getId());
 
         // Now user1 can access sprint2
-        setUser(user1.getEmail(), "ROLE_USER");
-        Sprint retrieved = sprintApi.getById(sprint2.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Sprint retrieved = peg.sprintApi.getById(sprint2.getId());
         assertNotNull(retrieved);
         assertEquals(sprint2.getId(), retrieved.getId());
     }
@@ -319,44 +320,44 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version, feature, and sprint
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
-        Sprint  sprint1  = addSprint(feature1, "Sprint 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
+        Sprint  sprint1  = peg.addSprint(feature1, "Sprint 1");
 
         // User2 creates a product with a version, feature, and sprint
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product2 = addProduct("User2 Product");
-        Version version2 = addVersion(product2, "Version 2.0");
-        Feature feature2 = addFeature(version2, "Feature 2");
-        Sprint  sprint2  = addSprint(feature2, "Sprint 2");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = peg.addProduct("User2 Product");
+        Version version2 = peg.addVersion(product2, "Version 2.0");
+        Feature feature2 = peg.addFeature(version2, "Feature 2");
+        Sprint  sprint2  = peg.addSprint(feature2, "Sprint 2");
 
         // User1 can access their own sprint
-        setUser(user1.getEmail(), "ROLE_USER");
-        Sprint retrieved1 = sprintApi.getById(sprint1.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Sprint retrieved1 = peg.sprintApi.getById(sprint1.getId());
         assertNotNull(retrieved1);
         assertEquals(sprint1.getId(), retrieved1.getId());
 
         // User1 cannot access user2's sprint
         assertThrows(AccessDeniedException.class, () -> {
-            sprintApi.getById(sprint2.getId());
+            peg.sprintApi.getById(sprint2.getId());
         });
 
         // User1 can only see their own sprints in getAll()
-        List<Sprint> user1Sprints = sprintApi.getAll();
+        List<Sprint> user1Sprints = peg.sprintApi.getAll();
         assertEquals(1 + 1, user1Sprints.size(), "User1 should only see their own sprints");// the "Backlog" Sprint is always there
         assertEquals(sprint1.getId(), user1Sprints.get(1).getId());
 
         // User2 can access their own sprint
-        setUser(user2.getEmail(), "ROLE_USER");
-        Sprint retrieved2 = sprintApi.getById(sprint2.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Sprint retrieved2 = peg.sprintApi.getById(sprint2.getId());
         assertNotNull(retrieved2);
         assertEquals(sprint2.getId(), retrieved2.getId());
 
         // User2 cannot access user1's sprint
         assertThrows(AccessDeniedException.class, () -> {
-            sprintApi.getById(sprint1.getId());
+            peg.sprintApi.getById(sprint1.getId());
         });
     }
 
@@ -373,15 +374,15 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version and feature
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
 
         // User2 tries to create a sprint for user1's feature - should fail
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            addSprint(feature1, "Unauthorized Sprint");
+            peg.addSprint(feature1, "Unauthorized Sprint");
         });
     }
 
@@ -398,16 +399,16 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version, feature, and sprint
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
-        Sprint  sprint1  = addSprint(feature1, "Sprint 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
+        Sprint  sprint1  = peg.addSprint(feature1, "Sprint 1");
 
         // User2 tries to delete user1's sprint - should fail
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            sprintApi.deleteById(sprint1.getId());
+            peg.sprintApi.deleteById(sprint1.getId());
         });
     }
 
@@ -424,17 +425,17 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version, feature, and sprint
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
-        Sprint  sprint1  = addSprint(feature1, "Sprint 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
+        Sprint  sprint1  = peg.addSprint(feature1, "Sprint 1");
 
         // User2 tries to update user1's sprint - should fail
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         sprint1.setName("Hacked Sprint");
         assertThrows(AccessDeniedException.class, () -> {
-            sprintApi.update(sprint1);
+            peg.sprintApi.update(sprint1);
         });
     }
 }

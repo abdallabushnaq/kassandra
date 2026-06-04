@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
@@ -67,17 +68,17 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     private User user3;
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -101,14 +102,14 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // Create product as different user
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product = addProduct("User Product");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product = peg.addProduct("User Product");
 
         // Admin should be able to view ACL
-        setUser("admin-user", "ROLE_ADMIN");
-        List<ProductAclEntry> acl = productAclApi.getAcl(product.getId());
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        List<ProductAclEntry> acl = peg.productAclApi.getAcl(product.getId());
         assertNotNull(acl);
-        List<Product> all = productApi.getAll();
+        List<Product> all = peg.productApi.getAll();
         assertEquals(1 + 1, all.size(), "Admin should see all");// the "Default" Product is always there
     }
 
@@ -122,14 +123,14 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     @MethodSource("listRandomCases")
     public void testAnonymousCannotAccessAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        setUser("admin-user", "ROLE_ADMIN");
-        Product product = addProduct("Product");
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        Product product = peg.addProduct("Product");
 
         // Clear security context (anonymous)
-        setUser(null, null);
+        PersistingEntityGenerator.setUser(null, null);
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            productAclApi.getAcl(product.getId());
+            peg.productAclApi.getAcl(product.getId());
         });
     }
 
@@ -145,14 +146,14 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "kristen.hubbell@kassandra.org", roles = "USER")
     public void testCannotGrantAccessTwiceToSameUser(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        Product product = addProduct("My Product");
+        Product product = peg.addProduct("My Product");
 
         // Grant access once
-        productAclApi.grantUserAccess(product.getId(), user2.getId());
+        peg.productAclApi.grantUserAccess(product.getId(), user2.getId());
 
         // Try to grant again - should fail
         try {
-            productAclApi.grantUserAccess(product.getId(), user2.getId());
+            peg.productAclApi.grantUserAccess(product.getId(), user2.getId());
             fail("Should not be able to grant access twice");
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("already") || e.getMessage().contains("exists"));
@@ -173,18 +174,18 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     public void testCreatorCanGrantUserAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Creator creates a product
-        Product product = addProduct("Shared Product");
+        Product product = peg.addProduct("Shared Product");
 
         // Creator grants access to another user
-        ProductAclEntry entry = productAclApi.grantUserAccess(product.getId(), user2.getId());
+        ProductAclEntry entry = peg.productAclApi.grantUserAccess(product.getId(), user2.getId());
         assertNotNull(entry);
         assertNotNull(entry.getId());
         assertEquals(product.getId(), entry.getProductId());
         assertEquals(user2.getId(), entry.getUserId());
 
         // Verify the user now has access
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product accessed = productApi.getById(product.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product accessed = peg.productApi.getById(product.getId());
         assertNotNull(accessed);
     }
 
@@ -202,22 +203,22 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     public void testCreatorCanRevokeUserAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Creator creates product and grants access
-        Product product = addProduct("My Product");
-        productAclApi.grantUserAccess(product.getId(), user3.getId());
+        Product product = peg.addProduct("My Product");
+        peg.productAclApi.grantUserAccess(product.getId(), user3.getId());
 
         // Verify user has access
-        setUser(user3.getEmail(), "ROLE_USER");
-        Product accessed = productApi.getById(product.getId());
+        PersistingEntityGenerator.setUser(user3.getEmail(), "ROLE_USER");
+        Product accessed = peg.productApi.getById(product.getId());
         assertNotNull(accessed);
 
         // Creator revokes access
-        setUser(user1.getEmail(), "ROLE_USER");
-        productAclApi.revokeUserAccess(product.getId(), user3.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        peg.productAclApi.revokeUserAccess(product.getId(), user3.getId());
 
         // User should no longer have access
-        setUser(user3.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user3.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            productApi.getById(product.getId());
+            peg.productApi.getById(product.getId());
         });
     }
 
@@ -235,10 +236,10 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     public void testCreatorCanViewOwnAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // User creates a product
-        Product product = addProduct("My Product");
+        Product product = peg.addProduct("My Product");
 
         // Creator should be able to view ACL
-        List<ProductAclEntry> acl = productAclApi.getAcl(product.getId());
+        List<ProductAclEntry> acl = peg.productAclApi.getAcl(product.getId());
         assertNotNull(acl);
         // Should have at least one entry (the creator)
         assertTrue(acl.size() >= 1);
@@ -258,21 +259,21 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     public void testDeleteProductCleansUpAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Create product with multiple ACL entries
-        Product product = addProduct("Product To Delete");
+        Product product = peg.addProduct("Product To Delete");
 
-        productAclApi.grantUserAccess(product.getId(), user1.getId());
-        productAclApi.grantUserAccess(product.getId(), user2.getId());
+        peg.productAclApi.grantUserAccess(product.getId(), user1.getId());
+        peg.productAclApi.grantUserAccess(product.getId(), user2.getId());
 
         // Verify ACL exists
-        List<ProductAclEntry> acl = productAclApi.getAcl(product.getId());
+        List<ProductAclEntry> acl = peg.productAclApi.getAcl(product.getId());
         assertTrue(acl.size() >= 2);
 
         // Delete product
-        productApi.deleteById(product.getId());
+        peg.productApi.deleteById(product.getId());
 
         // ACL should be cleaned up automatically (cascade delete)
         // Product no longer exists, so ACL access should fail
-        List<ProductAclEntry> acl1 = productAclApi.getAcl(product.getId());
+        List<ProductAclEntry> acl1 = peg.productAclApi.getAcl(product.getId());
         assertEquals(0, acl1.size(), "ACL entries should be cleaned up after product deletion");
     }
 
@@ -291,34 +292,34 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
 
         // User2 creates another product
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product2 = addProduct("User2 Product");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = peg.addProduct("User2 Product");
 
         // User1 should only see their own product
-        setUser(user1.getEmail(), "ROLE_USER");
-        List<Product> user1Products = productApi.getAll();
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        List<Product> user1Products = peg.productApi.getAll();
         assertEquals(1 + 1, user1Products.size(), "User1 should only see their own product");// the "Default" Product is always there
         assertTrue(user1Products.stream().anyMatch(p -> product1.getId().equals(p.getId())));
         assertTrue(user1Products.stream().anyMatch(p -> product1.getName().equals(p.getName())));
 
         // User2 should only see their own product
-        setUser(user2.getEmail(), "ROLE_USER");
-        List<Product> user2Products = productApi.getAll();
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        List<Product> user2Products = peg.productApi.getAll();
         assertEquals(1 + 1, user2Products.size(), "User2 should only see their own product");// the "Default" Product is always there
         assertTrue(user2Products.stream().anyMatch(p -> product2.getId().equals(p.getId())));
         assertTrue(user2Products.stream().anyMatch(p -> product2.getName().equals(p.getName())));
 
 
         // Now grant user1 access to product2
-        productAclApi.grantUserAccess(product2.getId(), user1.getId());
+        peg.productAclApi.grantUserAccess(product2.getId(), user1.getId());
 
         // User1 should now see both products
-        setUser(user1.getEmail(), "ROLE_USER");
-        List<Product> user1ProductsAfterGrant = productApi.getAll();
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        List<Product> user1ProductsAfterGrant = peg.productApi.getAll();
         assertEquals(1 + 2, user1ProductsAfterGrant.size(), "User1 should see both products after being granted access");// the "Default" Product is always there
 
         // Verify both products are in the list
@@ -343,24 +344,24 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
     public void testGrantGroupAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        UserGroup group = userGroupApi.getAll().getFirst();
+        UserGroup group = peg.userGroupApi.getAll().getFirst();
 
         // Admin creates a product
-        Product product = addProduct("Team Product");
+        Product product = peg.addProduct("Team Product");
 
         // Grant access to the group
-        ProductAclEntry entry = productAclApi.grantGroupAccess(product.getId(), group.getId());
+        ProductAclEntry entry = peg.productAclApi.grantGroupAccess(product.getId(), group.getId());
         assertNotNull(entry);
         assertEquals(group.getId(), entry.getGroupId());
         assertNull(entry.getUserId());
 
         // Both group members should now have access
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product accessed1 = productApi.getById(product.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product accessed1 = peg.productApi.getById(product.getId());
         assertNotNull(accessed1);
 
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product accessed2 = productApi.getById(product.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product accessed2 = peg.productApi.getById(product.getId());
         assertNotNull(accessed2);
     }
 
@@ -379,31 +380,31 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     public void testMultipleUsersAndGroupsInAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Create users and groups
-        UserGroup group1 = userGroupApi.create("Team A", "Team A", Set.of(user1.getId()));
-        UserGroup group2 = userGroupApi.create("Team B", "Team B", Set.of(user2.getId()));
+        UserGroup group1 = peg.userGroupApi.create("Team A", "Team A", Set.of(user1.getId()));
+        UserGroup group2 = peg.userGroupApi.create("Team B", "Team B", Set.of(user2.getId()));
 
         // Create product
-        Product product = addProduct("Collaborative Product");
+        Product product = peg.addProduct("Collaborative Product");
 
         // Grant access to individual user and multiple groups
-        productAclApi.grantUserAccess(product.getId(), user3.getId());
-        productAclApi.grantGroupAccess(product.getId(), group1.getId());
-        productAclApi.grantGroupAccess(product.getId(), group2.getId());
+        peg.productAclApi.grantUserAccess(product.getId(), user3.getId());
+        peg.productAclApi.grantGroupAccess(product.getId(), group1.getId());
+        peg.productAclApi.grantGroupAccess(product.getId(), group2.getId());
 
         // Check ACL entries
-        List<ProductAclEntry> acl = productAclApi.getAcl(product.getId());
+        List<ProductAclEntry> acl = peg.productAclApi.getAcl(product.getId());
         // Should have: creator + user3 + group1 + group2 = at least 4 entries
         assertTrue(acl.size() >= 4);
 
         // All users should have access
-        setUser(user1.getEmail(), "ROLE_USER");
-        assertNotNull(productApi.getById(product.getId()));
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        assertNotNull(peg.productApi.getById(product.getId()));
 
-        setUser(user2.getEmail(), "ROLE_USER");
-        assertNotNull(productApi.getById(product.getId()));
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        assertNotNull(peg.productApi.getById(product.getId()));
 
-        setUser(user3.getEmail(), "ROLE_USER");
-        assertNotNull(productApi.getById(product.getId()));
+        PersistingEntityGenerator.setUser(user3.getEmail(), "ROLE_USER");
+        assertNotNull(peg.productApi.getById(product.getId()));
     }
 
     /**
@@ -420,25 +421,25 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
     public void testRevokeGroupAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        UserGroup group = userGroupApi.getAll().getFirst();
+        UserGroup group = peg.userGroupApi.getAll().getFirst();
 
         // Create product and grant group access
-        Product product = addProduct("Team Product");
-        productAclApi.grantGroupAccess(product.getId(), group.getId());
+        Product product = peg.addProduct("Team Product");
+        peg.productAclApi.grantGroupAccess(product.getId(), group.getId());
 
         // Verify user has access through group
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product accessed = productApi.getById(product.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product accessed = peg.productApi.getById(product.getId());
         assertNotNull(accessed);
 
         // Revoke group access
-        setUser("admin-user", "ROLE_ADMIN");
-        productAclApi.revokeGroupAccess(product.getId(), group.getId());
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        peg.productAclApi.revokeGroupAccess(product.getId(), group.getId());
 
         // User should no longer have access
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            productApi.getById(product.getId());
+            peg.productApi.getById(product.getId());
         });
     }
 
@@ -456,19 +457,19 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     public void testUserWithAccessCanManageAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Creator creates product
-        Product product = addProduct("My Product");
+        Product product = peg.addProduct("My Product");
 
         // Grant access to user2
-        productAclApi.grantUserAccess(product.getId(), user2.getId());
+        peg.productAclApi.grantUserAccess(product.getId(), user2.getId());
 
         // User2 (who now has access) should be able to grant access to user3
-        setUser(user2.getEmail(), "ROLE_USER");
-        ProductAclEntry entry = productAclApi.grantUserAccess(product.getId(), user3.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        ProductAclEntry entry = peg.productAclApi.grantUserAccess(product.getId(), user3.getId());
         assertNotNull(entry);
 
         // User3 should now have access
-        setUser(user3.getEmail(), "ROLE_USER");
-        Product accessed = productApi.getById(product.getId());
+        PersistingEntityGenerator.setUser(user3.getEmail(), "ROLE_USER");
+        Product accessed = peg.productApi.getById(product.getId());
         assertNotNull(accessed);
     }
 
@@ -484,13 +485,13 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     public void testUserWithoutAccessCannotGrantAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Admin creates a product
-        setUser(admin1.getEmail(), "ROLE_ADMIN");
-        Product product = addProduct("Admin Product");
+        PersistingEntityGenerator.setUser(admin1.getEmail(), "ROLE_ADMIN");
+        Product product = peg.addProduct("Admin Product");
 
         // Different user tries to grant access - should fail
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            productAclApi.grantUserAccess(product.getId(), user2.getId());
+            peg.productAclApi.grantUserAccess(product.getId(), user2.getId());
         });
     }
 
@@ -507,13 +508,13 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     public void testUserWithoutAccessCannotRevokeAccess(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Admin creates product and grants access to user1
-        setUser(admin1.getEmail(), "ROLE_ADMIN");
-        Product product = addProduct("Admin Product");
-        productAclApi.grantUserAccess(product.getId(), user1.getId());
+        PersistingEntityGenerator.setUser(admin1.getEmail(), "ROLE_ADMIN");
+        Product product = peg.addProduct("Admin Product");
+        peg.productAclApi.grantUserAccess(product.getId(), user1.getId());
         // Different user (user2) who has NO access tries to revoke user1's access - should fail
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            productAclApi.revokeUserAccess(product.getId(), user1.getId());
+            peg.productAclApi.revokeUserAccess(product.getId(), user1.getId());
         });
     }
 
@@ -529,13 +530,13 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
     public void testUserWithoutAccessCannotViewAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
         // Admin creates a product
-        setUser(admin1.getEmail(), "ROLE_ADMIN");
-        Product product = addProduct("Admin Product");
+        PersistingEntityGenerator.setUser(admin1.getEmail(), "ROLE_ADMIN");
+        Product product = peg.addProduct("Admin Product");
 
         // Different user tries to view ACL - should fail
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            productAclApi.getAcl(product.getId());
+            peg.productAclApi.getAcl(product.getId());
         });
     }
 }

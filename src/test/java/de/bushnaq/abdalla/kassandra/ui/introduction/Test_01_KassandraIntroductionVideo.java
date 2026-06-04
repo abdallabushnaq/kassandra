@@ -149,13 +149,13 @@ public class Test_01_KassandraIntroductionVideo extends AbstractIntroductionVide
 
         generateProductsIfNeeded(testInfo, randomCase);
 
-        product     = productApi.getAll().get(1);
+        product     = peg.productApi.getAll().get(1);
         productName = product.getName();
-        version     = versionApi.getAll(product.getId()).getFirst();
+        version     = peg.versionApi.getAll(product.getId()).getFirst();
         versionName = version.getName();
-        feature     = featureApi.getAll(version.getId()).getFirst();
+        feature     = peg.featureApi.getAll(version.getId()).getFirst();
         featureName = feature.getName();
-        sprint      = sprintApi.getAll(feature.getId()).stream()
+        sprint      = peg.sprintApi.getAll(feature.getId()).stream()
                 .filter(s -> !s.getName().equals("Backlog"))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No non-Backlog sprint found for feature: " + featureName));

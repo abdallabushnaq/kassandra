@@ -19,10 +19,14 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.util.AbstractTestUtil;
 import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -47,32 +51,34 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
-public class SprintApiTest extends PersistingEntityGenerator {
-    private static final UUID   FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    private static final String SECOND_NAME = "SECOND_NAME";
+public class SprintApiTest extends AbstractTestUtil {
+    private static final UUID                      FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final String                    SECOND_NAME = "SECOND_NAME";
+    @Autowired
+    protected            PersistingEntityGenerator peg;
 
     @Test
     public void anonymousSecurity() {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomProducts(1);
             SecurityContextHolder.clearContext();
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            List<Sprint> allSprints = sprintApi.getAll();
+            List<Sprint> allSprints = peg.sprintApi.getAll();
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            Sprint sprint = sprintApi.getById(expectedSprints.getFirst().getId());
+            Sprint sprint = peg.sprintApi.getById(peg.expectedSprints.getFirst().getId());
         });
 
         {
-            Sprint sprint = expectedSprints.getFirst();
+            Sprint sprint = peg.expectedSprints.getFirst();
             String name   = sprint.getName();
             try {
                 sprint.setName(SECOND_NAME);
-                updateSprint(sprint);
+                peg.updateSprint(sprint);
                 fail("should not be able to update");
             } catch (AuthenticationCredentialsNotFoundException e) {
                 //restore fields to match db for later tests in @AfterEach
@@ -81,28 +87,34 @@ public class SprintApiTest extends PersistingEntityGenerator {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            removeSprint(expectedSprints.getFirst().getId());
+            peg.removeSprint(peg.expectedSprints.getFirst().getId());
         });
+    }
+
+    @BeforeEach
+    protected void beforeEach(TestInfo testInfo) {
+        super.beforeEach(testInfo);
+        peg.init();
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void create() throws Exception {
-        addRandomProducts(1);
+        peg.addRandomProducts(1);
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void createDuplicateNameFails() throws Exception {
         // Create product, version, and feature first
-        addRandomProducts(1);
+        peg.addRandomProducts(1);
 
         // Create first sprint
-        Sprint sprint1 = addSprint(expectedFeatures.get(0), "Sprint1");
+        Sprint sprint1 = peg.addSprint(peg.expectedFeatures.get(0), "Sprint1");
 
         try {
             // Try to create a second sprint with the same name
-            Sprint sprint2 = addSprint(expectedFeatures.get(0), "Sprint1");
+            Sprint sprint2 = peg.addSprint(peg.expectedFeatures.get(0), "Sprint1");
             fail("Should not be able to create a sprint with duplicate name");
         } catch (Exception e) {
             // Expected exception for duplicate name
@@ -114,17 +126,17 @@ public class SprintApiTest extends PersistingEntityGenerator {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void delete() throws Exception {
         // Create products with sprints
-        addRandomProducts(2);
+        peg.addRandomProducts(2);
         // Delete the first sprint
-        removeSprint(expectedSprints.get(1).getId());
+        peg.removeSprint(peg.expectedSprints.get(1).getId());
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void deleteUsingFakeId() throws Exception {
-        addRandomProducts(2);
+        peg.addRandomProducts(2);
         try {
-            removeSprint(FAKE_ID);
+            peg.removeSprint(FAKE_ID);
         } catch (ServerErrorException e) {
             // Expected exception
         }
@@ -133,14 +145,14 @@ public class SprintApiTest extends PersistingEntityGenerator {
     @Test
     public void getAll() throws Exception {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(3);
-            List<Sprint> allSprints = sprintApi.getAll();
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomProducts(3);
+            List<Sprint> allSprints = peg.sprintApi.getAll();
             assertEquals(1 + 3, allSprints.size());// including the "Default" Sprint
         }
         {
-            setUser("user", "ROLE_USER");
-            List<Sprint> allSprints = sprintApi.getAll();
+            PersistingEntityGenerator.setUser("user", "ROLE_USER");
+            List<Sprint> allSprints = peg.sprintApi.getAll();
             assertEquals(0, allSprints.size());
         }
     }
@@ -148,16 +160,16 @@ public class SprintApiTest extends PersistingEntityGenerator {
     @Test
     @WithMockUser(roles = "USER")
     public void getAllEmpty() throws Exception {
-        List<Sprint> allSprints = sprintApi.getAll();
+        List<Sprint> allSprints = peg.sprintApi.getAll();
         assertEquals(0, allSprints.size());
     }
 
     @Test
     public void getByFakeId() throws Exception {
-        setUser("admin-user", "ROLE_ADMIN");
-        addRandomProducts(1);
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        peg.addRandomProducts(1);
         try {
-            sprintApi.getById(FAKE_ID);
+            peg.sprintApi.getById(FAKE_ID);
             fail("Sprint should not exist");
         } catch (ServerErrorException e) {
             // Expected exception
@@ -166,37 +178,37 @@ public class SprintApiTest extends PersistingEntityGenerator {
 
     @Test
     public void getById() throws Exception {
-        setUser("admin-user", "ROLE_ADMIN");
-        addRandomProducts(1);
-        Sprint sprint = sprintApi.getById(expectedSprints.stream().sorted(Comparator.comparing(Sprint::getName)).toList().getFirst().getId());
-        assertSprintEquals(expectedSprints.getFirst(), sprint, true);
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        peg.addRandomProducts(1);
+        Sprint sprint = peg.sprintApi.getById(peg.expectedSprints.stream().sorted(Comparator.comparing(Sprint::getName)).toList().getFirst().getId());
+        assertSprintEquals(peg.expectedSprints.getFirst(), sprint, true);
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void update() throws Exception {
-        addRandomProducts(2);
-        Sprint sprint = expectedSprints.get(1);
+        peg.addRandomProducts(2);
+        Sprint sprint = peg.expectedSprints.get(1);
         sprint.setName(SECOND_NAME);
-        updateSprint(sprint);
+        peg.updateSprint(sprint);
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateToDuplicateNameFails() throws Exception {
         // Create product, version, and feature first
-        addRandomProducts(1);
+        peg.addRandomProducts(1);
 
         // Create two sprints
-        Sprint sprint1 = addSprint(expectedFeatures.stream().sorted(Comparator.comparing(Feature::getName)).toList().get(0), "Sprint1");
-        Sprint sprint2 = addSprint(expectedFeatures.stream().sorted(Comparator.comparing(Feature::getName)).toList().get(0), "Sprint2");
+        Sprint sprint1 = peg.addSprint(peg.expectedFeatures.stream().sorted(Comparator.comparing(Feature::getName)).toList().get(0), "Sprint1");
+        Sprint sprint2 = peg.addSprint(peg.expectedFeatures.stream().sorted(Comparator.comparing(Feature::getName)).toList().get(0), "Sprint2");
 
         // Try to update sprint2 to have the same name as sprint1
         String originalName = sprint2.getName();
         sprint2.setName(sprint1.getName());
 
         try {
-            updateSprint(sprint2);
+            peg.updateSprint(sprint2);
             fail("Should not be able to update a sprint to have a duplicate name");
         } catch (Exception e) {
             // Expected exception for duplicate name
@@ -229,25 +241,25 @@ public class SprintApiTest extends PersistingEntityGenerator {
     @Test
     public void userSecurity() {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            addRandomProducts(1);
-            setUser("user", "ROLE_USER");
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            peg.addRandomProducts(1);
+            PersistingEntityGenerator.setUser("user", "ROLE_USER");
         }
 
         // User without ACL cannot access products
         assertThrows(AccessDeniedException.class, () -> {
             // Regular users should be able to view sprints
-            List<Sprint> allSprints = sprintApi.getAll();
-            Sprint       sprint     = sprintApi.getById(expectedSprints.getFirst().getId());
+            List<Sprint> allSprints = peg.sprintApi.getAll();
+            Sprint       sprint     = peg.sprintApi.getById(peg.expectedSprints.getFirst().getId());
         });
 
         // But not modify them
         {
-            Sprint sprintToModify = expectedSprints.getFirst();
+            Sprint sprintToModify = peg.expectedSprints.getFirst();
             String originalName   = sprintToModify.getName();
             try {
                 sprintToModify.setName(SECOND_NAME);
-                updateSprint(sprintToModify);
+                peg.updateSprint(sprintToModify);
                 fail("Should not be able to update sprint");
             } catch (AccessDeniedException e) {
                 // Expected exception
@@ -257,7 +269,7 @@ public class SprintApiTest extends PersistingEntityGenerator {
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            removeSprint(expectedSprints.getFirst().getId());
+            peg.removeSprint(peg.expectedSprints.getFirst().getId());
         });
     }
 }

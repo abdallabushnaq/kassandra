@@ -64,11 +64,11 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get the second product to add versions to (skip Default product at index 0)
-        Product firstProduct = productApi.getAll().get(1);
+        Product firstProduct = peg.productApi.getAll().get(1);
 
         {
             processQuery("Add a new version with the name 3.1.5 to product " + firstProduct.getName() + ".");
-            List<Version>     versions = versionApi.getAll(firstProduct.getId());
+            List<Version>     versions = peg.versionApi.getAll(firstProduct.getId());
             Optional<Version> version  = versions.stream().filter(v -> v.getName().equals("3.1.5")).findFirst();
             assertTrue(version.isPresent(), "Version should be created");
             assertEquals("3.1.5", version.get().getName(), "Version name should match");
@@ -83,11 +83,11 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get the second product to add versions to (skip Default product at index 0)
-        Product firstProduct = productApi.getAll().get(1);
+        Product firstProduct = peg.productApi.getAll().get(1);
 
         //---add
         processQuery("Add a new version with the name 2.0.0-beta to product " + firstProduct.getName() + ".");
-        List<Version>     versions = versionApi.getAll(firstProduct.getId());
+        List<Version>     versions = peg.versionApi.getAll(firstProduct.getId());
         Optional<Version> version  = versions.stream().filter(v -> v.getName().equals("2.0.0-beta")).findFirst();
         assertTrue(version.isPresent(), "Version should be created before deletion test");
         log.info("Version ID: {}.", version.get().getId());
@@ -97,7 +97,7 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
 
         //---delete
         processQuery("Please delete the version you just created.");
-        List<Version>     versionsAfterDelete = versionApi.getAll(firstProduct.getId());
+        List<Version>     versionsAfterDelete = peg.versionApi.getAll(firstProduct.getId());
         Optional<Version> deletedVersion      = versionsAfterDelete.stream().filter(v -> v.getName().equals("2.0.0-beta")).findFirst();
         assertFalse(deletedVersion.isPresent(), "Version '2.0.0-beta' should be deleted");
         assertEquals(versionCountBeforeDelete - 1, versionsAfterDelete.size(), "Version count should decrease by 1");
@@ -110,8 +110,8 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get the second product to list versions from (skip Default product at index 0)
-        Product       firstProduct = productApi.getAll().get(1);
-        List<Version> allVersions  = versionApi.getAll(firstProduct.getId());
+        Product       firstProduct = peg.productApi.getAll().get(1);
+        List<Version> allVersions  = peg.versionApi.getAll(firstProduct.getId());
 
         String response = processQuery("list all versions for product " + firstProduct.getName() + ".");
         allVersions.forEach(version ->
@@ -131,7 +131,7 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get all versions across all products
-        List<Version> allVersions = versionApi.getAll();
+        List<Version> allVersions = peg.versionApi.getAll();
 
         String response = processQuery("list all versions.");
 
@@ -151,8 +151,8 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get a version from the second product (skip Default product)
-        Product       secondProduct = productApi.getAll().get(1);
-        List<Version> versions      = versionApi.getAll(secondProduct.getId());
+        Product       secondProduct = peg.productApi.getAll().get(1);
+        List<Version> versions      = peg.versionApi.getAll(secondProduct.getId());
         Version       firstVersion  = versions.getFirst();
 
         String response = processQuery("Get version details for version " + firstVersion.getName() + " of product " + secondProduct.getName() + ".");
@@ -172,11 +172,11 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get the second product (skip Default product at index 0)
-        Product firstProduct        = productApi.getAll().get(1);
-        int     initialVersionCount = versionApi.getAll(firstProduct.getId()).size();
+        Product firstProduct        = peg.productApi.getAll().get(1);
+        int     initialVersionCount = peg.versionApi.getAll(firstProduct.getId()).size();
 
         // Count how many of these versions already exist (realistic scenario - some versions may already be there)
-        List<Version> existingVersions     = versionApi.getAll(firstProduct.getId());
+        List<Version> existingVersions     = peg.versionApi.getAll(firstProduct.getId());
         long          existingVersion100   = existingVersions.stream().filter(v -> v.getName().equals("1.0.0")).count();
         long          existingVersion110   = existingVersions.stream().filter(v -> v.getName().equals("1.1.0")).count();
         long          existingVersion120   = existingVersions.stream().filter(v -> v.getName().equals("1.2.0")).count();
@@ -190,7 +190,7 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         String response = processQuery("Add three new versions to product " + firstProduct.getName() +
                 ": version 1.0.0, version 1.1.0, and version 1.2.0.");
 
-        List<Version> versionsAfter = versionApi.getAll(firstProduct.getId());
+        List<Version> versionsAfter = peg.versionApi.getAll(firstProduct.getId());
 
         // Verify all three versions exist (whether newly created or already existed)
         Optional<Version> version100 = versionsAfter.stream().filter(v -> v.getName().equals("1.0.0")).findFirst();
@@ -232,17 +232,17 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get the second product to add versions to (skip Default product at index 0)
-        Product firstProduct = productApi.getAll().get(1);
+        Product firstProduct = peg.productApi.getAll().get(1);
 
         {
             log.info("Product ID: {}, Product Name: {}", firstProduct.getId(), firstProduct.getName());
             processQuery("Add a new version with the name 1.0.0-alpa to product " + firstProduct.getName() + ".");
-            Optional<Version> misspelledVersion = versionApi.getByName(firstProduct.getId(), "1.0.0-alpa");
+            Optional<Version> misspelledVersion = peg.versionApi.getByName(firstProduct.getId(), "1.0.0-alpa");
             if (misspelledVersion.isEmpty()) {
-                Optional<Version> version = versionApi.getByName(firstProduct.getId(), "1.0.0-alpha");
+                Optional<Version> version = peg.versionApi.getByName(firstProduct.getId(), "1.0.0-alpha");
                 {
                     processQuery("Please fix the typo in the version you created to 1.0.0-alpha I specifically want alpa.");
-                    List<Version>     versions        = versionApi.getAll(firstProduct.getId());
+                    List<Version>     versions        = peg.versionApi.getAll(firstProduct.getId());
                     Optional<Version> updatedVersion  = versions.stream().filter(v -> v.getName().equals("1.0.0-alpa")).findFirst();
                     Optional<Version> mistypedVersion = versions.stream().filter(v -> v.getName().equals("1.0.0-alpha")).findFirst();
                     assertTrue(updatedVersion.isPresent(), "Version should be renamed");
@@ -252,7 +252,7 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
             } else {
                 {
                     processQuery("Please fix the typo in the version you created to 1.0.0-alpha.");
-                    List<Version>     versions        = versionApi.getAll(firstProduct.getId());
+                    List<Version>     versions        = peg.versionApi.getAll(firstProduct.getId());
                     Optional<Version> updatedVersion  = versions.stream().filter(v -> v.getName().equals("1.0.0-alpha")).findFirst();
                     Optional<Version> mistypedVersion = versions.stream().filter(v -> v.getName().equals("1.0.0-alpa")).findFirst();
                     assertTrue(updatedVersion.isPresent(), "Version should be renamed");
@@ -271,12 +271,12 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get the second product (skip Default product at index 0)
-        Product firstProduct = productApi.getAll().get(1);
+        Product firstProduct = peg.productApi.getAll().get(1);
 
         // Create a version with a typo
         {
             processQuery("Add a new version with the name 2.5.3-RC1 to product " + firstProduct.getName() + ".");
-            List<Version>     versions = versionApi.getAll(firstProduct.getId());
+            List<Version>     versions = peg.versionApi.getAll(firstProduct.getId());
             Optional<Version> version  = versions.stream().filter(v -> v.getName().equals("2.5.3-RC1")).findFirst();
             assertTrue(version.isPresent(), "Version should be created");
             log.info("Version 2.5.3-RC1 ID is: {}.", version.get().getId());
@@ -285,7 +285,7 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         // Update to final release
         {
             processQuery("Please update the version you just created to 2.5.3-final.");
-            List<Version>     versions     = versionApi.getAll(firstProduct.getId());
+            List<Version>     versions     = peg.versionApi.getAll(firstProduct.getId());
             Optional<Version> finalVersion = versions.stream().filter(v -> v.getName().equals("2.5.3-final")).findFirst();
             Optional<Version> rc1Version   = versions.stream().filter(v -> v.getName().equals("2.5.3-RC1")).findFirst();
             assertTrue(finalVersion.isPresent(), "Version should be updated to final");
@@ -302,7 +302,7 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get two different products (skip Default product at index 0)
-        List<Product> allProducts = productApi.getAll();
+        List<Product> allProducts = peg.productApi.getAll();
         assertTrue(allProducts.size() >= 3, "Need at least 3 products for this test (including Default)");
 
         Product firstProduct  = allProducts.get(1);
@@ -312,8 +312,8 @@ public class AiAssistantServiceVersionTest extends AbstractMcpTest {
         processQuery("Add a new version with the name 3.0.0 to product " + firstProduct.getName() + ".");
         processQuery("Add a new version with the name 3.0.0 to product " + secondProduct.getName() + ".");
 
-        List<Version> firstProductVersions  = versionApi.getAll(firstProduct.getId());
-        List<Version> secondProductVersions = versionApi.getAll(secondProduct.getId());
+        List<Version> firstProductVersions  = peg.versionApi.getAll(firstProduct.getId());
+        List<Version> secondProductVersions = peg.versionApi.getAll(secondProduct.getId());
 
         Optional<Version> version1 = firstProductVersions.stream()
                 .filter(v -> v.getName().equals("3.0.0")).findFirst();

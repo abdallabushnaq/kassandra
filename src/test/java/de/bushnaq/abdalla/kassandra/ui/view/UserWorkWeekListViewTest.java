@@ -73,28 +73,28 @@ import java.time.LocalDate;
 @Slf4j
 public class UserWorkWeekListViewTest extends AbstractKeycloakUiTestUtil {
 
-    private       UserWorkWeek lastUserWorkWeek;
-    private       String       lastUserWorkWeekName;
-    private final LocalDate    newStartDate    = LocalDate.of(2025, 8, 1);
+    private       UserWorkWeek               lastUserWorkWeek;
+    private       String                     lastUserWorkWeekName;
+    private final LocalDate                  newStartDate    = LocalDate.of(2025, 8, 1);
     /**
      * A second work week used as the target when testing edits and duplicates.
      */
-    private final String       newWorkWeekName = DefaultEntitiesInitializer.WORK_WEEK_JEWISH_5X8;
-    private final LocalDate    startDate       = LocalDate.of(2025, 6, 1);
-    private final String       testUsername    = "christopher.paul@kassandra.org";
+    private final String                     newWorkWeekName = DefaultEntitiesInitializer.WORK_WEEK_JEWISH_5X8;
+    private final LocalDate                  startDate       = LocalDate.of(2025, 6, 1);
+    private final String                     testUsername    = "christopher.paul@kassandra.org";
     @Autowired
-    private UserWorkWeekListViewTester userWorkWeekListViewTester;
+    private       UserWorkWeekListViewTester userWorkWeekListViewTester;
     /**
      * Work week used when creating a second assignment in the create/delete tests.
      */
-    private final String       workWeekName    = DefaultEntitiesInitializer.WORK_WEEK_ISLAMIC_5X8;
+    private final String                     workWeekName    = DefaultEntitiesInitializer.WORK_WEEK_ISLAMIC_5X8;
 
     /**
      * Reads the initial work week assignment of the test user from the API
      * and stores it for use in the test methods.
      */
     private void read() {
-        User paul = userApi.getByEmail("christopher.paul@kassandra.org").get();
+        User paul = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
         lastUserWorkWeek     = paul.getUserWorkWeeks().getFirst();
         lastUserWorkWeekName = lastUserWorkWeek.getWorkWeek().getName();
     }

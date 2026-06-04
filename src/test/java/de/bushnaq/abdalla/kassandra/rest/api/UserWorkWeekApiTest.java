@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.UserWorkWeek;
 import de.bushnaq.abdalla.kassandra.dto.WorkWeek;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
@@ -93,27 +94,27 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
     public void add(RandomCase randomCase, TestInfo testInfo) throws Exception {
         // Create user with default work week (Western 5x8)
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         // Verify the first work week was persisted with the correct start date
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getUserWorkWeeks().getFirst().getStart());
         }
 
         // Add a second work-week assignment (Islamic Sun-Thu 5×8) effective on SECOND_START_DATE
         {
-            User user = expectedUsers.getFirst();
-            WorkWeek islamicWorkWeek = workWeekApi.getAll().stream()
+            User user = peg.expectedUsers.getFirst();
+            WorkWeek islamicWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();
-            addWorkWeek(user, islamicWorkWeek, LocalDate.parse(SECOND_START_DATE));
+            peg.addWorkWeek(user, islamicWorkWeek, LocalDate.parse(SECOND_START_DATE));
         }
 
         // Verify the second assignment
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             assertEquals(LocalDate.parse(SECOND_START_DATE), user.getUserWorkWeeks().get(1).getStart());
         }
     }
@@ -128,30 +129,30 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
         // Set up data as admin; fetch the second work week while still authenticated
         final WorkWeek secondWorkWeek;
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
             // Add a second assignment so we have something to attempt to delete later
-            secondWorkWeek = workWeekApi.getAll().stream()
+            secondWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();
-            addWorkWeek(user, secondWorkWeek, LocalDate.parse(SECOND_START_DATE));
+            peg.addWorkWeek(user, secondWorkWeek, LocalDate.parse(SECOND_START_DATE));
             SecurityContextHolder.clearContext();
         }
 
         // Try to add a third assignment as anonymous – must fail
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User user = expectedUsers.getFirst();
-            addWorkWeek(user, secondWorkWeek, LocalDate.parse("2026-01-01"));
+            User user = peg.expectedUsers.getFirst();
+            peg.addWorkWeek(user, secondWorkWeek, LocalDate.parse("2026-01-01"));
         });
 
         // Try to update as anonymous – must fail
         {
-            User         user          = expectedUsers.getFirst();
+            User         user          = peg.expectedUsers.getFirst();
             UserWorkWeek uww           = user.getUserWorkWeeks().getFirst();
             LocalDate    originalStart = uww.getStart();
             uww.setStart(LocalDate.parse(SECOND_START_DATE));
             try {
-                updateWorkWeek(uww, user);
+                peg.updateWorkWeek(uww, user);
                 fail("should not be able to update");
             } catch (AuthenticationCredentialsNotFoundException e) {
                 // Restore field so the @AfterEach state checks still pass
@@ -161,9 +162,9 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Try to delete as anonymous – must fail
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User         user = expectedUsers.getFirst();
+            User         user = peg.expectedUsers.getFirst();
             UserWorkWeek uww  = user.getUserWorkWeeks().get(1);
-            removeWorkWeek(uww, user);
+            peg.removeWorkWeek(uww, user);
         });
     }
 
@@ -176,14 +177,14 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void deleteFirstWorkWeek(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         // Attempting to delete the first (and only) work-week assignment must fail
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             try {
-                userWorkWeekApi.deleteById(user.getId(), user.getUserWorkWeeks().getFirst().getId());
+                peg.userWorkWeekApi.deleteById(user.getId(), user.getUserWorkWeeks().getFirst().getId());
                 fail("should not be able to delete the first work-week assignment");
             } catch (ServerErrorException e) {
                 // expected
@@ -199,23 +200,23 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void deleteSecondWorkWeek(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         // Add a second assignment
         {
-            User user = expectedUsers.getFirst();
-            WorkWeek islamicWorkWeek = workWeekApi.getAll().stream()
+            User user = peg.expectedUsers.getFirst();
+            WorkWeek islamicWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();
-            addWorkWeek(user, islamicWorkWeek, LocalDate.parse(SECOND_START_DATE));
+            peg.addWorkWeek(user, islamicWorkWeek, LocalDate.parse(SECOND_START_DATE));
         }
 
         // Delete the second assignment – must succeed
         {
-            User         user = expectedUsers.getFirst();
+            User         user = peg.expectedUsers.getFirst();
             UserWorkWeek uww  = user.getUserWorkWeeks().get(1);
-            removeWorkWeek(uww, user);
+            peg.removeWorkWeek(uww, user);
         }
     }
 
@@ -227,26 +228,26 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void deleteUsingFakeId(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         // Add a second assignment so there is a deletable one
         {
-            User user = expectedUsers.getFirst();
-            WorkWeek islamicWorkWeek = workWeekApi.getAll().stream()
+            User user = peg.expectedUsers.getFirst();
+            WorkWeek islamicWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();
-            addWorkWeek(user, islamicWorkWeek, LocalDate.parse(SECOND_START_DATE));
+            peg.addWorkWeek(user, islamicWorkWeek, LocalDate.parse(SECOND_START_DATE));
         }
 
         // Try to delete the second assignment using a fake assignment ID
         {
-            User         user   = expectedUsers.getFirst();
+            User         user   = peg.expectedUsers.getFirst();
             UserWorkWeek uww    = user.getUserWorkWeeks().get(1);
             UUID         realId = uww.getId();
             uww.setId(FAKE_ID);
             try {
-                userWorkWeekApi.deleteById(user.getId(), uww.getId());
+                peg.userWorkWeekApi.deleteById(user.getId(), uww.getId());
                 fail("should not be able to delete with fake id");
             } catch (ServerErrorException e) {
                 // expected
@@ -263,25 +264,25 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void deleteUsingFakeUserId(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         // Add a second assignment so there is a deletable one
         {
-            User user = expectedUsers.getFirst();
-            WorkWeek islamicWorkWeek = workWeekApi.getAll().stream()
+            User user = peg.expectedUsers.getFirst();
+            WorkWeek islamicWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();
-            addWorkWeek(user, islamicWorkWeek, LocalDate.parse(SECOND_START_DATE));
+            peg.addWorkWeek(user, islamicWorkWeek, LocalDate.parse(SECOND_START_DATE));
         }
 
         // Try to delete using a fake user ID
         {
-            User user       = expectedUsers.getFirst();
+            User user       = peg.expectedUsers.getFirst();
             UUID realUserId = user.getId();
             user.setId(FAKE_ID);
             try {
-                userWorkWeekApi.deleteById(user.getId(), user.getUserWorkWeeks().get(1).getId());
+                peg.userWorkWeekApi.deleteById(user.getId(), user.getUserWorkWeeks().get(1).getId());
                 fail("should not be able to delete with fake user id");
             } catch (ResponseStatusException e) {
                 // expected
@@ -295,17 +296,17 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
     // -----------------------------------------------------------------------
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -323,25 +324,25 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateUsingFakeId(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         // Verify the assignment exists
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getUserWorkWeeks().getFirst().getStart());
         }
 
         // Attempt to update using a fake assignment ID
         {
-            User         user      = expectedUsers.getFirst();
+            User         user      = peg.expectedUsers.getFirst();
             UserWorkWeek uww       = user.getUserWorkWeeks().getFirst();
             UUID         realId    = uww.getId();
             LocalDate    realStart = uww.getStart();
             uww.setId(FAKE_ID);
             uww.setStart(LocalDate.parse(SECOND_START_DATE));
             try {
-                updateWorkWeek(uww, user);
+                peg.updateWorkWeek(uww, user);
                 fail("should not be able to update with fake id");
             } catch (ServerErrorException e) {
                 // expected
@@ -359,12 +360,12 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateUsingFakeUserId(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         // Verify the assignment exists
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getUserWorkWeeks().getFirst().getStart());
         }
 
@@ -372,14 +373,14 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Attempt to update using a fake user ID
         {
-            User user       = expectedUsers.getFirst();
+            User user       = peg.expectedUsers.getFirst();
             UUID realUserId = user.getId();
             user.setId(FAKE_ID);
             UserWorkWeek uww       = user.getUserWorkWeeks().getFirst();
             LocalDate    realStart = uww.getStart();
             uww.setStart(LocalDate.parse(SECOND_START_DATE));
             try {
-                updateWorkWeek(uww, user);
+                peg.updateWorkWeek(uww, user);
                 fail("should not be able to update with fake user id");
             } catch (ResponseStatusException e) {
                 // expected
@@ -397,12 +398,12 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateWorkWeek(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         // Verify that the first assignment has the expected start date
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getUserWorkWeeks().getFirst().getStart());
         }
 
@@ -410,14 +411,14 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Switch to a different work week and change the start date
         {
-            User user = expectedUsers.getFirst();
-            WorkWeek islamicWorkWeek = workWeekApi.getAll().stream()
+            User user = peg.expectedUsers.getFirst();
+            WorkWeek islamicWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();
             UserWorkWeek uww = user.getUserWorkWeeks().getFirst();
             uww.setWorkWeek(islamicWorkWeek);
             uww.setStart(LocalDate.parse(SECOND_START_DATE));
-            updateWorkWeek(uww, user);
+            peg.updateWorkWeek(uww, user);
         }
     }
 
@@ -429,14 +430,14 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
     @MethodSource("listRandomCases")
     public void userSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
 
         // user1 must not be able to add a work-week assignment for user2
         assertThrows(AccessDeniedException.class, () -> {
-            WorkWeek islamicWorkWeek = workWeekApi.getAll().stream()
+            WorkWeek islamicWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();
-            addWorkWeek(user2, islamicWorkWeek, LocalDate.parse(SECOND_START_DATE));
+            peg.addWorkWeek(user2, islamicWorkWeek, LocalDate.parse(SECOND_START_DATE));
         });
 
         // user1 must not be able to update user2's first work-week assignment
@@ -445,7 +446,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
             LocalDate    originalStart = uww.getStart();
             try {
                 uww.setStart(LocalDate.parse(SECOND_START_DATE));
-                updateWorkWeek(uww, user2);
+                peg.updateWorkWeek(uww, user2);
                 fail("Should not be able to update another user's work-week");
             } catch (AccessDeniedException e) {
                 // Restore original value so @AfterEach state remains consistent
@@ -456,7 +457,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
         // user1 must not be able to delete user2's first work-week assignment
         assertThrows(AccessDeniedException.class, () -> {
             UserWorkWeek uww = user2.getUserWorkWeeks().getFirst();
-            removeWorkWeek(uww, user2);
+            peg.removeWorkWeek(uww, user2);
         });
     }
 }

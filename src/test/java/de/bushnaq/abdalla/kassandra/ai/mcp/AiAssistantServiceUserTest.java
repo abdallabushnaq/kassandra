@@ -62,7 +62,7 @@ public class AiAssistantServiceUserTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         String         response = processQuery("create a new user Ahmet Mustafa, ahmet.mustafa@kassandra.org and add him to the Team group.");
-        Optional<User> user     = userApi.getByEmail("ahmet.mustafa@kassandra.org");
+        Optional<User> user     = peg.userApi.getByEmail("ahmet.mustafa@kassandra.org");
         assertTrue(user.isPresent(), "User should have been created");
     }
 
@@ -74,15 +74,15 @@ public class AiAssistantServiceUserTest extends AbstractMcpTest {
 
         //---create
         processQuery("create a new user Ahmet Mustafa, ahmet.mustafa@kassandra.org.");
-        assertTrue(userApi.getByEmail("ahmet.mustafa@kassandra.org").isPresent(), "User should be created before deletion test");
-        log.info("User ID: {}.", userApi.getByEmail("ahmet.mustafa@kassandra.org").get().getId());
+        assertTrue(peg.userApi.getByEmail("ahmet.mustafa@kassandra.org").isPresent(), "User should be created before deletion test");
+        log.info("User ID: {}.", peg.userApi.getByEmail("ahmet.mustafa@kassandra.org").get().getId());
 
         //---delete
         String response = processQuery("Please delete the user you just created.");
-        if (userApi.getByEmail("ahmet.mustafa@kassandra.org").isEmpty() && response.toLowerCase().contains("are you sure")) {
+        if (peg.userApi.getByEmail("ahmet.mustafa@kassandra.org").isEmpty() && response.toLowerCase().contains("are you sure")) {
             processQuery("I am sure.");
         }
-        assertTrue(userApi.getByEmail("ahmet.mustafa@kassandra.org").isEmpty(), "User ' ahmet.mustafa@kassandra.org' should be deleted");
+        assertTrue(peg.userApi.getByEmail("ahmet.mustafa@kassandra.org").isEmpty(), "User ' ahmet.mustafa@kassandra.org' should be deleted");
 
     }
 
@@ -91,7 +91,7 @@ public class AiAssistantServiceUserTest extends AbstractMcpTest {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testGetAll(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        List<User> allUsers = userApi.getAll();
+        List<User> allUsers = peg.userApi.getAll();
 
         String response = processQuery("list all user email addresses.");
         allUsers.forEach(user -> assertTrue(response.toLowerCase(Locale.ROOT).contains(user.getEmail().toLowerCase()), "User email missing: " + user.getEmail()));
@@ -103,11 +103,11 @@ public class AiAssistantServiceUserTest extends AbstractMcpTest {
     public void testUpdate(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
 
-        User user = userApi.getAll().get(1); // get any user
+        User user = peg.userApi.getAll().get(1); // get any user
         log.info("User ID: {}.", user.getId());
         processQuery("update user " + user.getName() + " last name to 'Salam'.");
         {
-            User   updatedUser = userApi.getById(user.getId()); // get any user
+            User   updatedUser = peg.userApi.getById(user.getId()); // get any user
             String lastName    = updatedUser.getName().substring(updatedUser.getName().indexOf(' ') + 1);
             assertEquals("Salam", lastName, "User last name should be updated to 'Salam'");
         }

@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -66,10 +68,12 @@ public class LocationApiTest extends AbstractUiTestUtil {
     private static final String SECOND_START_DATE = "2025-07-01";
     private static final String SECOND_STATE      = "fl";
 
-    private User admin1;
-    private User user1;
-    private User user2;
-    private User user3;
+    private   User                      admin1;
+    @Autowired
+    protected PersistingEntityGenerator peg;
+    private   User                      user1;
+    private   User                      user2;
+    private   User                      user3;
 
     @ParameterizedTest
     @MethodSource("listRandomCases")
@@ -78,27 +82,27 @@ public class LocationApiTest extends AbstractUiTestUtil {
         //create a user with Australian locale
         {
             Locale.setDefault(new Locale.Builder().setLanguage("en").setRegion("AU").build());//australian locale
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
             Locale.setDefault(Locale.getDefault());
         }
 
         //test if new location was persisted correctly
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getLocations().getFirst().getStart());
         }
 
         //add a working location in Germany
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //moving to Germany
-            addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
-            userApi.update(user);//persist the new location
+            peg.addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
+            peg.userApi.update(user);//persist the new location
         }
 
         //test the new location
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             assertEquals(LocalDate.parse(SECOND_START_DATE), user.getLocations().get(1).getStart());
         }
     }
@@ -107,25 +111,25 @@ public class LocationApiTest extends AbstractUiTestUtil {
     @MethodSource("listRandomCases")
     public void anonymousSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
             SecurityContextHolder.clearContext();
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User user = expectedUsers.getFirst();
-            addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
+            User user = peg.expectedUsers.getFirst();
+            peg.addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
         });
 
         {
-            User     user            = expectedUsers.getFirst();
+            User     user            = peg.expectedUsers.getFirst();
             Location location        = user.getLocations().getFirst();
             String   originalCountry = location.getCountry();
             String   originalState   = location.getState();
             location.setCountry(SECOND_COUNTRY);
             location.setState(SECOND_STATE);
             try {
-                updateLocation(location, user);
+                peg.updateLocation(location, user);
                 fail("should not be able to update");
             } catch (AuthenticationCredentialsNotFoundException e) {
                 //restore fields to match db for later tests in @AfterEach
@@ -135,9 +139,9 @@ public class LocationApiTest extends AbstractUiTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User     user     = expectedUsers.getFirst();
+            User     user     = peg.expectedUsers.getFirst();
             Location location = user.getLocations().getFirst();
-            removeLocation(location, user);
+            peg.removeLocation(location, user);
         });
     }
 
@@ -146,14 +150,14 @@ public class LocationApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void deleteFirstLocation(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         //try to delete the first location
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             try {
-                locationApi.deleteById(user.getId(), user.getLocations().getFirst().getId());
+                peg.locationApi.deleteById(user.getId(), user.getLocations().getFirst().getId());
                 fail("should not be able to delete the first location");
             } catch (ServerErrorException e) {
                 //expected
@@ -166,22 +170,22 @@ public class LocationApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void deleteSecondLocation(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         //add a working location in Germany
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //moving to Germany
-            addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
-            userApi.update(user);//persist the new location
+            peg.addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
+            peg.userApi.update(user);//persist the new location
         }
 
         //try to delete the second location
         {
-            User     user     = expectedUsers.getFirst();
+            User     user     = peg.expectedUsers.getFirst();
             Location location = user.getLocations().get(1);
-            removeLocation(location, user);
+            peg.removeLocation(location, user);
         }
     }
 
@@ -192,26 +196,26 @@ public class LocationApiTest extends AbstractUiTestUtil {
         //create a user with australian locale
         {
             Locale.setDefault(new Locale.Builder().setLanguage("en").setRegion("AU").build());//australian locale
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
             Locale.setDefault(Locale.getDefault());
         }
 
         //add a working location in Germany
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //moving to Germany
-            addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
-            userApi.update(user);//persist the new location
+            peg.addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
+            peg.userApi.update(user);//persist the new location
         }
 
         //try to delete using fake location id
         {
-            User     user       = expectedUsers.getFirst();
+            User     user       = peg.expectedUsers.getFirst();
             Location location   = user.getLocations().getFirst();
             UUID     locationId = location.getId();
             location.setId(FAKE_ID);
             try {
-                locationApi.deleteById(user.getId(), user.getLocations().getFirst().getId());
+                peg.locationApi.deleteById(user.getId(), user.getLocations().getFirst().getId());
                 fail("should not be able to delete");
             } catch (ServerErrorException e) {
                 //expected
@@ -227,25 +231,25 @@ public class LocationApiTest extends AbstractUiTestUtil {
         //create a user with Australian locale
         {
             Locale.setDefault(new Locale.Builder().setLanguage("en").setRegion("AU").build());//australian locale
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
             Locale.setDefault(Locale.getDefault());
         }
 
         //add a working location in Germany
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //moving to Germany
-            addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
-            userApi.update(user);//persist the new location
+            peg.addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
+            peg.userApi.update(user);//persist the new location
         }
 
         //try to delete using fake user id
         {
-            User user   = expectedUsers.getFirst();
+            User user   = peg.expectedUsers.getFirst();
             UUID userId = user.getId();
             user.setId(FAKE_ID);
             try {
-                locationApi.deleteById(user.getId(), user.getLocations().getFirst().getId());
+                peg.locationApi.deleteById(user.getId(), user.getLocations().getFirst().getId());
                 fail("should not be able to delete");
             } catch (ResponseStatusException e) {
                 //expected
@@ -255,17 +259,17 @@ public class LocationApiTest extends AbstractUiTestUtil {
     }
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -280,12 +284,12 @@ public class LocationApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateLocation(RandomCase randomCase, TestInfo testInfo) throws Exception {
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         //test if the location was persisted correctly
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getLocations().getFirst().getStart());
         }
 
@@ -293,12 +297,12 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //fix location mistake
         {
-            User     user     = expectedUsers.getFirst();
+            User     user     = peg.expectedUsers.getFirst();
             Location location = user.getLocations().getFirst();
             location.setCountry(SECOND_COUNTRY);
             location.setState(SECOND_STATE);
             location.setStart(LocalDate.parse(SECOND_START_DATE));
-            updateLocation(location, user);
+            peg.updateLocation(location, user);
         }
     }
 
@@ -343,12 +347,12 @@ public class LocationApiTest extends AbstractUiTestUtil {
     public void updateUsingFakeUserId(RandomCase randomCase, TestInfo testInfo) throws Exception {
 
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_START_DATE));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_START_DATE));
         }
 
         //test if the location was persisted correctly
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getLocations().getFirst().getStart());
         }
 
@@ -356,14 +360,14 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //update using fake user id
         {
-            User user   = expectedUsers.getFirst();
+            User user   = peg.expectedUsers.getFirst();
             UUID userId = user.getId();
             user.setId(FAKE_ID);
             Location location = user.getLocations().getFirst();
             String   country  = location.getCountry();
             location.setCountry(SECOND_COUNTRY);
             try {
-                updateLocation(location, user);
+                peg.updateLocation(location, user);
                 fail("should not be able to update");
             } catch (ResponseStatusException e) {
                 //expected
@@ -377,10 +381,10 @@ public class LocationApiTest extends AbstractUiTestUtil {
     @MethodSource("listRandomCases")
     public void userSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
 
         assertThrows(AccessDeniedException.class, () -> {
-            addLocation(user2, "de", "nw", LocalDate.parse(SECOND_START_DATE));
+            peg.addLocation(user2, "de", "nw", LocalDate.parse(SECOND_START_DATE));
         });
 
         {
@@ -390,7 +394,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
             try {
                 location.setCountry(SECOND_COUNTRY);
                 location.setState(SECOND_STATE);
-                updateLocation(location, user2);
+                peg.updateLocation(location, user2);
                 fail("Should not be able to update location");
             } catch (AccessDeniedException e) {
                 // Restore original values
@@ -401,7 +405,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         assertThrows(AccessDeniedException.class, () -> {
             Location location = user2.getLocations().getFirst();
-            removeLocation(location, user2);
+            peg.removeLocation(location, user2);
         });
     }
 }

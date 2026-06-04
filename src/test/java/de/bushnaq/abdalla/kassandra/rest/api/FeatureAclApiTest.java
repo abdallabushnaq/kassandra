@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
@@ -69,17 +70,17 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
     UserRepository userRepository;
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        user2  = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3  = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        user2  = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3  = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -105,37 +106,37 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version and feature
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
 
         // User2 creates a product with a version and feature
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product2 = addProduct("User2 Product");
-        Version version2 = addVersion(product2, "Version 2.0");
-        Feature feature2 = addFeature(version2, "Feature 2");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = peg.addProduct("User2 Product");
+        Version version2 = peg.addVersion(product2, "Version 2.0");
+        Feature feature2 = peg.addFeature(version2, "Feature 2");
 
         // Admin can access all features
-        setUser(admin1.getEmail(), "ROLE_ADMIN");
-        List<Feature> allFeatures = featureApi.getAll();
+        PersistingEntityGenerator.setUser(admin1.getEmail(), "ROLE_ADMIN");
+        List<Feature> allFeatures = peg.featureApi.getAll();
         assertEquals(1 + 2, allFeatures.size(), "Admin should see all features");// the "Default" Product is always there
 
         // Admin can get specific features
-        Feature retrieved1 = featureApi.getById(feature1.getId());
+        Feature retrieved1 = peg.featureApi.getById(feature1.getId());
         assertNotNull(retrieved1);
         assertEquals(feature1.getId(), retrieved1.getId());
 
-        Feature retrieved2 = featureApi.getById(feature2.getId());
+        Feature retrieved2 = peg.featureApi.getById(feature2.getId());
         assertNotNull(retrieved2);
         assertEquals(feature2.getId(), retrieved2.getId());
 
         // Admin can update any feature
         feature1.setName("Updated by Admin");
-        featureApi.update(feature1);
+        peg.featureApi.update(feature1);
 
         // Admin can delete any feature
-        featureApi.deleteById(feature2.getId());
+        peg.featureApi.deleteById(feature2.getId());
     }
 
     /**
@@ -152,28 +153,28 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version and multiple features
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1  = addProduct("User1 Product");
-        Version version1  = addVersion(product1, "Version 1.0");
-        Feature feature1a = addFeature(version1, "Feature 1A");
-        Feature feature1b = addFeature(version1, "Feature 1B");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1  = peg.addProduct("User1 Product");
+        Version version1  = peg.addVersion(product1, "Version 1.0");
+        Feature feature1a = peg.addFeature(version1, "Feature 1A");
+        Feature feature1b = peg.addFeature(version1, "Feature 1B");
 
         // User1 can get all features for their version
-        List<Feature> features = featureApi.getAll(version1.getId());
+        List<Feature> features = peg.featureApi.getAll(version1.getId());
         assertEquals(2, features.size(), "User1 should see all features of their version");
 
         // User2 cannot get features for user1's version
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            featureApi.getAll(version1.getId());
+            peg.featureApi.getAll(version1.getId());
         });
 
         // After granting access, user2 can get features
-        setUser(user1.getEmail(), "ROLE_USER");
-        productAclApi.grantUserAccess(product1.getId(), user2.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        peg.productAclApi.grantUserAccess(product1.getId(), user2.getId());
 
-        setUser(user2.getEmail(), "ROLE_USER");
-        List<Feature> featuresAfterGrant = featureApi.getAll(version1.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        List<Feature> featuresAfterGrant = peg.featureApi.getAll(version1.getId());
         assertEquals(2, featuresAfterGrant.size(), "User2 should see all features after being granted access");
     }
 
@@ -192,33 +193,33 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // Admin creates a group with user1
-        setUser(admin1.getEmail(), "ROLE_ADMIN");
-        var group = userGroupApi.create("Dev Team", "Development Team", java.util.Set.of(user1.getId()));
+        PersistingEntityGenerator.setUser(admin1.getEmail(), "ROLE_ADMIN");
+        var group = peg.userGroupApi.create("Dev Team", "Development Team", java.util.Set.of(user1.getId()));
 
         // User2 creates a product with a version and feature
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product = addProduct("Team Product");
-        Version version = addVersion(product, "Version 1.0");
-        Feature feature = addFeature(version, "Feature 1");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product = peg.addProduct("Team Product");
+        Version version = peg.addVersion(product, "Version 1.0");
+        Feature feature = peg.addFeature(version, "Feature 1");
 
         // User1 cannot access the feature
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            featureApi.getById(feature.getId());
+            peg.featureApi.getById(feature.getId());
         });
 
         // User2 grants group access to the product
-        setUser(user2.getEmail(), "ROLE_USER");
-        productAclApi.grantGroupAccess(product.getId(), group.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        peg.productAclApi.grantGroupAccess(product.getId(), group.getId());
 
         // Now user1 can access the feature (via group membership)
-        setUser(user1.getEmail(), "ROLE_USER");
-        Feature retrieved = featureApi.getById(feature.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Feature retrieved = peg.featureApi.getById(feature.getId());
         assertNotNull(retrieved);
         assertEquals(feature.getId(), retrieved.getId());
 
         // User1 can also see it in getAll()
-        List<Feature> allFeatures = featureApi.getAll();
+        List<Feature> allFeatures = peg.featureApi.getAll();
         assertTrue(allFeatures.stream().anyMatch(f -> f.getId().equals(feature.getId())), "User1 should see the feature via group access");
     }
 
@@ -236,27 +237,27 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version and feature
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product = addProduct("User1 Product");
-        Version version = addVersion(product, "Version 1.0");
-        Feature feature = addFeature(version, "Feature 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product = peg.addProduct("User1 Product");
+        Version version = peg.addVersion(product, "Version 1.0");
+        Feature feature = peg.addFeature(version, "Feature 1");
 
         // User1 grants user2 access to the product
-        productAclApi.grantUserAccess(product.getId(), user2.getId());
+        peg.productAclApi.grantUserAccess(product.getId(), user2.getId());
 
         // User2 can access the feature
-        setUser(user2.getEmail(), "ROLE_USER");
-        Feature retrieved = featureApi.getById(feature.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Feature retrieved = peg.featureApi.getById(feature.getId());
         assertNotNull(retrieved);
 
         // User1 revokes user2's access
-        setUser(user1.getEmail(), "ROLE_USER");
-        productAclApi.revokeUserAccess(product.getId(), user2.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        peg.productAclApi.revokeUserAccess(product.getId(), user2.getId());
 
         // User2 can no longer access the feature
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            featureApi.getById(feature.getId());
+            peg.featureApi.getById(feature.getId());
         });
     }
 
@@ -273,30 +274,30 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version and feature
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
 
         // User2 creates a product with a version and feature
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product2 = addProduct("User2 Product");
-        Version version2 = addVersion(product2, "Version 2.0");
-        Feature feature2 = addFeature(version2, "Feature 2");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = peg.addProduct("User2 Product");
+        Version version2 = peg.addVersion(product2, "Version 2.0");
+        Feature feature2 = peg.addFeature(version2, "Feature 2");
 
         // User1 cannot access feature2
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            featureApi.getById(feature2.getId());
+            peg.featureApi.getById(feature2.getId());
         });
 
         // User2 grants user1 access to product2
-        setUser(user2.getEmail(), "ROLE_USER");
-        productAclApi.grantUserAccess(product2.getId(), user1.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        peg.productAclApi.grantUserAccess(product2.getId(), user1.getId());
 
         // Now user1 can access feature2
-        setUser(user1.getEmail(), "ROLE_USER");
-        Feature retrieved = featureApi.getById(feature2.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Feature retrieved = peg.featureApi.getById(feature2.getId());
         assertNotNull(retrieved);
         assertEquals(feature2.getId(), retrieved.getId());
     }
@@ -315,42 +316,42 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version and feature
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
 
         // User2 creates a product with a version and feature
-        setUser(user2.getEmail(), "ROLE_USER");
-        Product product2 = addProduct("User2 Product");
-        Version version2 = addVersion(product2, "Version 2.0");
-        Feature feature2 = addFeature(version2, "Feature 2");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Product product2 = peg.addProduct("User2 Product");
+        Version version2 = peg.addVersion(product2, "Version 2.0");
+        Feature feature2 = peg.addFeature(version2, "Feature 2");
 
         // User1 can access their own feature
-        setUser(user1.getEmail(), "ROLE_USER");
-        Feature retrieved1 = featureApi.getById(feature1.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Feature retrieved1 = peg.featureApi.getById(feature1.getId());
         assertNotNull(retrieved1);
         assertEquals(feature1.getId(), retrieved1.getId());
 
         // User1 cannot access user2's feature
         assertThrows(AccessDeniedException.class, () -> {
-            featureApi.getById(feature2.getId());
+            peg.featureApi.getById(feature2.getId());
         });
 
         // User1 can only see their own features in getAll()
-        List<Feature> user1Features = featureApi.getAll();
+        List<Feature> user1Features = peg.featureApi.getAll();
         assertEquals(1 + 1, user1Features.size(), "User1 should only see their own features");// the "Default" Feature is always there
         assertEquals(feature1.getId(), user1Features.get(1).getId());
 
         // User2 can access their own feature
-        setUser(user2.getEmail(), "ROLE_USER");
-        Feature retrieved2 = featureApi.getById(feature2.getId());
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        Feature retrieved2 = peg.featureApi.getById(feature2.getId());
         assertNotNull(retrieved2);
         assertEquals(feature2.getId(), retrieved2.getId());
 
         // User2 cannot access user1's feature
         assertThrows(AccessDeniedException.class, () -> {
-            featureApi.getById(feature1.getId());
+            peg.featureApi.getById(feature1.getId());
         });
     }
 
@@ -367,14 +368,14 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
 
         // User2 tries to create a feature for user1's version - should fail
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            addFeature(version1, "Unauthorized Feature");
+            peg.addFeature(version1, "Unauthorized Feature");
         });
     }
 
@@ -391,15 +392,15 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version and feature
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
 
         // User2 tries to delete user1's feature - should fail
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         assertThrows(AccessDeniedException.class, () -> {
-            featureApi.deleteById(feature1.getId());
+            peg.featureApi.deleteById(feature1.getId());
         });
     }
 
@@ -416,16 +417,16 @@ public class FeatureAclApiTest extends AbstractUiTestUtil {
         init(randomCase, testInfo);
 
         // User1 creates a product with a version and feature
-        setUser(user1.getEmail(), "ROLE_USER");
-        Product product1 = addProduct("User1 Product");
-        Version version1 = addVersion(product1, "Version 1.0");
-        Feature feature1 = addFeature(version1, "Feature 1");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product product1 = peg.addProduct("User1 Product");
+        Version version1 = peg.addVersion(product1, "Version 1.0");
+        Feature feature1 = peg.addFeature(version1, "Feature 1");
 
         // User2 tries to update user1's feature - should fail
-        setUser(user2.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
         feature1.setName("Hacked Feature");
         assertThrows(AccessDeniedException.class, () -> {
-            featureApi.update(feature1);
+            peg.featureApi.update(feature1);
         });
     }
 }

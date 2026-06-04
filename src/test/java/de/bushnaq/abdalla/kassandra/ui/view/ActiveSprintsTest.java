@@ -87,67 +87,67 @@ public class ActiveSprintsTest extends AbstractKeycloakUiTestUtil {
         featureName = "Property request api";
         sprintName  = "Sprint 1";
 
-        addRandomUsers(10);
-        Product product = addProduct(productName);
-        Version version = addVersion(product, versionName);
-        Feature feature = addFeature(version, featureName);
-        Sprint  sprint  = addSprint(feature, sprintName);
+        peg.addRandomUsers(10);
+        Product product = peg.addProduct(productName);
+        Version version = peg.addVersion(product, versionName);
+        Feature feature = peg.addFeature(version, featureName);
+        Sprint  sprint  = peg.addSprint(feature, sprintName);
 
         // Set sprint status to STARTED to make it active
         sprint.setStatus(Status.STARTED);
-        sprintApi.update(sprint);
+        peg.sprintApi.update(sprint);
 
-        User christopherPaul = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        User graceMartin     = userApi.getByEmail("grace.martin@kassandra.org").get();
+        User christopherPaul = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        User graceMartin     = peg.userApi.getByEmail("grace.martin@kassandra.org").get();
 
         // Create a start milestone
         {
             LocalDateTime startDateTime  = LocalDateTime.parse("2025-05-05T08:00");
-            Task          startMilestone = addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+            Task          startMilestone = peg.addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         }
 
         // Story 1: Config API implementation with tasks in different statuses
         {
-            story1 = addParentTask("Config api implementation", sprint, null, null);
+            story1 = peg.addParentTask("Config api implementation", sprint, null, null);
             story1.setTaskStatus(TaskStatus.IN_PROGRESS);
-            taskApi.update(story1);
+            peg.taskApi.update(story1);
 
-            task11 = addTask("create controller", "4h", "6h", graceMartin, sprint, story1, null);
+            task11 = peg.addTask("create controller", "4h", "6h", graceMartin, sprint, story1, null);
             task11.setTaskStatus(TaskStatus.IN_PROGRESS);
             task11.setRemainingEstimate(Duration.ofHours(3));
-            taskApi.update(task11);
+            peg.taskApi.update(task11);
 
-            task12 = addTask("api documentation", "2h", "3h", graceMartin, sprint, story1, null);
+            task12 = peg.addTask("api documentation", "2h", "3h", graceMartin, sprint, story1, null);
             task12.setTaskStatus(TaskStatus.TODO);
             task12.setRemainingEstimate(Duration.ofHours(2));
-            taskApi.update(task12);
+            peg.taskApi.update(task12);
 
-            task13 = addTask("api error handling", "5h", "7h", graceMartin, sprint, story1, null);
+            task13 = peg.addTask("api error handling", "5h", "7h", graceMartin, sprint, story1, null);
             task13.setTaskStatus(TaskStatus.TODO);
             task13.setRemainingEstimate(Duration.ofHours(5));
-            taskApi.update(task13);
+            peg.taskApi.update(task13);
         }
 
         // Story 2: Config persistence implementation with tasks in different statuses
         {
-            story2 = addParentTask("Config persistence implementation", sprint, null, null);
+            story2 = peg.addParentTask("Config persistence implementation", sprint, null, null);
             story2.setTaskStatus(TaskStatus.IN_PROGRESS);
-            taskApi.update(story2);
+            peg.taskApi.update(story2);
 
-            task21 = addTask("create repository", "4h", "6h", christopherPaul, sprint, story2, null);
+            task21 = peg.addTask("create repository", "4h", "6h", christopherPaul, sprint, story2, null);
             task21.setTaskStatus(TaskStatus.DONE);
             task21.setRemainingEstimate(Duration.ZERO);
-            taskApi.update(task21);
+            peg.taskApi.update(task21);
 
-            task22 = addTask("schema documentation", "2h", "3h", christopherPaul, sprint, story2, null);
+            task22 = peg.addTask("schema documentation", "2h", "3h", christopherPaul, sprint, story2, null);
             task22.setTaskStatus(TaskStatus.DONE);
             task22.setRemainingEstimate(Duration.ZERO);
-            taskApi.update(task22);
+            peg.taskApi.update(task22);
 
-            task23 = addTask("persistence error handling", "5h", "7h", christopherPaul, sprint, story2, null);
+            task23 = peg.addTask("persistence error handling", "5h", "7h", christopherPaul, sprint, story2, null);
             task23.setTaskStatus(TaskStatus.IN_PROGRESS);
             task23.setRemainingEstimate(Duration.ofHours(4));
-            taskApi.update(task23);
+            peg.taskApi.update(task23);
         }
 
         return sprint;

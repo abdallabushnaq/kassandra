@@ -65,12 +65,12 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get the first product and version to add features to
-        Version firstVersion = versionApi.getAll().get(1);
-        Product product      = productApi.getById(firstVersion.getProductId());
+        Version firstVersion = peg.versionApi.getAll().get(1);
+        Product product      = peg.productApi.getById(firstVersion.getProductId());
 
         {
             processQuery("Add a new feature with the name Galaxxy to version " + firstVersion.getName() + " of product " + product.getName() + ".");
-            List<Feature>     features = featureApi.getAll(firstVersion.getId());
+            List<Feature>     features = peg.featureApi.getAll(firstVersion.getId());
             Optional<Feature> feature  = features.stream().filter(f -> f.getName().equals("Galaxxy")).findFirst();
             assertTrue(feature.isPresent(), "Feature should be created");
             assertFalse(feature.get().getLightAvatarHash().isEmpty(), "Feature avatar hash should not be empty");
@@ -84,12 +84,12 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get the first product and version to add features to
-        Version firstVersion = versionApi.getAll().get(1);
-        Product product      = productApi.getById(firstVersion.getProductId());
+        Version firstVersion = peg.versionApi.getAll().get(1);
+        Product product      = peg.productApi.getById(firstVersion.getProductId());
 
         //---add
         processQuery("Add a new feature with the name Galaxy to version " + firstVersion.getName() + " of product " + product.getName() + ".");
-        List<Feature>     features = featureApi.getAll(firstVersion.getId());
+        List<Feature>     features = peg.featureApi.getAll(firstVersion.getId());
         Optional<Feature> feature  = features.stream().filter(f -> f.getName().equalsIgnoreCase("Galaxy")).findFirst();
         assertTrue(feature.isPresent(), "Feature should be created before deletion test");
         log.info("Features ID: {}.", feature.get().getId());
@@ -97,7 +97,7 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
 
         //---delete
         processQuery("Please delete the feature you just created.");
-        features = featureApi.getAll(firstVersion.getId());
+        features = peg.featureApi.getAll(firstVersion.getId());
         Optional<Feature> deletedFeature = features.stream().filter(f -> f.getName().equals("Galaxy")).findFirst();
 //        printTables();
         assertFalse(deletedFeature.isPresent(), "Feature 'Galaxy' should be deleted");
@@ -110,9 +110,9 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get the first product and version to list features from
-        Version       firstVersion = versionApi.getAll().get(1);
-        Product       product      = productApi.getById(firstVersion.getProductId());
-        List<Feature> allFeatures  = featureApi.getAll(firstVersion.getId());
+        Version       firstVersion = peg.versionApi.getAll().get(1);
+        Product       product      = peg.productApi.getById(firstVersion.getProductId());
+        List<Feature> allFeatures  = peg.featureApi.getAll(firstVersion.getId());
 
         String response = processQuery("list all features for version " + firstVersion.getName() + " of product " + product.getName() + ".");
         allFeatures.forEach(feature -> assertTrue(response.toLowerCase(Locale.ROOT).contains(feature.getName().toLowerCase()), "Feature name missing: " + feature.getName()));
@@ -125,12 +125,12 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
         init(randomCase, testInfo);
 
         // Get the first product and version to add features to
-        Version firstVersion = versionApi.getAll().get(1);
-        Product product      = productApi.getById(firstVersion.getProductId());
+        Version firstVersion = peg.versionApi.getAll().get(1);
+        Product product      = peg.productApi.getById(firstVersion.getProductId());
 
         {
             processQuery("Add a new feature with the name Galaxxy to version " + firstVersion.getName() + " of product " + product.getName() + ".");
-            List<Feature>     features = featureApi.getAll(firstVersion.getId());
+            List<Feature>     features = peg.featureApi.getAll(firstVersion.getId());
             Optional<Feature> feature  = features.stream().filter(f -> f.getName().equals("Galaxxy")).findFirst();
             assertTrue(feature.isPresent(), "Feature should be created");
             log.info("Feature Galaxxy ID is: {}.", feature.get().getId());
@@ -138,7 +138,7 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
 
         {
             processQuery("Please fix the typo in the feature you created to Galaxy.");
-            List<Feature>     features        = featureApi.getAll(firstVersion.getId());
+            List<Feature>     features        = peg.featureApi.getAll(firstVersion.getId());
             Optional<Feature> updatedFeature  = features.stream().filter(f -> f.getName().equals("Galaxy")).findFirst();
             Optional<Feature> mistypedFeature = features.stream().filter(f -> f.getName().equals("Galaxxy")).findFirst();
             assertTrue(updatedFeature.isPresent(), "Feature should be renamed");
@@ -151,9 +151,9 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
     @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
     public void testUpdateWithContext(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        Product product     = productApi.getAll().get(1);
+        Product product     = peg.productApi.getAll().get(1);
         String  productName = product.getName();
-        Version version     = versionApi.getAll(product.getId()).getFirst();
+        Version version     = peg.versionApi.getAll(product.getId()).getFirst();
         String  versionName = version.getName();
 
         // Get the first product and version to add features to
@@ -163,7 +163,7 @@ public class AiAssistantServiceFeatureTest extends AbstractMcpTest {
         {
             processQuery("[Context: You are viewing the feature list of version '1.0.0' (versionId=3) of product 'Orion' (productId=3). Use versionId=3 when calling createFeature, updateFeature or any other feature tool that requires a versionId.]\n" +
                     "please rename 'dashboard' to 'Game Dashboard'.");
-            Assert.assertTrue(featureApi.getByName(version.getId(), "Game Dashboard").isPresent()); //test
+            Assert.assertTrue(peg.featureApi.getByName(version.getId(), "Game Dashboard").isPresent()); //test
         }
 
     }

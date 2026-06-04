@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.dto.OffDay;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
+import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.Tag;
@@ -78,15 +79,15 @@ public class OffDayApiTest extends AbstractUiTestUtil {
 
         //create a user
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_DATE_0));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_DATE_0));
             id = user.getId();
         }
 
         //add a vacation
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //vacation
-            addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
+            peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
     }
 
@@ -113,18 +114,18 @@ public class OffDayApiTest extends AbstractUiTestUtil {
 
         //create a user
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_DATE_0));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_DATE_0));
             id = user.getId();
         }
 
         //add a vacation
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //vacation
-            addOffDay(user, LocalDate.parse("2024-03-05"), LocalDate.parse("2024-03-10"), OffDayType.VACATION);
+            peg.addOffDay(user, LocalDate.parse("2024-03-05"), LocalDate.parse("2024-03-10"), OffDayType.VACATION);
             for (DateRange range : rangeList) {
                 try {
-                    addOffDay(user, LocalDate.parse(range.start), LocalDate.parse(range.end), OffDayType.VACATION);
+                    peg.addOffDay(user, LocalDate.parse(range.start), LocalDate.parse(range.end), OffDayType.VACATION);
                     fail("Should not be able to add overlapping OffDay " + range.start + " to " + range.end);
                 } catch (ResponseStatusException e) {
                     //ok
@@ -136,24 +137,24 @@ public class OffDayApiTest extends AbstractUiTestUtil {
     @Test
     public void anonymousSecurity() {
         {
-            setUser("admin-user", "ROLE_ADMIN");
-            User user = addRandomUser(LocalDate.parse(FIRST_DATE_0));
-            addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
+            PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_DATE_0));
+            peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
             SecurityContextHolder.clearContext();
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User user = expectedUsers.getFirst();
-            addOffDay(user, LocalDate.parse(FIRST_DATE_1), LocalDate.parse(LAST_DATE_1), OffDayType.SICK);
+            User user = peg.expectedUsers.getFirst();
+            peg.addOffDay(user, LocalDate.parse(FIRST_DATE_1), LocalDate.parse(LAST_DATE_1), OffDayType.SICK);
         });
 
         {
-            User       user         = expectedUsers.getFirst();
+            User       user         = peg.expectedUsers.getFirst();
             OffDay     offDay       = user.getOffDays().getFirst();
             OffDayType originalType = offDay.getType();
             try {
                 offDay.setType(OffDayType.SICK);
-                updateOffDay(offDay, user);
+                peg.updateOffDay(offDay, user);
                 fail("Should not be able to update OffDay");
             } catch (AuthenticationCredentialsNotFoundException e) {
                 // Restore original values
@@ -162,9 +163,9 @@ public class OffDayApiTest extends AbstractUiTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User   user   = expectedUsers.getFirst();
+            User   user   = peg.expectedUsers.getFirst();
             OffDay offDay = user.getOffDays().getFirst();
-            removeOffDay(offDay, user);
+            peg.removeOffDay(offDay, user);
         });
     }
 
@@ -173,21 +174,21 @@ public class OffDayApiTest extends AbstractUiTestUtil {
     public void delete() throws Exception {
         //create a user
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_DATE_0));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_DATE_0));
         }
 
         //add a vacation
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //vacation
-            addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
+            peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
 
         //try to delete the vacation
         {
-            User   user   = expectedUsers.getFirst();
+            User   user   = peg.expectedUsers.getFirst();
             OffDay offDay = user.getOffDays().get(0);
-            removeOffDay(offDay, user);
+            peg.removeOffDay(offDay, user);
         }
     }
 
@@ -196,24 +197,24 @@ public class OffDayApiTest extends AbstractUiTestUtil {
     public void deleteUsingFakeId() throws Exception {
         //create a user
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_DATE_0));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_DATE_0));
         }
 
         //add a vacation
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //vacation
-            addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
+            peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
 
         //try to delete using fake offday id
         {
-            User   user   = expectedUsers.getFirst();
+            User   user   = peg.expectedUsers.getFirst();
             OffDay offDay = user.getOffDays().get(0);
             UUID   id     = offDay.getId();
             offDay.setId(FAKE_ID);
             try {
-                removeOffDay(offDay, user);
+                peg.removeOffDay(offDay, user);
                 fail("should not be able to delete the first location");
             } catch (ServerErrorException e) {
                 //expected
@@ -228,24 +229,24 @@ public class OffDayApiTest extends AbstractUiTestUtil {
     public void deleteUsingFakeUserId() throws Exception {
         //create a user
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_DATE_0));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_DATE_0));
         }
 
         //add a vacation
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //vacation
-            addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
+            peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
 
         //try to delete using fake user id
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             UUID id   = user.getId();
             user.setId(FAKE_ID);
             OffDay offDay = user.getOffDays().getFirst();
             try {
-                removeOffDay(offDay, user);
+                peg.removeOffDay(offDay, user);
                 fail("should not be able to delete the first location");
             } catch (ResponseStatusException e) {
                 //expected
@@ -255,18 +256,18 @@ public class OffDayApiTest extends AbstractUiTestUtil {
     }
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        Authentication roleAdmin = setUser("admin-user", "ROLE_ADMIN");
+        Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        admin1 = userApi.getByEmail("christopher.paul@kassandra.org").get();
-        user1  = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        admin1 = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        user1  = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
         user1.initialize();
-        user2 = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        user3 = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        user2 = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        user3 = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
-        setUser(roleAdmin);
+        PersistingEntityGenerator.setUser(roleAdmin);
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -281,27 +282,27 @@ public class OffDayApiTest extends AbstractUiTestUtil {
     public void update() throws Exception {
         //create a user
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_DATE_0));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_DATE_0));
         }
 
         //add a vacation
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //vacation
-            addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
+            peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
-        testUsers();
+        peg.testUsers();
 
         Thread.sleep(1000);//ensure that update time is different
 
         //fix vacation mistake
         {
-            User   user   = expectedUsers.getFirst();
+            User   user   = peg.expectedUsers.getFirst();
             OffDay offDay = user.getOffDays().getFirst();
             offDay.setType(OffDayType.SICK);
             offDay.setFirstDay(LocalDate.parse(FIRST_DATE_1));
             offDay.setLastDay(LocalDate.parse(LAST_DATE_1));
-            updateOffDay(offDay, user);
+            peg.updateOffDay(offDay, user);
         }
     }
 
@@ -350,26 +351,26 @@ public class OffDayApiTest extends AbstractUiTestUtil {
     public void updateUsingFakeUserId() throws Exception {
         //create a user
         {
-            User user = addRandomUser(LocalDate.parse(FIRST_DATE_0));
+            User user = peg.addRandomUser(LocalDate.parse(FIRST_DATE_0));
         }
 
         //add a vacation
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             //vacation
-            addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
+            peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
 
         //update offday using fake user id
         {
-            User user = expectedUsers.getFirst();
+            User user = peg.expectedUsers.getFirst();
             UUID id   = user.getId();
             user.setId(FAKE_ID);
             OffDay     offDay = user.getOffDays().getFirst();
             OffDayType type   = offDay.getType();
             offDay.setType(OffDayType.SICK);
             try {
-                updateOffDay(offDay, user);
+                peg.updateOffDay(offDay, user);
                 fail("should not be able to update");
             } catch (ResponseStatusException e) {
                 //expected
@@ -383,10 +384,10 @@ public class OffDayApiTest extends AbstractUiTestUtil {
     @MethodSource("listRandomCases")
     public void userSecurity(RandomCase randomCase, TestInfo testInfo) throws Exception {
         init(randomCase, testInfo);
-        setUser(user1.getEmail(), "ROLE_USER");
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
 
         assertThrows(AccessDeniedException.class, () -> {
-            addOffDay(user2, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.SICK);
+            peg.addOffDay(user2, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.SICK);
         });
 
         {
@@ -394,7 +395,7 @@ public class OffDayApiTest extends AbstractUiTestUtil {
             OffDayType originalType = offDay.getType();
             try {
                 offDay.setType(OffDayType.SICK);
-                updateOffDay(offDay, user2);
+                peg.updateOffDay(offDay, user2);
                 fail("Should not be able to update OffDay");
             } catch (AccessDeniedException e) {
                 // Restore original values
@@ -404,7 +405,7 @@ public class OffDayApiTest extends AbstractUiTestUtil {
 
         assertThrows(AccessDeniedException.class, () -> {
             OffDay offDay = user2.getOffDays().getFirst();
-            removeOffDay(offDay, user2);
+            peg.removeOffDay(offDay, user2);
         });
     }
 

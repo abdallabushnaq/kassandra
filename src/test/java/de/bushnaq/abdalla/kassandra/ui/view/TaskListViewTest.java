@@ -69,22 +69,22 @@ public class TaskListViewTest extends AbstractKeycloakUiTestUtil {
     AboutViewTester aboutViewTester;
     @Autowired
     private       FeatureListViewTester    featureListViewTester;
-    private final String                   featureName = nameGenerator.generateFeatureName(0);
+    private final String                   featureName = peg.nameGenerator.generateFeatureName(0);
     //    private final String                newTaskName = "NewTask-3";
     @Autowired
     private       ProductListViewTester    productListViewTester;
-    private final String                   productName = nameGenerator.generateProductName(0);
+    private final String                   productName = peg.nameGenerator.generateProductName(0);
     @Autowired
     private       HumanizedSeleniumHandler seleniumHandler;
     @Autowired
     private       SprintListViewTester     sprintListViewTester;
-    private final String                   sprintName  = nameGenerator.generateSprintName(0);
+    private final String                   sprintName  = peg.nameGenerator.generateSprintName(0);
     @Autowired
     private       TaskListViewTester       taskListViewTester;
-    private final String                   taskName0   = nameGenerator.generateSprintName(0);
+    private final String                   taskName0   = peg.nameGenerator.generateSprintName(0);
     @Autowired
     private       VersionListViewTester    versionListViewTester;
-    private final String                   versionName = nameGenerator.generateVersionName(0);
+    private final String                   versionName = peg.nameGenerator.generateVersionName(0);
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//

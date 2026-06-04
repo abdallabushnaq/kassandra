@@ -77,16 +77,16 @@ import java.util.List;
 @AutoConfigureMockMvc
 @AutoConfigureTestRestTemplate
 public class Test_03_ManagingUserGroupsIntroductionVideo extends AbstractIntroductionVideo {
-    public static final NarratorAttribute        INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
-    public static final NarratorAttribute        NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f);
+    public static final NarratorAttribute INTENSE = new NarratorAttribute().withExaggeration(.7f).withCfgWeight(.3f).withTemperature(1f);
+    public static final NarratorAttribute NORMAL  = new NarratorAttribute().withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f);
     @Autowired
     AboutViewTester aboutViewTester;
     @Autowired
-    private             ProductListViewTester    productListViewTester;
+    private ProductListViewTester    productListViewTester;
     @Autowired
-    private             HumanizedSeleniumHandler seleniumHandler;
+    private HumanizedSeleniumHandler seleniumHandler;
     @Autowired
-    private             UserGroupListViewTester  userGroupListViewTester;
+    private UserGroupListViewTester  userGroupListViewTester;
 
     @BeforeAll
     static void beforeAll() {
@@ -109,9 +109,9 @@ public class Test_03_ManagingUserGroupsIntroductionVideo extends AbstractIntrodu
         Narrator paul = Narrator.withChatterboxTTS("tts/" + testInfo.getTestClass().get().getSimpleName());
         HumanizedSeleniumHandler.setHumanize(true);
 
-        User user1 = userApi.getByEmail("kristen.hubbell@kassandra.org").get();
-        User user2 = userApi.getByEmail("claudine.fick@kassandra.org").get();
-        User user3 = userApi.getByEmail("randy.asmus@kassandra.org").get();
+        User user1 = peg.userApi.getByEmail("kristen.hubbell@kassandra.org").get();
+        User user2 = peg.userApi.getByEmail("claudine.fick@kassandra.org").get();
+        User user3 = peg.userApi.getByEmail("randy.asmus@kassandra.org").get();
 
 
         seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.VIDEO_SUBTITLE);

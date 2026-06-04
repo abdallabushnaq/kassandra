@@ -76,28 +76,28 @@ public class QualityBoardTest extends AbstractKeycloakUiTestUtil {
     }
 
     private void generateTasks(RandomCase randomCase) {
-        random.setSeed(randomCase.getSeed());
-        int numberOfUsers    = random.nextInt(randomCase.getMaxNumberOfUsers()) + 2;
-        int numberOfFeatures = random.nextInt(randomCase.getMaxNumberOfStories()) + 1;
-        int numberOfTasks    = random.nextInt(randomCase.getMaxNumberOfTasks()) + 1;
+        peg.random.setSeed(randomCase.getSeed());
+        int numberOfUsers    = peg.random.nextInt(randomCase.getMaxNumberOfUsers()) + 2;
+        int numberOfFeatures = peg.random.nextInt(randomCase.getMaxNumberOfStories()) + 1;
+        int numberOfTasks    = peg.random.nextInt(randomCase.getMaxNumberOfTasks()) + 1;
         {
-            addRandomUsers(numberOfUsers);
-            Product product = addProduct(nameGenerator.generateProductName(0));
-            Version version = addVersion(product, nameGenerator.generateVersionName(0));
-            Feature feature = addFeature(version, nameGenerator.generateFeatureName(0));
-            addSprint(feature, nameGenerator.generateSprintName(0));
+            peg.addRandomUsers(numberOfUsers);
+            Product product = peg.addProduct(peg.nameGenerator.generateProductName(0));
+            Version version = peg.addVersion(product, peg.nameGenerator.generateVersionName(0));
+            Feature feature = peg.addFeature(version, peg.nameGenerator.generateFeatureName(0));
+            peg.addSprint(feature, peg.nameGenerator.generateSprintName(0));
         }
-        Sprint sprint = expectedSprints.getFirst();
+        Sprint sprint = peg.expectedSprints.getFirst();
 
-        Task startMilestone = addTask(sprint, null, "Start", LocalDateTime.parse("2024-12-15T08:00:00"), Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+        Task startMilestone = peg.addTask(sprint, null, "Start", LocalDateTime.parse("2024-12-15T08:00:00"), Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         for (int f = 0; f < numberOfFeatures; f++) {
             String featureName = generateFeatureName(f);
-            Task   feature     = addParentTask(featureName, sprint, null, startMilestone);
+            Task   feature     = peg.addParentTask(featureName, sprint, null, startMilestone);
             for (int t = 0; t < numberOfTasks; t++) {
-                User   user     = expectedUsers.stream().toList().get(random.nextInt(numberOfUsers));
-                String duration = String.format("%dd", random.nextInt(randomCase.getMaxTaskDurationDays()) + 1);
+                User   user     = peg.expectedUsers.stream().toList().get(peg.random.nextInt(numberOfUsers));
+                String duration = String.format("%dd", peg.random.nextInt(randomCase.getMaxTaskDurationDays()) + 1);
                 String workName = NameGenerator.generateWorkName(featureName, t);
-                addTask(workName, duration, null, user, sprint, feature, null);
+                peg.addTask(workName, duration, null, user, sprint, feature, null);
             }
         }
     }
@@ -118,10 +118,10 @@ public class QualityBoardTest extends AbstractKeycloakUiTestUtil {
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateTasks(randomCase);
-        Sprint sprint = expectedSprints.getFirst();
+        Sprint sprint = peg.expectedSprints.getFirst();
         sprint.initialize();
-        sprint.initUserMap(userApi.getAll(sprint.getId()));
-        sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
+        sprint.initUserMap(peg.userApi.getAll(sprint.getId()));
+        sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));
 
         levelResourcesAndPersist(testInfo, sprint, null);
         generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
@@ -134,10 +134,10 @@ public class QualityBoardTest extends AbstractKeycloakUiTestUtil {
                 generateTestCaseName(testInfo)
         );
         productListViewTester.switchToProductListView();
-        productListViewTester.selectProduct(nameGenerator.generateProductName(0));
-        versionListViewTester.selectVersion(nameGenerator.generateVersionName(0));
-        featureListViewTester.selectFeature(nameGenerator.generateFeatureName(0));
-        sprintListViewTester.selectSprint(nameGenerator.generateSprintName(0));
+        productListViewTester.selectProduct(peg.nameGenerator.generateProductName(0));
+        versionListViewTester.selectVersion(peg.nameGenerator.generateVersionName(0));
+        featureListViewTester.selectFeature(peg.nameGenerator.generateFeatureName(0));
+        sprintListViewTester.selectSprint(peg.nameGenerator.generateSprintName(0));
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 

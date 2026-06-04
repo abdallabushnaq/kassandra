@@ -88,7 +88,7 @@ public class AiAssistantServiceBasicTest extends AbstractMcpTest {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void test_03_ClearConversation() {
         // Setup: Add products
-        addRandomProducts(1);
+        peg.addRandomProducts(1);
 
         // First conversation
         String response1 = processQuery("List all products.");
@@ -110,7 +110,7 @@ public class AiAssistantServiceBasicTest extends AbstractMcpTest {
         // First query: Create a product
         String response1 = processQuery("Add a new product called TestMemory.");
 
-        assertTrue(productApi.getByName("TestMemory").isPresent(), "Product 'TestMemory' should have been created");
+        assertTrue(peg.productApi.getByName("TestMemory").isPresent(), "Product 'TestMemory' should have been created");
 
         // Second query: Reference the product without naming it
         String response2 = processQuery("What is the name of the product you just created?");
@@ -119,7 +119,7 @@ public class AiAssistantServiceBasicTest extends AbstractMcpTest {
         log.info("AI Response about created product: {}", response2);
 
         // Clean up
-        productApi.getByName("TestMemory").ifPresent(p -> productApi.deleteById(p.getId()));
+        peg.productApi.getByName("TestMemory").ifPresent(p -> peg.productApi.deleteById(p.getId()));
     }
 
 }
