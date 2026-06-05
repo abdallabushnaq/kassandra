@@ -162,7 +162,7 @@ public class SerializationTest {
         assertEquals(u1.getFirstWorkingDay(), user.getFirstWorkingDay());
         assertEquals(2, user.getRoleList().size());
         {
-            String json2 = "{\"availabilities\":[{\"availability\":0.5,\"id\":1,\"start\":\"2023-05-05\"}],\"lightAvatarHash\":\"bfedee7b59c89684\",\"color\":\"#FFFF0000\",\"email\":\"christopher.paul@kassandra.org\",\"firstWorkingDay\":\"2023-05-05\",\"id\":1,\"locations\":[{\"country\":\"de\",\"id\":1,\"start\":\"2023-05-05\",\"state\":\"nw\"}],\"name\":\"Christopher Paul\",\"roles\":\"ADMIN,USER\"}";
+            String json2 = "{\"availabilities\":[{\"availability\":0.5,\"id\":\"d47f4e30-306f-4940-8921-c154094df1a1\",\"start\":\"2023-05-05\"}],\"lightAvatarHash\":\"bfedee7b59c89684\",\"color\":\"#FFFF0000\",\"email\":\"christopher.paul@kassandra.org\",\"firstWorkingDay\":\"2023-05-05\",\"id\":\"d47f4e30-306f-4940-8921-c154094df1a1\",\"locations\":[{\"country\":\"de\",\"id\":\"d47f4e30-306f-4940-8921-c154094df1a1\",\"start\":\"2023-05-05\",\"state\":\"nw\"}],\"name\":\"Christopher Paul\",\"roles\":\"ADMIN,USER\"}";
             User   user2 = jsonMapper.readValue(json2, User.class);
         }
 
