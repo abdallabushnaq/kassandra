@@ -22,9 +22,11 @@ import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.util.DurationDeserializer;
 import de.bushnaq.abdalla.util.DurationSerializer;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.UuidGenerator;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
 
@@ -41,7 +43,6 @@ import java.util.UUID;
 @Table(name = "tasks")
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = false)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
@@ -59,7 +60,7 @@ public class TaskDAO {
     private LocalDateTime finish;
 
     @Id
-    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
+//    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
     private UUID                                        id;
     @Column(nullable = false)
@@ -103,5 +104,9 @@ public class TaskDAO {
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
     private Duration                                    timeSpent         = Duration.ZERO;
+
+    public TaskDAO() {
+        this.setId(UUID.randomUUID());
+    }
 
 }

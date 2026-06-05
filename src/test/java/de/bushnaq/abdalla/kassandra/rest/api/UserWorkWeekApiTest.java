@@ -99,13 +99,13 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Verify the first work week was persisted with the correct start date
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getUserWorkWeeks().getFirst().getStart());
         }
 
         // Add a second work-week assignment (Islamic Sun-Thu 5×8) effective on SECOND_START_DATE
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             WorkWeek islamicWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();
@@ -114,7 +114,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Verify the second assignment
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             assertEquals(LocalDate.parse(SECOND_START_DATE), user.getUserWorkWeeks().get(1).getStart());
         }
     }
@@ -141,13 +141,13 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Try to add a third assignment as anonymous – must fail
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             peg.addWorkWeek(user, secondWorkWeek, LocalDate.parse("2026-01-01"));
         });
 
         // Try to update as anonymous – must fail
         {
-            User         user          = peg.expectedUsers.getFirst();
+            User         user          = peg.getUsers().getFirst();
             UserWorkWeek uww           = user.getUserWorkWeeks().getFirst();
             LocalDate    originalStart = uww.getStart();
             uww.setStart(LocalDate.parse(SECOND_START_DATE));
@@ -162,7 +162,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Try to delete as anonymous – must fail
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User         user = peg.expectedUsers.getFirst();
+            User         user = peg.getUsers().getFirst();
             UserWorkWeek uww  = user.getUserWorkWeeks().get(1);
             peg.removeWorkWeek(uww, user);
         });
@@ -182,7 +182,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Attempting to delete the first (and only) work-week assignment must fail
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             try {
                 peg.userWorkWeekApi.deleteById(user.getId(), user.getUserWorkWeeks().getFirst().getId());
                 fail("should not be able to delete the first work-week assignment");
@@ -205,7 +205,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Add a second assignment
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             WorkWeek islamicWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();
@@ -214,7 +214,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Delete the second assignment – must succeed
         {
-            User         user = peg.expectedUsers.getFirst();
+            User         user = peg.getUsers().getFirst();
             UserWorkWeek uww  = user.getUserWorkWeeks().get(1);
             peg.removeWorkWeek(uww, user);
         }
@@ -233,7 +233,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Add a second assignment so there is a deletable one
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             WorkWeek islamicWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();
@@ -242,7 +242,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Try to delete the second assignment using a fake assignment ID
         {
-            User         user   = peg.expectedUsers.getFirst();
+            User         user   = peg.getUsers().getFirst();
             UserWorkWeek uww    = user.getUserWorkWeeks().get(1);
             UUID         realId = uww.getId();
             uww.setId(FAKE_ID);
@@ -269,7 +269,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Add a second assignment so there is a deletable one
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             WorkWeek islamicWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();
@@ -278,7 +278,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Try to delete using a fake user ID
         {
-            User user       = peg.expectedUsers.getFirst();
+            User user       = peg.getUsers().getFirst();
             UUID realUserId = user.getId();
             user.setId(FAKE_ID);
             try {
@@ -329,13 +329,13 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Verify the assignment exists
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getUserWorkWeeks().getFirst().getStart());
         }
 
         // Attempt to update using a fake assignment ID
         {
-            User         user      = peg.expectedUsers.getFirst();
+            User         user      = peg.getUsers().getFirst();
             UserWorkWeek uww       = user.getUserWorkWeeks().getFirst();
             UUID         realId    = uww.getId();
             LocalDate    realStart = uww.getStart();
@@ -365,7 +365,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Verify the assignment exists
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getUserWorkWeeks().getFirst().getStart());
         }
 
@@ -373,7 +373,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Attempt to update using a fake user ID
         {
-            User user       = peg.expectedUsers.getFirst();
+            User user       = peg.getUsers().getFirst();
             UUID realUserId = user.getId();
             user.setId(FAKE_ID);
             UserWorkWeek uww       = user.getUserWorkWeeks().getFirst();
@@ -403,7 +403,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Verify that the first assignment has the expected start date
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getUserWorkWeeks().getFirst().getStart());
         }
 
@@ -411,7 +411,7 @@ public class UserWorkWeekApiTest extends AbstractUiTestUtil {
 
         // Switch to a different work week and change the start date
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             WorkWeek islamicWorkWeek = peg.workWeekApi.getAll().stream()
                     .filter(ww -> SECOND_WORK_WEEK.equals(ww.getName()))
                     .findFirst().orElseThrow();

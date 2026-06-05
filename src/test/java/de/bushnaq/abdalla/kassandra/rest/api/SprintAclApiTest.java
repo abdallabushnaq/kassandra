@@ -43,6 +43,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -347,7 +348,10 @@ public class SprintAclApiTest extends AbstractUiTestUtil {
         // User1 can only see their own sprints in getAll()
         List<Sprint> user1Sprints = peg.sprintApi.getAll();
         assertEquals(1 + 1, user1Sprints.size(), "User1 should only see their own sprints");// the "Backlog" Sprint is always there
-        assertEquals(sprint1.getId(), user1Sprints.get(1).getId());
+        Optional<Sprint> sprint = user1Sprints.stream().filter(s -> s.getName().equals(sprint1.getName())).findFirst();
+
+
+        assertEquals(sprint1.getId(), sprint.get().getId());
 
         // User2 can access their own sprint
         PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");

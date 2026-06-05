@@ -91,10 +91,10 @@ public class GanttGenerator extends EntityGenerator {
     }
 
     public void generateBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
-        Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
+        Sprint sprint = getSprints().stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         sprint.initialize();
-        sprint.initUserMap(users);
-        sprint.initTaskMap(tasks, worklogs);
+        sprint.initUserMap(getUsers().stream().toList());
+        sprint.initTaskMap(getTasks(), getWorklogs());
         sprint.recalculate(ParameterOptions.getLocalNow());
 //        Context       context     = new Context(new KassandraParameterOptions(new LightTheme(null), new DarkTheme(null)));
         Context context = new Context(null);
@@ -112,10 +112,10 @@ public class GanttGenerator extends EntityGenerator {
     }
 
     public void generateGanttBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
-        Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
+        Sprint sprint = getSprints().stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         sprint.initialize();
-        sprint.initUserMap(users);
-        sprint.initTaskMap(tasks, worklogs);
+        sprint.initUserMap(getUsers().stream().toList());
+        sprint.initTaskMap(getTasks(), getWorklogs());
         sprint.recalculate(ParameterOptions.getLocalNow());
         Context context = new Context(null);
         context.parameters.setTheme(testTheme);
@@ -135,10 +135,10 @@ public class GanttGenerator extends EntityGenerator {
     }
 
     public void generateGanttChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
-        Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
+        Sprint sprint = getSprints().stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         sprint.initialize();
-        sprint.initUserMap(users);
-        sprint.initTaskMap(tasks, worklogs);
+        sprint.initUserMap(getUsers().stream().toList());
+        sprint.initTaskMap(getTasks(), getWorklogs());
         sprint.recalculate(ParameterOptions.getLocalNow());
         Context context = new Context(null);
         context.parameters.setTheme(testTheme);
@@ -157,10 +157,10 @@ public class GanttGenerator extends EntityGenerator {
     }
 
     public void generateOverviewChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
-        Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
+        Sprint sprint = getSprints().stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         sprint.initialize();
-        sprint.initUserMap(users);
-        sprint.initTaskMap(tasks, worklogs);
+        sprint.initUserMap(getUsers().stream().toList());
+        sprint.initTaskMap(getTasks(), getWorklogs());
         sprint.recalculate(ParameterOptions.getLocalNow());
 
         List<Sprint> sprintList = new ArrayList<>();
@@ -277,7 +277,7 @@ public class GanttGenerator extends EntityGenerator {
      * @param now
      */
     public void generateWorklogs(UUID sprintId, LocalDateTime now) {
-        Sprint sprint = sprints.stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
+        Sprint sprint = getSprints().stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
         try (Profiler pc = new Profiler(SampleType.CPU)) {
 
             final long         SECONDS_PER_WORKING_DAY = 75 * 6 * 60;
@@ -327,8 +327,8 @@ public class GanttGenerator extends EntityGenerator {
 
     public void initializeSprint(Sprint sprint) {
         sprint.initialize();
-        sprint.initUserMap(users);
-        sprint.initTaskMap(tasks, worklogs);
+        sprint.initUserMap(getUsers().stream().toList());
+        sprint.initTaskMap(getTasks(), getWorklogs());
     }
 
     public void levelResources(TestInfo testInfo, Sprint sprint, ProjectFile projectFile) throws Exception {

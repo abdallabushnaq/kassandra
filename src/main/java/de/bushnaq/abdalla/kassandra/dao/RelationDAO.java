@@ -17,13 +17,14 @@
 
 package de.bushnaq.abdalla.kassandra.dao;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
 
@@ -31,14 +32,12 @@ import java.util.UUID;
 @Table(name = "relations")
 @Getter
 @Setter
-@NoArgsConstructor
-//@ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
 public class RelationDAO {
 
     @Id
-    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
+//    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
     UUID id;
 
@@ -47,5 +46,9 @@ public class RelationDAO {
 
     @Column(nullable = false)
     Boolean visible;
+
+    public RelationDAO() {
+        this.setId(UUID.randomUUID());
+    }
 
 }

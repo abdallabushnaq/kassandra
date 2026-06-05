@@ -63,70 +63,56 @@ public class PersistingEntityGenerator {
     public              AvailabilityApi        availabilityApi;
     @Autowired
     protected           AvatarService          avatarService;
+    public final        EntityGenerator        eg                        = new EntityGenerator();
     @Autowired
     protected           EntityManager          entityManager;
-    protected final     TreeSet<Availability>  expectedAvailabilities    = new TreeSet<>();
-    public              List<Feature>          expectedFeatures          = new ArrayList<>();
-    protected final     TreeSet<Location>      expectedLocations         = new TreeSet<>();
-    protected           TreeSet<OffDay>        expectedOffDays           = new TreeSet<>();
-    public              List<Product>          expectedProducts          = new ArrayList<>();
-    public              List<Sprint>           expectedSprints           = new ArrayList<>();
-    public              List<Task>             expectedTasks             = new ArrayList<>();
-    public              TreeSet<User>          expectedUsers             = new TreeSet<>();
-    public              List<Version>          expectedVersions          = new ArrayList<>();
-    public              List<Worklog>          expectedWorklogs          = new ArrayList<>();
     public              FeatureApi             featureApi;
-    protected static    int                    featureIndex              = 0;
     @Autowired
     protected           JsonMapper             jsonMapper;
     public              LocationApi            locationApi;
     public              NameGenerator          nameGenerator             = new NameGenerator();
     protected           OffDayApi              offDayApi;
     private final       List<OffDay>           offDayBuffer              = new ArrayList<>();
+    private             TreeSet<OffDay>        offDays                   = new TreeSet<>();
     private             int                    offDaysIterations;
     public              ProductAclApi          productAclApi;
     public              ProductApi             productApi;
-    protected static    int                    productIndex              = 0;
     public final        Random                 random                    = new Random();
     public              SprintApi              sprintApi;
     private static      int                    sprintIndex               = 0;
-    //    @Autowired
-//    protected           StableDiffusionConfig  stableDiffusionConfig;
     @Autowired
     protected           StableDiffusionService stableDiffusionService;
     public              TaskApi                taskApi;
+    private             List<Task>             tasks                     = new ArrayList<>();
     @Autowired
     private             TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
     public              UserApi                userApi;
     public              UserGroupApi           userGroupApi;
-    public static       int                    userIndex                 = 0;
+    private static      int                    userIndex                 = 0;
     public              UserWorkWeekApi        userWorkWeekApi;
     public              VersionApi             versionApi;
-    protected static    int                    versionIndex              = 0;
+    private static      int                    versionIndex              = 0;
     public              WorkWeekApi            workWeekApi;
     public              WorklogApi             worklogApi;
     private final       List<Worklog>          worklogBuffer             = new ArrayList<>();
 
-    public void addAvailability(User user, float availability, LocalDate start) {
-        Availability a = new Availability(availability, start);
-        a.setUser(user);
-        a.setCreated(user.getCreated());
-        a.setUpdated(user.getUpdated());
-        availabilityApi.persist(a, user.getId());
-        user.addAvailability(a);
-        expectedAvailabilities.add(a);
+    public Availability addAvailability(User user, float availability, LocalDate start) {
+        Availability a = eg.addAvailability(user, availability, start);
+        getAvailabilities().remove(a);
+        user.removeAvailability(a);
+
+        Availability saved = availabilityApi.persist(a, user.getId());
+        user.addAvailability(saved);
+        getAvailabilities().add(saved);
+        saved.setUser(user);
+        return saved;
     }
 
     public Feature addFeature(Version version, String name) {
-        Feature feature = new Feature();
-        feature.setName(name);
+        Feature feature = eg.addFeature(version, name);
+        getFeatures().remove(feature);
+        version.removeFeature(feature);
 
-        feature.setVersion(version);
-        feature.setVersionId(version.getId());
-        feature.setCreated(ParameterOptions.getNow());
-        feature.setUpdated(ParameterOptions.getNow());
-
-        Feature              saved              = null;
         long                 startTime          = System.currentTimeMillis();
         String               basePrompt         = Feature.getDefaultLightAvatarPrompt(name);
         String               darkBasePrompt     = Feature.getDefaultDarkAvatarPrompt(name);
@@ -134,7 +120,8 @@ public class PersistingEntityGenerator {
         String               darkNegativePrompt = Feature.getDefaultDarkAvatarNegativePrompt();
         GeneratedImageResult image              = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "lightbulb");
         feature.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
-        saved = featureApi.persist(feature);
+
+        Feature saved = featureApi.persist(feature);
 
         GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "lightbulb");
 
@@ -143,22 +130,20 @@ public class PersistingEntityGenerator {
                 image.getNegativePrompt(), darkImage.getNegativePrompt());
         System.out.println("Generated image for feature: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
-        expectedFeatures.add(saved);
-
+        getFeatures().add(saved);
+        saved.setVersion(version);
         version.addFeature(saved);
 
-        featureIndex++;
         return saved;
     }
 
     public void addLocation(User user, String country, String state, LocalDate start) {
-        Location location = new Location(country, state, start);
-        location.setUser(user);
-        location.setCreated(user.getCreated());
-        location.setUpdated(user.getUpdated());
+        Location location = eg.addLocation(user, country, state, start);
+        user.removeLocation(location);
+        getLocations().remove(location);
         Location saved = locationApi.persist(location, user.getId());
         user.addLocation(saved);
-        expectedLocations.add(saved);
+        getLocations().add(saved);
     }
 
     public void addOffDay(User user, LocalDate offDayStart, LocalDate offDayFinish, OffDayType type) {
@@ -233,7 +218,7 @@ public class PersistingEntityGenerator {
         return daysUsed;
     }
 
-    protected void addOffDayToBuffer(User user, LocalDate offDayStart, LocalDate offDayFinish, OffDayType type) {
+    private void addOffDayToBuffer(User user, LocalDate offDayStart, LocalDate offDayFinish, OffDayType type) {
         OffDay offDay = new OffDay(offDayStart, offDayFinish, type);
         offDay.setUser(user);
         offDay.setCreated(user.getCreated());
@@ -292,12 +277,9 @@ public class PersistingEntityGenerator {
     }
 
     public Product addProduct(String name) {
-        Product product = new Product();
-        product.setName(name);
-        product.setCreated(ParameterOptions.getNow());
-        product.setUpdated(ParameterOptions.getNow());
+        Product product = eg.addProduct(name);
+        getProducts().remove(product);
 
-        Product              saved              = null;
         long                 startTime          = System.currentTimeMillis();
         String               basePrompt         = Product.getDefaultLightAvatarPrompt(name);
         String               darkBasePrompt     = Product.getDefaultDarkAvatarPrompt(name);
@@ -305,7 +287,7 @@ public class PersistingEntityGenerator {
         String               darkNegativePrompt = Product.getDefaultDarkAvatarNegativePrompt();
         GeneratedImageResult image              = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "cube");
         product.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
-        saved = productApi.persist(product);
+        Product saved = productApi.persist(product);
 
         GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "cube");
 
@@ -314,20 +296,34 @@ public class PersistingEntityGenerator {
                 image.getNegativePrompt(), darkImage.getNegativePrompt());
         System.out.println("Generated image for product: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
-        expectedProducts.add(saved);
-        productIndex++;
+        getProducts().add(saved);
         return saved;
     }
 
     public Feature addRandomFeature(Version version) {
-        return addFeature(version, nameGenerator.generateFeatureName(featureIndex));
+        return addFeature(version, nameGenerator.generateFeatureName(getFeatureIndex()));
+    }
+
+    protected void addRandomOffDays(User saved, LocalDate employmentDate) {
+        try (Profiler pc = new Profiler(SampleType.CPU)) {
+
+            int employmentYear = employmentDate.getYear();
+            offDaysIterations = 0;
+            for (int yearIndex = 0; yearIndex < 2; yearIndex++) {
+                int year = employmentYear + yearIndex;
+                random.setSeed(generateUserYearSeed(saved, year));
+                addOffDays(saved, employmentDate, 30, year, OffDayType.VACATION, 10, 20);
+                addOffDays(saved, employmentDate, random.nextInt(5), year, OffDayType.TRIP, 1, 5);
+            }
+            flushOffDayBuffer(saved);
+        }
     }
 
     public void addRandomProducts(int count) {
         User user1 = addRandomUser();
 
         for (int i = 0; i < count; i++) {
-            Product product = addProduct(nameGenerator.generateProductName(productIndex));
+            Product product = addProduct(nameGenerator.generateProductName(getProductIndex()));
             Version version = addVersion(product, String.format("1.%d.0", i));
             Feature feature = addRandomFeature(version);
             Sprint  sprint  = addRandomSprint(feature);
@@ -338,8 +334,27 @@ public class PersistingEntityGenerator {
         testProducts();
     }
 
+    protected void addRandomSickDays() {
+        try (Profiler pc = new Profiler(SampleType.CPU)) {
+            List<User> all = userApi.getAll();
+            for (User user : all) {
+                user.initialize();
+                LocalDate employmentDate = ParameterOptions.getNow().toLocalDate().minusYears(1);
+
+                int employmentYear = employmentDate.getYear();
+                offDaysIterations = 0;
+                for (int yearIndex = 0; yearIndex < 2; yearIndex++) {
+                    int year = employmentYear + yearIndex;
+                    random.setSeed(generateUserYearSeed(user, year));
+                    addOffDays(user, employmentDate, random.nextInt(20), year, OffDayType.SICK, 1, 5);
+                }
+                flushOffDayBuffer(user);
+            }
+        }
+    }
+
     public Sprint addRandomSprint(Feature feature) {
-        return addSprint(feature, nameGenerator.generateSprintName(sprintIndex));
+        return addSprint(feature, nameGenerator.generateSprintName(getSprintIndex()));
     }
 
     /**
@@ -350,9 +365,9 @@ public class PersistingEntityGenerator {
      * @return the created User object
      */
     public User addRandomUser(LocalDate firstDate) {
-        String       name  = nameGenerator.generateUserName(userIndex);
-        String       email = nameGenerator.generateUserEmail(userIndex);
-        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.7f);
+        String       name  = nameGenerator.generateUserName(getUserIndex());
+        String       email = nameGenerator.generateUserEmail(getUserIndex());
+        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.7f);
         GanttContext gc    = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
@@ -368,15 +383,15 @@ public class PersistingEntityGenerator {
      * @return the created User object
      */
     public User addRandomUser() {
-        String    name      = nameGenerator.generateUserName(userIndex);
-        String    email     = nameGenerator.generateUserEmail(userIndex);
+        String    name      = nameGenerator.generateUserName(getUserIndex());
+        String    email     = nameGenerator.generateUserEmail(getUserIndex());
         LocalDate firstDate = ParameterOptions.getNow().toLocalDate();
 
-        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.7f);
+        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.7f);
         GanttContext gc    = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
-        generateRandomOffDays(saved, firstDate);
+        addRandomOffDays(saved, firstDate);
         testUsers();
         return saved;
     }
@@ -391,13 +406,13 @@ public class PersistingEntityGenerator {
      */
     public User addRandomUser(int index, float availability) {
         String       name      = nameGenerator.generateUserName(index);
-        String       email     = nameGenerator.generateUserEmail(userIndex);
+        String       email     = nameGenerator.generateUserEmail(getUserIndex());
         LocalDate    firstDate = ParameterOptions.getNow().toLocalDate().minusYears(1);
-        User         saved     = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), availability);
+        User         saved     = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), availability);
         GanttContext gc        = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
-        generateRandomOffDays(saved, firstDate);
+        addRandomOffDays(saved, firstDate);
         testUsers();
         return saved;
     }
@@ -412,20 +427,20 @@ public class PersistingEntityGenerator {
     public void addRandomUsers(int count) {
         for (int i = 0; i < count; i++) {
             long      time      = System.currentTimeMillis();
-            String    name      = nameGenerator.generateUserName(userIndex);
-            String    email     = nameGenerator.generateUserEmail(userIndex);
+            String    name      = nameGenerator.generateUserName(getUserIndex());
+            String    email     = nameGenerator.generateUserEmail(getUserIndex());
             LocalDate firstDate = ParameterOptions.getNow().toLocalDate().minusYears(2);
             User      saved;
             if (email.equalsIgnoreCase("christopher.paul@kassandra.org"))
-                saved = addUser(name, email, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f);
+                saved = addUser(name, email, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.5f);
             else
-                saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(userIndex), 0.5f + ((float) random.nextInt(5)) / 5f);
+                saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.5f + ((float) random.nextInt(5)) / 5f);
             System.out.println("Adding user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms");
             saved.initialize();
             time = System.currentTimeMillis();
             if (saved.getOffDays().isEmpty()) {
                 //only in case it is a new user
-                generateRandomOffDays(saved, firstDate);
+                addRandomOffDays(saved, firstDate);
             }
             Profiler.log("generateRandomOffDays");
             System.out.println("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and " + offDaysIterations + " iterations");
@@ -441,7 +456,7 @@ public class PersistingEntityGenerator {
      * @return the created Version object
      */
     public Version addRandomVersion(Product product) {
-        return addVersion(product, nameGenerator.generateVersionName(versionIndex));
+        return addVersion(product, nameGenerator.generateVersionName(getVersionIndex()));
     }
 
     public Sprint addSprint(Feature feature, String name) {
@@ -450,8 +465,8 @@ public class PersistingEntityGenerator {
         sprint.setStatus(Status.STARTED);
         sprint.setFeature(feature);
         sprint.setFeatureId(feature.getId());
-        sprint.setCreated(ParameterOptions.getNow());
-        sprint.setUpdated(ParameterOptions.getNow());
+//        sprint.setCreated(ParameterOptions.getNow());
+//        sprint.setUpdated(ParameterOptions.getNow());
 
         Sprint               saved              = null;
         long                 startTime          = System.currentTimeMillis();
@@ -471,10 +486,10 @@ public class PersistingEntityGenerator {
         System.out.println("Generated image for sprint: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
 
-        expectedSprints.add(saved);
+        getSprints().add(saved);
         feature.addSprint(saved);
 
-        sprintIndex++;
+        setSprintIndex(getSprintIndex() + 1);
         return saved;
     }
 
@@ -522,7 +537,7 @@ public class PersistingEntityGenerator {
 //        System.out.printf("trying to add %s%n", task);
 
         Task saved = taskApi.persist(task);
-        expectedTasks.add(saved);
+        getTasks().add(saved);
         if (parent != null) {
             parent.addChildTask(saved);
         }
@@ -546,8 +561,8 @@ public class PersistingEntityGenerator {
         if (existingUser != null) {
             System.out.println("User with email " + email + " already exists, skipping creation");
             // Add to expected users if not already there
-            userIndex++;
-            expectedUsers.add(existingUser);
+            setUserIndex(getUserIndex() + 1);
+            getUsers().add(existingUser);
             return existingUser;
         }
 
@@ -567,12 +582,6 @@ public class PersistingEntityGenerator {
         String               negativePrompt     = User.getDefaultLightAvatarNegativePrompt();
         String               darkNegativePrompt = User.getDefaultDarkAvatarNegativePrompt();
         GeneratedImageResult image              = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "user");
-//        try {
-//            image = avatarService.generateLightAvatar(basePrompt, negativePrompt);
-//        } catch (StableDiffusionException e) {
-//            log.warn("Failed to generate light avatar for user {}: {}", name, e.getMessage());
-//            image = avatarService.generateDefaultLightAvatar("user");
-//        }
         user.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
 
         userApi.persist(user);
@@ -588,20 +597,14 @@ public class PersistingEntityGenerator {
         addWorkWeek(user, defaultWorkWeek, start);
 
         GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "user");
-//        try {
-//            darkImage = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, image);
-//        } catch (StableDiffusionException e) {
-//            log.warn("Failed to generate dark avatar for user {}: {}", name, e.getMessage());
-//            darkImage = avatarService.generateDefaultDarkAvatar("user");
-//        }
 
         userApi.updateAvatarFull(user.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
                 darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
                 image.getNegativePrompt(), darkImage.getNegativePrompt());
         System.out.println("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
-        userIndex++;
-        expectedUsers.add(user);
+        setUserIndex(getUserIndex() + 1);
+        getUsers().add(user);
         return user;
 
     }
@@ -615,8 +618,8 @@ public class PersistingEntityGenerator {
         version.setUpdated(ParameterOptions.getNow());
         Version saved = versionApi.persist(version);
         product.addVersion(saved);
-        expectedVersions.add(saved);
-        versionIndex++;
+        getVersions().add(saved);
+        setVersionIndex(getVersionIndex() + 1);
         return saved;
     }
 
@@ -649,7 +652,7 @@ public class PersistingEntityGenerator {
         worklog.setComment(comment);
         task.addWorklog(worklog);
         Worklog saved = worklogApi.persist(worklog);
-        expectedWorklogs.add(saved);
+        getWorklogs().add(saved);
         return saved;
     }
 
@@ -711,7 +714,7 @@ public class PersistingEntityGenerator {
      * <p>
      * The temp (ID-less) OffDay objects that were added to {@code user.getOffDays()} during generation
      * are replaced by the server-returned objects carrying their assigned IDs. The flushed entries are
-     * also added to {@link #expectedOffDays}.
+     * also added to {@link #offDays}.
      * </p>
      *
      * @param user the user whose buffered off days should be persisted
@@ -730,7 +733,7 @@ public class PersistingEntityGenerator {
             // Replace in-memory temp objects with the saved ones (which carry server-assigned IDs).
             user.getOffDays().removeAll(pending);
             saved.forEach(user::addOffday);
-            expectedOffDays.addAll(saved);
+            getOffDays().addAll(saved);
         }
         offDayBuffer.removeAll(pending);
     }
@@ -740,7 +743,7 @@ public class PersistingEntityGenerator {
      * <p>
      * The temp (ID-less) {@link Worklog} objects that were added to each task's worklog list during
      * generation receive their server-assigned IDs in-place (the response is assumed to be in the same
-     * order as the request). The flushed entries are also added to {@link #expectedWorklogs}.
+     * order as the request). The flushed entries are also added to {@link #EntityGenerator.worklogs}.
      * </p>
      *
      * @param sprint the sprint whose buffered worklogs should be persisted
@@ -762,12 +765,12 @@ public class PersistingEntityGenerator {
             for (int i = 0; i < pending.size(); i++) {
                 pending.get(i).setId(saved.get(i).getId());
             }
-            expectedWorklogs.addAll(pending);
+            getWorklogs().addAll(pending);
         }
         worklogBuffer.removeAll(pending);
     }
 
-    protected void generateRandomOffDays(User saved, LocalDate employmentDate) {
+    public void generateRandomOffDays(User saved, LocalDate employmentDate) {
         try (Profiler pc = new Profiler(SampleType.CPU)) {
 
             int employmentYear = employmentDate.getYear();
@@ -782,7 +785,7 @@ public class PersistingEntityGenerator {
         }
     }
 
-    protected void generateRandomSickDays() {
+    public void generateRandomSickDays() {
         try (Profiler pc = new Profiler(SampleType.CPU)) {
             List<User> all = userApi.getAll();
             for (User user : all) {
@@ -810,8 +813,24 @@ public class PersistingEntityGenerator {
         return (saved.getName() + year).hashCode();
     }
 
+    public TreeSet<Availability> getAvailabilities() {
+        return eg.getAvailabilities();
+    }
+
     protected int getCurrentSprintIndex() {
-        return sprintIndex;
+        return getSprintIndex();
+    }
+
+    public int getFeatureIndex() {
+        return eg.getFeatureIndex();
+    }
+
+    public List<Feature> getFeatures() {
+        return eg.getFeatures();
+    }
+
+    public TreeSet<Location> getLocations() {
+        return eg.getLocations();
     }
 
     private LocalDate getNextWorkingDay(ProjectCalendar calendar, LocalDate start, int workingDays) {
@@ -828,23 +847,58 @@ public class PersistingEntityGenerator {
         return current;
     }
 
+    public TreeSet<OffDay> getOffDays() {
+        return offDays;
+    }
+
+    public int getProductIndex() {
+        return eg.getProductIndex();
+    }
+
+    public List<Product> getProducts() {
+        return eg.getProducts();
+    }
+
+    public static int getSprintIndex() {
+        return sprintIndex;
+    }
+
+    public List<Sprint> getSprints() {
+        return eg.getSprints();
+    }
+
+    public List<Task> getTasks() {
+        return tasks;
+    }
+
+    public static int getUserIndex() {
+        return userIndex;
+    }
+
+    public TreeSet<User> getUsers() {
+        return eg.getUsers();
+    }
+
+    public static int getVersionIndex() {
+        return versionIndex;
+    }
+
+    public List<Version> getVersions() {
+        return eg.getVersions();
+    }
+
+    public List<Worklog> getWorklogs() {
+        return eg.getWorklogs();
+    }
+
     public void init() {
-        productIndex = 0;
-        featureIndex = 0;
-        sprintIndex  = 0;
-        userIndex    = 0;
-        versionIndex = 0;
+        eg.init();
+        setSprintIndex(0);
+        setUserIndex(0);
+        setVersionIndex(0);
         nameGenerator.resetStoryPool(); // Reset story pool for each test
-        expectedUsers.clear();
-        expectedOffDays.clear();
-        expectedAvailabilities.clear();
-        expectedLocations.clear();
-        expectedVersions.clear();
-        expectedProducts.clear();
-        expectedFeatures.clear();
-        expectedSprints.clear();
-        expectedTasks.clear();
-        expectedWorklogs.clear();
+        getOffDays().clear();
+        getLocations().clear();
     }
 
     private boolean isOverlapping(List<OffDay> offDays, LocalDate start, LocalDate end) {
@@ -861,9 +915,9 @@ public class PersistingEntityGenerator {
         Task oldParent = task.getParentTask();
         newParent.addChildTask(task);
 
-        taskApi.persist(newParent);
-        taskApi.persist(task);
-        taskApi.persist(oldParent);
+        taskApi.update(newParent);
+        taskApi.update(task);
+        taskApi.update(oldParent);
     }
 
     /**
@@ -900,40 +954,40 @@ public class PersistingEntityGenerator {
     public void removeAvailability(Availability availability, User user) {
         availabilityApi.deleteById(user.getId(), availability.getId());
         user.removeAvailability(availability);
-        expectedAvailabilities.remove(availability);
+        getAvailabilities().remove(availability);
     }
 
     public void removeFeature(UUID id) {
-        Feature featureToRemove = expectedFeatures.stream().filter(project -> project.getId().equals(id)).findFirst().orElse(null);
+        Feature featureToRemove = eg.getFeatures().stream().filter(project -> project.getId().equals(id)).findFirst().orElse(null);
         featureApi.deleteById(id);
         if (featureToRemove != null) {
             //remove this project from its parent version
-            featureToRemove.getVersion().removeProject(featureToRemove);
+            featureToRemove.getVersion().removeFeature(featureToRemove);
             // Remove all sprints and their tasks
             for (Sprint sprint : featureToRemove.getSprints()) {
                 for (Task task : sprint.getTasks()) {
-                    expectedTasks.remove(task);
+                    getTasks().remove(task);
                 }
-                expectedSprints.remove(sprint);
+                getSprints().remove(sprint);
             }
-            expectedFeatures.remove(featureToRemove);
+            eg.getFeatures().remove(featureToRemove);
         }
     }
 
     public void removeLocation(Location location, User user) {
         locationApi.deleteById(user.getId(), location.getId());
         user.removeLocation(location);
-        expectedLocations.remove(location);
+        getLocations().remove(location);
     }
 
     public void removeOffDay(OffDay offDay, User user) {
         offDayApi.deleteById(user.getId(), offDay.getId());
         user.removeOffDay(offDay);
-        expectedOffDays.remove(offDay);
+        getOffDays().remove(offDay);
     }
 
     public void removeProduct(UUID id) {
-        Product productToRemove = expectedProducts.stream().filter(product -> product.getId().equals(id)).findFirst().orElse(null);
+        Product productToRemove = getProducts().stream().filter(product -> product.getId().equals(id)).findFirst().orElse(null);
         productApi.deleteById(id);
 
         if (productToRemove != null) {
@@ -942,33 +996,33 @@ public class PersistingEntityGenerator {
                 for (Feature feature : version.getFeatures()) {
                     for (Sprint sprint : feature.getSprints()) {
                         for (Task task : sprint.getTasks()) {
-                            expectedTasks.remove(task);
+                            getTasks().remove(task);
                         }
-                        expectedSprints.remove(sprint);
+                        getSprints().remove(sprint);
                     }
-                    expectedFeatures.remove(feature);
+                    eg.getFeatures().remove(feature);
                 }
-                expectedVersions.remove(version);
+                getVersions().remove(version);
             }
-            expectedProducts.remove(productToRemove);
+            getProducts().remove(productToRemove);
         }
     }
 
     public void removeSprint(UUID id) {
-        Sprint sprintToRemove = expectedSprints.stream().filter(sprint -> sprint.getId().equals(id)).findFirst().orElse(null);
+        Sprint sprintToRemove = getSprints().stream().filter(sprint -> sprint.getId().equals(id)).findFirst().orElse(null);
         sprintApi.deleteById(id);
         if (sprintToRemove != null) {
             //remove this sprint from its parent project
             sprintToRemove.getFeature().removePrint(sprintToRemove);
             for (Task task : sprintToRemove.getTasks()) {
-                expectedTasks.remove(task);
+                getTasks().remove(task);
             }
-            expectedSprints.remove(sprintToRemove);
+            getSprints().remove(sprintToRemove);
         }
     }
 
     public void removeTaskTree(Task task) {
-        expectedTasks.remove(task);
+        getTasks().remove(task);
         taskApi.deleteById(task.getId());
         for (Task childTask : task.getChildTasks()) {
             removeTaskTree(childTask);
@@ -976,24 +1030,24 @@ public class PersistingEntityGenerator {
     }
 
     public void removeUser(UUID id) {
-        User userToRemove = expectedUsers.stream().filter(user -> user.getId().equals(id)).findFirst().orElse(null);
+        User userToRemove = getUsers().stream().filter(user -> user.getId().equals(id)).findFirst().orElse(null);
         userApi.deleteById(id);
 
         if (userToRemove != null) {
             // Remove all availabilities
-            expectedAvailabilities.removeAll(userToRemove.getAvailabilities());
+            getAvailabilities().removeAll(userToRemove.getAvailabilities());
             // Remove all locations
-            expectedLocations.removeAll(userToRemove.getLocations());
+            getLocations().removeAll(userToRemove.getLocations());
             // Remove all off days
-            expectedOffDays.removeAll(userToRemove.getOffDays());
+            getOffDays().removeAll(userToRemove.getOffDays());
             // Remove the user
-            expectedUsers.remove(userToRemove);
+            getUsers().remove(userToRemove);
         }
 
     }
 
     public void removeVersion(UUID id) {
-        Version versionToRemove = expectedVersions.stream().filter(version -> version.getId().equals(id)).findFirst().orElse(null);
+        Version versionToRemove = getVersions().stream().filter(version -> version.getId().equals(id)).findFirst().orElse(null);
         versionApi.deleteById(id);
 
         if (versionToRemove != null) {
@@ -1003,13 +1057,13 @@ public class PersistingEntityGenerator {
             for (Feature feature : versionToRemove.getFeatures()) {
                 for (Sprint sprint : feature.getSprints()) {
                     for (Task task : sprint.getTasks()) {
-                        expectedTasks.remove(task);
+                        getTasks().remove(task);
                     }
-                    expectedSprints.remove(sprint);
+                    getSprints().remove(sprint);
                 }
-                expectedFeatures.remove(feature);
+                eg.getFeatures().remove(feature);
             }
-            expectedVersions.remove(versionToRemove);
+            getVersions().remove(versionToRemove);
         }
     }
 
@@ -1023,6 +1077,18 @@ public class PersistingEntityGenerator {
     public void removeWorkWeek(UserWorkWeek userWorkWeek, User user) {
         userWorkWeekApi.deleteById(user.getId(), userWorkWeek.getId());
         user.removeUserWorkWeek(userWorkWeek);
+    }
+
+    public void setOffDays(TreeSet<OffDay> offDays) {
+        this.offDays = offDays;
+    }
+
+    public static void setSprintIndex(int sprintIndex) {
+        PersistingEntityGenerator.sprintIndex = sprintIndex;
+    }
+
+    public void setTasks(List<Task> tasks) {
+        this.tasks = tasks;
     }
 
     public static void setUser(Authentication authentication) {
@@ -1044,6 +1110,14 @@ public class PersistingEntityGenerator {
             );
         }
         return authentication;
+    }
+
+    public static void setUserIndex(int userIndex) {
+        PersistingEntityGenerator.userIndex = userIndex;
+    }
+
+    public static void setVersionIndex(int versionIndex) {
+        PersistingEntityGenerator.versionIndex = versionIndex;
     }
 
     protected void testAll() {
@@ -1068,104 +1142,69 @@ public class PersistingEntityGenerator {
         gc.allVersions = versionApi.getAll().stream().sorted().toList();
         gc.allFeatures = featureApi.getAll().stream().sorted().toList();
         gc.allSprints  = sprintApi.getAll().stream().sorted().toList();
-//        for (Sprint sprint : gc.allSprints) {
-//            sprint.setWorklogs(worklogApi.getAll(sprint.getId()).stream().sorted().toList());
-//        }
-        gc.allTasks = taskApi.getAll().stream().sorted().toList();
+        gc.allTasks    = taskApi.getAll().stream().sorted().toList();
         gc.initialize();
 
         // Add the always-present "Default" product (created by DefaultEntitiesInitializer) to expectedProducts if not already tracked.
         // Use gc.allProducts as it is already fully populated with versions, features and sprints.
-        boolean defaultProductTracked = expectedProducts.stream().anyMatch(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()));
+        boolean defaultProductTracked = getProducts().stream().anyMatch(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()));
         if (!defaultProductTracked) {
             gc.allProducts.stream()
                     .filter(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
                     .findFirst()
-                    .ifPresent(expectedProducts::add);
+                    .ifPresent(getProducts()::add);
         }
-        boolean defaultVersionTracked = expectedVersions.stream().anyMatch(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()));
+        boolean defaultVersionTracked = getVersions().stream().anyMatch(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()));
         if (!defaultVersionTracked) {
             gc.allVersions.stream()
                     .filter(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
                     .findFirst()
-                    .ifPresent(expectedVersions::add);
+                    .ifPresent(getVersions()::add);
         }
-        boolean defaultFeatureTracked = expectedFeatures.stream().anyMatch(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()));
+        boolean defaultFeatureTracked = eg.getFeatures().stream().anyMatch(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()));
         if (!defaultFeatureTracked) {
             gc.allFeatures.stream()
                     .filter(p -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
                     .findFirst()
-                    .ifPresent(expectedFeatures::add);
+                    .ifPresent(eg.getFeatures()::add);
         }
-        boolean defaultSprintTracked = expectedSprints.stream().anyMatch(p -> DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(p.getName()));
+        boolean defaultSprintTracked = getSprints().stream().anyMatch(p -> DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(p.getName()));
         if (!defaultFeatureTracked) {
             gc.allSprints.stream()
                     .filter(p -> DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(p.getName()))
                     .findFirst()
-                    .ifPresent(expectedSprints::add);
+                    .ifPresent(getSprints()::add);
         }
 
         // add default product, version, feature and backlog sprint
-        Product defaultProduct = expectedProducts.stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.DEFAULT_NAME)).findFirst().get();
-        Version defaultVersion = expectedVersions.stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.DEFAULT_NAME)).findFirst().get();
+        Product defaultProduct = getProducts().stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.DEFAULT_NAME)).findFirst().get();
+        Version defaultVersion = getVersions().stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.DEFAULT_NAME)).findFirst().get();
         defaultProduct.getVersions().add(defaultVersion);
         defaultVersion.setProduct(defaultProduct);
-        Feature defaultFeature = expectedFeatures.stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.DEFAULT_NAME)).findFirst().get();
+        Feature defaultFeature = eg.getFeatures().stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.DEFAULT_NAME)).findFirst().get();
         defaultVersion.getFeatures().add(defaultFeature);
         defaultFeature.setVersion(defaultVersion);
-        Sprint defaultSprint = expectedSprints.stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME)).findFirst().get();
+        Sprint defaultSprint = getSprints().stream().filter(f -> f.getName().equals(DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME)).findFirst().get();
         defaultFeature.getSprints().add(defaultSprint);
         defaultSprint.setFeature(defaultFeature);
 
-        expectedProducts.sort(Comparator.comparing(Product::getName));
-        expectedFeatures.sort(Comparator.comparing(Feature::getName));
-        expectedSprints.sort(Comparator.comparing(Sprint::getName));
-        expectedTasks.sort(Comparator.comparing(Task::getName));
-        expectedVersions.sort(Comparator.comparing(Version::getName));
-        expectedWorklogs.sort(Comparator.comparing(Worklog::getStart));
+        getProducts().sort(Comparator.comparing(Product::getName));
+        eg.getFeatures().sort(Comparator.comparing(Feature::getName));
+        getSprints().sort(Comparator.comparing(Sprint::getName));
+        getTasks().sort(Comparator.comparing(Task::getName));
+        getVersions().sort(Comparator.comparing(Version::getName));
+        getWorklogs().sort(Comparator.comparing(Worklog::getStart));
 
         GanttContext egc = new GanttContext();
-        egc.allUsers    = expectedUsers.stream().sorted().toList();
-        egc.allProducts = expectedProducts;
-        egc.allVersions = expectedVersions;
-        egc.allFeatures = expectedFeatures;
-        egc.allSprints  = expectedSprints;
-//        for (Sprint sprint : gc.allSprints) {
-//            sprint.setWorklogs(worklogApi.getAll(sprint.getId()).stream().sorted().toList());
-//        }
-        egc.allTasks = taskApi.getAll().stream().sorted().toList();
+        egc.allUsers    = getUsers().stream().sorted().toList();
+        egc.allProducts = getProducts();
+        egc.allVersions = getVersions();
+        egc.allFeatures = eg.getFeatures();
+        egc.allSprints  = getSprints();
+        egc.allTasks    = taskApi.getAll().stream().sorted().toList();
         egc.initialize();
 
 
-        //initialize sprints to compare them.
-//        for (Sprint sprint : gc.allSprints) {
-//            sprint.initialize();
-//            sprint.initUserMap(gc.allUsers.stream().toList());
-//            sprint.initTaskMap(gc.allTasks, gc.allWorklogs);
-//            GanttUtil         ganttUtil = new GanttUtil();
-//            GanttErrorHandler eh        = new GanttErrorHandler();
-//            if (sprint.getStart() == null)
-//                sprint.setStart(ParameterOptions.getLocalNow());//new sprint always starts today
-//            ganttUtil.levelResources(eh, sprint, "", sprint.getStart());
-//        }
-//        for (Sprint sprint : expectedSprints) {
-//            sprint.initialize();
-//            sprint.initUserMap(expectedUsers.stream().toList());
-//            sprint.initTaskMap(expectedTasks, expectedWorklogs);
-//            GanttUtil         ganttUtil = new GanttUtil();
-//            GanttErrorHandler eh        = new GanttErrorHandler();
-//            if (sprint.getStart() == null)
-//                sprint.setStart(ParameterOptions.getLocalNow());//new sprint always starts today
-//            ganttUtil.levelResources(eh, sprint, "", sprint.getStart());
-//        }
-
-//        List<Product> actual = productApi.getAll();
-//        printTables();
-
-//        assertEquals(1 + expectedProducts.size(), gc.allProducts.size());// the "Default" Product is always there
-//        for (int i = 0; i < expectedProducts.size(); i++) {
-//            assertProductEquals(expectedProducts.get(i), gc.allProducts.get(i + 1));
-//        }
         DTOAsserts.assertUnorderedListEquals(egc.allProducts, gc.allProducts, Comparator.comparing(Product::getName), "products", DTOAsserts::assertProductEquals);
     }
 
@@ -1173,62 +1212,62 @@ public class PersistingEntityGenerator {
         entityManager.clear();//clear the cache to get the latest data from the database
         List<User> actual = userApi.getAll();
 
-        DTOAsserts.assertUnorderedListEquals(expectedUsers, actual, Comparator.comparing(User::getId), "users",
+        DTOAsserts.assertUnorderedListEquals(getUsers(), actual, Comparator.comparing(User::getId), "users",
                 DTOAsserts::assertUserEquals);
     }
 
     public void updateAvailability(Availability availability, User user) {
         availabilityApi.update(availability, user.getId());
-        expectedAvailabilities.remove(availability);
-        expectedAvailabilities.add(availability);
+        getAvailabilities().remove(availability);
+        getAvailabilities().add(availability);
     }
 
     public void updateFeature(Feature feature) {
         featureApi.update(feature);
-        expectedFeatures.remove(feature);
-        expectedFeatures.add(feature);//replace old products with the updated one
+        eg.getFeatures().remove(feature);
+        eg.getFeatures().add(feature);//replace old products with the updated one
     }
 
     public void updateLocation(Location location, User user) throws ServerErrorException {
         locationApi.update(location, user.getId());
-        expectedLocations.remove(location);
-        expectedLocations.add(location);
+        getLocations().remove(location);
+        getLocations().add(location);
     }
 
     public void updateOffDay(OffDay offDay, User user) throws ServerErrorException {
         offDayApi.update(offDay, user.getId());
-        expectedOffDays.remove(offDay);
-        expectedOffDays.add(offDay);
+        getOffDays().remove(offDay);
+        getOffDays().add(offDay);
     }
 
     public void updateProduct(Product product) throws ServerErrorException {
         productApi.update(product);
-        expectedProducts.remove(product);
-        expectedProducts.add(product);//replace old products with the updated one
+        getProducts().remove(product);
+        getProducts().add(product);//replace old products with the updated one
     }
 
     public void updateSprint(Sprint sprint) throws ServerErrorException {
         sprintApi.update(sprint);
-        expectedSprints.remove(sprint);
-        expectedSprints.add(sprint); // Replace old sprint with the updated one
+        getSprints().remove(sprint);
+        getSprints().add(sprint); // Replace old sprint with the updated one
     }
 
     public void updateTask(Task task) {
         taskApi.update(task);
-        expectedTasks.remove(task);
-        expectedTasks.add(task);//replace old products with the updated one
+        getTasks().remove(task);
+        getTasks().add(task);//replace old products with the updated one
     }
 
     public void updateUser(User user) throws ServerErrorException {
         userApi.update(user);
-        expectedUsers.remove(user);
-        expectedUsers.add(user);//replace old user with the updated one
+        getUsers().remove(user);
+        getUsers().add(user);//replace old user with the updated one
     }
 
     public void updateVersion(Version version) {
         versionApi.update(version);
-        expectedVersions.remove(version);
-        expectedVersions.add(version);//replace old products with the updated one
+        getVersions().remove(version);
+        getVersions().add(version);//replace old products with the updated one
     }
 
     /**

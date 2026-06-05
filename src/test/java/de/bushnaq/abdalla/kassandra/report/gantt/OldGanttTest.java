@@ -63,15 +63,15 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
-        PersistingEntityGenerator.userIndex++;
+        PersistingEntityGenerator.setUserIndex(PersistingEntityGenerator.getUserIndex() + 1);
         peg.addRandomUser(2, 0.3f);
         peg.addRandomUser(1, 0.7f);
         initializeInstances();
 
         //create tasks
         Sprint sprint         = peg.sprintApi.getAll().getFirst();
-        User   resource1      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
-        User   resource2      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
+        User   resource1      = peg.getUsers().stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
+        User   resource2      = peg.getUsers().stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
         Task   startMilestone = peg.addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), null, Duration.ZERO, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         Task   task1          = peg.addParentTask("[1] Parent Task", sprint, null, startMilestone);
         Task   task2          = peg.addTask("[2] Child Task", "5d", null, resource1, sprint, task1, null);
@@ -103,15 +103,15 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
-        PersistingEntityGenerator.userIndex++;
+        PersistingEntityGenerator.setUserIndex(PersistingEntityGenerator.getUserIndex() + 1);
         peg.addRandomUser(2, 0.5f);
         peg.addRandomUser(3, 0.7f);
         initializeInstances();
 
         //create tasks
-        Sprint sprint         = peg.expectedSprints.getFirst();
-        User   resource1      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
-        User   resource2      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
+        Sprint sprint         = peg.getSprints().getFirst();
+        User   resource1      = peg.getUsers().stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
+        User   resource2      = peg.getUsers().stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
         Task   startMilestone = peg.addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         Task   task1          = peg.addParentTask("[1] Parent Task", sprint, null, startMilestone);
         Task   task2          = peg.addTask("[2] Child Task ", "5d", null, resource1, sprint, task1, null);
@@ -148,16 +148,16 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
-        PersistingEntityGenerator.userIndex++;
+        PersistingEntityGenerator.setUserIndex(PersistingEntityGenerator.getUserIndex() + 1);
 
         peg.addRandomUser(2, 0.5f);
         peg.addRandomUser(4, 0.7f);
         initializeInstances();
 
         //create tasks
-        Sprint sprint         = peg.expectedSprints.getFirst();
-        User   resource1      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
-        User   resource2      = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
+        Sprint sprint         = peg.getSprints().getFirst();
+        User   resource1      = peg.getUsers().stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
+        User   resource2      = peg.getUsers().stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
         Task   startMilestone = peg.addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         Task   task1          = peg.addParentTask("[1] Parent Task", sprint, null, startMilestone);
         Task   task2          = peg.addTask("[2] Child Task ", "5d", null, resource1, sprint, task1, null);

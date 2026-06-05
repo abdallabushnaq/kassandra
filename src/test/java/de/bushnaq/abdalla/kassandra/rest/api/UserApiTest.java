@@ -74,7 +74,7 @@ public class UserApiTest extends AbstractTestUtil {
         });
 
         {
-            User      user           = peg.expectedUsers.getFirst();
+            User      user           = peg.getUsers().getFirst();
             LocalDate lastWorkingDay = user.getLastWorkingDay();
             try {
                 user.setLastWorkingDay(LocalDate.parse(SECOND_START_DATE));
@@ -87,11 +87,11 @@ public class UserApiTest extends AbstractTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            peg.removeUser(peg.expectedUsers.getFirst().getId());
+            peg.removeUser(peg.getUsers().getFirst().getId());
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User user = peg.userApi.getById(peg.expectedUsers.getFirst().getId());
+            User user = peg.userApi.getById(peg.getUsers().getFirst().getId());
         });
     }
 
@@ -116,7 +116,7 @@ public class UserApiTest extends AbstractTestUtil {
     public void delete() throws Exception {
         //create the users
         peg.addRandomUsers(2);
-        peg.removeUser(peg.expectedUsers.getFirst().getId());
+        peg.removeUser(peg.getUsers().getFirst().getId());
 
     }
 
@@ -139,8 +139,8 @@ public class UserApiTest extends AbstractTestUtil {
 
         //get user by id
         {
-            User user = peg.userApi.getById(peg.expectedUsers.first().getId());
-            assertUserEquals(peg.expectedUsers.first(), user);
+            User user = peg.userApi.getById(peg.getUsers().first().getId());
+            assertUserEquals(peg.getUsers().first(), user);
         }
 
         peg.testUsers();
@@ -231,7 +231,7 @@ public class UserApiTest extends AbstractTestUtil {
         });
 
         {
-            User      user           = peg.expectedUsers.getFirst();
+            User      user           = peg.getUsers().getFirst();
             LocalDate lastWorkingDay = user.getLastWorkingDay();
             try {
                 user.setLastWorkingDay(LocalDate.parse(SECOND_START_DATE));
@@ -244,7 +244,7 @@ public class UserApiTest extends AbstractTestUtil {
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            peg.removeUser(peg.expectedUsers.getFirst().getId());
+            peg.removeUser(peg.getUsers().getFirst().getId());
         });
     }
 }

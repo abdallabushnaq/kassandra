@@ -85,7 +85,7 @@ public class OffDayApiTest extends AbstractUiTestUtil {
 
         //add a vacation
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //vacation
             peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
@@ -120,7 +120,7 @@ public class OffDayApiTest extends AbstractUiTestUtil {
 
         //add a vacation
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //vacation
             peg.addOffDay(user, LocalDate.parse("2024-03-05"), LocalDate.parse("2024-03-10"), OffDayType.VACATION);
             for (DateRange range : rangeList) {
@@ -144,12 +144,12 @@ public class OffDayApiTest extends AbstractUiTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             peg.addOffDay(user, LocalDate.parse(FIRST_DATE_1), LocalDate.parse(LAST_DATE_1), OffDayType.SICK);
         });
 
         {
-            User       user         = peg.expectedUsers.getFirst();
+            User       user         = peg.getUsers().getFirst();
             OffDay     offDay       = user.getOffDays().getFirst();
             OffDayType originalType = offDay.getType();
             try {
@@ -163,7 +163,7 @@ public class OffDayApiTest extends AbstractUiTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User   user   = peg.expectedUsers.getFirst();
+            User   user   = peg.getUsers().getFirst();
             OffDay offDay = user.getOffDays().getFirst();
             peg.removeOffDay(offDay, user);
         });
@@ -179,14 +179,14 @@ public class OffDayApiTest extends AbstractUiTestUtil {
 
         //add a vacation
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //vacation
             peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
 
         //try to delete the vacation
         {
-            User   user   = peg.expectedUsers.getFirst();
+            User   user   = peg.getUsers().getFirst();
             OffDay offDay = user.getOffDays().get(0);
             peg.removeOffDay(offDay, user);
         }
@@ -202,14 +202,14 @@ public class OffDayApiTest extends AbstractUiTestUtil {
 
         //add a vacation
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //vacation
             peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
 
         //try to delete using fake offday id
         {
-            User   user   = peg.expectedUsers.getFirst();
+            User   user   = peg.getUsers().getFirst();
             OffDay offDay = user.getOffDays().get(0);
             UUID   id     = offDay.getId();
             offDay.setId(FAKE_ID);
@@ -234,14 +234,14 @@ public class OffDayApiTest extends AbstractUiTestUtil {
 
         //add a vacation
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //vacation
             peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
 
         //try to delete using fake user id
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             UUID id   = user.getId();
             user.setId(FAKE_ID);
             OffDay offDay = user.getOffDays().getFirst();
@@ -287,7 +287,7 @@ public class OffDayApiTest extends AbstractUiTestUtil {
 
         //add a vacation
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //vacation
             peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
@@ -297,7 +297,7 @@ public class OffDayApiTest extends AbstractUiTestUtil {
 
         //fix vacation mistake
         {
-            User   user   = peg.expectedUsers.getFirst();
+            User   user   = peg.getUsers().getFirst();
             OffDay offDay = user.getOffDays().getFirst();
             offDay.setType(OffDayType.SICK);
             offDay.setFirstDay(LocalDate.parse(FIRST_DATE_1));
@@ -356,14 +356,14 @@ public class OffDayApiTest extends AbstractUiTestUtil {
 
         //add a vacation
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //vacation
             peg.addOffDay(user, LocalDate.parse(FIRST_DATE_0), LocalDate.parse(LAST_DATE_0), OffDayType.VACATION);
         }
 
         //update offday using fake user id
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             UUID id   = user.getId();
             user.setId(FAKE_ID);
             OffDay     offDay = user.getOffDays().getFirst();

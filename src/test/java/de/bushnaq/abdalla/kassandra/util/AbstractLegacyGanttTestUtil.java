@@ -69,7 +69,7 @@ public class AbstractLegacyGanttTestUtil extends AbstractGanttTestUtil {
             }
         }
         gc.initialize();
-        Sprint readSprint = peg.sprintApi.getById(peg.expectedSprints.getFirst().getId());
+        Sprint readSprint = peg.sprintApi.getById(peg.getSprints().getFirst().getId());
         readSprint.initialize();
         readSprint.initUserMap(peg.userApi.getAll(readSprint.getId()));
         readSprint.initTaskMap(peg.taskApi.getAll(readSprint.getId()), peg.worklogApi.getAll(readSprint.getId()));

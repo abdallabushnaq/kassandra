@@ -88,13 +88,13 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //test if new location was persisted correctly
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getLocations().getFirst().getStart());
         }
 
         //add a working location in Germany
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //moving to Germany
             peg.addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
             peg.userApi.update(user);//persist the new location
@@ -102,7 +102,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //test the new location
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             assertEquals(LocalDate.parse(SECOND_START_DATE), user.getLocations().get(1).getStart());
         }
     }
@@ -117,12 +117,12 @@ public class LocationApiTest extends AbstractUiTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             peg.addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
         });
 
         {
-            User     user            = peg.expectedUsers.getFirst();
+            User     user            = peg.getUsers().getFirst();
             Location location        = user.getLocations().getFirst();
             String   originalCountry = location.getCountry();
             String   originalState   = location.getState();
@@ -139,7 +139,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            User     user     = peg.expectedUsers.getFirst();
+            User     user     = peg.getUsers().getFirst();
             Location location = user.getLocations().getFirst();
             peg.removeLocation(location, user);
         });
@@ -155,7 +155,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //try to delete the first location
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             try {
                 peg.locationApi.deleteById(user.getId(), user.getLocations().getFirst().getId());
                 fail("should not be able to delete the first location");
@@ -175,7 +175,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //add a working location in Germany
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //moving to Germany
             peg.addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
             peg.userApi.update(user);//persist the new location
@@ -183,7 +183,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //try to delete the second location
         {
-            User     user     = peg.expectedUsers.getFirst();
+            User     user     = peg.getUsers().getFirst();
             Location location = user.getLocations().get(1);
             peg.removeLocation(location, user);
         }
@@ -202,7 +202,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //add a working location in Germany
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //moving to Germany
             peg.addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
             peg.userApi.update(user);//persist the new location
@@ -210,7 +210,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //try to delete using fake location id
         {
-            User     user       = peg.expectedUsers.getFirst();
+            User     user       = peg.getUsers().getFirst();
             Location location   = user.getLocations().getFirst();
             UUID     locationId = location.getId();
             location.setId(FAKE_ID);
@@ -237,7 +237,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //add a working location in Germany
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //moving to Germany
             peg.addLocation(user, "de", "nw", LocalDate.parse(SECOND_START_DATE));
             peg.userApi.update(user);//persist the new location
@@ -245,7 +245,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //try to delete using fake user id
         {
-            User user   = peg.expectedUsers.getFirst();
+            User user   = peg.getUsers().getFirst();
             UUID userId = user.getId();
             user.setId(FAKE_ID);
             try {
@@ -289,7 +289,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //test if the location was persisted correctly
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getLocations().getFirst().getStart());
         }
 
@@ -297,7 +297,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //fix location mistake
         {
-            User     user     = peg.expectedUsers.getFirst();
+            User     user     = peg.getUsers().getFirst();
             Location location = user.getLocations().getFirst();
             location.setCountry(SECOND_COUNTRY);
             location.setState(SECOND_STATE);
@@ -352,7 +352,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //test if the location was persisted correctly
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             assertEquals(LocalDate.parse(FIRST_START_DATE), user.getLocations().getFirst().getStart());
         }
 
@@ -360,7 +360,7 @@ public class LocationApiTest extends AbstractUiTestUtil {
 
         //update using fake user id
         {
-            User user   = peg.expectedUsers.getFirst();
+            User user   = peg.getUsers().getFirst();
             UUID userId = user.getId();
             user.setId(FAKE_ID);
             Location location = user.getLocations().getFirst();

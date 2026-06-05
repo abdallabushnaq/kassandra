@@ -69,7 +69,7 @@ public class Version extends AbstractTimeAware implements Comparable<Version> {
         features.forEach(project -> project.initialize(gc));
     }
 
-    public void removeProject(Feature feature) {
+    public void removeFeature(Feature feature) {
         features.remove(feature);
     }
 }

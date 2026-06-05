@@ -87,14 +87,14 @@ public class QualityBoardTest extends AbstractKeycloakUiTestUtil {
             Feature feature = peg.addFeature(version, peg.nameGenerator.generateFeatureName(0));
             peg.addSprint(feature, peg.nameGenerator.generateSprintName(0));
         }
-        Sprint sprint = peg.expectedSprints.getFirst();
+        Sprint sprint = peg.getSprints().getFirst();
 
         Task startMilestone = peg.addTask(sprint, null, "Start", LocalDateTime.parse("2024-12-15T08:00:00"), Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
         for (int f = 0; f < numberOfFeatures; f++) {
             String featureName = generateFeatureName(f);
             Task   feature     = peg.addParentTask(featureName, sprint, null, startMilestone);
             for (int t = 0; t < numberOfTasks; t++) {
-                User   user     = peg.expectedUsers.stream().toList().get(peg.random.nextInt(numberOfUsers));
+                User   user     = peg.getUsers().stream().toList().get(peg.random.nextInt(numberOfUsers));
                 String duration = String.format("%dd", peg.random.nextInt(randomCase.getMaxTaskDurationDays()) + 1);
                 String workName = NameGenerator.generateWorkName(featureName, t);
                 peg.addTask(workName, duration, null, user, sprint, feature, null);
@@ -118,7 +118,7 @@ public class QualityBoardTest extends AbstractKeycloakUiTestUtil {
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateTasks(randomCase);
-        Sprint sprint = peg.expectedSprints.getFirst();
+        Sprint sprint = peg.getSprints().getFirst();
         sprint.initialize();
         sprint.initUserMap(peg.userApi.getAll(sprint.getId()));
         sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));

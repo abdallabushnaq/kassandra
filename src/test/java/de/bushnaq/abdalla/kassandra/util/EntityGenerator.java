@@ -20,8 +20,8 @@ package de.bushnaq.abdalla.kassandra.util;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.gantt.ColorGenerator;
 import de.bushnaq.abdalla.util.date.DateUtil;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -29,46 +29,69 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.UUID;
 
 @Slf4j
 public class EntityGenerator {
-    private final   ColorGenerator  colorGenerator = new ColorGenerator();
-    protected final List<Throwable> exceptions     = new ArrayList<>();
-    protected       List<Feature>   features       = new ArrayList<>();
-    protected       JsonMapper      jsonMapper     = new JsonMapper();
-    private final   NameGenerator   nameGenerator  = new NameGenerator();
-    protected       List<Product>   products       = new ArrayList<>();
-    protected       List<Sprint>    sprints        = new ArrayList<>();
-    protected       LocalDate       startOfTime    = LocalDate.of(2000, 1, 1);
-    protected       List<Task>      tasks          = new ArrayList<>();
-    protected       List<User>      users          = new ArrayList<>();
-    protected       List<Version>   versions       = new ArrayList<>();
-    protected       List<Worklog>   worklogs       = new ArrayList<>();
+    @Getter
+    private final TreeSet<Availability> availabilities = new TreeSet<>();
+    private final ColorGenerator        colorGenerator = new ColorGenerator();
+    @Getter
+    private       int                   featureIndex   = 0;
+    @Getter
+    private final List<Feature>         features       = new ArrayList<>();
+    @Getter
+    private final TreeSet<Location>     locations      = new TreeSet<>();
+    private final NameGenerator         nameGenerator  = new NameGenerator();
+    @Getter
+    private       int                   productIndex   = 0;
+    @Getter
+    private final List<Product>         products       = new ArrayList<>();
+    @Getter
+    private final List<Sprint>          sprints        = new ArrayList<>();
+    protected     LocalDate             startOfTime    = LocalDate.of(2000, 1, 1);
+    @Getter
+    private final List<Task>            tasks          = new ArrayList<>();
+    @Getter
+    private final TreeSet<User>         users          = new TreeSet<>();
+    @Getter
+    private final List<Version>         versions       = new ArrayList<>();
+    @Getter
+    private final List<Worklog>         worklogs       = new ArrayList<>();
 
-    protected void addAvailability(User user, float availability, LocalDate start) {
+    protected Availability addAvailability(User user, float availability, LocalDate start) {
         Availability a = new Availability(availability, start);
+        a.setId(UUID.randomUUID());
         a.setUser(user);
+        a.setCreated(user.getCreated());
+        a.setUpdated(user.getUpdated());
         user.addAvailability(a);
+        getAvailabilities().add(a);
+        return a;
     }
 
     protected Feature addFeature(Version version, String name) {
         Feature feature = new Feature();
+        feature.setId(UUID.randomUUID());
         feature.setName(name);
         feature.setVersion(version);
         feature.setVersionId(version.getId());
-        feature.setId(UUID.randomUUID());
         version.addFeature(feature);
-        features.add(feature);
+        getFeatures().add(feature);
+        featureIndex = featureIndex + 1;
         return feature;
     }
 
-    protected void addLocation(User user, String country, String state, LocalDate start) {
+    protected Location addLocation(User user, String country, String state, LocalDate start) {
         Location location = new Location(country, state, start);
+        location.setId(UUID.randomUUID());
         location.setUser(user);
         location.setCreated(user.getCreated());
         location.setUpdated(user.getUpdated());
         user.addLocation(location);
+        getLocations().add(location);
+        return location;
     }
 
     public Task addParentTask(String name, Sprint sprint, Task parent, Task dependency) {
@@ -79,7 +102,8 @@ public class EntityGenerator {
         Product product = new Product();
         product.setName(name);
         product.setId(UUID.randomUUID());
-        products.add(product);
+        getProducts().add(product);
+        productIndex = productIndex + 1;
         return product;
     }
 
@@ -90,7 +114,7 @@ public class EntityGenerator {
         sprint.setFeature(feature);
         sprint.setFeatureId(feature.getId());
         feature.addSprint(sprint);
-        sprints.add(sprint);
+        getSprints().add(sprint);
         return sprint;
     }
 
@@ -153,8 +177,8 @@ public class EntityGenerator {
             sprint.addTask(task);
         }
         task.setId(UUID.randomUUID());
-        task.setOrderId(tasks.size());
-        tasks.add(task);
+        task.setOrderId(getTasks().size());
+        getTasks().add(task);
 //        System.out.printf("Adding %s%n", task);
         System.out.printf("Task ID: %s, Task Name: %s resource id: %s%n", task.getId(), task.getName(), task.getResourceId());
         return task;
@@ -164,11 +188,11 @@ public class EntityGenerator {
         User user = new User();
         user.setName(name);
         user.setEmail(name);
-        user.setColor(colorGenerator.generateUserColor(users.size()));
+        user.setColor(colorGenerator.generateUserColor(getUsers().size()));
         user.setId(UUID.randomUUID());
         addAvailability(user, availability, startOfTime);
         addLocation(user, "de", "nw", startOfTime);
-        users.add(user);
+        getUsers().add(user);
         return user;
     }
 
@@ -179,7 +203,7 @@ public class EntityGenerator {
         version.setProductId(product.getId());
         version.setId(UUID.randomUUID());
         product.addVersion(version);
-        versions.add(version);
+        getVersions().add(version);
         return version;
     }
 
@@ -194,7 +218,7 @@ public class EntityGenerator {
         worklog.setComment(comment);
         worklog.setId(UUID.randomUUID());
         task.addWorklog(worklog);
-        worklogs.add(worklog);
+        getWorklogs().add(worklog);
         return worklog;
     }
 
@@ -206,5 +230,46 @@ public class EntityGenerator {
         return task;
     }
 
+    public void init() {
+        featureIndex = 0;
+        getAvailabilities().clear();
+        getUsers().clear();
+        getAvailabilities().clear();
+        getVersions().clear();
+        productIndex = 0;
+        getProducts().clear();
+        getFeatures().clear();
+        getSprints().clear();
+        getTasks().clear();
+        getWorklogs().clear();
+    }
 
+
+    //    public void setFeatures(List<Feature> features) {
+//        this.features = features;
+//    }
+//
+//    public void setProducts(List<Product> products) {
+//        this.products = products;
+//    }
+//
+//    public void setSprints(List<Sprint> sprints) {
+//        this.sprints = sprints;
+//    }
+//
+//    public void setTasks(List<Task> tasks) {
+//        this.tasks = tasks;
+//    }
+
+//    public void setUsers(List<User> users) {
+//        this.users = users;
+//    }
+
+//    public void setVersions(List<Version> versions) {
+//        this.versions = versions;
+//    }
+//
+//    public void setWorklogs(List<Worklog> worklogs) {
+//        this.worklogs = worklogs;
+//    }
 }

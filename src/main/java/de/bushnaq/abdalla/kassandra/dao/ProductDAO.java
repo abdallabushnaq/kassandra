@@ -17,10 +17,15 @@
 
 package de.bushnaq.abdalla.kassandra.dao;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
 
@@ -28,21 +33,24 @@ import java.util.UUID;
 @Table(name = "products")
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
 public class ProductDAO extends AbstractTimeAwareDAO {
 
-    @Column(name = "light_avatar_hash", length = 16)
-    private String lightAvatarHash;
     @Column(name = "dark_avatar_hash", length = 16)
     private String darkAvatarHash;
     @Id
-    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
+//    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
     private UUID   id;
+    @Column(name = "light_avatar_hash", length = 16)
+    private String lightAvatarHash;
     @Column(nullable = false, unique = true)
     private String name;
+
+    public ProductDAO() {
+        this.setId(UUID.randomUUID());
+    }
 
 }

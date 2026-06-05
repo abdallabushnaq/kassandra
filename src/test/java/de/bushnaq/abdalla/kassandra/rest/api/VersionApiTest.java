@@ -66,14 +66,14 @@ public class VersionApiTest extends AbstractTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            peg.addRandomVersion(peg.expectedProducts.getFirst());
+            peg.addRandomVersion(peg.getProducts().getFirst());
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
             List<Version> allVersions = peg.versionApi.getAll();
         });
         {
-            Version version = peg.expectedVersions.getFirst();
+            Version version = peg.getVersions().getFirst();
             String  name    = version.getName();
             version.setName(SECOND_NAME);
             try {
@@ -86,11 +86,11 @@ public class VersionApiTest extends AbstractTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            peg.removeVersion(peg.expectedVersions.get(0).getId());
+            peg.removeVersion(peg.getVersions().get(0).getId());
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            Version version = peg.versionApi.getById(peg.expectedVersions.getFirst().getId());
+            Version version = peg.versionApi.getById(peg.getVersions().getFirst().getId());
         });
     }
 
@@ -113,11 +113,11 @@ public class VersionApiTest extends AbstractTestUtil {
         peg.addRandomProducts(1);
 
         // Create first version
-        Version version1 = peg.addVersion(peg.expectedProducts.get(0), "Version1");
+        Version version1 = peg.addVersion(peg.getProducts().get(0), "Version1");
 
         try {
             // Try to create a second version with the same name
-            Version version2 = peg.addVersion(peg.expectedProducts.get(0), "Version1");
+            Version version2 = peg.addVersion(peg.getProducts().get(0), "Version1");
             fail("Should not be able to create a version with duplicate name");
         } catch (Exception e) {
             // Expected exception for duplicate name
@@ -130,7 +130,7 @@ public class VersionApiTest extends AbstractTestUtil {
     public void delete() throws Exception {
         //create the users
         peg.addRandomProducts(2);
-        peg.removeVersion(peg.expectedVersions.getFirst().getId());
+        peg.removeVersion(peg.getVersions().getFirst().getId());
     }
 
     @Test
@@ -163,7 +163,7 @@ public class VersionApiTest extends AbstractTestUtil {
     public void getAllByProductId() throws Exception {
         PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         peg.addRandomProducts(3);
-        List<Version> allVersions = peg.versionApi.getAll(peg.expectedProducts.getFirst().getId());
+        List<Version> allVersions = peg.versionApi.getAll(peg.getProducts().getFirst().getId());
         assertEquals(1, allVersions.size());
     }
 
@@ -190,15 +190,15 @@ public class VersionApiTest extends AbstractTestUtil {
     public void getById() throws Exception {
         PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         peg.addRandomProducts(1);
-        Version version = peg.versionApi.getById(peg.expectedVersions.getFirst().getId());
-        assertEquals(peg.expectedVersions.getFirst().getId(), version.getId());
+        Version version = peg.versionApi.getById(peg.getVersions().getFirst().getId());
+        assertEquals(peg.getVersions().getFirst().getId(), version.getId());
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void update() throws Exception {
         peg.addRandomProducts(2);
-        Version version = peg.expectedVersions.getFirst();
+        Version version = peg.getVersions().getFirst();
         version.setName(SECOND_NAME);
         peg.updateVersion(version);
     }
@@ -210,8 +210,8 @@ public class VersionApiTest extends AbstractTestUtil {
         peg.addRandomProducts(1);
 
         // Create two versions
-        Version version1 = peg.addVersion(peg.expectedProducts.get(0), "Version1");
-        Version version2 = peg.addVersion(peg.expectedProducts.get(0), "Version2");
+        Version version1 = peg.addVersion(peg.getProducts().get(0), "Version1");
+        Version version2 = peg.addVersion(peg.getProducts().get(0), "Version2");
 
         // Try to update version2 to have the same name as version1
         String originalName = version2.getName();
@@ -233,7 +233,7 @@ public class VersionApiTest extends AbstractTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void updateUsingFakeId() throws Exception {
         peg.addRandomProducts(2);
-        Version version = peg.expectedVersions.getFirst();
+        Version version = peg.getVersions().getFirst();
         UUID    id      = version.getId();
         String  name    = version.getName();
         version.setId(FAKE_ID);
@@ -257,11 +257,11 @@ public class VersionApiTest extends AbstractTestUtil {
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            peg.addRandomVersion(peg.expectedProducts.getFirst());
+            peg.addRandomVersion(peg.getProducts().getFirst());
         });
 
         {
-            Version testVersion = peg.expectedVersions.getFirst();
+            Version testVersion = peg.getVersions().getFirst();
             String  name        = testVersion.getName();
             testVersion.setName(SECOND_NAME);
             try {
@@ -273,7 +273,7 @@ public class VersionApiTest extends AbstractTestUtil {
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            peg.removeVersion(peg.expectedVersions.get(0).getId());
+            peg.removeVersion(peg.getVersions().get(0).getId());
         });
     }
 }

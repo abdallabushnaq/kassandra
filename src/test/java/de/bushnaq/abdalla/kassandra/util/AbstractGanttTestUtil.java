@@ -90,7 +90,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         int       count         = 1;
         String    testUserEmail = "christopher.paul@kassandra.org";
         LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
-        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(PersistingEntityGenerator.userIndex), 0.5f);
+        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(PersistingEntityGenerator.getUserIndex()), 0.5f);
 
         for (int i = 0; i < count; i++) {
             Product product = peg.addProduct(peg.nameGenerator.generateProductName(i));
@@ -266,7 +266,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
 
     //TODO remove
     private void generateDebugGanttCharts(TestInfo testInfo, String testFolder) throws Exception {
-        for (Sprint sprint : peg.expectedSprints) {
+        for (Sprint sprint : peg.getSprints()) {
 //            sprint.initialize();
 //            sprint.initUserMap(userApi.getAll(sprint.getId()));
 //            sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
@@ -340,24 +340,24 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
 
     private void generateProductsInternal(TestInfo testInfo, RandomCase randomCase) throws Exception {
         peg.random.setSeed(randomCase.getSeed());
-        peg.expectedUsers.clear();
+        peg.getUsers().clear();
         try (Profiler pc = new Profiler(SampleType.JPA)) {
             peg.addRandomUsers(randomCase.getMaxNumberOfUsers());
         }
-        UserGroup group = peg.userGroupApi.create("Team", "Dev team", new HashSet<>(peg.expectedUsers.stream().map(User::getId).toList()));
+        UserGroup group = peg.userGroupApi.create("Team", "Dev team", new HashSet<>(peg.getUsers().stream().map(User::getId).toList()));
         Profiler.log("generating users for test case " + randomCase.getTestCaseIndex());
         {
             int numberOfProducts = generateRandomValue(randomCase.getMinNumberOfProducts(), randomCase.getMaxNumberOfProducts());
             try (Profiler pc = new Profiler(SampleType.JPA)) {
                 for (int p = 0; p < numberOfProducts; p++) {
-                    Product product = peg.addProduct(peg.nameGenerator.generateProductName(PersistingEntityGenerator.productIndex));
+                    Product product = peg.addProduct(peg.nameGenerator.generateProductName(peg.getProductIndex()));
                     peg.productAclApi.grantGroupAccess(product.getId(), group.getId());
                     int numberOfVersions = generateRandomValue(randomCase.getMinNumberOfVersions(), randomCase.getMaxNumberOfVersions());
                     for (int v = 0; v < numberOfVersions; v++) {
                         Version version          = peg.addVersion(product, peg.nameGenerator.generateVersionName(v));
                         int     numberOfFeatures = generateRandomValue(randomCase.getMinNumberOfFeatures(), randomCase.getMaxNumberOfFeatures());
                         for (int f = 0; f < numberOfFeatures; f++) {
-                            Feature feature         = peg.addFeature(version, peg.nameGenerator.generateFeatureName(PersistingEntityGenerator.featureIndex));
+                            Feature feature         = peg.addFeature(version, peg.nameGenerator.generateFeatureName(peg.getFeatureIndex()));
                             int     numberOfSprints = generateRandomValue(randomCase.getMinNumberOfSprints(), randomCase.getMaxNumberOfSprints());
                             for (int s = 0; s < numberOfSprints; s++) {
                                 generateSprint(testInfo, randomCase, feature);
@@ -371,7 +371,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
             Profiler.log("generate Products for test case -" + randomCase.getTestCaseIndex());
         }
         try (Profiler pc = new Profiler(SampleType.JPA)) {
-            for (Sprint sprint : peg.expectedSprints) {
+            for (Sprint sprint : peg.getSprints()) {
                 peg.taskApi.updateBatch(sprint.getTasks(), sprint.getId());
                 peg.sprintApi.update(sprint);
             }
@@ -412,7 +412,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
                     for (int t = 0; t < numberOfTasks; t++) {
                         int userIndex = peg.random.nextInt(numberOfUsers);
 //                    System.out.println("User index=" + userIndex);
-                        User   user             = peg.expectedUsers.stream().sorted(Comparator.comparing(User::getName)).toList().get(userIndex);
+                        User   user             = peg.getUsers().stream().sorted(Comparator.comparing(User::getName)).toList().get(userIndex);
                         float  minHours         = peg.random.nextFloat(randomCase.getMaxTaskDurationDays() * 7.5f) + 1;
                         float  maxHours         = minHours + peg.random.nextFloat() * minHours;
                         String minWork          = String.format("%dh", (int) minHours);
@@ -472,7 +472,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
     private void generateWorkLogs() {
         log.info("--------------------------");
         log.info("Generating work logs start");
-        for (Sprint sprint : peg.expectedSprints) {
+        for (Sprint sprint : peg.getSprints()) {
             // ~60 % of sprints run on schedule; ~40 % carry a delay of up to MAX_DELAY_FACTOR.
             float delay = peg.random.nextFloat() < (1f - DELAY_PROBABILITY) ? 0.0f : peg.random.nextFloat() * MAX_DELAY_FACTOR;
             log.debug("Sprint '{}' delay factor: {}", sprint.getName(), delay);
@@ -638,10 +638,10 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         do {
             anyChanged = false;
             outer:
-            for (int i = 0; i < peg.expectedSprints.size(); i++) {
-                for (int j = i + 1; j < peg.expectedSprints.size(); j++) {
-                    Sprint earlier     = peg.expectedSprints.get(i);
-                    Sprint later       = peg.expectedSprints.get(j);
+            for (int i = 0; i < peg.getSprints().size(); i++) {
+                for (int j = i + 1; j < peg.getSprints().size(); j++) {
+                    Sprint earlier     = peg.getSprints().get(i);
+                    Sprint later       = peg.getSprints().get(j);
                     long   overlapDays = computeResourceOverlapDays(earlier, later);
                     if (overlapDays > 0) {
                         logger.info("Resource overlap of {} days detected between sprint '{}' and '{}'; shifting '{}' forward.",

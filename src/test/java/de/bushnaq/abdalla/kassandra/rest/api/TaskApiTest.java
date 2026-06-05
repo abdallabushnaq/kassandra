@@ -85,18 +85,18 @@ public class TaskApiTest extends AbstractUiTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            Task task = peg.addTask(peg.expectedSprints.getFirst(), null, "Project Phase 1", LocalDateTime.now(), Duration.ofDays(10), null, null, null);
+            Task task = peg.addTask(peg.getSprints().getFirst(), null, "Project Phase 1", LocalDateTime.now(), Duration.ofDays(10), null, null, null);
         });
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
             List<Task> allTasks = peg.taskApi.getAll();
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            Task task = peg.taskApi.getById(peg.expectedTasks.getFirst().getId());
+            Task task = peg.taskApi.getById(peg.getTasks().getFirst().getId());
         });
 
         {
-            Task   task = peg.expectedTasks.getFirst();
+            Task   task = peg.getTasks().getFirst();
             String name = task.getName();
             task.setName(SECOND_NAME);
             try {
@@ -109,7 +109,7 @@ public class TaskApiTest extends AbstractUiTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            peg.removeTaskTree(peg.expectedTasks.getFirst());
+            peg.removeTaskTree(peg.getTasks().getFirst());
         });
     }
 
@@ -156,7 +156,7 @@ public class TaskApiTest extends AbstractUiTestUtil {
         Assertions.assertThat(remainingIds).doesNotContain(leafId);
 
         // Sync local state so @AfterEach validation passes
-        peg.expectedTasks.remove(leaf);
+        peg.getTasks().remove(leaf);
         sprint.getTasks().remove(leaf);
     }
 
@@ -189,7 +189,7 @@ public class TaskApiTest extends AbstractUiTestUtil {
         Assertions.assertThat(remainingIds).doesNotContain(parentId, child1Id, child2Id, grandchildId);
 
         // Sync local state so @AfterEach validation passes
-        peg.expectedTasks.removeIf(t -> {
+        peg.getTasks().removeIf(t -> {
             UUID id = t.getId();
             return id.equals(parentId) || id.equals(child1Id) || id.equals(child2Id) || id.equals(grandchildId);
         });
@@ -244,7 +244,7 @@ public class TaskApiTest extends AbstractUiTestUtil {
         Assertions.assertThat(survivingB.getPredecessors()).noneMatch(r -> r.getPredecessorId().equals(aId));
 
         // Sync local state so @AfterEach validation passes
-        peg.expectedTasks.remove(taskA);
+        peg.getTasks().remove(taskA);
         sprint.getTasks().remove(taskA);
         // Remove the now-stale predecessor reference from the local taskB so assertTaskEquals passes
         taskB.getPredecessors().removeIf(r -> r.getPredecessorId().equals(aId));
@@ -300,7 +300,7 @@ public class TaskApiTest extends AbstractUiTestUtil {
         Assertions.assertThat(survivingA.getPredecessors()).isEmpty();
 
         // Sync local state so @AfterEach validation passes
-        peg.expectedTasks.remove(taskB);
+        peg.getTasks().remove(taskB);
         sprint.getTasks().remove(taskB);
     }
 
@@ -344,7 +344,7 @@ public class TaskApiTest extends AbstractUiTestUtil {
 
         //update
         {
-            peg.move(peg.expectedSprints.getFirst(), peg.expectedTasks.get(2), peg.expectedTasks.get(1));
+            peg.move(peg.getSprints().getFirst(), peg.getTasks().get(2), peg.getTasks().get(1));
         }
 
         printTables();
@@ -369,13 +369,13 @@ public class TaskApiTest extends AbstractUiTestUtil {
         // Regular users should be able to view tasks
         List<Task> allTasks = peg.taskApi.getAll();
         assertThrows(AccessDeniedException.class, () -> {
-            Task task = peg.taskApi.getById(peg.expectedTasks.getFirst().getId());
+            Task task = peg.taskApi.getById(peg.getTasks().getFirst().getId());
             log.trace("Task retrieved by regular user: {}", task);
         });
 
         // But not modify them
         {
-            Task   taskToModify = peg.expectedTasks.getFirst();
+            Task   taskToModify = peg.getTasks().getFirst();
             String originalName = taskToModify.getName();
             try {
                 taskToModify.setName("Updated by regular user");
@@ -389,7 +389,7 @@ public class TaskApiTest extends AbstractUiTestUtil {
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            peg.removeTaskTree(peg.expectedTasks.getFirst());
+            peg.removeTaskTree(peg.getTasks().getFirst());
         });
     }
 }

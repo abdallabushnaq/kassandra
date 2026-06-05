@@ -24,8 +24,10 @@ import de.bushnaq.abdalla.kassandra.repository.TaskRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ProductAclService;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +38,17 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/task")
 public class TaskController {
 
+    //    @Deprecated
+//    public boolean isDeliveryBufferTask(TaskDAO task) {
+//        return task.getName().equalsIgnoreCase(DELIVERY_BUFFER);
+//    }
+//
+//    @Deprecated
+//    public boolean isStory(TaskDAO task) {
+//        return !task.isMilestone() && (task.getMinEstimate() == null || task.getMinEstimate().isZero());
+//    }
+    @Autowired
+    EntityManager entityManager;
     @Autowired
     private FeatureRepository featureRepository;
     @Autowired
@@ -131,28 +144,19 @@ public class TaskController {
                 .collect(Collectors.toList());
     }
 
-//    @Deprecated
-//    public boolean isDeliveryBufferTask(TaskDAO task) {
-//        return task.getName().equalsIgnoreCase(DELIVERY_BUFFER);
-//    }
-//
-//    @Deprecated
-//    public boolean isStory(TaskDAO task) {
-//        return !task.isMilestone() && (task.getMinEstimate() == null || task.getMinEstimate().isZero());
-//    }
-
     @PostMapping
     @PreAuthorize("@aclSecurityService.hasSprintAccess(#task.sprintId) or hasRole('ADMIN')")
     @Transactional
-    public TaskDAO save(@RequestBody TaskDAO task) {
+    public ResponseEntity<TaskDAO> save(@RequestBody TaskDAO task) {
         // Assign the next available orderId if not set or set to 0
 
         if (task.getOrderId() == null || task.getOrderId() == -1) {
             Integer maxOrderId = taskRepository.findMaxOrderId(task.getSprintId());
             task.setOrderId(maxOrderId + 1);
         }
-        TaskDAO save = taskRepository.save(task);
-        return save;
+        entityManager.persist(task); // INSERT, no SELECT, no cascade conflict
+//        TaskDAO save = taskRepository.save(task);
+        return ResponseEntity.ok(task);
     }
 
     @PutMapping()

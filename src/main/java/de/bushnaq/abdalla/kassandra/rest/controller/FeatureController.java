@@ -30,6 +30,7 @@ import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ProductAclService;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,8 +40,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -48,6 +49,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FeatureController {
 
+    @Autowired
+    EntityManager entityManager;
     @Autowired
     private FeatureAvatarGenerationDataRepository featureAvatarGenerationDataRepository;
     @Autowired
@@ -114,31 +117,6 @@ public class FeatureController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    /**
-     * Return the dark-mode avatar for the given feature.
-     * Falls back to the light avatar when no dark variant has been stored yet.
-     *
-     * @param id The feature ID
-     * @return The dark avatar image, or the light avatar as fallback, or 404 if no avatar exists
-     */
-    @GetMapping("/{id}/dark-avatar")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable UUID id) {
-        return featureAvatarRepository.findByFeatureId(id)
-                .map(avatar -> {
-                    byte[] imageBytes = avatar.getDarkAvatarImage();
-                    if (imageBytes == null || imageBytes.length == 0) {
-                        // Fall back to light image when dark variant not yet generated
-                        imageBytes = avatar.getLightAvatarImage();
-                    }
-                    if (imageBytes == null || imageBytes.length == 0) {
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
-                    }
-                    return ResponseEntity.ok(new AvatarWrapper(imageBytes));
-                })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
-    }
-
     @GetMapping("/{id}/avatar/full")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable UUID id) {
@@ -175,6 +153,31 @@ public class FeatureController {
         return ResponseEntity.ok(feature);
     }
 
+    /**
+     * Return the dark-mode avatar for the given feature.
+     * Falls back to the light avatar when no dark variant has been stored yet.
+     *
+     * @param id The feature ID
+     * @return The dark avatar image, or the light avatar as fallback, or 404 if no avatar exists
+     */
+    @GetMapping("/{id}/dark-avatar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable UUID id) {
+        return featureAvatarRepository.findByFeatureId(id)
+                .map(avatar -> {
+                    byte[] imageBytes = avatar.getDarkAvatarImage();
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        // Fall back to light image when dark variant not yet generated
+                        imageBytes = avatar.getLightAvatarImage();
+                    }
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
+                    }
+                    return ResponseEntity.ok(new AvatarWrapper(imageBytes));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
     @PostMapping()
     @PreAuthorize("@aclSecurityService.hasVersionAccess(#feature.versionId) or hasRole('ADMIN')")
     @Transactional
@@ -184,8 +187,9 @@ public class FeatureController {
             if (featureRepository.existsByNameAndVersionId(feature.getName(), feature.getVersionId())) {
                 throw new UniqueConstraintViolationException("Feature", "name", feature.getName());
             }
-            FeatureDAO save = featureRepository.save(feature);
-            return ResponseEntity.ok(save);
+            entityManager.persist(feature); // INSERT, no SELECT, no cascade conflict
+//            FeatureDAO save = featureRepository.save(feature);
+            return ResponseEntity.ok(feature);
         }).orElse(ResponseEntity.notFound().build());
     }
 

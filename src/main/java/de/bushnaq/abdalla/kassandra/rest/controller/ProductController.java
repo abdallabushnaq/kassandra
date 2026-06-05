@@ -30,6 +30,7 @@ import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ProductAclService;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,14 +40,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/product")
 @Slf4j
 public class ProductController {
 
+    @Autowired
+    EntityManager entityManager;
     @Autowired
     private ProductAclService                     productAclService;
     @Autowired
@@ -137,31 +140,6 @@ public class ProductController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    /**
-     * Return the dark-mode avatar for the given product.
-     * Falls back to the light avatar when no dark variant has been stored yet.
-     *
-     * @param id The product ID
-     * @return The dark avatar image, or the light avatar as fallback, or 404 if no avatar exists
-     */
-    @GetMapping("/{id}/dark-avatar")
-    @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
-    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable UUID id) {
-        return productAvatarRepository.findByProductId(id)
-                .map(avatar -> {
-                    byte[] imageBytes = avatar.getDarkAvatarImage();
-                    if (imageBytes == null || imageBytes.length == 0) {
-                        // Fall back to light image when dark variant not yet generated
-                        imageBytes = avatar.getLightAvatarImage();
-                    }
-                    if (imageBytes == null || imageBytes.length == 0) {
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
-                    }
-                    return ResponseEntity.ok(new AvatarWrapper(imageBytes));
-                })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
-    }
-
     @GetMapping("/{id}/avatar/full")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable UUID id) {
@@ -217,6 +195,31 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 
+    /**
+     * Return the dark-mode avatar for the given product.
+     * Falls back to the light avatar when no dark variant has been stored yet.
+     *
+     * @param id The product ID
+     * @return The dark avatar image, or the light avatar as fallback, or 404 if no avatar exists
+     */
+    @GetMapping("/{id}/dark-avatar")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
+    public ResponseEntity<AvatarWrapper> getDarkAvatar(@PathVariable UUID id) {
+        return productAvatarRepository.findByProductId(id)
+                .map(avatar -> {
+                    byte[] imageBytes = avatar.getDarkAvatarImage();
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        // Fall back to light image when dark variant not yet generated
+                        imageBytes = avatar.getLightAvatarImage();
+                    }
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
+                    }
+                    return ResponseEntity.ok(new AvatarWrapper(imageBytes));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
     @PostMapping(consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
@@ -227,7 +230,8 @@ public class ProductController {
         }
 
         // Save the product
-        ProductDAO savedProduct = productRepository.save(product);
+        entityManager.persist(product); // INSERT, no SELECT, no cascade conflict
+//        ProductDAO savedProduct = productRepository.save(product);
 
         // Grant creator access to the product
         String userEmail = SecurityUtils.getUserEmail();
@@ -235,15 +239,15 @@ public class ProductController {
         if (!SecurityUtils.GUEST.equals(userEmail)) {
             userRepository.findByEmail(userEmail).ifPresent(user -> {
                 try {
-                    productAclService.grantCreatorAccess(savedProduct.getId(), user.getId());
-                    log.info("Granted creator access to product {} for user {}", savedProduct.getId(), user.getName());
+                    productAclService.grantCreatorAccess(product.getId(), user.getId());
+                    log.info("Granted creator access to product {} for user {}", product.getId(), user.getName());
                 } catch (Exception e) {
-                    log.error("Failed to grant creator access to product {} for user {}", savedProduct.getId(), user.getName(), e);
+                    log.error("Failed to grant creator access to product {} for user {}", product.getId(), user.getName(), e);
                 }
             });
         }
 
-        return ResponseEntity.ok(savedProduct);
+        return ResponseEntity.ok(product);
     }
 
     @PutMapping()

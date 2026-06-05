@@ -79,7 +79,7 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
 
         //add an availability
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //moving to Germany
             peg.addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         }
@@ -130,7 +130,7 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
 
         //try to delete the first location
         {
-            User         user         = peg.expectedUsers.getFirst();
+            User         user         = peg.getUsers().getFirst();
             Availability availability = user.getAvailabilities().getFirst();
             try {
                 peg.removeAvailability(availability, user);
@@ -153,14 +153,14 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
 
         //add an availability
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //moving to Germany
             peg.addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         }
 
         //try to delete the second availability
         {
-            User         user         = peg.expectedUsers.getFirst();
+            User         user         = peg.getUsers().getFirst();
             Availability availability = user.getAvailabilities().getLast();
             peg.removeAvailability(availability, user);
         }
@@ -178,14 +178,14 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
 
         //add an availability
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //moving to Germany
             peg.addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         }
 
         //try to delete the second availability with fake availability id
         {
-            User         user         = peg.expectedUsers.getFirst();
+            User         user         = peg.getUsers().getFirst();
             Availability availability = user.getAvailabilities().getLast();
             UUID         id           = availability.getId();
             availability.setId(FAKE_ID);
@@ -211,14 +211,14 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
 
         //add an availability
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             //moving to Germany
             peg.addAvailability(user, SECOND_AVAILABILITY, LocalDate.parse(SECOND_START_DATE));
         }
 
         //try to delete the second availability with fake user id
         {
-            User user = peg.expectedUsers.getFirst();
+            User user = peg.getUsers().getFirst();
             UUID id   = user.getId();
             user.setId(FAKE_ID);
             Availability availability = user.getAvailabilities().getLast();
@@ -265,7 +265,7 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
 
         //user availability is fixed
         {
-            User         user         = peg.expectedUsers.getFirst();
+            User         user         = peg.getUsers().getFirst();
             Availability availability = user.getAvailabilities().getFirst();
             availability.setAvailability(SECOND_AVAILABILITY);
             peg.updateAvailability(availability, user);
@@ -313,7 +313,7 @@ public class AvailabilityApiTest extends AbstractUiTestUtil {
 
         //update availability using unknown user id
         {
-            User user   = peg.expectedUsers.getFirst();
+            User user   = peg.getUsers().getFirst();
             UUID userId = user.getId();
             user.setId(FAKE_ID);
             Availability availability = user.getAvailabilities().getFirst();

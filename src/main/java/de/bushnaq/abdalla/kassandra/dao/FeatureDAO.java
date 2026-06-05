@@ -18,9 +18,11 @@
 package de.bushnaq.abdalla.kassandra.dao;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
 
@@ -31,22 +33,25 @@ import java.util.UUID;
 )
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
 public class FeatureDAO extends AbstractTimeAwareDAO {
 
-    @Column(name = "light_avatar_hash", length = 16)
-    private String lightAvatarHash;
     @Column(name = "dark_avatar_hash", length = 16)
     private String darkAvatarHash;
     @Id
-    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
+//    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
     private UUID   id;
+    @Column(name = "light_avatar_hash", length = 16)
+    private String lightAvatarHash;
     @Column(nullable = false)
     private String name;
     @Column(nullable = false)
     private UUID   versionId;
+
+    public FeatureDAO() {
+        this.setId(UUID.randomUUID());
+    }
 }

@@ -70,11 +70,11 @@ public class SprintApiTest extends AbstractTestUtil {
         });
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            Sprint sprint = peg.sprintApi.getById(peg.expectedSprints.getFirst().getId());
+            Sprint sprint = peg.sprintApi.getById(peg.getSprints().getFirst().getId());
         });
 
         {
-            Sprint sprint = peg.expectedSprints.getFirst();
+            Sprint sprint = peg.getSprints().getFirst();
             String name   = sprint.getName();
             try {
                 sprint.setName(SECOND_NAME);
@@ -87,7 +87,7 @@ public class SprintApiTest extends AbstractTestUtil {
         }
 
         assertThrows(AuthenticationCredentialsNotFoundException.class, () -> {
-            peg.removeSprint(peg.expectedSprints.getFirst().getId());
+            peg.removeSprint(peg.getSprints().getFirst().getId());
         });
     }
 
@@ -110,11 +110,11 @@ public class SprintApiTest extends AbstractTestUtil {
         peg.addRandomProducts(1);
 
         // Create first sprint
-        Sprint sprint1 = peg.addSprint(peg.expectedFeatures.get(0), "Sprint1");
+        Sprint sprint1 = peg.addSprint(peg.getFeatures().get(0), "Sprint1");
 
         try {
             // Try to create a second sprint with the same name
-            Sprint sprint2 = peg.addSprint(peg.expectedFeatures.get(0), "Sprint1");
+            Sprint sprint2 = peg.addSprint(peg.getFeatures().get(0), "Sprint1");
             fail("Should not be able to create a sprint with duplicate name");
         } catch (Exception e) {
             // Expected exception for duplicate name
@@ -128,7 +128,7 @@ public class SprintApiTest extends AbstractTestUtil {
         // Create products with sprints
         peg.addRandomProducts(2);
         // Delete the first sprint
-        peg.removeSprint(peg.expectedSprints.get(1).getId());
+        peg.removeSprint(peg.getSprints().get(1).getId());
     }
 
     @Test
@@ -180,15 +180,15 @@ public class SprintApiTest extends AbstractTestUtil {
     public void getById() throws Exception {
         PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
         peg.addRandomProducts(1);
-        Sprint sprint = peg.sprintApi.getById(peg.expectedSprints.stream().sorted(Comparator.comparing(Sprint::getName)).toList().getFirst().getId());
-        assertSprintEquals(peg.expectedSprints.getFirst(), sprint, true);
+        Sprint sprint = peg.sprintApi.getById(peg.getSprints().stream().sorted(Comparator.comparing(Sprint::getName)).toList().getFirst().getId());
+        assertSprintEquals(peg.getSprints().getFirst(), sprint, true);
     }
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void update() throws Exception {
         peg.addRandomProducts(2);
-        Sprint sprint = peg.expectedSprints.get(1);
+        Sprint sprint = peg.getSprints().get(1);
         sprint.setName(SECOND_NAME);
         peg.updateSprint(sprint);
     }
@@ -200,8 +200,8 @@ public class SprintApiTest extends AbstractTestUtil {
         peg.addRandomProducts(1);
 
         // Create two sprints
-        Sprint sprint1 = peg.addSprint(peg.expectedFeatures.stream().sorted(Comparator.comparing(Feature::getName)).toList().get(0), "Sprint1");
-        Sprint sprint2 = peg.addSprint(peg.expectedFeatures.stream().sorted(Comparator.comparing(Feature::getName)).toList().get(0), "Sprint2");
+        Sprint sprint1 = peg.addSprint(peg.getFeatures().stream().sorted(Comparator.comparing(Feature::getName)).toList().get(0), "Sprint1");
+        Sprint sprint2 = peg.addSprint(peg.getFeatures().stream().sorted(Comparator.comparing(Feature::getName)).toList().get(0), "Sprint2");
 
         // Try to update sprint2 to have the same name as sprint1
         String originalName = sprint2.getName();
@@ -250,12 +250,12 @@ public class SprintApiTest extends AbstractTestUtil {
         assertThrows(AccessDeniedException.class, () -> {
             // Regular users should be able to view sprints
             List<Sprint> allSprints = peg.sprintApi.getAll();
-            Sprint       sprint     = peg.sprintApi.getById(peg.expectedSprints.getFirst().getId());
+            Sprint       sprint     = peg.sprintApi.getById(peg.getSprints().getFirst().getId());
         });
 
         // But not modify them
         {
-            Sprint sprintToModify = peg.expectedSprints.getFirst();
+            Sprint sprintToModify = peg.getSprints().getFirst();
             String originalName   = sprintToModify.getName();
             try {
                 sprintToModify.setName(SECOND_NAME);
@@ -269,7 +269,7 @@ public class SprintApiTest extends AbstractTestUtil {
         }
 
         assertThrows(AccessDeniedException.class, () -> {
-            peg.removeSprint(peg.expectedSprints.getFirst().getId());
+            peg.removeSprint(peg.getSprints().getFirst().getId());
         });
     }
 }

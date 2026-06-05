@@ -199,8 +199,8 @@ public class MPXJReader extends GanttGenerator {
             }
         }
         sprint.initialize();
-        sprint.initUserMap(users);
-        sprint.initTaskMap(tasks, worklogs);
+        sprint.initUserMap(getUsers().stream().toList());
+        sprint.initTaskMap(getTasks(), getWorklogs());
         if (includeLevelingInfo) {
             sprint.setEnd(sprint.getLatestFinishDate());
         }
