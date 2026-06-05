@@ -53,6 +53,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 @Slf4j
 @Component
@@ -478,55 +479,46 @@ public class PersistingEntityGenerator {
         } catch (Exception e) {
             // User doesn't exist, which is fine - we'll create a new one
         }
-
         if (existingUser != null) {
             System.out.println("User with email " + email + " already exists, skipping creation");
-            // Add to expected users if not already there
             getUsers().add(existingUser);
             return existingUser;
         }
-
-        // User doesn't exist, create new one
-        User user = new User();
-        user.setName(name);
-        user.setEmail(email);
-        user.setFirstWorkingDay(start);
-        user.setRoles(roles);
-        user.setColor(color);
-        user.setCreated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
-        user.setUpdated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
 
         long                 startTime          = System.currentTimeMillis();
         String               basePrompt         = User.getDefaultLightAvatarPrompt(name);
         String               darkBasePrompt     = User.getDefaultDarkAvatarPrompt(name);
         String               negativePrompt     = User.getDefaultLightAvatarNegativePrompt();
         String               darkNegativePrompt = User.getDefaultDarkAvatarNegativePrompt();
-        GeneratedImageResult image              = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "user");
-        user.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
+        GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "user");
+        GeneratedImageResult darkImage          = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "user");
 
-        userApi.persist(user);
-        log.info("Created user: " + user.getName() + " with email: " + user.getEmail());
-        addLocation(user, country, state, start);
-        addAvailability(user, availability, start);
+        // eg.addUser builds the User, assigns an ID, persists it, and registers it in the collection
+        User saved = eg.addUser(name, email, roles, start, color, user -> {
+            user.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
+            user.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
+            userApi.persist(user);
+            log.info("Created user: " + user.getName() + " with email: " + user.getEmail());
+            return user;
+        });
+        userApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), basePrompt,
+                darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
+                lightImage.getNegativePrompt(), darkImage.getNegativePrompt());
+
+        // Chain sub-entities – each method already delegates to eg with its own persister
+        addLocation(saved, country, state, start);
+        addAvailability(saved, availability, start);
 
         // Assign the default Western work week starting on the user's first working day
         WorkWeek defaultWorkWeek = workWeekApi.getAll().stream()
                 .filter(ww -> DefaultEntitiesInitializer.WORK_WEEK_5X8.equals(ww.getName()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Default work week '" + DefaultEntitiesInitializer.WORK_WEEK_5X8 + "' not found"));
-        addWorkWeek(user, defaultWorkWeek, start);
+        addWorkWeek(saved, defaultWorkWeek, start);
 
-        GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "user");
-
-        userApi.updateAvatarFull(user.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
-                darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
-                image.getNegativePrompt(), darkImage.getNegativePrompt());
         System.out.println("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
-        getUsers().add(user);
-        setUserIndex(getUserIndex() + 1);
-        return user;
-
+        return saved;
     }
 
     public Version addVersion(Product product, String versionName) {
@@ -575,17 +567,18 @@ public class PersistingEntityGenerator {
      * @return the buffered (not yet persisted) worklog
      */
     protected Worklog addWorklogToBuffer(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
-        Worklog worklog = new Worklog();
-        worklog.setSprintId(task.getSprintId());
-        worklog.setTaskId(task.getId());
-        worklog.setAuthorId(user.getId());
-        worklog.setStart(start);
-        worklog.setTimeSpent(timeSpent);
-        worklog.setTimeRemainingEstimate(task.getRemainingEstimate().minus(timeSpent));
-        worklog.setComment(comment);
+        Worklog worklog = eg.addWorklog(task, user, start, timeSpent, comment, UnaryOperator.identity());
+//        Worklog worklog = new Worklog();
+//        worklog.setSprintId(task.getSprintId());
+//        worklog.setTaskId(task.getId());
+//        worklog.setAuthorId(user.getId());
+//        worklog.setStart(start);
+//        worklog.setTimeSpent(timeSpent);
+//        worklog.setTimeRemainingEstimate(task.getRemainingEstimate().minus(timeSpent));
+//        worklog.setComment(comment);
+//        task.addWorklog(worklog);
         // Add to in-memory state immediately so accounting (timeSpent, remainingEstimate) stays correct.
         // The actual DB persist is deferred – call flushWorklogBuffer(sprint) when done.
-        task.addWorklog(worklog);
         worklogBuffer.add(worklog);
         return worklog;
     }

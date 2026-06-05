@@ -172,7 +172,7 @@
 | kassandra.dao                        | WarnException.java                                               | src      |        1 |        0 |        0 |        6 |        7 |
 | kassandra.dao                        | WorkDayScheduleDAO.java                                          | src      |       11 |       12 |       16 |       35 |       74 |
 | kassandra.dao                        | WorkWeekDAO.java                                                 | src      |       17 |       10 |       17 |       98 |      142 |
-| kassandra.dao                        | WorklogDAO.java                                                  | src      |       10 |        0 |       16 |       41 |       67 |
+| kassandra.dao                        | WorklogDAO.java                                                  | src      |       11 |        0 |       17 |       44 |       72 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.dto.util                   | AvatarUtil.java                                                  | src      |        6 |       15 |       18 |       24 |       63 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -199,7 +199,7 @@
 | kassandra.dto                        | Version.java                                                     | src      |       11 |        0 |       16 |       48 |       75 |
 | kassandra.dto                        | WorkDaySchedule.java                                             | src      |       11 |       11 |       16 |       27 |       65 |
 | kassandra.dto                        | WorkWeek.java                                                    | src      |       23 |       39 |       16 |       94 |      172 |
-| kassandra.dto                        | Worklog.java                                                     | src      |        6 |        0 |       16 |       26 |       48 |
+| kassandra.dto                        | Worklog.java                                                     | src      |        6 |        0 |       16 |       25 |       47 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.report.GanttBurndown       | GanttBurndownChart.java                                          | src      |        7 |        0 |       17 |       28 |       52 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -345,13 +345,13 @@
 | kassandra.rest.controller            | ProductAclController.java                                        | src      |       11 |       36 |       16 |       66 |      129 |
 | kassandra.rest.controller            | ProductController.java                                           | src      |       42 |       11 |       40 |      250 |      343 |
 | kassandra.rest.controller            | SprintController.java                                            | src      |       36 |       10 |       31 |      237 |      314 |
-| kassandra.rest.controller            | TaskController.java                                              | src      |       18 |       16 |       44 |      118 |      196 |
+| kassandra.rest.controller            | TaskController.java                                              | src      |       18 |       16 |       35 |      118 |      187 |
 | kassandra.rest.controller            | UserController.java                                              | src      |       48 |       32 |       34 |      253 |      367 |
 | kassandra.rest.controller            | UserGroupController.java                                         | src      |       15 |       54 |       16 |       92 |      177 |
 | kassandra.rest.controller            | UserWorkWeekController.java                                      | src      |       11 |       39 |       18 |       91 |      159 |
 | kassandra.rest.controller            | VersionController.java                                           | src      |       13 |        0 |       21 |       85 |      119 |
 | kassandra.rest.controller            | WorkWeekController.java                                          | src      |       12 |       36 |       16 |       72 |      136 |
-| kassandra.rest.controller            | WorklogController.java                                           | src      |       13 |       11 |       16 |       57 |       97 |
+| kassandra.rest.controller            | WorklogController.java                                           | src      |       13 |       11 |       16 |       63 |      103 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.rest.debug                 | DebugUtil.java                                                   | src      |        4 |        0 |       16 |       18 |       38 |
 | kassandra.rest.debug                 | JsonResponseLogger.java                                          | src      |        8 |        0 |       16 |       47 |       71 |
@@ -530,12 +530,12 @@
 | kassandra.util                       | AbstractLegacyGanttTestUtil.java                                 | src      |       10 |        0 |       19 |       85 |      114 |
 | kassandra.util                       | AbstractTestUtil.java                                            | src      |       14 |       16 |       20 |       66 |      116 |
 | kassandra.util                       | DTOAsserts.java                                                  | src      |       34 |       15 |       39 |      136 |      224 |
-| kassandra.util                       | EntityGenerator.java                                             | src      |       44 |        0 |       18 |      256 |      318 |
+| kassandra.util                       | EntityGenerator.java                                             | src      |       44 |        6 |       18 |      269 |      337 |
 | kassandra.util                       | GanttGenerator.java                                              | src      |       24 |       43 |       36 |      248 |      351 |
 | kassandra.util                       | H2DatabaseStateManager.java                                      | src      |       22 |       27 |       27 |      125 |      201 |
 | kassandra.util                       | MPXJReader.java                                                  | src      |       14 |        0 |       50 |      168 |      232 |
 | kassandra.util                       | NameGenerator.java                                               | src      |       26 |       15 |       25 |      172 |      238 |
-| kassandra.util                       | PersistingEntityGenerator.java                                   | src      |      141 |      114 |       71 |      855 |     1181 |
+| kassandra.util                       | PersistingEntityGenerator.java                                   | src      |      138 |      114 |       71 |      851 |     1174 |
 | kassandra.util                       | RandomCase.java                                                  | src      |        7 |        0 |       19 |       62 |       88 |
 | kassandra.util                       | TestInfoUtil.java                                                | src      |       15 |       86 |       16 |       51 |      168 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -615,5 +615,5 @@
 | util                                 | TaskUtil.java                                                    | src      |        8 |        0 |       31 |       15 |       54 |
 | util                                 | Util.java                                                        | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 67 package(s)                        | 547 file(s)                                                      | java     |    12166 |    11967 |    16203 |    65065 |   105401 |
+| 67 package(s)                        | 547 file(s)                                                      | java     |    12164 |    11973 |    16195 |    65082 |   105414 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.awt.*;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -232,16 +233,35 @@ public class EntityGenerator {
     }
 
     public User addUser(String name, float availability) {
+        User saved = addUser(name, name, null, startOfTime,
+                colorGenerator.generateUserColor(getUsers().size()), UnaryOperator.identity());
+        addAvailability(saved, availability, startOfTime);
+        addLocation(saved, "de", "nw", startOfTime);
+        return saved;
+    }
+
+    /**
+     * Builds a {@link User} from the supplied fields, assigns an ID, calls the {@code persister},
+     * then registers the result in the {@code users} collection and increments {@code userIndex}.
+     * Sub-entities (availability, location, work-week) are <em>not</em> created here; the caller
+     * is responsible for chaining those after this method returns.
+     */
+    protected User addUser(String name, String email, String roles, LocalDate start, Color color, UnaryOperator<User> persister) {
         User user = new User();
         user.setId(UUID.randomUUID());
         user.setName(name);
-        user.setEmail(name);
-        user.setColor(colorGenerator.generateUserColor(getUsers().size()));
-        addAvailability(user, availability, startOfTime);
-        addLocation(user, "de", "nw", startOfTime);
-        users.add(user);
+        user.setEmail(email);
+        user.setFirstWorkingDay(start);
+        user.setRoles(roles);
+        user.setColor(color);
+        if (start != null) {
+            user.setCreated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
+            user.setUpdated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
+        }
+        User saved = persister.apply(user);
+        users.add(saved);
         userIndex++;
-        return user;
+        return saved;
     }
 
     protected Version addVersion(Product product, String versionName) {
