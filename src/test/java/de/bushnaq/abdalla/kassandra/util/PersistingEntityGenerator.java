@@ -340,6 +340,7 @@ public class PersistingEntityGenerator {
         if (existingUser != null) {
             System.out.println("User with email " + email + " already exists, skipping creation");
             getUsers().add(existingUser);
+            eg.setUserIndex(eg.getUserIndex() + 1);
             return existingUser;
         }
 
