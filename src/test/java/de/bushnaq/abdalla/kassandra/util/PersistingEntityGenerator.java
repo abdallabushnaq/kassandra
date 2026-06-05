@@ -73,9 +73,8 @@ public class PersistingEntityGenerator {
     public              LocationApi            locationApi;
     public              NameGenerator          nameGenerator             = new NameGenerator();
     protected           OffDayApi              offDayApi;
-    private final       List<OffDay>           offDayBuffer              = new ArrayList<>();
-    private             TreeSet<OffDay>        offDays                   = new TreeSet<>();
-    private             int                    offDaysIterations;
+    @Autowired
+    private             OffDayGenerator        offDayGenerator;
     public              ProductAclApi          productAclApi;
     public              ProductApi             productApi;
     public final        Random                 random                    = new Random();
@@ -140,113 +139,6 @@ public class PersistingEntityGenerator {
         }
     }
 
-    /**
-     * Adds vacation blocks by splitting them when non-working days are encountered
-     * Returns the number of actual vacation days used
-     */
-    private int addOffDayBlockWithSplitting(User user, ProjectCalendar calendar, LocalDate firstDate, LocalDate startDate, int workingDaysCount, OffDayType offDayType) {
-        int       daysUsed     = 0;
-        LocalDate currentStart = startDate;
-        LocalDate currentDate  = startDate;
-        boolean   inBlock      = false;
-
-        while (daysUsed < workingDaysCount) {
-            boolean isWorkingDay = calendar.isWorkingDate(currentDate);
-
-            if (isWorkingDay) {
-                if (!inBlock) {
-                    // Start a new block
-                    currentStart = currentDate;
-                    inBlock      = true;
-                }
-                daysUsed++;
-
-                // If we've used all the days, add the final block
-                if (daysUsed >= workingDaysCount) {
-                    addOffDayToBuffer(user, currentStart, currentDate, offDayType);
-//                    logger.info(String.format("%s %s %s", currentStart, currentDate, "vacation"));
-                    break;
-                }
-            } else {
-                // We hit a non-working day, end the current block if there is one
-                if (inBlock) {
-                    LocalDate blockEnd = currentDate.minusDays(1);
-                    addOffDayToBuffer(user, currentStart, blockEnd, offDayType);
-//                    logger.info(String.format("%s %s %s", currentStart, blockEnd, "vacation"));
-                    inBlock = false;
-                }
-            }
-
-            currentDate = currentDate.plusDays(1);
-
-            // Safety check to prevent infinite loops
-            if (currentDate.isAfter(startDate.plusYears(1))) {
-                if (inBlock) {
-                    // End any remaining block
-                    LocalDate blockEnd = currentDate.minusDays(1);
-                    addOffDayToBuffer(user, currentStart, blockEnd, offDayType);
-//                    logger.info(String.format("%s %s %s", currentStart, blockEnd, "vacation"));
-                }
-                break;
-            }
-        }
-
-        return daysUsed;
-    }
-
-    private void addOffDayToBuffer(User user, LocalDate offDayStart, LocalDate offDayFinish, OffDayType type) {
-        OffDay offDay = new OffDay(offDayStart, offDayFinish, type);
-        offDay.setUser(user);
-        offDay.setCreated(user.getCreated());
-        offDay.setUpdated(user.getUpdated());
-        // Add to in-memory state immediately so overlap detection and calendar work during generation.
-        // The actual DB persist is deferred – call flushOffDayBuffer(user) when all off days for the
-        // user have been accumulated.
-        user.addOffday(offDay);
-        offDayBuffer.add(offDay);
-        ProjectCalendarException vacation = user.getCalendar().addCalendarException(offDayStart, offDayFinish);
-        switch (type) {
-            case VACATION -> vacation.setName("vacation");
-            case SICK -> vacation.setName("sick");
-            case TRIP -> vacation.setName("trip");
-        }
-    }
-
-    private void addOffDays(User saved, LocalDate firstDate, int annualVacationDays, int year, OffDayType offDayType, int summerDurationMin, int summerDurationMax) {
-        int             remainingDays = annualVacationDays;
-        ProjectCalendar pc            = saved.getCalendar();
-
-        LocalDate yearStart = LocalDate.of(year, 1, 1);
-        LocalDate yearEnd   = yearStart.plusYears(1).minusDays(1);
-
-        // First add a longer summer vacation block (2-4 weeks)
-        int       summerStart         = random.nextInt(60) + 150; // Random start between day 150-210 (June-July)
-        LocalDate summerVacationStart = pc.getNextWorkStart(yearStart.plusDays(summerStart).atStartOfDay()).toLocalDate();
-        int       summerDuration      = random.nextInt(summerDurationMax - summerDurationMin + 1) + summerDurationMin; // 10-20 days (2-4 weeks)
-        summerDuration = Math.min(summerDuration, remainingDays);
-
-        // Add summer vacation with proper splitting of non-working days
-        int daysUsed = addOffDayBlockWithSplitting(saved, pc, firstDate, summerVacationStart, summerDuration, offDayType);
-        remainingDays -= daysUsed;
-
-        // Distribute remaining days throughout the year in smaller blocks
-        while (remainingDays > 0) {
-            offDaysIterations++;
-            int       blockDuration = Math.min(remainingDays, random.nextInt(4) + 3); // 3-6 days blocks
-            LocalDate startDate;
-
-            do {
-                int dayOffset = random.nextInt(365); // Random day in the year
-                startDate = pc.getNextWorkStart(yearStart.plusDays(dayOffset).atStartOfDay()).toLocalDate();
-            } while (startDate.isAfter(yearEnd) || isOverlapping(saved.getOffDays(), startDate, startDate.plusDays(blockDuration)));
-
-            if (!startDate.isAfter(yearEnd)) {
-                // Add vacation block with proper splitting of non-working days
-                int actualDaysUsed = addOffDayBlockWithSplitting(saved, pc, firstDate, startDate, blockDuration, offDayType);
-                remainingDays -= actualDaysUsed;
-            }
-        }
-    }
 
     public Task addParentTask(String name, Sprint sprint, Task parent, Task dependency) {
         return addTask(sprint, parent, name, null, Duration.ofDays(0), null, null, dependency);
@@ -278,21 +170,6 @@ public class PersistingEntityGenerator {
         return addFeature(version, nameGenerator.generateFeatureName(getFeatureIndex()));
     }
 
-    protected void addRandomOffDays(User saved, LocalDate employmentDate) {
-        try (Profiler pc = new Profiler(SampleType.CPU)) {
-
-            int employmentYear = employmentDate.getYear();
-            offDaysIterations = 0;
-            for (int yearIndex = 0; yearIndex < 2; yearIndex++) {
-                int year = employmentYear + yearIndex;
-                random.setSeed(generateUserYearSeed(saved, year));
-                addOffDays(saved, employmentDate, 30, year, OffDayType.VACATION, 10, 20);
-                addOffDays(saved, employmentDate, random.nextInt(5), year, OffDayType.TRIP, 1, 5);
-            }
-            flushOffDayBuffer(saved);
-        }
-    }
-
     public void addRandomProducts(int count) {
         User user1 = addRandomUser();
 
@@ -306,25 +183,6 @@ public class PersistingEntityGenerator {
             Task    task3   = addTask(sprint, task2, "Implementation", LocalDateTime.now().plusDays(4), Duration.ofDays(6), null, user1, task1);
         }
         testProducts();
-    }
-
-    protected void addRandomSickDays() {
-        try (Profiler pc = new Profiler(SampleType.CPU)) {
-            List<User> all = userApi.getAll();
-            for (User user : all) {
-                user.initialize();
-                LocalDate employmentDate = ParameterOptions.getNow().toLocalDate().minusYears(1);
-
-                int employmentYear = employmentDate.getYear();
-                offDaysIterations = 0;
-                for (int yearIndex = 0; yearIndex < 2; yearIndex++) {
-                    int year = employmentYear + yearIndex;
-                    random.setSeed(generateUserYearSeed(user, year));
-                    addOffDays(user, employmentDate, random.nextInt(20), year, OffDayType.SICK, 1, 5);
-                }
-                flushOffDayBuffer(user);
-            }
-        }
     }
 
     public Sprint addRandomSprint(Feature feature) {
@@ -365,7 +223,7 @@ public class PersistingEntityGenerator {
         GanttContext gc    = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
-        addRandomOffDays(saved, firstDate);
+        offDayGenerator.addRandomOffDays(saved, firstDate);
         testUsers();
         return saved;
     }
@@ -386,7 +244,7 @@ public class PersistingEntityGenerator {
         GanttContext gc        = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
-        addRandomOffDays(saved, firstDate);
+        offDayGenerator.addRandomOffDays(saved, firstDate);
         testUsers();
         return saved;
     }
@@ -414,10 +272,10 @@ public class PersistingEntityGenerator {
             time = System.currentTimeMillis();
             if (saved.getOffDays().isEmpty()) {
                 //only in case it is a new user
-                addRandomOffDays(saved, firstDate);
+                offDayGenerator.addRandomOffDays(saved, firstDate);
             }
             Profiler.log("generateRandomOffDays");
-            System.out.println("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and " + offDaysIterations + " iterations");
+            System.out.println("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and " + offDayGenerator.getOffDaysIterations() + " iterations");
         }
 //        printTables();
         testUsers();
@@ -568,15 +426,6 @@ public class PersistingEntityGenerator {
      */
     protected Worklog addWorklogToBuffer(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
         Worklog worklog = eg.addWorklog(task, user, start, timeSpent, comment, UnaryOperator.identity());
-//        Worklog worklog = new Worklog();
-//        worklog.setSprintId(task.getSprintId());
-//        worklog.setTaskId(task.getId());
-//        worklog.setAuthorId(user.getId());
-//        worklog.setStart(start);
-//        worklog.setTimeSpent(timeSpent);
-//        worklog.setTimeRemainingEstimate(task.getRemainingEstimate().minus(timeSpent));
-//        worklog.setComment(comment);
-//        task.addWorklog(worklog);
         // Add to in-memory state immediately so accounting (timeSpent, remainingEstimate) stays correct.
         // The actual DB persist is deferred – call flushWorklogBuffer(sprint) when done.
         worklogBuffer.add(worklog);
@@ -604,34 +453,6 @@ public class PersistingEntityGenerator {
         return task;
     }
 
-    /**
-     * Flushes all buffered off days for the given user to the database in a single batch HTTP call.
-     * <p>
-     * The temp (ID-less) OffDay objects that were added to {@code user.getOffDays()} during generation
-     * are replaced by the server-returned objects carrying their assigned IDs. The flushed entries are
-     * also added to {@link #offDays}.
-     * </p>
-     *
-     * @param user the user whose buffered off days should be persisted
-     */
-    protected void flushOffDayBuffer(User user) {
-        List<OffDay> pending = offDayBuffer.stream()
-                .filter(o -> o.getUser() != null && o.getUser().getId() != null && o.getUser().getId().equals(user.getId()))
-                .toList();
-        if (pending.isEmpty()) {
-            return;
-        }
-        try (Profiler pc = new Profiler(SampleType.JPA)) {
-            long         time  = System.currentTimeMillis();
-            List<OffDay> saved = offDayApi.persistBatch(pending, user.getId());
-            log.debug("Batch-persisted {} off days for user '{}' in {} ms", saved.size(), user.getName(), System.currentTimeMillis() - time);
-            // Replace in-memory temp objects with the saved ones (which carry server-assigned IDs).
-            user.getOffDays().removeAll(pending);
-            saved.forEach(user::addOffday);
-            getOffDays().addAll(saved);
-        }
-        offDayBuffer.removeAll(pending);
-    }
 
     /**
      * Flushes all buffered worklogs for the given sprint to the database in a single batch HTTP call.
@@ -665,47 +486,14 @@ public class PersistingEntityGenerator {
         worklogBuffer.removeAll(pending);
     }
 
-    public void generateRandomOffDays(User saved, LocalDate employmentDate) {
-        try (Profiler pc = new Profiler(SampleType.CPU)) {
-
-            int employmentYear = employmentDate.getYear();
-            offDaysIterations = 0;
-            for (int yearIndex = 0; yearIndex < 2; yearIndex++) {
-                int year = employmentYear + yearIndex;
-                random.setSeed(generateUserYearSeed(saved, year));
-                addOffDays(saved, employmentDate, 30, year, OffDayType.VACATION, 10, 20);
-                addOffDays(saved, employmentDate, random.nextInt(5), year, OffDayType.TRIP, 1, 5);
-            }
-            flushOffDayBuffer(saved);
-        }
-    }
 
     public void generateRandomSickDays() {
-        try (Profiler pc = new Profiler(SampleType.CPU)) {
-            List<User> all = userApi.getAll();
-            for (User user : all) {
-                user.initialize();
-                LocalDate employmentDate = ParameterOptions.getNow().toLocalDate().minusYears(1);
-
-                int employmentYear = employmentDate.getYear();
-                offDaysIterations = 0;
-                for (int yearIndex = 0; yearIndex < 2; yearIndex++) {
-                    int year = employmentYear + yearIndex;
-                    random.setSeed(generateUserYearSeed(user, year));
-                    addOffDays(user, employmentDate, random.nextInt(20), year, OffDayType.SICK, 1, 5);
-                }
-                flushOffDayBuffer(user);
-            }
-        }
+        offDayGenerator.generateRandomSickDays();
     }
 
     public Color generateUserColor(int userIndex) {
         int index = userIndex % LightTheme.KELLY_COLORS.length;
         return LightTheme.KELLY_COLORS[index];
-    }
-
-    private static int generateUserYearSeed(User saved, int year) {
-        return (saved.getName() + year).hashCode();
     }
 
     public TreeSet<Availability> getAvailabilities() {
@@ -743,7 +531,7 @@ public class PersistingEntityGenerator {
     }
 
     public TreeSet<OffDay> getOffDays() {
-        return offDays;
+        return offDayGenerator.getOffDays();
     }
 
     public int getProductIndex() {
@@ -789,12 +577,6 @@ public class PersistingEntityGenerator {
     public void init() {
         eg.init();
         nameGenerator.resetStoryPool(); // Reset story pool for each test
-        getOffDays().clear();
-        getLocations().clear();
-    }
-
-    private boolean isOverlapping(List<OffDay> offDays, LocalDate start, LocalDate end) {
-        return offDays.stream().anyMatch(offDay -> !(end.isBefore(offDay.getFirstDay()) || start.isAfter(offDay.getLastDay())));
     }
 
     /**
@@ -971,21 +753,9 @@ public class PersistingEntityGenerator {
         user.removeUserWorkWeek(userWorkWeek);
     }
 
-    public void setOffDays(TreeSet<OffDay> offDays) {
-        this.offDays = offDays;
-    }
-
     public static void setUser(Authentication authentication) {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
-
-//    public static void setSprintIndex(int sprintIndex) {
-//        PersistingEntityGenerator.sprintIndex = sprintIndex;
-//    }
-
-//    public void setTasks(List<Task> tasks) {
-//        this.tasks = tasks;
-//    }
 
     public static Authentication setUser(String email, String role) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -1017,7 +787,6 @@ public class PersistingEntityGenerator {
     public void testAllAndPrintTables() {
         setUser("admin-user", "ROLE_ADMIN");
         testAll();
-//        printTables();
     }
 
     /**
