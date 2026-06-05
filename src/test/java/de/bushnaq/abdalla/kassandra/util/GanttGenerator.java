@@ -273,7 +273,7 @@ public class GanttGenerator extends EntityGenerator {
     /**
      * Generates worklogs for the tasks in the sprint simulating a team of people working.
      *
-     * @param sprint
+     * @param sprintId
      * @param now
      */
     public void generateWorklogs(UUID sprintId, LocalDateTime now) {

@@ -60,7 +60,6 @@ public class TaskDAO {
     private LocalDateTime finish;
 
     @Id
-//    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
     private UUID                                        id;
     @Column(nullable = false)

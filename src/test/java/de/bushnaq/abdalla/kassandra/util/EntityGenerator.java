@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.function.UnaryOperator;
 
 @Slf4j
 public class EntityGenerator {
@@ -49,6 +50,8 @@ public class EntityGenerator {
     @Getter
     private final List<Product>         products       = new ArrayList<>();
     @Getter
+    private       int                   sprintIndex    = 0;
+    @Getter
     private final List<Sprint>          sprints        = new ArrayList<>();
     protected     LocalDate             startOfTime    = LocalDate.of(2000, 1, 1);
     @Getter
@@ -56,42 +59,63 @@ public class EntityGenerator {
     @Getter
     private final TreeSet<User>         users          = new TreeSet<>();
     @Getter
+    private       int                   versionIndex   = 0;
+    @Getter
     private final List<Version>         versions       = new ArrayList<>();
     @Getter
     private final List<Worklog>         worklogs       = new ArrayList<>();
 
     protected Availability addAvailability(User user, float availability, LocalDate start) {
+        return addAvailability(user, availability, start, UnaryOperator.identity());
+    }
+
+    protected Availability addAvailability(User user, float availability, LocalDate start, UnaryOperator<Availability> persister) {
         Availability a = new Availability(availability, start);
         a.setId(UUID.randomUUID());
-        a.setUser(user);
         a.setCreated(user.getCreated());
         a.setUpdated(user.getUpdated());
-        user.addAvailability(a);
-        getAvailabilities().add(a);
-        return a;
+
+        Availability saved = persister.apply(a);
+//        if (saved.getUser() == null)
+        saved.setUser(user);
+        user.addAvailability(saved);
+        availabilities.add(saved);
+        return saved;
     }
 
     protected Feature addFeature(Version version, String name) {
+        return addFeature(version, name, UnaryOperator.identity());
+    }
+
+    protected Feature addFeature(Version version, String name, UnaryOperator<Feature> persister) {
         Feature feature = new Feature();
         feature.setId(UUID.randomUUID());
         feature.setName(name);
-        feature.setVersion(version);
         feature.setVersionId(version.getId());
-        version.addFeature(feature);
-        getFeatures().add(feature);
+
+        Feature saved = persister.apply(feature);
+        saved.setVersion(version);
+        version.addFeature(saved);
+        features.add(saved);
         featureIndex = featureIndex + 1;
-        return feature;
+        return saved;
     }
 
     protected Location addLocation(User user, String country, String state, LocalDate start) {
+        return addLocation(user, country, state, start, UnaryOperator.identity());
+    }
+
+    protected Location addLocation(User user, String country, String state, LocalDate start, UnaryOperator<Location> persister) {
         Location location = new Location(country, state, start);
         location.setId(UUID.randomUUID());
-        location.setUser(user);
         location.setCreated(user.getCreated());
         location.setUpdated(user.getUpdated());
-        user.addLocation(location);
-        getLocations().add(location);
-        return location;
+
+        Location saved = persister.apply(location);
+        saved.setUser(user);
+        user.addLocation(saved);
+        locations.add(saved);
+        return saved;
     }
 
     public Task addParentTask(String name, Sprint sprint, Task parent, Task dependency) {
@@ -99,23 +123,38 @@ public class EntityGenerator {
     }
 
     protected Product addProduct(String name) {
+        return addProduct(name, UnaryOperator.identity());
+    }
+
+    protected Product addProduct(String name, UnaryOperator<Product> persister) {
         Product product = new Product();
         product.setName(name);
         product.setId(UUID.randomUUID());
-        getProducts().add(product);
+
+        Product saved = persister.apply(product);
+
+        products.add(saved);
         productIndex = productIndex + 1;
-        return product;
+        return saved;
     }
 
     protected Sprint addSprint(Feature feature, String name) {
+        return addSprint(feature, name, UnaryOperator.identity());
+    }
+
+    protected Sprint addSprint(Feature feature, String name, UnaryOperator<Sprint> persister) {
         Sprint sprint = new Sprint();
         sprint.setName(name);
         sprint.setStatus(Status.STARTED);
-        sprint.setFeature(feature);
         sprint.setFeatureId(feature.getId());
-        feature.addSprint(sprint);
-        getSprints().add(sprint);
-        return sprint;
+
+        Sprint saved = persister.apply(sprint);
+        saved.setFeature(feature);
+
+        feature.addSprint(saved);
+        sprints.add(saved);
+        sprintIndex = sprintIndex + 1;
+        return saved;
     }
 
     public Sprint addSprint() {
@@ -135,7 +174,13 @@ public class EntityGenerator {
     }
 
     public Task addTask(Sprint sprint, Task parent, String name, LocalDateTime start, Duration minWork, Duration maxWork, User user, Task dependency, TaskMode taskMode, boolean milestone) {
+        return addTask(sprint, parent, name, start, minWork, maxWork, user, dependency, taskMode, milestone, UnaryOperator.identity());
+    }
+
+    public Task addTask(Sprint sprint, Task parent, String name, LocalDateTime start, Duration minWork, Duration maxWork, User user, Task dependency, TaskMode taskMode, boolean milestone, UnaryOperator<Task> persister) {
         Task task = new Task();
+        task.setId(UUID.randomUUID());
+        task.setOrderId(getTasks().size());
         task.setName(name);
         task.setStart(start);
         if (minWork != null) {
@@ -145,6 +190,7 @@ public class EntityGenerator {
         if (maxWork != null && !maxWork.isZero()) {
             task.setMaxEstimate(maxWork);
         }
+        //TODO do we need this?
         if (minWork == null || minWork.equals(Duration.ZERO)) {
             task.setFinish(start);
         }
@@ -159,29 +205,25 @@ public class EntityGenerator {
             task.addPredecessor(dependency, true);
         }
         if (sprint != null) {
-            task.setSprint(sprint);
             task.setSprintId(sprint.getId());
         }
         if (parent != null) {
-            task.setParentTask(parent);
             task.setParentTaskId(parent.getId());
         }
-        // Save the task
-//        System.out.printf("trying to add %s%n", task);
 
-        if (parent != null) {
-            parent.addChildTask(task);
-        }
+        Task saved = persister.apply(task);
+
         if (sprint != null) {
-            task.setSprint(sprint);
-            sprint.addTask(task);
+            saved.setSprint(sprint);
+            sprint.addTask(saved);
         }
-        task.setId(UUID.randomUUID());
-        task.setOrderId(getTasks().size());
-        getTasks().add(task);
-//        System.out.printf("Adding %s%n", task);
-        System.out.printf("Task ID: %s, Task Name: %s resource id: %s%n", task.getId(), task.getName(), task.getResourceId());
-        return task;
+        if (parent != null) {
+            saved.setParentTask(parent);
+            parent.addChildTask(saved);
+        }
+        getTasks().add(saved);
+        System.out.printf("Adding Task ID: %s, Task Name: %s resource id: %s%n", saved.getId(), saved.getName(), saved.getResourceId());
+        return saved;
     }
 
     public User addUser(String name, float availability) {
@@ -197,14 +239,22 @@ public class EntityGenerator {
     }
 
     protected Version addVersion(Product product, String versionName) {
+        return addVersion(product, versionName, UnaryOperator.identity());
+    }
+
+    protected Version addVersion(Product product, String versionName, UnaryOperator<Version> persister) {
         Version version = new Version();
         version.setName(versionName);
-        version.setProduct(product);
         version.setProductId(product.getId());
         version.setId(UUID.randomUUID());
-        product.addVersion(version);
-        getVersions().add(version);
-        return version;
+
+        Version saved = persister.apply(version);
+        saved.setProduct(product);
+
+        product.addVersion(saved);
+        versions.add(saved);
+        versionIndex++;
+        return saved;
     }
 
     protected Worklog addWorklog(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
@@ -231,45 +281,19 @@ public class EntityGenerator {
     }
 
     public void init() {
-        featureIndex = 0;
         getAvailabilities().clear();
         getUsers().clear();
         getAvailabilities().clear();
+        versionIndex = 0;
         getVersions().clear();
         productIndex = 0;
         getProducts().clear();
+        featureIndex = 0;
         getFeatures().clear();
+        sprintIndex = 0;
         getSprints().clear();
         getTasks().clear();
         getWorklogs().clear();
     }
 
-
-    //    public void setFeatures(List<Feature> features) {
-//        this.features = features;
-//    }
-//
-//    public void setProducts(List<Product> products) {
-//        this.products = products;
-//    }
-//
-//    public void setSprints(List<Sprint> sprints) {
-//        this.sprints = sprints;
-//    }
-//
-//    public void setTasks(List<Task> tasks) {
-//        this.tasks = tasks;
-//    }
-
-//    public void setUsers(List<User> users) {
-//        this.users = users;
-//    }
-
-//    public void setVersions(List<Version> versions) {
-//        this.versions = versions;
-//    }
-//
-//    public void setWorklogs(List<Worklog> worklogs) {
-//        this.worklogs = worklogs;
-//    }
 }

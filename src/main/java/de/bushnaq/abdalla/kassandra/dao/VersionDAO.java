@@ -18,9 +18,11 @@
 package de.bushnaq.abdalla.kassandra.dao;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
 
@@ -31,14 +33,13 @@ import java.util.UUID;
 )
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
 public class VersionDAO extends AbstractTimeAwareDAO {
 
     @Id
-    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
+//    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
     private UUID id;
 
@@ -47,5 +48,9 @@ public class VersionDAO extends AbstractTimeAwareDAO {
 
     @Column(nullable = false)
     private UUID productId;
+
+    public VersionDAO() {
+        this.setId(UUID.randomUUID());
+    }
 
 }

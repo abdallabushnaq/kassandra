@@ -9,6 +9,7 @@
     1. dto and dao need default constructors that set the id
     2. remove the generator annotation
     3. use entitymanager to persist
+7. sort db printout
 
 ## Feature
 

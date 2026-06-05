@@ -219,25 +219,6 @@ public class SprintApiTest extends AbstractTestUtil {
         sprint2.setName(originalName);
     }
 
-//    @Test
-//    @WithMockUser(username = "admin-user", roles = "ADMIN")
-//    public void updateUsingFakeId() throws Exception {
-//        addRandomProducts(2);
-//        Sprint sprint = expectedSprints.getFirst();
-//        UUID   id     = sprint.getId();
-//        String name   = sprint.getName();
-//        sprint.setId(FAKE_ID);
-//        sprint.setName(SECOND_NAME);
-//        try {
-//            updateSprint(sprint);
-//            fail("should not be able to update");
-//        } catch (ServerErrorException e) {
-//            // Expected exception
-//            sprint.setId(id);
-//            sprint.setName(name);
-//        }
-//    }
-
     @Test
     public void userSecurity() {
         {

@@ -155,7 +155,6 @@ public class TaskController {
             task.setOrderId(maxOrderId + 1);
         }
         entityManager.persist(task); // INSERT, no SELECT, no cascade conflict
-//        TaskDAO save = taskRepository.save(task);
         return ResponseEntity.ok(task);
     }
 

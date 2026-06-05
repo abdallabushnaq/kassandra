@@ -298,9 +298,9 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     public int getNextOrderId() {
         return getTasks().isEmpty() ? 0 :
                 getTasks().stream()
-                .mapToInt(Task::getOrderId)
-                .max()
-                .orElse(-1) + 1;
+                        .mapToInt(Task::getOrderId)
+                        .max()
+                        .orElse(-1) + 1;
     }
 
     public Task getTaskById(UUID predecessorId) {
@@ -486,6 +486,10 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
             //calculate the release date based on the work done and the remaining work
             releaseDate = ReportUtil.calculateReleaseDate(getStart(), now, getWorked(), DateUtil.add(getWorked(), getRemaining()));
         }
+    }
+
+    public void removeTask(Task task) {
+        tasks.remove(task);
     }
 
     @JsonIgnore

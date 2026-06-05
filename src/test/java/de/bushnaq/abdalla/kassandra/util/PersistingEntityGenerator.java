@@ -79,11 +79,9 @@ public class PersistingEntityGenerator {
     public              ProductApi             productApi;
     public final        Random                 random                    = new Random();
     public              SprintApi              sprintApi;
-    private static      int                    sprintIndex               = 0;
     @Autowired
     protected           StableDiffusionService stableDiffusionService;
     public              TaskApi                taskApi;
-    private             List<Task>             tasks                     = new ArrayList<>();
     @Autowired
     private             TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
     public              UserApi                userApi;
@@ -91,59 +89,37 @@ public class PersistingEntityGenerator {
     private static      int                    userIndex                 = 0;
     public              UserWorkWeekApi        userWorkWeekApi;
     public              VersionApi             versionApi;
-    private static      int                    versionIndex              = 0;
     public              WorkWeekApi            workWeekApi;
     public              WorklogApi             worklogApi;
     private final       List<Worklog>          worklogBuffer             = new ArrayList<>();
 
     public Availability addAvailability(User user, float availability, LocalDate start) {
-        Availability a = eg.addAvailability(user, availability, start);
-        getAvailabilities().remove(a);
-        user.removeAvailability(a);
-
-        Availability saved = availabilityApi.persist(a, user.getId());
-        user.addAvailability(saved);
-        getAvailabilities().add(saved);
-        saved.setUser(user);
-        return saved;
+        return eg.addAvailability(user, availability, start, a -> availabilityApi.persist(a, user.getId()));
     }
 
     public Feature addFeature(Version version, String name) {
-        Feature feature = eg.addFeature(version, name);
-        getFeatures().remove(feature);
-        version.removeFeature(feature);
+        return eg.addFeature(version, name, feature -> {
+            long                 startTime          = System.currentTimeMillis();
+            String               basePrompt         = Feature.getDefaultLightAvatarPrompt(name);
+            String               darkBasePrompt     = Feature.getDefaultDarkAvatarPrompt(name);
+            String               negativePrompt     = Feature.getDefaultLightAvatarNegativePrompt();
+            String               darkNegativePrompt = Feature.getDefaultDarkAvatarNegativePrompt();
+            GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "lightbulb");
+            feature.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
+            GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "lightbulb");
+            feature.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
 
-        long                 startTime          = System.currentTimeMillis();
-        String               basePrompt         = Feature.getDefaultLightAvatarPrompt(name);
-        String               darkBasePrompt     = Feature.getDefaultDarkAvatarPrompt(name);
-        String               negativePrompt     = Feature.getDefaultLightAvatarNegativePrompt();
-        String               darkNegativePrompt = Feature.getDefaultDarkAvatarNegativePrompt();
-        GeneratedImageResult image              = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "lightbulb");
-        feature.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
-
-        Feature saved = featureApi.persist(feature);
-
-        GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "lightbulb");
-
-        featureApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
-                darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
-                image.getNegativePrompt(), darkImage.getNegativePrompt());
-        System.out.println("Generated image for feature: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
-
-        getFeatures().add(saved);
-        saved.setVersion(version);
-        version.addFeature(saved);
-
-        return saved;
+            Feature saved = featureApi.persist(feature);
+            featureApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), basePrompt,
+                    darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
+                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt());
+            System.out.println("Generated lightImage for feature: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            return saved;
+        });
     }
 
     public void addLocation(User user, String country, String state, LocalDate start) {
-        Location location = eg.addLocation(user, country, state, start);
-        user.removeLocation(location);
-        getLocations().remove(location);
-        Location saved = locationApi.persist(location, user.getId());
-        user.addLocation(saved);
-        getLocations().add(saved);
+        eg.addLocation(user, country, state, start, l -> locationApi.persist(l, user.getId()));
     }
 
     public void addOffDay(User user, LocalDate offDayStart, LocalDate offDayFinish, OffDayType type) {
@@ -277,27 +253,25 @@ public class PersistingEntityGenerator {
     }
 
     public Product addProduct(String name) {
-        Product product = eg.addProduct(name);
-        getProducts().remove(product);
+        return eg.addProduct(name, product -> {
+            long                 startTime          = System.currentTimeMillis();
+            String               basePrompt         = Product.getDefaultLightAvatarPrompt(name);
+            String               darkBasePrompt     = Product.getDefaultDarkAvatarPrompt(name);
+            String               negativePrompt     = Product.getDefaultLightAvatarNegativePrompt();
+            String               darkNegativePrompt = Product.getDefaultDarkAvatarNegativePrompt();
+            GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "cube");
+            product.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
+            GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "cube");
+            product.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
 
-        long                 startTime          = System.currentTimeMillis();
-        String               basePrompt         = Product.getDefaultLightAvatarPrompt(name);
-        String               darkBasePrompt     = Product.getDefaultDarkAvatarPrompt(name);
-        String               negativePrompt     = Product.getDefaultLightAvatarNegativePrompt();
-        String               darkNegativePrompt = Product.getDefaultDarkAvatarNegativePrompt();
-        GeneratedImageResult image              = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "cube");
-        product.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
-        Product saved = productApi.persist(product);
+            Product saved = productApi.persist(product);
 
-        GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "cube");
-
-        productApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
-                darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
-                image.getNegativePrompt(), darkImage.getNegativePrompt());
-        System.out.println("Generated image for product: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
-
-        getProducts().add(saved);
-        return saved;
+            productApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), basePrompt,
+                    darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
+                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt());
+            System.out.println("Generated lightImage for product: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            return saved;
+        });
     }
 
     public Feature addRandomFeature(Version version) {
@@ -460,37 +434,25 @@ public class PersistingEntityGenerator {
     }
 
     public Sprint addSprint(Feature feature, String name) {
-        Sprint sprint = new Sprint();
-        sprint.setName(name);
-        sprint.setStatus(Status.STARTED);
-        sprint.setFeature(feature);
-        sprint.setFeatureId(feature.getId());
-//        sprint.setCreated(ParameterOptions.getNow());
-//        sprint.setUpdated(ParameterOptions.getNow());
+        return eg.addSprint(feature, name, sprint -> {
+            long                 startTime          = System.currentTimeMillis();
+            String               basePrompt         = Sprint.getDefaultLightAvatarPrompt(name);
+            String               darkBasePrompt     = Sprint.getDefaultDarkAvatarPrompt(name);
+            String               negativePrompt     = Sprint.getDefaultLightAvatarNegativePrompt();
+            String               darkNegativePrompt = Sprint.getDefaultDarkAvatarNegativePrompt();
+            GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "exit");
+            sprint.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
+            GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "exit");
+            sprint.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
 
-        Sprint               saved              = null;
-        long                 startTime          = System.currentTimeMillis();
-        String               basePrompt         = Sprint.getDefaultLightAvatarPrompt(name);
-        String               darkBasePrompt     = Sprint.getDefaultDarkAvatarPrompt(name);
-        String               negativePrompt     = Sprint.getDefaultLightAvatarNegativePrompt();
-        String               darkNegativePrompt = Sprint.getDefaultDarkAvatarNegativePrompt();
-        GeneratedImageResult image              = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "exit");
-        sprint.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
-        saved = sprintApi.persist(sprint);
+            Sprint saved = sprintApi.persist(sprint);
 
-        GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, image, "exit");
-
-        sprintApi.updateAvatarFull(saved.getId(), image.getResizedImage(), image.getOriginalImage(), basePrompt,
-                darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
-                image.getNegativePrompt(), darkImage.getNegativePrompt());
-        System.out.println("Generated image for sprint: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
-
-
-        getSprints().add(saved);
-        feature.addSprint(saved);
-
-        setSprintIndex(getSprintIndex() + 1);
-        return saved;
+            sprintApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), basePrompt,
+                    darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
+                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt());
+            System.out.println("Generated lightImage for sprint: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            return saved;
+        });
     }
 
     public Task addTask(String name, String minWorkString, String maxWorkString, User user, Sprint sprint, Task parent, Task dependency) {
@@ -502,51 +464,11 @@ public class PersistingEntityGenerator {
     }
 
     public Task addTask(Sprint sprint, Task parent, String name, LocalDateTime start, Duration minWork, Duration maxWork, User user, Task dependency, TaskMode taskMode, boolean milestone) {
-        Task task = new Task();
-        task.setName(name);
-        task.setStart(start);
-        if (minWork != null) {
-            task.setMinEstimate(minWork);
-            task.setRemainingEstimate(minWork);
-        }
-        if (maxWork != null && !maxWork.isZero()) {
-            task.setMaxEstimate(maxWork);
-        }
-//        if (minWork == null || minWork.equals(Duration.ZERO)) {
-//            task.setFinish(start);
-//        }
-        if (taskMode != null) {
-            task.setTaskMode(taskMode);
-        }
-        task.setMilestone(milestone);
-        if (user != null) {
-            task.setResourceId(user.getId());
-        }
-        if (dependency != null) {
-            task.addPredecessor(dependency, true);
-        }
-        if (sprint != null) {
-            task.setSprint(sprint);
-            task.setSprintId(sprint.getId());
-        }
-        if (parent != null) {
-            task.setParentTask(parent);
-            task.setParentTaskId(parent.getId());
-        }
-        // Save the task
-//        System.out.printf("trying to add %s%n", task);
-
-        Task saved = taskApi.persist(task);
-        getTasks().add(saved);
-        if (parent != null) {
-            parent.addChildTask(saved);
-        }
-        if (sprint != null) {
-            saved.setSprint(sprint);
-            sprint.addTask(saved);
-        }
-        System.out.printf("Adding %s%n", saved.toString());
-        return saved;
+        return eg.addTask(sprint, parent, name, start, minWork, maxWork, user, dependency, taskMode, milestone, task -> {
+            Task saved = taskApi.persist(task);
+            System.out.printf("Adding %s%n", saved.toString());
+            return saved;
+        });
     }
 
     public User addUser(String name, String email, String roles, String country, String state, LocalDate start, Color color, float availability) {
@@ -610,17 +532,10 @@ public class PersistingEntityGenerator {
     }
 
     public Version addVersion(Product product, String versionName) {
-        Version version = new Version();
-        version.setName(versionName);
-        version.setProduct(product);
-        version.setProductId(product.getId());
-        version.setCreated(ParameterOptions.getNow());
-        version.setUpdated(ParameterOptions.getNow());
-        Version saved = versionApi.persist(version);
-        product.addVersion(saved);
-        getVersions().add(saved);
-        setVersionIndex(getVersionIndex() + 1);
-        return saved;
+        return eg.addVersion(product, versionName, v -> {
+            Version saved = versionApi.persist(v);
+            return saved;
+        });
     }
 
     /**
@@ -743,7 +658,7 @@ public class PersistingEntityGenerator {
      * <p>
      * The temp (ID-less) {@link Worklog} objects that were added to each task's worklog list during
      * generation receive their server-assigned IDs in-place (the response is assumed to be in the same
-     * order as the request). The flushed entries are also added to {@link #EntityGenerator.worklogs}.
+     * order as the request). The flushed entries are also added to {@link #getWorklogs()}.
      * </p>
      *
      * @param sprint the sprint whose buffered worklogs should be persisted
@@ -859,8 +774,8 @@ public class PersistingEntityGenerator {
         return eg.getProducts();
     }
 
-    public static int getSprintIndex() {
-        return sprintIndex;
+    public int getSprintIndex() {
+        return eg.getSprintIndex();
     }
 
     public List<Sprint> getSprints() {
@@ -868,7 +783,7 @@ public class PersistingEntityGenerator {
     }
 
     public List<Task> getTasks() {
-        return tasks;
+        return eg.getTasks();
     }
 
     public static int getUserIndex() {
@@ -879,8 +794,8 @@ public class PersistingEntityGenerator {
         return eg.getUsers();
     }
 
-    public static int getVersionIndex() {
-        return versionIndex;
+    public int getVersionIndex() {
+        return eg.getVersionIndex();
     }
 
     public List<Version> getVersions() {
@@ -893,9 +808,7 @@ public class PersistingEntityGenerator {
 
     public void init() {
         eg.init();
-        setSprintIndex(0);
         setUserIndex(0);
-        setVersionIndex(0);
         nameGenerator.resetStoryPool(); // Reset story pool for each test
         getOffDays().clear();
         getLocations().clear();
@@ -1013,7 +926,7 @@ public class PersistingEntityGenerator {
         sprintApi.deleteById(id);
         if (sprintToRemove != null) {
             //remove this sprint from its parent project
-            sprintToRemove.getFeature().removePrint(sprintToRemove);
+            sprintToRemove.getFeature().removeSprint(sprintToRemove);
             for (Task task : sprintToRemove.getTasks()) {
                 getTasks().remove(task);
             }
@@ -1083,13 +996,13 @@ public class PersistingEntityGenerator {
         this.offDays = offDays;
     }
 
-    public static void setSprintIndex(int sprintIndex) {
-        PersistingEntityGenerator.sprintIndex = sprintIndex;
-    }
+//    public static void setSprintIndex(int sprintIndex) {
+//        PersistingEntityGenerator.sprintIndex = sprintIndex;
+//    }
 
-    public void setTasks(List<Task> tasks) {
-        this.tasks = tasks;
-    }
+//    public void setTasks(List<Task> tasks) {
+//        this.tasks = tasks;
+//    }
 
     public static void setUser(Authentication authentication) {
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -1114,10 +1027,6 @@ public class PersistingEntityGenerator {
 
     public static void setUserIndex(int userIndex) {
         PersistingEntityGenerator.userIndex = userIndex;
-    }
-
-    public static void setVersionIndex(int versionIndex) {
-        PersistingEntityGenerator.versionIndex = versionIndex;
     }
 
     protected void testAll() {

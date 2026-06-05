@@ -224,25 +224,6 @@ public class FeatureApiTest extends AbstractTestUtil {
         feature2.setName(originalName);
     }
 
-//    @Test
-//    @WithMockUser(username = "admin-user", roles = "ADMIN")
-//    public void updateUsingFakeId() throws Exception {
-//        peg.addRandomProducts(2);
-//        Feature feature = peg.getFeatures().getFirst();
-//        UUID    id      = feature.getId();
-//        String  name    = feature.getName();
-//        feature.setId(FAKE_ID);
-//        feature.setName(SECOND_NAME);
-//        try {
-//            peg.updateFeature(feature);
-//            fail("should not be able to update");
-//        } catch (ServerErrorException e) {
-//            //expected
-//            feature.setId(id);
-//            feature.setName(name);
-//        }
-//    }
-
     @Test
     public void userSecurity() {
         {

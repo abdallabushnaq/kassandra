@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ProductAclService;
+import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,6 +38,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/version")
 public class VersionController {
 
+    @Autowired
+    EntityManager entityManager;
     @Autowired
     private ProductAclService productAclService;
     @Autowired
@@ -97,8 +100,9 @@ public class VersionController {
             if (versionRepository.existsByNameAndProductId(version.getName(), version.getProductId())) {
                 throw new UniqueConstraintViolationException("Version", "name", version.getName());
             }
-            VersionDAO save = versionRepository.save(version);
-            return ResponseEntity.ok(save);
+//            VersionDAO save = versionRepository.save(version);
+            entityManager.persist(version); // INSERT, no SELECT, no cascade conflict
+            return ResponseEntity.ok(version);
         }).orElse(ResponseEntity.notFound().build());
     }
 

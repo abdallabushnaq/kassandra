@@ -49,10 +49,12 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SprintController {
 
-    /** Sorts sprints by start date ascending (nulls last), then by id for a stable secondary order. */
+    /**
+     * Sorts sprints by start date ascending (nulls last), then by id for a stable secondary order.
+     */
     private static final Comparator<SprintDAO> BY_START_THEN_ID =
             Comparator.comparing(SprintDAO::getStart, Comparator.nullsLast(Comparator.naturalOrder()))
-                      .thenComparing(SprintDAO::getId);
+                    .thenComparing(SprintDAO::getId);
 
     @Autowired
     EntityManager entityManager;
@@ -211,7 +213,7 @@ public class SprintController {
     @PostMapping()
     @PreAuthorize("@aclSecurityService.hasFeatureAccess(#sprintDAO.featureId) or hasRole('ADMIN')")
     @Transactional
-    public SprintDAO save(@RequestBody SprintDAO sprintDAO) {
+    public ResponseEntity<SprintDAO> save(@RequestBody SprintDAO sprintDAO) {
         // Prevent creating another Backlog sprint (globally unique name)
         if (DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(sprintDAO.getName())) {
             SprintDAO existingBacklog = sprintRepository.findByName(DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME);
@@ -225,8 +227,7 @@ public class SprintController {
             throw new UniqueConstraintViolationException("Sprint", "name", sprintDAO.getName());
         }
         entityManager.persist(sprintDAO);
-//        SprintDAO save = sprintRepository.save(sprintDAO);
-        return sprintDAO;
+        return ResponseEntity.ok(sprintDAO);
     }
 
     @PutMapping()

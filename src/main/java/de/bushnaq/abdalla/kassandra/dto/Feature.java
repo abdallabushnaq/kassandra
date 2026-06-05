@@ -170,7 +170,7 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
         sprints.forEach(sprint -> sprint.initialize(gc));
     }
 
-    public void removePrint(Sprint sprint) {
+    public void removeSprint(Sprint sprint) {
         sprints.remove(sprint);
     }
 }

@@ -183,7 +183,9 @@ public class TaskApiTest extends AbstractUiTestUtil {
         UUID child2Id     = child2.getId();
         UUID grandchildId = grandchild.getId();
 
+        printTables();
         peg.taskApi.deleteById(parentId);
+        printTables();
 
         List<UUID> remainingIds = peg.taskApi.getAll().stream().map(Task::getId).toList();
         Assertions.assertThat(remainingIds).doesNotContain(parentId, child1Id, child2Id, grandchildId);

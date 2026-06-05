@@ -375,25 +375,6 @@ public class ProductApiTest extends AbstractUiTestUtil {
         product2.setName(originalName);
     }
 
-//    @Test
-//    @WithMockUser(username = "admin-user", roles = "ADMIN")
-//    public void updateUsingFakeId() throws Exception {
-//        peg.addRandomProducts(2);
-//        Product product = peg.getProducts().getFirst();
-//        UUID    id      = product.getId();
-//        String  name    = product.getName();
-//        product.setId(FAKE_ID);
-//        product.setName(SECOND_NAME);
-//        try {
-//            peg.updateProduct(product);
-//            fail("should not be able to update");
-//        } catch (ServerErrorException e) {
-//            //restore fields to match db for later tests in @AfterEach
-//            product.setId(id);
-//            product.setName(name);
-//        }
-//    }
-
     @Test
     public void userSecurity() {
         {

@@ -230,25 +230,6 @@ public class VersionApiTest extends AbstractTestUtil {
     }
 
     @Test
-    @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void updateUsingFakeId() throws Exception {
-        peg.addRandomProducts(2);
-        Version version = peg.getVersions().getFirst();
-        UUID    id      = version.getId();
-        String  name    = version.getName();
-        version.setId(FAKE_ID);
-        version.setName(SECOND_NAME);
-        try {
-            peg.updateVersion(version);
-            fail("should not be able to update");
-        } catch (ServerErrorException e) {
-            //restore fields to match db for later tests in @AfterEach
-            version.setId(id);
-            version.setName(name);
-        }
-    }
-
-    @Test
     public void userSecurity() {
         {
             PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");

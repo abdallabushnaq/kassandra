@@ -188,7 +188,6 @@ public class FeatureController {
                 throw new UniqueConstraintViolationException("Feature", "name", feature.getName());
             }
             entityManager.persist(feature); // INSERT, no SELECT, no cascade conflict
-//            FeatureDAO save = featureRepository.save(feature);
             return ResponseEntity.ok(feature);
         }).orElse(ResponseEntity.notFound().build());
     }
