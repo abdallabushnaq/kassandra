@@ -109,7 +109,7 @@ public class WorklogApiTest extends AbstractTestUtil {
             Worklog worklog1 = peg.getWorklogs().getFirst();
             worklog1.setComment("Design work 1 - updated");
             worklog1.setTimeSpent(Duration.ofHours(3));
-            peg.worklogApi.persist(worklog1);
+            peg.updateWorklog(worklog1);
         }
 
         printTables();

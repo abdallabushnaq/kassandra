@@ -38,15 +38,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/task")
 public class TaskController {
 
-    //    @Deprecated
-//    public boolean isDeliveryBufferTask(TaskDAO task) {
-//        return task.getName().equalsIgnoreCase(DELIVERY_BUFFER);
-//    }
-//
-//    @Deprecated
-//    public boolean isStory(TaskDAO task) {
-//        return !task.isMilestone() && (task.getMinEstimate() == null || task.getMinEstimate().isZero());
-//    }
     @Autowired
     EntityManager entityManager;
     @Autowired

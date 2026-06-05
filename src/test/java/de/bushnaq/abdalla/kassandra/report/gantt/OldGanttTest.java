@@ -63,7 +63,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
-        PersistingEntityGenerator.setUserIndex(PersistingEntityGenerator.getUserIndex() + 1);
+        peg.setUserIndex(peg.getUserIndex() + 1);
         peg.addRandomUser(2, 0.3f);
         peg.addRandomUser(1, 0.7f);
         initializeInstances();
@@ -103,7 +103,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
-        PersistingEntityGenerator.setUserIndex(PersistingEntityGenerator.getUserIndex() + 1);
+        peg.setUserIndex(peg.getUserIndex() + 1);
         peg.addRandomUser(2, 0.5f);
         peg.addRandomUser(3, 0.7f);
         initializeInstances();
@@ -148,7 +148,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         TestInfoUtil.setTestStart(testInfo, "2024-12-15T08:00:00");
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + testCaseIndex);
         generateOneProduct(testInfo);
-        PersistingEntityGenerator.setUserIndex(PersistingEntityGenerator.getUserIndex() + 1);
+        peg.setUserIndex(peg.getUserIndex() + 1);
 
         peg.addRandomUser(2, 0.5f);
         peg.addRandomUser(4, 0.7f);

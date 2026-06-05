@@ -90,7 +90,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         int       count         = 1;
         String    testUserEmail = "christopher.paul@kassandra.org";
         LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
-        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(PersistingEntityGenerator.getUserIndex()), 0.5f);
+        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f);
 
         for (int i = 0; i < count; i++) {
             Product product = peg.addProduct(peg.nameGenerator.generateProductName(i));

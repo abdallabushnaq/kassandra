@@ -21,9 +21,11 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -33,7 +35,6 @@ import java.util.UUID;
 @Table(name = "worklogs")
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
@@ -46,7 +47,7 @@ public class WorklogDAO extends AbstractTimeAwareDAO {
     private String comment;
 
     @Id
-    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
+//    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
     private UUID id;
 
@@ -57,11 +58,15 @@ public class WorklogDAO extends AbstractTimeAwareDAO {
     private OffsetDateTime start;
 
     @Column(nullable = false)
-    private UUID taskId;
+    private UUID     taskId;
     @Column(nullable = false)
     private Duration timeRemainingEstimate;
     @Column(nullable = false)
     private Duration timeSpent;
     @Column(nullable = true)
-    private UUID updateAuthorId;
+    private UUID     updateAuthorId;
+
+    public WorklogDAO() {
+        setId(UUID.randomUUID());
+    }
 }

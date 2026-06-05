@@ -19,6 +19,8 @@ package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.dao.WorklogDAO;
 import de.bushnaq.abdalla.kassandra.repository.WorklogRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,6 +35,8 @@ import java.util.UUID;
 @RequestMapping("/api/worklog")
 public class WorklogController {
 
+    @Autowired
+    EntityManager entityManager;
     @Autowired
     private WorklogRepository worklogRepository;
 
@@ -63,8 +67,10 @@ public class WorklogController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public WorklogDAO save(@RequestBody WorklogDAO worklog) {
-        return worklogRepository.save(worklog);
+    @Transactional
+    public ResponseEntity<WorklogDAO> save(@RequestBody WorklogDAO worklog) {
+        entityManager.persist(worklog);
+        return ResponseEntity.ok(worklog);
     }
 
     /**

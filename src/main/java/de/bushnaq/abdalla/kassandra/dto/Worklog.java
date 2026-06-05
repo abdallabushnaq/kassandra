@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.dto;
 
-import de.bushnaq.abdalla.kassandra.dao.AbstractTimeAwareDAO;
 import lombok.*;
 
 import java.time.Duration;
@@ -29,7 +28,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-public class Worklog extends AbstractTimeAwareDAO implements Comparable<Worklog> {
+public class Worklog extends AbstractTimeAware implements Comparable<Worklog> {
 
     private UUID           authorId;
     private String         comment;

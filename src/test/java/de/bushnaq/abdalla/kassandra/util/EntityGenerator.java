@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.gantt.ColorGenerator;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -56,6 +57,9 @@ public class EntityGenerator {
     protected     LocalDate             startOfTime    = LocalDate.of(2000, 1, 1);
     @Getter
     private final List<Task>            tasks          = new ArrayList<>();
+    @Setter
+    @Getter
+    private       int                   userIndex      = 0;
     @Getter
     private final TreeSet<User>         users          = new TreeSet<>();
     @Getter
@@ -97,7 +101,7 @@ public class EntityGenerator {
         saved.setVersion(version);
         version.addFeature(saved);
         features.add(saved);
-        featureIndex = featureIndex + 1;
+        featureIndex++;
         return saved;
     }
 
@@ -128,13 +132,13 @@ public class EntityGenerator {
 
     protected Product addProduct(String name, UnaryOperator<Product> persister) {
         Product product = new Product();
-        product.setName(name);
         product.setId(UUID.randomUUID());
+        product.setName(name);
 
         Product saved = persister.apply(product);
 
         products.add(saved);
-        productIndex = productIndex + 1;
+        productIndex++;
         return saved;
     }
 
@@ -144,6 +148,7 @@ public class EntityGenerator {
 
     protected Sprint addSprint(Feature feature, String name, UnaryOperator<Sprint> persister) {
         Sprint sprint = new Sprint();
+        sprint.setId(UUID.randomUUID());
         sprint.setName(name);
         sprint.setStatus(Status.STARTED);
         sprint.setFeatureId(feature.getId());
@@ -228,13 +233,14 @@ public class EntityGenerator {
 
     public User addUser(String name, float availability) {
         User user = new User();
+        user.setId(UUID.randomUUID());
         user.setName(name);
         user.setEmail(name);
         user.setColor(colorGenerator.generateUserColor(getUsers().size()));
-        user.setId(UUID.randomUUID());
         addAvailability(user, availability, startOfTime);
         addLocation(user, "de", "nw", startOfTime);
-        getUsers().add(user);
+        users.add(user);
+        userIndex++;
         return user;
     }
 
@@ -244,9 +250,9 @@ public class EntityGenerator {
 
     protected Version addVersion(Product product, String versionName, UnaryOperator<Version> persister) {
         Version version = new Version();
+        version.setId(UUID.randomUUID());
         version.setName(versionName);
         version.setProductId(product.getId());
-        version.setId(UUID.randomUUID());
 
         Version saved = persister.apply(version);
         saved.setProduct(product);
@@ -258,7 +264,12 @@ public class EntityGenerator {
     }
 
     protected Worklog addWorklog(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
+        return addWorklog(task, user, start, timeSpent, comment, UnaryOperator.identity());
+    }
+
+    protected Worklog addWorklog(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment, UnaryOperator<Worklog> persister) {
         Worklog worklog = new Worklog();
+        worklog.setId(UUID.randomUUID());
         worklog.setSprintId(task.getSprintId());
         worklog.setTaskId(task.getId());
         worklog.setAuthorId(user.getId());
@@ -266,10 +277,12 @@ public class EntityGenerator {
         worklog.setTimeSpent(timeSpent);
         worklog.setTimeRemainingEstimate(task.getRemainingEstimate().minus(timeSpent));
         worklog.setComment(comment);
-        worklog.setId(UUID.randomUUID());
-        task.addWorklog(worklog);
-        getWorklogs().add(worklog);
-        return worklog;
+
+        Worklog saved = persister.apply(worklog);
+
+        task.addWorklog(saved);
+        worklogs.add(saved);
+        return saved;
     }
 
     public Task createDeliveryBufferTask(Sprint sprint, Duration minWork) {
@@ -282,6 +295,7 @@ public class EntityGenerator {
 
     public void init() {
         getAvailabilities().clear();
+        userIndex = 0;
         getUsers().clear();
         getAvailabilities().clear();
         versionIndex = 0;

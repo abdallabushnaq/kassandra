@@ -86,7 +86,6 @@ public class PersistingEntityGenerator {
     private             TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
     public              UserApi                userApi;
     public              UserGroupApi           userGroupApi;
-    private static      int                    userIndex                 = 0;
     public              UserWorkWeekApi        userWorkWeekApi;
     public              VersionApi             versionApi;
     public              WorkWeekApi            workWeekApi;
@@ -483,7 +482,6 @@ public class PersistingEntityGenerator {
         if (existingUser != null) {
             System.out.println("User with email " + email + " already exists, skipping creation");
             // Add to expected users if not already there
-            setUserIndex(getUserIndex() + 1);
             getUsers().add(existingUser);
             return existingUser;
         }
@@ -525,8 +523,8 @@ public class PersistingEntityGenerator {
                 image.getNegativePrompt(), darkImage.getNegativePrompt());
         System.out.println("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
-        setUserIndex(getUserIndex() + 1);
         getUsers().add(user);
+        setUserIndex(getUserIndex() + 1);
         return user;
 
     }
@@ -557,18 +555,7 @@ public class PersistingEntityGenerator {
     }
 
     public Worklog addWorklog(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
-        Worklog worklog = new Worklog();
-        worklog.setSprintId(task.getSprintId());
-        worklog.setTaskId(task.getId());
-        worklog.setAuthorId(user.getId());
-        worklog.setStart(start);
-        worklog.setTimeSpent(timeSpent);
-        worklog.setTimeRemainingEstimate(task.getRemainingEstimate().minus(timeSpent));
-        worklog.setComment(comment);
-        task.addWorklog(worklog);
-        Worklog saved = worklogApi.persist(worklog);
-        getWorklogs().add(saved);
-        return saved;
+        return eg.addWorklog(task, user, start, timeSpent, comment, worklogApi::persist);
     }
 
     /**
@@ -786,8 +773,8 @@ public class PersistingEntityGenerator {
         return eg.getTasks();
     }
 
-    public static int getUserIndex() {
-        return userIndex;
+    public int getUserIndex() {
+        return eg.getUserIndex();
     }
 
     public TreeSet<User> getUsers() {
@@ -808,7 +795,6 @@ public class PersistingEntityGenerator {
 
     public void init() {
         eg.init();
-        setUserIndex(0);
         nameGenerator.resetStoryPool(); // Reset story pool for each test
         getOffDays().clear();
         getLocations().clear();
@@ -996,6 +982,10 @@ public class PersistingEntityGenerator {
         this.offDays = offDays;
     }
 
+    public static void setUser(Authentication authentication) {
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
 //    public static void setSprintIndex(int sprintIndex) {
 //        PersistingEntityGenerator.sprintIndex = sprintIndex;
 //    }
@@ -1003,10 +993,6 @@ public class PersistingEntityGenerator {
 //    public void setTasks(List<Task> tasks) {
 //        this.tasks = tasks;
 //    }
-
-    public static void setUser(Authentication authentication) {
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
 
     public static Authentication setUser(String email, String role) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -1025,8 +1011,8 @@ public class PersistingEntityGenerator {
         return authentication;
     }
 
-    public static void setUserIndex(int userIndex) {
-        PersistingEntityGenerator.userIndex = userIndex;
+    public void setUserIndex(int userIndex) {
+        eg.setUserIndex(userIndex);
     }
 
     protected void testAll() {
@@ -1187,6 +1173,12 @@ public class PersistingEntityGenerator {
      */
     public void updateWorkWeek(UserWorkWeek userWorkWeek, User user) {
         userWorkWeekApi.update(userWorkWeek, user.getId());
+    }
+
+    public void updateWorklog(Worklog worklog) throws ServerErrorException {
+        worklogApi.update(worklog);
+        getWorklogs().remove(worklog);
+        getWorklogs().add(worklog);//replace old products with the updated one
     }
 
 }
