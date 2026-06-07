@@ -104,6 +104,8 @@ public class OidcApiSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Configure authorization for API endpoints
                 .authorizeHttpRequests(authorize -> authorize
+                        // Allow anonymous access to overview endpoints used by the UI (client-side fetch)
+                        .requestMatchers("/api/overview/**").permitAll()
                         .requestMatchers("/api/**").authenticated())
                 // Configure both JWT token authentication AND HTTP Basic auth for API endpoints
                 .httpBasic(httpBasic -> {

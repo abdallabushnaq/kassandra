@@ -39,6 +39,3 @@
 2. first OldGanttTest
 3. all BurndownTest
 4. several GanttTets fail because they do not expect sprint to have any other status than STARTED.
-
-OldGanttTest
-

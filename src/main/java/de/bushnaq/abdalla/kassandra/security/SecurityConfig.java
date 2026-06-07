@@ -71,6 +71,8 @@ public class SecurityConfig {
         return http
                 .securityMatcher("/api/**") // Apply this configuration only to API endpoints
                 .authorizeHttpRequests(authorize -> authorize
+                        // Allow unauthenticated access to overview endpoints used by the UI
+                        .requestMatchers("/api/overview/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for API endpoints
@@ -199,9 +201,10 @@ public class SecurityConfig {
                 .requestMatchers("/VAADIN/**").permitAll()
                 .requestMatchers("/css/**").permitAll()
                 .requestMatchers("/styles.css").permitAll()
-                .requestMatchers("/js/tooltips.js").permitAll()
+                .requestMatchers("/js/tooltips.js", "/js/sprints-overview-v2.js").permitAll()
                 .requestMatchers("/ui/icons/**").permitAll()
                 .requestMatchers("/ui/images/**").permitAll()
+                .requestMatchers("/ui/report/**").permitAll()
                 .requestMatchers("/frontend/**").permitAll()
                 .requestMatchers("/frontend-es5/**").permitAll()
                 .requestMatchers("/frontend-es6/**").permitAll()
