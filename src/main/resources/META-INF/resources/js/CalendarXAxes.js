@@ -8,16 +8,16 @@
     'use strict';
 
     // Row heights (Java CalendarElement heights: fontSize + margine=4)
-    const YEAR_H  = 17;   // 13+4 → rect bh-1 = 16px visible
+    const YEAR_H = 17;   // 13+4 → rect bh-1 = 16px visible
     const MONTH_H = 16;   // 12+4 → rect bh-1 = 15px visible
-    const WEEK_H  = 14;   // 10+4 → rect bh-1 = 13px visible
-    const DOM_H   = 14;   // 10+4  day-of-month
-    const DOW_H   = 14;   // 10+4  day-of-week
+    const WEEK_H = 14;   // 10+4 → rect bh-1 = 13px visible
+    const DOM_H = 14;   // 10+4  day-of-month
+    const DOW_H = 14;   // 10+4  day-of-week
 
     // Visibility thresholds (Java CalendarXAxes constants)
     const MIN_WEEK = 2;   // WEEK_MIN_DAY_WIDTH
-    const MIN_DOW  = 10;  // DAY_OF_WEEK_MIN_DAY_WIDTH  – show DOW row only
-    const MIN_DOM  = 16;  // DAY_OF_MONTH_MIN_DAY_WIDTH – show DOM row above DOW
+    const MIN_DOW = 10;  // DAY_OF_WEEK_MIN_DAY_WIDTH  – show DOW row only
+    const MIN_DOM = 16;  // DAY_OF_MONTH_MIN_DAY_WIDTH – show DOM row above DOW
 
     const MS = 86400000;
     const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -83,8 +83,8 @@
         getHeight(dayWidth) {
             let h = YEAR_H + MONTH_H;
             if (dayWidth >= MIN_WEEK) h += WEEK_H;
-            if (dayWidth >= MIN_DOM)       h += DOM_H + DOW_H;  // both DOM and DOW rows
-            else if (dayWidth >= MIN_DOW)  h += DOW_H;          // DOW row only, no DOM
+            if (dayWidth >= MIN_DOM) h += DOM_H + DOW_H;  // both DOM and DOW rows
+            else if (dayWidth >= MIN_DOW) h += DOW_H;          // DOW row only, no DOM
             return h;
         }
 
@@ -257,7 +257,6 @@
 
     // Export
     window.CalendarXAxes = CalendarXAxes;
-    window.CalendarXAxesSVG = CalendarXAxes; // backward-compat alias used by sprints-overview-v2.js
 })();
 /*
  * Copyright (C) 2025-2026 Abdalla Bushnaq

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,7 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
@@ -25,20 +28,17 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
-import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
@@ -56,43 +56,51 @@ import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.SprintDialog;
-import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+/**
+ * Sprints Overview V3 – combines the full LegacySprintListView UI (grid, filters, AI panel, dialogs)
+ * with a client-side virtual-canvas chart rendered by {@code sprints-overview-v3.js}.
+ *
+ * <p>Scripts loaded (in order):
+ * <ol>
+ *   <li>{@code /js/CalendarXAxes.js} – calendar header renderer</li>
+ *   <li>{@code /js/sprints-overview-v3.js} – chart orchestrator</li>
+ * </ol>
+ *
+ * <p>Theme changes are handled both by the JS MutationObserver (watching the {@code <html theme>}
+ * attribute) and by the server-side {@link ThemeChangedEvent}, so the chart always re-fetches
+ * {@code /api/overview/sprints?theme=dark|light} with the correct parameter.
+ */
 @Route(value = "sprint-list", layout = MainLayout.class)
-@PageTitle("Sprint List Page")
-@Menu(order = 4, icon = "vaadin:time-forward", title = "Sprints")
-@PermitAll // When security is enabled, allow all authenticated users
+@PageTitle("Sprints")
+@Menu(order = 4, icon = "vaadin:grid-v", title = "Sprints")
+@PermitAll
 @Slf4j
 public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
-    public static final  String                       CREATE_SPRINT_BUTTON             = "create-sprint-button";
-    public static final  String                       FEATURE_SELECTOR                 = "feature-selector";
-    private static final String                       PARAM_AI_PANEL                   = "aiPanel";
-    private static final String                       ROUTE_KEY_PREFIX                 = "sprint-list:";
-    public static final  String                       SPRINT_AI_PANEL_BUTTON           = "sprint-ai-panel-button";
-    public static final  String                       SPRINT_GLOBAL_FILTER             = "sprint-global-filter";
-    public static final  String                       SPRINT_GRID                      = "sprint-grid";
-    public static final  String                       SPRINT_GRID_CONFIG_BUTTON_PREFIX = "sprint-grid-config-button-prefix-";
-    public static final  String                       SPRINT_GRID_DELETE_BUTTON_PREFIX = "sprint-grid-delete-button-prefix-";
-    public static final  String                       SPRINT_GRID_EDIT_BUTTON_PREFIX   = "sprint-grid-edit-button-prefix-";
-    public static final  String                       SPRINT_GRID_NAME_PREFIX          = "sprint-grid-name-";
-    public static final  String                       SPRINT_LIST_PAGE_TITLE           = "sprint-list-page-title";
-    public static final  String                       SPRINT_ROW_COUNTER               = "sprint-row-counter";
+    public static final  String                       CREATE_SPRINT_BUTTON             = "create-sprint-button-v3";
+    public static final  String                       FEATURE_SELECTOR                 = "feature-selector-v3";
+    private static final String                       OVERVIEW_CONTAINER_ID            = "sprints-overview-v3-container";
+    private static final String                       ROUTE_KEY_PREFIX                 = "overview-v3:";
+    public static final  String                       SPRINT_AI_PANEL_BUTTON           = "sprint-ai-panel-button-v3";
+    public static final  String                       SPRINT_GLOBAL_FILTER             = "sprint-global-filter-v3";
+    public static final  String                       SPRINT_GRID                      = "sprint-grid-v3";
+    public static final  String                       SPRINT_GRID_CONFIG_BUTTON_PREFIX = "sprint-grid-config-button-v3-";
+    public static final  String                       SPRINT_GRID_DELETE_BUTTON_PREFIX = "sprint-grid-delete-button-v3-";
+    public static final  String                       SPRINT_GRID_EDIT_BUTTON_PREFIX   = "sprint-grid-edit-button-v3-";
+    public static final  String                       SPRINT_GRID_NAME_PREFIX          = "sprint-grid-name-v3-";
+    public static final  String                       SPRINT_LIST_PAGE_TITLE           = "sprint-list-page-title-v3";
+    public static final  String                       SPRINT_ROW_COUNTER               = "sprint-row-counter-v3";
     private final        Button                       aiToggleButton;
     private              List<Sprint>                 allSprints                       = new ArrayList<>();
     private final        AvatarService                avatarService;
@@ -100,11 +108,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     private final        ChatAgentPanel               chatAgentPanel;
     private final        Div                          chatPane;
     private final        Clock                        clock;
-    /**
-     * Application context – injected by Spring after the constructor runs; used for chart rendering.
-     */
-    @Autowired
-    protected            Context                      context;
     private final        FeatureApi                   featureApi;
     private              UUID                         featureId;
     private final        Map<UUID, Feature>           featureMap                       = new HashMap<>();
@@ -114,16 +117,12 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
      * Displays the selected feature's avatar when exactly one feature is selected;
      * hidden otherwise.
      */
-    private              Image                        headerAvatar;
+    private final        Image                        headerAvatar;
     private              boolean                      isRestoringFromUrl               = false;
     /**
-     * Container for the SprintsOverviewChart SVG placed above the sprint list.
+     * Container for the client-side chart. The JS function renders an SVG into this div.
      */
     private final        Div                          overviewChartContainer;
-    /**
-     * In-flight async overview-chart generation; cancelled if a newer refresh arrives.
-     */
-    private              CompletableFuture<Void>      overviewChartGenerationFuture;
     /**
      * Registration for the ThemeChangedEvent listener that re-renders the overview chart.
      */
@@ -216,12 +215,14 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 .set("transition", "width 0.3s ease, opacity 0.3s ease")
                 .set("width", "0").set("opacity", "0").set("min-width", "0");
 
-        // Overview chart sits above the sprint-list / AI split layout
+        // Client-side chart container – JS renders into this div.
         overviewChartContainer = new Div();
+        overviewChartContainer.setId(OVERVIEW_CONTAINER_ID);
         overviewChartContainer.getStyle()
                 .set("overflow-x", "auto")
-                .set("flex-shrink", "0")  // Prevent flex compression so the full SVG height is always shown
+                .set("flex-shrink", "0")  // Prevent flex compression so the full chart height is always shown
                 .set("width", "100%")
+                .set("min-height", "100px")
                 .set("margin-bottom", "var(--lumo-space-xs)");
         add(overviewChartContainer);
 
@@ -279,7 +280,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             log.warn("No products/versions/features available; SprintListView will show empty state");
         }
         // Capture requested features from URL for initial ComboBox preselection.
-        // Cleared here so each navigation cycle starts fresh.
         requestedFeatureIds = null;
         if (queryParameters.getParameters().containsKey("features")) {
             requestedFeatureIds = queryParameters.getParameters().get("features").getFirst();
@@ -316,11 +316,10 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                             params.put("product", String.valueOf(productId));
                             params.put("version", String.valueOf(versionId));
                             params.put("feature", String.valueOf(featureId));
-                            mainLayout.getBreadcrumbs().addItem("Sprints", SprintListView.class, params);
+                            mainLayout.getBreadcrumbs().addItem("Sprints Overview V3", SprintListView.class, params);
                         }
 
-                        // Pass navigation context to the AI panel so the LLM knows which product,
-                        // version, and feature are selected and can supply the correct IDs to SprintTools without asking.
+                        // Pass navigation context to the AI panel
                         chatAgentPanel.setViewContext(
                                 "You are viewing the sprint list of feature '" + feature.getName() + "' (featureId=" + featureId + ") of version '" + version.getName() + "' (versionId=" + versionId + ") of product '" + product.getName() + "' (productId=" + productId + "). " +
                                         "Use featureId=" + featureId + " when calling createSprint or any other sprint tool that requires a featureId.");
@@ -384,95 +383,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         dialog.open();
     }
 
-    /**
-     * Generates the SprintsOverviewChart asynchronously and places the resulting SVG in
-     * {@code overviewChartContainer}.  The chart always shows <em>all</em> sprints
-     * (i.e. {@code allSprints}), not just the ones currently visible in the table.
-     * <p>
-     * Sprints without a valid start or end date are filtered out before the chart is
-     * created, because the renderer requires every sprint to have both dates.  If no
-     * sprints with valid dates exist the container is simply cleared.
-     * </p>
-     */
-    private void generateOverviewChart() {
-        // Pre-filter to sprints that have both start and end (required by the renderer).
-        List<Sprint> chartSprints = allSprints.stream()
-                .filter(s -> s.getStart() != null && s.getEnd() != null)
-                .collect(Collectors.toList());
-
-        if (chartSprints.isEmpty()) {
-            overviewChartContainer.removeAll();
-            return;
-        }
-
-        // Capture the current theme on the UI thread before going async.
-        context.syncTheme();
-
-        // Cancel any previous in-flight generation.
-        if (overviewChartGenerationFuture != null && !overviewChartGenerationFuture.isDone()) {
-            overviewChartGenerationFuture.cancel(true);
-            log.debug("Cancelled previous sprints overview chart generation");
-        }
-
-        // Show a loading indicator while the chart renders in the background.
-        overviewChartContainer.removeAll();
-        ProgressBar progressBar = new ProgressBar();
-        progressBar.setIndeterminate(true);
-        progressBar.setWidth("300px");
-
-        Span loadingText = new Span("Generating sprints overview...");
-        loadingText.getStyle()
-                .set("margin-right", "var(--lumo-space-xs)")
-                .set("font-style", "italic")
-                .set("color", "var(--lumo-secondary-text-color)");
-
-        Div loadingContainer = new Div(loadingText, progressBar);
-        loadingContainer.getStyle()
-                .set("display", "flex")
-                .set("align-items", "center")
-                .set("padding", "var(--lumo-space-m)");
-        overviewChartContainer.add(loadingContainer);
-
-        UI             ui              = UI.getCurrent();
-        Authentication authentication  = SecurityContextHolder.getContext().getAuthentication();
-        List<Sprint>   sprintsSnapshot = new ArrayList<>(chartSprints);
-
-        overviewChartGenerationFuture = CompletableFuture.supplyAsync(() -> {
-            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
-            ctx.setAuthentication(authentication);
-            SecurityContextHolder.setContext(ctx);
-            try {
-                Svg svg = new Svg();
-                RenderUtil.generateSprintsOverviewChartSvg(context, sprintsSnapshot, svg);
-                return svg;
-            } catch (Exception e) {
-                throw new RuntimeException("Error generating sprints overview chart", e);
-            } finally {
-                SecurityContextHolder.clearContext();
-            }
-        }).thenAccept(svg -> {
-            ui.access(() -> {
-                overviewChartContainer.removeAll();
-                svg.getStyle()
-                        .set("max-width", "100%")
-                        .set("height", "auto")
-                        .set("display", "block");
-                overviewChartContainer.add(svg);
-                ui.push();
-            });
-        }).exceptionally(ex -> {
-            log.error("Error generating sprints overview chart: {}", ex.getMessage(), ex);
-            ui.access(() -> {
-                overviewChartContainer.removeAll();
-                Span errorMsg = new Span("Could not render sprints overview: " + ex.getMessage());
-                errorMsg.getStyle().set("color", "var(--lumo-error-color)");
-                overviewChartContainer.add(errorMsg);
-                ui.push();
-            });
-            return null;
-        });
-    }
-
+    @Override
     protected void initGrid(Clock clock) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
 
@@ -480,14 +391,12 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
 
         // Add click listener to navigate to QualityBoard with the selected sprint ID
         getGrid().addItemClickListener(event -> {
-            Sprint selectedSprint = event.getItem();
-            // Create parameters map
-            Map<String, String> params = new HashMap<>();
+            Sprint              selectedSprint = event.getItem();
+            Map<String, String> params         = new HashMap<>();
             params.put("product", String.valueOf(productId));
             params.put("version", String.valueOf(versionId));
             params.put("feature", String.valueOf(featureId));
             params.put("sprint", String.valueOf(selectedSprint.getId()));
-            // Navigate with query parameters
             UI.getCurrent().navigate(
                     QualityBoard.class,
                     QueryParameters.simple(params)
@@ -500,7 +409,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         }
 
         {
-            //product
             Grid.Column<Sprint> productColumn = getGrid().addColumn(sprint -> {
                 Feature f = featureMap.get(sprint.getFeatureId());
                 if (f == null) return "";
@@ -513,7 +421,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         }
 
         {
-            //version
             Grid.Column<Sprint> versionColumn = getGrid().addColumn(sprint -> {
                 Feature f = featureMap.get(sprint.getFeatureId());
                 if (f == null) return "";
@@ -524,7 +431,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         }
 
         {
-            //feature
             Grid.Column<Sprint> featureColumn = getGrid().addColumn(sprint -> {
                 Feature f = featureMap.get(sprint.getFeatureId());
                 return f != null ? f.getName() : "";
@@ -535,7 +441,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         {
             // Add avatar image column
             Grid.Column<Sprint> avatarColumn = getGrid().addColumn(new ComponentRenderer<>(sprint -> {
-                // Sprint has a custom image - use URL-based loading
                 com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
                 avatar.setWidth("24px");
                 avatar.setHeight("24px");
@@ -608,7 +513,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             VaadinUtil.addSimpleHeader(remainingColumn, "Remaining", VaadinIcon.HOURGLASS);
         }
 
-        // Add actions column using VaadinUtil with an additional config button
+        // Add actions column
         getGrid().addColumn(new ComponentRenderer<>(sprint -> {
             HorizontalLayout layout = new HorizontalLayout();
             layout.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -618,7 +523,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             editButton.setId(SPRINT_GRID_EDIT_BUTTON_PREFIX + sprint.getName());
             editButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
             editButton.addClickListener(e -> openSprintDialog(sprint));
-//            editButton.getElement().setAttribute("title", "Edit");
 
             Button configButton = new Button(new Icon(VaadinIcon.COG));
             configButton.setId(SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprint.getName());
@@ -634,7 +538,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                         QueryParameters.simple(params)
                 );
             });
-//            configButton.getElement().setAttribute("title", "Tasks Configuration");
 
             Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
             deleteButton.setId(SPRINT_GRID_DELETE_BUTTON_PREFIX + sprint.getName());
@@ -642,27 +545,38 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             deleteButton.addClickListener(e -> confirmDelete(sprint));
             // Hide delete button for Backlog sprint
             deleteButton.setVisible(!DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(sprint.getName()));
-//            deleteButton.getElement().setAttribute("title", "Delete");
 
             layout.add(editButton, configButton, deleteButton);
             return layout;
         })).setWidth("160px").setFlexGrow(0);
-
     }
 
     /**
-     * Subscribes to {@link ThemeChangedEvent} so the SprintsOverviewChart is re-generated
-     * in the new theme.  Calls {@code super.onAttach()} to preserve the data-provider
-     * refresh that {@link AbstractMainGrid} registers for the same event.
+     * Subscribes to {@link ThemeChangedEvent} so the client-side chart is re-fetched
+     * with the correct theme parameter.  The JS also watches the {@code <html theme>}
+     * attribute via a MutationObserver, so both sides trigger a refresh on theme change.
+     * <p>
+     * Calls {@code super.onAttach()} to preserve the data-provider refresh that
+     * {@link AbstractMainGrid} registers for the same event.
      *
      * @param attachEvent the attach event
      */
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        UI ui = attachEvent.getUI();
+        // Ensure scripts are loaded; browser will serve cached copies after first load.
+        ui.getPage().addJavaScript("/js/CalendarXAxes.js");
+        ui.getPage().addJavaScript("/js/sprints-overview-v3.js");
+        // Mount the chart after scripts and DOM are ready.
+        ui.getPage().executeJs(
+                "if(window.mountSprintsOverviewV3) window.mountSprintsOverviewV3($0);",
+                OVERVIEW_CONTAINER_ID
+        );
+        // Re-mount on server-side theme change so the chart re-fetches with ?theme=dark|light.
         overviewThemeChangedRegistration = ComponentUtil.addListener(
-                attachEvent.getUI(), ThemeChangedEvent.class,
-                e -> generateOverviewChart());
+                ui, ThemeChangedEvent.class,
+                e -> refreshClientChart());
     }
 
     /**
@@ -692,17 +606,28 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     }
 
     /**
+     * Triggers a client-side chart refresh by calling {@code mountSprintsOverviewV3}.
+     * The JS function fetches {@code /api/overview/sprints?theme=dark|light} and renders
+     * the chart into {@link #overviewChartContainer}.
+     * <p>
+     * Scripts are added on each call so they are always available even after a navigation
+     * that unloaded them; the browser will serve them from cache.
+     */
+    private void refreshClientChart() {
+        getUI().ifPresent(ui -> {
+            ui.getPage().addJavaScript("/js/CalendarXAxes.js");
+            ui.getPage().addJavaScript("/js/sprints-overview-v3.js");
+            ui.getPage().executeJs(
+                    "if(window.mountSprintsOverviewV3) window.mountSprintsOverviewV3($0);",
+                    OVERVIEW_CONTAINER_ID
+            );
+        });
+    }
+
+    /**
      * Reloads sprints from the API, refreshes the feature ComboBox item list while
      * preserving (or initially setting) the current selection, then re-applies
-     * the grid filter.
-     * <p>
-     * Selection priority on the first call after navigation:
-     * <ol>
-     *   <li>Preserve existing ComboBox selection (on grid refresh).</li>
-     *   <li>Restore from {@code features} URL parameter (comma-separated feature IDs).</li>
-     *   <li>Preselect the navigation-context feature when {@code featureId} is set.</li>
-     *   <li>Select all features when no context is given.</li>
-     * </ol>
+     * the grid filter and triggers a client-side chart refresh.
      */
     private void refreshGrid() {
         // Reload sprints and rebuild all lookup maps
@@ -740,7 +665,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 }
             } else if (requestedFeatureIds != null) {
                 // URL contained a 'features' key — it is authoritative.
-                // Non-empty → restore those IDs; empty string → user explicitly cleared, leave empty.
                 if (!requestedFeatureIds.isEmpty()) {
                     Set<Feature> toSelect = new HashSet<>();
                     for (String idStr : requestedFeatureIds.split(",")) {
@@ -756,7 +680,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                         featureSelector.setValue(toSelect);
                     }
                 }
-                // else: empty string → leave selector empty (applyFeatureFilter will clear the filter)
             } else if (featureId != null) {
                 // Default: preselect the navigation-context feature
                 freshFeatures.stream()
@@ -785,16 +708,12 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         // Sync header title/avatar to the current feature selection
         updateHeaderForSelection();
 
-        // Generate or refresh the overview chart after the grid is updated
-        generateOverviewChart();
+        // Trigger client-side chart refresh after the grid is updated
+        refreshClientChart();
     }
 
     /**
      * Updates the header title text and avatar to reflect the current feature-selector state.
-     * <ul>
-     *   <li>Exactly one feature selected → show that feature's avatar (if available) and name.</li>
-     *   <li>Zero or multiple features selected → hide avatar and show "Sprints".</li>
-     * </ul>
      */
     private void updateHeaderForSelection() {
         if (getHeaderPageTitle() == null || headerAvatar == null) {

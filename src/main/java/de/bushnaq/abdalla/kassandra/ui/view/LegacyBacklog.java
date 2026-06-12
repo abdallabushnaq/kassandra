@@ -55,11 +55,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
-import java.util.Set;
+import java.util.*;
 
 @Route(value = "legacy-backlog", layout = MainLayout.class)
 @PageTitle("Legacy Backlog")
@@ -865,7 +861,7 @@ public class LegacyBacklog extends Main implements BeforeEnterObserver, AfterNav
         log.info("Final params map: {}", params);
         log.info("Navigating to URL with params...");
 
-        // Update URL with query parameters (like SprintListView does)
+        // Update URL with query parameters (like LegacySprintListView does)
         QueryParameters queryParameters = QueryParameters.simple(params);
         getUI().ifPresent(ui -> {
             log.info("UI present, calling navigate with class and queryParameters");
