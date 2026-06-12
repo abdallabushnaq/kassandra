@@ -14,8 +14,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,16 +27,15 @@ import static org.mockito.Mockito.when;
 public class SprintsOverviewServiceTest {
 
     @Mock
-    SprintRepository sprintRepository;
-    @Mock
     FeatureRepository featureRepository;
     @Mock
-    VersionRepository versionRepository;
-    @Mock
     ProductAclService productAclService;
-
     @InjectMocks
     SprintsOverviewService service;
+    @Mock
+    SprintRepository  sprintRepository;
+    @Mock
+    VersionRepository versionRepository;
 
     @BeforeEach
     void setUp() {
@@ -54,19 +53,19 @@ public class SprintsOverviewServiceTest {
     void testLaneAssignment() {
         SprintDAO a = new SprintDAO();
         a.setName("A");
-        a.setStart(LocalDateTime.of(2026,5,1,9,0));
-        a.setEnd(LocalDateTime.of(2026,5,10,17,0));
+        a.setStart(LocalDateTime.of(2026, 5, 1, 9, 0));
+        a.setEnd(LocalDateTime.of(2026, 5, 10, 17, 0));
         a.setStatus(Status.STARTED);
 
         SprintDAO b = new SprintDAO();
         b.setName("B");
-        b.setStart(LocalDateTime.of(2026,5,5,9,0));
-        b.setEnd(LocalDateTime.of(2026,5,15,17,0));
+        b.setStart(LocalDateTime.of(2026, 5, 5, 9, 0));
+        b.setEnd(LocalDateTime.of(2026, 5, 15, 17, 0));
         b.setStatus(Status.STARTED);
 
         when(sprintRepository.findAll()).thenReturn(List.of(a, b));
 
-        SprintOverviewDto dto = service.getOverview(LocalDateTime.of(2026,6,6,0,0), null);
+        SprintOverviewDto dto = service.getOverview(LocalDateTime.of(2026, 6, 6, 0, 0), null, true);
 
         // overlapping sprints should be assigned to different lanes
         assertEquals(2, dto.lanes.size());

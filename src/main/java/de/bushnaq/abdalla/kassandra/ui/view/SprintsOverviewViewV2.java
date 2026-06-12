@@ -2,12 +2,14 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 
 @Route(value = "overview-v2", layout = MainLayout.class)
+@Menu(order = 11, icon = "vaadin:grid-v", title = "overview-v2")
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
 public class SprintsOverviewViewV2 extends Div {
@@ -27,7 +29,10 @@ public class SprintsOverviewViewV2 extends Div {
 //        add(fallback);
 
         // Load client script that will fetch /api/overview/sprints and render interactive chart
+        //TODO do we need this?
         UI.getCurrent().getPage().addJavaScript("/js/sprints-overview-v2.js");
+        //TODO do we need this?
+//        UI.getCurrent().getPage().addJavaScript("/js/CalendarXAxes.js");
     }
 }
 

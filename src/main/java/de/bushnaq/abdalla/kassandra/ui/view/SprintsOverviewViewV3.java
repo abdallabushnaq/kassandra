@@ -1,0 +1,763 @@
+/*
+ *
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
+package de.bushnaq.abdalla.kassandra.ui.view;
+
+import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.router.*;
+import com.vaadin.flow.router.Location;
+import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.Lumo;
+import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
+import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
+import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.rest.api.*;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
+import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
+import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
+import de.bushnaq.abdalla.kassandra.ui.dialog.SprintDialog;
+import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
+import de.bushnaq.abdalla.util.date.DateUtil;
+import jakarta.annotation.security.PermitAll;
+import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.time.Clock;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Sprints Overview V3 – combines the full SprintListView UI (grid, filters, AI panel, dialogs)
+ * with a client-side virtual-canvas chart rendered by {@code sprints-overview-v3.js}.
+ *
+ * <p>Scripts loaded (in order):
+ * <ol>
+ *   <li>{@code /js/CalendarXAxes.js} – calendar header renderer</li>
+ *   <li>{@code /js/sprints-overview-v3.js} – chart orchestrator</li>
+ * </ol>
+ *
+ * <p>Theme changes are handled both by the JS MutationObserver (watching the {@code <html theme>}
+ * attribute) and by the server-side {@link ThemeChangedEvent}, so the chart always re-fetches
+ * {@code /api/overview/sprints?theme=dark|light} with the correct parameter.
+ */
+@Route(value = "overview-v3", layout = MainLayout.class)
+@PageTitle("Sprints Overview V3")
+@Menu(order = 12, icon = "vaadin:grid-v", title = "overview-v3")
+@PermitAll
+@Slf4j
+public class SprintsOverviewViewV3 extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
+    public static final  String                       CREATE_SPRINT_BUTTON             = "create-sprint-button-v3";
+    public static final  String                       FEATURE_SELECTOR                 = "feature-selector-v3";
+    private static final String                       OVERVIEW_CONTAINER_ID            = "sprints-overview-v3-container";
+    private static final String                       ROUTE_KEY_PREFIX                 = "overview-v3:";
+    public static final  String                       SPRINT_AI_PANEL_BUTTON           = "sprint-ai-panel-button-v3";
+    public static final  String                       SPRINT_GLOBAL_FILTER             = "sprint-global-filter-v3";
+    public static final  String                       SPRINT_GRID                      = "sprint-grid-v3";
+    public static final  String                       SPRINT_GRID_CONFIG_BUTTON_PREFIX = "sprint-grid-config-button-v3-";
+    public static final  String                       SPRINT_GRID_DELETE_BUTTON_PREFIX = "sprint-grid-delete-button-v3-";
+    public static final  String                       SPRINT_GRID_EDIT_BUTTON_PREFIX   = "sprint-grid-edit-button-v3-";
+    public static final  String                       SPRINT_GRID_NAME_PREFIX          = "sprint-grid-name-v3-";
+    public static final  String                       SPRINT_LIST_PAGE_TITLE           = "sprint-list-page-title-v3";
+    public static final  String                       SPRINT_ROW_COUNTER               = "sprint-row-counter-v3";
+    private final        Button                       aiToggleButton;
+    private              List<Sprint>                 allSprints                       = new ArrayList<>();
+    private final        AvatarService                avatarService;
+    private final        SplitLayout                  bodySplit;
+    private final        ChatAgentPanel               chatAgentPanel;
+    private final        Div                          chatPane;
+    private final        Clock                        clock;
+    private final        FeatureApi                   featureApi;
+    private              UUID                         featureId;
+    private final        Map<UUID, Feature>           featureMap                       = new HashMap<>();
+    private final        MultiSelectComboBox<Feature> featureSelector;
+    /**
+     * Avatar {@link Image} shown in the page header next to the title.
+     * Displays the selected feature's avatar when exactly one feature is selected;
+     * hidden otherwise.
+     */
+    private              Image                        headerAvatar;
+    private              boolean                      isRestoringFromUrl               = false;
+    /**
+     * Container for the client-side chart. The JS function renders an SVG into this div.
+     */
+    private final        Div                          overviewChartContainer;
+    /**
+     * Registration for the ThemeChangedEvent listener that re-renders the overview chart.
+     */
+    private              Registration                 overviewThemeChangedRegistration;
+    private final        ProductApi                   productApi;
+    private              UUID                         productId;
+    private final        Map<UUID, Product>           productMap                       = new HashMap<>();
+    private              String                       requestedFeatureIds;
+    private              Set<Feature>                 selectedFeatures                 = new HashSet<>();
+    private final        ChatPanelSessionState        sessionState;
+    private final        SprintApi                    sprintApi;
+    private final        StableDiffusionService       stableDiffusionService;
+    private final        UserApi                      userApi;
+    private final        VersionApi                   versionApi;
+    private              UUID                         versionId;
+    private final        Map<UUID, Version>           versionMap                       = new HashMap<>();
+
+    public SprintsOverviewViewV3(SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi,
+                                 UserApi userApi, Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
+                                 AvatarService avatarService,
+                                 StableDiffusionService stableDiffusionService,
+                                 AiAssistantService aiAssistantService,
+                                 ChatPanelSessionState chatPanelSessionState,
+                                 KassandraProperties kassandraProperties,
+                                 LmStudioService lmStudioService) {
+        super(clock);
+        this.sprintApi              = sprintApi;
+        this.productApi             = productApi;
+        this.versionApi             = versionApi;
+        this.featureApi             = featureApi;
+        this.userApi                = userApi;
+        this.clock                  = clock;
+        this.avatarService          = avatarService;
+        this.stableDiffusionService = stableDiffusionService;
+        this.sessionState           = chatPanelSessionState;
+
+        headerAvatar = new Image();
+        headerAvatar.setWidth("32px");
+        headerAvatar.setHeight("32px");
+        headerAvatar.getStyle()
+                .set("border-radius", "var(--lumo-border-radius)")
+                .set("object-fit", "cover")
+                .set("display", "inline-block")
+                .set("margin-right", "12px");
+        headerAvatar.setVisible(false);
+
+        add(createSmartHeader("Sprints", SPRINT_LIST_PAGE_TITLE, headerAvatar,
+                CREATE_SPRINT_BUTTON, () -> openSprintDialog(null),
+                SPRINT_ROW_COUNTER, SPRINT_GLOBAL_FILTER, aiFilterService, mapper, "Sprint"));
+
+        featureSelector = new MultiSelectComboBox<>();
+        featureSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
+        featureSelector.setId(FEATURE_SELECTOR);
+        // Feature names are only unique within one version,
+        // and version names within one product — prefix with "Product / Version"
+        // to guarantee uniqueness across the entire server.
+        featureSelector.setItemLabelGenerator(f -> {
+            Version v = versionMap.get(f.getVersionId());
+            Product p = v != null ? productMap.get(v.getProductId()) : null;
+            String prefix = (p != null ? p.getName() + " / " : "")
+                    + (v != null ? v.getName() + " / " : "");
+            return prefix + f.getName();
+        });
+        featureSelector.setPlaceholder("All features");
+        featureSelector.setClearButtonVisible(true);
+        featureSelector.setWidth("380px");
+        featureSelector.addValueChangeListener(e -> {
+            if (e.isFromClient()) {
+                selectedFeatures = new HashSet<>(e.getValue());
+                updateHeaderForSelection();
+                updateUrlParameters();
+                applyFeatureFilter();
+            }
+        });
+        // Insert before the smart-filter so the feature selector appears on the far left
+        getLastHeaderRightLayout().addComponentAtIndex(0, featureSelector);
+
+        aiToggleButton = new Button("AI");
+        aiToggleButton.setId(SPRINT_AI_PANEL_BUTTON);
+        aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        aiToggleButton.getElement().setAttribute("title", "AI Assistant");
+        addHeaderButton(aiToggleButton);
+
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, kassandraProperties, lmStudioService);
+        chatAgentPanel.setSizeFull();
+
+        chatPane = new Div(chatAgentPanel);
+        chatPane.getStyle()
+                .set("height", "100%").set("overflow", "hidden")
+                .set("transition", "width 0.3s ease, opacity 0.3s ease")
+                .set("width", "0").set("opacity", "0").set("min-width", "0");
+
+        // Client-side chart container – JS renders into this div.
+        overviewChartContainer = new Div();
+        overviewChartContainer.setId(OVERVIEW_CONTAINER_ID);
+        overviewChartContainer.getStyle()
+                .set("overflow-x", "auto")
+                .set("flex-shrink", "0")  // Prevent flex compression so the full chart height is always shown
+                .set("width", "100%")
+                .set("min-height", "100px")
+                .set("margin-bottom", "var(--lumo-space-xs)");
+        add(overviewChartContainer);
+
+        bodySplit = new SplitLayout(getGridPanelWrapper(), chatPane);
+        bodySplit.setOrientation(SplitLayout.Orientation.HORIZONTAL);
+        bodySplit.setSizeFull();
+        bodySplit.setSplitterPosition(100);
+        add(bodySplit);
+
+        aiToggleButton.addClickListener(e -> {
+            sessionState.setPanelOpen(!sessionState.isPanelOpen());
+            applyChatPaneState(sessionState.isPanelOpen());
+        });
+    }
+
+    @Override
+    public void afterNavigation(AfterNavigationEvent event) {
+        Location        location        = event.getLocation();
+        QueryParameters queryParameters = location.getQueryParameters();
+        log.info("=== afterNavigation called {} parameters", queryParameters.getParameters().size());
+        if (queryParameters.getParameters().containsKey("product")) {
+            this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
+        }
+        if (queryParameters.getParameters().containsKey("version")) {
+            this.versionId = UUID.fromString(queryParameters.getParameters().get("version").getFirst());
+        }
+        if (queryParameters.getParameters().containsKey("feature")) {
+            this.featureId = UUID.fromString(queryParameters.getParameters().get("feature").getFirst());
+        }
+        // Resolve defaults when navigated directly from the menu (no URL params)
+        if (productId == null) {
+            productId = productApi.getAll().stream()
+                    .filter(p -> !DefaultEntitiesInitializer.DEFAULT_NAME.equals(p.getName()))
+                    .map(Product::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (versionId == null && productId != null) {
+            final UUID pid = productId;
+            versionId = versionApi.getAll().stream()
+                    .filter(v -> pid.equals(v.getProductId()))
+                    .map(Version::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (featureId == null && versionId != null) {
+            final UUID vid = versionId;
+            featureId = featureApi.getAll().stream()
+                    .filter(f -> vid.equals(f.getVersionId()))
+                    .map(Feature::getId)
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (productId == null || versionId == null || featureId == null) {
+            log.warn("No products/versions/features available; SprintsOverviewViewV3 will show empty state");
+        }
+        // Capture requested features from URL for initial ComboBox preselection.
+        requestedFeatureIds = null;
+        if (queryParameters.getParameters().containsKey("features")) {
+            requestedFeatureIds = queryParameters.getParameters().get("features").getFirst();
+        }
+
+        chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId + ":" + versionId + ":" + featureId);
+
+        //- update breadcrumbs
+        getElement().getParent().getComponent()
+                .ifPresent(component -> {
+                    if (component instanceof MainLayout mainLayout) {
+                        if (productId == null || versionId == null || featureId == null) {
+                            log.warn("No products/versions/features available; skipping SprintsOverviewViewV3 breadcrumb setup");
+                            return;
+                        }
+                        mainLayout.getBreadcrumbs().clear();
+                        Product product = productApi.getById(productId);
+                        Version version = versionApi.getById(versionId);
+                        Feature feature = featureApi.getById(featureId);
+                        mainLayout.getBreadcrumbs().addItem("Products (" + product.getName() + ")", ProductListView.class);
+                        {
+                            Map<String, String> params = new HashMap<>();
+                            params.put("product", String.valueOf(productId));
+                            mainLayout.getBreadcrumbs().addItem("Versions (" + version.getName() + ")", VersionListView.class, params);
+                        }
+                        {
+                            Map<String, String> params = new HashMap<>();
+                            params.put("product", String.valueOf(productId));
+                            params.put("version", String.valueOf(versionId));
+                            mainLayout.getBreadcrumbs().addItem("Features (" + feature.getName() + ")", FeatureListView.class, params);
+                        }
+                        {
+                            Map<String, String> params = new HashMap<>();
+                            params.put("product", String.valueOf(productId));
+                            params.put("version", String.valueOf(versionId));
+                            params.put("feature", String.valueOf(featureId));
+                            mainLayout.getBreadcrumbs().addItem("Sprints Overview V3", SprintsOverviewViewV3.class, params);
+                        }
+
+                        // Pass navigation context to the AI panel
+                        chatAgentPanel.setViewContext(
+                                "You are viewing the sprint list of feature '" + feature.getName() + "' (featureId=" + featureId + ") of version '" + version.getName() + "' (versionId=" + versionId + ") of product '" + product.getName() + "' (productId=" + productId + "). " +
+                                        "Use featureId=" + featureId + " when calling createSprint or any other sprint tool that requires a featureId.");
+                    }
+                });
+
+        applyChatPaneState(sessionState.isPanelOpen());
+
+        final String userEmail  = SecurityUtils.getUserEmail();
+        User         userFromDb = null;
+        if (!userEmail.equals(SecurityUtils.GUEST)) {
+            try {
+                userFromDb = userApi.getByEmail(userEmail).get();
+            } catch (Exception ignored) {
+            }
+        }
+        chatAgentPanel.setCurrentUser(userFromDb);
+        chatAgentPanel.setOnAiReply(this::refreshGrid);
+
+        refreshGrid();
+    }
+
+    private void applyChatPaneState(boolean open) {
+        if (open) {
+            chatPane.getStyle().set("width", "35%").set("opacity", "1").set("min-width", "280px");
+            bodySplit.setSplitterPosition(65);
+            aiToggleButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        } else {
+            chatPane.getStyle().set("width", "0").set("opacity", "0").set("min-width", "0");
+            bodySplit.setSplitterPosition(100);
+            aiToggleButton.removeThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        }
+    }
+
+    /**
+     * Applies a data-provider filter so the grid shows only sprints whose feature is
+     * selected in the MultiSelectComboBox.  When the selection is empty the filter is
+     * cleared and all sprints are shown.
+     */
+    private void applyFeatureFilter() {
+        if (!selectedFeatures.isEmpty()) {
+            Set<UUID> ids = selectedFeatures.stream().map(Feature::getId).collect(Collectors.toSet());
+            getDataProvider().setFilter(sprint -> ids.contains(sprint.getFeatureId()));
+        } else {
+            getDataProvider().setFilter(null);
+        }
+    }
+
+    private void confirmDelete(Sprint sprint) {
+        String message = "Are you sure you want to delete sprint \"" + sprint.getName() + "\"?";
+        ConfirmDialog dialog = new ConfirmDialog(
+                "Confirm Delete",
+                message,
+                "Delete",
+                () -> {
+                    sprintApi.deleteById(sprint.getId());
+                    refreshGrid();
+                    Notification.show("Sprint deleted", 3000, Notification.Position.BOTTOM_START);
+                }
+        );
+        dialog.open();
+    }
+
+    /**
+     * Triggers a client-side chart refresh by calling {@code mountSprintsOverviewV3}.
+     * The JS function fetches {@code /api/overview/sprints?theme=dark|light} and renders
+     * the chart into {@link #overviewChartContainer}.
+     * <p>
+     * Scripts are added on each call so they are always available even after a navigation
+     * that unloaded them; the browser will serve them from cache.
+     */
+    private void refreshClientChart() {
+        getUI().ifPresent(ui -> {
+            ui.getPage().addJavaScript("/js/CalendarXAxes.js");
+            ui.getPage().addJavaScript("/js/sprints-overview-v3.js");
+            ui.getPage().executeJs(
+                    "if(window.mountSprintsOverviewV3) window.mountSprintsOverviewV3($0);",
+                    OVERVIEW_CONTAINER_ID
+            );
+        });
+    }
+
+    @Override
+    protected void initGrid(Clock clock) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG).withZone(clock.getZone()).withLocale(getLocale());
+
+        getGrid().setId(SPRINT_GRID);
+
+        // Add click listener to navigate to QualityBoard with the selected sprint ID
+        getGrid().addItemClickListener(event -> {
+            Sprint selectedSprint = event.getItem();
+            Map<String, String> params = new HashMap<>();
+            params.put("product", String.valueOf(productId));
+            params.put("version", String.valueOf(versionId));
+            params.put("feature", String.valueOf(featureId));
+            params.put("sprint", String.valueOf(selectedSprint.getId()));
+            UI.getCurrent().navigate(
+                    QualityBoard.class,
+                    QueryParameters.simple(params)
+            );
+        });
+
+        {
+            Grid.Column<Sprint> keyColumn = getGrid().addColumn(Sprint::getKey);
+            VaadinUtil.addSimpleHeader(keyColumn, "Key", VaadinIcon.KEY);
+        }
+
+        {
+            Grid.Column<Sprint> productColumn = getGrid().addColumn(sprint -> {
+                Feature f = featureMap.get(sprint.getFeatureId());
+                if (f == null) return "";
+                Version v = versionMap.get(f.getVersionId());
+                if (v == null) return "";
+                Product p = productMap.get(v.getProductId());
+                return p != null ? p.getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(productColumn, "Product", VaadinIcon.PACKAGE);
+        }
+
+        {
+            Grid.Column<Sprint> versionColumn = getGrid().addColumn(sprint -> {
+                Feature f = featureMap.get(sprint.getFeatureId());
+                if (f == null) return "";
+                Version v = versionMap.get(f.getVersionId());
+                return v != null ? v.getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(versionColumn, "Version", VaadinIcon.COMPILE);
+        }
+
+        {
+            Grid.Column<Sprint> featureColumn = getGrid().addColumn(sprint -> {
+                Feature f = featureMap.get(sprint.getFeatureId());
+                return f != null ? f.getName() : "";
+            });
+            VaadinUtil.addSimpleHeader(featureColumn, "Feature", VaadinIcon.LIGHTBULB);
+        }
+
+        {
+            // Add avatar image column
+            Grid.Column<Sprint> avatarColumn = getGrid().addColumn(new ComponentRenderer<>(sprint -> {
+                com.vaadin.flow.component.html.Image avatar = new com.vaadin.flow.component.html.Image();
+                avatar.setWidth("24px");
+                avatar.setHeight("24px");
+                avatar.getStyle()
+                        .set("border-radius", "var(--lumo-border-radius)")
+                        .set("object-fit", "cover")
+                        .set("display", "block")
+                        .set("margin", "0")
+                        .set("padding", "0");
+
+                // Use hash-based URL for proper caching; theme-aware
+                boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                avatar.setSrc(sprint.getAvatarUrl(isDark));
+                avatar.setAlt(sprint.getName());
+                return avatar;
+            }));
+            avatarColumn.setWidth("48px");
+            avatarColumn.setFlexGrow(0);
+            avatarColumn.setHeader("");
+        }
+        {
+            // Add name column with filtering and sorting
+            Grid.Column<Sprint> nameColumn = getGrid().addColumn(new ComponentRenderer<>(sprint -> {
+                Div div = new Div();
+                div.add(sprint.getName());
+                div.setId(SPRINT_GRID_NAME_PREFIX + sprint.getName());
+                return div;
+            }));
+
+            // Configure a custom comparator to properly sort by the name property
+            nameColumn.setComparator((sprint1, sprint2) ->
+                    sprint1.getName().compareToIgnoreCase(sprint2.getName()));
+
+            VaadinUtil.addSimpleHeader(nameColumn, "Name", VaadinIcon.EXIT);
+        }
+
+        {
+            Grid.Column<Sprint> startColumn = getGrid().addColumn(sprint -> sprint.getStart() != null ? dateTimeFormatter.format(sprint.getStart()) : "");
+            VaadinUtil.addSimpleHeader(startColumn, "Start", VaadinIcon.CALENDAR);
+        }
+
+        {
+            Grid.Column<Sprint> endColumn = getGrid().addColumn(sprint -> sprint.getEnd() != null ? dateTimeFormatter.format(sprint.getEnd()) : "");
+            VaadinUtil.addSimpleHeader(endColumn, "End", VaadinIcon.CALENDAR);
+        }
+
+        {
+            Grid.Column<Sprint> statusColumn = getGrid().addColumn(sprint -> sprint.getStatus().name());
+            VaadinUtil.addSimpleHeader(statusColumn, "Status", VaadinIcon.FLAG);
+        }
+
+        {
+            Grid.Column<Sprint> originalEstimationColumn = getGrid().addColumn(sprint ->
+                    sprint.getOriginalEstimation() != null ?
+                            DateUtil.createDurationString(sprint.getOriginalEstimation(), false, true, true) : "");
+            VaadinUtil.addSimpleHeader(originalEstimationColumn, "Original Estimation", VaadinIcon.CLOCK);
+        }
+
+        {
+            Grid.Column<Sprint> workedColumn = getGrid().addColumn(sprint ->
+                    sprint.getWorked() != null ?
+                            DateUtil.createDurationString(sprint.getWorked(), false, true, true) : "");
+            VaadinUtil.addSimpleHeader(workedColumn, "Worked", VaadinIcon.TIMER);
+        }
+
+        {
+            Grid.Column<Sprint> remainingColumn = getGrid().addColumn(sprint ->
+                    sprint.getRemaining() != null ?
+                            DateUtil.createDurationString(sprint.getRemaining(), false, true, true) : "");
+            VaadinUtil.addSimpleHeader(remainingColumn, "Remaining", VaadinIcon.HOURGLASS);
+        }
+
+        // Add actions column
+        getGrid().addColumn(new ComponentRenderer<>(sprint -> {
+            HorizontalLayout layout = new HorizontalLayout();
+            layout.setAlignItems(FlexComponent.Alignment.CENTER);
+            layout.setSpacing(true);
+
+            Button editButton = new Button(new Icon(VaadinIcon.EDIT));
+            editButton.setId(SPRINT_GRID_EDIT_BUTTON_PREFIX + sprint.getName());
+            editButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+            editButton.addClickListener(e -> openSprintDialog(sprint));
+
+            Button configButton = new Button(new Icon(VaadinIcon.COG));
+            configButton.setId(SPRINT_GRID_CONFIG_BUTTON_PREFIX + sprint.getName());
+            configButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+            configButton.addClickListener(e -> {
+                Map<String, String> params = new HashMap<>();
+                params.put("product", String.valueOf(productId));
+                params.put("version", String.valueOf(versionId));
+                params.put("feature", String.valueOf(featureId));
+                params.put("sprint", String.valueOf(sprint.getId()));
+                UI.getCurrent().navigate(
+                        Backlog.class,
+                        QueryParameters.simple(params)
+                );
+            });
+
+            Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
+            deleteButton.setId(SPRINT_GRID_DELETE_BUTTON_PREFIX + sprint.getName());
+            deleteButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
+            deleteButton.addClickListener(e -> confirmDelete(sprint));
+            // Hide delete button for Backlog sprint
+            deleteButton.setVisible(!DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(sprint.getName()));
+
+            layout.add(editButton, configButton, deleteButton);
+            return layout;
+        })).setWidth("160px").setFlexGrow(0);
+    }
+
+    /**
+     * Subscribes to {@link ThemeChangedEvent} so the client-side chart is re-fetched
+     * with the correct theme parameter.  The JS also watches the {@code <html theme>}
+     * attribute via a MutationObserver, so both sides trigger a refresh on theme change.
+     * <p>
+     * Calls {@code super.onAttach()} to preserve the data-provider refresh that
+     * {@link AbstractMainGrid} registers for the same event.
+     *
+     * @param attachEvent the attach event
+     */
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        UI ui = attachEvent.getUI();
+        // Ensure scripts are loaded; browser will serve cached copies after first load.
+        ui.getPage().addJavaScript("/js/CalendarXAxes.js");
+        ui.getPage().addJavaScript("/js/sprints-overview-v3.js");
+        // Mount the chart after scripts and DOM are ready.
+        ui.getPage().executeJs(
+                "if(window.mountSprintsOverviewV3) window.mountSprintsOverviewV3($0);",
+                OVERVIEW_CONTAINER_ID
+        );
+        // Re-mount on server-side theme change so the chart re-fetches with ?theme=dark|light.
+        overviewThemeChangedRegistration = ComponentUtil.addListener(
+                ui, ThemeChangedEvent.class,
+                e -> refreshClientChart());
+    }
+
+    /**
+     * Removes the {@link ThemeChangedEvent} subscription for the overview chart to prevent
+     * memory leaks.  Calls {@code super.onDetach()} to preserve the base-class cleanup.
+     *
+     * @param detachEvent the detach event
+     */
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (overviewThemeChangedRegistration != null) {
+            overviewThemeChangedRegistration.remove();
+            overviewThemeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
+    }
+
+    private void openSprintDialog(Sprint sprint) {
+        SprintDialog dialog = new SprintDialog(sprint, avatarService, stableDiffusionService, sprintApi, featureId);
+        dialog.addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                // Dialog was closed, refresh the grid
+                refreshGrid();
+            }
+        });
+        dialog.open();
+    }
+
+    /**
+     * Reloads sprints from the API, refreshes the feature ComboBox item list while
+     * preserving (or initially setting) the current selection, then re-applies
+     * the grid filter and triggers a client-side chart refresh.
+     */
+    private void refreshGrid() {
+        // Reload sprints and rebuild all lookup maps
+        List<Sprint> freshSprints = sprintApi.getAll();
+        allSprints = freshSprints;
+
+        List<Feature> freshFeatures = featureApi.getAll();
+        featureMap.clear();
+        freshFeatures.forEach(f -> featureMap.put(f.getId(), f));
+
+        versionMap.clear();
+        versionApi.getAll().forEach(v -> versionMap.put(v.getId(), v));
+
+        productMap.clear();
+        productApi.getAll().forEach(p -> productMap.put(p.getId(), p));
+
+        // Replace data-provider items
+        getDataProvider().getItems().clear();
+        getDataProvider().getItems().addAll(freshSprints);
+
+        // Update ComboBox items while preserving / establishing selection
+        if (featureSelector != null) {
+            Set<Feature> currentSelection = featureSelector.getValue();
+            isRestoringFromUrl = true;
+            featureSelector.setItems(freshFeatures);
+            if (!currentSelection.isEmpty()) {
+                // Preserve the previously selected features (match by ID)
+                Set<UUID> selectedIds = currentSelection.stream().map(Feature::getId).collect(Collectors.toSet());
+                Set<Feature> toRestore = freshFeatures.stream()
+                        .filter(f -> selectedIds.contains(f.getId()))
+                        .collect(Collectors.toSet());
+                if (!toRestore.isEmpty()) {
+                    selectedFeatures = toRestore;
+                    featureSelector.setValue(toRestore);
+                }
+            } else if (requestedFeatureIds != null) {
+                // URL contained a 'features' key — it is authoritative.
+                if (!requestedFeatureIds.isEmpty()) {
+                    Set<Feature> toSelect = new HashSet<>();
+                    for (String idStr : requestedFeatureIds.split(",")) {
+                        try {
+                            UUID id = UUID.fromString(idStr.trim());
+                            freshFeatures.stream().filter(f -> f.getId().equals(id)).findFirst().ifPresent(toSelect::add);
+                        } catch (NumberFormatException e) {
+                            log.warn("Invalid feature ID in URL: {}", idStr);
+                        }
+                    }
+                    if (!toSelect.isEmpty()) {
+                        selectedFeatures = toSelect;
+                        featureSelector.setValue(toSelect);
+                    }
+                }
+            } else if (featureId != null) {
+                // Default: preselect the navigation-context feature
+                freshFeatures.stream()
+                        .filter(f -> featureId.equals(f.getId()))
+                        .findFirst()
+                        .ifPresent(f -> {
+                            selectedFeatures = new HashSet<>(Set.of(f));
+                            featureSelector.setValue(selectedFeatures);
+                        });
+            } else if (!freshFeatures.isEmpty()) {
+                // No context ID given → select all features
+                selectedFeatures = new HashSet<>(freshFeatures);
+                featureSelector.setValue(selectedFeatures);
+            }
+            isRestoringFromUrl = false;
+        }
+
+        // Apply ComboBox-driven filter
+        applyFeatureFilter();
+
+        // Force complete refresh of the grid
+        getDataProvider().refreshAll();
+        getGrid().getDataProvider().refreshAll();
+        getUI().ifPresent(ui -> ui.push());
+
+        // Sync header title/avatar to the current feature selection
+        updateHeaderForSelection();
+
+        // Trigger client-side chart refresh after the grid is updated
+        refreshClientChart();
+    }
+
+    /**
+     * Updates the header title text and avatar to reflect the current feature-selector state.
+     */
+    private void updateHeaderForSelection() {
+        if (getHeaderPageTitle() == null || headerAvatar == null) {
+            return;
+        }
+        if (selectedFeatures.size() == 1) {
+            Feature single = selectedFeatures.iterator().next();
+            getHeaderPageTitle().setText(single.getName());
+            if (single.getLightAvatarHash() != null && !single.getLightAvatarHash().isEmpty()) {
+                boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                headerAvatar.setSrc(single.getAvatarUrl(isDark));
+                headerAvatar.setVisible(true);
+            } else {
+                headerAvatar.setVisible(false);
+            }
+        } else {
+            getHeaderPageTitle().setText("Sprints");
+            headerAvatar.setVisible(false);
+        }
+    }
+
+    /**
+     * Pushes the current {@code product}, {@code version}, {@code feature}, and
+     * selected {@code sprint} into the URL so that the filter state survives
+     * browser refresh and can be bookmarked.  No-op while restoring state from a
+     * URL to prevent feedback loops.
+     */
+    private void updateUrlParameters() {
+        if (isRestoringFromUrl) {
+            return;
+        }
+        Map<String, String> params = new HashMap<>();
+        if (productId != null) {
+            params.put("product", String.valueOf(productId));
+        }
+        if (versionId != null) {
+            params.put("version", String.valueOf(versionId));
+        }
+        if (featureId != null) {
+            params.put("feature", String.valueOf(featureId));
+        }
+        // Always write the key — empty string signals "user intentionally cleared".
+        String featureIds = selectedFeatures.stream()
+                .map(f -> String.valueOf(f.getId()))
+                .collect(Collectors.joining(","));
+        params.put("features", featureIds);
+        getUI().ifPresent(ui -> ui.navigate(SprintsOverviewViewV3.class, QueryParameters.simple(params)));
+    }
+}

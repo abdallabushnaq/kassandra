@@ -1,10 +1,11 @@
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.rest.dto.SprintOverviewDto;
 import de.bushnaq.abdalla.kassandra.service.SprintsOverviewService;
+import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.annotation.security.PermitAll;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,11 +23,12 @@ public class OverviewController {
 
     @GetMapping("/sprints")
     @PermitAll
-    public SprintOverviewDto getSprintsOverview(@RequestParam(required = false) Integer limitMonths) {
-        LocalDateTime now = LocalDateTime.now();
-        return sprintsOverviewService.getOverview(now, limitMonths);
+    public SprintOverviewDto getSprintsOverview(
+            @RequestParam(required = false) Integer limitMonths,
+            @RequestParam(required = false, defaultValue = "light") String theme) {
+        LocalDateTime now  = ParameterOptions.getLocalNow();
+        boolean       dark = "dark".equalsIgnoreCase(theme);
+        return sprintsOverviewService.getOverview(now, limitMonths, dark);
     }
 
 }
-
-

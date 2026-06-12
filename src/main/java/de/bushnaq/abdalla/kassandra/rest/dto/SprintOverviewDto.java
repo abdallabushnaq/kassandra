@@ -22,6 +22,10 @@ public class SprintOverviewDto {
         public LocalDateTime now;
         public Integer laneCount;
         public String version = "v2";
+        // Map of theme color values used by the frontend calendar x-axes.
+        // Keys correspond to the server-side XAxesTheme field names.
+        // Colors are sent as 0xRRGGBB integers (no alpha).
+        public java.util.Map<String, Integer> xAxesTheme = new java.util.HashMap<>();
     }
 
     public static class LaneDto {
@@ -43,4 +47,5 @@ public class SprintOverviewDto {
         public List<String> exceptions = new ArrayList<>();
     }
 }
+
 

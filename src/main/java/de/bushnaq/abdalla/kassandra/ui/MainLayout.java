@@ -234,11 +234,17 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             tabToPathMap.put(tab, entry.path());
         });
 
-        // Add explicit tab for the new Sprints overview v2 view so it's easily reachable
-        Tab overviewV2Tab = new Tab(new Span("Sprints overview (v2)"));
-        overviewV2Tab.setId("overview-v2");
-        tabs.add(overviewV2Tab);
-        tabToPathMap.put(overviewV2Tab, "overview-v2");
+//        // Add explicit tab for the new Sprints overview v2 view so it's easily reachable
+//        Tab overviewV2Tab = new Tab(new Span("Sprints overview (v2)"));
+//        overviewV2Tab.setId("overview-v2");
+//        tabs.add(overviewV2Tab);
+//        tabToPathMap.put(overviewV2Tab, "overview-v2");
+//
+//        // Add explicit tab for the new Sprints overview v3 view so it's easily reachable
+//        Tab overviewV3Tab = new Tab(new Span("Sprints overview (v3)"));
+//        overviewV3Tab.setId("overview-v3");
+//        tabs.add(overviewV3Tab);
+//        tabToPathMap.put(overviewV3Tab, "overview-v3");
 
         // Handle tab selection changes
         tabs.addSelectedChangeListener(event -> {

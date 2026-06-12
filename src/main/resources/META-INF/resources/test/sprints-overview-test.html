@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprints Overview V3 – Test Page</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background: #f5f5f5; padding: 12px; }
+        .controls {
+            background: #fff; border: 1px solid #ddd; border-radius: 4px;
+            padding: 10px 14px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .controls label { font-size: 13px; color: #444; }
+        .controls select, .controls button {
+            padding: 5px 10px; border: 1px solid #bbb; border-radius: 3px;
+            background: #fff; font-size: 13px; cursor: pointer;
+        }
+        .controls button:hover { background: #f0f0f0; }
+        .hint { font-size: 12px; color: #888; }
+        #chart-container {
+            background: #fff; border: 1px solid #ddd; border-radius: 4px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <label>Scenario:</label>
+        <select id="scenario">
+            <option value="normal">Normal (5 lanes, ~10 sprints)</option>
+            <option value="dense">Dense (10 lanes, 30 sprints)</option>
+            <option value="sparse">Sparse (2 lanes, 3 sprints)</option>
+            <option value="long">Long timeline (1 year)</option>
+        </select>
+        <button id="btn-reload">Reload</button>
+        <span class="hint">Scroll wheel = zoom &nbsp;|&nbsp; Click+drag = pan &nbsp;|&nbsp; Trackpad swipe = pan</span>
+    </div>
+    <div id="chart-container"></div>
+
+    <!-- Load chart scripts (same order as Vaadin view) -->
+    <script src="../js/CalendarXAxes.js"></script>
+    <script src="../js/sprints-overview-v3.js"></script>
+
+    <script>
+        // ── Mock data generator ─────────────────────────────────────────────
+        function makeData(scenario) {
+            const now   = new Date();
+            const start = new Date(now); start.setMonth(start.getMonth() - 2);
+            const end   = new Date(now); end.setMonth(end.getMonth()   + (scenario === 'long' ? 10 : 4));
+
+            const STATUS_COLORS = {
+                CREATED: '#000000a0',
+                STARTED: '#1f8fff50',
+                CLOSED:  '#00000020'
+            };
+
+            function sprint(id, name, offsetDays, durationDays, status) {
+                const s = new Date(start); s.setDate(s.getDate() + offsetDays);
+                const e = new Date(s);     e.setDate(e.getDate() + durationDays - 1);
+                return { id, key: 'S-' + id, name, start: s.toISOString(), end: e.toISOString(),
+                         status, color: STATUS_COLORS[status], hasGantt: true, delay: false };
+            }
+
+            const lanes = [];
+
+            if (scenario === 'sparse') {
+                lanes.push({ laneId: 0, sprints: [sprint(1, 'Q1 Planning', 10, 14, 'CLOSED')] });
+                lanes.push({ laneId: 1, sprints: [sprint(2, 'Dev Sprint 1', 30, 21, 'STARTED'), sprint(3, 'Dev Sprint 2', 60, 21, 'CREATED')] });
+            } else if (scenario === 'dense') {
+                for (let i = 0; i < 10; i++) {
+                    const sprs = [];
+                    for (let j = 0; j < 3; j++) {
+                        const off = j * 40 + i * 3;
+                        const st  = off < 60 ? 'CLOSED' : (off < 90 ? 'STARTED' : 'CREATED');
+                        sprs.push(sprint(i * 10 + j, 'Sprint ' + String.fromCharCode(65+i) + (j+1), off, 14, st));
+                    }
+                    lanes.push({ laneId: i, sprints: sprs });
+                }
+            } else {
+                // normal or long
+                const count = scenario === 'long' ? 8 : 2;
+                for (let i = 0; i < 5; i++) {
+                    const sprs = [];
+                    for (let j = 0; j < count; j++) {
+                        const off = j * 45 + i * 2;
+                        const st  = off < 60 ? 'CLOSED' : (off < 90 ? 'STARTED' : 'CREATED');
+                        sprs.push(sprint(i * 20 + j, 'Sprint ' + String.fromCharCode(65+i) + (j+1), off, 14, st));
+                    }
+                    lanes.push({ laneId: i, sprints: sprs });
+                }
+            }
+
+            // Theme using Java LightTheme exact color values
+            const xAxesTheme = {
+                yearBgColor: 0xababab, yearTextColor: 0xffffff, yearBoderColor: 0xffffff,
+                'monthBgColors.0':  0x187dc3, 'monthBgColors.1':  0x24aeef,
+                'monthBgColors.2':  0x279e68, 'monthBgColors.3':  0x62b742,
+                'monthBgColors.4':  0xacc231, 'monthBgColors.5':  0xf9b71b,
+                'monthBgColors.6':  0xf1751d, 'monthBgColors.7':  0xe54629,
+                'monthBgColors.8':  0xe71657, 'monthBgColors.9':  0xad3483,
+                'monthBgColors.10': 0x654198, 'monthBgColors.11': 0x0855a3,
+                monthBorderColor: 0xffffff, monthTextColor: 0xffffff,
+                weekBgColor: 0xababab, weekBoderColor: 0xffffff, weekTextColor: 0xffffff,
+                dayOfMonthBgColor: 0xababab, dayOfMonthBorderColor: 0xffffff,
+                dayOfMonthTextColor: 0xffffff,
+                dayOfMonthWeekendBgColor: 0xd7d7d7, dayOfMonthWeekendTextColor: 0x000000,
+                dayOfweekBgColor: 0xffffff, dayOfWeekBorderColor: 0xffffff,
+                dayOfWeekTextColor: 0x000000,
+                dayOfweekSaturdayBgColor: 0xd7d7d7, dayOfweekSundayBgColor: 0xd7d7d7,
+                dayOfWeekWeekendTextColor: 0x000000,
+                gridColor: 0xe4e8f3
+            };
+
+            return {
+                lanes,
+                meta: {
+                    chartStart: start.toISOString(),
+                    chartEnd:   end.toISOString(),
+                    now:        now.toISOString(),
+                    laneCount:  lanes.length,
+                    xAxesTheme
+                }
+            };
+        }
+
+        // ── Render ─────────────────────────────────────────────────────────
+        function render() {
+            const scenario = document.getElementById('scenario').value;
+            window.mountSprintsOverviewV3('chart-container', makeData(scenario));
+        }
+
+        document.getElementById('btn-reload').addEventListener('click', render);
+        document.getElementById('scenario').addEventListener('change', render);
+
+        // Initial render (scripts loaded synchronously above)
+        render();
+    </script>
+</body>
+</html>

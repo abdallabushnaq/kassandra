@@ -106,6 +106,8 @@ public class OidcSecurityConfig {
                 .requestMatchers("/styles.css").permitAll()
                 .requestMatchers("/js/tooltips.js").permitAll()
                 .requestMatchers("/js/sprints-overview-v2.js").permitAll()
+                .requestMatchers("/js/sprints-overview-v3.js").permitAll()
+                .requestMatchers("/js/CalendarXAxes.js").permitAll()
                 .requestMatchers("/ui/icons/**").permitAll()
                 .requestMatchers("/ui/images/**").permitAll()
                 .requestMatchers("/ui/report/**").permitAll()
