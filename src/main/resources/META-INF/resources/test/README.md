@@ -113,7 +113,9 @@ The test page generates data matching the API contract:
     "chartEnd": "2026-10-31T23:59:59",
     "now": "2026-06-12T14:30:00",
     "laneCount": 5,
-    "xAxesTheme": { /* theme colors */ }
+    "xAxesTheme": {
+      /* theme colors */
+    }
   }
 }
 ```
@@ -152,7 +154,7 @@ Times measured on mid-range hardware. Use DevTools Performance tab for detailed 
 **Chart doesn't render:**
 
 - Check console for JavaScript errors
-- Verify `SprintsOverviewChart.js` exists in parent `js/` directory
+- Verify `sprints-overview-chart.js` exists in parent `js/` directory
 - Ensure D3.js CDN is accessible
 
 **Chart looks wrong:**
@@ -192,5 +194,5 @@ To add a new test scenario:
 
 ### Questions?
 
-See the comprehensive documentation in `docs/` or check the source code comments in `js/SprintsOverviewChart.js`.
+See the comprehensive documentation in `docs/` or check the source code comments in `js/sprints-overview-chart.js`.
 

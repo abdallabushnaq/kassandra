@@ -324,6 +324,11 @@
                     <include>**/*.csv</include>
                 </includes>
             </resource>
+            <!-- Include minified JavaScript in the build output -->
+            <resource>
+                <directory>${project.build.directory}/generated-resources</directory>
+                <targetPath>META-INF/resources</targetPath>
+            </resource>
         </resources>
         <plugins>
             <plugin>
@@ -462,6 +467,34 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.github.blutorange</groupId>
+                <artifactId>closure-compiler-maven-plugin</artifactId>
+                <version>3.0.1</version>
+                <configuration>
+                    <baseSourceDir>${project.basedir}/src/main/resources/META-INF/resources</baseSourceDir>
+                    <baseTargetDir>${project.build.directory}/generated-resources</baseTargetDir>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>minify</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <sourceDir>js</sourceDir>
+                            <targetDir>js</targetDir>
+                            <includes>
+                                <include>**/*.js</include>
+                            </includes>
+                            <outputFilename>sprints-overview.min.js</outputFilename>
+                            <skipMerge>false</skipMerge>
+                            <closureLanguageIn>ECMASCRIPT_2020</closureLanguageIn>
+                            <closureLanguageOut>ECMASCRIPT_2020</closureLanguageOut>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

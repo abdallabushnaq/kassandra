@@ -532,8 +532,8 @@
     // The browser never fetches /api/overview/sprints; that endpoint now requires authentication.
     var _instance = null;
 
-    function mountSprintsOverviewV3(containerId, injectedData) {
-        const id = containerId || 'sprints-overview-v3-container';
+    function mountSprintsOverviewChart(containerId, injectedData) {
+        const id = containerId || 'sprints-overview-chart-container';
         const c = document.getElementById(id);
         if (!c) return;  // not in DOM yet; Vaadin will call us again via executeJs
 
@@ -549,6 +549,6 @@
         }
     }
 
-    window.mountSprintsOverviewV3 = mountSprintsOverviewV3;
-    window.createSprintsOverviewV3 = createChart;  // used by test page
+    window.mountSprintsOverviewChart = mountSprintsOverviewChart;
+    window.createSprintsOverviewChart = createChart;  // used by test page
 })();

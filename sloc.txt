@@ -508,7 +508,7 @@
 | kassandra.ui.view                    | ProductListViewTest.java                                         | src      |       35 |      119 |       24 |      224 |      402 |
 | kassandra.ui.view                    | QualityBoard.java                                                | src      |       68 |       88 |       54 |      622 |      832 |
 | kassandra.ui.view                    | QualityBoardTest.java                                            | src      |       11 |        0 |       18 |      115 |      144 |
-| kassandra.ui.view                    | SprintListView.java                                              | src      |       62 |       73 |       46 |      597 |      778 |
+| kassandra.ui.view                    | SprintListView.java                                              | src      |       62 |       74 |       49 |      596 |      781 |
 | kassandra.ui.view                    | SprintListViewTest.java                                          | src      |       15 |       82 |       24 |      113 |      234 |
 | kassandra.ui.view                    | SprintStatistics.java                                            | src      |       20 |        4 |       26 |       97 |      147 |
 | kassandra.ui.view                    | TaskListViewTest.java                                            | src      |        8 |       16 |       17 |       89 |      130 |
@@ -622,5 +622,5 @@
 | util                                 | TaskUtil.java                                                    | src      |        8 |        0 |       31 |       15 |       54 |
 | util                                 | Util.java                                                        | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 68 package(s)                        | 553 file(s)                                                      | java     |    12298 |    12057 |    16290 |    66036 |   106681 |
+| 68 package(s)                        | 553 file(s)                                                      | java     |    12298 |    12058 |    16293 |    66035 |   106684 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

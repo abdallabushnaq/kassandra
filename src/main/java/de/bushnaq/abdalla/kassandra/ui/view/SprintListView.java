@@ -39,7 +39,6 @@ import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
-import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
@@ -47,11 +46,11 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
-import de.bushnaq.abdalla.kassandra.rest.dto.SprintOverviewDto;
-import de.bushnaq.abdalla.kassandra.service.SprintsOverviewService;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
+import de.bushnaq.abdalla.kassandra.rest.dto.SprintOverviewDto;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.SprintsOverviewService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
@@ -73,13 +72,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Sprints Overview V3 – combines the full LegacySprintListView UI (grid, filters, AI panel, dialogs)
- * with a client-side virtual-canvas chart rendered by {@code sprints-overview-v3.js}.
+ * Sprints Overview combines the full LegacySprintListView UI (grid, filters, AI panel, dialogs)
+ * with a client-side virtual-canvas chart rendered by {@code sprints-overview-chart.js}.
  *
  * <p>Scripts loaded (in order):
  * <ol>
- *   <li>{@code /js/CalendarXAxes.js} – calendar header renderer</li>
- *   <li>{@code /js/sprints-overview-v3.js} – chart orchestrator</li>
+ *   <li>{@code /js/calendar-x-axes.js} – calendar header renderer</li>
+ *   <li>{@code /js/sprints-overview-chart.js} – chart orchestrator</li>
  * </ol>
  *
  * <p>Theme changes are handled by the server-side {@link ThemeChangedEvent}: when the user
@@ -94,19 +93,19 @@ import java.util.stream.Collectors;
 @PermitAll
 @Slf4j
 public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
-    public static final  String                       CREATE_SPRINT_BUTTON             = "create-sprint-button-v3";
-    public static final  String                       FEATURE_SELECTOR                 = "feature-selector-v3";
-    private static final String                       OVERVIEW_CONTAINER_ID            = "sprints-overview-v3-container";
-    private static final String                       ROUTE_KEY_PREFIX                 = "overview-v3:";
-    public static final  String                       SPRINT_AI_PANEL_BUTTON           = "sprint-ai-panel-button-v3";
-    public static final  String                       SPRINT_GLOBAL_FILTER             = "sprint-global-filter-v3";
-    public static final  String                       SPRINT_GRID                      = "sprint-grid-v3";
-    public static final  String                       SPRINT_GRID_CONFIG_BUTTON_PREFIX = "sprint-grid-config-button-v3-";
-    public static final  String                       SPRINT_GRID_DELETE_BUTTON_PREFIX = "sprint-grid-delete-button-v3-";
-    public static final  String                       SPRINT_GRID_EDIT_BUTTON_PREFIX   = "sprint-grid-edit-button-v3-";
-    public static final  String                       SPRINT_GRID_NAME_PREFIX          = "sprint-grid-name-v3-";
-    public static final  String                       SPRINT_LIST_PAGE_TITLE           = "sprint-list-page-title-v3";
-    public static final  String                       SPRINT_ROW_COUNTER               = "sprint-row-counter-v3";
+    public static final  String                       CREATE_SPRINT_BUTTON             = "create-sprint-button";
+    public static final  String                       FEATURE_SELECTOR                 = "feature-selector";
+    private static final String                       OVERVIEW_CONTAINER_ID            = "sprints-overview-chart-container";
+    private static final String                       ROUTE_KEY_PREFIX                 = "overview:";
+    public static final  String                       SPRINT_AI_PANEL_BUTTON           = "sprint-ai-panel-button";
+    public static final  String                       SPRINT_GLOBAL_FILTER             = "sprint-global-filter";
+    public static final  String                       SPRINT_GRID                      = "sprint-grid";
+    public static final  String                       SPRINT_GRID_CONFIG_BUTTON_PREFIX = "sprint-grid-config-button-";
+    public static final  String                       SPRINT_GRID_DELETE_BUTTON_PREFIX = "sprint-grid-delete-button-";
+    public static final  String                       SPRINT_GRID_EDIT_BUTTON_PREFIX   = "sprint-grid-edit-button-";
+    public static final  String                       SPRINT_GRID_NAME_PREFIX          = "sprint-grid-name-";
+    public static final  String                       SPRINT_LIST_PAGE_TITLE           = "sprint-list-page-title";
+    public static final  String                       SPRINT_ROW_COUNTER               = "sprint-row-counter";
     private final        Button                       aiToggleButton;
     private              List<Sprint>                 allSprints                       = new ArrayList<>();
     private final        AvatarService                avatarService;
@@ -125,6 +124,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
      */
     private final        Image                        headerAvatar;
     private              boolean                      isRestoringFromUrl               = false;
+    private final        JsonMapper                   jsonMapper;
     /**
      * Container for the client-side chart. The JS function renders an SVG into this div.
      */
@@ -141,7 +141,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     private final        ChatPanelSessionState        sessionState;
     private final        SprintApi                    sprintApi;
     private final        SprintsOverviewService       sprintsOverviewService;
-    private final        JsonMapper                   jsonMapper;
     private final        StableDiffusionService       stableDiffusionService;
     private final        UserApi                      userApi;
     private final        VersionApi                   versionApi;
@@ -609,15 +608,16 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     }
 
     /**
-     * Triggers a client-side chart refresh by calling {@code mountSprintsOverviewV3}.
+     * Triggers a client-side chart refresh by calling {@code mountSprintsOverviewChart}.
      * <p>
      * Chart data is built server-side via {@link SprintsOverviewService} and passed directly
      * as the second argument to the JS function, so the browser never needs to call
      * {@code /api/overview/sprints}.  This keeps the overview API endpoint properly secured
      * and avoids an extra round-trip.
      * <p>
-     * Scripts are added on each call so they are always available even after a navigation
-     * that unloaded them; the browser will serve them from cache.
+     * The minified script is loaded once via {@code /js/sprints-overview.min.js}, which combines
+     * CalendarXAxes.js and SprintsOverviewChart.js and is generated during the Maven build.
+     * The browser will serve it from cache on subsequent references.
      */
     private void refreshClientChart() {
         getUI().ifPresent(ui -> {
@@ -625,10 +625,13 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             try {
                 SprintOverviewDto dto  = sprintsOverviewService.getOverview(LocalDateTime.now(), null, isDark);
                 String            json = jsonMapper.writeValueAsString(dto);
-                ui.getPage().addJavaScript("/js/CalendarXAxes.js");
-                ui.getPage().addJavaScript("/js/SprintsOverviewChart.js");
+                // production code
+                ui.getPage().addJavaScript("/js/sprints-overview.min.js");
+                // debugging code
+//                ui.getPage().addJavaScript("/js/calendar-x-axes.js");
+//                ui.getPage().addJavaScript("/js/sprints-overview-chart.js");
                 ui.getPage().executeJs(
-                        "if(window.mountSprintsOverviewV3) window.mountSprintsOverviewV3($0, JSON.parse($1));",
+                        "if(window.mountSprintsOverviewChart) window.mountSprintsOverviewChart($0, JSON.parse($1));",
                         OVERVIEW_CONTAINER_ID, json
                 );
             } catch (Exception e) {
