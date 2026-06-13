@@ -316,7 +316,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                             params.put("product", String.valueOf(productId));
                             params.put("version", String.valueOf(versionId));
                             params.put("feature", String.valueOf(featureId));
-                            mainLayout.getBreadcrumbs().addItem("Sprints Overview V3", SprintListView.class, params);
+                            mainLayout.getBreadcrumbs().addItem("Sprints", SprintListView.class, params);
                         }
 
                         // Pass navigation context to the AI panel
