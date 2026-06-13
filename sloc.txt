@@ -221,7 +221,7 @@
 | kassandra.report.dao.theme           | DarkTheme.java                                                   | src      |       29 |        0 |       78 |      114 |      221 |
 | kassandra.report.dao.theme           | GanttTheme.java                                                  | src      |        4 |        0 |       18 |       26 |       48 |
 | kassandra.report.dao.theme           | LightTheme.java                                                  | src      |       32 |        0 |       79 |      112 |      223 |
-| kassandra.report.dao.theme           | Theme.java                                                       | src      |        5 |        0 |       16 |       13 |       34 |
+| kassandra.report.dao.theme           | Theme.java                                                       | src      |       14 |        8 |       21 |       48 |       91 |
 | kassandra.report.dao.theme           | XAxesTheme.java                                                  | src      |        4 |        0 |       23 |       44 |       71 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.report.dao                 | AuthorContribution.java                                          | src      |       11 |        0 |       16 |       32 |       59 |
@@ -358,7 +358,7 @@
 | kassandra.rest.debug                 | JsonResponseLogger.java                                          | src      |        8 |        0 |       16 |       47 |       71 |
 | kassandra.rest.debug                 | RequestLoggingFilter.java                                        | src      |       18 |        0 |       19 |       75 |      112 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.rest.dto                   | SprintOverviewDto.java                                           | src      |        9 |        3 |        3 |       36 |       51 |
+| kassandra.rest.dto                   | SprintOverviewDto.java                                           | src      |        9 |        3 |        3 |       34 |       49 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.rest.exception             | UniqueConstraintViolationException.java                          | src      |        7 |       19 |       16 |       21 |       63 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -385,7 +385,7 @@
 | kassandra.service                    | DatabaseDebugService.java                                        | src      |       30 |       47 |       21 |      143 |      241 |
 | kassandra.service                    | ProductAclService.java                                           | src      |       25 |       72 |       16 |      117 |      230 |
 | kassandra.service                    | SprintExportService.java                                         | src      |       20 |       53 |       24 |      121 |      218 |
-| kassandra.service                    | SprintsOverviewService.java                                      | src      |       37 |        0 |       33 |      193 |      263 |
+| kassandra.service                    | SprintsOverviewService.java                                      | src      |       30 |        0 |       33 |      163 |      226 |
 | kassandra.service                    | SprintsOverviewServiceTest.java                                  | src      |       13 |        0 |        3 |       60 |       76 |
 | kassandra.service                    | UserGroupService.java                                            | src      |       24 |       62 |       19 |      105 |      210 |
 | kassandra.service                    | UserRoleMigrationService.java                                    | src      |       18 |       17 |       22 |       72 |      129 |
@@ -622,5 +622,5 @@
 | util                                 | TaskUtil.java                                                    | src      |        8 |        0 |       31 |       15 |       54 |
 | util                                 | Util.java                                                        | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 68 package(s)                        | 553 file(s)                                                      | java     |    12298 |    12058 |    16293 |    66038 |   106687 |
+| 68 package(s)                        | 553 file(s)                                                      | java     |    12300 |    12066 |    16298 |    66041 |   106705 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

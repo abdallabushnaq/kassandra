@@ -6,7 +6,6 @@ import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.XAxesTheme;
 import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
@@ -200,46 +199,10 @@ public class SprintsOverviewService {
             dto.lanes.add(lane);
         }
 
-        // --- add x-axes theme colors for the frontend (keys match XAxesTheme field names)
+        // --- add all theme colors for the frontend using reflection
         try {
-            Theme                                       theme = dark ? darkTheme : lightTheme;
-            XAxesTheme                                  xt    = theme.xAxesTheme;
-            java.util.function.Function<Color, Integer> rgb   = c -> c == null ? null : ((c.getRed() & 0xff) << 16) | ((c.getGreen() & 0xff) << 8) | (c.getBlue() & 0xff);
-            dto.meta.xAxesTheme.put("gridColor", rgb.apply(theme.ganttTheme.gridColor));
-
-            dto.meta.xAxesTheme.put("dayOfMonthBgColor", rgb.apply(xt.dayOfMonthBgColor));
-            dto.meta.xAxesTheme.put("dayOfMonthBorderColor", rgb.apply(xt.dayOfMonthBorderColor));
-            dto.meta.xAxesTheme.put("dayOfMonthTextColor", rgb.apply(xt.dayOfMonthTextColor));
-            dto.meta.xAxesTheme.put("dayOfMonthWeekendBgColor", rgb.apply(xt.dayOfMonthWeekendBgColor));
-            dto.meta.xAxesTheme.put("dayOfMonthWeekendTextColor", rgb.apply(xt.dayOfMonthWeekendTextColor));
-
-            dto.meta.xAxesTheme.put("dayOfWeekBorderColor", rgb.apply(xt.dayOfWeekBorderColor));
-            dto.meta.xAxesTheme.put("dayOfWeekTextColor", rgb.apply(xt.dayOfWeekTextColor));
-            dto.meta.xAxesTheme.put("dayOfWeekWeekendTextColor", rgb.apply(xt.dayOfWeekWeekendTextColor));
-            dto.meta.xAxesTheme.put("dayOfweekBgColor", rgb.apply(xt.dayOfweekBgColor));
-            dto.meta.xAxesTheme.put("dayOfweekSaturdayBgColor", rgb.apply(xt.dayOfweekSaturdayBgColor));
-            dto.meta.xAxesTheme.put("dayOfweekSundayBgColor", rgb.apply(xt.dayOfweekSundayBgColor));
-
-            dto.meta.xAxesTheme.put("futureEventColor", rgb.apply(xt.futureEventColor));
-            dto.meta.xAxesTheme.put("milestoneFlagColor", rgb.apply(xt.milestoneFlagColor));
-            dto.meta.xAxesTheme.put("milestoneTextColor", rgb.apply(xt.milestoneTextColor));
-
-            for (int i = 0; i < xt.monthBgColors.length; i++) {
-                dto.meta.xAxesTheme.put(String.format("monthBgColors.%d", i), rgb.apply(xt.monthBgColors[i]));
-            }
-            dto.meta.xAxesTheme.put("monthBorderColor", rgb.apply(xt.monthBorderColor));
-            dto.meta.xAxesTheme.put("monthTextColor", rgb.apply(xt.monthTextColor));
-
-            dto.meta.xAxesTheme.put("nowEventColor", rgb.apply(xt.nowEventColor));
-            dto.meta.xAxesTheme.put("pastEventColor", rgb.apply(xt.pastEventColor));
-
-            dto.meta.xAxesTheme.put("weekBgColor", rgb.apply(xt.weekBgColor));
-            dto.meta.xAxesTheme.put("weekBoderColor", rgb.apply(xt.weekBorderColor));
-            dto.meta.xAxesTheme.put("weekTextColor", rgb.apply(xt.weekTextColor));
-
-            dto.meta.xAxesTheme.put("yearBgColor", rgb.apply(xt.yearBgColor));
-            dto.meta.xAxesTheme.put("yearBorderColor", rgb.apply(xt.yearBorderColor));
-            dto.meta.xAxesTheme.put("yearTextColor", rgb.apply(xt.yearTextColor));
+            Theme theme = dark ? darkTheme : lightTheme;
+            dto.meta.xAxesTheme.putAll(theme.toMap());
         } catch (Exception ignored) {
             // non-fatal: if theme cannot be constructed, leave map empty
         }

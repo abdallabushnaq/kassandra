@@ -1,6 +1,6 @@
 // sprints-overview-v3.js
 // Virtual-canvas Sprints Overview chart.
-// Depends on: svg-utils.js, color-utils.js, date-utils.js, CalendarXAxes.js
+// Depends on: svg-utils.js, color-utils.js, date-utils.js, CalendarXAxes.js, theme-color-constants.js
 //
 // Interaction:
 //   plain wheel      → zoom (change dayWidth, keep day-under-cursor stable)
@@ -19,6 +19,7 @@
     const {createSvgElement, createRect, createText, createLine, createClipPath} = window.SvgUtils;
     const {getThemeColor, convertSprintColorToRgba} = window.ColorUtils;
     const {MS, getUtcDayMidnight, calculateDayIndex, calculateDayCount} = window.DateUtils;
+    const colorKeys = window.ThemeColorKeys;
 
     // ── Java SprintsOverviewRenderer constants (numberOfLines = 3) ────────────
     const LINE_HEIGHT = 13;
@@ -311,8 +312,8 @@
         function renderWeekendStripes(baseY, baseHeight) {
             const stripesGroup = createSvgElement('g', {'class': 'stripes'});
             const containerWidth = getContainerWidth();
-            const saturdayBgColor = getThemeColor(theme, 'dayOfweekSaturdayBgColor', '#d7d7d7');
-            const sundayBgColor = getThemeColor(theme, 'dayOfweekSundayBgColor', '#d7d7d7');
+            const saturdayBgColor = getThemeColor(theme, colorKeys.XAXES_DAY_OF_WEEK_SATURDAY_BG_COLOR);
+            const sundayBgColor = getThemeColor(theme, colorKeys.XAXES_DAY_OF_WEEK_SUNDAY_BG_COLOR);
 
             if (dayWidth >= MIN_DAY_BARS) {
                 // Per-day colored stripes (weekends colored, weekdays transparent)
@@ -328,7 +329,7 @@
                 }
             } else {
                 // Week-boundary lines only (one Monday line per week)
-                const gridColor = getThemeColor(theme, 'gridColor', '#e4e8f3');
+                const gridColor = getThemeColor(theme, colorKeys.GANTT_GRID_COLOR);
                 const firstVisibleDay = Math.max(0, Math.floor(scrollOffset));
                 const lastVisibleDay = Math.min(totalDays - 1, firstVisibleDay + Math.ceil(containerWidth / dayWidth) + 8);
                 for (let dayIdx = firstVisibleDay; dayIdx <= lastVisibleDay; dayIdx++) {
@@ -354,7 +355,7 @@
             const gridGroup = createSvgElement('g', {'class': 'grid'});
             if (dayWidth < MIN_DAY_BARS) return gridGroup;
 
-            const gridColor = getThemeColor(theme, 'gridColor');
+            const gridColor = getThemeColor(theme, colorKeys.GANTT_GRID_COLOR);
             const containerWidth = getContainerWidth();
             const firstVisibleDay = Math.max(0, Math.floor(scrollOffset) - 1);
             const lastVisibleDay = Math.min(totalDays, firstVisibleDay + Math.ceil(containerWidth / dayWidth) + 2);
