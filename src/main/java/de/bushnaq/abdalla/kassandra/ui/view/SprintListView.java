@@ -39,6 +39,7 @@ import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
@@ -46,6 +47,8 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
+import de.bushnaq.abdalla.kassandra.rest.dto.SprintOverviewDto;
+import de.bushnaq.abdalla.kassandra.service.SprintsOverviewService;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
@@ -63,6 +66,7 @@ import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
@@ -78,9 +82,11 @@ import java.util.stream.Collectors;
  *   <li>{@code /js/sprints-overview-v3.js} – chart orchestrator</li>
  * </ol>
  *
- * <p>Theme changes are handled both by the JS MutationObserver (watching the {@code <html theme>}
- * attribute) and by the server-side {@link ThemeChangedEvent}, so the chart always re-fetches
- * {@code /api/overview/sprints?theme=dark|light} with the correct parameter.
+ * <p>Theme changes are handled by the server-side {@link ThemeChangedEvent}: when the user
+ * switches themes {@link #refreshClientChart()} is called again, which rebuilds the
+ * {@link de.bushnaq.abdalla.kassandra.rest.dto.SprintOverviewDto} with the new theme and
+ * pushes fresh data to the browser.  The browser never fetches
+ * {@code /api/overview/sprints} directly.
  */
 @Route(value = "sprint-list", layout = MainLayout.class)
 @PageTitle("Sprints")
@@ -134,6 +140,8 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     private              Set<Feature>                 selectedFeatures                 = new HashSet<>();
     private final        ChatPanelSessionState        sessionState;
     private final        SprintApi                    sprintApi;
+    private final        SprintsOverviewService       sprintsOverviewService;
+    private final        JsonMapper                   jsonMapper;
     private final        StableDiffusionService       stableDiffusionService;
     private final        UserApi                      userApi;
     private final        VersionApi                   versionApi;
@@ -147,7 +155,8 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                           AiAssistantService aiAssistantService,
                           ChatPanelSessionState chatPanelSessionState,
                           KassandraProperties kassandraProperties,
-                          LmStudioService lmStudioService) {
+                          LmStudioService lmStudioService,
+                          SprintsOverviewService sprintsOverviewService) {
         super(clock);
         this.sprintApi              = sprintApi;
         this.productApi             = productApi;
@@ -158,6 +167,8 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.sessionState           = chatPanelSessionState;
+        this.sprintsOverviewService = sprintsOverviewService;
+        this.jsonMapper             = mapper;
 
         headerAvatar = new Image();
         headerAvatar.setWidth("32px");
@@ -565,15 +576,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         UI ui = attachEvent.getUI();
-        // Ensure scripts are loaded; browser will serve cached copies after first load.
-        ui.getPage().addJavaScript("/js/CalendarXAxes.js");
-        ui.getPage().addJavaScript("/js/sprints-overview-v3.js");
-        // Mount the chart after scripts and DOM are ready.
-        ui.getPage().executeJs(
-                "if(window.mountSprintsOverviewV3) window.mountSprintsOverviewV3($0);",
-                OVERVIEW_CONTAINER_ID
-        );
-        // Re-mount on server-side theme change so the chart re-fetches with ?theme=dark|light.
+        // Re-mount on server-side theme change so the chart is rebuilt with the new theme colours.
         overviewThemeChangedRegistration = ComponentUtil.addListener(
                 ui, ThemeChangedEvent.class,
                 e -> refreshClientChart());
@@ -607,20 +610,30 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
 
     /**
      * Triggers a client-side chart refresh by calling {@code mountSprintsOverviewV3}.
-     * The JS function fetches {@code /api/overview/sprints?theme=dark|light} and renders
-     * the chart into {@link #overviewChartContainer}.
+     * <p>
+     * Chart data is built server-side via {@link SprintsOverviewService} and passed directly
+     * as the second argument to the JS function, so the browser never needs to call
+     * {@code /api/overview/sprints}.  This keeps the overview API endpoint properly secured
+     * and avoids an extra round-trip.
      * <p>
      * Scripts are added on each call so they are always available even after a navigation
      * that unloaded them; the browser will serve them from cache.
      */
     private void refreshClientChart() {
         getUI().ifPresent(ui -> {
-            ui.getPage().addJavaScript("/js/CalendarXAxes.js");
-            ui.getPage().addJavaScript("/js/sprints-overview-v3.js");
-            ui.getPage().executeJs(
-                    "if(window.mountSprintsOverviewV3) window.mountSprintsOverviewV3($0);",
-                    OVERVIEW_CONTAINER_ID
-            );
+            boolean isDark = ui.getElement().getThemeList().contains(com.vaadin.flow.theme.lumo.Lumo.DARK);
+            try {
+                SprintOverviewDto dto  = sprintsOverviewService.getOverview(LocalDateTime.now(), null, isDark);
+                String            json = jsonMapper.writeValueAsString(dto);
+                ui.getPage().addJavaScript("/js/CalendarXAxes.js");
+                ui.getPage().addJavaScript("/js/SprintsOverviewChart.js");
+                ui.getPage().executeJs(
+                        "if(window.mountSprintsOverviewV3) window.mountSprintsOverviewV3($0, JSON.parse($1));",
+                        OVERVIEW_CONTAINER_ID, json
+                );
+            } catch (Exception e) {
+                log.error("Failed to build sprints overview chart data", e);
+            }
         });
     }
 

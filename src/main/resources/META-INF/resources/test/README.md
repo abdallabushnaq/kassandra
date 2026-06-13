@@ -1,6 +1,7 @@
 # Test Pages
 
-This directory contains standalone HTML test pages for testing chart components without running the full Kassandra application.
+This directory contains standalone HTML test pages for testing chart components without running the full Kassandra
+application.
 
 ## Sprints Overview Test
 
@@ -13,6 +14,7 @@ This directory contains standalone HTML test pages for testing chart components 
 #### Option 1: Via Running Application
 
 If Kassandra is running on port 8080:
+
 ```
 http://localhost:8080/test/sprints-overview-test.html
 ```
@@ -20,12 +22,14 @@ http://localhost:8080/test/sprints-overview-test.html
 #### Option 2: Standalone Web Server
 
 From this directory's parent:
+
 ```bash
 cd E:/github/kassandra/src/main/resources/META-INF/resources
 python -m http.server 8000
 ```
 
 Then open:
+
 ```
 http://localhost:8000/test/sprints-overview-test.html
 ```
@@ -33,6 +37,7 @@ http://localhost:8000/test/sprints-overview-test.html
 #### Option 3: Direct File Access
 
 Some browsers allow opening `sprints-overview-test.html` directly:
+
 ```
 file:///E:/github/kassandra/src/main/resources/META-INF/resources/test/sprints-overview-test.html
 ```
@@ -72,6 +77,7 @@ file:///E:/github/kassandra/src/main/resources/META-INF/resources/test/sprints-o
 ### Debugging
 
 Open browser DevTools (F12) to:
+
 - Check console for errors
 - Inspect SVG structure
 - Profile performance
@@ -81,6 +87,7 @@ Open browser DevTools (F12) to:
 ### Mock Data Structure
 
 The test page generates data matching the API contract:
+
 ```json
 {
   "lanes": [
@@ -116,6 +123,7 @@ This matches the real API endpoint `/api/overview/sprints`.
 ### Modifying Test Data
 
 Edit `generateMockData()` function in the HTML file to:
+
 - Change date ranges
 - Add/remove sprints
 - Modify colors
@@ -131,27 +139,30 @@ Edit `generateMockData()` function in the HTML file to:
 
 ### Performance Expectations
 
-| Scenario | Expected Render Time |
-|----------|---------------------|
-| Normal | < 100ms |
-| Dense | < 250ms |
-| Long Timeline | < 300ms |
+| Scenario      | Expected Render Time |
+|---------------|----------------------|
+| Normal        | < 100ms              |
+| Dense         | < 250ms              |
+| Long Timeline | < 300ms              |
 
 Times measured on mid-range hardware. Use DevTools Performance tab for detailed profiling.
 
 ### Troubleshooting
 
 **Chart doesn't render:**
+
 - Check console for JavaScript errors
-- Verify `sprints-overview-v3.js` exists in parent `js/` directory
+- Verify `SprintsOverviewChart.js` exists in parent `js/` directory
 - Ensure D3.js CDN is accessible
 
 **Chart looks wrong:**
+
 - Verify mock data structure matches API contract
 - Check theme colors in `xAxesTheme`
 - Inspect SVG with DevTools
 
 **Performance issues:**
+
 - Try "Sparse" scenario first
 - Check browser (Chrome/Edge recommended)
 - Close other tabs
@@ -181,5 +192,5 @@ To add a new test scenario:
 
 ### Questions?
 
-See the comprehensive documentation in `docs/` or check the source code comments in `js/sprints-overview-v3.js`.
+See the comprehensive documentation in `docs/` or check the source code comments in `js/SprintsOverviewChart.js`.
 

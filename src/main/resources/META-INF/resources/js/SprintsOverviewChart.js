@@ -524,19 +524,13 @@
 
     // ── Public mount function ─────────────────────────────────────────────────
     // Called by:
-    //   1. Script IIFE on first load (may be a no-op if container not yet in DOM)
-    //   2. Vaadin executeJs on every navigation (container is guaranteed to exist)
-    //   3. Test page with injectedData to skip the fetch
+    //   1. Vaadin executeJs on every navigation/theme-change (data is always injected by the server)
+    //   2. Test page with injectedData
+    //
+    // Data is always supplied as the second argument by SprintListView.refreshClientChart(),
+    // which serialises the SprintOverviewDto server-side and passes it directly.
+    // The browser never fetches /api/overview/sprints; that endpoint now requires authentication.
     var _instance = null;
-    var _themeWatcher = null;  // MutationObserver watching <html theme="...">
-
-    /**
-     * True when Vaadin's Lumo dark theme is active.
-     * Checks the body[theme] attribute set by Vaadin after theme is applied.
-     */
-    function isDarkMode() {
-        return (document.body.getAttribute('theme') || '').includes('dark');
-    }
 
     function mountSprintsOverviewV3(containerId, injectedData) {
         const id = containerId || 'sprints-overview-v3-container';
@@ -550,39 +544,11 @@
 
         if (injectedData) {
             _instance = createChart(c, injectedData, {containerId: id});
-            return;
+        } else {
+            c.innerHTML = '<div style="padding:16px;color:red;font-family:sans-serif;">No chart data provided.</div>';
         }
-
-        // Watch for Vaadin dark/light mode toggle and re-fetch when it changes
-        if (_themeWatcher) {
-            _themeWatcher.disconnect();
-            _themeWatcher = null;
-        }
-        _themeWatcher = new MutationObserver(function () {
-            mountSprintsOverviewV3(id);
-        });
-        _themeWatcher.observe(document.documentElement, {attributes: true, attributeFilter: ['theme']});
-
-        const themeParam = isDarkMode() ? 'dark' : 'light';
-        c.innerHTML = '<div style="padding:16px;color:#666;font-family:sans-serif;">Loading\u2026</div>';
-        fetch('/api/overview/sprints?theme=' + themeParam)
-            .then(function (r) {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.json();
-            })
-            .then(function (data) {
-                c.innerHTML = '';
-                _instance = createChart(c, data, {containerId: id});
-            })
-            .catch(function (err) {
-                console.error('SprintsOverviewV3:', err);
-                c.innerHTML = '<div style="padding:16px;color:red;font-family:sans-serif;">Error: ' + err.message + '</div>';
-            });
     }
 
     window.mountSprintsOverviewV3 = mountSprintsOverviewV3;
     window.createSprintsOverviewV3 = createChart;  // used by test page
-
-    // Auto-mount on script load (first-ever page load)
-    mountSprintsOverviewV3();
 })();
