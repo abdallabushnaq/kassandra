@@ -46,11 +46,11 @@ public class XAxesTheme {
     public Color   pastEventColor;
     //-------------------------- Week
     public Color   weekBgColor;
-    public Color   weekBoderColor;
+    public Color   weekBorderColor;
     public Color   weekTextColor;
     //-------------------------- Year
     public Color   yearBgColor;
-    public Color   yearBoderColor;
+    public Color   yearBorderColor;
     public Color   yearTextColor;
 
     public XAxesTheme() {

@@ -24,7 +24,8 @@
      * @param {string} fallbackColor The fallback color to use if key is not found
      * @returns {string} The theme color or fallback color as a hex string
      */
-    function getThemeColor(theme, key, fallbackColor) {
+    function getThemeColor(theme, key) {
+        const fallbackColor = '#ffffff';
         return (theme && theme[key] != null) ? (convertNumberToHexColor(theme[key]) || fallbackColor) : fallbackColor;
     }
 
@@ -53,8 +54,4 @@
         convertSprintColorToRgba
     };
 })();
-/*
- * Copyright (C) 2025-2026 Abdalla Bushnaq
- * Licensed under the Apache License, Version 2.0
- */
 

@@ -16,9 +16,9 @@
     'use strict';
 
     // Destructure utilities from global scope
-    const { createSvgElement, createRect, createText, createLine, createClipPath } = window.SvgUtils;
-    const { getThemeColor, convertSprintColorToRgba } = window.ColorUtils;
-    const { MS, getUtcDayMidnight, calculateDayIndex, calculateDayCount } = window.DateUtils;
+    const {createSvgElement, createRect, createText, createLine, createClipPath} = window.SvgUtils;
+    const {getThemeColor, convertSprintColorToRgba} = window.ColorUtils;
+    const {MS, getUtcDayMidnight, calculateDayIndex, calculateDayCount} = window.DateUtils;
 
     // ── Java SprintsOverviewRenderer constants (numberOfLines = 3) ────────────
     const LINE_HEIGHT = 13;
@@ -354,7 +354,7 @@
             const gridGroup = createSvgElement('g', {'class': 'grid'});
             if (dayWidth < MIN_DAY_BARS) return gridGroup;
 
-            const gridColor = getThemeColor(theme, 'gridColor', '#e4e8f3');
+            const gridColor = getThemeColor(theme, 'gridColor');
             const containerWidth = getContainerWidth();
             const firstVisibleDay = Math.max(0, Math.floor(scrollOffset) - 1);
             const lastVisibleDay = Math.min(totalDays, firstVisibleDay + Math.ceil(containerWidth / dayWidth) + 2);
@@ -396,7 +396,13 @@
                     if (sprintX + sprintWidth < 0 || sprintX > containerWidth) return;
 
                     // Register hit area for context menu
-                    sprintHitAreas.push({sprint, x: sprintX, y: laneY, width: Math.max(0, sprintWidth), height: SPRINT_H});
+                    sprintHitAreas.push({
+                        sprint,
+                        x: sprintX,
+                        y: laneY,
+                        width: Math.max(0, sprintWidth),
+                        height: SPRINT_H
+                    });
 
                     // Draw sprint rectangle
                     const rectElement = createRect(sprintX, laneY, sprintWidth, SPRINT_H, {

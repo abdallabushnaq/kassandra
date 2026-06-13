@@ -105,13 +105,13 @@ public class LightTheme extends Theme {
         xAxesTheme.monthBorderColor = Color.WHITE;
         xAxesTheme.monthTextColor   = Color.WHITE;
         //------------------------- Week
-        xAxesTheme.weekBgColor    = new Color(0xababab);
-        xAxesTheme.weekBoderColor = Color.WHITE;
-        xAxesTheme.weekTextColor  = Color.WHITE;
+        xAxesTheme.weekBgColor     = new Color(0xababab);
+        xAxesTheme.weekBorderColor = Color.WHITE;
+        xAxesTheme.weekTextColor   = Color.WHITE;
         //------------------------- Year
-        xAxesTheme.yearBgColor    = new Color(0xababab);
-        xAxesTheme.yearBoderColor = Color.white;
-        xAxesTheme.yearTextColor  = Color.WHITE;
+        xAxesTheme.yearBgColor     = new Color(0xababab);
+        xAxesTheme.yearBorderColor = Color.white;
+        xAxesTheme.yearTextColor   = Color.WHITE;
         //-------------------------
         xAxesTheme.futureEventColor   = Color.blue;
         xAxesTheme.milestoneFlagColor = chartTheme.backgroundColor;

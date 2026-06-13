@@ -123,7 +123,7 @@ public class CalendarXAxes {
                         int x2 = calculateDayX(end) - dayOfWeek.getWidth() / 2;
                         drawTextBox(daysX - (dayOfWeek.getWidth() / 2 - 1), x2 + dayOfWeek.getWidth(), year.getY(), year.getHeight(),
                                 String.valueOf(startCal.getYear()), parent.theme.xAxesTheme.yearTextColor, parent.theme.xAxesTheme.yearBgColor,
-                                parent.theme.xAxesTheme.yearBoderColor, year.getFont(), false);
+                                parent.theme.xAxesTheme.yearBorderColor, year.getFont(), false);
                         yearWasDrawn = true;
                     }
                 } else if (CalendarSize.YEARS.equals(calendarSize) && phase == 3 && (startCal.getDayOfMonth() == 1 || !monthWasDrawn) && isMonthVisible()) {
@@ -156,7 +156,7 @@ public class CalendarXAxes {
                             calendarWeek = DateUtil.createDateString(currentDay, sdf);
                         }
                         drawTextBox(daysX - (dayOfWeek.getWidth() / 2 - 1), x2 + dayOfWeek.getWidth(), week.getY(), week.getHeight() - 1, calendarWeek,
-                                parent.theme.xAxesTheme.weekTextColor, parent.theme.xAxesTheme.weekBgColor, parent.theme.xAxesTheme.weekBoderColor,
+                                parent.theme.xAxesTheme.weekTextColor, parent.theme.xAxesTheme.weekBgColor, parent.theme.xAxesTheme.weekBorderColor,
                                 week.getFont(), false);
                         firstWeekWasDrawn = true;
                     }

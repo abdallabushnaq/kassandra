@@ -9,9 +9,9 @@
     'use strict';
 
     // Destructure utilities from global scope
-    const { createSvgElement, createRect, createText, createClipPath } = window.SvgUtils;
-    const { getThemeColor } = window.ColorUtils;
-    const { MS, getUtcDayMidnight, calculateDayIndex } = window.DateUtils;
+    const {createSvgElement, createRect, createText, createClipPath} = window.SvgUtils;
+    const {getThemeColor} = window.ColorUtils;
+    const {MS, getUtcDayMidnight, calculateDayIndex} = window.DateUtils;
 
     // Row heights (Java CalendarElement heights: fontSize + margine=4)
     const YEAR_H = 17;   // 13+4 → rect bh-1 = 16px visible
@@ -77,35 +77,35 @@
          */
         draw(svg, chartStart, totalDays, dayWidth, scrollOffset, viewportWidth) {
             const theme = this.theme;
-            const headerGroup = createSvgElement('g', {'class': 'calendar-header'});
+            const headerGroup = createSvgElement('g', {'class': 'calendar-header'}, undefined);
             svg.appendChild(headerGroup);
 
             // ── Resolve theme colors (Java LightTheme defaults as fallback) ───
-            const yearBgColor = getThemeColor(theme, 'yearBgColor', '#ababab');
-            const yearTextColor = getThemeColor(theme, 'yearTextColor', '#ffffff');
-            const yearBorderColor = getThemeColor(theme, 'yearBoderColor', '#ffffff');
-            const monthTextColor = getThemeColor(theme, 'monthTextColor', '#ffffff');
-            const monthBorderColor = getThemeColor(theme, 'monthBorderColor', '#ffffff');
-            const weekBgColor = getThemeColor(theme, 'weekBgColor', '#ababab');
-            const weekTextColor = getThemeColor(theme, 'weekTextColor', '#ffffff');
-            const weekBorderColor = getThemeColor(theme, 'weekBoderColor', '#ffffff');
-            const dayOfMonthBgColor = getThemeColor(theme, 'dayOfMonthBgColor', '#ababab');
-            const dayOfMonthBorderColor = getThemeColor(theme, 'dayOfMonthBorderColor', '#ffffff');
-            const dayOfMonthTextColor = getThemeColor(theme, 'dayOfMonthTextColor', '#ffffff');
-            const dayOfMonthWeekendBgColor = getThemeColor(theme, 'dayOfMonthWeekendBgColor', '#d7d7d7');
-            const dayOfMonthWeekendTextColor = getThemeColor(theme, 'dayOfMonthWeekendTextColor', '#000000');
-            const dayOfWeekBgColor = getThemeColor(theme, 'dayOfweekBgColor', '#ffffff');
-            const dayOfWeekBorderColor = getThemeColor(theme, 'dayOfWeekBorderColor', '#ffffff');
-            const dayOfWeekTextColor = getThemeColor(theme, 'dayOfWeekTextColor', '#000000');
-            const dayOfWeekSaturdayBgColor = getThemeColor(theme, 'dayOfweekSaturdayBgColor', '#d7d7d7');
-            const dayOfWeekSundayBgColor = getThemeColor(theme, 'dayOfweekSundayBgColor', '#d7d7d7');
-            const dayOfWeekWeekendTextColor = getThemeColor(theme, 'dayOfWeekWeekendTextColor', '#000000');
+            const yearBgColor = getThemeColor(theme, 'yearBgColor');
+            const yearTextColor = getThemeColor(theme, 'yearTextColor');
+            const yearBorderColor = getThemeColor(theme, 'yearBorderColor');
+            const monthTextColor = getThemeColor(theme, 'monthTextColor');
+            const monthBorderColor = getThemeColor(theme, 'monthBorderColor');
+            const weekBgColor = getThemeColor(theme, 'weekBgColor');
+            const weekTextColor = getThemeColor(theme, 'weekTextColor');
+            const weekBorderColor = getThemeColor(theme, 'weekBorderColor');
+            const dayOfMonthBgColor = getThemeColor(theme, 'dayOfMonthBgColor');
+            const dayOfMonthBorderColor = getThemeColor(theme, 'dayOfMonthBorderColor');
+            const dayOfMonthTextColor = getThemeColor(theme, 'dayOfMonthTextColor');
+            const dayOfMonthWeekendBgColor = getThemeColor(theme, 'dayOfMonthWeekendBgColor');
+            const dayOfMonthWeekendTextColor = getThemeColor(theme, 'dayOfMonthWeekendTextColor');
+            const dayOfWeekBgColor = getThemeColor(theme, 'dayOfweekBgColor');
+            const dayOfWeekBorderColor = getThemeColor(theme, 'dayOfWeekBorderColor');
+            const dayOfWeekTextColor = getThemeColor(theme, 'dayOfWeekTextColor');
+            const dayOfWeekSaturdayBgColor = getThemeColor(theme, 'dayOfweekSaturdayBgColor');
+            const dayOfWeekSundayBgColor = getThemeColor(theme, 'dayOfweekSundayBgColor');
+            const dayOfWeekWeekendTextColor = getThemeColor(theme, 'dayOfWeekWeekendTextColor');
 
             // Java XAxesTheme.monthBgColors defaults (from XAxesTheme constructor)
-            const MONTH_BACKGROUNDS = [
-                '#187dc3', '#24aeef', '#279e68', '#62b742', '#acc231', '#f9b71b',
-                '#f1751d', '#e54629', '#e71657', '#ad3483', '#654198', '#0855a3'
-            ];
+            // const MONTH_BACKGROUNDS = [
+            //     '#187dc3', '#24aeef', '#279e68', '#62b742', '#acc231', '#f9b71b',
+            //     '#f1751d', '#e54629', '#e71657', '#ad3483', '#654198', '#0855a3'
+            // ];
             const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const DAY_ABBREVIATIONS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -149,7 +149,7 @@
                     headerGroup.appendChild(createSvgElement('line', {
                         x1: cellX + cellWidth, y1: cellY, x2: cellX + cellWidth, y2: cellY + cellHeight - 1,
                         stroke: borderColor, 'stroke-width': '1'
-                    }));
+                    }, undefined));
                 }
 
                 if (!labelText) return;
@@ -191,7 +191,7 @@
                 const endIndex = calculateDayIndex(monthEnd, chartStart);
                 const cellX = dayIndexToPixelX(Math.max(0, startIndex));
                 const cellWidth = dayIndexToPixelX(Math.min(totalDays - 1, endIndex) + 1) - cellX;
-                const monthBgColor = getThemeColor(theme, 'monthBgColors.' + monthIndex, MONTH_BACKGROUNDS[monthIndex]);
+                const monthBgColor = getThemeColor(theme, 'monthBgColors.' + monthIndex);
                 drawCalendarCell(cellX, cellWidth, currentY, MONTH_H, monthBgColor, monthBorderColor, MONTH_NAMES[monthIndex], monthTextColor, '11', false);
                 monthDate = new Date(Date.UTC(year, monthIndex + 1, 1));
             }
@@ -272,7 +272,3 @@
     // Export
     window.CalendarXAxes = CalendarXAxes;
 })();
-/*
- * Copyright (C) 2025-2026 Abdalla Bushnaq
- * Licensed under the Apache License, Version 2.0
- */

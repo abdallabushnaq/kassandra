@@ -234,11 +234,11 @@ public class SprintsOverviewService {
             dto.meta.xAxesTheme.put("pastEventColor", rgb.apply(xt.pastEventColor));
 
             dto.meta.xAxesTheme.put("weekBgColor", rgb.apply(xt.weekBgColor));
-            dto.meta.xAxesTheme.put("weekBoderColor", rgb.apply(xt.weekBoderColor));
+            dto.meta.xAxesTheme.put("weekBoderColor", rgb.apply(xt.weekBorderColor));
             dto.meta.xAxesTheme.put("weekTextColor", rgb.apply(xt.weekTextColor));
 
             dto.meta.xAxesTheme.put("yearBgColor", rgb.apply(xt.yearBgColor));
-            dto.meta.xAxesTheme.put("yearBoderColor", rgb.apply(xt.yearBoderColor));
+            dto.meta.xAxesTheme.put("yearBorderColor", rgb.apply(xt.yearBorderColor));
             dto.meta.xAxesTheme.put("yearTextColor", rgb.apply(xt.yearTextColor));
         } catch (Exception ignored) {
             // non-fatal: if theme cannot be constructed, leave map empty

@@ -36,7 +36,12 @@
      * @returns {SVGRectElement} The created rectangle element
      */
     function createRect(x, y, width, height, additionalAttrs) {
-        return createSvgElement('rect', Object.assign({x, y, width: Math.max(0, width), height: Math.max(0, height)}, additionalAttrs));
+        return createSvgElement('rect', Object.assign({
+            x,
+            y,
+            width: Math.max(0, width),
+            height: Math.max(0, height)
+        }, additionalAttrs));
     }
 
     /**
@@ -90,8 +95,3 @@
         createClipPath
     };
 })();
-/*
- * Copyright (C) 2025-2026 Abdalla Bushnaq
- * Licensed under the Apache License, Version 2.0
- */
-

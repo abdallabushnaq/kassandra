@@ -105,13 +105,13 @@ public class DarkTheme extends Theme {
         xAxesTheme.monthBorderColor = baseBorderColor;
         xAxesTheme.monthTextColor   = Color.white;
         //------------------------- Week
-        xAxesTheme.weekBgColor    = ColorUtil.colorFraction(baseBgColor, 2);
-        xAxesTheme.weekBoderColor = baseBorderColor;
-        xAxesTheme.weekTextColor  = subtileTextColor;
+        xAxesTheme.weekBgColor     = ColorUtil.colorFraction(baseBgColor, 2);
+        xAxesTheme.weekBorderColor = baseBorderColor;
+        xAxesTheme.weekTextColor   = subtileTextColor;
         //------------------------- Year
-        xAxesTheme.yearBgColor    = baseBgColor;
-        xAxesTheme.yearBoderColor = baseBorderColor;
-        xAxesTheme.yearTextColor  = subtileTextColor;
+        xAxesTheme.yearBgColor     = baseBgColor;
+        xAxesTheme.yearBorderColor = baseBorderColor;
+        xAxesTheme.yearTextColor   = subtileTextColor;
         //-------------------------
         xAxesTheme.futureEventColor   = Color.blue;
         xAxesTheme.milestoneFlagColor = Color.black;
