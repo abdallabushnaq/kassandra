@@ -1,6 +1,6 @@
 // sprints-overview-v3.js
 // Virtual-canvas Sprints Overview chart.
-// Depends on: CalendarXAxes.js  (must be loaded first)
+// Depends on: svg-utils.js, color-utils.js, date-utils.js, CalendarXAxes.js
 //
 // Interaction:
 //   plain wheel      → zoom (change dayWidth, keep day-under-cursor stable)
@@ -14,6 +14,11 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 (function () {
     'use strict';
+
+    // Destructure utilities from global scope
+    const { createSvgElement, createRect, createText, createLine, createClipPath } = window.SvgUtils;
+    const { getThemeColor, convertSprintColorToRgba } = window.ColorUtils;
+    const { MS, getUtcDayMidnight, calculateDayIndex, calculateDayCount } = window.DateUtils;
 
     // ── Java SprintsOverviewRenderer constants (numberOfLines = 3) ────────────
     const LINE_HEIGHT = 13;
@@ -30,108 +35,71 @@
     const MAX_DW = 80;
     const ZOOM_STEP = 1.25;
 
-    const MS = 86400000;
-    const SVG_NS = 'http://www.w3.org/2000/svg';
-
-    // ── SVG helpers ───────────────────────────────────────────────────────────
-    function el(tag, attrs, txt) {
-        const e = document.createElementNS(SVG_NS, tag);
-        if (attrs) for (const k of Object.keys(attrs)) e.setAttribute(k, String(attrs[k]));
-        if (txt != null) e.textContent = txt;
-        return e;
-    }
-
-    function rct(x, y, w, h, a) {
-        return el('rect', Object.assign({x, y, width: Math.max(0, w), height: Math.max(0, h)}, a));
-    }
-
-    function ln(x1, y1, x2, y2, a) {
-        return el('line', Object.assign({x1, y1, x2, y2}, a));
-    }
-
-    function tx(x, y, c, a) {
-        return el('text', Object.assign({x, y}, a), c);
-    }
-
-    function mkClip(id, x, y, w, h) {
-        const d = el('defs'), cp = el('clipPath', {id});
-        cp.appendChild(rct(x, y, w, h, {}));
-        d.appendChild(cp);
-        return d;
-    }
-
-    // ── Color helpers ─────────────────────────────────────────────────────────
-    function numToHex(v) {
-        if (v == null) return null;
-        if (typeof v === 'string') return v;
-        if (typeof v === 'number') return '#' + (v >>> 0).toString(16).padStart(6, '0').slice(-6);
-        return null;
-    }
-
-    function tc(theme, key, fb) {
-        return (theme && theme[key] != null) ? (numToHex(theme[key]) || fb) : fb;
-    }
-
-    function utcDay(d) {
-        const dt = (typeof d === 'string') ? new Date(d) : d;
-        return new Date(Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()));
-    }
-
-    function dayIdxOf(date, start) {
-        return Math.round((utcDay(date).getTime() - start.getTime()) / MS);
-    }
-
-    function dayCount(s, e) {
-        return Math.round((utcDay(e).getTime() - utcDay(s).getTime()) / MS) + 1;
-    }
-
-    // Java encodes sprint color as #rrggbbaa → rgba()
-    function sprintFill(hex) {
-        if (!hex) return 'rgba(31,143,255,0.31)';
-        if (/^#[0-9a-fA-F]{8}$/.test(hex)) {
-            const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16),
-                b = parseInt(hex.slice(5, 7), 16), a = (parseInt(hex.slice(7, 9), 16) / 255).toFixed(3);
-            return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
-        }
-        return hex;
-    }
 
     // ── localStorage view-state helpers ───────────────────────────────────────
     // Key format: kassandra.chart.<chartName>.view
     // where <chartName> is derived from the container ID by stripping a trailing "-container".
     // Example: "sprints-overview-v3-container" → "kassandra.chart.sprints-overview-v3.view"
 
-    function viewStateKey(containerId) {
+    /**
+     * Generates the localStorage key for storing chart view state (zoom and scroll position).
+     * @param {string} containerId The DOM element ID of the chart container
+     * @returns {string} The localStorage key for this chart instance
+     */
+    function generateViewStateKey(containerId) {
         const chartName = (containerId || 'chart').replace(/-container$/, '');
         return 'kassandra.chart.' + chartName + '.view';
     }
 
-    function loadViewState(containerId) {
+    /**
+     * Loads the saved view state (dayWidth and scrollOffset) from localStorage.
+     * @param {string} containerId The DOM element ID of the chart container
+     * @returns {?Object} Object with dayWidth and scrollOffset properties, or null if not saved
+     */
+    function loadChartViewState(containerId) {
         try {
-            const raw = localStorage.getItem(viewStateKey(containerId));
-            if (raw) {
-                const s = JSON.parse(raw);
-                if (typeof s.dayWidth === 'number' && typeof s.scrollOffset === 'number') return s;
+            const rawData = localStorage.getItem(generateViewStateKey(containerId));
+            if (rawData) {
+                const state = JSON.parse(rawData);
+                if (typeof state.dayWidth === 'number' && typeof state.scrollOffset === 'number') return state;
             }
-        } catch (e) { /* storage may be unavailable */
+        } catch (error) { /* storage may be unavailable */
         }
         return null;
     }
 
-    function saveViewState(containerId, dayWidth, scrollOffset) {
+    /**
+     * Saves the current view state (dayWidth and scrollOffset) to localStorage.
+     * Silently fails if storage is unavailable or quota exceeded.
+     * @param {string} containerId The DOM element ID of the chart container
+     * @param {number} dayWidth Current pixel width per day
+     * @param {number} scrollOffset Current scroll position (first visible day index)
+     */
+    function saveChartViewState(containerId, dayWidth, scrollOffset) {
         try {
-            localStorage.setItem(viewStateKey(containerId), JSON.stringify({dayWidth, scrollOffset}));
-        } catch (e) { /* quota exceeded or restricted – silently ignore */
+            localStorage.setItem(generateViewStateKey(containerId), JSON.stringify({dayWidth, scrollOffset}));
+        } catch (error) { /* quota exceeded or restricted – silently ignore */
         }
     }
 
     // ── Context menu (one singleton per page) ─────────────────────────────────
-    var _ctxMenu = null;
 
-    function ensureContextMenu() {
-        if (_ctxMenu) return _ctxMenu;
-        const m = document.createElement('div');
-        m.style.cssText = [
+    /**
+     * Global context menu DOM element (singleton, created on first use).
+     * @type {?HTMLDivElement}
+     */
+    var singletoneContextMenu = null;
+
+    /**
+     * Initializes the context menu DOM element if not already created.
+     * Creates a single floating menu element on first call; subsequent calls return the existing element.
+     * The menu includes click-away and keyboard dismissal.
+     * @returns {HTMLDivElement} The context menu DOM element
+     */
+    function initializeContextMenuSingleton() {
+        if (singletoneContextMenu) return singletoneContextMenu;
+        const menuElement = document.createElement('div');
+        menuElement.style.cssText = [
             'position:fixed',
             'z-index:99999',
             'background:var(--lumo-base-color,#fff)',
@@ -146,37 +114,53 @@
             'display:none',
             'user-select:none',
         ].join(';');
-        document.body.appendChild(m);
-        _ctxMenu = m;
-        // Dismiss on any click or scroll outside the menu
-        document.addEventListener('click', function (e) {
-            if (!_ctxMenu.contains(e.target)) hideContextMenu();
+        document.body.appendChild(menuElement);
+        singletoneContextMenu = menuElement;
+
+        // Dismiss on any click outside the menu
+        document.addEventListener('click', function (event) {
+            if (!singletoneContextMenu.contains(event.target)) hideContextMenuSingleton();
         });
-        document.addEventListener('scroll', hideContextMenu, true);
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') hideContextMenu();
+
+        // Dismiss on scroll
+        document.addEventListener('scroll', hideContextMenuSingleton, true);
+
+        // Dismiss on Escape key
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') hideContextMenuSingleton();
         });
-        return m;
+
+        return menuElement;
     }
 
-    function hideContextMenu() {
-        if (_ctxMenu) _ctxMenu.style.display = 'none';
+    /**
+     * Hides the context menu by setting display to 'none'.
+     */
+    function hideContextMenuSingleton() {
+        if (singletoneContextMenu) singletoneContextMenu.style.display = 'none';
     }
 
-    function showContextMenu(clientX, clientY, sprint) {
-        const m = ensureContextMenu();
-        m.innerHTML = '';
+    /**
+     * Displays the context menu at the specified screen position with sprint-specific options.
+     * Menu includes navigation links to Backlog, Active Sprint, and Quality Board views.
+     * @param {number} clientX Screen X coordinate where the menu should appear
+     * @param {number} clientY Screen Y coordinate where the menu should appear
+     * @param {Object} sprint Sprint object with id, name, and navigation properties
+     */
+    function showContextMenuForSprint(clientX, clientY, sprint) {
+        const menuElement = initializeContextMenuSingleton();
+        menuElement.innerHTML = '';
 
-        const items = [
+        const menuItems = [
             {label: '\u{1F4CB} Backlog', url: 'backlog?sprint=' + sprint.id},
             {label: '\u25B6 Active Sprint', url: 'active-sprints?sprints=' + sprint.id},
             {label: '\u{1F4CB} Quality Board', url: 'quality-board?sprint=' + sprint.id},
         ];
 
         // Optional header showing sprint name
-        const header = document.createElement('div');
-        header.textContent = sprint.name || 'Sprint';
-        header.style.cssText = [
+        const headerElement = document.createElement('div');
+        headerElement.textContent = sprint.name || 'Sprint';
+        headerElement.style.cssText = [
             'padding:4px 14px 4px 14px',
             'font-weight:bold',
             'font-size:12px',
@@ -188,367 +172,526 @@
             'text-overflow:ellipsis',
             'max-width:220px',
         ].join(';');
-        m.appendChild(header);
+        menuElement.appendChild(headerElement);
 
-        items.forEach(function (item) {
-            const row = document.createElement('div');
-            row.textContent = item.label;
-            row.style.cssText = [
+        // Add menu items
+        menuItems.forEach(function (item) {
+            const rowElement = document.createElement('div');
+            rowElement.textContent = item.label;
+            rowElement.style.cssText = [
                 'padding:6px 16px',
                 'cursor:pointer',
                 'white-space:nowrap',
                 'transition:background 0.1s',
             ].join(';');
-            row.addEventListener('mouseenter', function () {
-                row.style.background = 'var(--lumo-primary-color-10pct,#e8f0fe)';
+
+            rowElement.addEventListener('mouseenter', function () {
+                rowElement.style.background = 'var(--lumo-primary-color-10pct,#e8f0fe)';
             });
-            row.addEventListener('mouseleave', function () {
-                row.style.background = '';
+
+            rowElement.addEventListener('mouseleave', function () {
+                rowElement.style.background = '';
             });
-            row.addEventListener('click', function (e) {
-                e.stopPropagation();
-                hideContextMenu();
+
+            rowElement.addEventListener('click', function (event) {
+                event.stopPropagation();
+                hideContextMenuSingleton();
                 window.location.href = item.url;
             });
-            m.appendChild(row);
+
+            menuElement.appendChild(rowElement);
         });
 
         // Position: prefer right-and-below cursor; flip if it would overflow viewport
-        m.style.display = 'block';
-        const mw = m.offsetWidth || 168;
-        const mh = m.offsetHeight || 120;
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        const left = (clientX + mw + 2 > vw) ? (clientX - mw) : (clientX + 2);
-        const top = (clientY + mh + 2 > vh) ? (clientY - mh) : (clientY + 2);
-        m.style.left = Math.max(0, left) + 'px';
-        m.style.top = Math.max(0, top) + 'px';
+        menuElement.style.display = 'block';
+        const menuWidth = menuElement.offsetWidth || 168;
+        const menuHeight = menuElement.offsetHeight || 120;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const leftPosition = (clientX + menuWidth + 2 > viewportWidth) ? (clientX - menuWidth) : (clientX + 2);
+        const topPosition = (clientY + menuHeight + 2 > viewportHeight) ? (clientY - menuHeight) : (clientY + 2);
+        menuElement.style.left = Math.max(0, leftPosition) + 'px';
+        menuElement.style.top = Math.max(0, topPosition) + 'px';
     }
 
     // ── Chart factory ─────────────────────────────────────────────────────────
-    function createChart(container, data, opts) {
-        opts = opts || {};
-        const containerId = opts.containerId || container.id || 'chart';
-        const meta = data.meta || {};
+
+    /**
+     * Creates and renders a sprints overview interactive chart.
+     * The chart displays project sprints across a timeline with interactive zoom and pan controls.
+     * View state (dayWidth and scrollOffset) is automatically persisted to localStorage and restored
+     * on subsequent instantiations.
+     *
+     * Interaction:
+     * - Mouse wheel (vertical) → zoom in/out (maintains day under cursor)
+     * - Trackpad swipe (horizontal) → pan left/right
+     * - Click and drag → pan left/right
+     * - Right-click on sprint → context menu with navigation links
+     * - Container resize → automatic redraw
+     *
+     * @param {HTMLElement} container DOM container element where the chart will be rendered
+     * @param {Object} data Chart data object with meta (configuration) and lanes (sprint rows)
+     * @param {Object} options Optional configuration object
+     * @param {string} options.containerId Unique identifier for this chart instance (used for localStorage)
+     * @param {number} options.initialDayWidth Initial pixel width per day
+     * @returns {Object} Control API with render, schedule, and destroy methods
+     */
+    function createChart(container, data, options) {
+        options = options || {};
+        const containerId = options.containerId || container.id || 'chart';
+        const metadata = data.meta || {};
         const lanes = data.lanes || [];
-        const theme = meta.xAxesTheme || {};
-        const chartStart = utcDay(new Date(meta.chartStart || Date.now()));
-        const chartEnd = utcDay(new Date(meta.chartEnd || Date.now()));
-        const nowDate = meta.now ? utcDay(new Date(meta.now)) : utcDay(new Date());
-        const totalDays = dayCount(chartStart, chartEnd);
+        const theme = metadata.xAxesTheme || {};
+        const chartStart = getUtcDayMidnight(new Date(metadata.chartStart || Date.now()));
+        const chartEnd = getUtcDayMidnight(new Date(metadata.chartEnd || Date.now()));
+        const currentDate = metadata.now ? getUtcDayMidnight(new Date(metadata.now)) : getUtcDayMidnight(new Date());
+        const totalDays = calculateDayCount(chartStart, chartEnd);
 
         // CalendarXAxes class from CalendarXAxes.js
         const calendar = new window.CalendarXAxes(theme);
 
-        let dayWidth = Math.min(MAX_DW, Math.max(MIN_DW, opts.initialDayWidth || DEFAULT_DW));
-        let scrollOffset = 0;  // fractional day index of the left viewport edge
+        let dayWidth = Math.min(MAX_DW, Math.max(MIN_DW, options.initialDayWidth || DEFAULT_DW));
+        let scrollOffset = 0;  // First visible day index (fractional, zero-based)
 
-        // Hit areas for context menu – rebuilt on every render()
-        let _hitAreas = [];  // [{ sp, x, y, w, h }]
+        // Hit areas for context menu – rebuilt on every render
+        let sprintHitAreas = [];  // [{sprint, x, y, width, height}]
 
-        const dX = di => (di - scrollOffset) * dayWidth;
-        const cw = () => Math.max(200, container.clientWidth || 800);
-        const calH = () => calendar.getHeight(dayWidth);
+        // Helper: Convert day index to viewport pixel X coordinate
+        const dayIndexToPixelX = (dayIndex) => (dayIndex - scrollOffset) * dayWidth;
 
-        // ── Restore or default scroll/zoom position ────────────────────────────
-        function initScroll() {
-            const saved = loadViewState(containerId);
-            if (saved) {
-                dayWidth = Math.min(MAX_DW, Math.max(MIN_DW, saved.dayWidth));
-                scrollOffset = saved.scrollOffset;
-                clampScroll();  // clampScroll needs dayWidth set first
+        // Helper: Get current container width
+        const getContainerWidth = () => Math.max(200, container.clientWidth || 800);
+
+        // Helper: Get calendar header height
+        const getCalendarHeight = () => calendar.getHeight(dayWidth);
+
+        // ── Restore or initialize scroll/zoom position ────────────────────────
+        /**
+         * Initializes scroll position and zoom level from saved state or defaults.
+         * If saved state exists, restores dayWidth and scrollOffset.
+         * Otherwise, initializes with "today" at 30% from the left edge.
+         */
+        function initializeScroll() {
+            const savedState = loadChartViewState(containerId);
+            if (savedState) {
+                dayWidth = Math.min(MAX_DW, Math.max(MIN_DW, savedState.dayWidth));
+                scrollOffset = savedState.scrollOffset;
+                constrainScrollOffset();
             } else {
                 // Default: put "today" at 30% from the left
-                const ni = dayIdxOf(nowDate, chartStart);
-                const v = cw() / dayWidth;
-                scrollOffset = Math.max(0, Math.min(totalDays - v, ni - v * 0.3));
+                const todayIndex = calculateDayIndex(currentDate, chartStart);
+                const visibleDays = getContainerWidth() / dayWidth;
+                scrollOffset = Math.max(0, Math.min(totalDays - visibleDays, todayIndex - visibleDays * 0.3));
             }
         }
 
-        // ── Debounced save after interactions ─────────────────────────────────
-        let _saveTimer = null;
+        // ── Debounced save after interactions ──────────────────────────────────
+        let saveTimerId = null;
 
+        /**
+         * Schedules a deferred chart state save (debounced 250ms).
+         */
         function scheduleSave() {
-            if (_saveTimer) clearTimeout(_saveTimer);
-            _saveTimer = setTimeout(function () {
-                saveViewState(containerId, dayWidth, scrollOffset);
+            if (saveTimerId) clearTimeout(saveTimerId);
+            saveTimerId = setTimeout(function () {
+                saveChartViewState(containerId, dayWidth, scrollOffset);
             }, 250);
         }
 
-        // ── Weekend / day stripes (drawn BELOW sprints) ────────────────────────
-        function renderStripes(bY, bH) {
-            const g = el('g', {'class': 'stripes'});
-            const W = cw();
-            const satC = tc(theme, 'dayOfweekSaturdayBgColor', '#d7d7d7');
-            const sunC = tc(theme, 'dayOfweekSundayBgColor', '#d7d7d7');
+        // ── Render individual chart layers ─────────────────────────────────────
+
+        /**
+         * Renders weekend stripes and/or week boundary lines below sprints.
+         * At high dayWidth (>= MIN_DAY_BARS), draws per-day colored stripes for weekends.
+         * At low dayWidth (< MIN_DAY_BARS), draws thin lines at week boundaries (Mondays).
+         * @param {number} baseY Y position of the stripes layer
+         * @param {number} baseHeight Height of the stripes layer
+         * @returns {SVGGElement} Group element containing stripes
+         */
+        function renderWeekendStripes(baseY, baseHeight) {
+            const stripesGroup = createSvgElement('g', {'class': 'stripes'});
+            const containerWidth = getContainerWidth();
+            const saturdayBgColor = getThemeColor(theme, 'dayOfweekSaturdayBgColor', '#d7d7d7');
+            const sundayBgColor = getThemeColor(theme, 'dayOfweekSundayBgColor', '#d7d7d7');
 
             if (dayWidth >= MIN_DAY_BARS) {
-                // Per-day coloured stripes (weekends coloured, weekdays transparent)
-                const fv = Math.max(0, Math.floor(scrollOffset) - 1);
-                const lv = Math.min(totalDays - 1, fv + Math.ceil(W / dayWidth) + 2);
-                for (let i = fv; i <= lv; i++) {
-                    const dw = new Date(chartStart.getTime() + i * MS).getUTCDay();
-                    const bg = dw === 6 ? satC : (dw === 0 ? sunC : null);
-                    if (!bg) continue;
-                    const x = dX(i);
-                    if (x + dayWidth < 0 || x > W) continue;
-                    g.appendChild(rct(x, bY, dayWidth, bH, {fill: bg}));
+                // Per-day colored stripes (weekends colored, weekdays transparent)
+                const firstVisibleDay = Math.max(0, Math.floor(scrollOffset) - 1);
+                const lastVisibleDay = Math.min(totalDays - 1, firstVisibleDay + Math.ceil(containerWidth / dayWidth) + 2);
+                for (let dayIdx = firstVisibleDay; dayIdx <= lastVisibleDay; dayIdx++) {
+                    const dayOfWeek = new Date(chartStart.getTime() + dayIdx * MS).getUTCDay();
+                    const bgColor = dayOfWeek === 6 ? saturdayBgColor : (dayOfWeek === 0 ? sundayBgColor : null);
+                    if (!bgColor) continue;
+                    const xPos = dayIndexToPixelX(dayIdx);
+                    if (xPos + dayWidth < 0 || xPos > containerWidth) continue;
+                    stripesGroup.appendChild(createRect(xPos, baseY, dayWidth, baseHeight, {fill: bgColor}));
                 }
             } else {
                 // Week-boundary lines only (one Monday line per week)
-                const gc = tc(theme, 'gridColor', '#e4e8f3');
-                const fv = Math.max(0, Math.floor(scrollOffset));
-                const lv = Math.min(totalDays - 1, fv + Math.ceil(W / dayWidth) + 8);
-                for (let i = fv; i <= lv; i++) {
-                    if (new Date(chartStart.getTime() + i * MS).getUTCDay() !== 1) continue;
-                    const x = dX(i);
-                    if (x < 0 || x > W) continue;
-                    g.appendChild(ln(x, bY, x, bY + bH, {
-                        stroke: gc,
+                const gridColor = getThemeColor(theme, 'gridColor', '#e4e8f3');
+                const firstVisibleDay = Math.max(0, Math.floor(scrollOffset));
+                const lastVisibleDay = Math.min(totalDays - 1, firstVisibleDay + Math.ceil(containerWidth / dayWidth) + 8);
+                for (let dayIdx = firstVisibleDay; dayIdx <= lastVisibleDay; dayIdx++) {
+                    if (new Date(chartStart.getTime() + dayIdx * MS).getUTCDay() !== 1) continue;
+                    const xPos = dayIndexToPixelX(dayIdx);
+                    if (xPos < 0 || xPos > containerWidth) continue;
+                    stripesGroup.appendChild(createLine(xPos, baseY, xPos, baseY + baseHeight, {
+                        stroke: gridColor,
                         'stroke-width': '1'
                     }));
                 }
             }
-            return g;
+            return stripesGroup;
         }
 
-        // ── Vertical grid lines ────────────────────────────────────────────────
-        function renderGrid(bY, bH) {
-            const g = el('g', {'class': 'grid'});
-            if (dayWidth < MIN_DAY_BARS) return g;
-            const gc = tc(theme, 'gridColor', '#e4e8f3');
-            const W = cw();
-            const fv = Math.max(0, Math.floor(scrollOffset) - 1);
-            const lv = Math.min(totalDays, fv + Math.ceil(W / dayWidth) + 2);
-            for (let i = fv; i <= lv; i++) {
-                const x = dX(i);
-                if (x < 0 || x > W) continue;
-                g.appendChild(ln(x, bY, x, bY + bH, {
-                    stroke: gc,
+        /**
+         * Renders vertical grid lines for each day (when dayWidth >= MIN_DAY_BARS).
+         * @param {number} baseY Y position of the grid layer
+         * @param {number} baseHeight Height of the grid layer
+         * @returns {SVGGElement} Group element containing grid lines
+         */
+        function renderVerticalGridLines(baseY, baseHeight) {
+            const gridGroup = createSvgElement('g', {'class': 'grid'});
+            if (dayWidth < MIN_DAY_BARS) return gridGroup;
+
+            const gridColor = getThemeColor(theme, 'gridColor', '#e4e8f3');
+            const containerWidth = getContainerWidth();
+            const firstVisibleDay = Math.max(0, Math.floor(scrollOffset) - 1);
+            const lastVisibleDay = Math.min(totalDays, firstVisibleDay + Math.ceil(containerWidth / dayWidth) + 2);
+
+            for (let dayIdx = firstVisibleDay; dayIdx <= lastVisibleDay; dayIdx++) {
+                const xPos = dayIndexToPixelX(dayIdx);
+                if (xPos < 0 || xPos > containerWidth) continue;
+                gridGroup.appendChild(createLine(xPos, baseY, xPos, baseY + baseHeight, {
+                    stroke: gridColor,
                     'stroke-width': '1'
                 }));
             }
-            return g;
+            return gridGroup;
         }
 
-        // ── Sprint rectangles + name label ─────────────────────────────────────
-        function renderSprints(sY) {
-            _hitAreas = [];  // rebuild on every render
-            const g = el('g', {'class': 'sprints'});
-            const W = cw();
-            lanes.forEach((lane, li) => {
-                const lY = sY + li * LANE_H;
-                (lane.sprints || []).forEach(sp => {
-                    if (!sp.start || !sp.end) return;
-                    const si = dayIdxOf(sp.start, chartStart);
-                    const ei = dayIdxOf(sp.end, chartStart);
+        /**
+         * Renders sprint rectangles and labels across all lanes.
+         * Builds hit areas for context menu interaction.
+         * @param {number} baseY Y position where sprints start (below calendar header)
+         * @returns {SVGGElement} Group element containing all sprint rectangles
+         */
+        function renderSprintRectangles(baseY) {
+            sprintHitAreas = [];  // Rebuild on every render
+            const sprintsGroup = createSvgElement('g', {'class': 'sprints'});
+            const containerWidth = getContainerWidth();
+
+            lanes.forEach((lane, laneIndex) => {
+                const laneY = baseY + laneIndex * LANE_H;
+                (lane.sprints || []).forEach((sprint) => {
+                    if (!sprint.start || !sprint.end) return;
+
+                    const startIndex = calculateDayIndex(sprint.start, chartStart);
+                    const endIndex = calculateDayIndex(sprint.end, chartStart);
+
                     // Sprint rect: starts at left edge of start-day, ends 1px before right edge of end-day
-                    const sx = dX(si);
-                    const sw = (ei - si + 1) * dayWidth - 1;
-                    if (sx + sw < 0 || sx > W) return;
+                    const sprintX = dayIndexToPixelX(startIndex);
+                    const sprintWidth = (endIndex - startIndex + 1) * dayWidth - 1;
 
-                    // Register hit area for context menu (uses raw SVG coords)
-                    _hitAreas.push({sp, x: sx, y: lY, w: Math.max(0, sw), h: SPRINT_H});
+                    if (sprintX + sprintWidth < 0 || sprintX > containerWidth) return;
 
-                    const rect = rct(sx, lY, sw, SPRINT_H, {fill: sprintFill(sp.color)});
-                    rect.appendChild(el('title', {}, buildTooltip(sp)));
-                    g.appendChild(rect);
+                    // Register hit area for context menu
+                    sprintHitAreas.push({sprint, x: sprintX, y: laneY, width: Math.max(0, sprintWidth), height: SPRINT_H});
 
-                    if (sw > 20) {
-                        const cid = 'sp' + li + '_' + sp.id;
-                        g.appendChild(mkClip(cid, sx, lY, sw, SPRINT_H));
+                    // Draw sprint rectangle
+                    const rectElement = createRect(sprintX, laneY, sprintWidth, SPRINT_H, {
+                        fill: convertSprintColorToRgba(sprint.color)
+                    });
+                    rectElement.appendChild(createSvgElement('title', {}, buildSprintTooltip(sprint)));
+                    sprintsGroup.appendChild(rectElement);
+
+                    // Draw sprint name label (if wide enough)
+                    if (sprintWidth > 20) {
+                        const clipPathId = 'sp' + laneIndex + '_' + sprint.id;
+                        sprintsGroup.appendChild(createClipPath(clipPathId, sprintX, laneY, sprintWidth, SPRINT_H));
                         // Java: drawString at x1+1, y1+(0+1)*LINE_HEIGHT-2 = y1+11
-                        g.appendChild(tx(sx + 1, lY + LINE_HEIGHT - 2, sp.name || '', {
-                            fill: '#000000', 'font-size': '12', 'font-family': 'Arial,sans-serif',
-                            'font-weight': 'bold', 'clip-path': 'url(#' + cid + ')'
+                        sprintsGroup.appendChild(createText(sprintX + 1, laneY + LINE_HEIGHT - 2, sprint.name || '', {
+                            fill: '#000000',
+                            'font-size': '12',
+                            'font-family': 'Arial,sans-serif',
+                            'font-weight': 'bold',
+                            'clip-path': 'url(#' + clipPathId + ')'
                         }));
                     }
                 });
             });
-            return g;
+
+            return sprintsGroup;
         }
 
-        function buildTooltip(s) {
-            let out = s.name || '';
-            if (s.key) out += '\nKey: ' + s.key;
-            if (s.status) out += '\nStatus: ' + s.status;
-            if (s.start) out += '\nStart: ' + new Date(s.start).toLocaleDateString();
-            if (s.end) out += '\nEnd:   ' + new Date(s.end).toLocaleDateString();
-            if (s.delay) out += '\n(DELAYED)';
-            return out;
+        /**
+         * Constructs a multi-line tooltip text for a sprint.
+         * Includes key, status, start/end dates, and delay flag if applicable.
+         * @param {Object} sprint Sprint object with name, key, status, start, end, delay properties
+         * @returns {string} Multi-line tooltip text
+         */
+        function buildSprintTooltip(sprint) {
+            let tooltip = sprint.name || '';
+            if (sprint.key) tooltip += '\nKey: ' + sprint.key;
+            if (sprint.status) tooltip += '\nStatus: ' + sprint.status;
+            if (sprint.start) tooltip += '\nStart: ' + new Date(sprint.start).toLocaleDateString();
+            if (sprint.end) tooltip += '\nEnd:   ' + new Date(sprint.end).toLocaleDateString();
+            if (sprint.delay) tooltip += '\n(DELAYED)';
+            return tooltip;
         }
 
-        // ── Now-line (Java: 2px width, COLOR_DARK_RED = #cc0000) ──────────────
-        function renderNowLine(H) {
-            const g = el('g', {'class': 'now-line'});
-            const W = cw();
+        /**
+         * Renders the "today" marker line (2px dark red line at current date).
+         * @param {number} chartHeight Total chart height
+         * @returns {SVGGElement} Group element containing the now line
+         */
+        function renderCurrentDateLine(chartHeight) {
+            const nowLineGroup = createSvgElement('g', {'class': 'now-line'});
+            const containerWidth = getContainerWidth();
+
             // Java: center of day cell = dayLeft + dayWidth/2
-            const x = dX(dayIdxOf(nowDate, chartStart)) + dayWidth / 2;
-            if (x < 0 || x > W) return g;
-            g.appendChild(ln(x, 0, x, H, {stroke: '#cc0000', 'stroke-width': '2'}));
-            return g;
+            const xPos = dayIndexToPixelX(calculateDayIndex(currentDate, chartStart)) + dayWidth / 2;
+            if (xPos < 0 || xPos > containerWidth) return nowLineGroup;
+
+            nowLineGroup.appendChild(createLine(xPos, 0, xPos, chartHeight, {
+                stroke: '#cc0000',
+                'stroke-width': '2'
+            }));
+            return nowLineGroup;
         }
 
-        // ── Full redraw ────────────────────────────────────────────────────────
-        let _raf = null;
+        // ── Full chart redraw ──────────────────────────────────────────────────
 
-        function render() {
-            const W = cw();
-            const ch = calH();
-            const bH = lanes.length * LANE_H + 8;
-            const H = ch + bH;
+        let animationFrameId = null;
 
-            const svg = el('svg', {
-                width: W,
-                height: H,
+        /**
+         * Redraw the entire chart (internal render loop).
+         * Clears the container and recreates all SVG elements: stripes, grid, sprints, calendar, now-line.
+         * Called by schedule() via requestAnimationFrame.
+         */
+        function redrawChart() {
+            const containerWidth = getContainerWidth();
+            const calendarHeight = getCalendarHeight();
+            const sprintsBaseHeight = lanes.length * LANE_H + 8;
+            const totalHeight = calendarHeight + sprintsBaseHeight;
+
+            const svg = createSvgElement('svg', {
+                width: containerWidth,
+                height: totalHeight,
                 style: 'display:block;user-select:none;shape-rendering: crispEdges'
             });
 
-            // Draw order: stripes (bottom) → grid → sprints → calendar header → now-line (top)
-            svg.appendChild(renderStripes(ch, bH));
-            svg.appendChild(renderGrid(ch, bH));
-            svg.appendChild(renderSprints(ch));
-            calendar.draw(svg, chartStart, totalDays, dayWidth, scrollOffset, W);
-            svg.appendChild(renderNowLine(H));
+            // Draw order (bottom to top): stripes → grid → sprints → calendar header → now-line
+            svg.appendChild(renderWeekendStripes(calendarHeight, sprintsBaseHeight));
+            svg.appendChild(renderVerticalGridLines(calendarHeight, sprintsBaseHeight));
+            svg.appendChild(renderSprintRectangles(calendarHeight));
+            calendar.draw(svg, chartStart, totalDays, dayWidth, scrollOffset, containerWidth);
+            svg.appendChild(renderCurrentDateLine(totalHeight));
 
             container.innerHTML = '';
             container.appendChild(svg);
         }
 
-        function schedule() {
-            if (_raf) cancelAnimationFrame(_raf);
-            _raf = requestAnimationFrame(render);
+        /**
+         * Schedules a redraw on the next animation frame.
+         */
+        function scheduleRender() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(redrawChart);
         }
 
-        function clampScroll() {
-            scrollOffset = Math.max(0, Math.min(Math.max(0, totalDays - cw() / dayWidth), scrollOffset));
+        /**
+         * Constrains scrollOffset to valid range: [0, totalDays - visibleDays]
+         */
+        function constrainScrollOffset() {
+            scrollOffset = Math.max(0, Math.min(Math.max(0, totalDays - getContainerWidth() / dayWidth), scrollOffset));
         }
 
-        // ── Mouse-wheel:  vertical  = zoom (change dayWidth)
-        //                 horizontal = pan  (trackpad swipe left/right)
-        function onWheel(e) {
-            e.preventDefault();
-            if (e.deltaX !== 0) {
+        // ── Mouse-wheel and trackpad interaction ───────────────────────────────
+
+        /**
+         * Handles mouse wheel events for zoom and trackpad horizontal swipe for pan.
+         * - Vertical wheel wheel scroll → zoom in/out (maintains day under cursor)
+         * - Horizontal trackpad swipe → pan left/right
+         * @param {WheelEvent} event The wheel event
+         */
+        function handleWheelEvent(event) {
+            event.preventDefault();
+            if (event.deltaX !== 0) {
                 // Horizontal trackpad swipe → pan
-                scrollOffset += e.deltaX / dayWidth;
+                scrollOffset += event.deltaX / dayWidth;
             } else {
                 // Vertical wheel → zoom about the cursor position
-                const br = container.getBoundingClientRect();
-                const mouseX = (e.clientX != null) ? (e.clientX - br.left) : (cw() / 2);
+                const containerRect = container.getBoundingClientRect();
+                const mouseX = (event.clientX != null) ? (event.clientX - containerRect.left) : (getContainerWidth() / 2);
                 const dayUnderCursor = scrollOffset + mouseX / dayWidth;
-                const factor = e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
-                dayWidth = Math.max(MIN_DW, Math.min(MAX_DW, dayWidth * factor));
+                const zoomFactor = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
+                dayWidth = Math.max(MIN_DW, Math.min(MAX_DW, dayWidth * zoomFactor));
                 scrollOffset = dayUnderCursor - mouseX / dayWidth;
             }
-            clampScroll();
-            schedule();
+            constrainScrollOffset();
+            scheduleRender();
             scheduleSave();
         }
 
-        // ── Click-and-drag panning ─────────────────────────────────────────────
-        let _drag = null;  // { startX, startOffset }
+        // ── Click-and-drag panning ──────────────────────────────────────────────
 
-        function onPointerDown(e) {
-            if (e.button !== 0) return;
-            _drag = {startX: e.clientX, startOffset: scrollOffset};
-            container.setPointerCapture(e.pointerId);
+        let dragState = null;  // {startX, startOffset} when dragging
+
+        /**
+         * Handles pointer down (mouse button pressed or touch start).
+         * Initiates drag-to-pan if left mouse button.
+         * @param {PointerEvent} event The pointer down event
+         */
+        function handlePointerDown(event) {
+            if (event.button !== 0) return;
+            dragState = {startX: event.clientX, startOffset: scrollOffset};
+            container.setPointerCapture(event.pointerId);
             container.style.cursor = 'grabbing';
-            e.preventDefault();
+            event.preventDefault();
         }
 
-        function onPointerMove(e) {
-            if (!_drag) return;
-            const dx = e.clientX - _drag.startX;
-            scrollOffset = _drag.startOffset - dx / dayWidth;
-            clampScroll();
-            schedule();
+        /**
+         * Handles pointer move (mouse or touch motion).
+         * Updates scroll position during drag-to-pan.
+         * @param {PointerEvent} event The pointer move event
+         */
+        function handlePointerMove(event) {
+            if (!dragState) return;
+            const deltaX = event.clientX - dragState.startX;
+            scrollOffset = dragState.startOffset - deltaX / dayWidth;
+            constrainScrollOffset();
+            scheduleRender();
         }
 
-        function onPointerUp() {
-            if (_drag) {
-                _drag = null;
+        /**
+         * Handles pointer up (mouse button released or touch end).
+         * Ends drag-to-pan and saves view state.
+         */
+        function handlePointerUp() {
+            if (dragState) {
+                dragState = null;
                 scheduleSave();
             }
             container.style.cursor = 'grab';
         }
 
-        // ── Context menu (right-click on a sprint) ─────────────────────────────
-        function onContextMenu(e) {
-            e.preventDefault();
-            hideContextMenu();
-            const br = container.getBoundingClientRect();
-            const mx = e.clientX - br.left;
-            const my = e.clientY - br.top;
-            for (let i = 0; i < _hitAreas.length; i++) {
-                const ha = _hitAreas[i];
-                if (mx >= ha.x && mx <= ha.x + ha.w && my >= ha.y && my <= ha.y + ha.h) {
-                    showContextMenu(e.clientX, e.clientY, ha.sp);
+        // ── Context menu (right-click on sprint) ────────────────────────────────
+
+        /**
+         * Handles right-click events on the chart.
+         * If right-click is over a sprint, displays context menu.
+         * @param {MouseEvent} event The context menu event
+         */
+        function handleContextMenuRequest(event) {
+            event.preventDefault();
+            hideContextMenuSingleton();
+
+            const containerRect = container.getBoundingClientRect();
+            const mouseX = event.clientX - containerRect.left;
+            const mouseY = event.clientY - containerRect.top;
+
+            // Check hit areas
+            for (let i = 0; i < sprintHitAreas.length; i++) {
+                const hitArea = sprintHitAreas[i];
+                if (mouseX >= hitArea.x && mouseX <= hitArea.x + hitArea.width &&
+                    mouseY >= hitArea.y && mouseY <= hitArea.y + hitArea.height) {
+                    showContextMenuForSprint(event.clientX, event.clientY, hitArea.sprint);
                     return;
                 }
             }
         }
 
-        // ── ResizeObserver: redraw when container resizes ──────────────────────
-        let _ro = null;
+        // ── ResizeObserver: redraw when container resizes ───────────────────────
+        let resizeObserver = null;
         if (typeof ResizeObserver !== 'undefined') {
-            _ro = new ResizeObserver(schedule);
-            _ro.observe(container);
+            resizeObserver = new ResizeObserver(scheduleRender);
+            resizeObserver.observe(container);
         }
 
-        // ── Cleanup ────────────────────────────────────────────────────────────
-        function destroy() {
-            container.removeEventListener('wheel', onWheel);
-            container.removeEventListener('pointerdown', onPointerDown);
-            container.removeEventListener('pointermove', onPointerMove);
-            container.removeEventListener('pointerup', onPointerUp);
-            container.removeEventListener('pointercancel', onPointerUp);
-            container.removeEventListener('contextmenu', onContextMenu);
-            if (_ro) _ro.disconnect();
-            if (_raf) cancelAnimationFrame(_raf);
-            if (_saveTimer) clearTimeout(_saveTimer);
+        // ── Cleanup and initialization ─────────────────────────────────────────
+
+        /**
+         * Cleans up all event listeners, observers, and timers.
+         * Called when destroying the chart instance.
+         */
+        function cleanupChart() {
+            container.removeEventListener('wheel', handleWheelEvent);
+            container.removeEventListener('pointerdown', handlePointerDown);
+            container.removeEventListener('pointermove', handlePointerMove);
+            container.removeEventListener('pointerup', handlePointerUp);
+            container.removeEventListener('pointercancel', handlePointerUp);
+            container.removeEventListener('contextmenu', handleContextMenuRequest);
+
+            if (resizeObserver) resizeObserver.disconnect();
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (saveTimerId) clearTimeout(saveTimerId);
+
             container.innerHTML = '';
         }
 
+        // ── Initialization ─────────────────────────────────────────────────────
         container.style.cursor = 'grab';
-        container.addEventListener('wheel', onWheel, {passive: false});
-        container.addEventListener('pointerdown', onPointerDown, {passive: false});
-        container.addEventListener('pointermove', onPointerMove, {passive: true});
-        container.addEventListener('pointerup', onPointerUp);
-        container.addEventListener('pointercancel', onPointerUp);
-        container.addEventListener('contextmenu', onContextMenu);
-        initScroll();
-        render();
+        container.addEventListener('wheel', handleWheelEvent, {passive: false});
+        container.addEventListener('pointerdown', handlePointerDown, {passive: false});
+        container.addEventListener('pointermove', handlePointerMove, {passive: true});
+        container.addEventListener('pointerup', handlePointerUp);
+        container.addEventListener('pointercancel', handlePointerUp);
+        container.addEventListener('contextmenu', handleContextMenuRequest);
 
-        return {render, schedule, destroy};
+        initializeScroll();
+        redrawChart();
+
+        // Return control API
+        return {
+            render: redrawChart,
+            schedule: scheduleRender,
+            destroy: cleanupChart
+        };
     }
 
-    // ── Public mount function ─────────────────────────────────────────────────
-    // Called by:
-    //   1. Vaadin executeJs on every navigation/theme-change (data is always injected by the server)
-    //   2. Test page with injectedData
-    //
-    // Data is always supplied as the second argument by SprintListView.refreshClientChart(),
-    // which serialises the SprintOverviewDto server-side and passes it directly.
-    // The browser never fetches /api/overview/sprints; that endpoint now requires authentication.
-    var _instance = null;
+    // ── Public mount API ──────────────────────────────────────────────────────
 
+    /**
+     * Global chart instance (one per page).
+     * Allows cleanup and re-initialization on theme changes or navigation.
+     * @type {?Object}
+     */
+    var currentChartInstance = null;
+
+    /**
+     * Mounts or remounts the sprints overview chart to a DOM container.
+     * Called by Vaadin on component initialization, theme changes, and navigation.
+     * Automatically cleans up any previous instance before creating a new one.
+     *
+     * Data is always supplied as the second argument by SprintListView.refreshClientChart(),
+     * which serializes the SprintOverviewDto server-side. The browser never fetches
+     * /api/overview/sprints as that endpoint requires authentication.
+     *
+     * @param {string} containerId The DOM element ID of the chart container
+     * @param {Object} injectedData Chart data object (supplied by server via Vaadin)
+     *                              with meta and lanes properties
+     */
     function mountSprintsOverviewChart(containerId, injectedData) {
-        const id = containerId || 'sprints-overview-chart-container';
-        const c = document.getElementById(id);
-        if (!c) return;  // not in DOM yet; Vaadin will call us again via executeJs
+        const elementId = containerId || 'sprints-overview-chart-container';
+        const containerElement = document.getElementById(elementId);
+        if (!containerElement) return;  // Not in DOM yet; Vaadin will call us again via executeJs
 
-        if (_instance && typeof _instance.destroy === 'function') {
-            _instance.destroy();
-            _instance = null;
+        // Cleanup previous instance
+        if (currentChartInstance && typeof currentChartInstance.destroy === 'function') {
+            currentChartInstance.destroy();
+            currentChartInstance = null;
         }
 
+        // Create new instance if data provided
         if (injectedData) {
-            _instance = createChart(c, injectedData, {containerId: id});
+            currentChartInstance = createChart(containerElement, injectedData, {containerId: elementId});
         } else {
-            c.innerHTML = '<div style="padding:16px;color:red;font-family:sans-serif;">No chart data provided.</div>';
+            containerElement.innerHTML = '<div style="padding:16px;color:red;font-family:sans-serif;">No chart data provided.</div>';
         }
     }
 
+    // Export public API
     window.mountSprintsOverviewChart = mountSprintsOverviewChart;
-    window.createSprintsOverviewChart = createChart;  // used by test page
+    window.createSprintsOverviewChart = createChart;  // Used by test page
 })();
