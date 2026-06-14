@@ -30,7 +30,6 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
@@ -43,11 +42,12 @@ import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
+import de.bushnaq.abdalla.kassandra.rest.dto.GanttChartDto;
+import de.bushnaq.abdalla.kassandra.service.GanttChartService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.CrossGridDragDropCoordinator;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
-import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -59,8 +59,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -82,6 +80,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     public static final String                       CREATE_TASK_BUTTON_ID      = "create-task-button";
     public static final String                       EDIT_BUTTON_ID             = "edit-tasks-button";
     public static final String                       EXPAND_TOGGLE_BUTTON_ID    = "expand-toggle-button";
+    public static final String                       GANTT_CHART_CONTAINER_ID   = "backlog-gantt-chart-container";
     public static final String                       MENU_ITEM_ID               = "/backlog";
     public static final String                       ROUTE                      = "backlog";
     public static final String                       SAVE_BUTTON_ID             = "save-tasks-button";
@@ -97,6 +96,8 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private final       Clock                        clock;
     @Autowired
     protected           Context                      context;
+    @Autowired
+    private             GanttChartService            ganttChartService;
     private final       CrossGridDragDropCoordinator dragDropCoordinator;              // Coordinator for cross-grid drag & drop
     private             Button                       editButton;
     private final       GanttErrorHandler            eh                         = new GanttErrorHandler();
@@ -105,7 +106,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private             UUID                         featureId;
     //    private final       Svg                          ganttChart                 = new Svg();
     private final       Div                          ganttChartContainer;
-    private             CompletableFuture<Void>      ganttGenerationFuture;
     private             GanttUtil                    ganttUtil;
     private final       TaskGrid                     grid;
     /**
@@ -199,9 +199,11 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
             // Create Gantt chart container (placed between sprint grid and backlog)
             ganttChartContainer = new Div();
+            ganttChartContainer.setId(GANTT_CHART_CONTAINER_ID);
             ganttChartContainer.getStyle()
-                    .set("overflow-x", "auto")
                     .set("width", "100%")
+                    .set("overflow-x", "hidden")
+                    .set("min-height", "120px")
                     .set("margin-top", "var(--lumo-space-xs)");
 
             // Create backlog grid (always shown at bottom)
@@ -688,68 +690,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     }
 
     /**
-     * Creates a deep copy (snapshot) of the sprint and all its tasks.
-     * This is necessary for async Gantt chart generation to avoid race conditions
-     * when tasks are being saved/updated while the chart is being rendered.
-     *
-     * @param original the sprint to copy
-     * @return a deep copy of the sprint with all relationships preserved
-     */
-    private Sprint createSprintSnapshot(Sprint original) {
-        try {
-            // Use Jackson to create a deep copy through serialization/deserialization
-            String sprintJson = jsonMapper.writeValueAsString(original);
-            Sprint snapshot   = jsonMapper.readValue(sprintJson, Sprint.class);
-
-            // Need to reconstruct the relationships and initialize the sprint
-            // Get a copy of the tasks list
-            List<Task> tasksCopy = new ArrayList<>();
-            for (Task originalTask : original.getTasks()) {
-                String taskJson = jsonMapper.writeValueAsString(originalTask);
-                Task   taskCopy = jsonMapper.readValue(taskJson, Task.class);
-                tasksCopy.add(taskCopy);
-            }
-
-            // Get a copy of worklogs
-            List<Worklog> worklogsCopy = new ArrayList<>();
-            for (Worklog originalWorklog : original.getWorklogs()) {
-                String  worklogJson = jsonMapper.writeValueAsString(originalWorklog);
-                Worklog worklogCopy = jsonMapper.readValue(worklogJson, Worklog.class);
-                worklogsCopy.add(worklogCopy);
-            }
-
-            // Get a copy of users (serialize/deserialize to ensure deep copy)
-            List<User> usersCopy = new ArrayList<>();
-            for (User originalUser : original.getUserMap().values()) {
-                String userJson = jsonMapper.writeValueAsString(originalUser);
-                User   userCopy = jsonMapper.readValue(userJson, User.class);
-                usersCopy.add(userCopy);
-            }
-
-            // Initialize the snapshot - this is critical!
-            // First initialize the sprint itself (sets up ProjectFile and properties)
-            snapshot.initialize();
-
-            // Then initialize user map (sets up calendars)
-            snapshot.initUserMap(usersCopy);
-
-            // Then initialize task map (sets up task relationships and sprint references)
-            snapshot.initTaskMap(tasksCopy, worklogsCopy);
-
-            // Finally recalculate (updates calculated fields like release date)
-            snapshot.recalculate(ParameterOptions.getLocalNow());
-
-            log.debug("Created sprint snapshot with {} tasks, {} users, {} worklogs",
-                    tasksCopy.size(), usersCopy.size(), worklogsCopy.size());
-            return snapshot;
-        } catch (Exception e) {
-            log.error("Error creating sprint snapshot, falling back to original reference", e);
-            // If snapshot creation fails, return the original (better than crashing)
-            return original;
-        }
-    }
-
-    /**
      * Create a new Story task
      */
     private void createStory() {
@@ -788,37 +728,14 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     /**
      * Display error message for Gantt chart generation failure
      */
-    private void displayGanttError(Throwable throwable) {
+    private void displayGanttError(String message) {
         ganttChartContainer.removeAll();
-
-        // Convert stack trace to string
-        StringWriter stringWriter = new StringWriter();
-        PrintWriter  printWriter  = new PrintWriter(stringWriter);
-        throwable.printStackTrace(printWriter);
-        String stackTrace = stringWriter.toString();
-
-        // Display error message with stack trace
-        Paragraph errorParagraph = new Paragraph("Error generating Gantt chart: " + throwable.getMessage());
+        Paragraph errorParagraph = new Paragraph("Error generating Gantt chart: " + message);
         errorParagraph.getStyle()
                 .set("color", "var(--lumo-error-color)")
-                .set("font-weight", "bold");
-
-        Paragraph stackTraceParagraph = new Paragraph(stackTrace);
-        stackTraceParagraph.getStyle()
-                .set("white-space", "pre-wrap")
-                .set("font-family", "monospace")
-                .set("font-size", "12px")
-                .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("padding", "var(--lumo-space-s)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("max-height", "300px")
-                .set("overflow-y", "auto");
-
-        Div errorContainer = new Div(errorParagraph, stackTraceParagraph);
-        errorContainer.getStyle()
+                .set("font-weight", "bold")
                 .set("padding", "var(--lumo-space-m)");
-
-        ganttChartContainer.add(errorContainer);
+        ganttChartContainer.add(errorParagraph);
     }
 
     /**
@@ -941,95 +858,38 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         return null;
     }
 
-    private void generateGanttChart() {
-        // Capture theme on UI thread before launching background work
-        context.syncTheme();
-
-        // Cancel any previous generation in progress
-        if (ganttGenerationFuture != null && !ganttGenerationFuture.isDone()) {
-            ganttGenerationFuture.cancel(true);
-            log.debug("Cancelled previous Gantt chart generation");
-        }
-
-
-        // Clear container and show loading indicator
-        ganttChartContainer.removeAll();
-        ProgressBar progressBar = new ProgressBar();
-        progressBar.setIndeterminate(true);
-        progressBar.setWidth("300px");
-
-        Span loadingText = new Span("Generating Gantt chart...");
-        loadingText.getStyle()
-                .set("margin-right", "var(--lumo-space-xs)")
-                .set("font-style", "italic")
-                .set("color", "var(--lumo-secondary-text-color)");
-
-        Div loadingContainer = new Div(loadingText, progressBar);
-        loadingContainer.getStyle()
-                .set("display", "flex")
-                .set("align-items", "center")
-                .set("padding", "var(--lumo-space-m)");
-
-        ganttChartContainer.add(loadingContainer);
-
-        // Capture UI and security context
-        UI             ui             = UI.getCurrent();
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Sprint         sprintSnapshot = createSprintSnapshot(this.sprint); // Create deep copy of sprint
-
-        // Generate chart asynchronously
-        long startTime = System.currentTimeMillis();
-        ganttGenerationFuture = CompletableFuture.supplyAsync(() -> {
-            // Set security context in background thread
-            SecurityContext context = SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(authentication);
-            SecurityContextHolder.setContext(context);
+    /**
+     * Builds the {@link GanttChartDto} server-side and pushes it to the browser via
+     * {@code mountGanttChart(containerId, data)} so that {@code gantt-chart.js} can
+     * render the interactive, zoomable client-side Gantt chart.
+     * <p>
+     * The chart window is padded by {@code preRun}/{@code postRun} days (matching the
+     * SVG renderer) to leave room for user-name labels on the left and task-name labels
+     * that overflow the right edge of a bar.
+     * <p>
+     * Called both on first load and when the user toggles the theme.
+     */
+    private void refreshGanttChart() {
+        getUI().ifPresent(ui -> {
+            boolean isDark = ui.getElement().getThemeList().contains(com.vaadin.flow.theme.lumo.Lumo.DARK);
             try {
-                log.debug("Starting async Gantt chart generation");
-                Svg svg = new Svg();
-                RenderUtil.generateGanttChartSvg(Backlog.this.context, sprintSnapshot, svg);
-                return svg;
+                GanttChartDto dto  = ganttChartService.build(sprint, ParameterOptions.getLocalNow(), isDark);
+                String        json = jsonMapper.writeValueAsString(dto);
+                ui.getPage().addJavaScript("/js/theme-color-constants.js");
+                ui.getPage().addJavaScript("/js/svg-utils.js");
+                ui.getPage().addJavaScript("/js/color-utils.js");
+                ui.getPage().addJavaScript("/js/date-utils.js");
+                ui.getPage().addJavaScript("/js/calendar-x-axes.js");
+                ui.getPage().addJavaScript("/js/gantt-chart.js");
+                ui.getPage().executeJs(
+                        "if(window.mountGanttChart) window.mountGanttChart($0, JSON.parse($1));",
+                        GANTT_CHART_CONTAINER_ID, json
+                );
+                log.debug("Gantt chart DTO pushed to client for sprint '{}'", sprint.getName());
             } catch (Exception e) {
-                // Wrap checked exception in runtime exception for CompletableFuture
-                throw new RuntimeException("Error generating Gantt chart", e);
-            } finally {
-                SecurityContextHolder.clearContext();
+                log.error("Failed to build Gantt chart data for sprint '{}'", sprint.getName(), e);
+                displayGanttError(e.getMessage());
             }
-        }).thenAccept(svg -> {
-            long elapsed = System.currentTimeMillis() - startTime;
-            log.info("Gantt chart generated in {} ms", elapsed);
-
-            // Update UI on UI thread
-            ui.access(() -> {
-                try {
-                    ganttChartContainer.removeAll();
-
-                    // Configure Gantt chart for proper scrolling display
-                    svg.getStyle()
-                            .set("margin-top", "var(--lumo-space-xs)")
-                            .set("max-width", "100%")
-                            .set("height", "auto")
-                            .set("display", "block");
-
-                    ganttChartContainer.add(svg);
-                    ui.push(); // Push changes to client
-                    log.trace("Gantt chart added to UI and pushed to client");
-                } catch (Exception e) {
-                    log.error("Error adding Gantt chart to UI", e);
-                    displayGanttError(e);
-                    ui.push(); // Push error to client
-                }
-            });
-        }).exceptionally(ex -> {
-            long elapsed = System.currentTimeMillis() - startTime;
-            log.error("Error generating Gantt chart after {} ms: {}", elapsed, ex.getMessage(), ex);
-
-            // Show error in UI
-            ui.access(() -> {
-                displayGanttError(ex);
-                ui.push(); // Push error to client
-            });
-            return null;
         });
     }
 
@@ -1391,7 +1251,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         themeChangedRegistration = ComponentUtil.addListener(
                 attachEvent.getUI(), ThemeChangedEvent.class, e -> {
                     if (sprint != null && !"Backlog".equals(sprint.getName())) {
-                        generateGanttChart();
+                        refreshGanttChart();
                     }
                 });
     }
@@ -1509,7 +1369,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         // Generate Gantt chart only for the selected sprint (not for Backlog)
         // Backlog sprint doesn't have scheduling, so Gantt chart doesn't make sense for it
         if (sprint != null && !"Backlog".equals(sprint.getName())) {
-            generateGanttChart();
+            refreshGanttChart();
         } else if (ganttChartContainer != null) {
             // Clear the Gantt chart container if we're showing Backlog or no sprint
             ganttChartContainer.removeAll();

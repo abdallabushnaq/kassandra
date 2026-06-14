@@ -17,98 +17,146 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Main;
+import com.vaadin.flow.component.grid.dnd.GridDropLocation;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
-import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
-import de.bushnaq.abdalla.kassandra.dto.Sprint;
-import de.bushnaq.abdalla.kassandra.dto.Task;
-import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.dto.Worklog;
-import de.bushnaq.abdalla.kassandra.rest.api.SprintApi;
-import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
-import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
-import de.bushnaq.abdalla.kassandra.rest.api.WorklogApi;
-import de.bushnaq.abdalla.kassandra.service.DatabaseDebugService;
+import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
+import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
-import de.bushnaq.abdalla.kassandra.ui.component.BacklogDragDropHandler;
-import de.bushnaq.abdalla.kassandra.ui.component.SprintCard;
+import de.bushnaq.abdalla.kassandra.ui.component.CrossGridDragDropCoordinator;
+import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
+import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
+import de.bushnaq.abdalla.util.GanttErrorHandler;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.time.Duration;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.time.Clock;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Route(value = "legacy-backlog", layout = MainLayout.class)
 @PageTitle("Legacy Backlog")
-//@Menu(order = 13, icon = "vaadin:grid-v", title = "Legacy Backlog")
-@PermitAll
-@RolesAllowed({"USER", "ADMIN"})
+@Menu(order = 6, icon = "vaadin:grid-v", title = "Legacy Backlog")
+@PermitAll // When security is enabled, allow all authenticated users
+@RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
 @Log4j2
 @Deprecated
-public class LegacyBacklog extends Main implements BeforeEnterObserver, AfterNavigationObserver {
+public class LegacyBacklog extends Main implements AfterNavigationObserver, BeforeEnterObserver {
+    public static final String                       BACKLOG_PAGE_TITLE_ID      = "legacy-backlog-page-title";
+    public static final String                       CANCEL_BUTTON_ID           = "legacy-cancel-tasks-button";
+    public static final String                       CLEAR_FILTER_BUTTON_ID     = "legacy-clear-filter-button";
+    public static final String                       CREATE_MILESTONE_BUTTON_ID = "legacy-create-milestone-button";
+    public static final String                       CREATE_STORY_BUTTON_ID     = "legacy-create-story-button";
+    public static final String                       CREATE_TASK_BUTTON_ID      = "legacy-create-task-button";
+    public static final String                       EDIT_BUTTON_ID             = "legacy-edit-tasks-button";
+    public static final String                       EXPAND_TOGGLE_BUTTON_ID    = "legacy-expand-toggle-button";
+    public static final String                       MENU_ITEM_ID               = "/legacy-backlog";
+    public static final String                       ROUTE                      = "legacy-backlog";
+    public static final String                       SAVE_BUTTON_ID             = "legacy-save-tasks-button";
+    public static final String                       SEARCH_FIELD_ID            = "legacy-search-field";
+    public static final String                       SPRINT_SELECTOR_ID         = "legacy-sprint-selector";
+    public static final String                       SPRINT_STATUS_SELECTOR_ID  = "legacy-sprint-status-selector";
+    public static final String                       USER_SELECTOR_ID           = "legacy-user-selector";
+    private             List<Sprint>                 allSprints                 = new ArrayList<>();
+    private final       TaskGrid                     backlogGrid;                        // Grid for Backlog sprint (always at bottom)
+    private final       VerticalLayout               backlogGridPanel;                   // Panel containing backlog grid
+    private             Sprint                       backlogSprint              = null;  // Cached Backlog sprint (always shown at bottom)
+    private             Button                       cancelButton;
+    private final       Clock                        clock;
+    @Autowired
+    protected           Context                      context;
+    private final       CrossGridDragDropCoordinator dragDropCoordinator;              // Coordinator for cross-grid drag & drop
+    private             Button                       editButton;
+    private final       GanttErrorHandler            eh                         = new GanttErrorHandler();
+    private             boolean                      expandAllStories           = true;  // Default to expanded
+    private final       FeatureApi                   featureApi;
+    private             UUID                         featureId;
+    //    private final       Svg                          ganttChart                 = new Svg();
+    private final       Div                          ganttChartContainer;
+    private             CompletableFuture<Void>      ganttGenerationFuture;
+    private             GanttUtil                    ganttUtil;
+    private final       TaskGrid                     grid;
+    /**
+     * Avatar image shown in the header — updated to reflect the selected sprint.
+     */
+    private             Image                        headerAvatar;
+    private final       HorizontalLayout             headerLayout;
+    private             boolean                      isRestoringFromUrl         = false;
+    private final       JsonMapper                   jsonMapper;
+    private static      UUID                         lastShownSprintId          = null;  // Static to persist across navigation
+    private             User                         loggedInUser               = null;
+    /**
+     * Page title component updated to reflect the current sprint selection.
+     */
+    private             H2                           pageTitle;
+    private final       ProductApi                   productApi;
+    private             UUID                         productId;
+    private             String                       requestedUserIds           = null;
+    private             Button                       saveButton;
+    private             TextField                    searchField;
+    private             String                       searchText                 = "";
+    private             Sprint                       selectedSprint             = null;  // The sprint selected in dropdown (not Backlog)
+    private             Set<User>                    selectedUsers              = new HashSet<>();
+    private             Sprint                       sprint;                             // Current sprint being displayed in grid
+    private final       SprintApi                    sprintApi;
+    private             Span                         sprintEndValue;                     // Displays end date of the selected sprint
+    private             UUID                         sprintId;
+    private final       HorizontalLayout             sprintInfoPanel;                    // Header panel showing sprint start, end and status
+    private             ComboBox<Sprint>             sprintSelector;
+    private             Span                         sprintStartValue;                   // Displays start date of the selected sprint
+    private             ComboBox<Status>             sprintStatusComboBox;               // Allows changing the status of the selected sprint
+    private final       TaskApi                      taskApi;
+    private             Registration                 themeChangedRegistration;
+    private final       UserApi                      userApi;
+    private             MultiSelectComboBox<User>    userSelector;
+    private             List<User>                   users                      = new ArrayList<>();
+    private final       VersionApi                   versionApi;
+    private             UUID                         versionId;
+    private final       WorklogApi                   worklogApi;
 
-    public static final String                      ROUTE              = "legacy-backlog";
-    private             List<Sprint>                allSprints         = new ArrayList<>();
-    private             Sprint                      backlogSprint;      // Cached backlog sprint
-    private final       VerticalLayout              contentLayout;
-    private final       DatabaseDebugService        databaseDebugService; // For debug print DB
-    private final       BacklogDragDropHandler      dragDropHandler;
-    private             boolean                     hasUrlParameters   = false;
-    private             boolean                     isRestoringFromUrl = false;
-    private             User                        loggedInUser;       // Current logged-in user
-    private             String                      savedSprintIds     = null;
-    private             String                      savedUserIds       = null;
-    private             String                      searchText         = "";
-    private             java.util.Set<Sprint>       selectedSprints    = new java.util.HashSet<>();
-    private             java.util.Set<User>         selectedUsers      = new java.util.HashSet<>();
-    private final       SprintApi                   sprintApi;
-    private             MultiSelectComboBox<Sprint> sprintSelector;
-    private final       TaskApi                     taskApi;
-    private final       UserApi                     userApi;
-    private final       java.util.Map<UUID, User>   userMap            = new java.util.HashMap<>();
-    private             MultiSelectComboBox<User>   userSelector;
-    private             List<User>                  users              = new ArrayList<>();
-    private final       WorklogApi                  worklogApi;
-
-    public LegacyBacklog(SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi, DatabaseDebugService databaseDebugService) {
-        this.sprintApi            = sprintApi;
-        this.taskApi              = taskApi;
-        this.userApi              = userApi;
-        this.worklogApi           = worklogApi;
-        this.databaseDebugService = databaseDebugService;
-
-        // Create drag-drop handler
-        this.dragDropHandler = new BacklogDragDropHandler(taskApi, () -> {
-            backlogSprint = null; // Clear cache
-            loadData();           // Reload all data
-        });
-
-        // Load current user
-        String userEmail = getUserEmail();
-        try {
-            loggedInUser = userApi.getByEmail(userEmail).get();
-        } catch (ResponseStatusException e) {
-            log.warn("Could not find user with email: {}", userEmail);
-        }
+    public LegacyBacklog(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock, JsonMapper jsonMapper) {
+        this.worklogApi = worklogApi;
+        this.taskApi    = taskApi;
+        this.sprintApi  = sprintApi;
+        this.productApi = productApi;
+        this.versionApi = versionApi;
+        this.featureApi = featureApi;
+        this.userApi    = userApi;
+        this.clock      = clock;
+        this.jsonMapper = jsonMapper;
 
         try {
             // Set width full but not height - let content determine height for scrolling
@@ -116,535 +164,886 @@ public class LegacyBacklog extends Main implements BeforeEnterObserver, AfterNav
             // Make view background transparent, so AppLayout's gray background is visible
             getStyle().set("background-color", "transparent");
 
+            // Apply tree-grid-wrapper styling to the main view
+            setClassName("tree-grid-wrapper");
             addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
+            this.getStyle().set("padding-left", "var(--lumo-space-xs)");
+            this.getStyle().set("padding-right", "var(--lumo-space-xs)");
 
-            // Create header with filters
-            HorizontalLayout headerLayout = createHeader();
+            headerLayout = createHeaderWithButtons();
 
-            // Create content layout for sprint cards
-            contentLayout = new VerticalLayout();
-            contentLayout.setWidthFull();
-            contentLayout.setPadding(false);
-            contentLayout.setSpacing(true);
-            contentLayout.addClassName(LumoUtility.Gap.LARGE);
+            // Create main sprint grid
+            grid = createGrid(clock);
 
-            add(headerLayout, contentLayout);
+            // Create panel wrapper for sprint grid
+            VerticalLayout gridPanelWrapper = new VerticalLayout();
+            gridPanelWrapper.setPadding(false);
+            gridPanelWrapper.setSpacing(false);
+            gridPanelWrapper.setWidthFull();
+            gridPanelWrapper.addClassName("tree-grid-panel-wrapper");
 
-            this.getStyle().set("padding-left", "var(--lumo-space-m)");
-            this.getStyle().set("padding-right", "var(--lumo-space-m)");
+            VerticalLayout innerWrapper = new VerticalLayout();
+            innerWrapper.setPadding(false);
+            innerWrapper.setSpacing(false);
+
+            // Create the sprint info panel (start date, end date, status) and add it above the grid
+            sprintInfoPanel = createSprintInfoPanel();
+            gridPanelWrapper.add(sprintInfoPanel, innerWrapper);
+
+            VerticalLayout gridPanel = new VerticalLayout(grid);
+            gridPanel.setPadding(false);
+            gridPanel.setSpacing(false);
+            gridPanel.setWidthFull();
+            gridPanel.addClassName("tree-grid-panel");
+
+            innerWrapper.add(gridPanel);
+
+            // Create Gantt chart container (placed between sprint grid and backlog)
+            ganttChartContainer = new Div();
+            ganttChartContainer.getStyle()
+                    .set("overflow-x", "auto")
+                    .set("width", "100%")
+                    .set("margin-top", "var(--lumo-space-xs)");
+
+            // Create backlog grid (always shown at bottom)
+            backlogGrid = createGrid(clock);
+
+            // Create panel wrapper for backlog grid with a header
+            backlogGridPanel = new VerticalLayout();
+            backlogGridPanel.setPadding(false);
+            backlogGridPanel.setSpacing(false);
+            backlogGridPanel.setWidthFull();
+            backlogGridPanel.addClassName("tree-grid-panel-wrapper");
+            backlogGridPanel.getStyle().set("margin-top", "var(--lumo-space-l)");
+
+            // Add a header/separator for the backlog section
+            Div backlogHeader = new Div();
+            backlogHeader.setText("Backlog");
+            backlogHeader.getStyle()
+                    .set("font-size", "var(--lumo-font-size-l)")
+                    .set("font-weight", "600")
+                    .set("padding", "var(--lumo-space-m)")
+                    .set("background-color", "var(--lumo-contrast-5pct)")
+                    .set("border-radius", "var(--lumo-border-radius-m) var(--lumo-border-radius-m) 0 0");
+
+            VerticalLayout backlogInnerWrapper = new VerticalLayout();
+            backlogInnerWrapper.setPadding(false);
+            backlogInnerWrapper.setSpacing(false);
+
+            VerticalLayout backlogGridPanelInner = new VerticalLayout(backlogGrid);
+            backlogGridPanelInner.setPadding(false);
+            backlogGridPanelInner.setSpacing(false);
+            backlogGridPanelInner.setWidthFull();
+            backlogGridPanelInner.addClassName("tree-grid-panel");
+
+            backlogInnerWrapper.add(backlogGridPanelInner);
+            backlogGridPanel.add(backlogHeader, backlogInnerWrapper);
+
+            // Setup cross-grid drag & drop coordinator
+            dragDropCoordinator = new CrossGridDragDropCoordinator(this::handleCrossGridTransfer);
+            dragDropCoordinator.register(grid);
+            dragDropCoordinator.register(backlogGrid);
+            grid.setDragDropCoordinator(dragDropCoordinator);
+            backlogGrid.setDragDropCoordinator(dragDropCoordinator);
+
+            // Add components in order: header, sprint grid, gantt chart, backlog grid
+            add(headerLayout, ganttChartContainer, gridPanelWrapper, backlogGridPanel);
+
+            String userEmail = getUserEmail();
+            try {
+                loggedInUser = userApi.getByEmail(userEmail).get();
+            } catch (ResponseStatusException e) {
+                log.warn("Could not find user with email: " + userEmail, e);
+            }
 
         } catch (Exception e) {
-            log.error("Error initializing Backlog", e);
+            log.error("Error initializing Backlog view", e);
             throw e;
         }
     }
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-//        log.info("afterNavigation start");
-        // Update breadcrumbs
-        getElement().getParent().getComponent()
-                .ifPresent(component -> {
-                    if (component instanceof MainLayout mainLayout) {
-                        mainLayout.getBreadcrumbs().clear();
-                        mainLayout.getBreadcrumbs().addItem("Legacy Backlog", LegacyBacklog.class);
-                    }
-                });
-
-        // Set flag to prevent URL updates during restoration
-        isRestoringFromUrl = true;
-        // Load data and populate grids
-        loadData();
-        // Clear restoration flag after load complete
-        isRestoringFromUrl = false;
-//        log.info("== afterNavigation end");
-//        log.info("");
-    }
-
-    /**
-     * Apply filters to the displayed sprints
-     */
-    private void applyFilters() {
-//        log.info(" * applyFilters called");
-        try {
-            // Clear previous content
-            contentLayout.removeAll();
-
-            // Clear previous drag-drop registrations
-            dragDropHandler.clearRegistrations();
-
-            if (allSprints.isEmpty()) {
-                Div emptyMessage = new Div();
-                emptyMessage.setText("No sprints found.");
-                emptyMessage.getStyle()
-                        .set("padding", "var(--lumo-space-l)")
-                        .set("text-align", "center")
-                        .set("color", "var(--lumo-secondary-text-color)");
-                contentLayout.add(emptyMessage);
-                return;
-            }
-
-            // Get selected sprints from filter (or all if none selected)
-            List<Sprint> sprintsToShow = selectedSprints.isEmpty()
-                    ? new ArrayList<>(allSprints)
-                    : new ArrayList<>(selectedSprints);
-
-            // Always ensure Backlog sprint is included (even if filtered out or not in selection)
-            Sprint backlog = allSprints.stream()
-                    .filter(s -> DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s.getName()))
-                    .findFirst()
-                    .orElse(null);
-            if (backlog != null && !sprintsToShow.contains(backlog)) {
-                sprintsToShow.add(backlog);
-            }
-
-            if (sprintsToShow.isEmpty()) {
-                Div emptyMessage = new Div();
-                emptyMessage.setText("No sprints match the current filters.");
-                emptyMessage.getStyle()
-                        .set("padding", "var(--lumo-space-l)")
-                        .set("text-align", "center")
-                        .set("color", "var(--lumo-secondary-text-color)");
-                contentLayout.add(emptyMessage);
-                return;
-            }
-
-            // Sort sprints by start date (newest first), but Backlog always last
-            sprintsToShow.sort((s1, s2) -> {
-                // Backlog sprint always goes last
-                boolean s1IsBacklog = DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s1.getName());
-                boolean s2IsBacklog = DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s2.getName());
-
-                if (s1IsBacklog && !s2IsBacklog) return 1;
-                if (!s1IsBacklog && s2IsBacklog) return -1;
-
-                // Normal sorting by start date
-                if (s1.getStart() == null && s2.getStart() == null) return 0;
-                if (s1.getStart() == null) return 1;
-                if (s2.getStart() == null) return -1;
-                return s2.getStart().compareTo(s1.getStart());
-            });
-
-            // Create a card for each sprint
-            for (Sprint sprint : sprintsToShow) {
-                createSprintSection(sprint);
-            }
-
-        } catch (Exception e) {
-            log.error("Error applying filters", e);
-            Div errorMessage = new Div();
-            errorMessage.setText("Error applying filters: " + e.getMessage());
-            errorMessage.getStyle()
-                    .set("padding", "var(--lumo-space-l)")
-                    .set("color", "var(--lumo-error-text-color)");
-            contentLayout.add(errorMessage);
+        //- Get query parameters
+        com.vaadin.flow.router.Location location        = event.getLocation();
+        QueryParameters                 queryParameters = location.getQueryParameters();
+        log.info("=== afterNavigation called {} parameters", queryParameters.getParameters().size());
+        if (queryParameters.getParameters().containsKey("product")) {
+            this.productId = UUID.fromString(queryParameters.getParameters().get("product").getFirst());
         }
-    }
+        if (queryParameters.getParameters().containsKey("version")) {
+            this.versionId = UUID.fromString(queryParameters.getParameters().get("version").getFirst());
+        }
+        if (queryParameters.getParameters().containsKey("feature")) {
+            this.featureId = UUID.fromString(queryParameters.getParameters().get("feature").getFirst());
+        }
+        if (queryParameters.getParameters().containsKey("sprint")) {
+            this.sprintId = UUID.fromString(queryParameters.getParameters().get("sprint").getFirst());
+        }
+        // Capture requested users from URL for initial user-selector preselection.
+        // Cleared here so each navigation cycle starts fresh.
+        requestedUserIds = null;
+        if (queryParameters.getParameters().containsKey("users")) {
+            requestedUserIds = queryParameters.getParameters().get("users").getFirst();
+        }
 
-    /**
-     * Assign a user to a newly created task.
-     * Looks at the last task in the backlog with an assigned user.
-     * Falls back to the currently logged-in user.
-     */
-    private void assignUserToNewTask(Task newTask) {
-        UUID assignedUserId = null;
+        // If no sprint ID provided, use last shown sprint or find first non-Backlog sprint
+        if (this.sprintId == null) {
+            if (lastShownSprintId != null) {
+                // Use last shown sprint
+                this.sprintId = lastShownSprintId;
+                log.info("No sprint ID provided, using last shown sprint (ID: {})", this.sprintId);
+            } else {
+                // Find first non-Backlog sprint
+                try {
+                    List<Sprint> sprints = sprintApi.getAll();
+                    Sprint firstNonBacklog = sprints.stream()
+                            .filter(s -> !"Backlog".equals(s.getName()))
+                            .findFirst()
+                            .orElse(null);
 
-        Sprint sprint = getBacklogSprint();
-        if (sprint != null && !sprint.getTasks().isEmpty()) {
-            // Get tasks sorted by orderId (descending to get most recent first)
-            List<Task> sortedTasks = sprint.getTasks().stream()
-                    .sorted(Comparator.comparingInt(Task::getOrderId).reversed())
-                    .toList();
-
-            // Find the first task with an assigned user
-            for (Task task : sortedTasks) {
-                if (task.getResourceId() != null) {
-                    assignedUserId = task.getResourceId();
-                    break;
+                    if (firstNonBacklog != null) {
+                        this.sprintId = firstNonBacklog.getId();
+                        log.info("No sprint ID provided, using first non-Backlog sprint: {} (ID: {})",
+                                firstNonBacklog.getName(), this.sprintId);
+                    } else {
+                        // No sprints available at all
+                        log.warn("No sprints found");
+                        return;
+                    }
+                } catch (Exception e) {
+                    log.error("Error fetching sprints", e);
+                    return;
                 }
             }
         }
 
-        // Fall back to logged-in user
-        if (assignedUserId == null && loggedInUser != null) {
-            assignedUserId = loggedInUser.getId();
+        // Remember this sprint for next time
+        lastShownSprintId = this.sprintId;
+
+        ganttUtil = new GanttUtil();
+        loadData();
+
+        // Update sprint selector to show the current sprint (in case it was determined automatically)
+        updateSprintSelectorValue();
+
+        //- Update breadcrumbs
+        getElement().getParent().getComponent()
+                .ifPresent(component -> {
+                    if (component instanceof MainLayout mainLayout) {
+                        mainLayout.getBreadcrumbs().clear();
+
+                        // Only show full breadcrumb trail if we have product/version/feature context
+                        if (productId != null && versionId != null && featureId != null) {
+                            Product product = productApi.getById(productId);
+                            mainLayout.getBreadcrumbs().addItem("Products (" + product.getName() + ")", ProductListView.class);
+                            {
+                                Map<String, String> params = new HashMap<>();
+                                params.put("product", String.valueOf(productId));
+                                Version version = versionApi.getById(versionId);
+                                mainLayout.getBreadcrumbs().addItem("Versions (" + version.getName() + ")", VersionListView.class, params);
+                            }
+                            {
+                                Map<String, String> params = new HashMap<>();
+                                params.put("product", String.valueOf(productId));
+                                params.put("version", String.valueOf(versionId));
+                                Feature feature = featureApi.getById(featureId);
+                                mainLayout.getBreadcrumbs().addItem("Features (" + feature.getName() + ")", FeatureListView.class, params);
+                            }
+                            {
+                                Map<String, String> params = new HashMap<>();
+                                params.put("product", String.valueOf(productId));
+                                params.put("version", String.valueOf(versionId));
+                                params.put("feature", String.valueOf(featureId));
+                                mainLayout.getBreadcrumbs().addItem("Sprints (" + sprint.getName() + ")", SprintListView.class, params);
+                            }
+                            {
+                                Map<String, String> params = new HashMap<>();
+                                params.put("product", String.valueOf(productId));
+                                params.put("version", String.valueOf(versionId));
+                                params.put("feature", String.valueOf(featureId));
+                                params.put("sprint", String.valueOf(sprintId));
+                                mainLayout.getBreadcrumbs().addItem("Backlog", LegacyBacklog.class, params);
+                            }
+                        } else {
+                            // Simple breadcrumb when accessed from main menu
+                            mainLayout.getBreadcrumbs().addItem("Backlog", LegacyBacklog.class);
+                        }
+                    }
+                });
+
+        //- populate grid with selected sprint + Backlog sprint
+        refreshGrid();
+        updateUrlParameters();
+    }
+
+    /**
+     * Apply search and user filters to both grids.
+     * Filters the displayed tasks based on search text and selected users.
+     */
+    private void applyFilters() {
+        // Apply filters to sprint grid
+        if (sprint != null) {
+            List<Task> sprintTasks = filterTasks(sprint.getTasks());
+            grid.updateData(sprint, sprintTasks, users);
         }
 
-        if (assignedUserId != null) {
-            newTask.setResourceId(assignedUserId);
+        // Apply filters to backlog grid
+        if (backlogSprint != null) {
+            List<Task> backlogTasks = filterTasks(backlogSprint.getTasks());
+            backlogGrid.updateData(backlogSprint, backlogTasks, users);
         }
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-//        log.info("");
-//        log.info("== beforeEnter start");
-        // Read query parameters directly from the event
-        Location        location        = event.getLocation();
-        QueryParameters queryParameters = location.getQueryParameters();
+        // Read query parameters
+        com.vaadin.flow.router.Location location        = event.getLocation();
+        QueryParameters                 queryParameters = location.getQueryParameters();
 
-        log.info("URL: {}", location.getPath());
-        log.info("Query params from event: {}", queryParameters.getParameters());
+        // Extract sprint ID from URL if present
+        if (queryParameters.getParameters().containsKey("sprint")) {
+            this.sprintId = UUID.fromString(queryParameters.getParameters().get("sprint").getFirst());
+        }
 
-        // Check if any parameters exist (to distinguish first visit from cleared filters)
-        hasUrlParameters = !queryParameters.getParameters().isEmpty();
-        log.info("hasUrlParameters: {}", hasUrlParameters);
-
-        // Extract filter values from query parameters
-        if (queryParameters.getParameters().containsKey("sprints")) {
-            savedSprintIds = queryParameters.getParameters().get("sprints").get(0);
-            log.info("Restored sprints from URL: {}", savedSprintIds);
-        } else {
-            savedSprintIds = null;
-            log.info("No sprints in URL, set to null");
-        }
-        if (queryParameters.getParameters().containsKey("users")) {
-            savedUserIds = queryParameters.getParameters().get("users").get(0);
-            log.info("Restored users from URL: {}", savedUserIds);
-        } else {
-            savedUserIds = null;
-            log.info("No users in URL, set to null");
-        }
-        if (queryParameters.getParameters().containsKey("search")) {
-            searchText = queryParameters.getParameters().get("search").get(0);
-            log.info("Restored search from URL: {}", searchText);
-        } else {
-            searchText = "";
-            log.info("No search in URL, set to empty");
-        }
-//        log.info("== beforeEnter end");
+        // Populate the sprint selector after we have the sprint ID
+        populateSprintSelector();
     }
 
     /**
-     * Creates the header layout with search, filters, and clear button
+     * Cancel edit mode and discard all changes
      */
-    private HorizontalLayout createHeader() {
+    private void cancelEditMode() {
+        grid.getModifiedTasks().clear();
+
+        // Reload data to discard changes
+        loadData();
+        refreshGrid();
+        exitEditMode();
+    }
+
+    private TaskGrid createGrid(Clock clock) {
+        TaskGrid grid = new TaskGrid(clock, getLocale(), jsonMapper);
+        grid.setOnSaveAllChangesAndRefresh(this::saveAllChangesAndRefresh);
+        grid.setOnDeleteTask(this::deleteTaskAndRefresh);
+
+        grid.setWidthFull();
+
+        return grid;
+    }
+
+    /**
+     * Creates the header layout with search, filters, create buttons, Edit, Save, and Cancel buttons
+     */
+    private HorizontalLayout createHeaderWithButtons() {
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
         header.setAlignItems(FlexComponent.Alignment.END);
-        header.getStyle().set("padding", "var(--lumo-space-m)");
+        header.getStyle().set("padding", "var(--lumo-space-xs)");
         header.setSpacing(true);
+        header.setId("page-header");
 
-        // 1. Search input box with magnifying glass icon and label for alignment
-        TextField searchField = new TextField();
+        // Title and avatar at the left — updated dynamically by updateHeaderForSelection()
+        pageTitle = new H2("Backlog");
+        pageTitle.setId(BACKLOG_PAGE_TITLE_ID);
+        pageTitle.addClassNames(LumoUtility.Margin.NONE);
+
+        headerAvatar = new Image();
+        headerAvatar.setWidth("32px");
+        headerAvatar.setHeight("32px");
+        headerAvatar.getStyle()
+                .set("border-radius", "var(--lumo-border-radius)")
+                .set("object-fit", "cover")
+                .set("display", "inline-block")
+                .set("margin-right", "12px");
+        headerAvatar.setVisible(false);
+
+        // 1. Search input box with magnifying glass icon
+        searchField = new TextField();
         searchField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
-        searchField.setLabel("Search");
-        searchField.setPlaceholder("search board");
+        searchField.setId(SEARCH_FIELD_ID);
+//        searchField.setLabel("Search");
+        searchField.setPlaceholder("search tasks");
         searchField.setPrefixComponent(VaadinIcon.SEARCH.create());
         searchField.setValueChangeMode(ValueChangeMode.EAGER);
         searchField.addValueChangeListener(e -> {
-            // Only update if change is from user interaction, not programmatic
             if (e.isFromClient()) {
                 searchText = e.getValue() != null ? e.getValue().toLowerCase().trim() : "";
-                updateUrlParameters();
                 applyFilters();
             }
         });
-        searchField.setWidth("300px");
+        searchField.setWidth("200px");
 
         // 2. User multi-select dropdown
         userSelector = new MultiSelectComboBox<>();
-        userSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
-        userSelector.setLabel("User");
+        userSelector.setId(USER_SELECTOR_ID);
+//        userSelector.setLabel("User");
         userSelector.setItemLabelGenerator(User::getName);
         userSelector.setPlaceholder("Select users");
-        userSelector.setWidth("300px");
+        userSelector.setWidth("200px");
+        userSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
         userSelector.addValueChangeListener(e -> {
-            log.info("=== User selector value changed ===");
-            log.info("isFromClient: {}", e.isFromClient());
-            log.info("Old value IDs: {}", e.getOldValue().stream().map(User::getId).toList());
-            log.info("New value IDs: {}", e.getValue().stream().map(User::getId).toList());
-            log.info("selectedUsers IDs before: {}", selectedUsers.stream().map(User::getId).toList());
-
-            // Only update if change is from user interaction, not programmatic
             if (e.isFromClient()) {
                 selectedUsers = new java.util.HashSet<>(e.getValue());
-                log.info("selectedUsers IDs after update: {}", selectedUsers.stream().map(User::getId).toList());
-                log.info("Calling updateUrlParameters synchronously...");
-                updateUrlParameters();
-                log.info("Calling applyFilters...");
                 applyFilters();
-            } else {
-                log.info("Skipping update - not from client");
+                updateUrlParameters();
             }
         });
 
-        // 3. Sprint multi-select dropdown
-        sprintSelector = new MultiSelectComboBox<>();
-        sprintSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
-        sprintSelector.setLabel("Sprint");
+        // 3. Sprint single-select dropdown (changed from multi-select)
+        sprintSelector = new ComboBox<>();
+        sprintSelector.setId(SPRINT_SELECTOR_ID);
+//        sprintSelector.setLabel("Sprint");
         sprintSelector.setItemLabelGenerator(Sprint::getName);
-        sprintSelector.setPlaceholder("Select sprints");
-        sprintSelector.setWidth("300px");
+        sprintSelector.setPlaceholder("Select sprint");
+        sprintSelector.setWidth("200px");
+        sprintSelector.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
         sprintSelector.addValueChangeListener(e -> {
-            // Only update if change is from user interaction, not programmatic
             if (e.isFromClient()) {
-                selectedSprints = new java.util.HashSet<>(e.getValue());
+                selectedSprint = e.getValue();
+                loadDataForSelectedSprint();
                 updateUrlParameters();
-                applyFilters();
             }
         });
 
-        // 4. Clear filter button (right after filters, no spacer)
+        // 4. Clear filter button
         Button clearButton = new Button("Clear filter", VaadinIcon.CLOSE_SMALL.create());
-        clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        clearButton.setId(CLEAR_FILTER_BUTTON_ID);
+        clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        clearButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         clearButton.addClickListener(e -> {
             searchField.clear();
             userSelector.clear();
-            sprintSelector.clear();
-            selectedSprints.clear();
             selectedUsers.clear();
             searchText = "";
-            updateUrlParameters();
             applyFilters();
         });
+
+        // 5. Expand/Collapse toggle with checkbox styled as iOS toggle
+        HorizontalLayout expandToggleLayout = new HorizontalLayout();
+        expandToggleLayout.setSpacing(true);
+        expandToggleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        expandToggleLayout.getStyle().set("margin-left", "var(--lumo-space-xs)");
+
+        Span expandLabel = new Span("Expand All Stories");
+        expandLabel.getStyle()
+                .set("font-size", "var(--lumo-font-size-s)")
+                .set("color", "var(--lumo-body-text-color)");
+
+        com.vaadin.flow.component.checkbox.Checkbox expandToggleCheckbox = new com.vaadin.flow.component.checkbox.Checkbox();
+        expandToggleCheckbox.setId(EXPAND_TOGGLE_BUTTON_ID);
+        expandToggleCheckbox.setValue(expandAllStories); // Default to checked (expanded)
+        expandToggleCheckbox.addValueChangeListener(e -> {
+            if (e.isFromClient()) {
+                expandAllStories = e.getValue();
+                toggleStoryExpansion();
+            }
+        });
+
+        // Style the checkbox to look like an iOS toggle switch
+        expandToggleCheckbox.getElement().getThemeList().add("switch");
+
+        expandToggleLayout.add(expandLabel, expandToggleCheckbox);
 
         // Spacer to push create buttons to the right
         Div spacer = new Div();
 
         // Create Milestone button
-        Button createMilestoneButton = new Button("Create Milestone", VaadinIcon.FLAG.create());
+        Button createMilestoneButton = new Button("Milestone", VaadinIcon.PLUS.create());
+        createMilestoneButton.setId(CREATE_MILESTONE_BUTTON_ID);
         createMilestoneButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        createMilestoneButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         createMilestoneButton.addClickListener(e -> createMilestone());
 
         // Create Story button
-        Button createStoryButton = new Button("Create Story", VaadinIcon.BOOK.create());
+        Button createStoryButton = new Button("Story", VaadinIcon.PLUS.create());
+        createStoryButton.setId(CREATE_STORY_BUTTON_ID);
         createStoryButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        createStoryButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         createStoryButton.addClickListener(e -> createStory());
 
         // Create Task button
-        Button createTaskButton = new Button("Create Task", VaadinIcon.TASKS.create());
+        Button createTaskButton = new Button("Task", VaadinIcon.PLUS.create());
+        createTaskButton.setId(CREATE_TASK_BUTTON_ID);
         createTaskButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        createTaskButton.addClickListener(e -> createTask());
+        createTaskButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        createTaskButton.addClickListener(e -> grid.createTask(loggedInUser));
 
-        // Debug: Print DB button
-        Button printDbButton = new Button("Print DB", VaadinIcon.DATABASE.create());
-        printDbButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        printDbButton.addClickListener(e -> printDatabaseTables());
+        // Create Edit button
+        editButton = new Button("Edit", VaadinIcon.EDIT.create());
+        editButton.setId(EDIT_BUTTON_ID);
+        editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        editButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        editButton.addClickListener(e -> enterEditMode());
 
-        header.add(searchField, userSelector, sprintSelector, clearButton, spacer,
-                createMilestoneButton, createStoryButton, createTaskButton, printDbButton);
+        // Create Save button
+        saveButton = new Button("Save", VaadinIcon.CHECK.create());
+        saveButton.setId(SAVE_BUTTON_ID);
+        saveButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+        saveButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        saveButton.setVisible(false);
+        saveButton.addClickListener(e -> saveAllChangesAndRefresh());
+
+        // Create Cancel button
+        cancelButton = new Button("Cancel", VaadinIcon.CLOSE.create());
+        cancelButton.setId(CANCEL_BUTTON_ID);
+        cancelButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        cancelButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        cancelButton.setVisible(false);
+        cancelButton.addClickListener(e -> cancelEditMode());
+
+        // Add all components to header
+        header.add(headerAvatar, pageTitle, searchField, userSelector, sprintSelector, clearButton, expandToggleLayout, spacer,
+                createMilestoneButton, createStoryButton, createTaskButton, editButton, saveButton, cancelButton);
         header.setFlexGrow(1, spacer);
 
         return header;
     }
 
     /**
-     * Create a new Milestone task in the Backlog sprint.
+     * Create a new Milestone task
      */
     private void createMilestone() {
-        Sprint sprint = getBacklogSprint();
-        if (sprint == null) {
-            Notification.show("Backlog sprint not found", 3000, Notification.Position.MIDDLE);
-            return;
-        }
-
-        // Get the next orderId before creating the task
-        int nextOrderId = sprint.getNextOrderId();
+        long nextOrderId = sprint.getNextOrderId();
 
         Task task = new Task();
         task.setName("New Milestone-" + nextOrderId);
+        task.setSprint(sprint);
         task.setSprintId(sprint.getId());
-        task.setOrderId(nextOrderId);
         task.setMilestone(true);
         task.setStart(ParameterOptions.getLocalNow().withHour(8).withMinute(0).withSecond(0).withNano(0));
-        // Milestones typically don't have a user assigned
 
-        // Add task to sprint's task list so getNextOrderId() works correctly for next task
-        sprint.addTask(task);
-
-        taskApi.persist(task);
-        backlogSprint = null; // Clear cache to reload
+        Task saved = taskApi.persist(task);
         loadData();
+        refreshGrid();
     }
 
     /**
-     * Create a section for a single sprint with its story cards
+     * Creates the horizontal info panel displayed above the sprint task grid.
+     * Shows the sprint start date, end date, and an editable status selector.
+     *
+     * @return the constructed info panel
      */
-    private void createSprintSection(Sprint sprint) {
-        // Load tasks and worklogs for this sprint
-        List<Task>    tasks    = taskApi.getAll(sprint.getId());
-        List<Worklog> worklogs = worklogApi.getAll(sprint.getId());
+    private HorizontalLayout createSprintInfoPanel() {
+        HorizontalLayout panel = new HorizontalLayout();
+        panel.setAlignItems(FlexComponent.Alignment.CENTER);
+        panel.setSpacing(true);
+        panel.setWidthFull();
+        panel.getStyle()
+                .set("padding", "var(--lumo-space-s) var(--lumo-space-m)")
+                .set("background-color", "var(--lumo-contrast-5pct)")
+                .set("border-radius", "var(--lumo-border-radius-m) var(--lumo-border-radius-m) 0 0");
 
-        // Initialize sprint with all transient fields
-        sprint.initialize();
-        sprint.initUserMap(users);
-        sprint.initTaskMap(tasks, worklogs);
-        sprint.recalculate(ParameterOptions.getLocalNow());
+        // Spacer pushes everything that follows to the far right
+        Div spacer = new Div();
 
-        // Register sprint's tasks with drag-drop handler
-        dragDropHandler.registerSprint(sprint, tasks);
+        // Start date (read-only – displayed in secondary/gray colour)
+        Span startLabel = new Span("Start:");
+        startLabel.getStyle()
+                .set("font-weight", "600")
+                .set("color", "var(--lumo-secondary-text-color)");
+        sprintStartValue = new Span("-");
+        sprintStartValue.getStyle()
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("margin-right", "var(--lumo-space-m)");
 
-        // Filter only story tasks (tasks without parent)
-        List<Task> stories = new ArrayList<>();
-        for (Task task : tasks) {
-            if (task.isStory()) {
-                stories.add(task);
+        // End date (read-only – displayed in secondary/gray colour)
+        Span endLabel = new Span("End:");
+        endLabel.getStyle()
+                .set("font-weight", "600")
+                .set("color", "var(--lumo-secondary-text-color)");
+        sprintEndValue = new Span("-");
+        sprintEndValue.getStyle()
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("margin-right", "var(--lumo-space-m)");
+
+        // Status selector
+        Span statusLabel = new Span("Status:");
+        statusLabel.getStyle().set("font-weight", "600");
+        sprintStatusComboBox = new ComboBox<>();
+        sprintStatusComboBox.addThemeVariants(ComboBoxVariant.LUMO_SMALL);
+        sprintStatusComboBox.setId(SPRINT_STATUS_SELECTOR_ID);
+        sprintStatusComboBox.setItems(Status.values());
+        sprintStatusComboBox.setItemLabelGenerator(Status::name);
+        sprintStatusComboBox.setWidth("150px");
+        sprintStatusComboBox.addValueChangeListener(e -> {
+            if (e.isFromClient() && sprint != null && e.getValue() != null) {
+                sprint.setStatus(e.getValue());
+                try {
+                    sprintApi.update(sprint);
+                    log.info("Sprint status updated to {} for sprint {}", e.getValue(), sprint.getName());
+                } catch (Exception ex) {
+                    log.error("Failed to update sprint status for sprint {}", sprint.getName(), ex);
+                    com.vaadin.flow.component.notification.Notification.show(
+                            "Failed to update sprint status: " + ex.getMessage(), 3000,
+                            com.vaadin.flow.component.notification.Notification.Position.BOTTOM_START);
+                    // Revert to old value
+                    sprintStatusComboBox.setValue(e.getOldValue());
+                }
             }
+        });
+
+        panel.add(spacer, startLabel, sprintStartValue, endLabel, sprintEndValue, statusLabel, sprintStatusComboBox);
+        panel.setFlexGrow(1, spacer);
+        return panel;
+    }
+
+    /**
+     * Creates a deep copy (snapshot) of the sprint and all its tasks.
+     * This is necessary for async Gantt chart generation to avoid race conditions
+     * when tasks are being saved/updated while the chart is being rendered.
+     *
+     * @param original the sprint to copy
+     * @return a deep copy of the sprint with all relationships preserved
+     */
+    private Sprint createSprintSnapshot(Sprint original) {
+        try {
+            // Use Jackson to create a deep copy through serialization/deserialization
+            String sprintJson = jsonMapper.writeValueAsString(original);
+            Sprint snapshot   = jsonMapper.readValue(sprintJson, Sprint.class);
+
+            // Need to reconstruct the relationships and initialize the sprint
+            // Get a copy of the tasks list
+            List<Task> tasksCopy = new ArrayList<>();
+            for (Task originalTask : original.getTasks()) {
+                String taskJson = jsonMapper.writeValueAsString(originalTask);
+                Task   taskCopy = jsonMapper.readValue(taskJson, Task.class);
+                tasksCopy.add(taskCopy);
+            }
+
+            // Get a copy of worklogs
+            List<Worklog> worklogsCopy = new ArrayList<>();
+            for (Worklog originalWorklog : original.getWorklogs()) {
+                String  worklogJson = jsonMapper.writeValueAsString(originalWorklog);
+                Worklog worklogCopy = jsonMapper.readValue(worklogJson, Worklog.class);
+                worklogsCopy.add(worklogCopy);
+            }
+
+            // Get a copy of users (serialize/deserialize to ensure deep copy)
+            List<User> usersCopy = new ArrayList<>();
+            for (User originalUser : original.getUserMap().values()) {
+                String userJson = jsonMapper.writeValueAsString(originalUser);
+                User   userCopy = jsonMapper.readValue(userJson, User.class);
+                usersCopy.add(userCopy);
+            }
+
+            // Initialize the snapshot - this is critical!
+            // First initialize the sprint itself (sets up ProjectFile and properties)
+            snapshot.initialize();
+
+            // Then initialize user map (sets up calendars)
+            snapshot.initUserMap(usersCopy);
+
+            // Then initialize task map (sets up task relationships and sprint references)
+            snapshot.initTaskMap(tasksCopy, worklogsCopy);
+
+            // Finally recalculate (updates calculated fields like release date)
+            snapshot.recalculate(ParameterOptions.getLocalNow());
+
+            log.debug("Created sprint snapshot with {} tasks, {} users, {} worklogs",
+                    tasksCopy.size(), usersCopy.size(), worklogsCopy.size());
+            return snapshot;
+        } catch (Exception e) {
+            log.error("Error creating sprint snapshot, falling back to original reference", e);
+            // If snapshot creation fails, return the original (better than crashing)
+            return original;
+        }
+    }
+
+    /**
+     * Create a new Story task
+     */
+    private void createStory() {
+        long nextOrderId = sprint.getNextOrderId();
+
+        Task task = new Task();
+        task.setName("New Story-" + nextOrderId);
+        task.setSprint(sprint);
+        task.setSprintId(sprint.getId());
+
+        Task saved = taskApi.persist(task);
+        loadData();
+        refreshGrid();
+    }
+
+    /**
+     * Deletes the given task via the REST API and reloads the view.
+     * Handles child-task cascade and relation cleanup on the server side.
+     * Shows an error notification if the call fails.
+     *
+     * @param task the task to delete
+     */
+    private void deleteTaskAndRefresh(Task task) {
+        try {
+            taskApi.deleteById(task.getId());
+            loadData();
+            refreshGrid();
+        } catch (Exception e) {
+            log.error("Failed to delete task {}: {}", task.getKey(), e.getMessage(), e);
+            com.vaadin.flow.component.notification.Notification.show(
+                    "Failed to delete task: " + e.getMessage(), 3000,
+                    com.vaadin.flow.component.notification.Notification.Position.BOTTOM_START);
+        }
+    }
+
+    /**
+     * Display error message for Gantt chart generation failure
+     */
+    private void displayGanttError(Throwable throwable) {
+        ganttChartContainer.removeAll();
+
+        // Convert stack trace to string
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter  printWriter  = new PrintWriter(stringWriter);
+        throwable.printStackTrace(printWriter);
+        String stackTrace = stringWriter.toString();
+
+        // Display error message with stack trace
+        Paragraph errorParagraph = new Paragraph("Error generating Gantt chart: " + throwable.getMessage());
+        errorParagraph.getStyle()
+                .set("color", "var(--lumo-error-color)")
+                .set("font-weight", "bold");
+
+        Paragraph stackTraceParagraph = new Paragraph(stackTrace);
+        stackTraceParagraph.getStyle()
+                .set("white-space", "pre-wrap")
+                .set("font-family", "monospace")
+                .set("font-size", "12px")
+                .set("background-color", "var(--lumo-contrast-5pct)")
+                .set("padding", "var(--lumo-space-s)")
+                .set("border-radius", "var(--lumo-border-radius-m)")
+                .set("max-height", "300px")
+                .set("overflow-y", "auto");
+
+        Div errorContainer = new Div(errorParagraph, stackTraceParagraph);
+        errorContainer.getStyle()
+                .set("padding", "var(--lumo-space-m)");
+
+        ganttChartContainer.add(errorContainer);
+    }
+
+    /**
+     * Enter edit mode - enable editing for all rows
+     */
+    private void enterEditMode() {
+        grid.setEditMode(true);
+        grid.getModifiedTasks().clear();
+
+        // Update button visibility
+        editButton.setVisible(false);
+        saveButton.setVisible(true);
+        cancelButton.setVisible(true);
+
+        // Enable drag and drop for reordering
+        grid.setRowsDraggable(true);
+
+        // Add visual feedback for edit mode
+        grid.addClassName("edit-mode");
+
+        // Refresh grid to show editable components
+        grid.getDataProvider().refreshAll();
+
+    }
+
+    /**
+     * Exit edit mode
+     */
+    private void exitEditMode() {
+        grid.setEditMode(false);
+
+        // Update button visibility
+        editButton.setVisible(true);
+        saveButton.setVisible(false);
+        cancelButton.setVisible(false);
+
+        // Disable drag and drop
+        grid.setRowsDraggable(true);
+
+        // Remove visual feedback
+        grid.removeClassName("edit-mode");
+
+
+        // Refresh grid to show read-only components
+        grid.getDataProvider().refreshAll();
+    }
+
+    /**
+     * Filter a list of tasks based on current search text and selected users.
+     */
+    private List<Task> filterTasks(List<Task> tasks) {
+        if (searchText.isEmpty() && selectedUsers.isEmpty()) {
+            return new ArrayList<>(tasks);
         }
 
-        // Apply search filter to stories and their child tasks
-        if (!searchText.isEmpty() || !selectedUsers.isEmpty()) {
-            List<Task> filteredStories = new ArrayList<>();
-            for (Task story : stories) {
-                // Check if story matches search
-                boolean storyMatches = searchText.isEmpty() ||
-                        (story.getName() != null && story.getName().toLowerCase().contains(searchText)) ||
-                        (story.getId() != null && ("STORY-" + story.getId()).toLowerCase().contains(searchText));
+        List<Task> filteredTasks = new ArrayList<>();
 
-                // Check if any child task matches search or user filter
+        for (Task task : tasks) {
+            boolean matchesSearch = searchText.isEmpty() ||
+                    (task.getName() != null && task.getName().toLowerCase().contains(searchText)) ||
+                    (task.getId() != null && ("T-" + task.getId()).toLowerCase().contains(searchText));
+
+            boolean matchesUser = selectedUsers.isEmpty() ||
+                    (task.getResourceId() != null && selectedUsers.stream()
+                            .anyMatch(user -> user.getId().equals(task.getResourceId())));
+
+            // For stories (parent tasks), also check if any child task matches
+            if (task.isStory()) {
                 boolean hasMatchingChild = false;
-                for (Task task : tasks) {
-                    if (task.getParentTaskId() != null && task.getParentTaskId().equals(story.getId())) {
-                        boolean taskMatchesSearch = searchText.isEmpty() ||
-                                (task.getName() != null && task.getName().toLowerCase().contains(searchText)) ||
-                                (task.getId() != null && ("T-" + task.getId()).toLowerCase().contains(searchText));
+                for (Task childTask : tasks) {
+                    if (childTask.getParentTaskId() != null && childTask.getParentTaskId().equals(task.getId())) {
+                        boolean childMatchesSearch = searchText.isEmpty() ||
+                                (childTask.getName() != null && childTask.getName().toLowerCase().contains(searchText)) ||
+                                (childTask.getId() != null && ("T-" + childTask.getId()).toLowerCase().contains(searchText));
 
-                        boolean taskMatchesUser = selectedUsers.isEmpty() ||
-                                (task.getResourceId() != null && selectedUsers.stream()
-                                        .anyMatch(user -> user.getId().equals(task.getResourceId())));
+                        boolean childMatchesUser = selectedUsers.isEmpty() ||
+                                (childTask.getResourceId() != null && selectedUsers.stream()
+                                        .anyMatch(user -> user.getId().equals(childTask.getResourceId())));
 
-                        if (taskMatchesSearch && taskMatchesUser) {
+                        if (childMatchesSearch && childMatchesUser) {
                             hasMatchingChild = true;
                             break;
                         }
                     }
                 }
 
-                if (storyMatches || hasMatchingChild) {
-                    filteredStories.add(story);
+                // Story is included if:
+                // 1. It has a matching child (child matches both search AND user filter), OR
+                // 2. The story itself matches both search AND user filter
+                if (hasMatchingChild || (matchesSearch && matchesUser)) {
+                    filteredTasks.add(task);
+                }
+            } else {
+                // For regular tasks, just check the task itself
+                if (matchesSearch && matchesUser) {
+                    filteredTasks.add(task);
                 }
             }
-            stories = filteredStories;
         }
 
-        // Only create sprint card if there are stories to show
-        // Exception: Backlog sprint should always be visible even when empty
-        boolean isBacklogSprint = DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(sprint.getName());
-        if (!stories.isEmpty() || isBacklogSprint) {
-            // Create SprintCard for this sprint with drag-drop handler
-            SprintCard sprintCard = new SprintCard(sprint, stories, tasks, userMap, searchText, selectedUsers, dragDropHandler);
-
-            // Add sprint card to main content
-            contentLayout.add(sprintCard);
-        }
+        return filteredTasks;
     }
 
     /**
-     * Create a new Story task in the Backlog sprint.
-     */
-    private void createStory() {
-        Sprint sprint = getBacklogSprint();
-        if (sprint == null) {
-            Notification.show("Backlog sprint not found", 3000, Notification.Position.MIDDLE);
-            return;
-        }
-
-        // Get the next orderId before creating the task
-        int nextOrderId = sprint.getNextOrderId();
-
-        Task task = new Task();
-        task.setName("New Story-" + nextOrderId);
-        task.setSprintId(sprint.getId());
-        task.setOrderId(nextOrderId);
-        // Stories are parent tasks, typically don't have a user directly assigned
-
-        // Add task to sprint's task list so getNextOrderId() works correctly for next task
-        sprint.addTask(task);
-
-        taskApi.persist(task);
-        backlogSprint = null; // Clear cache to reload
-        loadData();
-    }
-
-    /**
-     * Create a new Task in the Backlog sprint.
-     * The task is automatically assigned to the last story in the sprint (by orderId).
-     */
-    private void createTask() {
-        Sprint sprint = getBacklogSprint();
-        if (sprint == null) {
-            Notification.show("Backlog sprint not found", 3000, Notification.Position.MIDDLE);
-            return;
-        }
-
-        // Get the next orderId before creating the task
-        int nextOrderId = sprint.getNextOrderId();
-
-        Task task = new Task();
-        task.setName("New Task-" + nextOrderId);
-        task.setSprintId(sprint.getId());
-        task.setOrderId(nextOrderId);
-        Duration work = Duration.ofHours(7).plus(Duration.ofMinutes(30));
-        task.setMinEstimate(work);
-        task.setRemainingEstimate(work);
-
-        // Assign user based on last task or logged-in user
-        assignUserToNewTask(task);
-
-        // Find the last story in the sprint (by orderId) and assign the task to it
-        Task lastStory = findLastStoryInSprint(sprint);
-        if (lastStory != null) {
-            task.setParentTaskId(lastStory.getId());
-            log.info("New task {} assigned to story {}", task.getName(), lastStory.getName());
-        }
-
-        // Add task to sprint's task list so getNextOrderId() works correctly for next task
-        sprint.addTask(task);
-
-        taskApi.persist(task);
-        backlogSprint = null; // Clear cache to reload
-        loadData();
-    }
-
-    /**
-     * Find the last story in the sprint based on orderId.
-     * Used to automatically assign new tasks to the most recent story.
+     * Find the story that should be the parent for a task at the given position.
+     * Looks backwards from the position to find the enclosing story.
      *
-     * @param sprint The sprint to search in
-     * @return The last story in the sprint, or null if no stories exist
+     * @param taskOrder The ordered list of tasks
+     * @param position  The position to check
+     * @return The parent story, or null if no parent found
      */
-    private Task findLastStoryInSprint(Sprint sprint) {
-        return sprint.getTasks().stream()
-                .filter(Task::isStory)
-                .max((t1, t2) -> Integer.compare(
-                        t1.getOrderId() != null ? t1.getOrderId() : 0,
-                        t2.getOrderId() != null ? t2.getOrderId() : 0))
-                .orElse(null);
-    }
-
-    /**
-     * Get the cached backlog sprint, loading it if necessary.
-     */
-    private Sprint getBacklogSprint() {
-        if (backlogSprint == null) {
-            try {
-                backlogSprint = sprintApi.getBacklogSprint();
-                // Initialize sprint if needed for task creation
-                if (backlogSprint != null) {
-                    backlogSprint.initialize();
-                    List<Task>    tasks    = taskApi.getAll(backlogSprint.getId());
-                    List<Worklog> worklogs = worklogApi.getAll(backlogSprint.getId());
-                    backlogSprint.initUserMap(users);
-                    backlogSprint.initTaskMap(tasks, worklogs);
-                }
-            } catch (Exception e) {
-                log.error("Failed to load backlog sprint", e);
+    private Task findParentStoryForPosition(List<Task> taskOrder, int position) {
+        // Look backwards from position to find the enclosing story
+        for (int i = position - 1; i >= 0; i--) {
+            Task candidate = taskOrder.get(i);
+            if (candidate.isStory()) {
+                return candidate;
             }
         }
-        return backlogSprint;
+        return null;
+    }
+
+    private void generateGanttChart() {
+        // Capture theme on UI thread before launching background work
+        context.syncTheme();
+
+        // Cancel any previous generation in progress
+        if (ganttGenerationFuture != null && !ganttGenerationFuture.isDone()) {
+            ganttGenerationFuture.cancel(true);
+            log.debug("Cancelled previous Gantt chart generation");
+        }
+
+
+        // Clear container and show loading indicator
+        ganttChartContainer.removeAll();
+        ProgressBar progressBar = new ProgressBar();
+        progressBar.setIndeterminate(true);
+        progressBar.setWidth("300px");
+
+        Span loadingText = new Span("Generating Gantt chart...");
+        loadingText.getStyle()
+                .set("margin-right", "var(--lumo-space-xs)")
+                .set("font-style", "italic")
+                .set("color", "var(--lumo-secondary-text-color)");
+
+        Div loadingContainer = new Div(loadingText, progressBar);
+        loadingContainer.getStyle()
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("padding", "var(--lumo-space-m)");
+
+        ganttChartContainer.add(loadingContainer);
+
+        // Capture UI and security context
+        UI             ui             = UI.getCurrent();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Sprint         sprintSnapshot = createSprintSnapshot(this.sprint); // Create deep copy of sprint
+
+        // Generate chart asynchronously
+        long startTime = System.currentTimeMillis();
+        ganttGenerationFuture = CompletableFuture.supplyAsync(() -> {
+            // Set security context in background thread
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                log.debug("Starting async Gantt chart generation");
+                Svg svg = new Svg();
+                RenderUtil.generateGanttChartSvg(LegacyBacklog.this.context, sprintSnapshot, svg);
+                return svg;
+            } catch (Exception e) {
+                // Wrap checked exception in runtime exception for CompletableFuture
+                throw new RuntimeException("Error generating Gantt chart", e);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        }).thenAccept(svg -> {
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.info("Gantt chart generated in {} ms", elapsed);
+
+            // Update UI on UI thread
+            ui.access(() -> {
+                try {
+                    ganttChartContainer.removeAll();
+
+                    // Configure Gantt chart for proper scrolling display
+                    svg.getStyle()
+                            .set("margin-top", "var(--lumo-space-xs)")
+                            .set("max-width", "100%")
+                            .set("height", "auto")
+                            .set("display", "block");
+
+                    ganttChartContainer.add(svg);
+                    ui.push(); // Push changes to client
+                    log.trace("Gantt chart added to UI and pushed to client");
+                } catch (Exception e) {
+                    log.error("Error adding Gantt chart to UI", e);
+                    displayGanttError(e);
+                    ui.push(); // Push error to client
+                }
+            });
+        }).exceptionally(ex -> {
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.error("Error generating Gantt chart after {} ms: {}", elapsed, ex.getMessage(), ex);
+
+            // Show error in UI
+            ui.access(() -> {
+                displayGanttError(ex);
+                ui.push(); // Push error to client
+            });
+            return null;
+        });
     }
 
     /**
-     * Get the currently logged-in user's email.
+     * Get the currently logged-in user's name or email.
+     * Copied from MainLayout for consistency.
      */
     private String getUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String         userEmail      = authentication != null ? authentication.getName() : "Guest";
 
         // If using OIDC, try to get the email address from authentication details
-        if (authentication != null &&
-                authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
+        if (authentication != null && authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
             String email = oidcUser.getEmail();
             if (email != null && !email.isEmpty()) {
                 userEmail = email;
@@ -654,226 +1053,692 @@ public class LegacyBacklog extends Main implements BeforeEnterObserver, AfterNav
     }
 
     /**
-     * Load all sprints and their tasks, then create a card for each sprint
+     * Handle task transfer between Sprint grid and Backlog grid.
+     * This is called when a task is dragged from one grid and dropped into another.
+     *
+     * @param event The cross-grid transfer event containing all necessary information
      */
-    private void loadData() {
-        try {
-            log.info(" * loadData called");
+    private void handleCrossGridTransfer(CrossGridDragDropCoordinator.CrossGridTransferEvent event) {
+        Task             task         = event.task();
+        List<Task>       childTasks   = event.childTasks();
+        TaskGrid         sourceGrid   = event.sourceGrid();
+        TaskGrid         targetGrid   = event.targetGrid();
+        Task             dropTarget   = event.dropTargetTask();
+        GridDropLocation dropLocation = event.dropLocation();
 
-            // Load all users and build userMap
-            users = userApi.getAll();
-            userMap.clear();
-            for (User user : users) {
-                userMap.put(user.getId(), user);
-            }
-            log.info("Loaded {} users", users.size());
+        Sprint sourceSprint = sourceGrid.getSprint();
+        Sprint targetSprint = targetGrid.getSprint();
 
-            // Load all sprints
-            allSprints = new ArrayList<>(sprintApi.getAll());
-
-            // Ensure Backlog sprint is always included (even if not returned by ACL-filtered API)
-            boolean hasBacklog = allSprints.stream()
-                    .anyMatch(s -> DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s.getName()));
-            if (!hasBacklog) {
-                try {
-                    Sprint backlogSprint = sprintApi.getBacklogSprint();
-                    if (backlogSprint != null) {
-                        allSprints.add(backlogSprint);
-                        log.info("Added Backlog sprint to allSprints (was not in ACL-filtered list)");
-                    }
-                } catch (Exception e) {
-                    log.warn("Could not fetch Backlog sprint: {}", e.getMessage());
-                }
-            }
-
-            log.info("Loaded {} sprints (including Backlog)", allSprints.size());
-
-            populateFilters();
-
-            // Apply filters (will show sprints if filters were restored or default selected)
-            if (!allSprints.isEmpty()) {
-                applyFilters();
-            }
-
-        } catch (Exception e) {
-            log.error("Error loading sprint data", e);
-            contentLayout.removeAll();
-            Div errorMessage = new Div();
-            errorMessage.setText("Error loading sprints: " + e.getMessage());
-            errorMessage.getStyle().set("padding", "var(--lumo-space-l)").set("color", "var(--lumo-error-text-color)");
-            contentLayout.add(errorMessage);
-        }
-    }
-
-    private void populateFilters() {
-        // Populate user selector
-        if (userSelector != null) {
-            userSelector.setItems(users);
-
-            // Restore selected users from URL parameters
-            if (savedUserIds != null && !savedUserIds.isEmpty()) {
-                log.info("Restoring users from savedUserIds: {}", savedUserIds);
-                Set<User> usersToSelect = new java.util.HashSet<>();
-                for (String idStr : savedUserIds.split(",")) {
-                    try {
-                        UUID id = UUID.fromString(idStr.trim());
-                        users.stream()
-                                .filter(u -> u.getId().equals(id))
-                                .findFirst()
-                                .ifPresent(user -> {
-                                    usersToSelect.add(user);
-                                    log.info("Added user ID {} to selection", user.getId());
-                                });
-                    } catch (NumberFormatException e) {
-                        log.warn("Invalid user ID in URL: {}", idStr);
-                    }
-                }
-                if (!usersToSelect.isEmpty()) {
-                    selectedUsers = usersToSelect;
-                    log.info("Setting userSelector value to IDs: {}", usersToSelect.stream().map(User::getId).toList());
-                    userSelector.setValue(usersToSelect);
-                    log.info("userSelector.setValue() completed");
-                } else {
-                    log.info("No valid users to restore");
-                }
-            } else {
-                log.info("savedUserIds is null or empty - not restoring users");
-            }
-        }
-
-        // Populate sprint selector (excluding Backlog since it's always visible)
-        if (sprintSelector != null) {
-            List<Sprint> selectableSprints = allSprints.stream()
-                    .filter(s -> !DefaultEntitiesInitializer.BACKLOG_SPRINT_NAME.equals(s.getName()))
-                    .toList();
-            sprintSelector.setItems(selectableSprints);
-
-            // Restore selected sprints from URL parameters or select first by default
-            if (savedSprintIds != null && !savedSprintIds.isEmpty()) {
-                Set<Sprint> sprintsToSelect = new java.util.HashSet<>();
-                for (String idStr : savedSprintIds.split(",")) {
-                    try {
-                        UUID id = UUID.fromString(idStr.trim());
-                        selectableSprints.stream()
-                                .filter(s -> s.getId().equals(id))
-                                .findFirst()
-                                .ifPresent(sprintsToSelect::add);
-                    } catch (NumberFormatException e) {
-                        log.warn("Invalid sprint ID in URL: {}", idStr);
-                    }
-                }
-                if (!sprintsToSelect.isEmpty()) {
-                    selectedSprints = sprintsToSelect;
-                    sprintSelector.setValue(sprintsToSelect);
-                }
-            } else if (!hasUrlParameters && !selectableSprints.isEmpty()) {
-                // Only select first sprint by default if NO URL parameters at all (first visit)
-                // If hasUrlParameters is true but no sprints, user explicitly cleared all sprints
-                selectedSprints = Set.of(selectableSprints.get(0));
-                sprintSelector.setValue(selectedSprints);
-                // Explicitly update URL with default selection
-                isRestoringFromUrl = false;
-                updateUrlParameters();
-                isRestoringFromUrl = true;
-                log.info("savedSprintIds is null or empty - not restoring sprints");
-            }
-        }
-
-        // Restore search text in field
-        if (searchText != null && !searchText.isEmpty()) {
-            getUI().ifPresent(ui -> ui.access(() -> {
-                if (getChildren().findFirst().isPresent()) {
-                    getChildren()
-                            .filter(c -> c instanceof HorizontalLayout)
-                            .findFirst()
-                            .ifPresent(header -> {
-                                header.getChildren()
-                                        .filter(c -> c instanceof TextField)
-                                        .map(c -> (TextField) c)
-                                        .findFirst()
-                                        .ifPresent(field -> field.setValue(searchText));
-                            });
-                }
-            }));
-        }
-    }
-
-    /**
-     * Debug method to print all database tables to db.txt file.
-     */
-    private void printDatabaseTables() {
-        log.info("Print DB button clicked - writing database tables to db.txt");
-        try {
-            java.nio.file.Path outputPath = databaseDebugService.printDatabaseTables();
-            Notification.show("Database tables written to " + outputPath, 3000, Notification.Position.BOTTOM_END);
-        } catch (Exception e) {
-            log.error("Error printing database tables", e);
-            Notification.show("Error printing database: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
-        }
-    }
-
-    /**
-     * Update URL parameters to persist filter state
-     */
-    private void updateUrlParameters() {
-        log.info("=== updateUrlParameters called ===");
-        log.info("isRestoringFromUrl: {}", isRestoringFromUrl);
-
-        // Don't update URL if we're currently restoring from URL (prevents infinite loop)
-        if (isRestoringFromUrl) {
-            log.info("Skipping - still restoring from URL");
+        if (sourceSprint == null || targetSprint == null) {
+            log.warn("Cannot transfer task - source or target sprint is null");
             return;
         }
 
-        java.util.Map<String, String> params = new java.util.HashMap<>();
+        log.info("Cross-grid transfer: {} from sprint '{}' to sprint '{}'",
+                task.getKey(), sourceSprint.getName(), targetSprint.getName());
 
-        if (!searchText.isEmpty()) {
-            params.put("search", searchText);
-            log.info("Added search: {}", searchText);
+        // Collect all modified tasks for batch saving
+        java.util.Set<Task> modifiedTasks = new java.util.HashSet<>();
+
+        // 1. Handle parent-child relationships - remove from current parent
+        Task oldParent = task.getParentTask();
+        if (oldParent != null) {
+            oldParent.removeChildTask(task);
+            modifiedTasks.add(oldParent);
+            log.debug("Removed task {} from parent {}", task.getKey(), oldParent.getKey());
         }
 
-        if (!selectedUsers.isEmpty()) {
-            String userIds = selectedUsers.stream()
-                    .map(u -> String.valueOf(u.getId()))
-                    .collect(java.util.stream.Collectors.joining(","));
-            params.put("users", userIds);
-            log.info("Added users: {}", userIds);
+        // 2. Remove from source sprint's task list
+        sourceSprint.getTasks().remove(task);
+        sourceGrid.getTaskOrder().remove(task);
+        log.debug("Removed task {} from source sprint", task.getKey());
+
+        // 3. If moving a story, also remove all children from source
+        if (task.isStory() && !childTasks.isEmpty()) {
+            for (Task child : childTasks) {
+                sourceSprint.getTasks().remove(child);
+                sourceGrid.getTaskOrder().remove(child);
+                log.debug("Removed child task {} from source sprint", child.getKey());
+            }
+        }
+
+        // 4. Remove broken relations (predecessors that now point across sprints)
+        List<Task> allMovedTasks = new ArrayList<>();
+        allMovedTasks.add(task);
+        if (task.isStory() && !childTasks.isEmpty()) {
+            allMovedTasks.addAll(childTasks);
+        }
+        removeBrokenRelations(allMovedTasks, sourceSprint, targetSprint, modifiedTasks);
+
+        // 5. Update task's sprint reference
+        task.setSprintId(targetSprint.getId());
+        task.setSprint(targetSprint);
+
+        // 6. Add to target sprint
+        targetSprint.addTask(task);
+
+        // 7. Determine insertion position in target grid
+        List<Task> targetTaskOrder = targetGrid.getTaskOrder();
+        int        insertIndex;
+
+        if (dropTarget != null) {
+            int dropTargetIndex = targetTaskOrder.indexOf(dropTarget);
+            if (dropLocation == GridDropLocation.BELOW) {
+                // If dropping below a story, insert after its last child
+                if (dropTarget.isStory() && !dropTarget.getChildTasks().isEmpty()) {
+                    Task lastChild = dropTarget.getChildTasks().getLast();
+                    insertIndex = targetTaskOrder.indexOf(lastChild) + 1;
+                } else {
+                    insertIndex = dropTargetIndex + 1;
+                }
+            } else {
+                insertIndex = dropTargetIndex;
+            }
         } else {
-            log.info("No users selected - NOT adding to URL");
+            // Drop at end
+            insertIndex = targetTaskOrder.size();
         }
 
-        if (!selectedSprints.isEmpty()) {
-            String sprintIds = selectedSprints.stream()
-                    .map(s -> String.valueOf(s.getId()))
-                    .collect(java.util.stream.Collectors.joining(","));
-            params.put("sprints", sprintIds);
-            log.info("Added sprints: {}", sprintIds);
+        // 8. Insert into target task order
+        if (insertIndex >= targetTaskOrder.size()) {
+            targetTaskOrder.add(task);
         } else {
-            log.info("No sprints selected - NOT adding to URL");
+            targetTaskOrder.add(insertIndex, task);
+        }
+        insertIndex++; // Move past the task we just inserted for children
+
+        // 9. Determine new parent for tasks (if the task needs parenting)
+        if (task.isTask()) {
+            Task newParent = findParentStoryForPosition(targetTaskOrder, targetTaskOrder.indexOf(task));
+            if (newParent != null) {
+                newParent.addChildTask(task);
+                modifiedTasks.add(newParent);
+                log.debug("Added task {} to new parent {}", task.getKey(), newParent.getKey());
+            }
         }
 
-        // Always add a marker parameter so we can distinguish first visit from cleared filters
-        if (params.isEmpty()) {
-            params.put("_", ""); // Empty marker parameter
-            log.info("Added marker parameter (all filters empty)");
+        // 10. If moving a story, also move all children
+        if (task.isStory() && !childTasks.isEmpty()) {
+            for (Task child : childTasks) {
+                // Update sprint reference
+                child.setSprintId(targetSprint.getId());
+                child.setSprint(targetSprint);
+                targetSprint.addTask(child);
+
+                // Insert child after the story (maintaining order)
+                if (insertIndex >= targetTaskOrder.size()) {
+                    targetTaskOrder.add(child);
+                } else {
+                    targetTaskOrder.add(insertIndex, child);
+                }
+                insertIndex++;
+
+                // Mark child as modified
+                child.setStart(null); // Reset start date to force recalculation
+                modifiedTasks.add(child);
+                log.debug("Moved child task {} to target sprint", child.getKey());
+            }
         }
 
-        log.info("Final params map: {}", params);
-        log.info("Navigating to URL with params...");
+        // 11. Recalculate order IDs for both grids and mark affected tasks as modified
+        recalculateOrderIdsAndMarkModified(targetTaskOrder, modifiedTasks);
+        recalculateOrderIdsAndMarkModified(sourceGrid.getTaskOrder(), modifiedTasks);
 
-        // Update URL with query parameters (like LegacySprintListView does)
-        QueryParameters queryParameters = QueryParameters.simple(params);
-        getUI().ifPresent(ui -> {
-            log.info("UI present, calling navigate with class and queryParameters");
-            log.info("QueryParameters toString: {}", queryParameters);
-            ui.navigate(LegacyBacklog.class, queryParameters);
-            log.info("Navigate called");
-        });
-        if (getUI().isEmpty()) {
-            log.warn("UI not present - cannot navigate!");
+        // 12. Transfer expansion state for Stories from source to target grid
+        if (task.isStory()) {
+            boolean wasExpanded = sourceGrid.removeAndReturnExpansionState(task.getId());
+            if (wasExpanded) {
+                targetGrid.addExpansionState(task.getId());
+            }
         }
 
-        log.info("=== updateUrlParameters complete ===");
+        // 13. Mark the main task as modified
+        task.setStart(null); // Reset start date to force recalculation
+        modifiedTasks.add(task);
+
+        // 14. Add all modified tasks to the appropriate grid's modifiedTasks collection
+        log.info("Marking {} tasks as modified from cross-grid transfer", modifiedTasks.size());
+        for (Task modifiedTask : modifiedTasks) {
+            // Add to the grid that owns this task (based on sprint)
+            if (modifiedTask.getSprintId() != null && modifiedTask.getSprintId().equals(targetSprint.getId())) {
+                targetGrid.getModifiedTasks().add(modifiedTask);
+            } else {
+                sourceGrid.getModifiedTasks().add(modifiedTask);
+            }
+        }
+
+        // 15. Save all changes and refresh both grids
+        saveAllChangesAndRefresh();
     }
-}
 
+    private void loadData() {
+        //- populate grid with tasks of the sprint
+        long time = System.currentTimeMillis();
+
+        // Capture the security context from the current thread
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Load in parallel with security context propagation
+        CompletableFuture<Sprint> sprintFuture = CompletableFuture.supplyAsync(() -> {
+            // Set security context in this thread
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                Sprint s = sprintApi.getById(sprintId);
+                s.initialize();
+                return s;
+            } finally {
+                SecurityContextHolder.clearContext();// Clear the security context after execution
+            }
+        });
+
+        CompletableFuture<List<User>> usersFuture = CompletableFuture.supplyAsync(() -> {
+            // Set security context in this thread
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                return userApi.getAll(sprintId);
+            } finally {
+                SecurityContextHolder.clearContext();// Clear the security context after execution
+
+            }
+        });
+
+        CompletableFuture<List<Task>> tasksFuture = CompletableFuture.supplyAsync(() -> {
+            // Set security context in this thread
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                return taskApi.getAll(sprintId);
+            } finally {
+                SecurityContextHolder.clearContext();// Clear the security context after execution
+            }
+        });
+
+        CompletableFuture<List<Worklog>> worklogsFuture = CompletableFuture.supplyAsync(() -> {
+            // Set security context in this thread
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                return worklogApi.getAll(sprintId);
+            } finally {
+                SecurityContextHolder.clearContext();// Clear the security context after execution
+            }
+        });
+        CompletableFuture<List<User>> userFuture = CompletableFuture.supplyAsync(() -> {
+            // Set security context in this thread
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                return userApi.getAll();
+            } finally {
+                SecurityContextHolder.clearContext();// Clear the security context after execution
+            }
+        });
+
+        // Also load Backlog sprint (always shown at bottom)
+        CompletableFuture<Sprint> backlogSprintFuture = CompletableFuture.supplyAsync(() -> {
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            try {
+                Sprint backlog = sprintApi.getBacklogSprint();
+                if (backlog != null) {
+                    backlog.initialize();
+                    // Load tasks and worklogs for backlog
+                    List<Task>    backlogTasks    = taskApi.getAll(backlog.getId());
+                    List<Worklog> backlogWorklogs = worklogApi.getAll(backlog.getId());
+                    List<User>    backlogUsers    = userApi.getAll(backlog.getId());
+                    backlog.initUserMap(backlogUsers);
+                    backlog.initTaskMap(backlogTasks, backlogWorklogs);
+                    backlog.recalculate(ParameterOptions.getLocalNow());
+                }
+                return backlog;
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        });
+
+        // Wait for all futures and combine results
+        try {
+            sprint = sprintFuture.get();
+            time   = System.currentTimeMillis();
+            sprint.initUserMap(usersFuture.get());
+            sprint.initTaskMap(tasksFuture.get(), worklogsFuture.get());
+            users = userFuture.get();
+            log.trace("sprint, user, task and worklog maps initialized in {} ms", System.currentTimeMillis() - time);
+            sprint.recalculate(ParameterOptions.getLocalNow());
+
+            // Get backlog sprint (may be null if it doesn't exist yet)
+            backlogSprint = backlogSprintFuture.get();
+            if (backlogSprint != null && backlogSprint.getId().equals(sprint.getId())) {
+                // If selected sprint IS the backlog, don't duplicate it
+                backlogSprint = null;
+            }
+
+            // Populate user selector with users from this sprint and restore selection
+            if (userSelector != null) {
+                isRestoringFromUrl = true;
+                userSelector.setItems(users);
+                if (!selectedUsers.isEmpty()) {
+                    // Preserve the previously selected users (match by ID, since object instances may differ)
+                    java.util.Set<UUID> selectedIds = selectedUsers.stream().map(User::getId).collect(java.util.stream.Collectors.toSet());
+                    java.util.Set<User> toRestore = users.stream()
+                            .filter(u -> selectedIds.contains(u.getId()))
+                            .collect(java.util.stream.Collectors.toSet());
+                    if (!toRestore.isEmpty()) {
+                        selectedUsers = new java.util.HashSet<>(toRestore);
+                        userSelector.setValue(toRestore);
+                    }
+                } else if (requestedUserIds != null) {
+                    // URL contained a 'users' key — restore those IDs; empty string means no selection.
+                    if (!requestedUserIds.isEmpty()) {
+                        java.util.Set<User> toSelect = new java.util.HashSet<>();
+                        for (String idStr : requestedUserIds.split(",")) {
+                            try {
+                                UUID id = UUID.fromString(idStr.trim());
+                                users.stream().filter(u -> u.getId().equals(id)).findFirst().ifPresent(toSelect::add);
+                            } catch (NumberFormatException nfe) {
+                                log.warn("Invalid user ID in URL: {}", idStr);
+                            }
+                        }
+                        if (!toSelect.isEmpty()) {
+                            selectedUsers = new java.util.HashSet<>(toSelect);
+                            userSelector.setValue(toSelect);
+                        }
+                    }
+                    requestedUserIds = null; // Consumed; subsequent loadData() calls use selectedUsers
+                }
+                isRestoringFromUrl = false;
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error loading sprint data", e);
+            // Handle exception appropriately
+        }
+        ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
+    }
+
+    /**
+     * Load data for the selected sprint from the sprint selector dropdown.
+     * This is called when the user selects a different sprint.
+     */
+    private void loadDataForSelectedSprint() {
+        if (selectedSprint == null) {
+            return;
+        }
+
+        // Update sprintId to the selected sprint
+        this.sprintId = selectedSprint.getId();
+
+        // Reload data for the new sprint
+        loadData();
+        applyFilters();
+        refreshGrid();
+    }
+
+    /**
+     * Subscribes to {@link ThemeChangedEvent} so the Gantt chart is re-generated in the new theme.
+     *
+     * @param attachEvent the attach event
+     */
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> {
+                    if (sprint != null && !"Backlog".equals(sprint.getName())) {
+                        generateGanttChart();
+                    }
+                });
+    }
+
+    /**
+     * Removes the {@link ThemeChangedEvent} subscription to prevent memory leaks.
+     *
+     * @param detachEvent the detach event
+     */
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
+    }
+
+    /**
+     * Populate the sprint selector with all available sprints.
+     * The Backlog sprint is excluded since it's always shown at the bottom.
+     */
+    private void populateSprintSelector() {
+        if (sprintSelector == null) {
+            return;
+        }
+
+        try {
+            // Load all sprints and filter out Backlog (it's always visible at bottom)
+            allSprints = sprintApi.getAll().stream()
+                    .filter(s -> !"Backlog".equals(s.getName()))
+                    .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+
+            // Sort sprints by start date (newest first)
+            allSprints.sort((s1, s2) -> {
+                if (s1.getStart() == null && s2.getStart() == null) return 0;
+                if (s1.getStart() == null) return 1;
+                if (s2.getStart() == null) return -1;
+                return s2.getStart().compareTo(s1.getStart());
+            });
+
+            sprintSelector.setItems(allSprints);
+
+            // Select the current sprint if available
+            if (sprintId != null) {
+                allSprints.stream()
+                        .filter(s -> s.getId().equals(sprintId))
+                        .findFirst()
+                        .ifPresent(s -> {
+                            selectedSprint = s;
+                            sprintSelector.setValue(s);
+                        });
+            }
+        } catch (Exception e) {
+            log.error("Error loading sprints for selector", e);
+        }
+    }
+
+    /**
+     * Recalculate order IDs for all tasks in the list based on their current positions.
+     *
+     * @param taskOrder The list of tasks to update
+     */
+    private void recalculateOrderIds(List<Task> taskOrder) {
+        for (int i = 0; i < taskOrder.size(); i++) {
+            taskOrder.get(i).setOrderId(i);
+        }
+    }
+
+    /**
+     * Recalculate order IDs for all tasks and mark them as modified for batch saving.
+     *
+     * @param taskOrder     The list of tasks to update
+     * @param modifiedTasks Set to collect tasks that were modified
+     */
+    private void recalculateOrderIdsAndMarkModified(List<Task> taskOrder, java.util.Set<Task> modifiedTasks) {
+        for (int i = 0; i < taskOrder.size(); i++) {
+            Task task = taskOrder.get(i);
+            if (task.getOrderId() == null || task.getOrderId() != i) {
+                task.setOrderId(i);
+                modifiedTasks.add(task);
+            }
+        }
+    }
+
+    /**
+     * Refresh both grids and the Gantt chart.
+     * Sprint grid shows the selected sprint's tasks.
+     * Backlog grid shows the Backlog sprint's tasks (always at bottom).
+     */
+    private void refreshGrid() {
+        // Set expansion preference for both grids
+        grid.setExpandInitially(expandAllStories);
+        backlogGrid.setExpandInitially(expandAllStories);
+
+        // Update sprint info header
+        updateSprintInfoPanel();
+
+        // Update sprint grid
+        if (sprint != null) {
+            grid.updateData(sprint, new ArrayList<>(sprint.getTasks()), users);
+        } else {
+            log.warn("Cannot refresh sprint grid - sprint is null");
+        }
+
+        // Update backlog grid
+        if (backlogSprint != null) {
+            backlogGrid.updateData(backlogSprint, new ArrayList<>(backlogSprint.getTasks()), users);
+            backlogGridPanel.setVisible(true);
+        } else {
+            // Hide backlog panel if no backlog sprint exists
+            backlogGridPanel.setVisible(false);
+        }
+
+        // Generate Gantt chart only for the selected sprint (not for Backlog)
+        // Backlog sprint doesn't have scheduling, so Gantt chart doesn't make sense for it
+        if (sprint != null && !"Backlog".equals(sprint.getName())) {
+            generateGanttChart();
+        } else if (ganttChartContainer != null) {
+            // Clear the Gantt chart container if we're showing Backlog or no sprint
+            ganttChartContainer.removeAll();
+        }
+
+        updateHeaderForSelection();
+    }
+
+    /**
+     * Removes broken relations when tasks are moved between sprints.
+     * <p>
+     * When a task is moved from one sprint to another, any predecessor/successor relationships
+     * that now span across sprints need to be removed to maintain data integrity.
+     * <p>
+     * This method handles two cases:
+     * <ol>
+     *     <li>Predecessors of moved tasks that reference tasks remaining in the source sprint</li>
+     *     <li>Tasks in the source sprint that have moved tasks as predecessors</li>
+     * </ol>
+     *
+     * @param movedTasks    List of tasks being moved (includes the main task and any child tasks)
+     * @param sourceSprint  The sprint the tasks are being moved from
+     * @param targetSprint  The sprint the tasks are being moved to
+     * @param modifiedTasks Set to collect tasks that were modified (for batch saving)
+     */
+    private void removeBrokenRelations(List<Task> movedTasks, Sprint sourceSprint, Sprint targetSprint, java.util.Set<Task> modifiedTasks) {
+        // Create a set of moved task IDs for quick lookup
+        java.util.Set<UUID> movedTaskIds = movedTasks.stream()
+                .map(Task::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        // 1. Remove predecessors of moved tasks that reference tasks in the source sprint
+        for (Task movedTask : movedTasks) {
+            List<Relation> predecessors = movedTask.getPredecessors();
+            if (predecessors != null && !predecessors.isEmpty()) {
+                List<Relation> relationsToRemove = new ArrayList<>();
+                for (Relation relation : predecessors) {
+                    UUID predecessorTaskId = relation.getPredecessorId();
+                    // If the predecessor is NOT in the moved tasks list, it's staying in source sprint
+                    // So this relation becomes broken
+                    if (!movedTaskIds.contains(predecessorTaskId)) {
+                        Task predecessorTask = sourceSprint.getTaskById(predecessorTaskId);
+                        if (predecessorTask != null) {
+                            relationsToRemove.add(relation);
+                            log.info("Removing broken relation: {} had predecessor {} which stays in sprint '{}'",
+                                    movedTask.getKey(), predecessorTask.getKey(), sourceSprint.getName());
+                        }
+                    }
+                }
+                if (!relationsToRemove.isEmpty()) {
+                    predecessors.removeAll(relationsToRemove);
+                    modifiedTasks.add(movedTask);
+                }
+            }
+        }
+
+        // 2. Remove relations from tasks in source sprint that have moved tasks as predecessors
+        for (Task sourceTask : sourceSprint.getTasks()) {
+            // Skip tasks that are being moved
+            if (movedTaskIds.contains(sourceTask.getId())) {
+                continue;
+            }
+
+            List<Relation> predecessors = sourceTask.getPredecessors();
+            if (predecessors != null && !predecessors.isEmpty()) {
+                List<Relation> relationsToRemove = new ArrayList<>();
+                for (Relation relation : predecessors) {
+                    UUID predecessorTaskId = relation.getPredecessorId();
+                    // If the predecessor is in the moved tasks, this relation becomes broken
+                    if (movedTaskIds.contains(predecessorTaskId)) {
+                        relationsToRemove.add(relation);
+                        Task movedPredecessor = movedTasks.stream()
+                                .filter(t -> t.getId().equals(predecessorTaskId))
+                                .findFirst()
+                                .orElse(null);
+                        log.info("Removing broken relation: {} in sprint '{}' had predecessor {} which moved to sprint '{}'",
+                                sourceTask.getKey(), sourceSprint.getName(),
+                                movedPredecessor != null ? movedPredecessor.getKey() : predecessorTaskId,
+                                targetSprint.getName());
+                    }
+                }
+                if (!relationsToRemove.isEmpty()) {
+                    predecessors.removeAll(relationsToRemove);
+                    // Mark task as modified for batch saving
+                    modifiedTasks.add(sourceTask);
+                }
+            }
+        }
+    }
+
+    /**
+     * Save all modified tasks to backend from both sprint grid and backlog grid
+     */
+    private void saveAllChangesAndRefresh() {
+        // Collect modified tasks from both grids
+        java.util.Set<Task> allModifiedTasks = new java.util.HashSet<>();
+        allModifiedTasks.addAll(grid.getModifiedTasks());
+        allModifiedTasks.addAll(backlogGrid.getModifiedTasks());
+
+        if (allModifiedTasks.isEmpty()) {
+            exitEditMode();
+            return;
+        }
+
+        log.info("Saving {} modified tasks ({} from sprint grid, {} from backlog grid)", allModifiedTasks.size(), grid.getModifiedTasks().size(), backlogGrid.getModifiedTasks().size());
+
+        // Persist all modified tasks
+        for (Task task : allModifiedTasks) {
+            if (task.getTaskMode() == de.bushnaq.abdalla.kassandra.dto.TaskMode.AUTO_SCHEDULED)
+                task.setStart(null); // Reset start date to force recalculation
+            taskApi.persist(task);
+        }
+
+        // Clear modified tasks from both grids and reload data
+        grid.getModifiedTasks().clear();
+        backlogGrid.getModifiedTasks().clear();
+        loadData();
+        refreshGrid();
+        exitEditMode();
+    }
+
+    /**
+     * Toggle expansion/collapse of all stories in both grids.
+     * Updates the expandInitially setting and forces immediate expansion/collapse.
+     */
+    private void toggleStoryExpansion() {
+        // Update the expand initially setting for both grids (for future loads)
+        grid.setExpandInitially(expandAllStories);
+        backlogGrid.setExpandInitially(expandAllStories);
+
+        // Force immediate expand/collapse of all stories
+        grid.forceExpandCollapseAll(expandAllStories);
+        backlogGrid.forceExpandCollapseAll(expandAllStories);
+    }
+
+    /**
+     * Updates the header title text and avatar to reflect the currently selected sprint.
+     * <ul>
+     *   <li>Sprint loaded → show that sprint's avatar and name.</li>
+     *   <li>No sprint loaded → hide avatar and show "Backlog".</li>
+     * </ul>
+     */
+    private void updateHeaderForSelection() {
+        if (pageTitle == null || headerAvatar == null) {
+            return;
+        }
+        if (sprint != null) {
+            pageTitle.setText(sprint.getName());
+            if (sprint.getLightAvatarHash() != null && !sprint.getLightAvatarHash().isEmpty()) {
+                boolean isDark = com.vaadin.flow.component.UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+                headerAvatar.setSrc(sprint.getAvatarUrl(isDark));
+                headerAvatar.setVisible(true);
+            } else {
+                headerAvatar.setVisible(false);
+            }
+        } else {
+            pageTitle.setText("Backlog");
+            headerAvatar.setVisible(false);
+        }
+    }
+
+    /**
+     * Updates the sprint info panel with the current sprint's start date, end date, and status.
+     * No-ops when the current sprint or info panel is not yet initialised.
+     */
+    private void updateSprintInfoPanel() {
+        if (sprint == null || sprintInfoPanel == null) {
+            return;
+        }
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        sprintStartValue.setText(sprint.getStart() != null ? sprint.getStart().format(dateFormatter) : "-");
+        sprintEndValue.setText(sprint.getEnd() != null ? sprint.getEnd().format(dateFormatter) : "-");
+        // Set programmatically — isFromClient() returns false, so no API call is triggered
+        sprintStatusComboBox.setValue(sprint.getStatus() != null ? sprint.getStatus() : Status.CREATED);
+    }
+
+    /**
+     * Update the sprint selector value to match the current sprintId.
+     * Called after afterNavigation determines the sprint (e.g., when navigating from main menu).
+     */
+    private void updateSprintSelectorValue() {
+        if (sprintSelector == null || sprintId == null) {
+            return;
+        }
+
+        // Find and select the sprint matching the current sprintId
+        allSprints.stream()
+                .filter(s -> s.getId().equals(sprintId))
+                .findFirst()
+                .ifPresent(s -> {
+                    selectedSprint = s;
+                    sprintSelector.setValue(s);
+                });
+    }
+
+    /**
+     * Pushes the current {@code sprint} and selected {@code users} into the browser URL so that
+     * the filter state survives a page refresh (F5) and can be bookmarked.
+     * <p>
+     * Uses {@link com.vaadin.flow.component.page.History#replaceState} to update the address
+     * bar without triggering a full Vaadin navigation cycle (and the expensive
+     * {@link #loadData()} it entails).  No-op while restoring state from a URL to prevent
+     * feedback loops.
+     */
+    private void updateUrlParameters() {
+        if (isRestoringFromUrl) {
+            return;
+        }
+        java.util.List<String> parts = new ArrayList<>();
+        if (productId != null) {
+            parts.add("product=" + productId);
+        }
+        if (versionId != null) {
+            parts.add("version=" + versionId);
+        }
+        if (featureId != null) {
+            parts.add("feature=" + featureId);
+        }
+        if (sprintId != null) {
+            parts.add("sprint=" + sprintId);
+        }
+        // Always write the 'users' key — empty string signals "user intentionally cleared".
+        String userIds = selectedUsers.stream()
+                .map(u -> String.valueOf(u.getId()))
+                .collect(java.util.stream.Collectors.joining(","));
+        parts.add("users=" + userIds);
+        String url = "legacy-backlog" + (parts.isEmpty() ? "" : "?" + String.join("&", parts));
+        getUI().ifPresent(ui -> ui.getPage().getHistory().replaceState(null, url));
+    }
+
+}

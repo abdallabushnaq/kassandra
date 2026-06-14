@@ -178,7 +178,7 @@
                 const endIndex = calculateDayIndex(new Date(year, 11, 31), chartStart);
                 const cellX = dayIndexToPixelX(Math.max(0, startIndex));
                 const cellWidth = dayIndexToPixelX(Math.min(totalDays - 1, endIndex) + 1) - cellX;
-                drawCalendarCell(cellX, cellWidth, currentY, YEAR_H, yearBgColor, yearBorderColor, String(year), yearTextColor, '11', false);
+                drawCalendarCell(cellX, cellWidth, currentY, YEAR_H, yearBgColor, yearBorderColor, String(year), yearTextColor, '14', false);
             }
             currentY += YEAR_H;
 
@@ -193,7 +193,7 @@
                 const cellX = dayIndexToPixelX(Math.max(0, startIndex));
                 const cellWidth = dayIndexToPixelX(Math.min(totalDays - 1, endIndex) + 1) - cellX;
                 const monthBgColor = getThemeColor(theme, colorKeys.XAXES_MONTH_BG_COLORS_PREFIX + monthIndex);
-                drawCalendarCell(cellX, cellWidth, currentY, MONTH_H, monthBgColor, monthBorderColor, MONTH_NAMES[monthIndex], monthTextColor, '11', false);
+                drawCalendarCell(cellX, cellWidth, currentY, MONTH_H, monthBgColor, monthBorderColor, MONTH_NAMES[monthIndex], monthTextColor, '12', false);
                 monthDate = new Date(Date.UTC(year, monthIndex + 1, 1));
             }
             currentY += MONTH_H;
@@ -217,7 +217,7 @@
                     const weekLabel = dayWidth >= MIN_DOW
                         ? String(new Date(chartStart.getTime() + Math.max(0, startIndex) * MS).getUTCDate())
                         : null;
-                    drawCalendarCell(cellX, cellWidth, currentY, WEEK_H, weekBgColor, weekBorderColor, weekLabel, weekTextColor, '9', false);
+                    drawCalendarCell(cellX, cellWidth, currentY, WEEK_H, weekBgColor, weekBorderColor, weekLabel, weekTextColor, '10', false);
                     weekStart.setUTCDate(weekStart.getUTCDate() + 7);
                 }
                 currentY += WEEK_H;
@@ -238,7 +238,7 @@
                         dayOfMonthBorderColor,
                         String(dayDate.getUTCDate()),
                         isWeekend ? dayOfMonthWeekendTextColor : dayOfMonthTextColor,
-                        '9', true
+                        '10', true
                     );
                 }
                 currentY += DOM_H;
@@ -260,7 +260,7 @@
                         dayOfWeekBorderColor,
                         DAY_ABBREVIATIONS[dayOfWeek],
                         isWeekend ? dayOfWeekWeekendTextColor : dayOfWeekTextColor,
-                        '9', true
+                        '10', true
                     );
                 }
                 currentY += DOW_H;
