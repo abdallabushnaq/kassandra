@@ -623,6 +623,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         getUI().ifPresent(ui -> {
             boolean isDark = ui.getElement().getThemeList().contains(com.vaadin.flow.theme.lumo.Lumo.DARK);
             try {
+                //TODO instead of using a service that will read all data from db again, we can use current sprints info we already have
                 SprintOverviewDto dto  = sprintsOverviewService.getOverview(LocalDateTime.now(), null, isDark);
                 String            json = jsonMapper.writeValueAsString(dto);
                 // production code
