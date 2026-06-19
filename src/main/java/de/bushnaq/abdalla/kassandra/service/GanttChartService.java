@@ -119,6 +119,28 @@ public class GanttChartService {
         dto.meta.theme.put("ganttTheme.taskTransparency",       theme.ganttTheme.taskTransparency);
         dto.meta.theme.put("ganttTheme.taskWeekEndTransparency", theme.ganttTheme.taskWeekEndTransparency);
 
+        // ── Project-level milestones ───────────────────────────────────
+        // These appear as S (start), E (end), N (now) markers in the calendar header
+        GanttChartDto.MilestoneDto startMilestone = new GanttChartDto.MilestoneDto();
+        startMilestone.date  = sprint.getEarliestStartDate().toLocalDate();
+        startMilestone.letter = "S";
+        startMilestone.label  = "Start";
+        dto.milestones.add(startMilestone);
+
+        GanttChartDto.MilestoneDto endMilestone = new GanttChartDto.MilestoneDto();
+        endMilestone.date  = sprint.getLatestFinishDate().toLocalDate();
+        endMilestone.letter = "E";
+        endMilestone.label  = "End";
+        dto.milestones.add(endMilestone);
+
+        if (now != null && !Status.CLOSED.equals(sprint.getStatus())) {
+            GanttChartDto.MilestoneDto nowMilestone = new GanttChartDto.MilestoneDto();
+            nowMilestone.date   = now.toLocalDate();
+            nowMilestone.letter = "N";
+            nowMilestone.label  = "Now";
+            dto.milestones.add(nowMilestone);
+        }
+
         // ── Task rows ─────────────────────────────────────────────────────
         int rowIndex = 0;
         for (Task task : sprint.getTasks()) {
@@ -151,6 +173,15 @@ public class GanttChartService {
 
         if (task.getAssignedUser() != null) {
             dto.assignedUserName = task.getAssignedUser().getName();
+            // User availability percentage and location for tooltip
+            if (!task.getAssignedUser().getAvailabilities().isEmpty()) {
+                Number availability = task.getAssignedUser().getAvailabilities().getLast().getAvailability();
+                dto.assignedUserAvailability = String.format("%.0f%%", availability.doubleValue() * 100);
+            }
+            if (!task.getAssignedUser().getLocations().isEmpty()) {
+                dto.assignedUserCountry = task.getAssignedUser().getLocations().getLast().getCountry();
+                dto.assignedUserState   = task.getAssignedUser().getLocations().getLast().getState();
+            }
         }
 
         // ── Colour computation (mirrors AbstractGanttRenderer.drawTask) ──

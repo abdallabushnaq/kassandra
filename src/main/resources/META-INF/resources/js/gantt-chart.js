@@ -185,6 +185,7 @@
 
         const metadata = data.meta || {};
         const tasks = data.tasks || [];
+        const milestones = data.milestones || [];
         const theme = metadata.theme || {};
 
         const chartStart = getUtcDayMidnight(new Date(metadata.chartStart || Date.now()));
@@ -207,7 +208,7 @@
         // Helper: day index → viewport pixel X (left edge of day column)
         const dayIndexToPixelX = (idx) => (idx - scrollOffset) * dayWidth;
         const getContainerWidth = () => Math.max(200, container.clientWidth || 800);
-        const getCalendarHeight = () => calendar.getHeight(dayWidth);
+        const getCalendarHeight = () => calendar.getHeight(dayWidth, milestones.length > 0);
 
         // ── Scroll / zoom initialisation ──────────────────────────────────
 
@@ -286,18 +287,25 @@
 
                     g.appendChild(createRect(xPos, rowY, dayWidth, TASK_H, {fill: bgColor}));
 
-                    // Draw off-day letter (V/T/S/H) for user off-days
+                    // Draw off-day letter (V/T/S/H) for user off-days (22px bold, matching Java)
                     if (exception && exception.letter && dayWidth >= 14) {
                         const letterEl = createText(
                             xPos + dayWidth / 2, rowY + TASK_H / 2 + 4,
                             exception.letter, {
                                 fill: getThemeColor(theme, colorKeys.GANTT_OUT_OF_OFFICE_COLOR),
-                                'font-size': '10',
+                                'font-size': '22',
                                 'font-family': 'sans-serif',
                                 'font-weight': 'bold',
-                                'text-anchor': 'middle'
+                                'text-anchor': 'middle',
+                                'dominant-baseline': 'middle'
                             }
                         );
+                        const letterTitle = createSvgElement('title', {},
+                            (exception.type || 'Off-day') + '\n' +
+                            new Date(exception.from).toLocaleDateString() + ' to ' +
+                            new Date(exception.to).toLocaleDateString()
+                        );
+                        letterEl.appendChild(letterTitle);
                         g.appendChild(letterEl);
                     }
                 }
@@ -307,7 +315,8 @@
         }
 
         /**
-         * Renders vertical day grid lines across the task area.
+         * Renders vertical day grid lines across the task area and horizontal task row dividers.
+         * This mirrors the GanttRenderer.drawDayBars() grid rendering.
          *
          * @param {number} calendarH  Y start of task area
          * @param {number} totalH     Height of task area
@@ -315,13 +324,18 @@
          */
         function renderGridLines(calendarH, totalH) {
             const g = createSvgElement('g', {'class': 'grid-lines'});
-            if (dayWidth < MIN_DAY_BARS) return g;
-
             const gridColor = getThemeColor(theme, colorKeys.GANTT_GRID_COLOR);
             const containerWidth = getContainerWidth();
+
+            if (dayWidth < MIN_DAY_BARS) {
+                // Very zoomed-out: only draw week-boundary vertical lines (already in renderDayStripes)
+                return g;
+            }
+
             const firstDay = Math.max(0, Math.floor(scrollOffset) - 1);
             const lastDay = Math.min(totalDays, firstDay + Math.ceil(containerWidth / dayWidth) + 2);
 
+            // Vertical grid lines for each day
             for (let d = firstDay; d <= lastDay; d++) {
                 const xPos = dayIndexToPixelX(d);
                 if (xPos < 0 || xPos > containerWidth) continue;
@@ -329,6 +343,15 @@
                     stroke: gridColor, 'stroke-width': '1'
                 }));
             }
+
+            // Horizontal grid lines for each task row (top border of each row)
+            for (let rowIndex = 0; rowIndex < tasks.length; rowIndex++) {
+                const rowY = calendarH + rowIndex * ROW_H;
+                g.appendChild(createLine(0, rowY, containerWidth, rowY, {
+                    stroke: gridColor, 'stroke-width': '1'
+                }));
+            }
+
             return g;
         }
 
@@ -369,7 +392,7 @@
                 } else {
                     // ── Regular task bar (per-day segments) ───────────────
                     renderTaskBar(g, task, startDayIdx, finishDayIdx, x1, x2, bodyY, bodyH, containerWidth);
-                    renderProgress(g, task, x1, x2, bodyY, bodyH);
+                    renderProgress(g, task, x1, x2, bodyY, bodyH, midY);
                     renderCriticalBorder(g, task, startDayIdx, finishDayIdx, x1, x2, bodyY, bodyH);
                 }
 
@@ -405,24 +428,28 @@
         }
 
         /**
-         * Draws a story bar: thick top and side borders with semi-transparent fill.
+         * Draws a story bar: thick top and side borders with NO fill (inverted U-shape).
+         * Only the border is visible, interior is transparent.
          */
         function renderStory(g, task, x1, x2, rowY, bodyY, bodyH, containerWidth) {
             const w = x2 - x1;
             if (w <= 0) return;
-            const fillColor = hexToRgba(task.fillColor);
 
-            // Background fill
-            const bg = createRect(x1, bodyY, w, bodyH, {fill: fillColor, opacity: '0.6'});
-            bg.appendChild(createSvgElement('title', {}, buildTaskTooltip(task)));
-            g.appendChild(bg);
+            const borderColor = task.borderColor || '#444444';
+            const thickness = 2;  // border thickness (matching Java)
 
-            // Top border (2px thick)
-            g.appendChild(createRect(x1, rowY, w, 2, {fill: task.borderColor || '#444444'}));
-            // Left border
-            g.appendChild(createRect(x1, rowY, 2, bodyH, {fill: task.borderColor || '#444444'}));
-            // Right border
-            g.appendChild(createRect(x2 - 2, rowY, 2, bodyH, {fill: task.borderColor || '#444444'}));
+            // Top border (2px thick) from rowY
+            g.appendChild(createRect(x1, rowY, w, thickness, {fill: borderColor}));
+            // Left border (vertical): from below top border to bottom of row (excluding bottom TASK_BODY_BORDER)
+            g.appendChild(createRect(x1, rowY + thickness, thickness, TASK_H - thickness - TASK_BODY_BORDER, {fill: borderColor}));
+            // Right border (vertical): from below top border to bottom of row (excluding bottom TASK_BODY_BORDER)
+            g.appendChild(createRect(x2 - thickness, rowY + thickness, thickness, TASK_H - thickness - TASK_BODY_BORDER, {fill: borderColor}));
+
+            // Add tooltip to the center of the U-shape
+            const tooltip = createSvgElement('title', {}, buildTaskTooltip(task));
+            const tooltipRect = createRect(x1 + thickness, rowY + thickness, w - thickness * 2, TASK_H - thickness * 2 - TASK_BODY_BORDER, {fill: 'none', 'pointer-events': 'all'});
+            tooltipRect.appendChild(tooltip);
+            g.appendChild(tooltipRect);
         }
 
         /**
@@ -463,18 +490,48 @@
 
         /**
          * Draws the progress overlay bar inside the task bar.
+         * Progress is represented as a bar with a visible color (lightened from fill color).
+         * Also renders the progress percentage text inside the progress bar.
          */
-        function renderProgress(g, task, x1, x2, bodyY, bodyH) {
+        function renderProgress(g, task, x1, x2, bodyY, bodyH, midY) {
             if (!task.progress || task.progress <= 0) return;
+
             const progressW = Math.round((x2 - x1) * task.progress);
-            if (progressW <= 1) return;
+            if (progressW <= 2) return;
 
-            const progressColor = task.progressColor ? hexToRgba(task.progressColor) : 'rgba(255,255,255,0.4)';
-            g.appendChild(createRect(x1 + 1, bodyY + 2, progressW - 1, bodyH - 4, {fill: progressColor}));
+            // Use task's progressColor if available, otherwise generate a visible lightened color
+            let progressColor = task.progressColor ? hexToRgba(task.progressColor) : 'rgba(200,200,200,0.6)';
 
-            // Progress end marker (1px vertical line)
-            if (task.progress < 1.0) {
-                g.appendChild(createRect(x1 + progressW - 1, bodyY + 2, 1, bodyH - 4, {fill: '#000000'}));
+            // Draw progress bar with some inset from edges (1px right, 2px top/bottom inset)
+            const progBarHeight = Math.max(2, bodyH - 4);
+            g.appendChild(createRect(x1 + 1, bodyY + 2, progressW - 2, progBarHeight, {fill: progressColor}));
+
+            // Progress end marker (1px vertical line) - only show if progress < 100%
+            if (task.progress < 0.99) {
+                g.appendChild(createRect(x1 + progressW - 1, bodyY + 2, 1, progBarHeight, {fill: '#000000'}));
+            }
+
+            // Render progress percentage text (e.g., "45%") inside the progress bar
+            const progressPercent = Math.round(task.progress * 100);
+            const progressText = progressPercent + '%';
+            const textWidth = progressText.length * 4; // approximate width for 8px font
+
+            // Only show text if it fits inside the progress bar
+            if (progressW > textWidth + 4) {
+                // Position text lower (approximately 1/3 down from center, matching Java's y + (ascent - 2) / 2)
+                const textY = midY + Math.max(1, Math.floor(8 / 3));  // slightly below center for 8px font
+                // Use white text with black outline for high contrast
+                const textEl = createText(x1 + progressW / 2, textY, progressText, {
+                    fill: '#ffffff',
+                    stroke: '#000000',
+                    'stroke-width': '0.5',
+                    'font-size': '8',
+                    'font-family': 'sans-serif',
+                    'font-weight': 'bold',
+                    'text-anchor': 'middle',
+                    'dominant-baseline': 'middle'
+                });
+                g.appendChild(textEl);
             }
         }
 
@@ -518,12 +575,13 @@
 
         /**
          * Renders task name (to the right) and resource name (to the left) labels.
+         * Includes tooltips for both task and resource names.
          */
         function renderTaskLabels(g, task, x1, x2, midY, containerWidth) {
             const textY = midY + 4;  // approximate baseline for 12px font centred on midY
             const textFill = task.textColor || '#000000';
 
-            // Resource name to the LEFT of the task bar
+            // Resource name to the LEFT of the task bar (with tooltip)
             if (task.assignedUserName && x1 > 0) {
                 const clipId = 'gc-left-' + String(task.id).replace(/-/g, '');
                 const labelX = x1 - RESOURCE_NAME_TO_TASK_GAP;
@@ -532,17 +590,30 @@
                 if (clipW > 8) {
                     const clipX = labelX - clipW;
                     g.appendChild(createClipPath(clipId, Math.max(0, clipX), midY - TASK_H, clipW, TASK_H * 2));
-                    g.appendChild(createText(labelX, textY, task.assignedUserName, {
+                    const userNameText = createText(labelX, textY, task.assignedUserName, {
                         fill: textFill,
                         'font-size': '12',
                         'font-family': 'sans-serif',
                         'text-anchor': 'end',
                         'clip-path': 'url(#' + clipId + ')'
-                    }));
+                    });
+                    // Build rich tooltip with availability, country, state (mirrors generateTaskNameToolTop)
+                    let userTooltip = task.assignedUserName;
+                    if (task.assignedUserAvailability) {
+                        userTooltip += '\nAvailability ' + task.assignedUserAvailability;
+                    }
+                    if (task.assignedUserCountry) {
+                        userTooltip += '\nCountry ' + task.assignedUserCountry;
+                    }
+                    if (task.assignedUserState) {
+                        userTooltip += '\nState ' + task.assignedUserState;
+                    }
+                    userNameText.appendChild(createSvgElement('title', {}, userTooltip));
+                    g.appendChild(userNameText);
                 }
             }
 
-            // Task key + name to the RIGHT of the task bar
+            // Task key + name to the RIGHT of the task bar (with tooltip)
             const labelRight = x2 + TASK_NAME_TO_TASK_GAP;
             if (labelRight < containerWidth + 40) {  // allow slight overflow
                 const clipId = 'gc-right-' + String(task.id).replace(/-/g, '');
@@ -550,13 +621,16 @@
                 if (clipW > 8) {
                     g.appendChild(createClipPath(clipId, labelRight, midY - TASK_H, clipW, TASK_H * 2));
                     const label = (task.key ? task.key + ' ' : '') + (task.name || '');
-                    g.appendChild(createText(labelRight, textY, label, {
+                    const taskNameText = createText(labelRight, textY, label, {
                         fill: textFill,
                         'font-size': '12',
                         'font-family': 'sans-serif',
                         'font-weight': task.story ? 'bold' : 'normal',
                         'clip-path': 'url(#' + clipId + ')'
-                    }));
+                    });
+                    // Add tooltip for task name
+                    taskNameText.appendChild(createSvgElement('title', {}, buildTaskTooltip(task)));
+                    g.appendChild(taskNameText);
                 }
             }
         }
@@ -694,7 +768,7 @@
             svg.appendChild(renderGridLines(calendarH, taskAreaH));
             svg.appendChild(renderTasks(calendarH));
             svg.appendChild(renderRelations(calendarH));
-            calendar.draw(svg, chartStart, totalDays, dayWidth, scrollOffset, containerWidth);
+            calendar.draw(svg, chartStart, totalDays, dayWidth, scrollOffset, containerWidth, milestones);
             svg.appendChild(renderNowLine(totalHeight));
 
             container.innerHTML = '';

@@ -248,7 +248,7 @@
 | kassandra.report.dao                 | Users.java                                                       | src      |        7 |        0 |       26 |       21 |       54 |
 | kassandra.report.dao                 | WorklogRemaining.java                                            | src      |        7 |        0 |       34 |       24 |       65 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.report.gantt               | AbstractGanttRenderer.java                                       | src      |       41 |       12 |       92 |      531 |      676 |
+| kassandra.report.gantt               | AbstractGanttRenderer.java                                       | src      |       41 |       12 |       91 |      531 |      675 |
 | kassandra.report.gantt               | AbstractGanttTester.java                                         | src      |       31 |       37 |       22 |      237 |      327 |
 | kassandra.report.gantt               | ColorGenerator.java                                              | src      |        4 |        0 |       19 |       11 |       34 |
 | kassandra.report.gantt               | CriticalTest.java                                                | src      |       11 |       13 |       16 |       36 |       76 |
@@ -358,7 +358,7 @@
 | kassandra.rest.debug                 | JsonResponseLogger.java                                          | src      |        8 |        0 |       16 |       47 |       71 |
 | kassandra.rest.debug                 | RequestLoggingFilter.java                                        | src      |       18 |        0 |       19 |       75 |      112 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.rest.dto                   | GanttChartDto.java                                               | src      |       10 |       47 |       16 |       74 |      147 |
+| kassandra.rest.dto                   | GanttChartDto.java                                               | src      |       11 |       51 |       16 |       89 |      167 |
 | kassandra.rest.dto                   | SprintOverviewDto.java                                           | src      |        9 |        3 |        3 |       34 |       49 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.rest.exception             | UniqueConstraintViolationException.java                          | src      |        7 |       19 |       16 |       21 |       63 |
@@ -384,7 +384,7 @@
 | kassandra.service                    | AboutBoxService.java                                             | src      |       21 |       71 |       24 |      111 |      227 |
 | kassandra.service                    | AclSecurityService.java                                          | src      |       19 |       71 |       18 |      108 |      216 |
 | kassandra.service                    | DatabaseDebugService.java                                        | src      |       30 |       47 |       21 |      143 |      241 |
-| kassandra.service                    | GanttChartService.java                                           | src      |       30 |       38 |       31 |      142 |      241 |
+| kassandra.service                    | GanttChartService.java                                           | src      |       33 |       38 |       34 |      167 |      272 |
 | kassandra.service                    | ProductAclService.java                                           | src      |       25 |       72 |       16 |      117 |      230 |
 | kassandra.service                    | SprintExportService.java                                         | src      |       20 |       53 |       24 |      121 |      218 |
 | kassandra.service                    | SprintsOverviewService.java                                      | src      |       30 |        0 |       33 |      163 |      226 |
@@ -624,5 +624,5 @@
 | util                                 | TaskUtil.java                                                    | src      |        8 |        0 |       31 |       15 |       54 |
 | util                                 | Util.java                                                        | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 68 package(s)                        | 555 file(s)                                                      | java     |    12408 |    12263 |    16402 |    66748 |   107821 |
+| 68 package(s)                        | 555 file(s)                                                      | java     |    12412 |    12267 |    16404 |    66788 |   107871 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

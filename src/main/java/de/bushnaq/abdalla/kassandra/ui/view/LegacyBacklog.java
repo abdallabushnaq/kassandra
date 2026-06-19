@@ -73,7 +73,6 @@ import java.util.concurrent.ExecutionException;
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
 @Log4j2
-@Deprecated
 public class LegacyBacklog extends Main implements AfterNavigationObserver, BeforeEnterObserver {
     public static final String                       BACKLOG_PAGE_TITLE_ID      = "legacy-backlog-page-title";
     public static final String                       CANCEL_BUTTON_ID           = "legacy-cancel-tasks-button";

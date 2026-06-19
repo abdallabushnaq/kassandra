@@ -455,8 +455,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
                     if (task.getProgress() != null) {
                         Color blendedColor = ColorUtil.calculateColorBlending(fillColor, Color.white);
                         if (task.getProgress().doubleValue() > 0.5) {
-                            blendedColor = ColorUtil.calculateColorBlending(fillColor, blendedColor);// we are drawing
-                            // two times
+                            blendedColor = ColorUtil.calculateColorBlending(fillColor, blendedColor);// we are drawing two times
                         }
                         Color highestContrast = ColorUtil.heighestContrast(blendedColor);
                         graphics2D.setColor(highestContrast);

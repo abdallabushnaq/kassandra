@@ -33,8 +33,9 @@ import java.util.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GanttChartDto {
 
-    public List<TaskDto> tasks = new ArrayList<>();
-    public Meta          meta  = new Meta();
+    public List<TaskDto>       tasks      = new ArrayList<>();
+    public List<MilestoneDto>  milestones = new ArrayList<>();
+    public Meta                meta       = new Meta();
 
     /**
      * Chart metadata: date range, sprint info, and theme colors.
@@ -65,6 +66,19 @@ public class GanttChartDto {
          * Values are 0xRRGGBB integers (no alpha, except taskTransparency which is 0-255).
          */
         public Map<String, Integer> theme = new HashMap<>();
+    }
+
+    /**
+     * Project-level milestone (Sprint start "S", end "E", or current date "N").
+     * Rendered in a separate row in the calendar header.
+     */
+    public static class MilestoneDto {
+        /** Date of the milestone. */
+        public LocalDate date;
+        /** Single-character code: S (start), E (end), or N (now). */
+        public String    letter;
+        /** Display label: "Start", "End", or "Now". */
+        public String    label;
     }
 
     /**
@@ -129,10 +143,16 @@ public class GanttChartDto {
         public String progressColor;
         /** Task text label color in #rrggbb format. */
         public String textColor;
-        /** Task border color in #rrggbb format (critical vs. normal). */
+         /** Task border color in #rrggbb format (critical vs. normal). */
         public String borderColor;
         /** Name of the assigned resource, shown to the left of the task bar. */
         public String assignedUserName;
+        /** User availability percentage (e.g., "100%" or "50%"). */
+        public String assignedUserAvailability;
+        /** User's country (for tooltip). */
+        public String assignedUserCountry;
+        /** User's state/region (for tooltip). */
+        public String assignedUserState;
         /** Zero-based row index used to compute the Y position in JS. */
         public int    rowIndex;
         /** Finish-to-start predecessor relations for drawing dependency arrows. */
