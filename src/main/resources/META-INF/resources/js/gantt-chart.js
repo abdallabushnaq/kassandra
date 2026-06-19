@@ -1,778 +1,1189 @@
 // gantt-chart.js
-// Client-side interactive Gantt chart renderer for Kassandra.
-// Depends on: svg-utils.js, color-utils.js, date-utils.js, calendar-x-axes.js, theme-color-constants.js
+// Interactive Gantt chart renderer.
+// Mirrors Java: AbstractGanttRenderer, GanttRenderer, GanttChart
 //
-// Interaction:
-//   mouse wheel      → zoom (change dayWidth, keep day-under-cursor stable)
-//   click + drag     → pan left/right
-//
-// View state (dayWidth + scrollOffset) is persisted in localStorage using the key
-//   kassandra.chart.<chartName>.view
+// Class hierarchy (matches Java):
+//   AbstractRenderer  (chart-util.js)
+//     └─ AbstractGanttRenderer  (this file)
+//          └─ GanttRenderer     (this file)
+//   AbstractCanvas  (chart-util.js)
+//     └─ AbstractChart  (chart-util.js)
+//          └─ GanttChart (this file)
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 (function () {
     'use strict';
 
-    // Destructure utilities from global scope
-    const {createSvgElement, createRect, createText, createLine, createClipPath} = window.SvgUtils;
-    const {getThemeColor, convertSprintColorToRgba} = window.ColorUtils;
-    const {MS, getUtcDayMidnight, calculateDayIndex, calculateDayCount} = window.DateUtils;
-    const colorKeys = window.ThemeColorKeys;
+    var createSvgElement         = window.SvgUtils.createSvgElement;
+    var createRect               = window.SvgUtils.createRect;
+    var createText               = window.SvgUtils.createText;
+    var createLine               = window.SvgUtils.createLine;
+    var createClipPath           = window.SvgUtils.createClipPath;
+    var intToHex                 = window.ColorUtils.intToHex;
+    var convertSprintColorToRgba = window.ColorUtils.convertSprintColorToRgba;
+    var hexToRgbaWithAlpha       = window.ColorUtils.hexToRgbaWithAlpha;
+    var MS                       = window.DateUtils.MS;
+    var getUtcDayMidnight        = window.DateUtils.getUtcDayMidnight;
+    var calculateDayIndex        = window.DateUtils.calculateDayIndex;
+    var calculateDayCount        = window.DateUtils.calculateDayCount;
 
-    // ── Layout constants (mirror Java AbstractGanttRenderer / GanttRenderer) ─
-    const TASK_H = 18;         // Java: LINE_HEIGHT=18, numberOfLinesPerTask=1
-    const ROW_H = TASK_H + 1; // 1px gap between rows
-    const TASK_BODY_BORDER = 1;
-    const RESOURCE_NAME_TO_TASK_GAP = 8;  // Java: RESOURCE_NAME_TO_TASK_GAP=3 + TASK_NAME_TO_TASK_GAP=13
-    const TASK_NAME_TO_TASK_GAP = 13;
-    const RELATION_CORNER_LENGTH = 14;
-    const MILESTONE_HALF = TASK_H / 2 - TASK_BODY_BORDER; // diamond half-size
+    // ── Constants ──────────────────────────────────────────────────────────────
+    // Mirrors Java: AbstractGanttRenderer field declarations
 
-    // ── Zoom / scroll config ──────────────────────────────────────────────────
-    const DEFAULT_DW = 20;     // matches Java CalendarXAxes.dayOfWeek.width = 20
-    const MIN_DW = 2;
-    const MAX_DW = 80;
-    const ZOOM_STEP = 1.25;
+    var FINE_LINE_STROKE_WIDTH    = 1.0;       // AbstractGanttRenderer.FINE_LINE_STROKE_WIDTH
+    var LINE_HEIGHT               = 18;        // AbstractGanttRenderer.LINE_HEIGHT
+    var RELATION_CORNER_LENGTH    = 14;        // AbstractGanttRenderer.RELATION_CORNER_LENGTH
+    var RELATION_LINE_STROKE_WIDTH = 1;        // AbstractGanttRenderer.RELATION_LINE_STROKE_WIDTH
+    var RESOURCE_NAME_TO_TASK_GAP = 3;         // AbstractGanttRenderer.RESOURCE_NAME_TO_TASK_GAP
+    /** seconds between work start and work end, including lunch hour */
+    var SECONDS_PER_DAY           = 85 * 6 * 60; // AbstractGanttRenderer.SECONDS_PER_DAY = 30600
+    var TASK_BODY_BORDER          = 1;         // AbstractGanttRenderer.TASK_BODY_BORDER
+    var TASK_NAME_TO_TASK_GAP     = 5 + 8;    // AbstractGanttRenderer.TASK_NAME_TO_TASK_GAP = 13
 
-    // ── Day-bars visibility threshold ─────────────────────────────────────────
-    const MIN_DAY_BARS = 4;   // draw per-day stripes only when dayWidth >= this
+    // Mirrors Java GanttRenderer field declarations
+    var GANTT_TASK_POST_SPACE     = 0;         // GanttRenderer.GANTT_TASK_POST_SPACE
+    var GANTT_TASK_PRI_SPACE      = 0;         // GanttRenderer.GANTT_TASK_PRI_SPACE
+    // NoneWorkingDayFont = new Font(Font.SANS_SERIF, Font.BOLD, 22)
+    var NONE_WORKING_DAY_FONT_SIZE = 22;       // GanttRenderer.NoneWorkingDayFont
 
-    // ── localStorage helpers ─────────────────────────────────────────────────
+    // Interactive chart constants (not in Java — needed for scrollable UI)
+    var DEFAULT_DW = 20; // matches GanttRenderer.calculateDayWidth → dayOfWeek.setWidth(20)
+    var MIN_DW     = 2;
+    var MAX_DW     = 80;
+    var ZOOM_STEP  = 1.25;
 
-    function generateViewStateKey(containerId) {
-        const chartName = (containerId || 'chart').replace(/-container$/, '');
+    // ── localStorage helpers ───────────────────────────────────────────────────
+
+    function viewStateKey(containerId) {
+        var chartName = (containerId || 'chart').replace(/-container$/, '');
         return 'kassandra.chart.' + chartName + '.view';
     }
 
-    function loadChartViewState(containerId) {
+    function loadViewState(containerId) {
         try {
-            const raw = localStorage.getItem(generateViewStateKey(containerId));
+            var raw = localStorage.getItem(viewStateKey(containerId));
             if (raw) {
-                const state = JSON.parse(raw);
-                if (typeof state.dayWidth === 'number' && typeof state.scrollOffset === 'number') return state;
+                var s = JSON.parse(raw);
+                if (typeof s.dayWidth === 'number' && typeof s.scrollOffset === 'number') return s;
             }
-        } catch (_) { /* storage unavailable */
-        }
+        } catch (e) { /* unavailable */ }
         return null;
     }
 
-    function saveChartViewState(containerId, dayWidth, scrollOffset) {
+    function saveViewState(containerId, dayWidth, scrollOffset) {
         try {
-            localStorage.setItem(generateViewStateKey(containerId), JSON.stringify({dayWidth, scrollOffset}));
-        } catch (_) { /* quota exceeded */
-        }
+            localStorage.setItem(viewStateKey(containerId), JSON.stringify({dayWidth: dayWidth, scrollOffset: scrollOffset}));
+        } catch (e) { /* quota */ }
     }
 
-    // ── Calendar exception helpers ────────────────────────────────────────────
+    // ── Date / time helpers ────────────────────────────────────────────────────
 
-    /**
-     * Parses a YYYY-MM-DD string to a UTC midnight Date.
-     * @param {string} dateStr
-     * @returns {Date}
-     */
     function parseLocalDate(dateStr) {
         if (!dateStr) return null;
-        // LocalDate arrives as "YYYY-MM-DD" (no time component)
-        const parts = dateStr.split('-');
-        return new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
+        var p = dateStr.split('-');
+        return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
     }
 
     /**
-     * Tests whether a UTC midnight Date is covered by any of the task's calendar exceptions.
-     * Weekends are NOT passed here; use getUTCDay() === 0 || 6 for those.
-     * @param {Date}   date
-     * @param {Array}  exceptions  Array of {from, to, type, letter}
-     * @returns {Object|null}  The first matching exception, or null
+     * Parses an ISO LocalDateTime string (no timezone suffix) to a JS Date.
+     * Mirrors Java: task.getStart() / task.getFinish() (LocalDateTime).
+     * Strings like "2026-03-01T08:00:00" are treated as local time by JS; since we
+     * use this consistently for all datetimes the relative differences are correct.
      */
+    function parseLocalDateTime(str) {
+        if (!str) return null;
+        if (str instanceof Date) return str;
+        return new Date(str);
+    }
+
+    /**
+     * Returns the "8:00 AM on same day" datetime string for a given LocalDateTime string.
+     * Mirrors Java: date.truncatedTo(ChronoUnit.DAYS).withHour(8)
+     * e.g. "2026-03-01T10:30:00" → "2026-03-01T08:00:00"
+     */
+    function getDayAt8AM(datetimeStr) {
+        if (!datetimeStr) return null;
+        return datetimeStr.split('T')[0] + 'T08:00:00';
+    }
+
+    // ── Calendar exception helpers ─────────────────────────────────────────────
+
     function getCalendarException(date, exceptions) {
         if (!exceptions || !exceptions.length) return null;
-        for (let i = 0; i < exceptions.length; i++) {
-            const ex = exceptions[i];
-            const from = parseLocalDate(ex.from);
-            const to = parseLocalDate(ex.to);
+        for (var i = 0; i < exceptions.length; i++) {
+            var ex   = exceptions[i];
+            var from = parseLocalDate(ex.from);
+            var to   = parseLocalDate(ex.to);
             if (from && to && date >= from && date <= to) return ex;
         }
         return null;
     }
 
     /**
-     * Returns true when the given UTC midnight Date is a working day for a task.
-     * A day is non-working when:
-     *   - it falls on Saturday (6) or Sunday (0), OR
-     *   - it is covered by one of the task's calendar exceptions.
-     *
-     * @param {Date}   date
-     * @param {Array}  exceptions
-     * @returns {boolean}
+     * Mirrors Java: ProjectCalendar.isWorkingDate(LocalDate).
+     * Returns true for Mon-Fri weekdays with no calendar exception.
      */
     function isWorkingDay(date, exceptions) {
-        const dow = date.getUTCDay();
+        var dow = date.getUTCDay();
         if (dow === 0 || dow === 6) return false;
         return getCalendarException(date, exceptions) === null;
     }
 
-    // ── Colour helpers ────────────────────────────────────────────────────────
+    // ── AbstractGanttRenderer ──────────────────────────────────────────────────
+    // Mirrors Java: AbstractGanttRenderer extends AbstractRenderer
 
-    /**
-     * Converts an 8-digit #rrggbbaa hex string to an SVG rgba() string.
-     * Falls back to the 6-digit (#rrggbb) path if no alpha digits are present.
-     * Delegates to the shared ColorUtils helper for sprint-style colours.
-     *
-     * @param {string} hex  e.g. "#3a7bc8b0"
-     * @returns {string}    e.g. "rgba(58,123,200,0.690)"
-     */
-    function hexToRgba(hex) {
-        return convertSprintColorToRgba(hex);
-    }
-
-    /**
-     * Converts an 8-digit #rrggbbaa hex string to an rgba() with a different alpha.
-     * Used to override the task fill alpha for non-working-day segments.
-     *
-     * @param {string} hex       #rrggbbaa source string
-     * @param {number} newAlpha  replacement alpha 0–255
-     * @returns {string}
-     */
-    function hexToRgbaWithAlpha(hex, newAlpha) {
-        if (!hex || hex.length < 7) return 'rgba(0,0,0,0.3)';
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return 'rgba(' + r + ',' + g + ',' + b + ',' + (newAlpha / 255).toFixed(3) + ')';
-    }
-
-    // ── Exception strip background colours ────────────────────────────────────
-
-    /**
-     * Returns the background colour (as an rgba/hex string) for a non-working day cell
-     * in a task row, based on the exception type and theme.
-     *
-     * @param {Object} theme        Flat theme colour map (ThemeColorKeys values)
-     * @param {Object|null} exception  Calendar exception object (null for plain weekends)
-     * @param {Date}   date         Current day
-     * @returns {string}  CSS colour
-     */
-    function getDayStripeBgColor(theme, exception, date) {
-        const dow = date.getUTCDay();
-        if (dow === 6) return getThemeColor(theme, colorKeys.CHART_DAY_OF_WEEK_SATURDAY_BG_COLOR);
-        if (dow === 0) return getThemeColor(theme, colorKeys.CHART_DAY_OF_WEEK_SUNDAY_BG_COLOR);
-        if (exception) {
-            const t = exception.type;
-            if (t === 'VACATION') return getThemeColor(theme, colorKeys.GANTT_VACATION_BG_COLOR);
-            if (t === 'TRIP') return getThemeColor(theme, colorKeys.GANTT_TRIP_BG_COLOR);
-            if (t === 'SICK') return getThemeColor(theme, colorKeys.GANTT_SICK_BG_COLOR);
-            return getThemeColor(theme, colorKeys.GANTT_HOLIDAY_BG_COLOR);
+    class AbstractGanttRenderer extends window.AbstractRenderer {
+        constructor() {
+            super();
+            this.dayWidth        = DEFAULT_DW;
+            this.scrollOffset    = 0;
+            this.containerWidth  = 800;
+            this.chartStart      = null;  // UTC midnight of chart first day
+            this.totalDays       = 0;
+            this.currentDate     = null;
+            this.tasks           = [];
+            this.milestones      = [];
+            /** Absolute pixel Y of the top of the task area; set before drawGanttChart. */
+            this._calendarH      = 0;
         }
-        // weekday, no exception → transparent (no stripe)
-        return null;
-    }
 
-    // ── Chart factory ─────────────────────────────────────────────────────────
+        /** Converts a 0-based day index (from chartStart) to a viewport pixel X. */
+        dayIndexToPixelX(dayIndex) {
+            return (dayIndex - this.scrollOffset) * this.dayWidth;
+        }
 
-    /**
-     * Creates and mounts an interactive Gantt chart into a DOM container.
-     *
-     * @param {HTMLElement} container   Host element (the chart fills its width)
-     * @param {Object}      data        GanttChartDto serialised as JSON
-     * @param {Object}      [options]
-     * @param {string}      [options.containerId]   For localStorage key
-     * @param {number}      [options.initialDayWidth]
-     * @returns {{ render, schedule, destroy }}
-     */
-    function createChart(container, data, options) {
-        options = options || {};
-        const containerId = options.containerId || container.id || 'chart';
+        /**
+         * Mirrors Java: AbstractRenderer.calculateX(LocalDateTime date, LocalDateTime startTime, long secondsPerDay)
+         *
+         * Java formula:
+         *   firstMilestoneX = firstDayX + dayWidth/2
+         *   dayX = firstMilestoneX + (calculateDays(firstMilestone, toDayPrecision(date)) + priRun) * dayWidth
+         *   timeOfDayX = (int)((workedToday.getSeconds() * dayWidth) / secondsPerDay)
+         *   return dayX + timeOfDayX
+         *   → caller does: x = calculateX(...) - dayWidth/2
+         *
+         * JS simplification (firstDayX=0, priRun baked into chartStart, subtract dayWidth/2 and scrollOffset):
+         *   return dayIndexToPixelX(dayIndex) + timeOfDayX
+         *
+         * @param {string} datetimeStr   ISO LocalDateTime string, e.g. "2026-03-01T10:30:00"
+         * @param {string} startTimeStr  ISO LocalDateTime for working-day start, e.g. "2026-03-01T08:00:00"
+         * @param {number} secondsPerDay Working seconds per day (SECONDS_PER_DAY = 30600)
+         * @returns {number} Viewport pixel X
+         */
+        calculateX(datetimeStr, startTimeStr, secondsPerDay) {
+            var date      = parseLocalDateTime(datetimeStr);
+            var startTime = parseLocalDateTime(startTimeStr);
+            // DateUtil.calculateDays(firstMilestone, toDayPrecision(date)) + priRun
+            // = calculateDayIndex(date, chartStart)  [chartStart = firstMilestone - preRun]
+            var dayIndex = calculateDayIndex(datetimeStr, this.chartStart);
+            // Duration.between(startTime, date).getSeconds()
+            var workedSeconds = (date.getTime() - startTime.getTime()) / 1000;
+            // (int)((workedSeconds * dayWidth) / secondsPerDay)
+            var timeOfDayX = Math.floor(workedSeconds * this.dayWidth / secondsPerDay);
+            return this.dayIndexToPixelX(dayIndex) + timeOfDayX;
+        }
 
-        const metadata = data.meta || {};
-        const tasks = data.tasks || [];
-        const milestones = data.milestones || [];
-        const theme = metadata.theme || {};
+        // Mirrors Java: AbstractGanttRenderer.getTaskHeight()
+        getTaskHeight() {
+            return LINE_HEIGHT; // LINE_HEIGHT * numberOfLinesPerTask (= 18 * 1)
+        }
 
-        const chartStart = getUtcDayMidnight(new Date(metadata.chartStart || Date.now()));
-        const chartEnd = getUtcDayMidnight(new Date(metadata.chartEnd || Date.now()));
-        const currentDate = metadata.now ? getUtcDayMidnight(new Date(metadata.now)) : getUtcDayMidnight(new Date());
-        const totalDays = calculateDayCount(chartStart, chartEnd);
+        // Mirrors Java: GanttRenderer.calculateChartHeight()
+        calculateChartHeight() {
+            var calH = this.calendarXAxes
+                ? this.calendarXAxes.getHeight(this.dayWidth, this.milestones.length > 0)
+                : 0;
+            // calendarXAxes.getHeight() + GANTT_TASK_PRI_SPACE + tasks * (taskHeight+1) + GANTT_TASK_POST_SPACE
+            return calH + GANTT_TASK_PRI_SPACE + this.tasks.length * (this.getTaskHeight() + 1) + GANTT_TASK_POST_SPACE;
+        }
 
-        // Build an id→rowIndex map for relation rendering
-        const taskRowMap = {};
-        tasks.forEach(function (t) {
-            taskRowMap[String(t.id)] = t.rowIndex;
-        });
+        // ── Color helpers ──────────────────────────────────────────────────────
 
-        // CalendarXAxes header renderer
-        const calendar = new window.CalendarXAxes(theme);
+        /**
+         * Mirrors Java: GraphColorUtil.getDayOfWeekStripBgColor(theme, date)
+         *   weekday   → xAxesTheme.dayOfweekBgColor
+         *   Saturday  → chartTheme.dayOfweekSaturdayBgColor
+         *   Sunday    → chartTheme.dayOfweekSundayBgColor
+         */
+        getDayOfWeekStripBgColor(dayDate) {
+            var dow = dayDate.getUTCDay();
+            if (dow === 6) return intToHex(this.theme.chartTheme.dayOfweekSaturdayBgColor, '#d7d7d7');
+            if (dow === 0) return intToHex(this.theme.chartTheme.dayOfweekSundayBgColor,   '#d7d7d7');
+            return intToHex(this.theme.xAxesTheme.dayOfweekBgColor, '#ffffff');
+        }
 
-        let dayWidth = Math.min(MAX_DW, Math.max(MIN_DW, options.initialDayWidth || DEFAULT_DW));
-        let scrollOffset = 0;
+        /**
+         * Mirrors Java: GraphColorUtil.getGanttDayStripeColor(theme, pc, currentDate)
+         *   Saturday / Sunday / working weekday → getDayOfWeekStripBgColor
+         *   non-working weekday (exception)     → exception-type color
+         */
+        getGanttDayStripeColor(task, dayDate) {
+            var dow = dayDate.getUTCDay();
+            if (dow === 6 || dow === 0 || isWorkingDay(dayDate, task.calendarExceptions)) {
+                return this.getDayOfWeekStripBgColor(dayDate);
+            }
+            var exception = getCalendarException(dayDate, task.calendarExceptions);
+            if (exception) {
+                var t = exception.type;
+                if (t === 'VACATION') return intToHex(this.theme.ganttTheme.vacationBgColor, '#a0c8ff');
+                if (t === 'TRIP')     return intToHex(this.theme.ganttTheme.tripBgColor,     '#c8a0ff');
+                if (t === 'SICK')     return intToHex(this.theme.ganttTheme.sickBgColor,     '#ffa0a0');
+                return intToHex(this.theme.ganttTheme.holidayBgColor, '#ffd0a0');
+            }
+            return intToHex(this.theme.xAxesTheme.dayOfMonthWeekendBgColor, '#d7d7d7');
+        }
 
-        // Helper: day index → viewport pixel X (left edge of day column)
-        const dayIndexToPixelX = (idx) => (idx - scrollOffset) * dayWidth;
-        const getContainerWidth = () => Math.max(200, container.clientWidth || 800);
-        const getCalendarHeight = () => calendar.getHeight(dayWidth, milestones.length > 0);
+        // ── drawDayBars (base) ─────────────────────────────────────────────────
 
-        // ── Scroll / zoom initialisation ──────────────────────────────────
+        /**
+         * Mirrors Java: AbstractRenderer.drawDayBars(LocalDate currentDay)
+         * Base implementation: draws plain weekday/weekend background for each task row.
+         * GanttRenderer overrides this.
+         */
+        drawDayBars(g, dayDate, calendarH) {
+            var dayIdx    = calculateDayIndex(dayDate, this.chartStart);
+            var dayLeft   = this.dayIndexToPixelX(dayIdx);
+            var gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+            var self      = this;
 
-        function initializeScroll() {
-            const saved = loadChartViewState(containerId);
-            if (saved) {
-                dayWidth = Math.min(MAX_DW, Math.max(MIN_DW, saved.dayWidth));
-                scrollOffset = saved.scrollOffset;
-                constrainScrollOffset();
-            } else {
-                // Default: put "today" at 20% from the left
-                const todayIdx = calculateDayIndex(currentDate, chartStart);
-                const visibleDays = getContainerWidth() / dayWidth;
-                scrollOffset = Math.max(0, Math.min(totalDays - visibleDays, todayIdx - visibleDays * 0.2));
+            for (var ti = 0; ti < this.tasks.length; ti++) {
+                var task = this.tasks[ti];
+                var rowY = calendarH + task.rowIndex * (self.getTaskHeight() + 1);
+
+                // ── 1. Grid ───────────────────────────────────────────────────
+                // Mirrors Java:
+                //   fillRect(x1-1, y1-1, dayWidth, 1)  → top --   (x1 = dayLeft+1, so x1-1 = dayLeft)
+                //   fillRect(x1-1, y1,   1, taskHeight) → left |
+                g.appendChild(createRect(dayLeft,     rowY - 1, self.dayWidth, 1,          {fill: gridColor})); // top --
+                g.appendChild(createRect(dayLeft,     rowY,     1,             LINE_HEIGHT, {fill: gridColor})); // left |
+
+                // ── 2. Background ─────────────────────────────────────────────
+                // Mirrors Java: getGanttDayStripeColor → fill rect at (x1, y1, dayWidth-1, taskHeight)
+                var bgColor = self.getGanttDayStripeColor(task, dayDate);
+                g.appendChild(createRect(dayLeft + 1, rowY, self.dayWidth - 1, LINE_HEIGHT, {fill: bgColor}));
+
+                // ── 3. Exception letter ───────────────────────────────────────
+                // Mirrors Java: NoneWorkingDayFont (22pt bold), drawString(letter, x-xShift, y+yShift)
+                var exception = getCalendarException(dayDate, task.calendarExceptions);
+                if (exception && exception.letter && self.dayWidth >= 14) {
+                    var cx     = dayLeft + self.dayWidth / 2;
+                    var letter = createText(cx, rowY + LINE_HEIGHT / 2, exception.letter, {
+                        fill: intToHex(self.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
+                        'font-size': String(NONE_WORKING_DAY_FONT_SIZE),
+                        'font-family': 'sans-serif',
+                        'font-weight': 'bold',
+                        'text-anchor': 'middle',
+                        'dominant-baseline': 'middle'
+                    });
+                    letter.appendChild(createSvgElement('title', {}, exception.type || 'Off-day'));
+                    g.appendChild(letter);
+                }
             }
         }
 
-        // ── Debounced save ────────────────────────────────────────────────
-        let saveTimerId = null;
+        // ── Task drawing methods ───────────────────────────────────────────────
 
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawConflictMarker(int y, List<Conflict> conflict)
+         * Only used in team planner chart. In GanttRenderer conflict is always null.
+         */
+        drawConflictMarker(g, y, conflict) {
+            if (conflict != null) {
+                // only used in team planner chart
+                // graphics2D.setColor(Color.red);
+                // for (Conflict c : conflict) { if (c.originalConflict) { fillRect(...) } }
+            }
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawCriticalMarker(Task task, int x1, int x2, int y)
+         * Draws the task outline per day:
+         *   working day  → solid top/bottom; first/last day also get a vertical side too
+         *   non-working  → dotted top/bottom (every 4th absolute pixel, 2px wide)
+         *
+         * Note: xStart/xFinish per day are always at whole-day pixel boundaries because
+         *   calculateX(day@8AM, day@8AM, SECONDS_PER_DAY) = dayIndexToPixelX(d) + 0  → left edge
+         *   calculateX(day@8AM+SECONDS_PER_DAY, day@8AM, SECONDS_PER_DAY) = dayIndexToPixelX(d) + dayWidth
+         */
+        drawCriticalMarker(g, task, x1, x2, y) {
+            if (task.critical) {
+                var borderColor = intToHex(this.theme.ganttTheme.criticalTaskBorderColor, '#ff0000');
+            } else {
+                var borderColor = intToHex(this.theme.ganttTheme.taskBorderColor, '#888888');
+            }
+            // ProjectCalendar pc — in JS: use task.calendarExceptions
+            // int days = Duration.between(start.truncatedTo(DAYS), finish.truncatedTo(DAYS)).toDays()
+            var startDayIdx  = calculateDayIndex(task.start,  this.chartStart);
+            var finishDayIdx = calculateDayIndex(task.finish, this.chartStart);
+            var days         = finishDayIdx - startDayIdx;
+
+            for (var day = 0; day <= days; day++) {
+                // LocalDateTime currentDay = start.truncatedTo(DAYS).plusDays(day)
+                var dayIdx      = startDayIdx + day;
+                var dayDate     = new Date(this.chartStart.getTime() + dayIdx * MS);
+                // pc.isWorkingDate(currentDay.toLocalDate())
+                var working     = isWorkingDay(dayDate, task.calendarExceptions);
+                // xStart = calculateX(currentDay@8AM, currentDay@8AM, SECONDS_PER_DAY) - dayWidth/2
+                //        = dayIndexToPixelX(dayIdx)
+                var xStart      = this.dayIndexToPixelX(dayIdx);
+                // xFinish = calculateX(currentDay@8AM+SECONDS_PER_DAY, currentDay@8AM, SECONDS_PER_DAY) - dayWidth/2
+                //         = dayIndexToPixelX(dayIdx) + dayWidth
+                var xFinish     = xStart + this.dayWidth;
+
+                if (working) {
+                    if (days === 0) {
+                        // this is the left and right end
+                        g.appendChild(createRect(x1, y - this.getTaskHeight()/2 + TASK_BODY_BORDER, x2 - x1 + 1, 1, {fill: borderColor})); //upper -
+                        g.appendChild(createRect(x1, y + this.getTaskHeight()/2 - TASK_BODY_BORDER - 1, x2 - x1 + 1, 1, {fill: borderColor})); //lower -
+                        g.appendChild(createRect(x1, y - this.getTaskHeight()/2 + TASK_BODY_BORDER + 1, 1, this.getTaskHeight() - TASK_BODY_BORDER*2 - 2, {fill: borderColor})); //start |
+                        g.appendChild(createRect(x2, y - this.getTaskHeight()/2 + TASK_BODY_BORDER + 1, 1, this.getTaskHeight() - TASK_BODY_BORDER*2 - 2, {fill: borderColor})); //end |
+                    } else if (day === 0) {
+                        // this is the left end
+                        g.appendChild(createRect(x1, y - this.getTaskHeight()/2 + TASK_BODY_BORDER, xFinish - x1, 1, {fill: borderColor})); //upper -
+                        g.appendChild(createRect(x1, y + this.getTaskHeight()/2 - TASK_BODY_BORDER - 1, xFinish - x1, 1, {fill: borderColor})); //lower -
+                        g.appendChild(createRect(x1, y - this.getTaskHeight()/2 + TASK_BODY_BORDER + 1, 1, this.getTaskHeight() - TASK_BODY_BORDER*2 - 2, {fill: borderColor})); //start |
+                    } else if (day === days) {
+                        // this is the right end
+                        g.appendChild(createRect(xStart, y - this.getTaskHeight()/2 + TASK_BODY_BORDER, x2 - xStart + 1, 1, {fill: borderColor})); //upper -
+                        g.appendChild(createRect(xStart, y + this.getTaskHeight()/2 - TASK_BODY_BORDER - 1, x2 - xStart + 1, 1, {fill: borderColor})); //lower -
+                        g.appendChild(createRect(x2,     y - this.getTaskHeight()/2 + TASK_BODY_BORDER + 1, 1, this.getTaskHeight() - TASK_BODY_BORDER*2 - 2, {fill: borderColor})); //end |
+                    } else {
+                        // this is the middle
+                        g.appendChild(createRect(xStart, y - this.getTaskHeight()/2 + TASK_BODY_BORDER, this.dayWidth, 1, {fill: borderColor}));
+                        g.appendChild(createRect(xStart, y + this.getTaskHeight()/2 - TASK_BODY_BORDER - 1, this.dayWidth, 1, {fill: borderColor}));
+                    }
+                } else {
+                    // non-working day: dotted border
+                    // for (int i = 0; i < dayWidth-1; i++) { int x = i + xStart; if (x % 4 == 0) ... }
+                    for (var i = 0; i < this.dayWidth - 1; i++) {
+                        // Use absolute chart pixel (dayIdx * dayWidth + i) to match Java's x%4 pattern
+                        var px = xStart + i;
+                        if ((dayIdx * this.dayWidth + i) % 4 === 0) {
+                            g.appendChild(createRect(px, y - this.getTaskHeight()/2 + TASK_BODY_BORDER, 2, 1, {fill: borderColor}));
+                            g.appendChild(createRect(px, y + this.getTaskHeight()/2 - TASK_BODY_BORDER - 1, 2, 1, {fill: borderColor}));
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawId(Task task, int y)
+         * Draws a colored box with the task key at firstDayX (= chart coordinate 0).
+         * In Java: x1 = firstDayX = 0; x2 = x1 + dayWidth.
+         */
+        drawId(g, task, y) {
+            // int x1 = firstDayX  →  in JS: dayIndexToPixelX(0) = (0 - scrollOffset) * dayWidth
+            var x1         = this.dayIndexToPixelX(0);
+            var x2         = x1 + this.dayWidth;
+            var fillColor  = intToHex(this.theme.ganttTheme.idBgColor,   '#cccccc');
+            var textColor  = intToHex(this.theme.ganttTheme.idTextColor,  '#000000');
+            // graphics2D.setFont(idFont)  →  Font(SANS_SERIF, PLAIN, 12)
+            // graphics2D.fillRect(x1+1, y - taskHeight/2, x2-x1-1, taskHeight)
+            g.appendChild(createRect(x1 + 1, y - this.getTaskHeight()/2, x2 - x1 - 1, this.getTaskHeight(), {fill: fillColor}));
+            // graphics2D.drawString(task.getKey(), x1+4, y+yShift)
+            // MetaData md = TaskUtil.getTaskMetaData(task) — not available in JS, treat as null
+            var midY = y; // y is already midY
+            var keyText = createText(x1 + 4, midY, task.key || '', {
+                fill: textColor,
+                'font-size': '12',
+                'font-family': 'sans-serif',
+                'dominant-baseline': 'middle'
+            });
+            if (task.name) keyText.appendChild(createSvgElement('title', {}, task.name));
+            g.appendChild(keyText);
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawManualMarker(Task task, int x1, int y, boolean labelInside, Color textColor)
+         * Draws a 1px red vertical bar at the left edge of a manually-scheduled task.
+         * Java: graphics2D.setColor(Color.red); fillRect(x1, y - getTaskHeight()/2, 1, getTaskHeight())
+         */
+        drawManualMarker(g, task, x1, y, labelInside) {
+            if (task.manuallyScheduled) {
+                // graphics2D.setColor(Color.red);
+                // graphics2D.fillRect(x1, y - getTaskHeight()/2, 1, getTaskHeight());
+                g.appendChild(createRect(x1, y - this.getTaskHeight()/2, 1, this.getTaskHeight(), {fill: '#ff0000'}));
+                // Note: timestamp drawing is commented out in Java source
+            }
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawMilestoneTask(Task task, int x1, int y, boolean labelInside, Color fillColor, Color textColor, String taskName)
+         * Java: int milestoneWidth = getTaskHeight()/2 - TASK_BODY_BORDER  (= 8)
+         *       int c = 0
+         *       xPoints = {x1+c, x1+c+mW, x1+c, x1+c-mW, x1+c}  → diamond centered at x1
+         *       yPoints = {y-mW, y, y+mW, y, y-mW}
+         */
+        drawMilestoneTask(g, task, x1, y, labelInside, taskName) {
+            var milestoneWidth = this.getTaskHeight() / 2 - TASK_BODY_BORDER; // = 8
+            var c              = 0;
+            // Java: if (task.getTaskMode() == MANUALLY_SCHEDULED) setColor(fillColor) else setColor(Color.gray)
+            // In JS, fillColor pre-computed in DTO
+            var fillColor   = task.fillColor ? convertSprintColorToRgba(task.fillColor) : '#808080';
+            var borderColor = task.borderColor || '#888888';
+            var points = [
+                (x1 + c)                   + ',' + (y - milestoneWidth),
+                (x1 + c + milestoneWidth)  + ',' + y,
+                (x1 + c)                   + ',' + (y + milestoneWidth),
+                (x1 + c - milestoneWidth)  + ',' + y,
+                (x1 + c)                   + ',' + (y - milestoneWidth)
+            ].join(' ');
+            // graphics2D.fillPolygon(xPoints, yPoints, nPoints)
+            // graphics2D.drawPolygon(xPoints, yPoints, nPoints)
+            var poly = createSvgElement('polygon', {
+                points: points,
+                fill: fillColor,
+                stroke: borderColor,
+                'stroke-width': '1'
+            });
+            poly.appendChild(createSvgElement('title', {}, this.generateTaskToolTip(task)));
+            g.appendChild(poly);
+            // graphics2D.setFont(graphFont)  →  Font(SANS_SERIF, PLAIN, 12)
+            // graphics2D.setColor(textColor)
+            var textColor = task.textColor || intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
+            // FontMetrics yShift = ascent - height/2  →  use dominant-baseline:middle
+            if (labelInside) {
+                // only used for team planner chart — not drawn in GanttRenderer
+            } else {
+                // graphics2D.drawString(String.format("%s (%s)", taskName, dateTimeString),
+                //     x1 + 2 + 8 + c + milestoneWidth/2, y + yShift)
+                var labelX = x1 + c + milestoneWidth / 2 + 10; // = x1 + 2 + 8 + c + mW/2
+                var dateStr = task.start ? new Date(task.start).toLocaleDateString() : '';
+                var label   = (taskName || '') + ' (' + dateStr + ')';
+                var lbl = createText(labelX, y, label, {
+                    fill: textColor,
+                    'font-size': '12',
+                    'font-family': 'sans-serif',
+                    'dominant-baseline': 'middle'
+                });
+                lbl.appendChild(createSvgElement('title', {}, this.generateTaskToolTip(task)));
+                g.appendChild(lbl);
+            }
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawRelation(Task sourceTask, int y2, Task targetTask, int y1)
+         *
+         * T------------| | | C
+         *
+         * Java:
+         *   int x1 = calculateX(targetTask.getFinish(), ...) - dayWidth/2
+         *   int x2 = RELATION_CORNER_LENGTH + calculateX(sourceTask.getStart(), ...) - dayWidth/2 - RESOURCE_NAME_TO_TASK_GAP
+         */
+        drawRelation(g, sourceTask, y2, targetTask, y1) {
+            var signum = (int) => (int > 0 ? 1 : int < 0 ? -1 : 0);
+            var sign   = signum(y2 - y1);
+            var yEnd, yMid;
+            if (sign > 0) {
+                y2  -= this.getTaskHeight() / 2 - TASK_BODY_BORDER;
+                yEnd = y2;
+                yMid = y2 - 5;
+            } else {
+                y2  += this.getTaskHeight() / 2 - TASK_BODY_BORDER;
+                yEnd = y2;
+                yMid = y2 + 5;
+            }
+            // int x1 = calculateX(targetTask.getFinish(), ...) - dayWidth/2
+            var ax1 = this.calculateX(targetTask.finish, getDayAt8AM(targetTask.finish), SECONDS_PER_DAY);
+            // int x2 = RELATION_CORNER_LENGTH + calculateX(sourceTask.getStart(), ...) - dayWidth/2 - RESOURCE_NAME_TO_TASK_GAP
+            var ax2 = RELATION_CORNER_LENGTH
+                    + this.calculateX(sourceTask.start, getDayAt8AM(sourceTask.start), SECONDS_PER_DAY)
+                    - RESOURCE_NAME_TO_TASK_GAP;
+
+            var arrowColor = (sourceTask.critical && targetTask.critical)
+                ? intToHex(this.theme.ganttTheme.criticalRelationColor, '#ff0000')
+                : intToHex(this.theme.ganttTheme.relationColor, '#3466ed');
+
+            // graphics2D.setStroke(new BasicStroke(RELATION_LINE_STROKE_WIDTH))
+            // graphics2D.fillRect(ax1+1, y1, ax2-ax1, 1)  → horizontal line
+            g.appendChild(createRect(ax1 + 1, y1, ax2 - ax1, 1, {fill: arrowColor}));
+            // graphics2D.fillRect(ax2, y1+1, 1, yMid-y1)  → vertical line
+            g.appendChild(createRect(ax2, y1 + 1, 1, yMid - y1, {fill: arrowColor}));
+
+            var d = 5;
+            var pts;
+            if (y2 > y1) {
+                // arrow head down: {ax2-d, yEnd-d+sign}, {ax2+d, yEnd-d+sign}, {ax2, yEnd+sign}
+                pts = [(ax2 - d) + ',' + (yEnd - d + sign),
+                       (ax2 + d) + ',' + (yEnd - d + sign),
+                       ax2       + ',' + (yEnd     + sign)].join(' ');
+            } else {
+                // arrow head up: {ax2+d, yEnd+d+sign}, {ax2-d, yEnd+d+sign}, {ax2, yEnd+sign}
+                pts = [(ax2 + d) + ',' + (yEnd + d + sign),
+                       (ax2 - d) + ',' + (yEnd + d + sign),
+                       ax2       + ',' + (yEnd     + sign)].join(' ');
+            }
+            // graphics2D.setColor(theme.ganttTheme.relationColor)
+            g.appendChild(createSvgElement('polygon', {points: pts, fill: arrowColor}));
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawRibbon(Graphics2D, int y1, int x1, int y2, int delta1, int delta2, Color ribbonColor)
+         * Draws a parallelogram (diagonal stripe) used for alien/marker task bodies.
+         * Java: xpoints = {x1, x1+delta1, x1+delta1+delta2, x1+delta2}
+         *       ypoints = {y2,        y1,              y1,       y2}
+         */
+        drawRibbon(g, y1, x1, y2, delta1, delta2, ribbonColor) {
+            var points = [
+                x1                      + ',' + y2,
+                (x1 + delta1)           + ',' + y1,
+                (x1 + delta1 + delta2)  + ',' + y1,
+                (x1 + delta2)           + ',' + y2
+            ].join(' ');
+            // graphics2D.setColor(ribbonColor); graphics2D.fillPolygon(xpoints, ypoints, xpoints.length)
+            g.appendChild(createSvgElement('polygon', {points: points, fill: ribbonColor}));
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawStoryBody(Task task, int x1, int x2, int y, Color fillColor, String marker, String toolTip)
+         * marker == null → normal inverted-U bracket
+         * marker != null → ribbon/diagonal stripe pattern (alien story)
+         */
+        drawStoryBody(g, task, x1, x2, y, marker) {
+            var fillColor = task.fillColor ? convertSprintColorToRgba(task.fillColor)
+                                           : intToHex(this.theme.ganttTheme.storyColor, '#444444');
+            var tooltip = this.generateTaskToolTip(task);
+            // graphics2D.setColor(fillColor)
+            if (marker == null) {
+                // drawTick(task.getStart(), x1, y, TextAlignment.left)   ← commented out in Java
+                // drawTick(task.getFinish(), x2, y, TextAlignment.right) ← commented out in Java
+                var y1        = y + TASK_BODY_BORDER;
+                var thickness = 2;
+                // graphics2D.fillRect(x1, y1 - taskHeight/2, x2-x1+1, thickness) //upper ---
+                g.appendChild(createRect(x1, y1 - this.getTaskHeight()/2, x2 - x1 + 1, thickness, {fill: fillColor}));
+                // graphics2D.fillRect(x1, y1 - taskHeight/2 + thickness, thickness, taskHeight - BORDER*2 - thickness) //left |
+                g.appendChild(createRect(x1, y1 - this.getTaskHeight()/2 + thickness, thickness, this.getTaskHeight() - TASK_BODY_BORDER*2 - thickness, {fill: fillColor}));
+                // graphics2D.fillRect(x1+x2-x1-1, ...) = fillRect(x2-1, ...) //right |
+                g.appendChild(createRect(x2 - 1, y1 - this.getTaskHeight()/2 + thickness, thickness, this.getTaskHeight() - TASK_BODY_BORDER*2 - thickness, {fill: fillColor}));
+                // invisible tooltip shape
+                if (x2 - x1 - 1 > 0) {
+                    var tooltipRect = createRect(x1 + 1, y1 - this.getTaskHeight()/2, x2 - x1 - 1, this.getTaskHeight() - thickness * 2, {fill: 'none', 'pointer-events': 'all'});
+                    tooltipRect.appendChild(createSvgElement('title', {}, tooltip));
+                    g.appendChild(tooltipRect);
+                }
+            } else {
+                // marker != null → ribbon pattern (alien story, used in team planner)
+                var stY1  = y - this.getTaskHeight()/2 + 1;
+                var stY2  = stY1 + this.getTaskHeight() - 2;
+                // graphics2D.setClip(x1+1, y-taskHeight/2+2, x2-x1-1, taskHeight-4)
+                var clipId = 'sr-' + String(task.id).replace(/-/g, '');
+                g.appendChild(createClipPath(clipId, x1 + 1, y - this.getTaskHeight()/2 + 2, x2 - x1 - 1, this.getTaskHeight() - 4));
+                var ribbonGroup = createSvgElement('g', {'clip-path': 'url(#' + clipId + ')'});
+                // int delta1 = 25; int delta2 = 16; Color ribbonColor = fillColor
+                var delta1      = 25;
+                var delta2      = 16;
+                var ribbonColor = fillColor;
+                for (var rx = x1 - delta2; rx < x2; rx += delta2) {
+                    this.drawRibbon(ribbonGroup, stY1, rx, stY2, delta1, delta2 - 1, ribbonColor);
+                    ribbonColor = (ribbonColor === fillColor) ? '#ffffff' : fillColor;
+                }
+                g.appendChild(ribbonGroup);
+            }
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawTask(long gantUniqueId, Task task, boolean drawId, ...)
+         * Public entry point. Computes x1/x2 using calculateX (intra-day time offset),
+         * retrieves y from the taskHeight map (= _calendarH + rowIndex * (taskHeight+1) + taskHeight/2),
+         * then calls the private drawTask overload.
+         */
+        drawTask(g, gantUniqueId, task, doDrawId, drawRelations, labelInside, alien, marker, conflict, drawOutOfOffice) {
+            // if (GanttUtil.isValidTask(task)) — tasks in DTO are already filtered to valid ones
+            if (!task.start || !task.finish) return;
+
+            // graphics2D.setStroke(new BasicStroke(FINE_LINE_STROKE_WIDTH))
+            var start = task.start;
+            var stop  = task.finish;
+            // int x1 = calculateX(start, start.truncatedTo(DAYS).withHour(8), SECONDS_PER_DAY) - dayWidth/2
+            var x1    = this.calculateX(start, getDayAt8AM(start), SECONDS_PER_DAY);
+            // int x2 = calculateX(stop, stop.truncatedTo(DAYS).withHour(8), SECONDS_PER_DAY) - dayWidth/2
+            var x2    = this.calculateX(stop, getDayAt8AM(stop), SECONDS_PER_DAY);
+            // Integer lane = taskHeight.get(gantUniqueId + "-" + task.getId())
+            // int y = lane + getTaskHeight() / 2
+            var y     = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) + GANTT_TASK_PRI_SPACE + this.getTaskHeight() / 2;
+
+            // drawOutOfOffice handling: drawOutOfOffice(task, y) — commented out in Java
+
+            // private drawTask overload
+            this._drawTask(g, task, x1, x2, y, labelInside, alien, marker, conflict);
+
+            if (doDrawId) {
+                this.drawId(g, task, y);
+            }
+            if (drawRelations) {
+                // draw relations for this task's predecessors
+                var self     = this;
+                var taskById = this._taskById || {};
+                if (task.predecessors && task.predecessors.length) {
+                    task.predecessors.forEach(function (rel) {
+                        var targetTask = taskById[String(rel.predecessorId)];
+                        if (!targetTask) return;
+                        // if (relation.isVisible())
+                        if (rel.visible) {
+                            // int y1 = taskHeight.get(...targetTask) + taskHeight/2
+                            var y1 = self._calendarH + targetTask.rowIndex * (self.getTaskHeight() + 1) + GANTT_TASK_PRI_SPACE + self.getTaskHeight() / 2;
+                            // int y2 = taskHeight.get(...sourceTask) + taskHeight/2
+                            var y2 = y;
+                            self.drawRelation(g, task, y2, targetTask, y1);
+                        }
+                    });
+                }
+            }
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawTask(Task task, int x1, int x2, int y, boolean labelInside, boolean alien, String marker, List<Conflict> conflict)
+         * Private dispatcher: determines task type, calls the appropriate body-drawing method,
+         * then draws labels.
+         * Colors are pre-computed in DTO by GanttChartService (mirrors AbstractGanttRenderer.drawTask color logic).
+         */
+        _drawTask(g, task, x1, x2, y, labelInside, alien, marker, conflict) {
+            // Color fillColor / textColor / resourceName / units — pre-computed in DTO
+            var fillColor   = task.fillColor;
+            var textColor   = task.textColor   || intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
+            var taskName    = task.name        || '';
+            var resourceName = task.assignedUserName || null;
+            var resourceUtilization = task.assignedUserAvailability || null;
+
+            if (task.milestone && !task.story) {
+                // ---Milestone, but not a story
+                this.drawMilestoneTask(g, task, x1, y, labelInside, taskName);
+            } else {
+                if (task.story) {
+                    // ---Story (has children)
+                    this.drawStoryBody(g, task, x1, x2, y, marker);
+                    // graphics2D.setFont(storyFont)  →  Font(SANS_SERIF, BOLD, 12)
+                    // graphics2D.setColor(textColor)
+                    // FontMetrics yShift = ascent - height/2
+                    if (labelInside) {
+                        // only used for team planner chart
+                    } else {
+                        // graphics2D.drawString(taskName, x2 + 2 + 8, y + yShift)
+                        var storyLabelX = x2 + 2 + 8;
+                        if (storyLabelX < this.containerWidth + 40) {
+                            var storyLabel = createText(storyLabelX, y, taskName, {
+                                fill: textColor,
+                                'font-size': '12',
+                                'font-family': 'sans-serif',
+                                'font-weight': 'bold',
+                                'dominant-baseline': 'middle'
+                            });
+                            storyLabel.appendChild(createSvgElement('title', {}, this.generateTaskToolTip(task)));
+                            g.appendChild(storyLabel);
+                        }
+                    }
+                } else {
+                    // ---Regular task
+                    var progress = task.progress || 0.0;
+                    this.drawTaskBody(g, task, x1, x2, y, alien, progress);
+                    this.drawConflictMarker(g, y, conflict);
+                    this.drawCriticalMarker(g, task, x1, x2, y);
+                    this.drawManualMarker(g, task, x1, y, labelInside);
+
+                    // task text
+                    if (labelInside) {
+                        // team planner chart — not drawn here
+                    } else {
+                        // progress text (8pt, centered inside bar)
+                        if (progress > 0) {
+                            // graphics2D.setFont(taskProgressFont)  →  8pt
+                            var text       = Math.round(progress * 100) + '%';
+                            var barWidth   = x2 - x1;
+                            // Approximate: 5px per char for 8pt font
+                            var textWidth  = text.length * 5;
+                            // if (width < x2 - x1)
+                            if (textWidth < barWidth) {
+                                // graphics2D.setClip(x1+1, y-taskHeight/2+GAP, x2-x1-3, taskHeight-6)
+                                var clipId2 = 'pt-' + String(task.id).replace(/-/g, '');
+                                g.appendChild(createClipPath(clipId2, x1 + 1, y - this.getTaskHeight()/2 + RESOURCE_NAME_TO_TASK_GAP, x2 - x1 - 3, this.getTaskHeight() - 6));
+                                // graphics2D.drawString(text, x1 + (x2-x1)/2 + 1 - width/2, y + (ascent-2)/2)
+                                var progressText = createText(x1 + barWidth/2, y, text, {
+                                    fill: '#ffffff',
+                                    stroke: '#000000',
+                                    'stroke-width': '0.4',
+                                    'font-size': '8',
+                                    'font-family': 'sans-serif',
+                                    'text-anchor': 'middle',
+                                    'dominant-baseline': 'middle',
+                                    'clip-path': 'url(#' + clipId2 + ')'
+                                });
+                                g.appendChild(progressText);
+                            }
+                        }
+
+                        // Task name: graphics2D.drawString(key + " " + taskName, x2 + TASK_NAME_TO_TASK_GAP, y + yShift)
+                        {
+                            var labelRight = x2 + TASK_NAME_TO_TASK_GAP;
+                            if (labelRight < this.containerWidth + 40) {
+                                var clipId3 = 'tn-' + String(task.id).replace(/-/g, '');
+                                var clipW3  = Math.max(0, this.containerWidth - labelRight);
+                                if (clipW3 > 8) {
+                                    g.appendChild(createClipPath(clipId3, labelRight, y - this.getTaskHeight(), clipW3, this.getTaskHeight() * 2));
+                                    var nameLabel = createText(labelRight, y, (task.key ? task.key + ' ' : '') + taskName, {
+                                        fill: textColor,
+                                        'font-size': '12',
+                                        'font-family': 'sans-serif',
+                                        'dominant-baseline': 'middle',
+                                        'clip-path': 'url(#' + clipId3 + ')'
+                                    });
+                                    nameLabel.appendChild(createSvgElement('title', {}, this.generateTaskToolTip(task)));
+                                    g.appendChild(nameLabel);
+                                }
+                            }
+                        }
+
+                        // Resource name: graphics2D.drawString(resourceName, resourceNameX, y + yShift)
+                        if (resourceName != null) {
+                            // int resourceNameWidth = fm.stringWidth(resourceName)  → approx 7px/char
+                            var resourceNameWidth = resourceName.length * 7;
+                            // int resourceNameX = x1 - resourceNameWidth - RESOURCE_NAME_TO_TASK_GAP
+                            var resourceNameX = x1 - resourceNameWidth - RESOURCE_NAME_TO_TASK_GAP;
+                            if (resourceNameX > -100) {
+                                var clipId4 = 'rn-' + String(task.id).replace(/-/g, '');
+                                var clipW4  = Math.min(120, x1 > 0 ? x1 : 0);
+                                if (clipW4 > 8) {
+                                    g.appendChild(createClipPath(clipId4, Math.max(0, resourceNameX), y - this.getTaskHeight(), clipW4, this.getTaskHeight() * 2));
+                                    var rLabel = createText(resourceNameX + resourceNameWidth, y, resourceName, {
+                                        fill: textColor,
+                                        'font-size': '12',
+                                        'font-family': 'sans-serif',
+                                        'text-anchor': 'end',
+                                        'dominant-baseline': 'middle',
+                                        'clip-path': 'url(#' + clipId4 + ')'
+                                    });
+                                    rLabel.appendChild(createSvgElement('title', {}, this.generateTaskNameToolTip(resourceName, resourceUtilization, task.assignedUserCountry, task.assignedUserState)));
+                                    g.appendChild(rLabel);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawTaskBody(Task task, int x1, int x2, int y, Color fillColor, boolean alien, double progress, String toolTip)
+         * Draws filled task body day by day.
+         * Working days → full fillColor opacity.
+         * Non-working days → fillColor with taskWeekEndTransparency alpha.
+         * After body segments draws the progress bar.
+         * alien=true → ribbon diagonal stripe pattern instead of solid fill.
+         */
+        drawTaskBody(g, task, x1, x2, y, alien, progress) {
+            var fillColor    = task.fillColor;
+            var originalColor = fillColor;
+            var tooltip      = this.generateTaskToolTip(task);
+
+            if (!alien) {
+                // int y1 = y - taskHeight/2 + TASK_BODY_BORDER
+                var y1 = y - this.getTaskHeight()/2 + TASK_BODY_BORDER;
+                // int h  = taskHeight - TASK_BODY_BORDER*2
+                var h  = this.getTaskHeight() - TASK_BODY_BORDER * 2;
+                // if (x2 - x1 - 1 - 1 > 0)  → skip very thin tasks
+                if (x2 - x1 - 2 > 0) {
+                    // ProjectCalendar pc — in JS: use task.calendarExceptions
+                    // int days = Duration.between(start.truncated(DAYS), finish.truncated(DAYS)).toDays()
+                    var startDayIdx  = calculateDayIndex(task.start,  this.chartStart);
+                    var finishDayIdx = calculateDayIndex(task.finish, this.chartStart);
+                    var days         = finishDayIdx - startDayIdx;
+
+                    for (var day = 0; day <= days; day++) {
+                        // LocalDateTime currentDay = start.truncated(DAYS).plusDays(day)
+                        var dayIdx  = startDayIdx + day;
+                        var dayDate = new Date(this.chartStart.getTime() + dayIdx * MS);
+                        // Shape s;
+                        var segX, segW;
+
+                        if (isWorkingDay(dayDate, task.calendarExceptions)) {
+                            // graphics2D.setColor(fillColor)
+                            var fill = convertSprintColorToRgba(fillColor);
+                            if (days === 0) {
+                                // this is the left and right end
+                                // s = new RectangleWithToolTip(x1, y1, x2-x1, h, toolTip)
+                                segX = x1; segW = x2 - x1;
+                            } else if (day === 0) {
+                                // this is the left end
+                                // xFinish = calculateX(currentDay@8AM+SECONDS_PER_DAY, ...) - dayWidth/2
+                                //         = dayIndexToPixelX(dayIdx) + dayWidth
+                                var xFinish = this.dayIndexToPixelX(dayIdx) + this.dayWidth;
+                                // s = new RectangleWithToolTip(x1, y1, xFinish-x1, h, toolTip)
+                                segX = x1; segW = xFinish - x1;
+                            } else if (day === days) {
+                                // this is the right end
+                                // xStart = calculateX(currentDay@8AM, ...) - dayWidth/2
+                                //        = dayIndexToPixelX(dayIdx)
+                                var xStart2 = this.dayIndexToPixelX(dayIdx);
+                                // s = new RectangleWithToolTip(xStart, y1, x2-xStart+1, h, toolTip)
+                                segX = xStart2; segW = x2 - xStart2 + 1;
+                            } else {
+                                // this is the middle
+                                // xStart = dayIndexToPixelX(dayIdx)
+                                var xStart3 = this.dayIndexToPixelX(dayIdx);
+                                // s = new RectangleWithToolTip(xStart, y1, dayWidth, h, toolTip)
+                                segX = xStart3; segW = this.dayWidth;
+                            }
+                            var rect = createRect(segX, y1, segW, h, {fill: fill});
+                            rect.appendChild(createSvgElement('title', {}, tooltip));
+                            g.appendChild(rect);
+                        } else {
+                            // non-working day: fillColor with taskWeekEndTransparency
+                            // graphics2D.setColor(new Color(r, g, b, taskWeekEndTransparency))
+                            var weekendFill = hexToRgbaWithAlpha(fillColor, this.theme.ganttTheme.taskWeekEndTransparency);
+                            var xStart4 = this.dayIndexToPixelX(dayIdx);
+                            // s = new RectangleWithToolTip(xStart, y1, dayWidth, h, toolTip)
+                            var rectW = createRect(xStart4, y1, this.dayWidth, h, {fill: weekendFill});
+                            rectW.appendChild(createSvgElement('title', {}, tooltip));
+                            g.appendChild(rectW);
+                        }
+                    } // end for day
+
+                    // progress bar
+                    // if (progress > 0.0 && numberOfLinesPerTask == 1)
+                    if (progress > 0.0) {
+                        // Color color = lightenColor(userColor, 0.6f) — pre-computed in DTO as progressColor
+                        var progressFill = task.progressColor
+                            ? convertSprintColorToRgba(task.progressColor)
+                            : hexToRgbaWithAlpha(fillColor, 200);
+                        // graphics2D.fillRect(x1+1, y1+2, (int)((x2-x1)*progress-1), h-4)
+                        var progressW = Math.floor((x2 - x1) * progress - 1);
+                        if (progressW > 0) {
+                            var pRect = createRect(x1 + 1, y1 + 2, progressW, h - 4, {fill: progressFill});
+                            pRect.appendChild(createSvgElement('title', {}, tooltip));
+                            g.appendChild(pRect);
+                            // if (progress < 1.0) fillRect(x1+(x2-x1)*progress-1, y-h/2+2, 1, h-4)
+                            if (progress < 1.0) {
+                                g.appendChild(createRect(x1 + progressW, y - this.getTaskHeight()/2 + 2, 1, this.getTaskHeight() - 4, {fill: '#000000'}));
+                            }
+                        }
+                    }
+                }
+            } else {
+                // alien=true → ribbon diagonal stripe pattern
+                var aY1   = y - this.getTaskHeight()/2 + 1;
+                var aY2   = aY1 + this.getTaskHeight() - 1;
+                // graphics2D.setClip(x1, y-taskHeight/2+2, x2-x1-1, taskHeight-4)
+                var clipId5 = 'ta-' + String(task.id).replace(/-/g, '');
+                g.appendChild(createClipPath(clipId5, x1, y - this.getTaskHeight()/2 + 2, x2 - x1 - 1, this.getTaskHeight() - 4));
+                var alienGroup = createSvgElement('g', {'clip-path': 'url(#' + clipId5 + ')'});
+                // int delta1 = 25; int delta2 = 16; Color ribbonColor = originalColor
+                var adelta1      = 25;
+                var adelta2      = 16;
+                var aRibbonColor = originalColor ? convertSprintColorToRgba(originalColor) : '#aaaaaa';
+                var aWhite       = '#ffffff';
+                var aCurrent     = aRibbonColor;
+                for (var ax = x1 - adelta2; ax < x2; ax += adelta2) {
+                    this.drawRibbon(alienGroup, aY1, ax, aY2, adelta1, adelta2 - 1, aCurrent);
+                    aCurrent = (aCurrent === aRibbonColor) ? aWhite : aRibbonColor;
+                }
+                g.appendChild(alienGroup);
+            }
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.drawTick(LocalDateTime time, int x, int y, TextAlignment alignment)
+         * Draws a tick mark with a time label at a task start/end edge.
+         * NOTE: All callers in Java have this commented out — stub only.
+         */
+        drawTick(g, time, x, y, alignment) {
+            // drawTick(task.getStart(), x1, y, TextAlignment.left)  ← commented out in Java
+            // drawTick(task.getFinish(), x2, y, TextAlignment.right) ← commented out in Java
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.generateTaskNameToolTop(String resourceName, ...)
+         * Returns plain-text tooltip for a resource name label.
+         */
+        generateTaskNameToolTip(resourceName, resourceUtilization, country, state) {
+            var tip = (resourceName || '');
+            if (resourceUtilization) tip += '\nAvailability ' + resourceUtilization;
+            if (country)             tip += '\nCountry '      + country;
+            if (state)               tip += '\nState '        + state;
+            return tip;
+        }
+
+        /**
+         * Mirrors Java: AbstractGanttRenderer.generateTaskToolTip(Task task, ...)
+         * Returns plain-text tooltip for a task body.
+         */
+        generateTaskToolTip(task) {
+            var s = task.name || '';
+            if (task.key)              s += '\nKey: '      + task.key;
+            if (task.start)            s += '\nStart: '    + new Date(task.start).toLocaleDateString();
+            if (task.finish)           s += '\nFinish: '   + new Date(task.finish).toLocaleDateString();
+            if (task.assignedUserName) s += '\nResource: ' + task.assignedUserName;
+            if (task.assignedUserAvailability) s += '\nAvailability: ' + task.assignedUserAvailability;
+            if (task.progress > 0)     s += '\nProgress: ' + Math.round(task.progress * 100) + '%';
+            return s;
+        }
+    }
+
+    // ── GanttRenderer ─────────────────────────────────────────────────────────
+    // Mirrors Java: GanttRenderer extends AbstractGanttRenderer
+
+    class GanttRenderer extends AbstractGanttRenderer {
+        /**
+         * @param {Object} data   GanttChartDto JSON
+         * @param {Theme}  theme  Theme instance
+         */
+        constructor(data, theme) {
+            super();
+            this.theme         = theme;
+            this.tasks         = data.tasks      || [];
+            this.milestones    = data.milestones || [];
+            this.chartStart    = getUtcDayMidnight(new Date(data.meta.chartStart));
+            this.totalDays     = calculateDayCount(
+                getUtcDayMidnight(new Date(data.meta.chartStart)),
+                getUtcDayMidnight(new Date(data.meta.chartEnd))
+            );
+            this.currentDate   = data.meta.now
+                ? getUtcDayMidnight(new Date(data.meta.now))
+                : getUtcDayMidnight(new Date());
+            this.calendarXAxes = new window.CalendarXAxes(theme);
+
+            // Build taskById map for relation lookup in drawTask (drawRelations=true)
+            // Mirrors Java: task.getSprint().getTaskById(relation.getPredecessorId())
+            this._taskById = {};
+            for (var ti = 0; ti < this.tasks.length; ti++) {
+                this._taskById[String(this.tasks[ti].id)] = this.tasks[ti];
+            }
+        }
+
+        /**
+         * Mirrors Java: GanttRenderer.calculateDayWidth()
+         * super.calculateDayWidth() then sets dayWidth = 20.
+         */
+        calculateDayWidth() {
+            // super.calculateDayWidth() — sets dayWidth based on chartWidth/days
+            // calendarXAxes.dayOfWeek.setWidth(20)
+            this.dayWidth = DEFAULT_DW; // = 20
+        }
+
+        /**
+         * Overrides AbstractRenderer.drawDayBars.
+         * Mirrors Java: GanttRenderer.drawDayBars(LocalDate currentDay)
+         *
+         * For each task row in this calendar column:
+         *   1. Grid:       top horizontal line + left vertical line  (ganttTheme.gridColor)
+         *   2. Background: getGanttDayStripeColor (per task's calendar)
+         *   3. Letter:     exception letter in NoneWorkingDayFont (22pt bold) when dayWidth ≥ 14
+         *
+         * Java:
+         *   int x  = calculateDayX(currentDay)               → center of day column
+         *   int x1 = x - (dayWidth/2 - 1)                    → one pixel from left edge
+         *   fillRect(x1-1, y1-1, dayWidth, 1)                → top --   at left edge
+         *   fillRect(x1-1, y1,   1,       taskHeight)         → left |  at left edge
+         *   fill(new Rectangle(x1, y1, dayWidth-1, taskHeight)) → background
+         */
+        drawDayBars(g, dayDate, calendarH) {
+            var dayIdx    = calculateDayIndex(dayDate, this.chartStart);
+            // calculateDayX(currentDay) = dayWidth/2 + dayIdx*dayWidth  (in Java coords)
+            // → in viewport: dayIndexToPixelX(dayIdx) + dayWidth/2
+            // → x1 = x - (dayWidth/2 - 1) = dayIndexToPixelX(dayIdx) + dayWidth/2 - dayWidth/2 + 1 = dayIndexToPixelX(dayIdx) + 1
+            var dayLeft   = this.dayIndexToPixelX(dayIdx); // left edge of column
+            // x1-1 = dayLeft  (from Java: fillRect(x1-1, ...) where x1 = dayLeft+1)
+            var gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+            var self      = this;
+
+            for (var ti = 0; ti < this.tasks.length; ti++) {
+                var task = this.tasks[ti];
+                var rowY = calendarH + task.rowIndex * (self.getTaskHeight() + 1) + GANTT_TASK_PRI_SPACE;
+
+                // grid: top -- and left |
+                // fillRect(x1-1, y1-1, dayWidth, 1)  → at dayLeft, rowY-1, width=dayWidth, height=1
+                g.appendChild(createRect(dayLeft,     rowY - 1, self.dayWidth, 1,               {fill: gridColor})); // top --
+                // fillRect(x1-1, y1, 1, taskHeight)  → at dayLeft, rowY, width=1, height=taskHeight
+                g.appendChild(createRect(dayLeft,     rowY,     1,            self.getTaskHeight(), {fill: gridColor})); // left |
+
+                // background: fill(Rectangle(x1, y1, dayWidth-1, taskHeight))
+                // x1 = dayLeft+1, width = dayWidth-1
+                var bgColor = self.getGanttDayStripeColor(task, dayDate);
+                g.appendChild(createRect(dayLeft + 1, rowY, self.dayWidth - 1, self.getTaskHeight(), {fill: bgColor}));
+
+                // exception letter (NoneWorkingDayFont: Font(SANS_SERIF, BOLD, 22))
+                // graphics2D.setFont(NoneWorkingDayFont)
+                // int xShift = fm.stringWidth(letter) / 2
+                // graphics2D.drawString(letter, x - xShift, y + yShift, tooltip)
+                var exception = getCalendarException(dayDate, task.calendarExceptions);
+                if (exception && exception.letter && self.dayWidth >= 14) {
+                    // x = calculateDayX(currentDay) in Java → center of column in viewport
+                    var cx     = dayLeft + self.dayWidth / 2;
+                    var letter = createText(cx, rowY + self.getTaskHeight() / 2, exception.letter, {
+                        fill: intToHex(self.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
+                        'font-size': String(NONE_WORKING_DAY_FONT_SIZE),
+                        'font-family': 'sans-serif',
+                        'font-weight': 'bold',
+                        'text-anchor': 'middle',
+                        'dominant-baseline': 'middle'
+                    });
+                    letter.appendChild(createSvgElement('title', {}, exception.type || 'Off-day'));
+                    g.appendChild(letter);
+                }
+            }
+        }
+
+        /**
+         * Mirrors Java: GanttRenderer.drawGanttChart() and drawGanttChart(int yOffset)
+         * Iterates all (valid) tasks and calls drawTask for each.
+         * Java: drawTask(0, task, drawId=true, drawRelations=true, labelInside=false, alien=false, marker=null, conflict=null, drawOutOfOffice=true)
+         */
+        drawGanttChart(g) {
+            // for (Task task : sprint.getTasks()) { if (GanttUtil.isValidTask(task)) { ... } }
+            // Tasks in DTO are already filtered to valid ones
+            for (var ti = 0; ti < this.tasks.length; ti++) {
+                // drawTask(0, task, true, true, false, false, null, null, true)
+                this.drawTask(g, 0, this.tasks[ti], true, true, false, false, null, null, true);
+            }
+        }
+
+        /**
+         * Mirrors Java: GanttRenderer.draw(ExtendedGraphics2D graphics2D, int x, int y)
+         *
+         * Java:
+         *   initPosition(firstDayX + x, y)
+         *   calculateTaskHeightMap(y + calendarXAxes.getHeight())
+         *   drawCalendar()    → calendar header rows + drawDayBars per day
+         *   drawMilestones()  → milestone row (handled by calendarXAxes.draw)
+         *   drawGanttChart()  → task bodies, borders, labels, relations
+         */
+        draw(svg, x, y) {
+            // calendarXAxes.getHeight() → pixel height of calendar header rows
+            var calendarH = this.calendarXAxes.getHeight(this.dayWidth, this.milestones.length > 0);
+            // calculateChartHeight() = calendarH + GANTT_TASK_PRI_SPACE + tasks*(taskHeight+1) + GANTT_TASK_POST_SPACE
+            var taskAreaH = GANTT_TASK_PRI_SPACE + this.tasks.length * (this.getTaskHeight() + 1) + GANTT_TASK_POST_SPACE;
+            var totalH    = calendarH + taskAreaH;
+            // calculateTaskHeightMap(y + calendarXAxes.getHeight())
+            // In JS: stored as this._calendarH for use in drawTask
+            this._calendarH = y + calendarH;
+
+            // ── drawCalendar() ──────────────────────────────────────────────
+            // CalendarXAxes.drawCalendar() → draws header rows then calls renderer.drawDayBars(day) for each day
+            var gDayBars = createSvgElement('g', {'class': 'day-bars'});
+            var firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
+            var lastDay  = Math.min(this.totalDays - 1, firstDay + Math.ceil(this.containerWidth / this.dayWidth) + 2);
+            for (var d = firstDay; d <= lastDay; d++) {
+                var dayDate = new Date(this.chartStart.getTime() + d * MS);
+                this.drawDayBars(gDayBars, dayDate, this._calendarH);
+            }
+            svg.appendChild(gDayBars);
+
+            // Calendar header rows (year, month, week, dom, dow)
+            // drawMilestones() is handled by passing milestones to calendarXAxes.draw
+            this.calendarXAxes.draw(
+                svg, this.chartStart, this.totalDays,
+                this.dayWidth, this.scrollOffset,
+                this.containerWidth, this.milestones
+            );
+
+            // ── drawGanttChart() ────────────────────────────────────────────
+            var gTasks = createSvgElement('g', {'class': 'tasks'});
+            this.drawGanttChart(gTasks);
+            svg.appendChild(gTasks);
+
+            // Now-line (mirrors Java milestone "N" vertical red line)
+            svg.appendChild(this.renderNowLine(y + totalH));
+        }
+
+        /** Draws a vertical red "now" line at the current date. */
+        renderNowLine(totalHeight) {
+            var g              = createSvgElement('g', {'class': 'now-line'});
+            var containerWidth = this.containerWidth;
+            var nowIdx         = calculateDayIndex(this.currentDate, this.chartStart);
+            var xPos           = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
+            if (xPos < 0 || xPos > containerWidth) return g;
+            g.appendChild(createLine(xPos, 0, xPos, totalHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
+            return g;
+        }
+    }
+
+    // ── GanttChart ─────────────────────────────────────────────────────────────
+    // Mirrors Java: GanttChart extends AbstractChart
+
+    class GanttChart extends window.AbstractChart {
+        /**
+         * @param {Object} data   GanttChartDto JSON
+         * @param {Theme}  theme  Theme instance
+         */
+        constructor(data, theme) {
+            super('Gantt Chart', data.meta.sprintName || '', '', '', 'gantt-chart', theme);
+            /** Mirrors Java: GanttChart → getRenderers().add(new GanttRenderer(dao)) */
+            this.addRenderer(new GanttRenderer(data, theme));
+        }
+
+        /**
+         * Updates renderer scroll/zoom state and recomputes chart dimensions.
+         * Called before each render frame.
+         */
+        updateViewState(dayWidth, scrollOffset, containerWidth) {
+            var renderer            = this.renderers[0];
+            renderer.dayWidth       = dayWidth;
+            renderer.scrollOffset   = scrollOffset;
+            renderer.containerWidth = containerWidth;
+
+            var calendarH = renderer.calendarXAxes.getHeight(dayWidth, renderer.milestones.length > 0);
+            var taskAreaH = GANTT_TASK_PRI_SPACE + renderer.tasks.length * (renderer.getTaskHeight() + 1) + GANTT_TASK_POST_SPACE;
+            var contentH  = calendarH + taskAreaH;
+
+            this.setChartWidth(containerWidth);
+            this.setChartHeight(contentH + this.captionElement.height + this.footerElement.height - 1);
+            this.footerElement.y = contentH + this.captionElement.height;
+        }
+
+        /** Mirrors Java: GanttChart.createReport() */
+        createReport(svg) {
+            this.renderers[0].draw(svg, 0, this.captionElement.height);
+        }
+    }
+
+    // ── Mount / createChart function ──────────────────────────────────────────
+
+    var currentGanttChartInstance = null;
+
+    function createChart(container, data, options) {
+        options         = options || {};
+        var containerId = options.containerId || container.id || 'chart';
+
+        var theme    = new window.Theme(data.meta.theme);
+        var chart    = new GanttChart(data, theme);
+        var renderer = chart.renderers[0];
+
+        var dayWidth     = DEFAULT_DW;
+        var scrollOffset = 0;
+
+        function getContainerWidth() { return Math.max(200, container.clientWidth || 800); }
+
+        function constrainScrollOffset() {
+            scrollOffset = Math.max(0, Math.min(
+                Math.max(0, renderer.totalDays - getContainerWidth() / dayWidth),
+                scrollOffset
+            ));
+        }
+
+        var saved = loadViewState(containerId);
+        if (saved) {
+            dayWidth     = Math.min(MAX_DW, Math.max(MIN_DW, saved.dayWidth));
+            scrollOffset = saved.scrollOffset;
+            constrainScrollOffset();
+        } else {
+            var todayIdx    = calculateDayIndex(renderer.currentDate, renderer.chartStart);
+            var visibleDays = getContainerWidth() / dayWidth;
+            scrollOffset    = Math.max(0, Math.min(renderer.totalDays - visibleDays, todayIdx - visibleDays * 0.2));
+        }
+
+        var saveTimerId = null;
         function scheduleSave() {
             if (saveTimerId) clearTimeout(saveTimerId);
             saveTimerId = setTimeout(function () {
-                saveChartViewState(containerId, dayWidth, scrollOffset);
+                saveViewState(containerId, dayWidth, scrollOffset);
             }, 250);
         }
 
-        // ── Render layers ─────────────────────────────────────────────────
+        var animationFrameId = null;
 
-        /**
-         * Renders per-row day-stripe background colours.
-         * Each task row gets coloured cells for weekends and off-days.
-         * Falls back to week-boundary lines when dayWidth < MIN_DAY_BARS.
-         *
-         * @param {number} calendarH  Y position where task rows start
-         * @param {number} totalH     Height of the task area
-         * @returns {SVGGElement}
-         */
-        function renderDayStripes(calendarH, totalH) {
-            const g = createSvgElement('g', {'class': 'day-stripes'});
-            const containerWidth = getContainerWidth();
-
-            if (dayWidth < MIN_DAY_BARS) {
-                // Draw week-boundary lines only
-                const gridColor = getThemeColor(theme, colorKeys.GANTT_GRID_COLOR);
-                const firstDay = Math.max(0, Math.floor(scrollOffset));
-                const lastDay = Math.min(totalDays - 1, firstDay + Math.ceil(containerWidth / dayWidth) + 8);
-                for (let d = firstDay; d <= lastDay; d++) {
-                    if (new Date(chartStart.getTime() + d * MS).getUTCDay() !== 1) continue;
-                    const xPos = dayIndexToPixelX(d);
-                    if (xPos < 0 || xPos > containerWidth) continue;
-                    g.appendChild(createLine(xPos, calendarH, xPos, calendarH + totalH, {
-                        stroke: gridColor, 'stroke-width': '1'
-                    }));
-                }
-                return g;
-            }
-
-            // Per-day stripes for each task row
-            const firstDay = Math.max(0, Math.floor(scrollOffset) - 1);
-            const lastDay = Math.min(totalDays - 1, firstDay + Math.ceil(containerWidth / dayWidth) + 2);
-
-            tasks.forEach(function (task) {
-                const rowY = calendarH + task.rowIndex * ROW_H;
-                for (let d = firstDay; d <= lastDay; d++) {
-                    const xPos = dayIndexToPixelX(d);
-                    if (xPos + dayWidth < 0 || xPos > containerWidth) continue;
-
-                    const dayDate = new Date(chartStart.getTime() + d * MS);
-                    const dow = dayDate.getUTCDay();
-                    const exception = (dow !== 0 && dow !== 6)
-                        ? getCalendarException(dayDate, task.calendarExceptions)
-                        : null;
-                    const bgColor = getDayStripeBgColor(theme, exception, dayDate);
-                    if (!bgColor) continue; // weekday, no exception → transparent
-
-                    g.appendChild(createRect(xPos, rowY, dayWidth, TASK_H, {fill: bgColor}));
-
-                    // Draw off-day letter (V/T/S/H) for user off-days (22px bold, matching Java)
-                    if (exception && exception.letter && dayWidth >= 14) {
-                        const letterEl = createText(
-                            xPos + dayWidth / 2, rowY + TASK_H / 2 + 4,
-                            exception.letter, {
-                                fill: getThemeColor(theme, colorKeys.GANTT_OUT_OF_OFFICE_COLOR),
-                                'font-size': '22',
-                                'font-family': 'sans-serif',
-                                'font-weight': 'bold',
-                                'text-anchor': 'middle',
-                                'dominant-baseline': 'middle'
-                            }
-                        );
-                        const letterTitle = createSvgElement('title', {},
-                            (exception.type || 'Off-day') + '\n' +
-                            new Date(exception.from).toLocaleDateString() + ' to ' +
-                            new Date(exception.to).toLocaleDateString()
-                        );
-                        letterEl.appendChild(letterTitle);
-                        g.appendChild(letterEl);
-                    }
-                }
-            });
-
-            return g;
-        }
-
-        /**
-         * Renders vertical day grid lines across the task area and horizontal task row dividers.
-         * This mirrors the GanttRenderer.drawDayBars() grid rendering.
-         *
-         * @param {number} calendarH  Y start of task area
-         * @param {number} totalH     Height of task area
-         * @returns {SVGGElement}
-         */
-        function renderGridLines(calendarH, totalH) {
-            const g = createSvgElement('g', {'class': 'grid-lines'});
-            const gridColor = getThemeColor(theme, colorKeys.GANTT_GRID_COLOR);
-            const containerWidth = getContainerWidth();
-
-            if (dayWidth < MIN_DAY_BARS) {
-                // Very zoomed-out: only draw week-boundary vertical lines (already in renderDayStripes)
-                return g;
-            }
-
-            const firstDay = Math.max(0, Math.floor(scrollOffset) - 1);
-            const lastDay = Math.min(totalDays, firstDay + Math.ceil(containerWidth / dayWidth) + 2);
-
-            // Vertical grid lines for each day
-            for (let d = firstDay; d <= lastDay; d++) {
-                const xPos = dayIndexToPixelX(d);
-                if (xPos < 0 || xPos > containerWidth) continue;
-                g.appendChild(createLine(xPos, calendarH, xPos, calendarH + totalH, {
-                    stroke: gridColor, 'stroke-width': '1'
-                }));
-            }
-
-            // Horizontal grid lines for each task row (top border of each row)
-            for (let rowIndex = 0; rowIndex < tasks.length; rowIndex++) {
-                const rowY = calendarH + rowIndex * ROW_H;
-                g.appendChild(createLine(0, rowY, containerWidth, rowY, {
-                    stroke: gridColor, 'stroke-width': '1'
-                }));
-            }
-
-            return g;
-        }
-
-        /**
-         * Renders all task bars, milestone diamonds, story brackets, progress overlays,
-         * and text labels (task name to the right, resource name to the left).
-         *
-         * @param {number} calendarH  Y offset where the first task row starts
-         * @returns {SVGGElement}
-         */
-        function renderTasks(calendarH) {
-            const g = createSvgElement('g', {'class': 'tasks'});
-            const containerWidth = getContainerWidth();
-
-            tasks.forEach(function (task) {
-                if (!task.start || !task.finish) return;
-
-                const startDayIdx = calculateDayIndex(task.start, chartStart);
-                const finishDayIdx = calculateDayIndex(task.finish, chartStart);
-
-                const x1 = dayIndexToPixelX(startDayIdx);
-                const x2 = dayIndexToPixelX(finishDayIdx + 1);  // exclusive right edge
-
-                // Cull rows entirely outside the viewport
-                if (x2 < 0 || x1 > containerWidth) return;
-
-                const rowY = calendarH + task.rowIndex * ROW_H;
-                const bodyY = rowY + TASK_BODY_BORDER;
-                const bodyH = TASK_H - TASK_BODY_BORDER * 2;
-                const midY = rowY + TASK_H / 2;  // vertical centre of the row
-
-                if (task.milestone) {
-                    // ── Diamond milestone ─────────────────────────────────
-                    renderMilestone(g, task, x1, midY);
-                } else if (task.story) {
-                    // ── Story bracket ─────────────────────────────────────
-                    renderStory(g, task, x1, x2, rowY, bodyY, bodyH, containerWidth);
-                } else {
-                    // ── Regular task bar (per-day segments) ───────────────
-                    renderTaskBar(g, task, startDayIdx, finishDayIdx, x1, x2, bodyY, bodyH, containerWidth);
-                    renderProgress(g, task, x1, x2, bodyY, bodyH, midY);
-                    renderCriticalBorder(g, task, startDayIdx, finishDayIdx, x1, x2, bodyY, bodyH);
-                }
-
-                // ── Labels ────────────────────────────────────────────────
-                if (!task.milestone) {
-                    renderTaskLabels(g, task, x1, x2, midY, containerWidth);
-                }
-            });
-
-            return g;
-        }
-
-        /**
-         * Draws a milestone as a filled diamond centred at (x1+dayWidth/2, midY).
-         */
-        function renderMilestone(g, task, x1, midY) {
-            const cx = x1 + dayWidth / 2;  // centre of the start day column
-            const hw = MILESTONE_HALF;
-            const points = [
-                cx + ',' + (midY - hw),
-                (cx + hw) + ',' + midY,
-                cx + ',' + (midY + hw),
-                (cx - hw) + ',' + midY
-            ].join(' ');
-            const poly = createSvgElement('polygon', {
-                points: points,
-                fill: hexToRgba(task.fillColor),
-                stroke: task.borderColor || '#888888',
-                'stroke-width': '1'
-            });
-            poly.appendChild(createSvgElement('title', {}, buildTaskTooltip(task)));
-            g.appendChild(poly);
-        }
-
-        /**
-         * Draws a story bar: thick top and side borders with NO fill (inverted U-shape).
-         * Only the border is visible, interior is transparent.
-         */
-        function renderStory(g, task, x1, x2, rowY, bodyY, bodyH, containerWidth) {
-            const w = x2 - x1;
-            if (w <= 0) return;
-
-            const borderColor = task.borderColor || '#444444';
-            const thickness = 2;  // border thickness (matching Java)
-
-            // Top border (2px thick) from rowY
-            g.appendChild(createRect(x1, rowY, w, thickness, {fill: borderColor}));
-            // Left border (vertical): from below top border to bottom of row (excluding bottom TASK_BODY_BORDER)
-            g.appendChild(createRect(x1, rowY + thickness, thickness, TASK_H - thickness - TASK_BODY_BORDER, {fill: borderColor}));
-            // Right border (vertical): from below top border to bottom of row (excluding bottom TASK_BODY_BORDER)
-            g.appendChild(createRect(x2 - thickness, rowY + thickness, thickness, TASK_H - thickness - TASK_BODY_BORDER, {fill: borderColor}));
-
-            // Add tooltip to the center of the U-shape
-            const tooltip = createSvgElement('title', {}, buildTaskTooltip(task));
-            const tooltipRect = createRect(x1 + thickness, rowY + thickness, w - thickness * 2, TASK_H - thickness * 2 - TASK_BODY_BORDER, {fill: 'none', 'pointer-events': 'all'});
-            tooltipRect.appendChild(tooltip);
-            g.appendChild(tooltipRect);
-        }
-
-        /**
-         * Draws a regular task bar with per-day segments coloured by working / non-working status.
-         */
-        function renderTaskBar(g, task, startDayIdx, finishDayIdx, x1, x2, bodyY, bodyH, containerWidth) {
-            const weekEndAlpha = getTransparency(task);
-
-            for (let d = startDayIdx; d <= finishDayIdx; d++) {
-                const segX = dayIndexToPixelX(d);
-                if (segX + dayWidth < 0 || segX > containerWidth) continue;
-
-                const dayDate = new Date(chartStart.getTime() + d * MS);
-                const working = isWorkingDay(dayDate, task.calendarExceptions);
-
-                let segFill;
-                if (working) {
-                    segFill = hexToRgba(task.fillColor);
-                } else {
-                    // Non-working segment: same colour but taskWeekEndTransparency alpha
-                    segFill = hexToRgbaWithAlpha(task.fillColor, weekEndAlpha);
-                }
-
-                const rect = createRect(segX, bodyY, dayWidth, bodyH, {fill: segFill});
-                rect.appendChild(createSvgElement('title', {}, buildTaskTooltip(task)));
-                g.appendChild(rect);
-            }
-        }
-
-        /**
-         * Extracts the taskWeekEndTransparency value from the theme (0–255).
-         */
-        function getTransparency(task) {
-            const rawKey = 'ganttTheme.taskWeekEndTransparency';
-            const v = theme[rawKey];
-            return (v != null && typeof v === 'number') ? v : 40;
-        }
-
-        /**
-         * Draws the progress overlay bar inside the task bar.
-         * Progress is represented as a bar with a visible color (lightened from fill color).
-         * Also renders the progress percentage text inside the progress bar.
-         */
-        function renderProgress(g, task, x1, x2, bodyY, bodyH, midY) {
-            if (!task.progress || task.progress <= 0) return;
-
-            const progressW = Math.round((x2 - x1) * task.progress);
-            if (progressW <= 2) return;
-
-            // Use task's progressColor if available, otherwise generate a visible lightened color
-            let progressColor = task.progressColor ? hexToRgba(task.progressColor) : 'rgba(200,200,200,0.6)';
-
-            // Draw progress bar with some inset from edges (1px right, 2px top/bottom inset)
-            const progBarHeight = Math.max(2, bodyH - 4);
-            g.appendChild(createRect(x1 + 1, bodyY + 2, progressW - 2, progBarHeight, {fill: progressColor}));
-
-            // Progress end marker (1px vertical line) - only show if progress < 100%
-            if (task.progress < 0.99) {
-                g.appendChild(createRect(x1 + progressW - 1, bodyY + 2, 1, progBarHeight, {fill: '#000000'}));
-            }
-
-            // Render progress percentage text (e.g., "45%") inside the progress bar
-            const progressPercent = Math.round(task.progress * 100);
-            const progressText = progressPercent + '%';
-            const textWidth = progressText.length * 4; // approximate width for 8px font
-
-            // Only show text if it fits inside the progress bar
-            if (progressW > textWidth + 4) {
-                // Position text lower (approximately 1/3 down from center, matching Java's y + (ascent - 2) / 2)
-                const textY = midY + Math.max(1, Math.floor(8 / 3));  // slightly below center for 8px font
-                // Use white text with black outline for high contrast
-                const textEl = createText(x1 + progressW / 2, textY, progressText, {
-                    fill: '#ffffff',
-                    stroke: '#000000',
-                    'stroke-width': '0.5',
-                    'font-size': '8',
-                    'font-family': 'sans-serif',
-                    'font-weight': 'bold',
-                    'text-anchor': 'middle',
-                    'dominant-baseline': 'middle'
-                });
-                g.appendChild(textEl);
-            }
-        }
-
-        /**
-         * Draws the task border (solid for working days, dotted for non-working days).
-         * Mirrors Java AbstractGanttRenderer.drawCriticalMarker().
-         */
-        function renderCriticalBorder(g, task, startDayIdx, finishDayIdx, x1, x2, bodyY, bodyH) {
-            const borderColor = task.borderColor || '#888888';
-            const topY = bodyY;
-            const bottomY = bodyY + bodyH - 1;
-            const days = finishDayIdx - startDayIdx;
-
-            for (let d = startDayIdx; d <= finishDayIdx; d++) {
-                const dayDate = new Date(chartStart.getTime() + d * MS);
-                const working = isWorkingDay(dayDate, task.calendarExceptions);
-                const dayLeft = dayIndexToPixelX(d);
-                const dayRight = dayLeft + dayWidth;
-                const isFirst = (d === startDayIdx);
-                const isLast = (d === finishDayIdx);
-
-                if (working) {
-                    // Solid horizontal top/bottom borders for this day segment
-                    g.appendChild(createRect(dayLeft, topY, dayWidth, 1, {fill: borderColor}));
-                    g.appendChild(createRect(dayLeft, bottomY, dayWidth, 1, {fill: borderColor}));
-                    if (isFirst) {
-                        g.appendChild(createRect(dayLeft, topY + 1, 1, bodyH - 2, {fill: borderColor}));
-                    }
-                    if (isLast) {
-                        g.appendChild(createRect(dayRight - 1, topY + 1, 1, bodyH - 2, {fill: borderColor}));
-                    }
-                } else {
-                    // Dotted border for non-working day segments
-                    for (let px = dayLeft; px < dayRight; px += 4) {
-                        g.appendChild(createRect(px, topY, 2, 1, {fill: borderColor}));
-                        g.appendChild(createRect(px, bottomY, 2, 1, {fill: borderColor}));
-                    }
-                }
-            }
-        }
-
-        /**
-         * Renders task name (to the right) and resource name (to the left) labels.
-         * Includes tooltips for both task and resource names.
-         */
-        function renderTaskLabels(g, task, x1, x2, midY, containerWidth) {
-            const textY = midY + 4;  // approximate baseline for 12px font centred on midY
-            const textFill = task.textColor || '#000000';
-
-            // Resource name to the LEFT of the task bar (with tooltip)
-            if (task.assignedUserName && x1 > 0) {
-                const clipId = 'gc-left-' + String(task.id).replace(/-/g, '');
-                const labelX = x1 - RESOURCE_NAME_TO_TASK_GAP;
-                // Clip to prevent overlap with earlier tasks – keep max 120px wide
-                const clipW = Math.min(120, x1);
-                if (clipW > 8) {
-                    const clipX = labelX - clipW;
-                    g.appendChild(createClipPath(clipId, Math.max(0, clipX), midY - TASK_H, clipW, TASK_H * 2));
-                    const userNameText = createText(labelX, textY, task.assignedUserName, {
-                        fill: textFill,
-                        'font-size': '12',
-                        'font-family': 'sans-serif',
-                        'text-anchor': 'end',
-                        'clip-path': 'url(#' + clipId + ')'
-                    });
-                    // Build rich tooltip with availability, country, state (mirrors generateTaskNameToolTop)
-                    let userTooltip = task.assignedUserName;
-                    if (task.assignedUserAvailability) {
-                        userTooltip += '\nAvailability ' + task.assignedUserAvailability;
-                    }
-                    if (task.assignedUserCountry) {
-                        userTooltip += '\nCountry ' + task.assignedUserCountry;
-                    }
-                    if (task.assignedUserState) {
-                        userTooltip += '\nState ' + task.assignedUserState;
-                    }
-                    userNameText.appendChild(createSvgElement('title', {}, userTooltip));
-                    g.appendChild(userNameText);
-                }
-            }
-
-            // Task key + name to the RIGHT of the task bar (with tooltip)
-            const labelRight = x2 + TASK_NAME_TO_TASK_GAP;
-            if (labelRight < containerWidth + 40) {  // allow slight overflow
-                const clipId = 'gc-right-' + String(task.id).replace(/-/g, '');
-                const clipW = Math.max(0, containerWidth - labelRight);
-                if (clipW > 8) {
-                    g.appendChild(createClipPath(clipId, labelRight, midY - TASK_H, clipW, TASK_H * 2));
-                    const label = (task.key ? task.key + ' ' : '') + (task.name || '');
-                    const taskNameText = createText(labelRight, textY, label, {
-                        fill: textFill,
-                        'font-size': '12',
-                        'font-family': 'sans-serif',
-                        'font-weight': task.story ? 'bold' : 'normal',
-                        'clip-path': 'url(#' + clipId + ')'
-                    });
-                    // Add tooltip for task name
-                    taskNameText.appendChild(createSvgElement('title', {}, buildTaskTooltip(task)));
-                    g.appendChild(taskNameText);
-                }
-            }
-        }
-
-        /**
-         * Renders finish-to-start dependency arrows between tasks.
-         * Arrow: horizontal line from predecessor.finish → vertical → arrowhead at successor.start.
-         *
-         * @param {number} calendarH  Y offset where task rows start
-         * @returns {SVGGElement}
-         */
-        function renderRelations(calendarH) {
-            const g = createSvgElement('g', {'class': 'relations'});
-            const containerWidth = getContainerWidth();
-            const relColor = getThemeColor(theme, colorKeys.GANTT_RELATION_COLOR);
-            const critColor = getThemeColor(theme, colorKeys.GANTT_CRITICAL_RELATION_COLOR);
-
-            // Build id→task map for quick lookup
-            const taskById = {};
-            tasks.forEach(function (t) {
-                taskById[String(t.id)] = t;
-            });
-
-            tasks.forEach(function (sourceTask) {
-                if (!sourceTask.predecessors || !sourceTask.predecessors.length) return;
-                if (!sourceTask.start) return;
-
-                const sourceRow = calendarH + sourceTask.rowIndex * ROW_H + TASK_H / 2;
-                const sourceX1 = dayIndexToPixelX(calculateDayIndex(sourceTask.start, chartStart));
-
-                sourceTask.predecessors.forEach(function (rel) {
-                    if (!rel.visible) return;
-                    const targetTask = taskById[String(rel.predecessorId)];
-                    if (!targetTask || !targetTask.finish) return;
-
-                    const targetRow = calendarH + targetTask.rowIndex * ROW_H + TASK_H / 2;
-                    const targetFinX = dayIndexToPixelX(calculateDayIndex(targetTask.finish, chartStart) + 1);
-
-                    // Arrow colour: both critical → critColor, else relColor
-                    const arrowColor = (sourceTask.critical && targetTask.critical) ? critColor : relColor;
-
-                    // x1 = predecessor finish edge
-                    const ax1 = targetFinX;
-                    // x2 = RELATION_CORNER_LENGTH past successor start
-                    const ax2 = sourceX1 + RELATION_CORNER_LENGTH;
-
-                    // Skip if arrow is entirely off-screen
-                    if (Math.max(ax1, ax2) < 0 || Math.min(ax1, ax2) > containerWidth) return;
-
-                    const y1 = targetRow;  // predecessor row centre
-                    const y2 = sourceRow;  // successor row centre
-                    const signum = (y2 > y1) ? 1 : -1;
-                    const yEnd = (y2 > y1)
-                        ? y2 - TASK_H / 2 + TASK_BODY_BORDER
-                        : y2 + TASK_H / 2 - TASK_BODY_BORDER;
-                    const yMid = (y2 > y1) ? yEnd - 5 : yEnd + 5;
-
-                    // Horizontal segment from predecessor finish to turn point
-                    g.appendChild(createLine(ax1, y1, ax2, y1, {stroke: arrowColor, 'stroke-width': '1'}));
-                    // Vertical segment from turn point to near successor
-                    g.appendChild(createLine(ax2, y1, ax2, yMid, {stroke: arrowColor, 'stroke-width': '1'}));
-
-                    // Arrowhead (triangle pointing toward successor)
-                    const d = 5;
-                    let points;
-                    if (y2 > y1) {
-                        points = [(ax2 - d) + ',' + (yEnd - d + signum),
-                            (ax2 + d) + ',' + (yEnd - d + signum),
-                            ax2 + ',' + (yEnd + signum)].join(' ');
-                    } else {
-                        points = [(ax2 + d) + ',' + (yEnd + d + signum),
-                            (ax2 - d) + ',' + (yEnd + d + signum),
-                            ax2 + ',' + (yEnd + signum)].join(' ');
-                    }
-                    g.appendChild(createSvgElement('polygon', {
-                        points: points, fill: arrowColor
-                    }));
-                });
-            });
-
-            return g;
-        }
-
-        /**
-         * Renders the "now" vertical line (2px red).
-         *
-         * @param {number} totalHeight  Full SVG height
-         * @returns {SVGGElement}
-         */
-        function renderNowLine(totalHeight) {
-            const g = createSvgElement('g', {'class': 'now-line'});
-            const containerWidth = getContainerWidth();
-            const nowIdx = calculateDayIndex(currentDate, chartStart);
-            const xPos = dayIndexToPixelX(nowIdx) + dayWidth / 2;
-            if (xPos < 0 || xPos > containerWidth) return g;
-            g.appendChild(createLine(xPos, 0, xPos, totalHeight, {
-                stroke: '#cc0000', 'stroke-width': '2'
-            }));
-            return g;
-        }
-
-        // ── Tooltip builder ───────────────────────────────────────────────
-
-        function buildTaskTooltip(task) {
-            let s = task.name || '';
-            if (task.key) s += '\nKey: ' + task.key;
-            if (task.start) s += '\nStart: ' + new Date(task.start).toLocaleDateString();
-            if (task.finish) s += '\nFinish: ' + new Date(task.finish).toLocaleDateString();
-            if (task.assignedUserName) s += '\nResource: ' + task.assignedUserName;
-            if (task.progress > 0) s += '\nProgress: ' + Math.round(task.progress * 100) + '%';
-            return s;
-        }
-
-        // ── Full redraw ───────────────────────────────────────────────────
-
-        let animationFrameId = null;
-
-        /**
-         * Redraws the entire chart SVG.
-         * Render order (bottom → top): day stripes → grid lines → tasks → relations → calendar header → now line
-         */
         function redrawChart() {
-            const containerWidth = getContainerWidth();
-            const calendarH = getCalendarHeight();
-            const taskAreaH = tasks.length * ROW_H + 8;
-            const totalHeight = calendarH + taskAreaH;
-
-            const svg = createSvgElement('svg', {
-                width: containerWidth,
-                height: totalHeight,
-                style: 'display:block;user-select:none;shape-rendering:crispEdges'
-            });
-
-            svg.appendChild(renderDayStripes(calendarH, taskAreaH));
-            svg.appendChild(renderGridLines(calendarH, taskAreaH));
-            svg.appendChild(renderTasks(calendarH));
-            svg.appendChild(renderRelations(calendarH));
-            calendar.draw(svg, chartStart, totalDays, dayWidth, scrollOffset, containerWidth, milestones);
-            svg.appendChild(renderNowLine(totalHeight));
-
-            container.innerHTML = '';
-            container.appendChild(svg);
+            var containerWidth = getContainerWidth();
+            chart.updateViewState(dayWidth, scrollOffset, containerWidth);
+            chart.render(container);
         }
 
         function scheduleRender() {
@@ -780,36 +1191,24 @@
             animationFrameId = requestAnimationFrame(redrawChart);
         }
 
-        function constrainScrollOffset() {
-            scrollOffset = Math.max(0, Math.min(
-                Math.max(0, totalDays - getContainerWidth() / dayWidth),
-                scrollOffset
-            ));
-        }
-
-        // ── Wheel zoom / trackpad pan ─────────────────────────────────────
-
         function handleWheelEvent(event) {
             event.preventDefault();
             if (event.deltaX !== 0) {
                 scrollOffset += event.deltaX / dayWidth;
             } else {
-                const rect = container.getBoundingClientRect();
-                const mouseX = (event.clientX != null) ? (event.clientX - rect.left) : (getContainerWidth() / 2);
-                const dayUnderCursor = scrollOffset + mouseX / dayWidth;
-                const factor = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
-                dayWidth = Math.max(MIN_DW, Math.min(MAX_DW, dayWidth * factor));
-                scrollOffset = dayUnderCursor - mouseX / dayWidth;
+                var rect     = container.getBoundingClientRect();
+                var mouseX   = (event.clientX != null) ? (event.clientX - rect.left) : (getContainerWidth() / 2);
+                var dayUnder = scrollOffset + mouseX / dayWidth;
+                var factor   = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
+                dayWidth     = Math.max(MIN_DW, Math.min(MAX_DW, dayWidth * factor));
+                scrollOffset = dayUnder - mouseX / dayWidth;
             }
             constrainScrollOffset();
             scheduleRender();
             scheduleSave();
         }
 
-        // ── Click-and-drag pan ────────────────────────────────────────────
-
-        let dragState = null;
-
+        var dragState = null;
         function handlePointerDown(event) {
             if (event.button !== 0) return;
             dragState = {startX: event.clientX, startOffset: scrollOffset};
@@ -817,30 +1216,22 @@
             container.style.cursor = 'grabbing';
             event.preventDefault();
         }
-
         function handlePointerMove(event) {
             if (!dragState) return;
             scrollOffset = dragState.startOffset - (event.clientX - dragState.startX) / dayWidth;
             constrainScrollOffset();
             scheduleRender();
         }
-
         function handlePointerUp() {
-            if (dragState) {
-                dragState = null;
-                scheduleSave();
-            }
+            if (dragState) { dragState = null; scheduleSave(); }
             container.style.cursor = 'grab';
         }
 
-        // ── ResizeObserver ────────────────────────────────────────────────
-        let resizeObserver = null;
+        var resizeObserver = null;
         if (typeof ResizeObserver !== 'undefined') {
             resizeObserver = new ResizeObserver(scheduleRender);
             resizeObserver.observe(container);
         }
-
-        // ── Cleanup ───────────────────────────────────────────────────────
 
         function cleanupChart() {
             container.removeEventListener('wheel', handleWheelEvent);
@@ -854,7 +1245,6 @@
             container.innerHTML = '';
         }
 
-        // ── Attach listeners and initial render ───────────────────────────
         container.style.cursor = 'grab';
         container.addEventListener('wheel', handleWheelEvent, {passive: false});
         container.addEventListener('pointerdown', handlePointerDown, {passive: false});
@@ -862,30 +1252,17 @@
         container.addEventListener('pointerup', handlePointerUp);
         container.addEventListener('pointercancel', handlePointerUp);
 
-        initializeScroll();
         redrawChart();
-
         return {render: redrawChart, schedule: scheduleRender, destroy: cleanupChart};
     }
 
-    // ── Public mount API ──────────────────────────────────────────────────────
+    // ── Public mount API ───────────────────────────────────────────────────────
 
-    /** Singleton chart instance (one Gantt chart per page). */
-    var currentGanttChartInstance = null;
-
-    /**
-     * Mounts (or remounts) the Gantt chart into the named container.
-     * Called by QualityBoard.refreshGanttChart() via Vaadin executeJs.
-     *
-     * @param {string} containerId   DOM element ID of the chart container
-     * @param {Object} injectedData  GanttChartDto deserialised from JSON
-     */
     function mountGanttChart(containerId, injectedData) {
-        const elementId = containerId || 'gantt-chart-container';
-        const containerElement = document.getElementById(elementId);
+        var elementId        = containerId || 'gantt-chart-container';
+        var containerElement = document.getElementById(elementId);
         if (!containerElement) return;
 
-        // Destroy previous instance
         if (currentGanttChartInstance && typeof currentGanttChartInstance.destroy === 'function') {
             currentGanttChartInstance.destroy();
             currentGanttChartInstance = null;
@@ -898,8 +1275,11 @@
         }
     }
 
-    // Export public API
-    window.mountGanttChart = mountGanttChart;
-    window.createGanttChart = createChart;    // For test pages
-})();
+    // ── Exports ────────────────────────────────────────────────────────────────
 
+    window.mountGanttChart       = mountGanttChart;
+    window.createGanttChart      = createChart;
+    window.GanttRenderer         = GanttRenderer;
+    window.GanttChart            = GanttChart;
+    window.AbstractGanttRenderer = AbstractGanttRenderer;
+})();

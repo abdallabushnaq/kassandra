@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.rest.dto.GanttChartDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.ThemeDto;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.xmlgraphics.java2d.color.ColorUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,10 +115,7 @@ public class GanttChartService {
         dto.meta.sprintName = sprint.getName();
         dto.meta.preRun     = preRun;
         dto.meta.postRun    = postRun;
-        dto.meta.theme.putAll(theme.toMap());
-        // Integer theme values not captured by toMap() (which only serialises Color fields)
-        dto.meta.theme.put("ganttTheme.taskTransparency",       theme.ganttTheme.taskTransparency);
-        dto.meta.theme.put("ganttTheme.taskWeekEndTransparency", theme.ganttTheme.taskWeekEndTransparency);
+        dto.meta.theme = ThemeDto.fromTheme(theme);
 
         // ── Project-level milestones ───────────────────────────────────
         // These appear as S (start), E (end), N (now) markers in the calendar header

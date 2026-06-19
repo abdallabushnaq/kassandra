@@ -21,7 +21,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * DTO for the interactive client-side Gantt chart rendered by gantt-chart.js.
@@ -61,11 +63,11 @@ public class GanttChartDto {
          */
         public int postRun;
         /**
-         * All theme color values as a flat key→integer map.
-         * Keys are in "themeName.fieldName" format (e.g. "ganttTheme.gridColor").
-         * Values are 0xRRGGBB integers (no alpha, except taskTransparency which is 0-255).
+         * Theme colors as a nested class-structured object mirroring Java's {@code Theme} hierarchy.
+         * Each sub-theme (chartTheme, ganttTheme, xAxesTheme, ...) contains typed color fields
+         * as 0xRRGGBB integers. Mirrors Java: {@code Theme → ChartTheme / GanttTheme / ...}
          */
-        public Map<String, Integer> theme = new HashMap<>();
+        public ThemeDto theme = new ThemeDto();
     }
 
     /**

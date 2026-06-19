@@ -17,7 +17,9 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -96,8 +98,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private final       Clock                        clock;
     @Autowired
     protected           Context                      context;
-    @Autowired
-    private             GanttChartService            ganttChartService;
     private final       CrossGridDragDropCoordinator dragDropCoordinator;              // Coordinator for cross-grid drag & drop
     private             Button                       editButton;
     private final       GanttErrorHandler            eh                         = new GanttErrorHandler();
@@ -106,6 +106,8 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     private             UUID                         featureId;
     //    private final       Svg                          ganttChart                 = new Svg();
     private final       Div                          ganttChartContainer;
+    @Autowired
+    private             GanttChartService            ganttChartService;
     private             GanttUtil                    ganttUtil;
     private final       TaskGrid                     grid;
     /**
@@ -859,41 +861,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     }
 
     /**
-     * Builds the {@link GanttChartDto} server-side and pushes it to the browser via
-     * {@code mountGanttChart(containerId, data)} so that {@code gantt-chart.js} can
-     * render the interactive, zoomable client-side Gantt chart.
-     * <p>
-     * The chart window is padded by {@code preRun}/{@code postRun} days (matching the
-     * SVG renderer) to leave room for user-name labels on the left and task-name labels
-     * that overflow the right edge of a bar.
-     * <p>
-     * Called both on first load and when the user toggles the theme.
-     */
-    private void refreshGanttChart() {
-        getUI().ifPresent(ui -> {
-            boolean isDark = ui.getElement().getThemeList().contains(com.vaadin.flow.theme.lumo.Lumo.DARK);
-            try {
-                GanttChartDto dto  = ganttChartService.build(sprint, ParameterOptions.getLocalNow(), isDark);
-                String        json = jsonMapper.writeValueAsString(dto);
-                ui.getPage().addJavaScript("/js/theme-color-constants.js");
-                ui.getPage().addJavaScript("/js/svg-utils.js");
-                ui.getPage().addJavaScript("/js/color-utils.js");
-                ui.getPage().addJavaScript("/js/date-utils.js");
-                ui.getPage().addJavaScript("/js/calendar-x-axes.js");
-                ui.getPage().addJavaScript("/js/gantt-chart.js");
-                ui.getPage().executeJs(
-                        "if(window.mountGanttChart) window.mountGanttChart($0, JSON.parse($1));",
-                        GANTT_CHART_CONTAINER_ID, json
-                );
-                log.debug("Gantt chart DTO pushed to client for sprint '{}'", sprint.getName());
-            } catch (Exception e) {
-                log.error("Failed to build Gantt chart data for sprint '{}'", sprint.getName(), e);
-                displayGanttError(e.getMessage());
-            }
-        });
-    }
-
-    /**
      * Get the currently logged-in user's name or email.
      * Copied from MainLayout for consistency.
      */
@@ -1335,6 +1302,44 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                 modifiedTasks.add(task);
             }
         }
+    }
+
+    /**
+     * Builds the {@link GanttChartDto} server-side and pushes it to the browser via
+     * {@code mountGanttChart(containerId, data)} so that {@code gantt-chart.js} can
+     * render the interactive, zoomable client-side Gantt chart.
+     * <p>
+     * The chart window is padded by {@code preRun}/{@code postRun} days (matching the
+     * SVG renderer) to leave room for user-name labels on the left and task-name labels
+     * that overflow the right edge of a bar.
+     * <p>
+     * Called both on first load and when the user toggles the theme.
+     */
+    private void refreshGanttChart() {
+        getUI().ifPresent(ui -> {
+            boolean isDark = ui.getElement().getThemeList().contains(com.vaadin.flow.theme.lumo.Lumo.DARK);
+            try {
+                GanttChartDto dto  = ganttChartService.build(sprint, ParameterOptions.getLocalNow(), isDark);
+                String        json = jsonMapper.writeValueAsString(dto);
+                ui.getPage().addJavaScript("/js/theme-class.js");
+                ui.getPage().addJavaScript("/js/theme-color-constants.js");
+                ui.getPage().addJavaScript("/js/svg-utils.js");
+                ui.getPage().addJavaScript("/js/color-utils.js");
+                ui.getPage().addJavaScript("/js/date-utils.js");
+                ui.getPage().addJavaScript("/js/chart-util.js");
+                ui.getPage().addJavaScript("/js/chart-elements.js");
+                ui.getPage().addJavaScript("/js/calendar-x-axes.js");
+                ui.getPage().addJavaScript("/js/gantt-chart.js");
+                ui.getPage().executeJs(
+                        "if(window.mountGanttChart) window.mountGanttChart($0, JSON.parse($1));",
+                        GANTT_CHART_CONTAINER_ID, json
+                );
+                log.debug("Gantt chart DTO pushed to client for sprint '{}'", sprint.getName());
+            } catch (Exception e) {
+                log.error("Failed to build Gantt chart data for sprint '{}'", sprint.getName(), e);
+                displayGanttError(e.getMessage());
+            }
+        });
     }
 
     /**

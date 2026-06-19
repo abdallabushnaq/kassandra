@@ -3,7 +3,9 @@ package de.bushnaq.abdalla.kassandra.rest.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * DTO for the interactive frontend sprint overview (v2).
@@ -20,15 +22,16 @@ public class SprintOverviewDto {
     }
 
     public static class Meta {
-        public LocalDateTime        chartEnd;
-        public LocalDateTime        chartStart;
-        public Integer              laneCount;
-        public LocalDateTime        now;
-        public String               version    = "v2";
-        // Map of theme color values used by the frontend calendar x-axes.
-        // Keys correspond to the server-side XAxesTheme field names.
-        // Colors are sent as 0xRRGGBB integers (no alpha).
-        public Map<String, Integer> xAxesTheme = new HashMap<>();
+        public LocalDateTime chartEnd;
+        public LocalDateTime chartStart;
+        public Integer       laneCount;
+        public LocalDateTime now;
+        public String        version = "v2";
+        /**
+         * Theme colors as a nested class-structured object mirroring Java's {@code Theme} hierarchy.
+         * Mirrors Java: {@code Theme → ChartTheme / GanttTheme / XAxesTheme / ...}
+         */
+        public ThemeDto theme = new ThemeDto();
     }
 
     public static class SprintDto {

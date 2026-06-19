@@ -10,6 +10,7 @@ import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.rest.dto.SprintOverviewDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.ThemeDto;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -199,12 +200,12 @@ public class SprintsOverviewService {
             dto.lanes.add(lane);
         }
 
-        // --- add all theme colors for the frontend using reflection
+        // --- add all theme colors for the frontend using class-based ThemeDto
         try {
             Theme theme = dark ? darkTheme : lightTheme;
-            dto.meta.xAxesTheme.putAll(theme.toMap());
+            dto.meta.theme = ThemeDto.fromTheme(theme);
         } catch (Exception ignored) {
-            // non-fatal: if theme cannot be constructed, leave map empty
+            // non-fatal: if theme cannot be constructed, leave default empty ThemeDto
         }
 
         return dto;
