@@ -113,31 +113,13 @@ public class GanttChartService {
         dto.meta.chartEnd   = chartEndDate.atStartOfDay();
         dto.meta.now        = now;
         dto.meta.sprintName = sprint.getName();
+        dto.meta.sprintEarliestStartDate = sprint.getEarliestStartDate();
+        dto.meta.sprintLatestFinishDate  = sprint.getLatestFinishDate();
+        dto.meta.sprintStatus = sprint.getStatus().name();
         dto.meta.preRun     = preRun;
         dto.meta.postRun    = postRun;
         dto.meta.theme = ThemeDto.fromTheme(theme);
 
-        // ── Project-level milestones ───────────────────────────────────
-        // These appear as S (start), E (end), N (now) markers in the calendar header
-        GanttChartDto.MilestoneDto startMilestone = new GanttChartDto.MilestoneDto();
-        startMilestone.date  = sprint.getEarliestStartDate().toLocalDate();
-        startMilestone.letter = "S";
-        startMilestone.label  = "Start";
-        dto.milestones.add(startMilestone);
-
-        GanttChartDto.MilestoneDto endMilestone = new GanttChartDto.MilestoneDto();
-        endMilestone.date  = sprint.getLatestFinishDate().toLocalDate();
-        endMilestone.letter = "E";
-        endMilestone.label  = "End";
-        dto.milestones.add(endMilestone);
-
-        if (now != null && !Status.CLOSED.equals(sprint.getStatus())) {
-            GanttChartDto.MilestoneDto nowMilestone = new GanttChartDto.MilestoneDto();
-            nowMilestone.date   = now.toLocalDate();
-            nowMilestone.letter = "N";
-            nowMilestone.label  = "Now";
-            dto.milestones.add(nowMilestone);
-        }
 
         // ── Task rows ─────────────────────────────────────────────────────
         int rowIndex = 0;

@@ -18,7 +18,8 @@
         const element = document.createElementNS(SVG_NS, tag);
         if (attrs) {
             for (const key of Object.keys(attrs)) {
-                element.setAttribute(key, String(attrs[key]));
+                if (attrs[key])
+                    element.setAttribute(key, String(attrs[key]));
             }
         }
         if (textContent != null) element.textContent = textContent;
@@ -69,6 +70,10 @@
         return createSvgElement('line', Object.assign({x1, y1, x2, y2}, additionalAttrs));
     }
 
+    function createCircle(x1, y1, r, additionalAttrs) {
+        return createSvgElement('circle', Object.assign({x1, y1, r}, additionalAttrs));
+    }
+
     /**
      * Creates an SVG clip path definition for rectangular clipping regions.
      * @param {string} id The unique identifier for the clip path
@@ -92,6 +97,7 @@
         createRect,
         createText,
         createLine,
+        createCircle,
         createClipPath
     };
 })();

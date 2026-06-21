@@ -66,12 +66,13 @@ public class SprintsOverviewRenderer extends AbstractRenderer {
         firstDate = findFirstDate();
         lastDate  = findLastDate();
         // ---first day should not be earlier than 6 month before now
-        if (dao.limit != null) {
-            LocalDate cutDay = DateUtil.addDay(dao.now.toLocalDate(), -(dao.limit));
-            if (cutDay.isBefore(firstDate)) {
-                firstDate = cutDay;
-            }
-        }
+        //TODO reintroduce
+//        if (dao.limit != null) {
+//            LocalDate cutDay = DateUtil.addDay(dao.now.toLocalDate(), -(dao.limit));
+//            if (cutDay.isBefore(firstDate)) {
+//                firstDate = cutDay;
+//            }
+//        }
 
         //        ganttRed = ImageIO.read(getClass().getResource("image/gantt-red.png"));
         //        ganttGreen = ImageIO.read(getClass().getResource("image/gantt-green.png"));
@@ -93,12 +94,14 @@ public class SprintsOverviewRenderer extends AbstractRenderer {
             timeFrameMonths = 2;
         }
         {
-            LocalDate c = dao.now.toLocalDate().withDayOfMonth(1).minusMonths(timeFrameMonths);
-            milestones.add(DateUtil.max(firstDate, c), "S", "Start (Start of project)", Color.blue, true);
+//            LocalDate c = dao.now.toLocalDate().withDayOfMonth(1).minusMonths(timeFrameMonths);
+//            milestones.add(DateUtil.max(firstDate, c), "S", "Start (Start of project)", Color.blue, true);
+            milestones.add(firstDate, "S", "Start (Start of project)", Color.blue, true);
         }
         {
-            LocalDate c = dao.now.toLocalDate().withDayOfMonth(1).minusDays(1).plusMonths(timeFrameMonths + 1);
-            milestones.add(DateUtil.min(lastDate, c), "E", "End (End of project)", Color.blue, true);
+//            LocalDate c = dao.now.toLocalDate().withDayOfMonth(1).minusDays(1).plusMonths(timeFrameMonths + 1);
+//            milestones.add(DateUtil.min(lastDate, c), "E", "End (End of project)", Color.blue, true);
+            milestones.add(lastDate, "E", "End (End of project)", Color.blue, true);
         }
 
         milestones.calculate();

@@ -634,9 +634,12 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 ui.getPage().addJavaScript("/js/svg-utils.js");
                 ui.getPage().addJavaScript("/js/color-utils.js");
                 ui.getPage().addJavaScript("/js/date-utils.js");
+                ui.getPage().addJavaScript("/js/date-utils.js");
                 ui.getPage().addJavaScript("/js/chart-util.js");
                 ui.getPage().addJavaScript("/js/chart-elements.js");
+                ui.getPage().addJavaScript("/js/graph-color-util.js");
                 ui.getPage().addJavaScript("/js/calendar-x-axes.js");
+                ui.getPage().addJavaScript("/js/milestone.js");
                 ui.getPage().addJavaScript("/js/sprints-overview-chart.js");
                 ui.getPage().executeJs(
                         "if(window.mountSprintsOverviewChart) window.mountSprintsOverviewChart($0, JSON.parse($1));",

@@ -8,43 +8,196 @@
 (function () {
     'use strict';
 
-    var createSvgElement = window.SvgUtils.createSvgElement;
-    var createRect       = window.SvgUtils.createRect;
-    var createText       = window.SvgUtils.createText;
-    var createClipPath   = window.SvgUtils.createClipPath;
-    var intToHex         = window.ColorUtils.intToHex;
-    var MS               = window.DateUtils.MS;
-    var getUtcDayMidnight  = window.DateUtils.getUtcDayMidnight;
-    var calculateDayIndex  = window.DateUtils.calculateDayIndex;
+    let GraphColorUtil = window.GraphColorUtil;
+    let createSvgElement = window.SvgUtils.createSvgElement;
+    let createLine = window.SvgUtils.createLine;
+    let createCircle = window.SvgUtils.createCircle;
+    let createRect = window.SvgUtils.createRect;
+    let createText = window.SvgUtils.createText;
+    let createClipPath = window.SvgUtils.createClipPath;
+    let intToHex = window.ColorUtils.intToHex;
+    // let MS = window.DateUtils.MS;
+    // let calculateDayIndex = window.DateUtils.calculateDayIndex;
+    let calculateDays = window.DateUtils.calculateDays;
+    let addDay = window.DateUtils.addDay;
+    let maxDate = window.DateUtils.maxDate;
+    let getWeekSunday = window.DateUtils.getWeekSunday;
+    let getWeekOfYear = window.DateUtils.getWeekOfYear;
+    // let createDateString = window.DateUtils.createDateString;
+    let convertSprintColorToRgba = window.ColorUtils.convertSprintColorToRgba;
 
+    const DAY_OF_MONTH_MIN_DAY_WIDTH = 16;
+    const DAY_OF_WEEK_MIN_DAY_WIDTH = 10;
+    const MONTH_MIN_DAY_WIDTH = 1;
+    const WEEK_MIN_DAY_WIDTH = 2;
     // Row heights (Java CalendarElement heights: fontSize + margin = 4)
-    var YEAR_H      = 17;   // 13+4 → rect bh-1 = 16px visible
-    var MONTH_H     = 16;   // 12+4 → rect bh-1 = 15px visible
-    var WEEK_H      = 14;   // 10+4 → rect bh-1 = 13px visible
-    var DOM_H       = 14;   // 10+4  day-of-month
-    var DOW_H       = 14;   // 10+4  day-of-week
-    var MILESTONE_H = 13;   // milestone row
+    const YEAR_H = 17;   // 13+4 → rect bh-1 = 16px visible
+    const MONTH_H = 16;   // 12+4 → rect bh-1 = 15px visible
+    const WEEK_H = 14;   // 10+4 → rect bh-1 = 13px visible
+    const DOM_H = 14;   // 10+4  day-of-month
+    const DOW_H = 14;   // 10+4  day-of-week
+    const MILESTONE_H = 13;   // milestone row
 
     // Visibility thresholds (mirrors Java CalendarXAxes constants)
-    var MIN_WEEK = 2;   // WEEK_MIN_DAY_WIDTH
-    var MIN_DOW  = 10;  // DAY_OF_WEEK_MIN_DAY_WIDTH  – show DOW row only
-    var MIN_DOM  = 16;  // DAY_OF_MONTH_MIN_DAY_WIDTH – show DOM row above DOW
+    const MIN_WEEK = 2;   // WEEK_MIN_DAY_WIDTH
+    const MIN_DOW = 10;  // DAY_OF_WEEK_MIN_DAY_WIDTH  – show DOW row only
+    const MIN_DOM = 16;  // DAY_OF_MONTH_MIN_DAY_WIDTH – show DOM row above DOW
+    // ── CalendarSize enum (mirrors Java enum) ───────────────────────────────
+    let CalendarSize = {
+        YEARS: 'YEARS',
+        MONTHS: 'MONTHS'
+    };
+
+    // ── CalendarElement class (mirrors Java CalendarElement) ────────────────
+    /**
+     * Represents a calendar row element (year, month, week, day).
+     * Mirrors: de.bushnaq.abdalla.kassandra.report.dao.CalendarElement
+     */
+    class CalendarElement {
+        /**
+         * @param {Font|Object} font     Font object or specification
+         * @param {Color|String} bgColor Background color
+         * @param {number} width         Width in pixels (may be null)
+         * @param {number} height        Height in pixels
+         */
+        constructor(font, bgColor, width, height) {
+            this.font = font;
+            this.bgColor = bgColor;
+            this.width = width;
+            this.height = height;
+            this.y = 0;
+        }
+
+        getWidth() {
+            return this.width;
+        }
+
+        setWidth(w) {
+            this.width = w;
+        }
+
+        getHeight() {
+            return this.height;
+        }
+
+        getY() {
+            return this.y;
+        }
+
+        setY(yVal) {
+            this.y = yVal;
+        }
+
+        getFont() {
+            return this.font;
+        }
+    }
 
     // ── CalendarXAxes class ──────────────────────────────────────────────────
-
+// ── CalendarMilestoneElement class ──────────────────────────────────────
     /**
-     * Renders a virtual-canvas calendar header for a chart.
-     * Hierarchical rows: year → month → week (optional) → day-of-month/day-of-week (optional).
-     * Visibility and styling are controlled by dayWidth thresholds and Theme class instance.
+     * Represents the milestone row element with flag styling.
+     * Mirrors: de.bushnaq.abdalla.kassandra.report.dao.CalendarMilestoneElement
+     */
+    class CalendarMilestoneElement extends CalendarElement {
+        /**
+         * @param {Color|String} bgColor        Background color
+         * @param {Color|String} flagBgColor    Flag background color
+         * @param {number} width                Width of milestone marker
+         * @param {number} height               Height of milestone marker
+         * @param {Font|Object} font            Font for milestone text
+         * @param {Font|Object} flagFont        Font for flag text
+         * @param {number} flagHeight           Height of flag
+         */
+        constructor(bgColor, flagBgColor, width, height, font, flagFont, flagHeight) {
+            super(font, bgColor, width, height);
+            this.width = width;
+            this.flagBgColor = flagBgColor;
+            this.flagFont = flagFont;
+            this.flagHeight = flagHeight;
+            this.flagY = 0;
+            this.y = 0;
+        }
+
+        getFlagHeight() {
+            return this.flagHeight;
+        }
+
+        getFlagFont() {
+            return this.flagFont;
+        }
+    }
+
+// ── CalendarXAxes main class ────────────────────────────────────────
+    /**
+     * Renders calendar header for charts (Gantt, burndown, Sprints Overview).
+     * Always uses parent object pattern:
+     * - Gantt/burndown: parent has {graphics2D, diagram, days, ...} for Java rendering
+     * - Sprints Overview: parent has {milestones, theme} for SVG rendering
      *
-     * Mirrors Java: CalendarXAxes
+     * Mirrors: de.bushnaq.abdalla.kassandra.report.dao.CalendarXAxes
      */
     class CalendarXAxes {
         /**
-         * @param {Theme} theme  Theme instance (provides xAxesTheme colors)
+         * Constructor.
+         *
+         * @param {Object} parent       Parent renderer object
+         * @param {number} priRun       Days prior to time range
+         * @param {number} postRun      Days post to time range
          */
-        constructor(theme) {
-            this.theme = theme || {};
+        constructor(parent, priRun, postRun) {
+            this.parent = parent;
+            this.priRun = priRun;
+            this.postRun = postRun;
+            this.milestones = parent.milestones;
+            this.theme = parent.theme;
+
+            // Initialize calendar elements (mirror Java initialization in constructor)
+            let margine = 4;
+            this.year = new CalendarElement(
+                {family: 'sans-serif', size: 14, weight: 'normal'},
+                null,
+                null,
+                13 + margine
+            );
+            this.month = new CalendarElement(
+                {family: 'sans-serif', size: 12, weight: 'normal'},
+                null,
+                null,
+                12 + margine
+            );
+            this.week = new CalendarElement(
+                {family: 'sans-serif', size: 10, weight: 'normal'},
+                null,
+                null,
+                10 + margine
+            );
+            this.dayOfMonth = new CalendarElement(
+                {family: 'sans-serif', size: 10, weight: 'bold'},
+                null,
+                20,
+                10 + margine
+            );
+            this.dayOfWeek = new CalendarElement(
+                {family: 'sans-serif', size: 10, weight: 'bold'},
+                null,
+                20,
+                10 + margine
+            );
+            this.milestone = new CalendarMilestoneElement(
+                null,
+                null,
+                11,
+                10 + margine,
+                {family: 'sans-serif', size: 10, weight: 'bold'},
+                {family: 'sans-serif', size: 11, weight: 'normal'},
+                13
+            );
+
+            this.calendarAtBottom = false;
+            this.calendarSize = CalendarSize.YEARS;
+            this.width = 0;
+            this.x = 0;
         }
 
         /**
@@ -56,213 +209,276 @@
          * @returns {number} Total header height in pixels
          */
         getHeight(dayWidth, hasMilestones) {
-            var height = YEAR_H + MONTH_H;
-            if (dayWidth >= MIN_WEEK) height += WEEK_H;
-            if (dayWidth >= MIN_DOM)  height += DOM_H + DOW_H;
-            else if (dayWidth >= MIN_DOW) height += DOW_H;
-            if (hasMilestones) height += MILESTONE_H;
+            let height = this.year.getHeight();
+            if (this.isMonthVisible())
+                height += this.month.getHeight();
+            if (this.isDayOfMonthVisible())
+                height += this.dayOfMonth.getHeight();
+            if (this.isDayOfWeekVisible())
+                height += this.dayOfWeek.getHeight();
+            if (this.isWeekVisible())
+                height += this.week.getHeight();
+            if (this.milestonesVisible())
+                height += this.milestone.getHeight() + this.milestone.getHeight();
+
+            // if (dayWidth >= MIN_WEEK) height += WEEK_H;
+            // if (dayWidth >= MIN_DOM) height += DOM_H + DOW_H;
+            // else if (dayWidth >= MIN_DOW) height += DOW_H;
+            // if (hasMilestones) height += MILESTONE_H;
             return height;
         }
 
-        /**
-         * Draws the calendar header into the given SVG element.
-         * Mirrors Java: CalendarXAxes.drawCalendar()
-         *
-         * @param {SVGSVGElement} svg            Target SVG element
-         * @param {Date}          chartStart      UTC midnight of first chart day
-         * @param {number}        totalDays       Total days in chart
-         * @param {number}        dayWidth        Pixel width per day
-         * @param {number}        scrollOffset    First visible day index (may be fractional)
-         * @param {number}        viewportWidth   Container width in pixels
-         * @param {Array}         [milestones]    Optional milestone array {date, letter, label}
-         * @returns {number} Actual header height drawn
-         */
-        draw(svg, chartStart, totalDays, dayWidth, scrollOffset, viewportWidth, milestones) {
-            var theme       = this.theme;
-            var xAxesTheme  = theme.xAxesTheme || {};
-            var headerGroup = createSvgElement('g', {'class': 'calendar-header'});
-            svg.appendChild(headerGroup);
 
-            // ── Resolve theme colors via direct property access ────────────────
-            var yearBgColor              = intToHex(xAxesTheme.yearBgColor,              '#ababab');
-            var yearTextColor            = intToHex(xAxesTheme.yearTextColor,            '#ffffff');
-            var yearBorderColor          = intToHex(xAxesTheme.yearBorderColor,          '#ffffff');
-            var monthTextColor           = intToHex(xAxesTheme.monthTextColor,           '#ffffff');
-            var monthBorderColor         = intToHex(xAxesTheme.monthBorderColor,         '#ffffff');
-            var weekBgColor              = intToHex(xAxesTheme.weekBgColor,              '#ababab');
-            var weekTextColor            = intToHex(xAxesTheme.weekTextColor,            '#ffffff');
-            var weekBorderColor          = intToHex(xAxesTheme.weekBorderColor,          '#ffffff');
-            var dayOfMonthBgColor        = intToHex(xAxesTheme.dayOfMonthBgColor,        '#ababab');
-            var dayOfMonthBorderColor    = intToHex(xAxesTheme.dayOfMonthBorderColor,    '#ffffff');
-            var dayOfMonthTextColor      = intToHex(xAxesTheme.dayOfMonthTextColor,      '#ffffff');
-            var dayOfMonthWeekendBgColor = intToHex(xAxesTheme.dayOfMonthWeekendBgColor, '#d7d7d7');
-            var dayOfMonthWeekendTextColor = intToHex(xAxesTheme.dayOfMonthWeekendTextColor, '#000000');
-            var dayOfWeekBgColor         = intToHex(xAxesTheme.dayOfweekBgColor,         '#ffffff');
-            var dayOfWeekBorderColor     = intToHex(xAxesTheme.dayOfWeekBorderColor,     '#ffffff');
-            var dayOfWeekTextColor       = intToHex(xAxesTheme.dayOfWeekTextColor,       '#000000');
-            var dayOfWeekSatBgColor      = intToHex(xAxesTheme.dayOfweekSaturdayBgColor, '#d7d7d7');
-            var dayOfWeekSunBgColor      = intToHex(xAxesTheme.dayOfweekSundayBgColor,   '#d7d7d7');
-            var dayOfWeekWeekendTextColor = intToHex(xAxesTheme.dayOfWeekWeekendTextColor, '#000000');
+        // draw(svg, chartStart, totalDays, dayWidth, scrollOffset, viewportWidth, milestones) {
+        drawCalendar(drawDays, svgGroup, viewportWidth) {
+            // Gantt mode only
+            if (!this.parent) return;
 
-            var MONTH_NAMES     = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            var DAY_ABBREV      = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            let firstDay = addDay(this.milestones.firstMilestone, -this.priRun);
+            let lastDay = maxDate(
+                this.milestones.lastMilestone,
+                addDay(this.milestones.firstMilestone, this.parent.days - 1)
+            );
 
-            var dayIndexToPixelX = function (dayIndex) {
-                return (dayIndex - scrollOffset) * dayWidth;
-            };
+            let yearWasDrawn = false;
+            let monthWasDrawn = false;
+            let firstWeekWasDrawn = false;
 
-            var chartEnd       = new Date(chartStart.getTime() + (totalDays - 1) * MS);
-            var currentY       = 0;
-            var clipIdCounter  = 0;
+            let weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            let months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-            // ── drawCalendarCell helper ────────────────────────────────────────
-            // Mirrors Java CalendarXAxes.drawTextBox()
-            var drawCalendarCell = function (cellX, cellWidth, cellY, cellHeight, bgColor, borderColor, labelText, textColor, fontSize, centered) {
-                if (cellX + cellWidth <= 0 || cellX >= viewportWidth) return;
-                headerGroup.appendChild(createRect(cellX, cellY, cellWidth, cellHeight - 1, {fill: bgColor}));
-                if (borderColor && cellWidth > 1) {
-                    headerGroup.appendChild(createSvgElement('line', {
-                        x1: cellX + cellWidth, y1: cellY,
-                        x2: cellX + cellWidth, y2: cellY + cellHeight - 1,
-                        stroke: borderColor, 'stroke-width': '1'
-                    }));
-                }
-                if (!labelText) return;
-                var clipId = 'cc' + (clipIdCounter++);
-                headerGroup.appendChild(createClipPath(clipId, cellX, cellY, cellWidth, cellHeight));
-                var textX = centered ? cellX + cellWidth / 2 : Math.max(cellX + 2, 2);
-                headerGroup.appendChild(createText(textX, cellY + cellHeight - 4, labelText, {
-                    fill: textColor,
-                    'font-size': fontSize,
-                    'font-family': 'sans-serif',
-                    'text-anchor': centered ? 'middle' : 'start',
-                    'clip-path': 'url(#' + clipId + ')'
-                }));
-            };
+            // Phase 0-4 loop (mirrors Java 5-phase rendering)
+            for (let phase = 0; phase < 5; phase++) {
+                let currentDay = new Date(firstDay);
 
-            // ── YEAR ROW (always visible) ──────────────────────────────────────
-            for (var year = chartStart.getUTCFullYear(); year <= chartEnd.getUTCFullYear(); year++) {
-                var startIdx = calculateDayIndex(new Date(Date.UTC(year, 0, 1)), chartStart);
-                var endIdx   = calculateDayIndex(new Date(Date.UTC(year, 11, 31)), chartStart);
-                var cellX    = dayIndexToPixelX(Math.max(0, startIdx));
-                var cellW    = dayIndexToPixelX(Math.min(totalDays - 1, endIdx) + 1) - cellX;
-                drawCalendarCell(cellX, cellW, currentY, YEAR_H, yearBgColor, yearBorderColor, String(year), yearTextColor, '14', false);
-            }
-            currentY += YEAR_H;
+                while (currentDay <= lastDay) {
+                    let daysX = this.calculateDayX(currentDay);
+                    let startCal = new Date(currentDay);
 
-            // ── MONTH ROW (always visible) ─────────────────────────────────────
-            var monthDate = new Date(Date.UTC(chartStart.getUTCFullYear(), chartStart.getUTCMonth(), 1));
-            while (monthDate <= chartEnd) {
-                var monthIndex = monthDate.getUTCMonth();
-                var monthYear  = monthDate.getUTCFullYear();
-                var monthEnd   = new Date(Date.UTC(monthYear, monthIndex + 1, 0));
-                var si         = calculateDayIndex(monthDate, chartStart);
-                var ei         = calculateDayIndex(monthEnd, chartStart);
-                var cx         = dayIndexToPixelX(Math.max(0, si));
-                var cw         = dayIndexToPixelX(Math.min(totalDays - 1, ei) + 1) - cx;
-                // monthBgColors array: mirrors Java XAxesTheme.monthBgColors[12]
-                var monthBgColors = xAxesTheme.monthBgColors;
-                var monthBgColor  = (monthBgColors && monthBgColors[monthIndex] != null) ? intToHex(monthBgColors[monthIndex]) : '#187dc3';
-                drawCalendarCell(cx, cw, currentY, MONTH_H, monthBgColor, monthBorderColor, MONTH_NAMES[monthIndex], monthTextColor, '12', false);
-                monthDate = new Date(Date.UTC(monthYear, monthIndex + 1, 1));
-            }
-            currentY += MONTH_H;
+                    // Phase 4: YEAR
+                    if (CalendarSize.YEARS === this.calendarSize && phase === 4 &&
+                        ((startCal.getDate() === 1 && startCal.getMonth() === 0) || !yearWasDrawn)) {
+                        let end = new Date(startCal.getFullYear(), 11, 31);
+                        if (end > lastDay) {
+                            end = new Date(lastDay);
+                        }
+                        let x2 = this.calculateDayX(end) - this.dayOfWeek.getWidth() / 2;
+                        this.drawTextBox(
+                            daysX - (this.dayOfWeek.getWidth() / 2 - 1),
+                            x2 + this.dayOfWeek.getWidth(),
+                            this.year.getY(),
+                            this.year.getHeight(),
+                            String(startCal.getFullYear()),
+                            this.parent.theme.xAxesTheme.yearTextColor,
+                            this.parent.theme.xAxesTheme.yearBgColor,
+                            this.parent.theme.xAxesTheme.yearBorderColor,
+                            this.year.getFont(),
+                            false,
+                            svgGroup,
+                            viewportWidth
+                        );
+                        yearWasDrawn = true;
+                    }
+                    // Phase 3: MONTH
+                    else if (CalendarSize.YEARS === this.calendarSize && phase === 3 &&
+                        (startCal.getDate() === 1 || !monthWasDrawn) && this.isMonthVisible()) {
+                        let end = addDay(new Date(startCal.getFullYear(), startCal.getMonth() + 1, 1), -1);
+                        if (end > lastDay) {
+                            end = new Date(lastDay);
+                        }
+                        let x2 = this.calculateDayX(end) - this.dayOfWeek.getWidth() / 2;
+                        let bgColor = this.parent.theme.xAxesTheme.monthBgColors[startCal.getMonth()];
+                        this.drawTextBox(
+                            daysX - (this.dayOfWeek.getWidth() / 2 - 1),
+                            x2 + this.dayOfWeek.getWidth(),
+                            this.month.getY(),
+                            this.month.getHeight(),
+                            months[startCal.getMonth()],
+                            this.parent.theme.xAxesTheme.monthTextColor,
+                            bgColor,
+                            this.parent.theme.xAxesTheme.monthBorderColor,
+                            this.month.getFont(),
+                            false,
+                            svgGroup,
+                            viewportWidth
+                        );
+                        monthWasDrawn = true;
+                    }
+                    // Phase 2: WEEK
+                    else if (CalendarSize.YEARS === this.calendarSize && phase === 2 &&
+                        (startCal.getDay() === 1 || !firstWeekWasDrawn) && this.isWeekVisible()) {
+                        let end = getWeekSunday(startCal);
+                        if (end > lastDay) {
+                            end = new Date(lastDay);
+                        }
+                        let x2 = this.calculateDayX(end) - this.dayOfWeek.getWidth() / 2;
+                        let calendarWeek;
+                        if (this.isDayOfWeekVisible()) {
+                            calendarWeek = 'W' + getWeekOfYear(currentDay);
+                        } else {
+                            calendarWeek = String(currentDay.getDate());
+                        }
+                        this.drawTextBox(
+                            daysX - (this.dayOfWeek.getWidth() / 2 - 1),
+                            x2 + this.dayOfWeek.getWidth(),
+                            this.week.getY(),
+                            this.week.getHeight() - 1,
+                            calendarWeek,
+                            this.parent.theme.xAxesTheme.weekTextColor,
+                            this.parent.theme.xAxesTheme.weekBgColor,
+                            this.parent.theme.xAxesTheme.weekBorderColor,
+                            this.week.getFont(),
+                            false,
+                            svgGroup,
+                            viewportWidth
+                        );
+                        firstWeekWasDrawn = true;
+                    }
+                    // Phase 1: DAY OF WEEK / DAY OF MONTH
+                    else if (phase === 1 && this.isDayOfWeekVisible()) {
+                        // Day of Month
+                        let bgColor = GraphColorUtil.getDayOfMonthBgColor(this.parent.theme, startCal);
+                        let textColor = GraphColorUtil.getDayOfMonthTextColor(this.parent.theme, startCal);
+                        this.drawTextBox(
+                            daysX - (this.dayOfMonth.getWidth() / 2 - 1),
+                            daysX - (this.dayOfMonth.getWidth() / 2 - 1) + (this.dayOfMonth.getWidth() - 1),
+                            this.dayOfMonth.getY(),
+                            this.dayOfMonth.getHeight(),
+                            String(startCal.getDate()),
+                            textColor,
+                            bgColor,
+                            this.parent.theme.xAxesTheme.dayOfMonthBorderColor,
+                            this.dayOfMonth.getFont(),
+                            true,
+                            svgGroup,
+                            viewportWidth
+                        );
 
-            // ── WEEK ROW (visible when dayWidth >= MIN_WEEK) ───────────────────
-            if (dayWidth >= MIN_WEEK) {
-                var weekStart = new Date(chartStart.getTime());
-                while (weekStart.getUTCDay() !== 1) weekStart.setUTCDate(weekStart.getUTCDate() - 1);
-                while (weekStart <= chartEnd) {
-                    var weekEnd  = new Date(weekStart.getTime());
-                    weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
-                    var ws = calculateDayIndex(weekStart, chartStart);
-                    var we = calculateDayIndex(weekEnd, chartStart);
-                    var wx = dayIndexToPixelX(Math.max(0, ws));
-                    var ww = dayIndexToPixelX(Math.min(totalDays - 1, we) + 1) - wx;
-                    var weekLabel = dayWidth >= MIN_DOW
-                        ? String(new Date(chartStart.getTime() + Math.max(0, ws) * MS).getUTCDate())
-                        : null;
-                    drawCalendarCell(wx, ww, currentY, WEEK_H, weekBgColor, weekBorderColor, weekLabel, weekTextColor, '10', false);
-                    weekStart.setUTCDate(weekStart.getUTCDate() + 7);
-                }
-                currentY += WEEK_H;
-            }
-
-            // ── DAY-OF-MONTH ROW (visible when dayWidth >= MIN_DOM) ───────────
-            if (dayWidth >= MIN_DOM) {
-                var firstVis = Math.max(0, Math.floor(scrollOffset) - 1);
-                var lastVis  = Math.min(totalDays - 1, firstVis + Math.ceil(viewportWidth / dayWidth) + 2);
-                for (var dayIdx = firstVis; dayIdx <= lastVis; dayIdx++) {
-                    var dayDate = new Date(chartStart.getTime() + dayIdx * MS);
-                    var dow     = dayDate.getUTCDay();
-                    var isWend  = dow === 0 || dow === 6;
-                    drawCalendarCell(
-                        dayIndexToPixelX(dayIdx), dayWidth, currentY, DOM_H,
-                        isWend ? dayOfMonthWeekendBgColor : dayOfMonthBgColor,
-                        dayOfMonthBorderColor,
-                        String(dayDate.getUTCDate()),
-                        isWend ? dayOfMonthWeekendTextColor : dayOfMonthTextColor,
-                        '10', true
-                    );
-                }
-                currentY += DOM_H;
-            }
-
-            // ── DAY-OF-WEEK ROW (visible when dayWidth >= MIN_DOW) ────────────
-            if (dayWidth >= MIN_DOW) {
-                var firstVisDow = Math.max(0, Math.floor(scrollOffset) - 1);
-                var lastVisDow  = Math.min(totalDays - 1, firstVisDow + Math.ceil(viewportWidth / dayWidth) + 2);
-                for (var di = firstVisDow; di <= lastVisDow; di++) {
-                    var dd   = new Date(chartStart.getTime() + di * MS);
-                    var d    = dd.getUTCDay();
-                    var iW   = d === 0 || d === 6;
-                    var dBg  = d === 6 ? dayOfWeekSatBgColor : (d === 0 ? dayOfWeekSunBgColor : dayOfWeekBgColor);
-                    drawCalendarCell(
-                        dayIndexToPixelX(di), dayWidth, currentY, DOW_H,
-                        dBg, dayOfWeekBorderColor, DAY_ABBREV[d],
-                        iW ? dayOfWeekWeekendTextColor : dayOfWeekTextColor,
-                        '10', true
-                    );
-                }
-                // Note: currentY is NOT advanced here (DOW row shares the space counted by DOM)
-                // It IS advanced below in the milestone row if present, or by the caller
-            }
-
-            // ── MILESTONE ROW ─────────────────────────────────────────────────
-            if (milestones && milestones.length > 0) {
-                var milestoneTextColor  = intToHex(xAxesTheme.milestoneTextColor, '#ffffff');
-                var milestoneFillColor  = intToHex(xAxesTheme.futureEventColor,   '#0000ff');
-                var milestoneFlagColor  = intToHex(xAxesTheme.milestoneFlagColor, '#ffffff');
-                var requestColor        = intToHex(theme.ganttTheme && theme.ganttTheme.requestMilestoneColor, '#cc0000');
-
-                // Map day-index → milestone for quick lookup
-                var msMap = {};
-                for (var mi = 0; mi < milestones.length; mi++) {
-                    var ms    = milestones[mi];
-                    var msDay = calculateDayIndex(new Date(ms.date), chartStart);
-                    if (msDay >= 0 && msDay < totalDays) msMap[msDay] = ms;
-                }
-
-                var firstVisMs = Math.max(0, Math.floor(scrollOffset) - 1);
-                var lastVisMs  = Math.min(totalDays - 1, firstVisMs + Math.ceil(viewportWidth / dayWidth) + 2);
-                for (var mdi = firstVisMs; mdi <= lastVisMs; mdi++) {
-                    var msObj = msMap[mdi];
-                    if (msObj) {
-                        var msX = dayIndexToPixelX(mdi) + dayWidth / 2 + 1;
-                        this.drawMilestone(
-                            msObj, new Date(msObj.date),
-                            msX, currentY,
-                            requestColor, msObj.letter,
-                            true, null, milestoneFlagColor,
-                            false, false,
-                            headerGroup, 0, 0, false
+                        // Day of Week
+                        let color = GraphColorUtil.getDayOfWeekBgColor(this.parent.theme, startCal);
+                        let textColor2 = GraphColorUtil.getDayOfWeekTextColor(this.parent.theme, startCal);
+                        let dayOfWeek = startCal.getDay();
+                        let weekLetter = weekDays[startCal.getDay()];
+                        this.drawTextBox(
+                            daysX - (this.dayOfWeek.getWidth() / 2 - 1),
+                            daysX - (this.dayOfWeek.getWidth() / 2 - 1) + (this.dayOfWeek.getWidth() - 1),
+                            this.dayOfWeek.getY(),
+                            this.dayOfWeek.getHeight(),
+                            weekDays[startCal.getDay()],
+                            textColor2,
+                            color,
+                            this.parent.theme.xAxesTheme.dayOfWeekBorderColor,
+                            this.dayOfWeek.getFont(),
+                            true,
+                            svgGroup,
+                            viewportWidth
                         );
                     }
+                    // Phase 0: DAY BARS and MILESTONE BACKGROUND
+                    else if (phase === 0) {
+                        if (drawDays && this.isDayBarsVisible()) {
+                            this.parent.drawDayBars(svgGroup, currentDay);
+                        }
+                        if (this.milestonesVisible()) {
+                            let color = GraphColorUtil.getDayOfWeekBgColor(this.parent.theme, startCal);
+                            let textColor2 = GraphColorUtil.getDayOfWeekTextColor(this.parent.theme, startCal);
+                            this.drawTextBox(
+                                daysX - (this.dayOfWeek.getWidth() / 2 - 1),
+                                daysX - (this.dayOfWeek.getWidth() / 2 - 1) + (this.dayOfWeek.getWidth() - 1),
+                                this.milestone.flagY,
+                                this.milestone.flagHeight,
+                                null,
+                                textColor2,
+                                color,
+                                this.parent.theme.xAxesTheme.dayOfWeekBorderColor,
+                                null,
+                                true,
+                                svgGroup,
+                                viewportWidth
+                            );
+                        }
+                    }
+
+                    currentDay = addDay(currentDay, 1);
                 }
-                currentY += MILESTONE_H;
+            }
+        }
+
+        /**
+         * Draw a text box (cell in calendar header).
+         * Mirrors: public void drawTextBox(int x1, int x2, Integer y1, int height, String text, ...)
+         * Handles both Java graphics2D (server rendering) and SVG (client rendering) modes.
+         */
+        drawTextBox(x1, x2, y1, height, text, textColor, backgroundColor, borderColor, font, centered, svgGroup, viewportWidth) {
+
+            // SVG rendering mode (client-side)
+            // Skip if outside viewport
+            if (x1 + (x2 - x1) <= 0 || x1 >= (viewportWidth || 9999)) return;
+            // if (x1 === 1)
+            //     text = 'X';
+
+            // if (text === 'T')
+            //     text = 'X';
+
+            let cellWidth = x2 - x1;
+            // Draw background rectangle
+            svgGroup.appendChild(createRect(x1, y1, cellWidth, height - 1, {fill: intToHex(backgroundColor)}));
+
+            // Draw border line (right edge)
+            if (borderColor && cellWidth > 1) {
+                svgGroup.appendChild(createLine(x2, y1, x2, y1 + height - 1, {
+                    stroke: intToHex(borderColor),
+                    'stroke-width': '1'
+                }));
+
+                // svgGroup.appendChild(createSvgElement('line', {
+                //     x1: x2, y1: y1,
+                //     x2: x2, y2: y1 + height - 1,
+                //     stroke: borderColor, 'stroke-width': '1'
+                // }));
             }
 
-            return currentY;
+            // Draw text label
+            if (text) {
+                //TODO reintroduce clipping
+                // let clipId = 'cc' + Math.random().toString(36).substr(2, 9);
+                // svgGroup.appendChild(createClipPath(clipId, x1, y1, cellWidth, height));
+                let fontSize = '10';
+                if (font && font.getSize) fontSize = String(font.getSize());
+                let textX = centered ? x1 + cellWidth / 2 : x1 + 2;
+                svgGroup.appendChild(createText(textX, y1 + height - 4, text, {
+                    fill: intToHex(textColor),
+                    'font-size': fontSize,
+                    'font-family': 'sans-serif',
+                    'text-anchor': centered ? 'middle' : 'start'/*,
+                //TODO reintroduce clipping
+                    'clip-path': 'url(#' + clipId + ')'*/
+                }));
+            }
+        }
+
+
+        /**
+         * Calculate X position for a given date (Gantt mode only).
+         * Mirrors: protected int calculateDayX(LocalDate date)
+         */
+        calculateDayX(date) {
+            // Gantt mode only - requires milestones
+            if (!this.milestones.firstMilestone) return 0;
+            let firstMilestoneX = this.x + this.dayOfWeek.getWidth() / 2;
+            return firstMilestoneX + (calculateDays(this.milestones.firstMilestone, date) - this.parent.scrollOffset + this.priRun) * this.dayOfWeek.getWidth();
+        }
+
+        drawMilestones(svg) {
+            for (let milestone of this.milestones.getList()) {
+                let x = this.calculateDayX(milestone.time);
+                this.drawMilestoneShort(svg, milestone, milestone.time, x, this.parent.theme.ganttTheme.requestMilestoneColor, this.milestone.symbol,
+                    !milestone.hidden, this.parent.theme.xAxesTheme.futureEventColor);// start
+            }
+        }
+
+        drawMilestoneShort(svg, m, time, x, fillColor, text, visible, flagTextColor) {
+            this.drawMilestone(svg, m, time, x, this.milestone.y, fillColor, text, visible, this.milestone.flagY, flagTextColor, true, true);
         }
 
         /**
@@ -275,7 +491,7 @@
          * @param {number}      y            Y-top of the milestone
          * @param {string}      fillColor    Background color for milestone box
          * @param {string}      text         Label: 'S', 'E', 'N', etc.
-         * @param {boolean}     drawMileston Whether to draw the box and text
+         * @param {boolean}     visible Whether to draw the box and text
          * @param {number|null} flagY        Y for the flag; null → no flag
          * @param {string}      flagTextColor Color for flag pole/text
          * @param {boolean}     drawFlag     Whether to draw a date flag
@@ -285,34 +501,46 @@
          * @param {number}      diagramHeight Height of diagram area (for now-line)
          * @param {boolean}     calendarAtBottom  Calendar position flag
          */
-        drawMilestone(m, time, x, y, fillColor, text, drawMileston, flagY, flagTextColor, drawFlag, drawNowLine, parentGroup, diagramY, diagramHeight, calendarAtBottom) {
-            var MILESTONE_WIDTH  = 11;
-            var MILESTONE_HEIGHT = 13;
-            var FLAG_HEIGHT      = 13;
-            var theme            = this.theme;
-            var darkRed          = '#8B0000';
-            var milestoneTextColor = intToHex(theme.xAxesTheme && theme.xAxesTheme.milestoneTextColor, '#ffffff');
+        drawMilestone(parentGroup, m, time, x, y, fillColor, text,
+                      visible, flagY, flagTextColor,
+                      drawFlag, drawNowLine) {
+            const MILESTONE_WIDTH = 11;
+            const MILESTONE_HEIGHT = 13;
+            const FLAG_HEIGHT = 13;
+            const theme = this.theme;
+            const darkRed = '#8B0000';
+            const milestoneTextColor = intToHex(theme.xAxesTheme && theme.xAxesTheme.milestoneTextColor, '#ffffff');
 
             if (text && text.charAt(0) === 'N' && drawNowLine) {
-                parentGroup.appendChild(createSvgElement('line', {
-                    x1: x, y1: diagramY,
-                    x2: x, y2: diagramY + diagramHeight,
-                    stroke: darkRed, 'stroke-width': '2'
+                parentGroup.appendChild(createLine(x, this.parent.diagram.y, x, this.parent.diagram.y + this.parent.diagram.height, {
+                    stroke: darkRed,
+                    'stroke-width': '2'
                 }));
-                var r = 3;
-                parentGroup.appendChild(createSvgElement('circle', {
-                    cx: x + 1, cy: calendarAtBottom ? diagramY - r / 2 : diagramY + diagramHeight - r,
-                    r: r, fill: darkRed
-                }));
+                // parentGroup.appendChild(createSvgElement('line', {
+                //     x1: x, y1: this.parent.diagram.y,
+                //     x2: x, y2: this.parent.diagram.y + this.parent.diagram.height,
+                //     stroke: darkRed, 'stroke-width': '2'
+                // }));
+                let r = 3;
+                parentGroup.appendChild(createCircle(x + 1,
+                    this.calendarAtBottom ? this.parent.diagram.y - r / 2 : this.parent.diagram.y + this.parent.diagram.height - r, r, {
+                        fill: darkRed
+                    }));
+                // parentGroup.appendChild(createSvgElement('circle', {
+                //     cx: x + 1,
+                //     cy: this.calendarAtBottom ? this.parent.diagram.y - r / 2 : this.parent.diagram.y + this.parent.diagram.height - r,
+                //     r: r,
+                //     fill: darkRed
+                // }));
             }
 
-            if (drawMileston) {
+            if (visible) {
                 parentGroup.appendChild(createRect(
                     x - MILESTONE_WIDTH / 2, y,
                     MILESTONE_WIDTH, MILESTONE_HEIGHT - 1,
-                    {fill: fillColor}
+                    {fill: intToHex(fillColor)}
                 ));
-                var textEl = createText(x - 1, y + MILESTONE_HEIGHT / 2 + 1, text, {
+                let textEl = createText(x - 1, y + MILESTONE_HEIGHT / 2 + 1, text, {
                     fill: milestoneTextColor,
                     'font-size': '10px',
                     'font-family': 'sans-serif',
@@ -329,16 +557,119 @@
                     parentGroup.appendChild(createSvgElement('line', {
                         x1: x, y1: y + MILESTONE_HEIGHT,
                         x2: x, y2: y + MILESTONE_HEIGHT + 3,
-                        stroke: flagTextColor, 'stroke-width': '1'
+                        stroke: intToHex(flagTextColor), 'stroke-width': '1'
                     }));
                     parentGroup.appendChild(createText(
                         x - MILESTONE_WIDTH / 2 + 2, flagY + FLAG_HEIGHT - 5,
                         this._formatDateForFlag(time),
-                        {fill: flagTextColor, 'font-size': '11px', 'font-family': 'sans-serif', 'text-anchor': 'start'}
+                        {
+                            fill: intToHex(flagTextColor),
+                            'font-size': '11px',
+                            'font-family': 'sans-serif',
+                            'text-anchor': 'start'
+                        }
                     ));
                 }
             }
         }
+
+        initPosition(x, y) {
+            this.x = x;
+            if (this.calendarAtBottom) {
+                // flag
+                // milestone, dayOfWeek
+                // dayOfMonth
+                // week
+                // month
+                // year
+
+                this.milestone.flagY = y;
+                this.milestone.y = this.milestone.flagY + this.milestone.flagHeight;
+                this.dayOfWeek.setY(this.milestone.y);
+                this.dayOfMonth.setY(this.dayOfWeek.getY() + this.dayOfWeek.getHeight());
+                if (this.isDayOfWeekVisible()) {
+                    if (this.isDayOfMonthVisible()) {
+                        this.week.setY(this.dayOfMonth.getY() + this.dayOfMonth.getHeight());
+                    } else {
+                        this.week.setY(this.dayOfWeek.getY() + this.dayOfWeek.getHeight());
+                    }
+                } else {
+                    this.week.setY(this.milestone.y + this.milestone.height);
+                }
+                if (this.isWeekVisible()) {
+                    this.month.setY(this.week.getY() + this.week.getHeight());
+                } else {
+                    this.month.setY(this.dayOfWeek.getY() + this.dayOfWeek.getHeight());
+                }
+                this.year.setY(this.month.getY() + this.month.getHeight());
+            } else {
+                // year
+                // month
+                // week
+                // dayOfMonth
+                // milestone, dayOfWeek
+                // flag
+                if (CalendarSize.YEARS === this.calendarSize) {
+                    this.year.setY(y);
+                    this.month.setY(this.year.getY() + this.year.getHeight());
+                    this.week.setY(this.month.getY() + this.month.getHeight());
+                    this.dayOfMonth.setY(this.week.getY() + this.week.getHeight());
+                    if (this.isDayOfMonthVisible()) {
+                        this.dayOfWeek.setY(this.dayOfMonth.getY() + this.dayOfMonth.getHeight());
+                    } else {
+                        this.dayOfWeek.setY(this.week.getY() + this.week.getHeight());
+                    }
+                    this.milestone.y = this.dayOfWeek.getY();
+                    this.milestone.flagY = this.dayOfWeek.getY() + this.milestone.height;
+
+                } else {
+                    this.year.setY(y);
+                    this.month.setY(y);
+                    this.week.setY(y);
+                    this.dayOfMonth.setY(this.week.getY() + this.week.getHeight());
+                    if (this.isDayOfMonthVisible()) {
+                        this.dayOfWeek.setY(this.dayOfMonth.getY() + this.dayOfMonth.getHeight());
+                    } else {
+                        this.dayOfWeek.setY(this.week.getY() + this.week.getHeight());
+                    }
+                    this.milestone.y = this.dayOfWeek.getY();
+                    this.milestone.flagY = this.dayOfWeek.getY() + this.milestone.height;
+                }
+            }
+        }
+
+        initSize(width, dayWidth, calendarAtBottom, calendarSize) {
+            this.calendarAtBottom = calendarAtBottom;
+            this.width = width;
+            this.dayOfWeek.setWidth(dayWidth);
+            this.dayOfMonth.setWidth(dayWidth);
+            this.calendarSize = calendarSize;
+        }
+
+        isDayBarsVisible() {
+            return this.dayOfWeek.getWidth() >= 4;
+        }
+
+        isDayOfMonthVisible() {
+            return this.dayOfWeek.getWidth() >= DAY_OF_MONTH_MIN_DAY_WIDTH;
+        }
+
+        isDayOfWeekVisible() {
+            return this.dayOfWeek.getWidth() >= DAY_OF_WEEK_MIN_DAY_WIDTH;
+        }
+
+        isMonthVisible() {
+            return CalendarSize.YEARS === this.calendarSize && this.dayOfWeek.getWidth() >= MONTH_MIN_DAY_WIDTH;
+        }
+
+        isWeekVisible() {
+            return CalendarSize.YEARS === this.calendarSize && this.dayOfWeek.getWidth() >= WEEK_MIN_DAY_WIDTH;
+        }
+
+        milestonesVisible() {
+            return !this.milestones.empty();
+        }
+
 
         /** @private Formats a date as "Sunday 19 June 2026". */
         _formatDateForTooltip(date) {
@@ -347,12 +678,15 @@
 
         /** @private Formats a date as "Jun.19". */
         _formatDateForFlag(date) {
-            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            return months[date.getUTCMonth()] + '.' + date.getUTCDate();
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return months[date.getMonth()] + '.' + date.getDate();
         }
+
+
     }
 
     // ── Export ─────────────────────────────────────────────────────────────────
 
     window.CalendarXAxes = CalendarXAxes;
+    window.CalendarSize = CalendarSize;
 })();

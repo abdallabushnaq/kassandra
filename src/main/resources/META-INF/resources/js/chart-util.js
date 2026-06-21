@@ -6,10 +6,12 @@
 (function () {
     'use strict';
 
-    var createSvgElement = window.SvgUtils.createSvgElement;
-    var createRect       = window.SvgUtils.createRect;
-    var createLine       = window.SvgUtils.createLine;
-    var intToHex         = window.ColorUtils.intToHex;
+    const createSvgElement = window.SvgUtils.createSvgElement;
+    const createRect = window.SvgUtils.createRect;
+    const createLine = window.SvgUtils.createLine;
+    const intToHex = window.ColorUtils.intToHex;
+    const calculateDays = window.DateUtils.calculateDays;
+
 
     // ── AbstractCanvas ─────────────────────────────────────────────────────────
     // Mirrors Java: AbstractCanvas
@@ -21,12 +23,12 @@
          */
         constructor(theme) {
             /** Total SVG width (including border). Mirrors Java AbstractCanvas.chartWidth. */
-            this.chartWidth  = 0;
+            this.chartWidth = 0;
             /** Total SVG height (including border). Mirrors Java AbstractCanvas.chartHeight. */
             this.chartHeight = 0;
             /** Border thickness in pixels. Mirrors Java AbstractCanvas.borderWidth = 1. */
             this.borderWidth = 1;
-            this.theme       = theme;
+            this.theme = theme;
         }
 
         /**
@@ -52,7 +54,7 @@
          * @param {SVGSVGElement} svg
          */
         drawBackground(svg) {
-            var bgColor = intToHex(this.theme.chartTheme.backgroundColor, '#ffffff');
+            let bgColor = intToHex(this.theme.chartTheme.backgroundColor, '#ffffff');
             svg.appendChild(createRect(0, 0, this.chartWidth, this.chartHeight, {fill: bgColor}));
         }
 
@@ -63,7 +65,7 @@
          * @param {SVGSVGElement} svg
          */
         drawBorder(svg) {
-            var borderColor = intToHex(this.theme.chartTheme.chartBorderColor, '#aaaaaa');
+            let borderColor = intToHex(this.theme.chartTheme.chartBorderColor, '#aaaaaa');
             svg.appendChild(createRect(0, 0, this.chartWidth - 1, this.chartHeight - 1, {
                 fill: 'none',
                 stroke: borderColor,
@@ -72,13 +74,16 @@
         }
 
         /** Abstract – implemented by AbstractChart to draw the caption. */
-        drawCaption(svg) { /* to be overridden */ }
+        drawCaption(svg) { /* to be overridden */
+        }
 
         /** Abstract – implemented by AbstractChart to draw the footer. */
-        drawFooter(svg) { /* to be overridden */ }
+        drawFooter(svg) { /* to be overridden */
+        }
 
         /** Abstract – implemented by concrete charts (GanttChart, SprintsOverviewChart). */
-        createReport(svg) { /* to be overridden */ }
+        createReport(svg) { /* to be overridden */
+        }
 
         /**
          * Renders the complete chart into an SVG and appends it to the container.
@@ -88,7 +93,7 @@
          * @param {HTMLElement} container  Host DOM element
          */
         render(container) {
-            var svg = createSvgElement('svg', {
+            let svg = createSvgElement('svg', {
                 width: this.chartWidth,
                 height: this.chartHeight,
                 style: 'display:block;user-select:none;shape-rendering:crispEdges'
@@ -157,7 +162,7 @@
         setChartWidth(chartWidth) {
             super.setChartWidth(chartWidth);
             if (this.captionElement) this.captionElement.width = this.chartWidth;
-            if (this.footerElement)  this.footerElement.width  = this.chartWidth;
+            if (this.footerElement) this.footerElement.width = this.chartWidth;
         }
 
         /** Delegates to captionElement.draw(svg). */
@@ -171,20 +176,58 @@
         }
     }
 
+
+    class GraphSquare {
+
+        constructor(x, y, width, height, font, lableFont) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.font = font;
+            this.lableFont = lableFont;
+        }
+
+        initPosition(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        initSize(w, h) {
+            this.width = w;
+            this.height = h;
+        }
+
+    }
+
     // ── AbstractRenderer ───────────────────────────────────────────────────────
     // Mirrors Java: AbstractRenderer
     // Base class for chart content renderers.
 
     class AbstractRenderer {
-        constructor() {
+        constructor(theme, milestones, preRun, postRun) {
             /** Computed chart content width (without caption/footer). */
-            this.chartWidth  = 0;
+            this.chartWidth = 0;
             /** Computed chart content height (without caption/footer). */
             this.chartHeight = 0;
-            /** CalendarXAxes instance for rendering the time header. */
-            this.calendarXAxes = null;
             /** Theme instance. */
-            this.theme = null;
+            this.theme = theme || null;
+            /** Milestones for the chart. Mirrors Java: AbstractRenderer.milestones. */
+            this.milestones = milestones || null;
+            /** CalendarXAxes instance for rendering the time header. Mirrors Java: AbstractRenderer.calendarXAxes. */
+            this.calendarXAxes = null;
+            this.days = 3;
+            this.firstDayX = 0;
+            this.scrollOffset = 0;
+            this.preRun = preRun;
+            this.postRun = postRun;
+
+            // If theme and milestones are provided, initialize CalendarXAxes
+            // Mirrors Java: AbstractRenderer constructor which creates CalendarXAxes after setting theme/milestones
+            if (this.theme && this.milestones) {
+                this.calendarXAxes = new window.CalendarXAxes(this, preRun || 0, postRun || 0);
+            }
+            this.diagram = new GraphSquare();
         }
 
         /**
@@ -193,7 +236,9 @@
          *
          * @returns {number}
          */
-        calculateChartHeight() { return this.chartHeight; }
+        calculateChartHeight() {
+            return this.chartHeight;
+        }
 
         /**
          * Abstract: compute chart content width.
@@ -201,7 +246,9 @@
          *
          * @returns {number}
          */
-        calculateChartWidth() { return this.chartWidth; }
+        calculateChartWidth() {
+            return this.chartWidth;
+        }
 
         /**
          * Abstract: draw chart content into the SVG.
@@ -211,13 +258,72 @@
          * @param {number}        x    X offset (always 0 for full-width charts)
          * @param {number}        y    Y offset = captionElement.height
          */
-        draw(svg, x, y) { /* to be overridden */ }
+        draw(svg, x, y) { /* to be overridden */
+        }
+
+        drawMilestones(svg) {
+            this.calendarXAxes.drawMilestones(svg);
+        }
+
+        calculateDayX(date) {
+            let firstMilestoneDay = this.milestones.firstMilestone;
+            let firstMilestoneX = this.firstDayX + this.calendarXAxes.dayOfWeek.getWidth() / 2;
+            return firstMilestoneX + (calculateDays(firstMilestoneDay, date) - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth();
+        }
+
+        drawDayBars(svg, currentDay) {
+            //        Calendar day = Calendar.getInstance();
+            //        day.setTimeInMillis(currentDay);
+            let color = window.GraphColorUtil.getDayOfWeekBgColor(this.theme/*, bankHolidays*/, currentDay);
+            let x = this.calculateDayX(currentDay);
+            svg.appendChild(createRect(x - (this.calendarXAxes.dayOfWeek.getWidth() / 2 - 1), this.diagram.y, this.calendarXAxes.dayOfWeek.getWidth() - 1, this.diagram.height, {fill: intToHex(color)}));
+            // graphics2D.setColor(color);
+            //day vertical bar
+            // graphics2D.fillRect(x - (this.calendarXAxes.dayOfWeek.getWidth() / 2 - 1), this.diagram.y, this.calendarXAxes.dayOfWeek.getWidth() - 1, this.diagram.height);//left |
+            //draw vertical lines
+
+            svg.appendChild(createRect(x - (this.calendarXAxes.dayOfWeek.getWidth() / 2 - 1) + (this.calendarXAxes.dayOfWeek.getWidth() - 1), this.diagram.y, (this.calendarXAxes.dayOfWeek.getWidth() - 1) + 1, this.diagram.height, {fill: intToHex(this.theme.ganttTheme.gridColor)}));
+            // graphics2D.setColor(this.theme.ganttTheme.gridColor);
+            // graphics2D.fillRect(x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxes.dayOfWeek.getWidth() - 1), diagram.y, 1, diagram.height);//right |
+        }
+
+        calculateDayWidth() {
+            this.days = this.calculateMaxDays();
+            this.calendarXAxes.dayOfWeek.setWidth((this.chartWidth) / this.days);
+        }
+
+        calculateMaxDays() {
+            return calculateDays(this.milestones.firstMilestone, this.milestones.lastMilestone) + 1 + this.calendarXAxes.priRun + this.calendarXAxes.postRun;
+        }
+
+        initSize(x, calendarAtBottom, calendarSize) {
+            this.calendarAtBottom = calendarAtBottom;
+            this.calendarXAxes.calendarSize = calendarSize;
+            // this.calendarAtBottom = calendarAtBottom;
+            this.calculateDayWidth();
+            this.chartWidth = this.calculateChartWidth();
+            this.chartHeight = this.calculateChartHeight();
+            this.firstDayX = x;
+            // this.bankHolidayFont = new Font(Font.SANS_SERIF, Font.PLAIN, Math.min(14, (int)(this.calendarXAxes.dayOfWeek.getWidth() * 1.1)));
+
+            if (calendarAtBottom) {
+                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+                this.diagram.initSize(this.chartWidth - x, this.chartHeight - this.calendarXAxes.getHeight());
+                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+            } else {
+                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+                this.diagram.initSize(this.chartWidth - x, this.chartHeight - this.calendarXAxes.getHeight());
+                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+            }
+        }
+
+
     }
 
     // ── Export to global scope ─────────────────────────────────────────────────
 
-    window.AbstractCanvas   = AbstractCanvas;
-    window.AbstractChart    = AbstractChart;
+    window.AbstractCanvas = AbstractCanvas;
+    window.AbstractChart = AbstractChart;
     window.AbstractRenderer = AbstractRenderer;
 })();
 

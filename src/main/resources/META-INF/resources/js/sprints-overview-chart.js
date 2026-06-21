@@ -23,17 +23,17 @@
 (function () {
     'use strict';
 
-    var createSvgElement   = window.SvgUtils.createSvgElement;
-    var createRect         = window.SvgUtils.createRect;
-    var createText         = window.SvgUtils.createText;
-    var createLine         = window.SvgUtils.createLine;
-    var createClipPath     = window.SvgUtils.createClipPath;
-    var intToHex           = window.ColorUtils.intToHex;
+    var createSvgElement = window.SvgUtils.createSvgElement;
+    var createRect = window.SvgUtils.createRect;
+    var createText = window.SvgUtils.createText;
+    var createLine = window.SvgUtils.createLine;
+    var createClipPath = window.SvgUtils.createClipPath;
+    var intToHex = window.ColorUtils.intToHex;
     var convertSprintColorToRgba = window.ColorUtils.convertSprintColorToRgba;
-    var MS                 = window.DateUtils.MS;
-    var getUtcDayMidnight  = window.DateUtils.getUtcDayMidnight;
-    var calculateDayIndex  = window.DateUtils.calculateDayIndex;
-    var calculateDayCount  = window.DateUtils.calculateDayCount;
+    var MS = window.DateUtils.MS;
+    var getDayMidnight = window.DateUtils.getDayMidnight;
+    var calculateDayIndex = window.DateUtils.calculateDayIndex;
+    var calculateDayCount = window.DateUtils.calculateDayCount;
 
     // ── Layout constants ───────────────────────────────────────────────────────
     // Mirrors Java: SprintsOverviewRenderer constants
@@ -52,14 +52,14 @@
      * Lane spacing = getTaskHeight() + 2.
      * Java getTaskHeight() when numberOfLines > 1: LINE_HEIGHT * numberOfLines + 17 = 56.
      */
-    var TASK_H   = LINE_HEIGHT * NUMBER_OF_LINES + 17;     // 56 px
-    var LANE_H   = TASK_H + 2;                             // 58 px
+    var TASK_H = LINE_HEIGHT * NUMBER_OF_LINES + 17;     // 56 px
+    var LANE_H = TASK_H + 2;                             // 58 px
 
     /** Default pixel width per day. Mirrors Java SprintsOverviewRenderer.calculateDayWidth() → dayOfWeek.width = 8. */
     var DEFAULT_DW = 8;
-    var MIN_DW     = 1;
-    var MAX_DW     = 80;
-    var ZOOM_STEP  = 1.25;
+    var MIN_DW = 1;
+    var MAX_DW = 80;
+    var ZOOM_STEP = 1.25;
 
     // ── localStorage helpers ───────────────────────────────────────────────────
 
@@ -75,14 +75,19 @@
                 var s = JSON.parse(raw);
                 if (typeof s.dayWidth === 'number' && typeof s.scrollOffset === 'number') return s;
             }
-        } catch (e) { /* unavailable */ }
+        } catch (e) { /* unavailable */
+        }
         return null;
     }
 
     function saveViewState(containerId, dayWidth, scrollOffset) {
         try {
-            localStorage.setItem(viewStateKey(containerId), JSON.stringify({dayWidth: dayWidth, scrollOffset: scrollOffset}));
-        } catch (e) { /* quota */ }
+            localStorage.setItem(viewStateKey(containerId), JSON.stringify({
+                dayWidth: dayWidth,
+                scrollOffset: scrollOffset
+            }));
+        } catch (e) { /* quota */
+        }
     }
 
     // ── Context menu (singleton per page) ─────────────────────────────────────
@@ -135,59 +140,111 @@
 
         // Navigation items
         var items = [
-            {label: 'Backlog',        href: '/ui/backlog?sprint='     + sprint.id},
-            {label: 'Active Sprint',  href: '/ui/active-sprint?sprint=' + sprint.id},
-            {label: 'Quality Board',  href: '/ui/quality-board?sprint=' + sprint.id}
+            {label: 'Backlog', href: '/ui/backlog?sprint=' + sprint.id},
+            {label: 'Active Sprint', href: '/ui/active-sprint?sprint=' + sprint.id},
+            {label: 'Quality Board', href: '/ui/quality-board?sprint=' + sprint.id}
         ];
         items.forEach(function (item) {
             var row = document.createElement('a');
             row.href = item.href;
             row.textContent = item.label;
             row.style.cssText = 'display:block;padding:6px 14px;text-decoration:none;color:inherit;cursor:pointer';
-            row.addEventListener('mouseenter', function () { row.style.background = 'var(--lumo-primary-color-10pct,#e8f0fe)'; });
-            row.addEventListener('mouseleave', function () { row.style.background = ''; });
-            row.addEventListener('click', function (e) { e.stopPropagation(); hideContextMenu(); });
+            row.addEventListener('mouseenter', function () {
+                row.style.background = 'var(--lumo-primary-color-10pct,#e8f0fe)';
+            });
+            row.addEventListener('mouseleave', function () {
+                row.style.background = '';
+            });
+            row.addEventListener('click', function (e) {
+                e.stopPropagation();
+                hideContextMenu();
+            });
             menu.appendChild(row);
         });
 
         menu.style.display = 'block';
-        var menuW  = menu.offsetWidth  || 160;
-        var menuH  = menu.offsetHeight || 120;
-        var leftPos = (clientX + menuW + 2 > window.innerWidth)  ? (clientX - menuW) : (clientX + 2);
-        var topPos  = (clientY + menuH + 2 > window.innerHeight) ? (clientY - menuH) : (clientY + 2);
+        var menuW = menu.offsetWidth || 160;
+        var menuH = menu.offsetHeight || 120;
+        var leftPos = (clientX + menuW + 2 > window.innerWidth) ? (clientX - menuW) : (clientX + 2);
+        var topPos = (clientY + menuH + 2 > window.innerHeight) ? (clientY - menuH) : (clientY + 2);
         menu.style.left = Math.max(0, leftPos) + 'px';
-        menu.style.top  = Math.max(0, topPos) + 'px';
+        menu.style.top = Math.max(0, topPos) + 'px';
     }
 
     // ── SprintsOverviewRenderer ────────────────────────────────────────────────
     // Mirrors Java: SprintsOverviewRenderer extends AbstractRenderer
 
     class SprintsOverviewRenderer extends window.AbstractRenderer {
-        /**
-         * @param {Object} data   SprintOverviewDto JSON
-         * @param {Theme}  theme  Theme instance
-         */
-        constructor(data, theme) {
-            super();
-            this.theme       = theme;
-            this.lanes       = data.lanes || [];
-            this.chartStart  = getUtcDayMidnight(new Date(data.meta.chartStart || Date.now()));
-            this.chartEnd    = getUtcDayMidnight(new Date(data.meta.chartEnd   || Date.now()));
-            this.currentDate = data.meta.now ? getUtcDayMidnight(new Date(data.meta.now)) : getUtcDayMidnight(new Date());
-            this.totalDays   = calculateDayCount(this.chartStart, this.chartEnd);
-            this.calendarXAxes = new window.CalendarXAxes(theme);
+
+        constructor(data, theme, preRun, postRun) {
+            // Create milestones first, BEFORE calling super()
+            // Mirrors Java SprintsOverviewRenderer constructor
+            let chartStart = new Date(data.meta.chartStart || Date.now());
+            let chartEnd = new Date(data.meta.chartEnd || Date.now());
+            let currentDate = new Date(data.meta.now);
+
+            let milestonesList = [];
+
+            // Milestone "N" (Now) - current date
+            milestonesList.push(new window.Milestone(
+                currentDate,
+                'N',
+                'Now (current date)',
+                false
+            ));
+
+            milestonesList.push(new window.Milestone(
+                getDayMidnight(chartStart),
+                'S',
+                'Start (Start of project)',
+                false
+            ));
+
+            milestonesList.push(new window.Milestone(
+                getDayMidnight(chartEnd),
+                'E',
+                'End (End of project)',
+                false
+            ));
+
+            let milestones = new window.Milestones(
+                milestonesList,
+                chartStart, // firstMilestone
+                chartEnd // lastMilestone
+            );
+
+            // NOW call super() with theme and milestones
+            // Mirrors Java: AbstractRenderer constructor pattern
+            // SprintsOverviewRenderer uses 3 (preRun) and 5 (postRun) like Java
+            super(theme, milestones, preRun, postRun);
+
+            this.lanes = data.lanes || [];
+            this.chartStart = chartStart;
+            this.chartEnd = chartEnd;
+            this.currentDate = currentDate;
+            this.totalDays = calculateDayCount(this.chartStart, this.chartEnd);
 
             /** Interactive scroll/zoom state – updated by SprintsOverviewChart.updateViewState() */
-            this.dayWidth       = DEFAULT_DW;
-            this.scrollOffset   = 0;
+            this.dayWidth = DEFAULT_DW;
             this.containerWidth = 800;
 
             /** Hit areas for context menu – rebuilt on every draw(). */
             this.sprintHitAreas = [];
+            this.initSize(0, false, window.CalendarSize.YEARS);
+        }
+
+        calculateChartWidth() {
+            return this.calendarXAxes.dayOfWeek.getWidth() * this.days;
         }
 
         dayIndexToPixelX(dayIndex) {
-            return (dayIndex - this.scrollOffset) * this.dayWidth;
+            return (dayIndex - this.scrollOffset + this.preRun) * this.dayWidth;
+        }
+
+        calculateDayWidth() {
+            // super.calculateDayWidth();
+            // this.calendarXAxes.dayOfWeek.setWidth(8);
+            return this.dayWidth;
         }
 
         /**
@@ -212,33 +269,36 @@
          * Mirrors Java: AbstractRenderer.drawDayBars() (background stripe portion for SprintsOverview).
          */
         renderWeekendStripes(baseY, baseHeight) {
-            var g              = createSvgElement('g', {'class': 'weekend-stripes'});
-            var containerWidth = this.containerWidth;
-            var xAxesTheme     = this.theme.xAxesTheme;
+            let g = createSvgElement('g', {'class': 'weekend-stripes'});
+            let containerWidth = this.containerWidth;
+            let xAxesTheme = this.theme.xAxesTheme;
 
             if (this.dayWidth >= 4) {
-                var satColor = intToHex(xAxesTheme.dayOfweekSaturdayBgColor, null);
-                var sunColor = intToHex(xAxesTheme.dayOfweekSundayBgColor,   null);
-                var firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
-                var lastDay  = Math.min(this.totalDays - 1, firstDay + Math.ceil(containerWidth / this.dayWidth) + 2);
-                for (var d = firstDay; d <= lastDay; d++) {
-                    var dow  = new Date(this.chartStart.getTime() + d * MS).getUTCDay();
-                    var xPos = this.dayIndexToPixelX(d);
+                let satColor = intToHex(xAxesTheme.dayOfweekSaturdayBgColor, null);
+                let sunColor = intToHex(xAxesTheme.dayOfweekSundayBgColor, null);
+                let firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
+                let lastDay = Math.min(this.totalDays - 1, firstDay + Math.ceil(containerWidth / this.dayWidth) + 2);
+                for (let d = firstDay; d <= lastDay; d++) {
+                    let dow = new Date(this.chartStart.getTime() + d * MS).getDay();
+                    let xPos = this.dayIndexToPixelX(d);
                     if (xPos + this.dayWidth < 0 || xPos > containerWidth) continue;
-                    var bgColor = dow === 6 ? satColor : (dow === 0 ? sunColor : null);
+                    let bgColor = dow === 6 ? satColor : (dow === 0 ? sunColor : null);
                     if (!bgColor) continue;
                     g.appendChild(createRect(xPos, baseY, this.dayWidth, baseHeight, {fill: bgColor}));
                 }
             } else {
                 // Week-boundary vertical lines
-                var gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
-                var firstD    = Math.max(0, Math.floor(this.scrollOffset));
-                var lastD     = Math.min(this.totalDays - 1, firstD + Math.ceil(containerWidth / this.dayWidth) + 8);
-                for (var dd = firstD; dd <= lastD; dd++) {
-                    if (new Date(this.chartStart.getTime() + dd * MS).getUTCDay() !== 1) continue;
-                    var xp = this.dayIndexToPixelX(dd);
+                let gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+                let firstD = Math.max(0, Math.floor(this.scrollOffset));
+                let lastD = Math.min(this.totalDays - 1, firstD + Math.ceil(containerWidth / this.dayWidth) + 8);
+                for (let dd = firstD; dd <= lastD; dd++) {
+                    if (new Date(this.chartStart.getTime() + dd * MS).getDay() !== 1) continue;
+                    let xp = this.dayIndexToPixelX(dd);
                     if (xp < 0 || xp > containerWidth) continue;
-                    g.appendChild(createLine(xp, baseY, xp, baseY + baseHeight, {stroke: gridColor, 'stroke-width': '1'}));
+                    g.appendChild(createLine(xp, baseY, xp, baseY + baseHeight, {
+                        stroke: gridColor,
+                        'stroke-width': '1'
+                    }));
                 }
             }
             return g;
@@ -249,17 +309,20 @@
          * Mirrors Java: AbstractRenderer.drawDayBars() (grid line portion).
          */
         renderVerticalGridLines(baseY, baseHeight) {
-            var g              = createSvgElement('g', {'class': 'grid-lines'});
-            var containerWidth = this.containerWidth;
+            let g = createSvgElement('g', {'class': 'grid-lines'});
+            let containerWidth = this.containerWidth;
             if (this.dayWidth < 4) return g;
 
-            var gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
-            var firstDay  = Math.max(0, Math.floor(this.scrollOffset) - 1);
-            var lastDay   = Math.min(this.totalDays, firstDay + Math.ceil(containerWidth / this.dayWidth) + 2);
-            for (var d = firstDay; d <= lastDay; d++) {
-                var xPos = this.dayIndexToPixelX(d);
+            let gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+            let firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
+            let lastDay = Math.min(this.totalDays, firstDay + Math.ceil(containerWidth / this.dayWidth) + 2);
+            for (let d = firstDay; d <= lastDay; d++) {
+                let xPos = this.dayIndexToPixelX(d);
                 if (xPos < 0 || xPos > containerWidth) continue;
-                g.appendChild(createLine(xPos, baseY, xPos, baseY + baseHeight, {stroke: gridColor, 'stroke-width': '1'}));
+                g.appendChild(createLine(xPos, baseY, xPos, baseY + baseHeight, {
+                    stroke: gridColor,
+                    'stroke-width': '1'
+                }));
             }
             return g;
         }
@@ -268,21 +331,21 @@
          * Renders sprint rectangles and labels across all lanes.
          * Mirrors Java: SprintsOverviewRenderer.drawGraph()
          */
-        renderSprintRectangles(baseY) {
+        drawGraph(svg) {
             this.sprintHitAreas = [];
-            var g              = createSvgElement('g', {'class': 'sprints'});
-            var containerWidth = this.containerWidth;
-            var self           = this;
+            let g = createSvgElement('g', {'class': 'sprints'});
+            let containerWidth = this.containerWidth;
+            let self = this;
 
             this.lanes.forEach(function (lane, laneIndex) {
-                var laneY = baseY + laneIndex * LANE_H;
+                let laneY = self.diagram.y + laneIndex * LANE_H;
 
                 (lane.sprints || []).forEach(function (sprint) {
                     if (!sprint.start || !sprint.end) return;
-                    var startIdx  = calculateDayIndex(sprint.start, self.chartStart);
-                    var endIdx    = calculateDayIndex(sprint.end,   self.chartStart);
-                    var sprintX   = self.dayIndexToPixelX(startIdx);
-                    var sprintW   = (endIdx - startIdx + 1) * self.dayWidth - 1;
+                    let startIdx = calculateDayIndex(sprint.start, self.chartStart);
+                    let endIdx = calculateDayIndex(sprint.end, self.chartStart);
+                    let sprintX = self.dayIndexToPixelX(startIdx);
+                    let sprintW = (endIdx - startIdx + 1) * self.dayWidth - 1;
                     if (sprintX + sprintW < 0 || sprintX > containerWidth) return;
 
                     // Register hit area for context menu
@@ -290,7 +353,7 @@
 
                     // Sprint rectangle – fill color from sprint.color (#rrggbbaa)
                     var fillColor = convertSprintColorToRgba(sprint.color);
-                    var rect      = createRect(sprintX, laneY, sprintW, SPRINT_H, {fill: fillColor});
+                    var rect = createRect(sprintX, laneY, sprintW, SPRINT_H, {fill: fillColor});
                     rect.appendChild(createSvgElement('title', {}, self.buildSprintTooltip(sprint)));
                     g.appendChild(rect);
 
@@ -310,7 +373,7 @@
                     }
                 });
             });
-            return g;
+            svg.appendChild(g);
         }
 
         /**
@@ -318,10 +381,10 @@
          * Mirrors Java: CalendarXAxes now-line rendering for overview.
          */
         renderCurrentDateLine(chartHeight) {
-            var g              = createSvgElement('g', {'class': 'now-line'});
-            var containerWidth = this.containerWidth;
-            var nowIdx         = calculateDayIndex(this.currentDate, this.chartStart);
-            var xPos           = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
+            let g = createSvgElement('g', {'class': 'now-line'});
+            let containerWidth = this.containerWidth;
+            let nowIdx = calculateDayIndex(this.currentDate, this.chartStart);
+            let xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
             if (xPos < 0 || xPos > containerWidth) return g;
             g.appendChild(createLine(xPos, 0, xPos, chartHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
             return g;
@@ -329,13 +392,30 @@
 
         /** Builds a multi-line tooltip string for a sprint. */
         buildSprintTooltip(sprint) {
-            var tooltip = sprint.name || '';
-            if (sprint.key)    tooltip += '\nKey: '    + sprint.key;
+            let tooltip = sprint.name || '';
+            if (sprint.key) tooltip += '\nKey: ' + sprint.key;
             if (sprint.status) tooltip += '\nStatus: ' + sprint.status;
-            if (sprint.start)  tooltip += '\nStart: '  + new Date(sprint.start).toLocaleDateString();
-            if (sprint.end)    tooltip += '\nEnd: '    + new Date(sprint.end).toLocaleDateString();
-            if (sprint.delay)  tooltip += '\n(DELAYED)';
+            if (sprint.start) tooltip += '\nStart: ' + new Date(sprint.start).toLocaleDateString();
+            if (sprint.end) tooltip += '\nEnd: ' + new Date(sprint.end).toLocaleDateString();
+            if (sprint.delay) tooltip += '\n(DELAYED)';
             return tooltip;
+        }
+
+        initPosition(x, y) {
+            this.firstDayX = x;
+            if (this.calendarAtBottom) {
+                this.calendarXAxes.initPosition(x, y);
+                this.diagram.initPosition(x, y);
+                this.calendarXAxes.initPosition(x, this.diagram.y + this.diagram.height + 1);
+            } else {
+                this.calendarXAxes.initPosition(x, y);
+                this.diagram.initPosition(x, this.calendarXAxes.year.getY() + this.calendarXAxes.getHeight());
+//            this.calendarXAxes.initPosition(x, this.diagram.y + this.diagram.height + 1);
+            }
+        }
+
+        drawCalendar(drawDays, svg) {
+            this.calendarXAxes.drawCalendar(drawDays, svg, this.diagram.width);
         }
 
         /**
@@ -343,18 +423,28 @@
          * Mirrors Java: SprintsOverviewRenderer.draw(ExtendedGraphics2D, int x, int y)
          */
         draw(svg, x, y) {
-            var calendarH    = this.calendarXAxes.getHeight(this.dayWidth, false);
-            var lanesH       = this.calculateLaneAreaHeight();
-            var totalH       = calendarH + lanesH;
+            // var calendarH = this.calendarXAxes.getHeight(this.dayWidth, false);
+            // var lanesH = this.calculateLaneAreaHeight();
+            // var totalH = calendarH + lanesH;
+            //
+            // // Initialize calendar positioning – mirrors Java: initPosition(firstDayX + x, y)
+            // this.calendarXAxes.initPosition(0, y);
+            //
+            // // Render order: stripes → grid → sprints → calendar header → now-line
+            // // Mirrors Java: drawCalendar() → drawGraph() → drawMilestones()
+            // svg.appendChild(this.renderWeekendStripes(y + calendarH, lanesH));
+            // svg.appendChild(this.renderVerticalGridLines(y + calendarH, lanesH));
+            // svg.appendChild(this.renderSprintRectangles(y + calendarH));
+            // // Use unified drawCalendar method like gantt-chart.js (pass milestones parameter)
+            // this.calendarXAxes.draw(svg, this.chartStart, this.totalDays, this.dayWidth, this.scrollOffset, this.containerWidth, this.milestones);
+            // svg.appendChild(this.renderCurrentDateLine(y + totalH));
 
-            // Render order: stripes → grid → sprints → calendar header → now-line
-            // Mirrors Java: drawCalendar() → drawGraph() → drawMilestones()
-            svg.appendChild(this.renderWeekendStripes(y + calendarH, lanesH));
-            svg.appendChild(this.renderVerticalGridLines(y + calendarH, lanesH));
-            svg.appendChild(this.renderSprintRectangles(y + calendarH));
-            this.calendarXAxes.draw(svg, this.chartStart, this.totalDays, this.dayWidth, this.scrollOffset, this.containerWidth);
-            svg.appendChild(this.renderCurrentDateLine(y + totalH));
+            this.initPosition(0 + x, y);
+            this.drawCalendar(true, svg);
+            this.drawGraph(svg, x, y);
+            this.drawMilestones(svg);
         }
+
     }
 
     // ── SprintsOverviewChart ───────────────────────────────────────────────────
@@ -368,7 +458,7 @@
         constructor(data, theme) {
             super('Project Overview Chart', '', '', '', 'sprints-overview-chart', theme);
             /** Mirrors Java: SprintsOverviewChart → getRenderers().add(new SprintsOverviewRenderer(dao)) */
-            this.addRenderer(new SprintsOverviewRenderer(data, theme));
+            this.addRenderer(new SprintsOverviewRenderer(data, theme, 5, 5));
         }
 
         /**
@@ -380,19 +470,22 @@
          * @param {number} containerWidth
          */
         updateViewState(dayWidth, scrollOffset, containerWidth) {
-            var renderer            = this.renderers[0];
-            renderer.dayWidth       = dayWidth;
-            renderer.scrollOffset   = scrollOffset;
+            var renderer = this.renderers[0];
+            renderer.dayWidth = dayWidth;
+            renderer.calendarXAxes.dayOfWeek.width = dayWidth;
+            renderer.scrollOffset = scrollOffset;
             renderer.containerWidth = containerWidth;
 
             var calendarH = renderer.calendarXAxes.getHeight(dayWidth, false);
-            var lanesH    = renderer.calculateLaneAreaHeight();
-            var contentH  = calendarH + lanesH;
+            var lanesH = renderer.calculateLaneAreaHeight();
+            var contentH = calendarH + lanesH;
 
             // Mirrors Java: SprintsOverviewChart constructor dimension setup
             this.setChartWidth(containerWidth);
             this.setChartHeight(contentH + this.captionElement.height + this.footerElement.height - 1);
-            this.footerElement.y = contentH + this.captionElement.height;
+            this.footerElement.y = contentH + this.captionElement.height;//TODO
+            this.renderers[0].initSize(this.firstDayX, false, window.CalendarSize.YEARS);
+
         }
 
         /** Mirrors Java: SprintsOverviewChart.createReport() */
@@ -416,17 +509,19 @@
      * @returns {{ render:Function, schedule:Function, destroy:Function }}
      */
     function createChart(container, data, options) {
-        options         = options || {};
+        options = options || {};
         var containerId = options.containerId || container.id || 'chart';
 
-        var theme    = new window.Theme(data.meta.theme);
-        var chart    = new SprintsOverviewChart(data, theme);
+        var theme = new window.Theme(data.meta.theme);
+        var chart = new SprintsOverviewChart(data, theme);
         var renderer = chart.renderers[0];
 
-        var dayWidth     = DEFAULT_DW;
+        var dayWidth = DEFAULT_DW;
         var scrollOffset = 0;
 
-        function getContainerWidth() { return Math.max(200, container.clientWidth || 800); }
+        function getContainerWidth() {
+            return Math.max(200, container.clientWidth || 800);
+        }
 
         function constrainScrollOffset() {
             scrollOffset = Math.max(0, Math.min(
@@ -437,16 +532,17 @@
 
         var saved = loadViewState(containerId);
         if (saved) {
-            dayWidth     = Math.min(MAX_DW, Math.max(MIN_DW, saved.dayWidth));
+            dayWidth = Math.min(MAX_DW, Math.max(MIN_DW, saved.dayWidth));
             scrollOffset = saved.scrollOffset;
             constrainScrollOffset();
         } else {
-            var todayIdx    = calculateDayIndex(renderer.currentDate, renderer.chartStart);
+            var todayIdx = calculateDayIndex(renderer.currentDate, renderer.chartStart);
             var visibleDays = getContainerWidth() / dayWidth;
-            scrollOffset    = Math.max(0, Math.min(renderer.totalDays - visibleDays, todayIdx - visibleDays * 0.3));
+            scrollOffset = Math.max(0, Math.min(renderer.totalDays - visibleDays, todayIdx - visibleDays * 0.3));
         }
 
         var saveTimerId = null;
+
         function scheduleSave() {
             if (saveTimerId) clearTimeout(saveTimerId);
             saveTimerId = setTimeout(function () {
@@ -472,12 +568,13 @@
             if (event.deltaX !== 0) {
                 scrollOffset += event.deltaX / dayWidth;
             } else {
-                var rect     = container.getBoundingClientRect();
-                var mouseX   = (event.clientX != null) ? (event.clientX - rect.left) : (getContainerWidth() / 2);
+                var rect = container.getBoundingClientRect();
+                var mouseX = (event.clientX != null) ? (event.clientX - rect.left) : (getContainerWidth() / 2);
                 var dayUnder = scrollOffset + mouseX / dayWidth;
-                var factor   = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
-                dayWidth     = Math.max(MIN_DW, Math.min(MAX_DW, dayWidth * factor));
+                var factor = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
+                dayWidth = Math.max(MIN_DW, Math.min(MAX_DW, dayWidth * factor));
                 scrollOffset = dayUnder - mouseX / dayWidth;
+                // this.initSize(this.firstDayX, false, window.CalendarSize.YEARS);
             }
             constrainScrollOffset();
             scheduleRender();
@@ -485,6 +582,7 @@
         }
 
         var dragState = null;
+
         function handlePointerDown(event) {
             if (event.button !== 0) return;
             dragState = {startX: event.clientX, startOffset: scrollOffset};
@@ -492,14 +590,19 @@
             container.style.cursor = 'grabbing';
             event.preventDefault();
         }
+
         function handlePointerMove(event) {
             if (!dragState) return;
             scrollOffset = dragState.startOffset - (event.clientX - dragState.startX) / dayWidth;
             constrainScrollOffset();
             scheduleRender();
         }
+
         function handlePointerUp() {
-            if (dragState) { dragState = null; scheduleSave(); }
+            if (dragState) {
+                dragState = null;
+                scheduleSave();
+            }
             container.style.cursor = 'grab';
         }
 
@@ -507,10 +610,10 @@
         function handleContextMenuRequest(event) {
             event.preventDefault();
             hideContextMenu();
-            var rect   = container.getBoundingClientRect();
+            var rect = container.getBoundingClientRect();
             var mouseX = event.clientX - rect.left;
             var mouseY = event.clientY - rect.top;
-            var hits   = renderer.sprintHitAreas;
+            var hits = renderer.sprintHitAreas;
             for (var i = 0; i < hits.length; i++) {
                 var h = hits[i];
                 if (mouseX >= h.x && mouseX <= h.x + h.width && mouseY >= h.y && mouseY <= h.y + h.height) {
@@ -561,7 +664,7 @@
      * @param {Object} injectedData  SprintOverviewDto JSON
      */
     function mountSprintsOverviewChart(containerId, injectedData) {
-        var elementId        = containerId || 'sprints-overview-chart-container';
+        var elementId = containerId || 'sprints-overview-chart-container';
         var containerElement = document.getElementById(elementId);
         if (!containerElement) return;
 
@@ -579,10 +682,10 @@
 
     // ── Exports ────────────────────────────────────────────────────────────────
 
-    window.mountSprintsOverviewChart   = mountSprintsOverviewChart;
-    window.createSprintsOverviewChart  = createChart;
-    window.SprintsOverviewRenderer     = SprintsOverviewRenderer;
-    window.SprintsOverviewChart        = SprintsOverviewChart;
+    window.mountSprintsOverviewChart = mountSprintsOverviewChart;
+    window.createSprintsOverviewChart = createChart;
+    window.SprintsOverviewRenderer = SprintsOverviewRenderer;
+    window.SprintsOverviewChart = SprintsOverviewChart;
 })();
 
 

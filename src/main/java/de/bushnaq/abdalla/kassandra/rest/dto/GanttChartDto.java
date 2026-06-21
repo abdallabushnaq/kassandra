@@ -36,7 +36,6 @@ import java.util.UUID;
 public class GanttChartDto {
 
     public List<TaskDto>       tasks      = new ArrayList<>();
-    public List<MilestoneDto>  milestones = new ArrayList<>();
     public Meta                meta       = new Meta();
 
     /**
@@ -51,6 +50,12 @@ public class GanttChartDto {
         public LocalDateTime now;
         /** Name of the sprint being rendered. */
         public String        sprintName;
+        /** Earliest start date of any task in the sprint (used for milestone "S"). */
+        public LocalDateTime sprintEarliestStartDate;
+        /** Latest finish date of any task in the sprint (used for milestone "E"). */
+        public LocalDateTime sprintLatestFinishDate;
+        /** Sprint status: ACTIVE, CLOSED, or PLANNING (used to determine if "N" milestone should be shown). */
+        public String        sprintStatus;
         /**
          * Number of extra days rendered before the earliest task start.
          * Mirrors {@code RenderDao.preRun}; used to leave room for user-name labels.
@@ -70,18 +75,6 @@ public class GanttChartDto {
         public ThemeDto theme = new ThemeDto();
     }
 
-    /**
-     * Project-level milestone (Sprint start "S", end "E", or current date "N").
-     * Rendered in a separate row in the calendar header.
-     */
-    public static class MilestoneDto {
-        /** Date of the milestone. */
-        public LocalDate date;
-        /** Single-character code: S (start), E (end), or N (now). */
-        public String    letter;
-        /** Display label: "Start", "End", or "Now". */
-        public String    label;
-    }
 
     /**
      * A calendar exception (non-working day range) for a task's assigned user.
