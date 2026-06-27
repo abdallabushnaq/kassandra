@@ -307,13 +307,13 @@
             // this.bankHolidayFont = new Font(Font.SANS_SERIF, Font.PLAIN, Math.min(14, (int)(this.calendarXAxes.dayOfWeek.getWidth() * 1.1)));
 
             if (calendarAtBottom) {
-                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, containerWidth);
                 this.diagram.initSize(this.chartWidth - x, this.chartHeight - this.calendarXAxes.getHeight());
-                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, containerWidth);
             } else {
-                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, containerWidth);
                 this.diagram.initSize(this.chartWidth - x, this.chartHeight - this.calendarXAxes.getHeight());
-                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+                this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, containerWidth);
             }
         }
 

@@ -1321,20 +1321,11 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             try {
                 GanttChartDto dto  = ganttChartService.build(sprint, ParameterOptions.getLocalNow(), isDark);
                 String        json = jsonMapper.writeValueAsString(dto);
-                ui.getPage().addJavaScript("/js/theme-class.js");
-                ui.getPage().addJavaScript("/js/theme-color-constants.js");
-                ui.getPage().addJavaScript("/js/svg-utils.js");
-                ui.getPage().addJavaScript("/js/color-utils.js");
-                ui.getPage().addJavaScript("/js/date-utils.js");
-                ui.getPage().addJavaScript("/js/chart-util.js");
-                ui.getPage().addJavaScript("/js/graph-color-util.js");
-                ui.getPage().addJavaScript("/js/date-utils.js");
-                ui.getPage().addJavaScript("/js/chart-elements.js");
-                ui.getPage().addJavaScript("/js/calendar-x-axes.js");
-                ui.getPage().addJavaScript("/js/milestone.js");
-                ui.getPage().addJavaScript("/js/gantt-chart.js");
+                // Dev:  individual ES module files (npm run build:static)
+                // Prod: single minified bundle (npm run build:static:prod, built by Maven)
                 ui.getPage().executeJs(
-                        "if(window.mountGanttChart) window.mountGanttChart($0, JSON.parse($1));",
+                        "import('/js/generated/gantt/gantt-bundle.js')" +
+                                ".then(() => window.mountGanttChart($0, JSON.parse($1)));",
                         GANTT_CHART_CONTAINER_ID, json
                 );
                 log.debug("Gantt chart DTO pushed to client for sprint '{}'", sprint.getName());

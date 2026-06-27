@@ -74,20 +74,12 @@
 </div>
 <div id="chart-container"></div>
 
-<!-- Load utility scripts first (no dependencies) -->
-<script src="../js/svg-utils.js"></script>
-<script src="../js/color-utils.js"></script>
-<script src="../js/date-utils.js"></script>
-<script src="../js/graph-color-util.js"></script>
-<!-- Load component scripts that depend on utilities -->
-<script src="../js/chart-elements.js"></script>
-<script src="../js/theme-class.js"></script>
-<script src="../js/chart-util.js"></script>
-<script src="../js/milestone.js"></script>
-<script src="../js/calendar-x-axes.js"></script>
-<script src="../js/sprints-overview-chart.js"></script>
+<script type="module">
+    // Static import ensures the bundle is fully executed (and window.mountSprintsOverviewChart
+    // is set) before any line below runs.  This works for both dev (individual ESM files)
+    // and prod (replace the src with '../generated/sprints-overview-bundle.js').
+    import '../js/generated/sprints-overview/sprints-overview-bundle.js';
 
-<script>
     // ── Mock data generator ─────────────────────────────────────────────
     function makeData(scenario) {
         const now = new Date();
@@ -186,8 +178,6 @@
 
     document.getElementById('btn-reload').addEventListener('click', render);
     document.getElementById('scenario').addEventListener('change', render);
-
-    // Initial render (scripts loaded synchronously above)
     render();
 </script>
 </body>

@@ -104,7 +104,7 @@ public class OidcSecurityConfig {
                 .requestMatchers("/VAADIN/**").permitAll()
                 .requestMatchers("/css/**").permitAll()
                 .requestMatchers("/styles.css").permitAll()
-                .requestMatchers("/js/*.js").permitAll()
+                .requestMatchers("/js/**").permitAll()
                 .requestMatchers("/ui/icons/**").permitAll()
                 .requestMatchers("/ui/images/**").permitAll()
                 .requestMatchers("/ui/report/**").permitAll()

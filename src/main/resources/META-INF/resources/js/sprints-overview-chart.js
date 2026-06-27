@@ -230,7 +230,7 @@
 
             /** Hit areas for context menu – rebuilt on every draw(). */
             this.sprintHitAreas = [];
-            this.initSize(0, false, window.CalendarSize.YEARS);
+            this.initSize(0, false, window.CalendarSize.YEARS, containerWidth);
         }
 
         calculateChartWidth() {
@@ -484,7 +484,7 @@
             this.setChartWidth(containerWidth);
             this.setChartHeight(contentH + this.captionElement.height + this.footerElement.height - 1);
             this.footerElement.y = contentH + this.captionElement.height;//TODO
-            this.renderers[0].initSize(this.firstDayX, false, window.CalendarSize.YEARS);
+            this.renderers[0].initSize(this.firstDayX, false, window.CalendarSize.YEARS, containerWidth);
 
         }
 

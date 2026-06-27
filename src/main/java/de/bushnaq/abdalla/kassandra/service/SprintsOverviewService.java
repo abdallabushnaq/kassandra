@@ -1,6 +1,5 @@
 package de.bushnaq.abdalla.kassandra.service;
 
-import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dao.SprintDAO;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
@@ -75,8 +74,6 @@ public class SprintsOverviewService {
     }
 
     public SprintOverviewDto getOverview(LocalDateTime now, Integer limitMonths, boolean dark) {
-        if (now == null) now = ParameterOptions.getLocalNow();
-
         List<SprintDAO> sprints = sprintRepository.findAll();
         // Ensure we operate on a modifiable list: repositories or tests may return immutable lists
         sprints = new ArrayList<>(sprints);

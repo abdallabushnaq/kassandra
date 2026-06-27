@@ -46,6 +46,9 @@
         <selenium.version>4.39.0</selenium.version>
         <lombok.version>1.18.42</lombok.version>
         <spring-ai.version>2.0.0-M2</spring-ai.version>
+        <!-- npm executable – default works on Linux/CI where npm is on PATH.
+             On Windows the Vaadin-managed Node.js is used (see windows-npm profile). -->
+        <npm.executable>npm</npm.executable>
 
     </properties>
 
@@ -471,33 +474,54 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>com.github.blutorange</groupId>
-                <artifactId>closure-compiler-maven-plugin</artifactId>
-                <version>3.0.1</version>
-                <configuration>
-                    <baseSourceDir>${project.basedir}/src/main/resources/META-INF/resources</baseSourceDir>
-                    <baseTargetDir>${project.build.directory}/generated-resources</baseTargetDir>
-                </configuration>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
-                        <goals>
-                            <goal>minify</goal>
-                        </goals>
+                        <id>build-static-ts-bundles</id>
                         <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
                         <configuration>
-                            <sourceDir>js</sourceDir>
-                            <targetDir>js</targetDir>
-                            <includes>
-                                <include>**/*.js</include>
-                            </includes>
-                            <outputFilename>sprints-overview.min.js</outputFilename>
-                            <skipMerge>false</skipMerge>
-                            <closureLanguageIn>ECMASCRIPT_2020</closureLanguageIn>
-                            <closureLanguageOut>ECMASCRIPT_2020</closureLanguageOut>
+                            <executable>${npm.executable}</executable>
+                            <arguments>
+                                <argument>run</argument>
+                                <argument>build:static:prod</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+            <!--            <plugin>-->
+            <!--                <groupId>com.github.blutorange</groupId>-->
+            <!--                <artifactId>closure-compiler-maven-plugin</artifactId>-->
+            <!--                <version>3.0.1</version>-->
+            <!--                <configuration>-->
+            <!--                    <baseSourceDir>${project.basedir}/src/main/resources/META-INF/resources</baseSourceDir>-->
+            <!--                    <baseTargetDir>${project.build.directory}/generated-resources</baseTargetDir>-->
+            <!--                </configuration>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--                        <goals>-->
+            <!--                            <goal>minify</goal>-->
+            <!--                        </goals>-->
+            <!--                        <phase>generate-resources</phase>-->
+            <!--                        <configuration>-->
+            <!--                            <sourceDir>js</sourceDir>-->
+            <!--                            <targetDir>js</targetDir>-->
+            <!--                            <includes>-->
+            <!--                                <include>**/*.js</include>-->
+            <!--                            </includes>-->
+            <!--                            <outputFilename>sprints-overview.min.js</outputFilename>-->
+            <!--                            <skipMerge>false</skipMerge>-->
+            <!--                            <closureLanguageIn>ECMASCRIPT_2020</closureLanguageIn>-->
+            <!--                            <closureLanguageOut>ECMASCRIPT_2020</closureLanguageOut>-->
+            <!--                        </configuration>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
         </plugins>
     </build>
 
@@ -557,6 +581,40 @@
         </dependencies>
     </dependencyManagement>
     <profiles>
+        <!-- On Windows, npm is a .cmd script that Java's ProcessBuilder cannot run directly.
+             Use node.exe + npm-cli.js instead (node.exe is a real executable).
+             Vaadin's prepare-frontend goal already installs Node.js to ~/.vaadin/node/ before
+             our generate-resources step, so the path is always available. -->
+        <profile>
+            <id>windows-npm</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>build-static-ts-bundles</id>
+                                <configuration>
+                                    <executable>${user.home}/.vaadin/node/node.exe</executable>
+                                    <arguments>
+                                        <argument>${user.home}/.vaadin/node/node_modules/npm/bin/npm-cli.js</argument>
+                                        <argument>run</argument>
+                                        <argument>build:static</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <id>production</id>
             <dependencies>
@@ -584,6 +642,27 @@
                                     <goal>build-frontend</goal>
                                 </goals>
                                 <phase>compile</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- In production, overwrite the per-file ESM build with minified IIFE bundles -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>build-static-ts-bundles-prod</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${npm.executable}</executable>
+                                    <arguments>
+                                        <argument>run</argument>
+                                        <argument>build:static:prod</argument>
+                                    </arguments>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

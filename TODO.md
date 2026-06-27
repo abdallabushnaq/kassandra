@@ -1,6 +1,8 @@
 # TODO
 
-1. rename all mcp tpo IDs
+1. still need to run npm run build:static to generate debugging version of js f
+2.
+3. rename all mcp tpo IDs
 2. GENERATOR. ensure some projects show delay, are not started or are finished closed.
 3. add better error handling in api.
 4. remove default test password from AbstractApi.
