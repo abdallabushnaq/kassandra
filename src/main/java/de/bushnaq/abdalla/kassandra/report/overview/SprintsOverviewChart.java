@@ -11,6 +11,7 @@ import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Deprecated
 public class SprintsOverviewChart extends AbstractChart {
 
     public SprintsOverviewChart(Context context, String relateCssPath, String column, String sprintName, Integer limit, LocalDateTime now,

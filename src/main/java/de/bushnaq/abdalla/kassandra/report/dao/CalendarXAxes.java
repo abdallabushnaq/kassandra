@@ -34,6 +34,7 @@ import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.Locale;
 
+@Deprecated
 public class CalendarXAxes {
     public static final  int                      DAY_OF_MONTH_MIN_DAY_WIDTH = 16;
     private static final int                      DAY_OF_WEEK_MIN_DAY_WIDTH  = 10;

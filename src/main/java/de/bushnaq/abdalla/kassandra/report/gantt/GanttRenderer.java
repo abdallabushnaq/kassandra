@@ -43,6 +43,7 @@ import java.time.format.DateTimeFormatter;
  *
  * @author abdalla.bushnaq
  */
+@Deprecated
 public class GanttRenderer extends AbstractGanttRenderer {
 
     private static final int               GANTT_TASK_POST_SPACE = 0;

@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.report.dao;
 
 import java.awt.*;
 
+@Deprecated
 public class CalendarMilestoneElement {
     public Font    flagFont;
     public Integer flagHeight;

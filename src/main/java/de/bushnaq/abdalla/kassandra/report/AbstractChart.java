@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public abstract class AbstractChart extends AbstractCanvas {
     public        CaptionElement         captionElement;
     public        FooterElement          footerElement;

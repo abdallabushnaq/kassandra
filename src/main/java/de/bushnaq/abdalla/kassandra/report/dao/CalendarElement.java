@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.report.dao;
 
 import java.awt.*;
 
+@Deprecated
 public class CalendarElement {
     private Font    font;
     private Integer height;

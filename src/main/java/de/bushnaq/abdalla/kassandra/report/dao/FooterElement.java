@@ -22,6 +22,7 @@ import lombok.Getter;
 
 import java.awt.*;
 
+@Deprecated
 public class FooterElement {
     public        int    height   = 14;
     private final String imageMap = "";

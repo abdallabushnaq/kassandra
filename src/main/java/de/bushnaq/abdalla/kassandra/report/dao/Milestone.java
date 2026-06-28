@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.report.dao;
 import java.awt.*;
 import java.time.LocalDate;
 
+@Deprecated
 public class Milestone implements Comparable<Milestone> {
     public Color     color;
     public boolean   hidden;

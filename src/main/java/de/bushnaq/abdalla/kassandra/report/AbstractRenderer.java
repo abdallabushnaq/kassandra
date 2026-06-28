@@ -38,6 +38,7 @@ import java.time.LocalDateTime;
  *
  * @author abdalla.bushnaq
  */
+@Deprecated
 public abstract class AbstractRenderer {
     public static final    int                MAX_DAY_WIDTH              = 20;
     protected static final float              STANDARD_LINE_STROKE_WIDTH = 3.1f;

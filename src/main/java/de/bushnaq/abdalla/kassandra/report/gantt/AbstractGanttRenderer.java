@@ -51,6 +51,7 @@ import java.util.Map;
  *
  * @author abdalla.bushnaq
  */
+@Deprecated
 public abstract class AbstractGanttRenderer extends AbstractRenderer {
     private static final   float                FINE_LINE_STROKE_WIDTH     = 1.0f;
     private static final   int                  LINE_HEIGHT                = 18;

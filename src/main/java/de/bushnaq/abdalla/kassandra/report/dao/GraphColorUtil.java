@@ -27,6 +27,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 
 
+@Deprecated
 public class GraphColorUtil {
 
     public static Color getDayOfMonthBgColor(Theme theme, LocalDate startCal) {

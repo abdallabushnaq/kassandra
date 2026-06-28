@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.report.AbstractChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 
 
+@Deprecated
 public class GanttChart extends AbstractChart {
 
     public GanttChart(String relativeCssPath, RenderDao dao) throws Exception {

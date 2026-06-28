@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 
 import java.awt.*;
 
+@Deprecated
 public class CaptionElement {
     public        Font   font   = new Font(Font.SANS_SERIF, Font.PLAIN, 18);
     public        int    height = 26;

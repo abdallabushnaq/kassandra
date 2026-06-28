@@ -25,6 +25,7 @@ import java.util.List;
  *
  * @author abdalla.bushnaq
  */
+@Deprecated
 public class SprintsOverviewRenderer extends AbstractRenderer {
     private static final Color CLOSING_COLOR            = new Color(0x0, 0x0, 0x0, 0x20);
     private static final Color CREATING_QUOTATION_COLOR = new Color(0xff, 0x0, 0x0, 0x50);

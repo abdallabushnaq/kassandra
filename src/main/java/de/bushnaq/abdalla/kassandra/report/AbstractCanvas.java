@@ -41,6 +41,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
 
+@Deprecated
 public abstract class AbstractCanvas extends ReportLink {
     private static final float              fine_LINE_STROKE_WIDTH = 1f;
     @Getter
