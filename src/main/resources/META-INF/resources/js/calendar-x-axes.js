@@ -5,6 +5,8 @@
 // Depends on: svg-utils.js, color-utils.js, date-utils.js, theme-class.js
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
+/** @deprecated
+ */
 (function () {
     'use strict';
 
