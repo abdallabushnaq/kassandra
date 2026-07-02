@@ -15,6 +15,9 @@
  *
  */
 export class FontSpec {
+    static readonly SANS_SERIF: string = 'Sans-Serif';
+    static readonly BOLD: string = 'bold';
+    static readonly PLAIN: string = 'normal';
     family: string;
     size: number;
     weight: string;

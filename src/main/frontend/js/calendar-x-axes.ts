@@ -16,7 +16,6 @@ import {CalendarSize} from './calendar-size.js';
 import type {IRenderer} from './renderer-interface.js';
 import type {Milestones} from './milestones.js';
 import type {Theme} from './theme/theme.js';
-import {FontMetrics} from "./font-metrics.js";
 
 const DAY_OF_MONTH_MIN_DAY_WIDTH = 16;
 const DAY_OF_WEEK_MIN_DAY_WIDTH = 10;
@@ -259,8 +258,6 @@ export class CalendarXAxes {
         if (text && font) {
             const fontSize = font && 'size' in font ? String(font.size) : '10';
             const maxAscent = font.maxAscent;
-            const fm = new FontMetrics(font);
-            // const width = fm.stringWidth(text);
             const textX = centered ? (cellWidth - 1) / 2 : 2;
             group.appendChild(createText(textX, (cellHeight - 1) / 2 + maxAscent / 2, text, {
                 fill: intToHex(textColor),

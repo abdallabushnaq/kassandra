@@ -28,9 +28,9 @@ export function intToHex(value: number | string | null | undefined, fallback = '
 export function convertSprintColorToRgba(hexColorWithAlpha: string | null | undefined): string {
     if (!hexColorWithAlpha) return 'rgba(31,143,255,0.31)';
     if (/^#[0-9a-fA-F]{8}$/.test(hexColorWithAlpha)) {
-        const red   = parseInt(hexColorWithAlpha.slice(1, 3), 16);
+        const red = parseInt(hexColorWithAlpha.slice(1, 3), 16);
         const green = parseInt(hexColorWithAlpha.slice(3, 5), 16);
-        const blue  = parseInt(hexColorWithAlpha.slice(5, 7), 16);
+        const blue = parseInt(hexColorWithAlpha.slice(5, 7), 16);
         const alpha = (parseInt(hexColorWithAlpha.slice(7, 9), 16) / 255).toFixed(3);
         return `rgba(${red},${green},${blue},${alpha})`;
     }
@@ -48,12 +48,51 @@ export function convertSprintColorToRgba(hexColorWithAlpha: string | null | unde
 export function hexToRgbaWithAlpha(hexColorWithAlpha: string | null | undefined, alphaOverride?: number | null): string {
     if (!hexColorWithAlpha) return 'rgba(31,143,255,0.25)';
     if (/^#[0-9a-fA-F]{8}$/.test(hexColorWithAlpha)) {
-        const red   = parseInt(hexColorWithAlpha.slice(1, 3), 16);
+        const red = parseInt(hexColorWithAlpha.slice(1, 3), 16);
         const green = parseInt(hexColorWithAlpha.slice(3, 5), 16);
-        const blue  = parseInt(hexColorWithAlpha.slice(5, 7), 16);
+        const blue = parseInt(hexColorWithAlpha.slice(5, 7), 16);
         const alpha = ((alphaOverride != null ? alphaOverride : 64) / 255).toFixed(3);
         return `rgba(${red},${green},${blue},${alpha})`;
     }
     return hexColorWithAlpha;
+}
+
+export class ColorUtil {
+    static WHITE: number = 0xffffff;
+    static BLACK: number = 0x000000;
+
+    static calculateColorBlending(aColor: number, background: number): number {
+        //        logger.info(String.format("r=%d, g=%d, b=%s, a=%d %08X", aColor.getRed(), aColor.getGreen(), aColor.getBlue(), aColor.getAlpha(), aColor.getRGB()));
+        const alpha = (aColor >> 24) & 0xff;
+        const red = ((aColor >> 16) & 0xff * alpha) / 255 + ((background >> 16) & 0xff * (255 - alpha)) / 255;
+        const green = ((aColor >> 8) & 0xff * alpha) / 255 + ((background >> 8) & 0xff * (255 - alpha)) / 255;
+        const blue = (aColor & 0xff * alpha) / 255 + (background & 0xff * (255 - alpha)) / 255;
+        const c = (red << 16) | (green << 8) | blue;
+        //        logger.info(String.format("r=%d, g=%d, b=%s, a=%d %08X", c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha(), c.getRGB()));
+        return c;
+    }
+
+    /**
+     * Returns either {@link Color#white} or {@link Color#black}, whichever provides the higher
+     * perceptual contrast against the given fully-opaque color.
+     * Uses the luminance formula {@code 0.299·R + 0.587·G + 0.114·B}; colors with a luminance
+     * below 127 are considered dark, so white is returned, and vice versa.
+     *
+     * @param aColor the background color (alpha channel is ignored)
+     * @return {@link Color#white} for dark backgrounds, {@link Color#black} for light backgrounds
+     */
+    static heighestContrast(aColor: number): number {
+        const red = (aColor >> 16) & 0xff;
+        const green = (aColor >> 8) & 0xff;
+        const blue = aColor & 0xff;
+        //0.299*R + 0.587*G + 0.114*B
+        const light = ((red * 299) / 1000) + ((green * 587) / 1000) + ((blue * 114) / 1000);
+        if (light < 127) {
+            return ColorUtil.WHITE;
+        } else {
+            return ColorUtil.BLACK;
+        }
+    }
+
 }
 
