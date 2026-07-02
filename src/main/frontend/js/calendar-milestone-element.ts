@@ -4,13 +4,18 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {CalendarElement, FontSpec} from './calendar-element.js';
+import {FontSpec} from './calendar-element.js';
 
-export class CalendarMilestoneElement extends CalendarElement {
+export class CalendarMilestoneElement {
+    font: FontSpec;
+    bgColor: unknown;
+    width: number;
+    height: number;
     flagBgColor: unknown;
     flagFont: FontSpec | null;
     flagHeight: number;
     flagY: number;
+    y: number;
 
     constructor(
         bgColor: unknown,
@@ -21,11 +26,15 @@ export class CalendarMilestoneElement extends CalendarElement {
         flagFont: FontSpec,
         flagHeight: number,
     ) {
-        super(font, bgColor, width, height);
+        this.font = font;
+        this.bgColor = bgColor;
+        this.width = width;
+        this.height = height;
         this.flagBgColor = flagBgColor;
         this.flagFont = flagFont;
         this.flagHeight = flagHeight;
         this.flagY = 0;
+        this.y = 0;
     }
 
     getFlagHeight(): number {
@@ -35,5 +44,18 @@ export class CalendarMilestoneElement extends CalendarElement {
     getFlagFont(): FontSpec | null {
         return this.flagFont;
     }
+
+    getWidth(): number {
+        return this.width;
+    }
+
+    setWidth(w: number): void {
+        this.width = w;
+    }
+
+    getHeight(): number {
+        return this.height;
+    }
+
 }
 

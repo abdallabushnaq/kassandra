@@ -32,11 +32,11 @@ export class SprintsOverviewChart extends AbstractChart {
         this.setChartWidth(containerWidth);
         this.setChartHeight(contentH + this.captionElement.height + this.footerElement.height - 1);
         this.footerElement.y = contentH + this.captionElement.height;
-        renderer.initSize(this.renderers[0].firstDayX, false, CalendarSize.YEARS, containerWidth);
+        renderer.initSize(this.renderers[0].firstDayX, false, CalendarSize.YEARS, containerWidth - 2 * this.borderWidth);
     }
 
     override createReport(svg: SVGSVGElement): void {
-        (this.renderers[0] as SprintsOverviewRenderer).draw(svg, 0, this.captionElement.height);
+        (this.renderers[0] as SprintsOverviewRenderer).draw(svg, this.borderWidth, this.captionElement.height + this.borderWidth);
     }
 }
 

@@ -36,10 +36,28 @@ export function createRect(
 ): SVGRectElement {
     return createSvgElement('rect', {
         x, y,
-        width:  Math.max(0, width),
+        width: Math.max(0, width),
         height: Math.max(0, height),
         ...additionalAttrs,
     });
+}
+
+/**
+ * Creates an SVG group element with specified attributes.
+ */
+export function createGroup(
+    x: number, y: number,
+    additionalAttrs?: SvgAttrs
+): SVGGElement {
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    group.setAttribute("transform", `translate(${x}, ${y})`);
+    if (additionalAttrs) {
+        for (const key of Object.keys(additionalAttrs)) {
+            const val = additionalAttrs[key];
+            if (val != null) group.setAttribute(key, String(val));
+        }
+    }
+    return group;
 }
 
 /**
@@ -49,7 +67,7 @@ export function createText(
     x: number, y: number, content: string,
     additionalAttrs?: SvgAttrs
 ): SVGTextElement {
-    return createSvgElement('text', { x, y, ...additionalAttrs }, content);
+    return createSvgElement('text', {x, y, ...additionalAttrs}, content);
 }
 
 /**
@@ -59,7 +77,7 @@ export function createLine(
     x1: number, y1: number, x2: number, y2: number,
     additionalAttrs?: SvgAttrs
 ): SVGLineElement {
-    return createSvgElement('line', { x1, y1, x2, y2, ...additionalAttrs });
+    return createSvgElement('line', {x1, y1, x2, y2, ...additionalAttrs});
 }
 
 /**
@@ -69,7 +87,7 @@ export function createCircle(
     cx: number, cy: number, r: number,
     additionalAttrs?: SvgAttrs
 ): SVGCircleElement {
-    return createSvgElement('circle', { cx, cy, r, ...additionalAttrs });
+    return createSvgElement('circle', {cx, cy, r, ...additionalAttrs});
 }
 
 /**
@@ -78,8 +96,8 @@ export function createCircle(
 export function createClipPath(
     id: string, x: number, y: number, width: number, height: number
 ): SVGDefsElement {
-    const defs     = createSvgElement('defs');
-    const clipPath = createSvgElement('clipPath', { id });
+    const defs = createSvgElement('defs');
+    const clipPath = createSvgElement('clipPath', {id});
     clipPath.appendChild(createRect(x, y, width, height, {}));
     defs.appendChild(clipPath);
     return defs;

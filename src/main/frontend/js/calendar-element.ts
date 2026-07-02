@@ -4,27 +4,8 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-export class FontSpec {
-    family: string;
-    size: number;
-    weight: string;
-    maxAscent: number;
 
-    constructor(family: string, size: number, weight: string) {
-        this.family = family;
-        this.size = size;
-        this.weight = weight;
-
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d")!;
-
-        ctx.font = `${size}px ${family}`;
-
-        const m = ctx.measureText("H");
-
-        this.maxAscent = m.fontBoundingBoxAscent;
-    }
-}
+import {FontSpec} from "./font-spec.js";
 
 export class CalendarElement {
     font: FontSpec;

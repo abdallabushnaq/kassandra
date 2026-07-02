@@ -6,15 +6,17 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {intToHex} from './color-utils.js';
-import {createCircle, createLine, createRect, createSvgElement, createText} from './svg-utils.js';
+import {createCircle, createGroup, createLine, createRect, createSvgElement, createText} from './svg-utils.js';
 import {addDay, calculateDays, getWeekOfYear, getWeekSunday, maxDate} from './date-utils.js';
 import {GraphColorUtil} from './graph-color-util.js';
-import {CalendarElement, FontSpec} from './calendar-element.js';
+import {CalendarElement} from './calendar-element.js';
+import {FontSpec} from "./font-spec.js";
 import {CalendarMilestoneElement} from './calendar-milestone-element.js';
 import {CalendarSize} from './calendar-size.js';
 import type {IRenderer} from './renderer-interface.js';
 import type {Milestones} from './milestones.js';
 import type {Theme} from './theme/theme.js';
+import {FontMetrics} from "./font-metrics.js";
 
 const DAY_OF_MONTH_MIN_DAY_WIDTH = 16;
 const DAY_OF_WEEK_MIN_DAY_WIDTH = 10;
@@ -108,8 +110,8 @@ export class CalendarXAxes {
                     if (end > lastDay) end.setTime(lastDay.getTime());
                     const x2 = this.calculateDayX(end) - (this.dayOfWeek.getWidth() ?? 0) / 2;
                     this.drawTextBox(
-                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2 - 1),
-                        x2 + (this.dayOfWeek.getWidth() ?? 0),
+                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2),
+                        x2 + (this.dayOfWeek.getWidth() ?? 0) - 1,//keep 1px left for border
                         this.year.getY(), this.year.getHeight(),
                         String(startCal.getFullYear()),
                         this.parent.theme.xAxesTheme.yearTextColor,
@@ -127,8 +129,8 @@ export class CalendarXAxes {
                     const x2 = this.calculateDayX(end) - (this.dayOfWeek.getWidth() ?? 0) / 2;
                     const bgColor = this.parent.theme.xAxesTheme.monthBgColors[startCal.getMonth()];
                     this.drawTextBox(
-                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2 - 1),
-                        x2 + (this.dayOfWeek.getWidth() ?? 0),
+                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2),
+                        x2 + (this.dayOfWeek.getWidth() ?? 0) - 1,//keep 1px left for border
                         this.month.getY(), this.month.getHeight(),
                         months[startCal.getMonth()],
                         this.parent.theme.xAxesTheme.monthTextColor,
@@ -148,9 +150,9 @@ export class CalendarXAxes {
                         ? 'W' + getWeekOfYear(currentDay)
                         : String(currentDay.getDate());
                     this.drawTextBox(
-                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2 - 1),
-                        x2 + (this.dayOfWeek.getWidth() ?? 0),
-                        this.week.getY(), this.week.getHeight() - 1,
+                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2),
+                        x2 + (this.dayOfWeek.getWidth() ?? 0) - 1,//keep 1px left for border
+                        this.week.getY(), this.week.getHeight(),
                         calendarWeek,
                         this.parent.theme.xAxesTheme.weekTextColor,
                         this.parent.theme.xAxesTheme.weekBgColor,
@@ -160,30 +162,33 @@ export class CalendarXAxes {
                     firstWeekWasDrawn = true;
                 }
                 // Phase 1: DAY OF MONTH / DAY OF WEEK
-                else if (phase === 1 && this.isDayOfWeekVisible()) {
-                    const domBgColor = GraphColorUtil.getDayOfMonthBgColor(this.parent.theme, startCal);
-                    const domTextColor = GraphColorUtil.getDayOfMonthTextColor(this.parent.theme, startCal);
-                    const dw = this.dayOfMonth.getWidth() ?? 0;
-                    this.drawTextBox(
-                        daysX - (dw / 2 - 1), daysX - (dw / 2 - 1) + (dw - 1),
-                        this.dayOfMonth.getY(), this.dayOfMonth.getHeight(),
-                        String(startCal.getDate()),
-                        domTextColor, domBgColor,
-                        this.parent.theme.xAxesTheme.dayOfMonthBorderColor,
-                        this.dayOfMonth.getFont(), true, svgGroup, viewportWidth,
-                    );
-
-                    const dowColor = GraphColorUtil.getDayOfWeekBgColor(this.parent.theme, startCal);
-                    const dowTextColor = GraphColorUtil.getDayOfWeekTextColor(this.parent.theme, startCal);
-                    const dowW = this.dayOfWeek.getWidth() ?? 0;
-                    this.drawTextBox(
-                        daysX - (dowW / 2 - 1), daysX - (dowW / 2 - 1) + (dowW - 1),
-                        this.dayOfWeek.getY(), this.dayOfWeek.getHeight(),
-                        weekDays[startCal.getDay()],
-                        dowTextColor, dowColor,
-                        this.parent.theme.xAxesTheme.dayOfWeekBorderColor,
-                        this.dayOfWeek.getFont(), true, svgGroup, viewportWidth,
-                    );
+                else if (phase === 1) {
+                    if (this.isDayOfMonthVisible()) {
+                        const domBgColor = GraphColorUtil.getDayOfMonthBgColor(this.parent.theme, startCal);
+                        const domTextColor = GraphColorUtil.getDayOfMonthTextColor(this.parent.theme, startCal);
+                        const dw = this.dayOfMonth.getWidth() ?? 0;
+                        this.drawTextBox(
+                            daysX - (dw / 2), daysX - (dw / 2) + (dw - 1),//keep 1px left for border
+                            this.dayOfMonth.getY(), this.dayOfMonth.getHeight(),
+                            String(startCal.getDate()),
+                            domTextColor, domBgColor,
+                            this.parent.theme.xAxesTheme.dayOfMonthBorderColor,
+                            this.dayOfMonth.getFont(), true, svgGroup, viewportWidth,
+                        );
+                    }
+                    if (this.isDayOfWeekVisible()) {
+                        const dowColor = GraphColorUtil.getDayOfWeekBgColor(this.parent.theme, startCal);
+                        const dowTextColor = GraphColorUtil.getDayOfWeekTextColor(this.parent.theme, startCal);
+                        const dowW = this.dayOfWeek.getWidth() ?? 0;
+                        this.drawTextBox(
+                            daysX - (dowW / 2), daysX - (dowW / 2) + (dowW - 1),//keep 1px left for border
+                            this.dayOfWeek.getY(), this.dayOfWeek.getHeight(),
+                            weekDays[startCal.getDay()],
+                            dowTextColor, dowColor,
+                            this.parent.theme.xAxesTheme.dayOfWeekBorderColor,
+                            this.dayOfWeek.getFont(), true, svgGroup, viewportWidth,
+                        );
+                    }
                 }
                 // Phase 0: DAY BARS and MILESTONE BACKGROUND
                 else if (phase === 0) {
@@ -195,7 +200,7 @@ export class CalendarXAxes {
                         const textColor2 = GraphColorUtil.getDayOfWeekTextColor(this.parent.theme, startCal);
                         const dowW = this.dayOfWeek.getWidth() ?? 0;
                         this.drawTextBox(
-                            daysX - (dowW / 2 - 1), daysX - (dowW / 2 - 1) + (dowW - 1),
+                            daysX - (dowW / 2), daysX - (dowW / 2) + (dowW - 1),//keep 1px left for border
                             this.milestone.flagY, this.milestone.flagHeight,
                             null, textColor2, color,
                             this.parent.theme.xAxesTheme.dayOfWeekBorderColor,
@@ -229,7 +234,7 @@ export class CalendarXAxes {
 
     drawTextBox(
         x1: number, x2: number,
-        y1: number, height: number,
+        y1: number, cellHeight: number,
         text: string | null,
         textColor: number | null | undefined,
         backgroundColor: number | null | undefined,
@@ -241,10 +246,11 @@ export class CalendarXAxes {
     ): void {
         if (x1 + (x2 - x1) <= 0 || x1 >= (viewportWidth || 9999)) return;
         const cellWidth = x2 - x1 + 1;
-        svgGroup.appendChild(createRect(x1, y1, cellWidth, height - 1, {fill: intToHex(backgroundColor)}));
+        const group = svgGroup.appendChild(createGroup(x1, y1));
+        group.appendChild(createRect(0, 0, cellWidth - 1, cellHeight - 1, {fill: intToHex(backgroundColor)}));//leave 1px for border right and bottom
 
         if (borderColor && cellWidth > 1) {
-            svgGroup.appendChild(createLine(x2, y1, x2, y1 + height - 1, {
+            group.appendChild(createLine(cellWidth - 1 + 0.5, 0, cellWidth - 1 + 0.5, cellHeight - 1, {
                 stroke: intToHex(borderColor),
                 'stroke-width': '1',
             }));
@@ -253,8 +259,10 @@ export class CalendarXAxes {
         if (text && font) {
             const fontSize = font && 'size' in font ? String(font.size) : '10';
             const maxAscent = font.maxAscent;
-            const textX = centered ? x1 + cellWidth / 2 : x1 + 2;
-            svgGroup.appendChild(createText(textX, y1 + height / 2 + (maxAscent + 1) / 2 - 2, text, {
+            const fm = new FontMetrics(font);
+            // const width = fm.stringWidth(text);
+            const textX = centered ? (cellWidth - 1) / 2 : 2;
+            group.appendChild(createText(textX, (cellHeight - 1) / 2 + maxAscent / 2, text, {
                 fill: intToHex(textColor),
                 'font-size': fontSize,
                 'font-family': 'sans-serif',
@@ -287,7 +295,8 @@ export class CalendarXAxes {
     }
 
     drawMilestoneShort(
-        svg: SVGElement, m: import('./milestone').Milestone | null,
+        svg: SVGElement,
+        m: import('./milestone').Milestone | null,
         time: Date, x: number,
         fillColor: number | null, text: string,
         visible: boolean, flagTextColor: number | null,
@@ -305,8 +314,6 @@ export class CalendarXAxes {
         flagY: number | null, flagTextColor: number | null,
         drawFlag: boolean, drawNowLine: boolean,
     ): void {
-        const MILESTONE_WIDTH = 11;
-        const MILESTONE_HEIGHT = 13;
         const FLAG_HEIGHT = 13;
         const theme = this.theme;
         const darkRed = '#8B0000';
@@ -329,11 +336,11 @@ export class CalendarXAxes {
 
         if (visible) {
             parentGroup.appendChild(createRect(
-                x - MILESTONE_WIDTH / 2, y,
-                MILESTONE_WIDTH, MILESTONE_HEIGHT - 1,
+                x - this.milestone.width / 2, y,
+                this.milestone.width, this.milestone.height - 1,
                 {fill: intToHex(fillColor)},
             ));
-            const textEl = createText(x - 1, y + MILESTONE_HEIGHT / 2 + 1, text, {
+            const textEl = createText(x - 1, y + this.milestone.height / 2 + 1, text, {
                 fill: milestoneTextColor,
                 'font-size': '10px',
                 'font-family': 'sans-serif',
@@ -350,12 +357,12 @@ export class CalendarXAxes {
 
             if (drawFlag && flagY != null) {
                 parentGroup.appendChild(createSvgElement('line', {
-                    x1: x, y1: y + MILESTONE_HEIGHT,
-                    x2: x, y2: y + MILESTONE_HEIGHT + 3,
+                    x1: x, y1: y + this.milestone.height,
+                    x2: x, y2: y + this.milestone.height + 3,
                     stroke: intToHex(flagTextColor), 'stroke-width': '1',
                 }));
                 parentGroup.appendChild(createText(
-                    x - MILESTONE_WIDTH / 2 + 2, flagY + FLAG_HEIGHT - 5,
+                    x - this.milestone.width / 2 + 2, flagY + FLAG_HEIGHT - 5,
                     this._formatDateForFlag(time),
                     {
                         fill: intToHex(flagTextColor),

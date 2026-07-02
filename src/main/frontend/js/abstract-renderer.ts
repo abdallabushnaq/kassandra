@@ -74,11 +74,11 @@ export abstract class AbstractRenderer implements IRenderer {
         const x = this.calculateDayX(currentDay);
         const dw = this.calendarXAxes.dayOfWeek.getWidth() ?? 0;
         g.appendChild(createRect(
-            x - (dw / 2 - 1), this.diagram.y, dw - 1, this.diagram.height,
+            x - (dw / 2), this.diagram.y, dw - 1, this.diagram.height,
             {fill: intToHex(color)},
         ));
         g.appendChild(createRect(
-            x - (dw / 2 - 1) + (dw - 1), this.diagram.y, (dw - 1) + 1, this.diagram.height,
+            x - (dw / 2) + (dw - 1), this.diagram.y, (dw - 1) + 1, this.diagram.height,
             {fill: intToHex(this.theme.ganttTheme.gridColor)},
         ));
     }

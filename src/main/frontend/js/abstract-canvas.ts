@@ -32,15 +32,15 @@ export abstract class AbstractCanvas {
     }
 
     /** Fills the entire SVG with the theme background color. */
-    drawBackground(svg: SVGSVGElement): void {
-        const bgColor = intToHex(this.theme.chartTheme.backgroundColor, '#ffffff');
+    drawBackground(svg: SVGGElement): void {
+        const bgColor = intToHex(this.theme.chartTheme.backgroundColor, '#fffff0');
         svg.appendChild(createRect(0, 0, this.chartWidth, this.chartHeight, {fill: bgColor}));
     }
 
     /** Draws a 1px border around the chart. */
-    drawBorder(svg: SVGSVGElement): void {
+    drawBorder(svg: SVGGElement): void {
         const borderColor = intToHex(this.theme.chartTheme.chartBorderColor, '#aaaaaa');
-        svg.appendChild(createRect(0, 0, this.chartWidth - 1, this.chartHeight - 1, {
+        svg.appendChild(createRect(0.5, 0.5, this.chartWidth - 1, this.chartHeight - 1, {
             fill: 'none',
             stroke: borderColor,
             'stroke-width': '1',
@@ -48,15 +48,15 @@ export abstract class AbstractCanvas {
     }
 
     /** Abstract – implemented by AbstractChart to draw the caption. */
-    drawCaption(_svg: SVGSVGElement): void { /* to be overridden */
+    drawCaption(_svg: SVGGElement): void { /* to be overridden */
     }
 
     /** Abstract – implemented by AbstractChart to draw the footer. */
-    drawFooter(_svg: SVGSVGElement): void { /* to be overridden */
+    drawFooter(_svg: SVGGElement): void { /* to be overridden */
     }
 
     /** Abstract – implemented by concrete charts. */
-    createReport(_svg: SVGSVGElement): void { /* to be overridden */
+    createReport(_svg: SVGGElement): void { /* to be overridden */
     }
 
     /**
@@ -70,6 +70,8 @@ export abstract class AbstractCanvas {
             height: this.chartHeight,
             style: 'display:block;user-select:none;shape-rendering:crispEdges',
         });
+        // const group = createGroup(this.borderWidth, this.borderWidth);
+        // svg.appendChild(group);
         this.drawBackground(svg);
         this.drawCaption(svg);
         this.createReport(svg);

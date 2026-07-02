@@ -105,7 +105,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     }
 
     dayIndexToPixelX(dayIndex: number): number {
-        return (dayIndex - this.scrollOffset + this.preRun) * this.dayWidth;
+        return this.firstDayX + (dayIndex - this.scrollOffset + this.preRun) * this.dayWidth;
     }
 
     override calculateDayWidth(): void {
