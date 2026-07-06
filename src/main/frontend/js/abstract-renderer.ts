@@ -111,5 +111,9 @@ export abstract class AbstractRenderer implements IRenderer {
             this.chartHeight - this.calendarXAxes.getHeight(this.calendarXAxes.dayOfWeek.getWidth() ?? 0, false),
         );
     }
+
+    protected drawCalendar(g: SVGElement, drawDays: boolean = true, viewportWidth: number) {
+        this.calendarXAxes.drawCalendar(g, drawDays, viewportWidth);
+    }
 }
 

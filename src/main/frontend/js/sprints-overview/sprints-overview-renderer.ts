@@ -4,9 +4,9 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {convertSprintColorToRgba, intToHex} from '../color-utils.js';
-import {createClipPath, createLine, createRect, createSvgElement, createText} from '../svg-utils.js';
-import {calculateDayCount, calculateDayIndex, getDayMidnight, MS} from '../date-utils.js';
+import {convertSprintColorToRgba} from '../color-utils.js';
+import {createClipPath, createRect, createSvgElement, createText} from '../svg-utils.js';
+import {calculateDayCount, calculateDayIndex, getDayMidnight} from '../date-utils.js';
 import {AbstractRenderer} from '../abstract-renderer.js';
 import {CalendarSize} from '../calendar-size.js';
 import {Milestone} from '../milestone.js';
@@ -121,56 +121,56 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         return calH + this.calculateLaneAreaHeight();
     }
 
-    renderWeekendStripes(baseY: number, baseHeight: number): SVGGElement {
-        const g = createSvgElement('g', {class: 'weekend-stripes'});
-        const containerWidth = this.containerWidth;
-        const xAxesTheme = this.theme.xAxesTheme;
+    // renderWeekendStripes(baseY: number, baseHeight: number): SVGGElement {
+    //     const g = createSvgElement('g', {class: 'weekend-stripes'});
+    //     const containerWidth = this.containerWidth;
+    //     const xAxesTheme = this.theme.xAxesTheme;
+    //
+    //     if (this.dayWidth >= 4) {
+    //         const satColor = intToHex(xAxesTheme.dayOfweekSaturdayBgColor, '');
+    //         const sunColor = intToHex(xAxesTheme.dayOfweekSundayBgColor, '');
+    //         const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
+    //         const lastDay = Math.min(this.totalDays - 1, firstDay + Math.ceil(containerWidth / this.dayWidth) + 2);
+    //         for (let d = firstDay; d <= lastDay; d++) {
+    //             const dow = new Date(this.chartStart.getTime() + d * MS).getDay();
+    //             const xPos = this.dayIndexToPixelX(d);
+    //             if (xPos + this.dayWidth < 0 || xPos > containerWidth) continue;
+    //             const bgColor = dow === 6 ? satColor : dow === 0 ? sunColor : null;
+    //             if (!bgColor) continue;
+    //             g.appendChild(createRect(xPos, baseY, this.dayWidth, baseHeight, {fill: bgColor}));
+    //         }
+    //     } else {
+    //         const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+    //         const firstD = Math.max(0, Math.floor(this.scrollOffset));
+    //         const lastD = Math.min(this.totalDays - 1, firstD + Math.ceil(containerWidth / this.dayWidth) + 8);
+    //         for (let dd = firstD; dd <= lastD; dd++) {
+    //             if (new Date(this.chartStart.getTime() + dd * MS).getDay() !== 1) continue;
+    //             const xp = this.dayIndexToPixelX(dd);
+    //             if (xp < 0 || xp > containerWidth) continue;
+    //             g.appendChild(createLine(xp, baseY, xp, baseY + baseHeight, {
+    //                 stroke: gridColor, 'stroke-width': '1',
+    //             }));
+    //         }
+    //     }
+    //     return g;
+    // }
 
-        if (this.dayWidth >= 4) {
-            const satColor = intToHex(xAxesTheme.dayOfweekSaturdayBgColor, '');
-            const sunColor = intToHex(xAxesTheme.dayOfweekSundayBgColor, '');
-            const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
-            const lastDay = Math.min(this.totalDays - 1, firstDay + Math.ceil(containerWidth / this.dayWidth) + 2);
-            for (let d = firstDay; d <= lastDay; d++) {
-                const dow = new Date(this.chartStart.getTime() + d * MS).getDay();
-                const xPos = this.dayIndexToPixelX(d);
-                if (xPos + this.dayWidth < 0 || xPos > containerWidth) continue;
-                const bgColor = dow === 6 ? satColor : dow === 0 ? sunColor : null;
-                if (!bgColor) continue;
-                g.appendChild(createRect(xPos, baseY, this.dayWidth, baseHeight, {fill: bgColor}));
-            }
-        } else {
-            const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
-            const firstD = Math.max(0, Math.floor(this.scrollOffset));
-            const lastD = Math.min(this.totalDays - 1, firstD + Math.ceil(containerWidth / this.dayWidth) + 8);
-            for (let dd = firstD; dd <= lastD; dd++) {
-                if (new Date(this.chartStart.getTime() + dd * MS).getDay() !== 1) continue;
-                const xp = this.dayIndexToPixelX(dd);
-                if (xp < 0 || xp > containerWidth) continue;
-                g.appendChild(createLine(xp, baseY, xp, baseY + baseHeight, {
-                    stroke: gridColor, 'stroke-width': '1',
-                }));
-            }
-        }
-        return g;
-    }
-
-    renderVerticalGridLines(baseY: number, baseHeight: number): SVGGElement {
-        const g = createSvgElement('g', {class: 'grid-lines'});
-        if (this.dayWidth < 4) return g;
-        const containerWidth = this.containerWidth;
-        const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
-        const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
-        const lastDay = Math.min(this.totalDays, firstDay + Math.ceil(containerWidth / this.dayWidth) + 2);
-        for (let d = firstDay; d <= lastDay; d++) {
-            const xPos = this.dayIndexToPixelX(d);
-            if (xPos < 0 || xPos > containerWidth) continue;
-            g.appendChild(createLine(xPos, baseY, xPos, baseY + baseHeight, {
-                stroke: gridColor, 'stroke-width': '1',
-            }));
-        }
-        return g;
-    }
+    // renderVerticalGridLines(baseY: number, baseHeight: number): SVGGElement {
+    //     const g = createSvgElement('g', {class: 'grid-lines'});
+    //     if (this.dayWidth < 4) return g;
+    //     const containerWidth = this.containerWidth;
+    //     const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+    //     const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
+    //     const lastDay = Math.min(this.totalDays, firstDay + Math.ceil(containerWidth / this.dayWidth) + 2);
+    //     for (let d = firstDay; d <= lastDay; d++) {
+    //         const xPos = this.dayIndexToPixelX(d);
+    //         if (xPos < 0 || xPos > containerWidth) continue;
+    //         g.appendChild(createLine(xPos, baseY, xPos, baseY + baseHeight, {
+    //             stroke: gridColor, 'stroke-width': '1',
+    //         }));
+    //     }
+    //     return g;
+    // }
 
     drawGraph(svg: SVGElement): void {
         this.sprintHitAreas = [];
@@ -212,15 +212,15 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         svg.appendChild(g);
     }
 
-    renderCurrentDateLine(chartHeight: number): SVGGElement {
-        const g = createSvgElement('g', {class: 'now-line'});
-        const containerWidth = this.containerWidth;
-        const nowIdx = calculateDayIndex(this.currentDate, this.chartStart);
-        const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
-        if (xPos < 0 || xPos > containerWidth) return g;
-        g.appendChild(createLine(xPos, 0, xPos, chartHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
-        return g;
-    }
+    // renderCurrentDateLine(chartHeight: number): SVGGElement {
+    //     const g = createSvgElement('g', {class: 'now-line'});
+    //     const containerWidth = this.containerWidth;
+    //     const nowIdx = calculateDayIndex(this.currentDate, this.chartStart);
+    //     const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
+    //     if (xPos < 0 || xPos > containerWidth) return g;
+    //     g.appendChild(createLine(xPos, 0, xPos, chartHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
+    //     return g;
+    // }
 
     buildSprintTooltip(sprint: SprintDto): string {
         let tooltip = sprint.name || '';
@@ -238,13 +238,13 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         this.diagram.initPosition(x, this.calendarXAxes.year.getY() + this.calendarXAxes.getHeight(this.dayWidth, false));
     }
 
-    drawCalendar(drawDays: boolean, svg: SVGElement): void {
-        this.calendarXAxes.drawCalendar(drawDays, svg, this.diagram.width);
+    drawCalendar(svg: SVGElement, drawDays: boolean, viewportWidth: number = this.diagram.width): void {
+        this.calendarXAxes.drawCalendar(svg, drawDays, viewportWidth);
     }
 
     override draw(svg: SVGSVGElement, x: number, y: number): void {
         this.initPosition(x, y);
-        this.drawCalendar(true, svg);
+        this.drawCalendar(svg, true);
         this.drawGraph(svg);
         this.drawMilestones(svg);
     }

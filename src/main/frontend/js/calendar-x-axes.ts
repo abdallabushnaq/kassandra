@@ -79,12 +79,12 @@ export class CalendarXAxes {
         return height;
     }
 
-    drawCalendar(drawDays: boolean, svgGroup: SVGElement, viewportWidth: number): void {
+    drawCalendar(svgGroup: SVGElement, drawDays: boolean, viewportWidth: number): void {
         if (!this.parent) return;
 
         const firstDay = addDay(this.milestones.firstMilestone!, -this.priRun);
         const lastDay = maxDate(
-            this.milestones.lastMilestone!,
+            addDay(this.milestones.lastMilestone!, this.postRun),
             addDay(this.milestones.firstMilestone!, this.parent.days - 1),
         );
 
@@ -217,19 +217,19 @@ export class CalendarXAxes {
      * Compatibility wrapper called by GanttRenderer.draw().
      * Mirrors the 7-argument signature used there.
      */
-    draw(
-        svgGroup: SVGElement,
-        _chartStart: Date,
-        _totalDays: number,
-        dayWidth: number,
-        _scrollOffset: number,
-        viewportWidth: number,
-        _milestones: Milestones,
-    ): void {
-        this.initSize(viewportWidth, dayWidth, this.calendarAtBottom, this.calendarSize);
-        this.drawCalendar(false, svgGroup, viewportWidth);
-        this.drawMilestones(svgGroup);
-    }
+    // draw(
+    //     svgGroup: SVGElement,
+    //     _chartStart: Date,
+    //     _totalDays: number,
+    //     dayWidth: number,
+    //     _scrollOffset: number,
+    //     viewportWidth: number,
+    //     _milestones: Milestones,
+    // ): void {
+    //     this.initSize(viewportWidth, dayWidth, this.calendarAtBottom, this.calendarSize);
+    //     this.drawCalendar(svgGroup, false, viewportWidth);
+    //     this.drawMilestones(svgGroup);
+    // }
 
     drawTextBox(
         x1: number, x2: number,
@@ -313,22 +313,25 @@ export class CalendarXAxes {
     ): void {
         const FLAG_HEIGHT = 13;
         const theme = this.theme;
-        const darkRed = '#8B0000';
+        const darkRed = '#cc4a31';
         const milestoneTextColor = intToHex(theme.xAxesTheme?.milestoneTextColor, '#ffffff');
 
         if (text?.charAt(0) === 'N' && drawNowLine) {
+            // now line
             parentGroup.appendChild(createLine(
                 x, this.parent.diagram.y,
                 x, this.parent.diagram.y + this.parent.diagram.height,
                 {stroke: darkRed, 'stroke-width': '2'},
             ));
-            const r = 3;
-            parentGroup.appendChild(createCircle(x + 1,
-                this.calendarAtBottom
-                    ? this.parent.diagram.y - r / 2
-                    : this.parent.diagram.y + this.parent.diagram.height - r,
-                r, {fill: darkRed},
-            ));
+            if (this.dayOfWeek.width) {
+                const r = Math.max(this.dayOfWeek.width / 3, 6) / 2;
+                parentGroup.appendChild(createCircle(x,
+                    this.calendarAtBottom
+                        ? this.parent.diagram.y - r / 2
+                        : this.parent.diagram.y + this.parent.diagram.height - r,
+                    r, {fill: darkRed, 'shape-rendering': 'auto'},
+                ));
+            }
         }
 
         if (visible) {

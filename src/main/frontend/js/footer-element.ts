@@ -7,6 +7,7 @@
 import {intToHex} from './color-utils.js';
 import {createText} from './svg-utils.js';
 import {Theme} from './theme/theme.js';
+import {FontSpec} from "./font-spec.js";
 
 export class FooterElement {
     text: string | null;
@@ -15,6 +16,7 @@ export class FooterElement {
     width: number;
     x: number;
     y: number;
+    private readonly font: FontSpec;
     private _theme: Theme;
 
     /**
@@ -25,6 +27,7 @@ export class FooterElement {
     constructor(text: string | null, key: string, theme: Theme) {
         this.text = text;
         this.key = key || '';
+        this.font = new FontSpec(FontSpec.SANS_SERIF, 10, FontSpec.PLAIN);
         this.height = text != null ? 14 : 0;
         this.width = 0;
         this.x = 3;
@@ -39,11 +42,13 @@ export class FooterElement {
     draw(svg: SVGElement): void {
         if (!this.text) return;
         const textColor = intToHex(this._theme.chartTheme.footerTextColor, '#2c7bf4');
-        const textY = this.y + 8;
+        const fontSize = this.font && 'size' in this.font ? String(this.font.size) : '10';
+        const maxAscent = this.font.maxAscent;
+        const textY = this.y + maxAscent + 1;
 
-        svg.appendChild(createText(this.x, textY, this.text + "na so was 2", {
+        svg.appendChild(createText(this.x, textY, this.text, {
             fill: textColor,
-            'font-size': '10',
+            'font-size': fontSize,
             'font-family': 'sans-serif',
         }));
 
@@ -52,7 +57,7 @@ export class FooterElement {
             const keyX = Math.max(this.x + 10, this.width - approxKeyWidth - 1);
             svg.appendChild(createText(keyX, textY, this.key, {
                 fill: textColor,
-                'font-size': '10',
+                'font-size': fontSize,
                 'font-family': 'sans-serif',
                 'text-anchor': 'start',
             }));

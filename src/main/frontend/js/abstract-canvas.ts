@@ -21,9 +21,9 @@ export abstract class AbstractCanvas {
         this.theme = theme;
     }
 
-    /** Sets chartWidth, adding borderWidth. Mirrors Java: AbstractCanvas.setChartWidth(int). */
+    /** Sets chartWidth, this is the width the browser has reserved for us in total */
     setChartWidth(chartWidth: number): void {
-        this.chartWidth = chartWidth + this.borderWidth * 2;
+        this.chartWidth = chartWidth;
     }
 
     /** Sets chartHeight, adding borderWidth. Mirrors Java: AbstractCanvas.setChartHeight(int). */
@@ -70,8 +70,6 @@ export abstract class AbstractCanvas {
             height: this.chartHeight,
             style: 'display:block;user-select:none;shape-rendering:crispEdges',
         });
-        // const group = createGroup(this.borderWidth, this.borderWidth);
-        // svg.appendChild(group);
         this.drawBackground(svg);
         this.drawCaption(svg);
         this.createReport(svg);

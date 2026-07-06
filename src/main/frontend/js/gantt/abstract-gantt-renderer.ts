@@ -131,30 +131,30 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         return intToHex(this.theme.xAxesTheme.dayOfMonthWeekendBgColor, '#d7d7d7');
     }
 
-    override drawDayBars(g: SVGElement, dayDate: Date, calendarH = 0): void {
-        const dayIdx = calculateDayIndex(dayDate, this.chartStart!);
-        const dayLeft = this.dayIndexToPixelX(dayIdx);
-        const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
-        for (const task of this.tasks) {
-            const rowY = calendarH + task.rowIndex * (this.getTaskHeight() + 1);
-            g.appendChild(createRect(dayLeft, rowY - 1, this.dayWidth, 1, {fill: gridColor}));
-            g.appendChild(createRect(dayLeft, rowY, 1, LINE_HEIGHT, {fill: gridColor}));
-            const bgColor = this.getGanttDayStripeColor(task, dayDate);
-            g.appendChild(createRect(dayLeft + 1, rowY, this.dayWidth - 1, LINE_HEIGHT, {fill: bgColor}));
-            const exception = getCalendarException(dayDate, task.calendarExceptions);
-            if (exception?.letter && this.dayWidth >= 14) {
-                const cx = dayLeft + this.dayWidth / 2;
-                const letter = createText(cx, rowY + LINE_HEIGHT / 2, exception.letter, {
-                    fill: intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
-                    'font-size': String(NONE_WORKING_DAY_FONT_SIZE),
-                    'font-family': 'sans-serif', 'font-weight': 'bold',
-                    'text-anchor': 'middle', 'dominant-baseline': 'middle',
-                });
-                letter.appendChild(createSvgElement('title', {}, exception.type || 'Off-day'));
-                g.appendChild(letter);
-            }
-        }
-    }
+    // override drawDayBars(g: SVGElement, dayDate: Date, calendarH = 0): void {
+    //     const dayIdx = calculateDayIndex(dayDate, this.chartStart!);
+    //     const dayLeft = this.dayIndexToPixelX(dayIdx);
+    //     const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+    //     for (const task of this.tasks) {
+    //         const rowY = calendarH + task.rowIndex * (this.getTaskHeight() + 1);
+    //         g.appendChild(createRect(dayLeft, rowY - 1, this.dayWidth, 1, {fill: gridColor}));
+    //         g.appendChild(createRect(dayLeft, rowY, 1, LINE_HEIGHT, {fill: gridColor}));
+    //         const bgColor = this.getGanttDayStripeColor(task, dayDate);
+    //         g.appendChild(createRect(dayLeft + 1, rowY, this.dayWidth - 1, LINE_HEIGHT, {fill: bgColor}));
+    //         const exception = getCalendarException(dayDate, task.calendarExceptions);
+    //         if (exception?.letter && this.dayWidth >= 14) {
+    //             const cx = dayLeft + this.dayWidth / 2;
+    //             const letter = createText(cx, rowY + LINE_HEIGHT / 2, exception.letter, {
+    //                 fill: intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
+    //                 'font-size': String(NONE_WORKING_DAY_FONT_SIZE),
+    //                 'font-family': 'sans-serif', 'font-weight': 'bold',
+    //                 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+    //             });
+    //             letter.appendChild(createSvgElement('title', {}, exception.type || 'Off-day'));
+    //             g.appendChild(letter);
+    //         }
+    //     }
+    // }
 
     drawConflictMarker(_g: SVGElement, _y: number, _conflict: unknown): void { /* team planner only */
     }
