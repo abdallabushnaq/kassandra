@@ -5,7 +5,7 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {Theme} from '../theme/theme.js';
-import {calculateDayIndex} from '../date-utils.js';
+import {DateUtils} from '../date-utils.js';
 import {SprintsOverviewChart} from './sprints-overview-chart.js';
 import {
     DEFAULT_DW,
@@ -90,7 +90,7 @@ function createChart(
         scrollOffset = saved.scrollOffset;
         constrainScrollOffset();
     } else {
-        const todayIdx = calculateDayIndex(renderer.currentDate, renderer.chartStart);
+        const todayIdx = DateUtils.calculateDayIndex(renderer.currentDate, renderer.chartStart);
         const visibleDays = getContainerWidth() / dayWidth;
         scrollOffset = Math.max(0, Math.min(renderer.totalDays - visibleDays, todayIdx - visibleDays * 0.3));
     }

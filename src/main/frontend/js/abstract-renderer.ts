@@ -6,7 +6,7 @@
 
 import {ColorUtils} from './color-utils.js';
 import {SvgUtils} from './svg-utils.js';
-import {calculateDays} from './date-utils.js';
+import {DateUtils} from './date-utils.js';
 import {CalendarXAxes} from './calendar-x-axes.js';
 import {CalendarSize} from './calendar-size.js';
 import {GraphSquare} from './graph-square.js';
@@ -64,7 +64,7 @@ export abstract class AbstractRenderer implements IRenderer {
         const firstMilestoneDay = this.milestones.firstMilestone!;
         const firstMilestoneX = this.firstDayX + (this.calendarXAxes.dayOfWeek.getWidth() ?? 0) / 2;
         return firstMilestoneX
-            + (calculateDays(firstMilestoneDay, date) - this.scrollOffset + this.calendarXAxes.priRun)
+            + (DateUtils.calculateDays(firstMilestoneDay, date) - this.scrollOffset + this.calendarXAxes.priRun)
             * (this.calendarXAxes.dayOfWeek.getWidth() ?? 0);
     }
 
@@ -89,7 +89,7 @@ export abstract class AbstractRenderer implements IRenderer {
     }
 
     calculateMaxDays(): number {
-        return calculateDays(this.milestones.firstMilestone!, this.milestones.lastMilestone!)
+        return DateUtils.calculateDays(this.milestones.firstMilestone!, this.milestones.lastMilestone!)
             + 1 + this.calendarXAxes.priRun + this.calendarXAxes.postRun;
     }
 

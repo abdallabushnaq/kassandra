@@ -5,7 +5,7 @@
 
 import {ColorUtils} from '../color-utils.js';
 import {SvgUtils} from '../svg-utils.js';
-import {calculateDayCount, calculateDayIndex, getDayMidnight, MS} from '../date-utils.js';
+import {DateUtils} from '../date-utils.js';
 import {Milestone} from '../milestone.js';
 import {Milestones} from '../milestones.js';
 import {Theme} from '../theme/theme.js';
@@ -32,11 +32,11 @@ export interface GanttChartDto {
 
 export class GanttRenderer extends AbstractGanttRenderer {
     constructor(data: GanttChartDto, theme: Theme, preRun: number, postRun: number) {
-        const chartStart = getDayMidnight(new Date(data.meta.chartStart));
-        const chartEnd = getDayMidnight(new Date(data.meta.chartEnd));
-        const now = data.meta.now ? getDayMidnight(new Date(data.meta.now)) : getDayMidnight(new Date());
-        const earliestStart = getDayMidnight(new Date(data.meta.sprintEarliestStartDate));
-        const latestFinish = getDayMidnight(new Date(data.meta.sprintLatestFinishDate));
+        const chartStart = DateUtils.getDayMidnight(new Date(data.meta.chartStart));
+        const chartEnd = DateUtils.getDayMidnight(new Date(data.meta.chartEnd));
+        const now = data.meta.now ? DateUtils.getDayMidnight(new Date(data.meta.now)) : DateUtils.getDayMidnight(new Date());
+        const earliestStart = DateUtils.getDayMidnight(new Date(data.meta.sprintEarliestStartDate));
+        const latestFinish = DateUtils.getDayMidnight(new Date(data.meta.sprintLatestFinishDate));
         const sprintStatus = data.meta.sprintStatus;
 
         const milestonesList: Milestone[] = [];
@@ -56,7 +56,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
 
         this.tasks = data.tasks || [];
         this.chartStart = chartStart;
-        this.totalDays = calculateDayCount(chartStart, chartEnd);
+        this.totalDays = DateUtils.calculateDayCount(chartStart, chartEnd);
         this.currentDate = now;
 
         for (const task of this.tasks) {
@@ -69,7 +69,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
     }
 
     override drawDayBars(g: SVGElement, dayDate: Date, calendarH = 0): void {
-        const dayIdx = calculateDayIndex(dayDate, this.chartStart!);
+        const dayIdx = DateUtils.calculateDayIndex(dayDate, this.chartStart!);
         const dayLeft = this.dayIndexToPixelX(dayIdx);
         const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
         for (const task of this.tasks) {
@@ -103,7 +103,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
     renderNowLine(totalHeight: number): SVGGElement {
         const g = SvgUtils.createSvgElement('g', {class: 'now-line'});
         const containerWidth = this.containerWidth;
-        const nowIdx = calculateDayIndex(this.currentDate!, this.chartStart!);
+        const nowIdx = DateUtils.calculateDayIndex(this.currentDate!, this.chartStart!);
         const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
         if (xPos < 0 || xPos > containerWidth) return g;
         g.appendChild(SvgUtils.createLine(xPos, 0, xPos, totalHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
@@ -120,7 +120,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
         const lastDay = Math.min(this.totalDays - 1, firstDay + Math.ceil(this.containerWidth / this.dayWidth) + 2);
         for (let d = firstDay; d <= lastDay; d++) {
-            const dayDate = new Date(this.chartStart!.getTime() + d * MS);
+            const dayDate = new Date(this.chartStart!.getTime() + d * DateUtils.MS);
             this.drawDayBars(gDayBars, dayDate, this._calendarH);
         }
         svg.appendChild(gDayBars);

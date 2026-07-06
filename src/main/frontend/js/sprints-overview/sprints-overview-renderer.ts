@@ -6,7 +6,7 @@
 
 import {ColorUtils} from '../color-utils.js';
 import {SvgUtils} from '../svg-utils.js';
-import {calculateDayCount, calculateDayIndex, getDayMidnight} from '../date-utils.js';
+import {DateUtils} from '../date-utils.js';
 import {AbstractRenderer} from '../abstract-renderer.js';
 import {CalendarSize} from '../calendar-size.js';
 import {Milestone} from '../milestone.js';
@@ -81,8 +81,8 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
 
         const milestonesList: Milestone[] = [
             new Milestone(currentDate, 'N', 'Now (current date)', false),
-            new Milestone(getDayMidnight(chartStart), 'S', 'Start (Start of project)', false),
-            new Milestone(getDayMidnight(chartEnd), 'E', 'End (End of project)', false),
+            new Milestone(DateUtils.getDayMidnight(chartStart), 'S', 'Start (Start of project)', false),
+            new Milestone(DateUtils.getDayMidnight(chartEnd), 'E', 'End (End of project)', false),
         ];
         const milestones = new Milestones(milestonesList, chartStart, chartEnd);
 
@@ -92,7 +92,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         this.chartStart = chartStart;
         this.chartEnd = chartEnd;
         this.currentDate = currentDate;
-        this.totalDays = calculateDayCount(chartStart, chartEnd);
+        this.totalDays = DateUtils.calculateDayCount(chartStart, chartEnd);
         this.dayWidth = DEFAULT_DW;
         this.containerWidth = 800;
         this.sprintHitAreas = [];
@@ -182,8 +182,8 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
 
             (lane.sprints || []).forEach((sprint) => {
                 if (!sprint.start || !sprint.end) return;
-                const startIdx = calculateDayIndex(sprint.start, this.chartStart);
-                const endIdx = calculateDayIndex(sprint.end, this.chartStart);
+                const startIdx = DateUtils.calculateDayIndex(sprint.start, this.chartStart);
+                const endIdx = DateUtils.calculateDayIndex(sprint.end, this.chartStart);
                 const sprintX = this.dayIndexToPixelX(startIdx);
                 const sprintW = (endIdx - startIdx + 1) * this.dayWidth - 1;
                 if (sprintX + sprintW < 0 || sprintX > containerWidth) return;

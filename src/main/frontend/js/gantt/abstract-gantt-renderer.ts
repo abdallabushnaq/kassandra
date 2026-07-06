@@ -5,7 +5,7 @@
 
 import {ColorUtils} from '../color-utils.js';
 import {SvgUtils} from '../svg-utils.js';
-import {calculateDayIndex, MS} from '../date-utils.js';
+import {DateUtils} from '../date-utils.js';
 import {AbstractRenderer} from '../abstract-renderer.js';
 import {Theme} from '../theme/theme.js';
 import {Milestones} from '../milestones.js';
@@ -91,7 +91,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     calculateX(datetimeStr: string, startTimeStr: string | null, secondsPerDay: number): number {
         const date = parseLocalDateTime(datetimeStr)!;
         const startTime = parseLocalDateTime(startTimeStr)!;
-        const dayIndex = calculateDayIndex(datetimeStr, this.chartStart!);
+        const dayIndex = DateUtils.calculateDayIndex(datetimeStr, this.chartStart!);
         const workedSeconds = (date.getTime() - startTime.getTime()) / 1000;
         const timeOfDayX = Math.floor(workedSeconds * this.dayWidth / secondsPerDay);
         return this.dayIndexToPixelX(dayIndex) + timeOfDayX;
@@ -164,13 +164,13 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             ? ColorUtils.intToHex(this.theme.ganttTheme.criticalTaskBorderColor, '#ff0000')
             : ColorUtils.intToHex(this.theme.ganttTheme.taskBorderColor, '#888888');
 
-        const startDayIdx = calculateDayIndex(task.start!, this.chartStart!);
-        const finishDayIdx = calculateDayIndex(task.finish!, this.chartStart!);
+        const startDayIdx = DateUtils.calculateDayIndex(task.start!, this.chartStart!);
+        const finishDayIdx = DateUtils.calculateDayIndex(task.finish!, this.chartStart!);
         const days = finishDayIdx - startDayIdx;
 
         for (let day = 0; day <= days; day++) {
             const dayIdx = startDayIdx + day;
-            const dayDate = new Date(this.chartStart!.getTime() + dayIdx * MS);
+            const dayDate = new Date(this.chartStart!.getTime() + dayIdx * DateUtils.MS);
             const working = isWorkingDay(dayDate, task.calendarExceptions);
             const xStart = this.dayIndexToPixelX(dayIdx);
             const xFinish = xStart + this.dayWidth;
@@ -461,13 +461,13 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             const y1 = y - th / 2 + TASK_BODY_BORDER;
             const h = th - TASK_BODY_BORDER * 2;
             if (x2 - x1 - 2 > 0) {
-                const startDayIdx = calculateDayIndex(task.start!, this.chartStart!);
-                const finishDayIdx = calculateDayIndex(task.finish!, this.chartStart!);
+                const startDayIdx = DateUtils.calculateDayIndex(task.start!, this.chartStart!);
+                const finishDayIdx = DateUtils.calculateDayIndex(task.finish!, this.chartStart!);
                 const days = finishDayIdx - startDayIdx;
 
                 for (let day = 0; day <= days; day++) {
                     const dayIdx = startDayIdx + day;
-                    const dayDate = new Date(this.chartStart!.getTime() + dayIdx * MS);
+                    const dayDate = new Date(this.chartStart!.getTime() + dayIdx * DateUtils.MS);
                     let segX: number, segW: number;
 
                     if (isWorkingDay(dayDate, task.calendarExceptions)) {

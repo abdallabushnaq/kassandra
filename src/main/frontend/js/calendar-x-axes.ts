@@ -7,7 +7,7 @@
 
 import {ColorUtils} from './color-utils.js';
 import {SvgUtils} from './svg-utils.js';
-import {addDay, calculateDays, getWeekOfYear, getWeekSunday, maxDate} from './date-utils.js';
+import {DateUtils} from './date-utils.js';
 import {GraphColorUtil} from './graph-color-util.js';
 import {CalendarElement} from './calendar-element.js';
 import {FontSpec} from "./font-spec.js";
@@ -82,10 +82,10 @@ export class CalendarXAxes {
     drawCalendar(svgGroup: SVGElement, drawDays: boolean, viewportWidth: number): void {
         if (!this.parent) return;
 
-        const firstDay = addDay(this.milestones.firstMilestone!, -this.priRun);
-        const lastDay = maxDate(
-            addDay(this.milestones.lastMilestone!, this.postRun),
-            addDay(this.milestones.firstMilestone!, this.parent.days - 1),
+        const firstDay = DateUtils.addDay(this.milestones.firstMilestone!, -this.priRun);
+        const lastDay = DateUtils.maxDate(
+            DateUtils.addDay(this.milestones.lastMilestone!, this.postRun),
+            DateUtils.addDay(this.milestones.firstMilestone!, this.parent.days - 1),
         );
 
         let yearWasDrawn = false;
@@ -123,7 +123,7 @@ export class CalendarXAxes {
                 // Phase 3: MONTH
                 else if (CalendarSize.YEARS === this.calendarSize && phase === 3 &&
                     (startCal.getDate() === 1 || !monthWasDrawn) && this.isMonthVisible()) {
-                    const end = addDay(new Date(startCal.getFullYear(), startCal.getMonth() + 1, 1), -1);
+                    const end = DateUtils.addDay(new Date(startCal.getFullYear(), startCal.getMonth() + 1, 1), -1);
                     if (end > lastDay) end.setTime(lastDay.getTime());
                     const x2 = this.calculateDayX(end) - (this.dayOfWeek.getWidth() ?? 0) / 2;
                     const bgColor = this.parent.theme.xAxesTheme.monthBgColors[startCal.getMonth()];
@@ -142,11 +142,11 @@ export class CalendarXAxes {
                 // Phase 2: WEEK
                 else if (CalendarSize.YEARS === this.calendarSize && phase === 2 &&
                     (startCal.getDay() === 1 || !firstWeekWasDrawn) && this.isWeekVisible()) {
-                    const end = getWeekSunday(startCal);
+                    const end = DateUtils.getWeekSunday(startCal);
                     if (end > lastDay) end.setTime(lastDay.getTime());
                     const x2 = this.calculateDayX(end) - (this.dayOfWeek.getWidth() ?? 0) / 2;
                     const calendarWeek = this.isDayOfWeekVisible()
-                        ? 'W' + getWeekOfYear(currentDay)
+                        ? 'W' + DateUtils.getWeekOfYear(currentDay)
                         : String(currentDay.getDate());
                     this.drawTextBox(
                         daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2),
@@ -208,7 +208,7 @@ export class CalendarXAxes {
                     }
                 }
 
-                currentDay = addDay(currentDay, 1);
+                currentDay = DateUtils.addDay(currentDay, 1);
             }
         }
     }
@@ -274,7 +274,7 @@ export class CalendarXAxes {
         if (!this.milestones.firstMilestone) return 0;
         const firstMilestoneX = this.x + (this.dayOfWeek.getWidth() ?? 0) / 2;
         return firstMilestoneX
-            + (calculateDays(this.milestones.firstMilestone, date) - this.parent.scrollOffset + this.priRun)
+            + (DateUtils.calculateDays(this.milestones.firstMilestone, date) - this.parent.scrollOffset + this.priRun)
             * (this.dayOfWeek.getWidth() ?? 0);
     }
 
