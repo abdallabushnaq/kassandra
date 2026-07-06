@@ -5,7 +5,7 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {convertSprintColorToRgba} from '../color-utils.js';
-import {createClipPath, createRect, createSvgElement, createText} from '../svg-utils.js';
+import {SvgUtils} from '../svg-utils.js';
 import {calculateDayCount, calculateDayIndex, getDayMidnight} from '../date-utils.js';
 import {AbstractRenderer} from '../abstract-renderer.js';
 import {CalendarSize} from '../calendar-size.js';
@@ -122,7 +122,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     }
 
     // renderWeekendStripes(baseY: number, baseHeight: number): SVGGElement {
-    //     const g = createSvgElement('g', {class: 'weekend-stripes'});
+    //     const g = SvgUtils.createSvgElement('g', {class: 'weekend-stripes'});
     //     const containerWidth = this.containerWidth;
     //     const xAxesTheme = this.theme.xAxesTheme;
     //
@@ -137,7 +137,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     //             if (xPos + this.dayWidth < 0 || xPos > containerWidth) continue;
     //             const bgColor = dow === 6 ? satColor : dow === 0 ? sunColor : null;
     //             if (!bgColor) continue;
-    //             g.appendChild(createRect(xPos, baseY, this.dayWidth, baseHeight, {fill: bgColor}));
+    //             g.appendChild(SvgUtils.createRect(xPos, baseY, this.dayWidth, baseHeight, {fill: bgColor}));
     //         }
     //     } else {
     //         const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
@@ -147,7 +147,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     //             if (new Date(this.chartStart.getTime() + dd * MS).getDay() !== 1) continue;
     //             const xp = this.dayIndexToPixelX(dd);
     //             if (xp < 0 || xp > containerWidth) continue;
-    //             g.appendChild(createLine(xp, baseY, xp, baseY + baseHeight, {
+    //             g.appendChild(SvgUtils.createLine(xp, baseY, xp, baseY + baseHeight, {
     //                 stroke: gridColor, 'stroke-width': '1',
     //             }));
     //         }
@@ -156,7 +156,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     // }
 
     // renderVerticalGridLines(baseY: number, baseHeight: number): SVGGElement {
-    //     const g = createSvgElement('g', {class: 'grid-lines'});
+    //     const g = SvgUtils.createSvgElement('g', {class: 'grid-lines'});
     //     if (this.dayWidth < 4) return g;
     //     const containerWidth = this.containerWidth;
     //     const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
@@ -165,7 +165,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     //     for (let d = firstDay; d <= lastDay; d++) {
     //         const xPos = this.dayIndexToPixelX(d);
     //         if (xPos < 0 || xPos > containerWidth) continue;
-    //         g.appendChild(createLine(xPos, baseY, xPos, baseY + baseHeight, {
+    //         g.appendChild(SvgUtils.createLine(xPos, baseY, xPos, baseY + baseHeight, {
     //             stroke: gridColor, 'stroke-width': '1',
     //         }));
     //     }
@@ -174,7 +174,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
 
     drawGraph(svg: SVGElement): void {
         this.sprintHitAreas = [];
-        const g = createSvgElement('g', {class: 'sprints'});
+        const g = SvgUtils.createSvgElement('g', {class: 'sprints'});
         const containerWidth = this.containerWidth;
 
         this.lanes.forEach((lane, laneIndex) => {
@@ -191,15 +191,15 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
                 this.sprintHitAreas.push({sprint, x: sprintX, y: laneY, width: sprintW, height: SPRINT_H});
 
                 const fillColor = convertSprintColorToRgba(sprint.color);
-                const rect = createRect(sprintX, laneY, sprintW, SPRINT_H, {fill: fillColor});
-                rect.appendChild(createSvgElement('title', {}, this.buildSprintTooltip(sprint)));
+                const rect = SvgUtils.createRect(sprintX, laneY, sprintW, SPRINT_H, {fill: fillColor});
+                rect.appendChild(SvgUtils.createSvgElement('title', {}, this.buildSprintTooltip(sprint)));
                 g.appendChild(rect);
 
                 if (sprintW > 20) {
                     const clipId = `sp${laneIndex}_${sprint.id}`;
-                    g.appendChild(createClipPath(clipId, sprintX, laneY, sprintW, SPRINT_H));
+                    g.appendChild(SvgUtils.createClipPath(clipId, sprintX, laneY, sprintW, SPRINT_H));
                     const textY = laneY + LINE_HEIGHT - 2;
-                    g.appendChild(createText(sprintX + 1, textY, sprint.name || '', {
+                    g.appendChild(SvgUtils.createText(sprintX + 1, textY, sprint.name || '', {
                         fill: '#000000',
                         'font-size': '12',
                         'font-family': 'Arial,sans-serif',
@@ -213,12 +213,12 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     }
 
     // renderCurrentDateLine(chartHeight: number): SVGGElement {
-    //     const g = createSvgElement('g', {class: 'now-line'});
+    //     const g = SvgUtils.createSvgElement('g', {class: 'now-line'});
     //     const containerWidth = this.containerWidth;
     //     const nowIdx = calculateDayIndex(this.currentDate, this.chartStart);
     //     const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
     //     if (xPos < 0 || xPos > containerWidth) return g;
-    //     g.appendChild(createLine(xPos, 0, xPos, chartHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
+    //     g.appendChild(SvgUtils.createLine(xPos, 0, xPos, chartHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
     //     return g;
     // }
 
@@ -249,4 +249,3 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         this.drawMilestones(svg);
     }
 }
-

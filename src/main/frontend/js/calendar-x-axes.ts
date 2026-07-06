@@ -6,7 +6,7 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {intToHex} from './color-utils.js';
-import {createCircle, createGroup, createLine, createRect, createSvgElement, createText} from './svg-utils.js';
+import {SvgUtils} from './svg-utils.js';
 import {addDay, calculateDays, getWeekOfYear, getWeekSunday, maxDate} from './date-utils.js';
 import {GraphColorUtil} from './graph-color-util.js';
 import {CalendarElement} from './calendar-element.js';
@@ -245,11 +245,11 @@ export class CalendarXAxes {
     ): void {
         if (x1 + (x2 - x1) <= 0 || x1 >= (viewportWidth || 9999)) return;
         const cellWidth = x2 - x1 + 1;
-        const group = svgGroup.appendChild(createGroup(x1, y1));
-        group.appendChild(createRect(0, 0, cellWidth - 1, cellHeight - 1, {fill: intToHex(backgroundColor)}));//leave 1px for border right and bottom
+        const group = svgGroup.appendChild(SvgUtils.createGroup(x1, y1));
+        group.appendChild(SvgUtils.createRect(0, 0, cellWidth - 1, cellHeight - 1, {fill: intToHex(backgroundColor)}));//leave 1px for border right and bottom
 
         if (borderColor && cellWidth > 1) {
-            group.appendChild(createLine(cellWidth - 1 + 0.5, 0, cellWidth - 1 + 0.5, cellHeight - 1, {
+            group.appendChild(SvgUtils.createLine(cellWidth - 1 + 0.5, 0, cellWidth - 1 + 0.5, cellHeight - 1, {
                 stroke: intToHex(borderColor),
                 'stroke-width': '1',
             }));
@@ -259,7 +259,7 @@ export class CalendarXAxes {
             const fontSize = font && 'size' in font ? String(font.size) : '10';
             const maxAscent = font.maxAscent;
             const textX = centered ? (cellWidth - 1) / 2 : 2;
-            group.appendChild(createText(textX, (cellHeight - 1) / 2 + maxAscent / 2, text, {
+            group.appendChild(SvgUtils.createText(textX, (cellHeight - 1) / 2 + maxAscent / 2, text, {
                 fill: intToHex(textColor),
                 'font-size': fontSize,
                 'font-family': 'sans-serif',
@@ -318,14 +318,14 @@ export class CalendarXAxes {
 
         if (text?.charAt(0) === 'N' && drawNowLine) {
             // now line
-            parentGroup.appendChild(createLine(
+            parentGroup.appendChild(SvgUtils.createLine(
                 x, this.parent.diagram.y,
                 x, this.parent.diagram.y + this.parent.diagram.height,
                 {stroke: darkRed, 'stroke-width': '2'},
             ));
             if (this.dayOfWeek.width) {
                 const r = Math.max(this.dayOfWeek.width / 3, 6) / 2;
-                parentGroup.appendChild(createCircle(x,
+                parentGroup.appendChild(SvgUtils.createCircle(x,
                     this.calendarAtBottom
                         ? this.parent.diagram.y - r / 2
                         : this.parent.diagram.y + this.parent.diagram.height - r,
@@ -335,12 +335,12 @@ export class CalendarXAxes {
         }
 
         if (visible) {
-            parentGroup.appendChild(createRect(
+            parentGroup.appendChild(SvgUtils.createRect(
                 x - this.milestone.width / 2, y,
                 this.milestone.width, this.milestone.height - 1,
                 {fill: intToHex(fillColor)},
             ));
-            const textEl = createText(x - 1, y + this.milestone.height / 2 + 1, text, {
+            const textEl = SvgUtils.createText(x - 1, y + this.milestone.height / 2 + 1, text, {
                 fill: milestoneTextColor,
                 'font-size': '10px',
                 'font-family': 'sans-serif',
@@ -350,18 +350,18 @@ export class CalendarXAxes {
             });
             if (m) {
                 textEl.appendChild(
-                    createSvgElement('title', {}, `${text} = ${m.name}\n${this._formatDateForTooltip(time)}`),
+                    SvgUtils.createSvgElement('title', {}, `${text} = ${m.name}\n${this._formatDateForTooltip(time)}`),
                 );
             }
             parentGroup.appendChild(textEl);
 
             if (drawFlag && flagY != null) {
-                parentGroup.appendChild(createSvgElement('line', {
+                parentGroup.appendChild(SvgUtils.createSvgElement('line', {
                     x1: x, y1: y + this.milestone.height,
                     x2: x, y2: y + this.milestone.height + 3,
                     stroke: intToHex(flagTextColor), 'stroke-width': '1',
                 }));
-                parentGroup.appendChild(createText(
+                parentGroup.appendChild(SvgUtils.createText(
                     x - this.milestone.width / 2 + 2, flagY + FLAG_HEIGHT - 5,
                     this._formatDateForFlag(time),
                     {
@@ -459,4 +459,3 @@ export class CalendarXAxes {
         return `${months[date.getMonth()]}.${date.getDate()}`;
     }
 }
-

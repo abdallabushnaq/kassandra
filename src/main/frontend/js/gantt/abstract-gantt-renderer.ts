@@ -4,7 +4,7 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {ColorUtil, convertSprintColorToRgba, hexToRgbaWithAlpha, intToHex} from '../color-utils.js';
-import {createClipPath, createRect, createSvgElement, createText} from '../svg-utils.js';
+import {SvgUtils} from '../svg-utils.js';
 import {calculateDayIndex, MS} from '../date-utils.js';
 import {AbstractRenderer} from '../abstract-renderer.js';
 import {Theme} from '../theme/theme.js';
@@ -137,20 +137,20 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     //     const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
     //     for (const task of this.tasks) {
     //         const rowY = calendarH + task.rowIndex * (this.getTaskHeight() + 1);
-    //         g.appendChild(createRect(dayLeft, rowY - 1, this.dayWidth, 1, {fill: gridColor}));
-    //         g.appendChild(createRect(dayLeft, rowY, 1, LINE_HEIGHT, {fill: gridColor}));
+    //         g.appendChild(SvgUtils.createRect(dayLeft, rowY - 1, this.dayWidth, 1, {fill: gridColor}));
+    //         g.appendChild(SvgUtils.createRect(dayLeft, rowY, 1, LINE_HEIGHT, {fill: gridColor}));
     //         const bgColor = this.getGanttDayStripeColor(task, dayDate);
-    //         g.appendChild(createRect(dayLeft + 1, rowY, this.dayWidth - 1, LINE_HEIGHT, {fill: bgColor}));
+    //         g.appendChild(SvgUtils.createRect(dayLeft + 1, rowY, this.dayWidth - 1, LINE_HEIGHT, {fill: bgColor}));
     //         const exception = getCalendarException(dayDate, task.calendarExceptions);
     //         if (exception?.letter && this.dayWidth >= 14) {
     //             const cx = dayLeft + this.dayWidth / 2;
-    //             const letter = createText(cx, rowY + LINE_HEIGHT / 2, exception.letter, {
+    //             const letter = SvgUtils.createText(cx, rowY + LINE_HEIGHT / 2, exception.letter, {
     //                 fill: intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
     //                 'font-size': String(NONE_WORKING_DAY_FONT_SIZE),
     //                 'font-family': 'sans-serif', 'font-weight': 'bold',
     //                 'text-anchor': 'middle', 'dominant-baseline': 'middle',
     //             });
-    //             letter.appendChild(createSvgElement('title', {}, exception.type || 'Off-day'));
+    //             letter.appendChild(SvgUtils.createSvgElement('title', {}, exception.type || 'Off-day'));
     //             g.appendChild(letter);
     //         }
     //     }
@@ -178,29 +178,29 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             if (working) {
                 const th = this.getTaskHeight();
                 if (days === 0) {
-                    g.appendChild(createRect(x1, y - th / 2 + TASK_BODY_BORDER, x2 - x1 + 1, 1, {fill: borderColor}));
-                    g.appendChild(createRect(x1, y + th / 2 - TASK_BODY_BORDER - 1, x2 - x1 + 1, 1, {fill: borderColor}));
-                    g.appendChild(createRect(x1, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
-                    g.appendChild(createRect(x2, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER, x2 - x1 + 1, 1, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(x1, y + th / 2 - TASK_BODY_BORDER - 1, x2 - x1 + 1, 1, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(x2, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
                 } else if (day === 0) {
-                    g.appendChild(createRect(x1, y - th / 2 + TASK_BODY_BORDER, xFinish - x1, 1, {fill: borderColor}));
-                    g.appendChild(createRect(x1, y + th / 2 - TASK_BODY_BORDER - 1, xFinish - x1, 1, {fill: borderColor}));
-                    g.appendChild(createRect(x1, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER, xFinish - x1, 1, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(x1, y + th / 2 - TASK_BODY_BORDER - 1, xFinish - x1, 1, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
                 } else if (day === days) {
-                    g.appendChild(createRect(xStart, y - th / 2 + TASK_BODY_BORDER, x2 - xStart + 1, 1, {fill: borderColor}));
-                    g.appendChild(createRect(xStart, y + th / 2 - TASK_BODY_BORDER - 1, x2 - xStart + 1, 1, {fill: borderColor}));
-                    g.appendChild(createRect(x2, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(xStart, y - th / 2 + TASK_BODY_BORDER, x2 - xStart + 1, 1, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(xStart, y + th / 2 - TASK_BODY_BORDER - 1, x2 - xStart + 1, 1, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(x2, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
                 } else {
-                    g.appendChild(createRect(xStart, y - th / 2 + TASK_BODY_BORDER, this.dayWidth, 1, {fill: borderColor}));
-                    g.appendChild(createRect(xStart, y + th / 2 - TASK_BODY_BORDER - 1, this.dayWidth, 1, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(xStart, y - th / 2 + TASK_BODY_BORDER, this.dayWidth, 1, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(xStart, y + th / 2 - TASK_BODY_BORDER - 1, this.dayWidth, 1, {fill: borderColor}));
                 }
             } else {
                 for (let i = 0; i < this.dayWidth - 1; i++) {
                     if ((dayIdx * this.dayWidth + i) % 4 === 0) {
                         const px = xStart + i;
                         const th = this.getTaskHeight();
-                        g.appendChild(createRect(px, y - th / 2 + TASK_BODY_BORDER, 2, 1, {fill: borderColor}));
-                        g.appendChild(createRect(px, y + th / 2 - TASK_BODY_BORDER - 1, 2, 1, {fill: borderColor}));
+                        g.appendChild(SvgUtils.createRect(px, y - th / 2 + TASK_BODY_BORDER, 2, 1, {fill: borderColor}));
+                        g.appendChild(SvgUtils.createRect(px, y + th / 2 - TASK_BODY_BORDER - 1, 2, 1, {fill: borderColor}));
                     }
                 }
             }
@@ -212,17 +212,17 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const x2 = x1 + this.dayWidth;
         const fillColor = intToHex(this.theme.ganttTheme.idBgColor, '#cccccc');
         const textColor = intToHex(this.theme.ganttTheme.idTextColor, '#000000');
-        g.appendChild(createRect(x1 + 1, y - this.getTaskHeight() / 2, x2 - x1 - 1, this.getTaskHeight(), {fill: fillColor}));
-        const keyText = createText(x1 + 4, y, task.key || '', {
+        g.appendChild(SvgUtils.createRect(x1 + 1, y - this.getTaskHeight() / 2, x2 - x1 - 1, this.getTaskHeight(), {fill: fillColor}));
+        const keyText = SvgUtils.createText(x1 + 4, y, task.key || '', {
             fill: textColor, 'font-size': '12', 'font-family': 'sans-serif', 'dominant-baseline': 'middle',
         });
-        if (task.name) keyText.appendChild(createSvgElement('title', {}, task.name));
+        if (task.name) keyText.appendChild(SvgUtils.createSvgElement('title', {}, task.name));
         g.appendChild(keyText);
     }
 
     drawManualMarker(g: SVGElement, task: TaskDto, x1: number, y: number, _labelInside: boolean): void {
         if (task.manuallyScheduled) {
-            g.appendChild(createRect(x1, y - this.getTaskHeight() / 2, 1, this.getTaskHeight(), {fill: '#ff0000'}));
+            g.appendChild(SvgUtils.createRect(x1, y - this.getTaskHeight() / 2, 1, this.getTaskHeight(), {fill: '#ff0000'}));
         }
     }
 
@@ -235,17 +235,17 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             `${x1},${y + mW}`, `${x1 - mW},${y}`,
             `${x1},${y - mW}`,
         ].join(' ');
-        const poly = createSvgElement('polygon', {points, fill: fillColor, stroke: borderColor, 'stroke-width': '1'});
-        poly.appendChild(createSvgElement('title', {}, this.generateTaskToolTip(task)));
+        const poly = SvgUtils.createSvgElement('polygon', {points, fill: fillColor, stroke: borderColor, 'stroke-width': '1'});
+        poly.appendChild(SvgUtils.createSvgElement('title', {}, this.generateTaskToolTip(task)));
         g.appendChild(poly);
         const textColor = task.textColor || intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
         const labelX = x1 + mW / 2 + 10;
         const dateStr = task.start ? new Date(task.start).toLocaleDateString() : '';
         const label = `${taskName || ''} (${dateStr})`;
-        const lbl = createText(labelX, y, label, {
+        const lbl = SvgUtils.createText(labelX, y, label, {
             fill: textColor, 'font-size': '12', 'font-family': 'sans-serif', 'dominant-baseline': 'middle',
         });
-        lbl.appendChild(createSvgElement('title', {}, this.generateTaskToolTip(task)));
+        lbl.appendChild(SvgUtils.createSvgElement('title', {}, this.generateTaskToolTip(task)));
         g.appendChild(lbl);
     }
 
@@ -270,18 +270,18 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const arrowColor = (sourceTask.critical && targetTask.critical)
             ? intToHex(this.theme.ganttTheme.criticalRelationColor, '#ff0000')
             : intToHex(this.theme.ganttTheme.relationColor, '#3466ed');
-        g.appendChild(createRect(ax1 + 1, y1, ax2 - ax1, 1, {fill: arrowColor}));
-        g.appendChild(createRect(ax2, y1 + 1, 1, yMid - y1, {fill: arrowColor}));
+        g.appendChild(SvgUtils.createRect(ax1 + 1, y1, ax2 - ax1, 1, {fill: arrowColor}));
+        g.appendChild(SvgUtils.createRect(ax2, y1 + 1, 1, yMid - y1, {fill: arrowColor}));
         const d = 5;
         const pts = y2 > y1
             ? `${ax2 - d},${yEnd - d + sign} ${ax2 + d},${yEnd - d + sign} ${ax2},${yEnd + sign}`
             : `${ax2 + d},${yEnd + d + sign} ${ax2 - d},${yEnd + d + sign} ${ax2},${yEnd + sign}`;
-        g.appendChild(createSvgElement('polygon', {points: pts, fill: arrowColor}));
+        g.appendChild(SvgUtils.createSvgElement('polygon', {points: pts, fill: arrowColor}));
     }
 
     drawRibbon(g: SVGElement, y1: number, x1: number, y2: number, delta1: number, delta2: number, ribbonColor: string): void {
         const points = `${x1},${y2} ${x1 + delta1},${y1} ${x1 + delta1 + delta2},${y1} ${x1 + delta2},${y2}`;
-        g.appendChild(createSvgElement('polygon', {points, fill: ribbonColor}));
+        g.appendChild(SvgUtils.createSvgElement('polygon', {points, fill: ribbonColor}));
     }
 
     drawStoryBody(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number, marker: string | null): void {
@@ -294,23 +294,23 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         if (marker == null) {
             const y1 = y + TASK_BODY_BORDER;
             const thickness = 2;
-            g.appendChild(createRect(x1, y1 - th / 2, x2 - x1 + 1, thickness, {fill: fillColor}));
-            g.appendChild(createRect(x1, y1 - th / 2 + thickness, thickness, th - TASK_BODY_BORDER * 2 - thickness, {fill: fillColor}));
-            g.appendChild(createRect(x2 - 1, y1 - th / 2 + thickness, thickness, th - TASK_BODY_BORDER * 2 - thickness, {fill: fillColor}));
+            g.appendChild(SvgUtils.createRect(x1, y1 - th / 2, x2 - x1 + 1, thickness, {fill: fillColor}));
+            g.appendChild(SvgUtils.createRect(x1, y1 - th / 2 + thickness, thickness, th - TASK_BODY_BORDER * 2 - thickness, {fill: fillColor}));
+            g.appendChild(SvgUtils.createRect(x2 - 1, y1 - th / 2 + thickness, thickness, th - TASK_BODY_BORDER * 2 - thickness, {fill: fillColor}));
             if (x2 - x1 - 1 > 0) {
-                const tooltipRect = createRect(x1 + 1, y1 - th / 2, x2 - x1 - 1, th - thickness * 2, {
+                const tooltipRect = SvgUtils.createRect(x1 + 1, y1 - th / 2, x2 - x1 - 1, th - thickness * 2, {
                     fill: 'none',
                     'pointer-events': 'all'
                 });
-                tooltipRect.appendChild(createSvgElement('title', {}, tooltip));
+                tooltipRect.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
                 g.appendChild(tooltipRect);
             }
         } else {
             const stY1 = y - th / 2 + 1;
             const stY2 = stY1 + th - 1;
             const clipId = 'sr-' + String(task.id).replace(/-/g, '');
-            g.appendChild(createClipPath(clipId, x1 + 1, y - th / 2 + 2, x2 - x1 - 1, th - 4));
-            const grp = createSvgElement('g', {'clip-path': `url(#${clipId})`});
+            g.appendChild(SvgUtils.createClipPath(clipId, x1 + 1, y - th / 2 + 2, x2 - x1 - 1, th - 4));
+            const grp = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
             let cur = fillColor;
             for (let rx = x1 - 16; rx < x2; rx += 16) {
                 this.drawRibbon(grp, stY1, rx, stY2, 25, 15, cur);
@@ -370,11 +370,11 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             this.drawStoryBody(g, task, x1, x2, y, marker);
             const storyLabelX = x2 + 10;
             if (storyLabelX < this.containerWidth + 40) {
-                const storyLabel = createText(storyLabelX, y, taskName, {
+                const storyLabel = SvgUtils.createText(storyLabelX, y, taskName, {
                     fill: textColor, 'font-size': '12', 'font-family': 'sans-serif',
                     'font-weight': 'bold', 'dominant-baseline': 'middle',
                 });
-                storyLabel.appendChild(createSvgElement('title', {}, this.generateTaskToolTip(task)));
+                storyLabel.appendChild(SvgUtils.createSvgElement('title', {}, this.generateTaskToolTip(task)));
                 g.appendChild(storyLabel);
             }
         } else {
@@ -397,8 +397,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                 const textWidth = fm.stringWidth(text);
                 if (textWidth < barWidth) {
                     const clipId2 = 'pt-' + String(task.id).replace(/-/g, '');
-                    g.appendChild(createClipPath(clipId2, x1 + 1, y - th / 2 + RESOURCE_NAME_TO_TASK_GAP, x2 - x1 - 3, th - 6));
-                    g.appendChild(createText(x1 + barWidth / 2, y, text, {
+                    g.appendChild(SvgUtils.createClipPath(clipId2, x1 + 1, y - th / 2 + RESOURCE_NAME_TO_TASK_GAP, x2 - x1 - 3, th - 6));
+                    g.appendChild(SvgUtils.createText(x1 + barWidth / 2, y, text, {
                         fill: highestContrast,
                         'font-size': AbstractGanttRenderer.taskProgressFont.size,
                         'font-family': AbstractGanttRenderer.taskProgressFont.family,
@@ -414,12 +414,12 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                 const clipId3 = 'tn-' + String(task.id).replace(/-/g, '');
                 const clipW3 = Math.max(0, this.containerWidth - labelRight);
                 if (clipW3 > 8) {
-                    g.appendChild(createClipPath(clipId3, labelRight, y - th, clipW3, th * 2));
-                    const nameLabel = createText(labelRight, y, (task.key ? task.key + ' ' : '') + taskName, {
+                    g.appendChild(SvgUtils.createClipPath(clipId3, labelRight, y - th, clipW3, th * 2));
+                    const nameLabel = SvgUtils.createText(labelRight, y, (task.key ? task.key + ' ' : '') + taskName, {
                         fill: textColor, 'font-size': '12', 'font-family': 'sans-serif',
                         'dominant-baseline': 'middle', 'clip-path': `url(#${clipId3})`,
                     });
-                    nameLabel.appendChild(createSvgElement('title', {}, this.generateTaskToolTip(task)));
+                    nameLabel.appendChild(SvgUtils.createSvgElement('title', {}, this.generateTaskToolTip(task)));
                     g.appendChild(nameLabel);
                 }
             }
@@ -432,13 +432,13 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                     const clipId4 = 'rn-' + String(task.id).replace(/-/g, '');
                     const clipW4 = Math.min(120, x1 > 0 ? x1 : 0);
                     if (clipW4 > 8) {
-                        g.appendChild(createClipPath(clipId4, Math.max(0, rnX), y - th, clipW4, th * 2));
-                        const rLabel = createText(rnX + rnWidth, y, rn, {
+                        g.appendChild(SvgUtils.createClipPath(clipId4, Math.max(0, rnX), y - th, clipW4, th * 2));
+                        const rLabel = SvgUtils.createText(rnX + rnWidth, y, rn, {
                             fill: textColor, 'font-size': '12', 'font-family': 'sans-serif',
                             'text-anchor': 'end', 'dominant-baseline': 'middle',
                             'clip-path': `url(#${clipId4})`,
                         });
-                        rLabel.appendChild(createSvgElement('title', {},
+                        rLabel.appendChild(SvgUtils.createSvgElement('title', {},
                             this.generateTaskNameToolTip(rn, task.assignedUserAvailability, task.assignedUserCountry, task.assignedUserState)));
                         g.appendChild(rLabel);
                     }
@@ -480,14 +480,14 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                             segX = this.dayIndexToPixelX(dayIdx);
                             segW = this.dayWidth;
                         }
-                        const rect = createRect(segX, y1, segW, h, {fill});
-                        rect.appendChild(createSvgElement('title', {}, tooltip));
+                        const rect = SvgUtils.createRect(segX, y1, segW, h, {fill});
+                        rect.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
                         g.appendChild(rect);
                     } else {
                         const weekendFill = hexToRgbaWithAlpha(fillColor, this.theme.ganttTheme.taskWeekEndTransparency);
                         const xStart4 = this.dayIndexToPixelX(dayIdx);
-                        const rectW = createRect(xStart4, y1, this.dayWidth, h, {fill: weekendFill});
-                        rectW.appendChild(createSvgElement('title', {}, tooltip));
+                        const rectW = SvgUtils.createRect(xStart4, y1, this.dayWidth, h, {fill: weekendFill});
+                        rectW.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
                         g.appendChild(rectW);
                     }
                 }
@@ -498,11 +498,11 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                         : hexToRgbaWithAlpha(fillColor, 200);
                     const progressW = Math.floor((x2 - x1) * progress - 1);
                     if (progressW > 0) {
-                        const pRect = createRect(x1 + 1, y1 + 2, progressW, h - 4, {fill: progressFill});
-                        pRect.appendChild(createSvgElement('title', {}, tooltip));
+                        const pRect = SvgUtils.createRect(x1 + 1, y1 + 2, progressW, h - 4, {fill: progressFill});
+                        pRect.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
                         g.appendChild(pRect);
                         if (progress < 1.0) {
-                            g.appendChild(createRect(x1 + progressW, y - th / 2 + 2, 1, th - 4, {fill: '#000000'}));
+                            g.appendChild(SvgUtils.createRect(x1 + progressW, y - th / 2 + 2, 1, th - 4, {fill: '#000000'}));
                         }
                     }
                 }
@@ -511,8 +511,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             const aY1 = y - th / 2 + 1;
             const aY2 = aY1 + th - 1;
             const clipId = 'ta-' + String(task.id).replace(/-/g, '');
-            g.appendChild(createClipPath(clipId, x1, y - th / 2 + 2, x2 - x1 - 1, th - 4));
-            const grp = createSvgElement('g', {'clip-path': `url(#${clipId})`});
+            g.appendChild(SvgUtils.createClipPath(clipId, x1, y - th / 2 + 2, x2 - x1 - 1, th - 4));
+            const grp = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
             let cur = fillColor ? convertSprintColorToRgba(fillColor) : '#aaaaaa';
             for (let ax = x1 - 16; ax < x2; ax += 16) {
                 this.drawRibbon(grp, aY1, ax, aY2, 25, 15, cur);
@@ -544,4 +544,3 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         return s;
     }
 }
-

@@ -5,7 +5,7 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {intToHex} from './color-utils.js';
-import {createRect, createSvgElement} from './svg-utils.js';
+import {SvgUtils} from './svg-utils.js';
 import {Theme} from './theme/theme.js';
 
 export abstract class AbstractCanvas {
@@ -34,13 +34,13 @@ export abstract class AbstractCanvas {
     /** Fills the entire SVG with the theme background color. */
     drawBackground(svg: SVGGElement): void {
         const bgColor = intToHex(this.theme.chartTheme.backgroundColor, '#fffff0');
-        svg.appendChild(createRect(0, 0, this.chartWidth, this.chartHeight, {fill: bgColor}));
+        svg.appendChild(SvgUtils.createRect(0, 0, this.chartWidth, this.chartHeight, {fill: bgColor}));
     }
 
     /** Draws a 1px border around the chart. */
     drawBorder(svg: SVGGElement): void {
         const borderColor = intToHex(this.theme.chartTheme.chartBorderColor, '#aaaaaa');
-        svg.appendChild(createRect(0.5, 0.5, this.chartWidth - 1, this.chartHeight - 1, {
+        svg.appendChild(SvgUtils.createRect(0.5, 0.5, this.chartWidth - 1, this.chartHeight - 1, {
             fill: 'none',
             stroke: borderColor,
             'stroke-width': '1',
@@ -65,7 +65,7 @@ export abstract class AbstractCanvas {
      * Mirrors Java: AbstractCanvas.render(…).
      */
     render(container: HTMLElement): void {
-        const svg = createSvgElement('svg', {
+        const svg = SvgUtils.createSvgElement('svg', {
             width: this.chartWidth,
             height: this.chartHeight,
             style: 'display:block;user-select:none;shape-rendering:crispEdges',

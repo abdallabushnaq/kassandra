@@ -5,7 +5,7 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {intToHex} from './color-utils.js';
-import {createText} from './svg-utils.js';
+import {SvgUtils} from './svg-utils.js';
 import {Theme} from './theme/theme.js';
 
 export class CaptionElement {
@@ -38,7 +38,7 @@ export class CaptionElement {
         if (!this.text) return;
         const textColor: string = intToHex(this._theme.chartTheme.captionTextColor, '#2c7bf4');
         const textY: number = this.y + Math.floor(this.height / 2) + 7;
-        svg.appendChild(createText(this.x, textY, this.text, {
+        svg.appendChild(SvgUtils.createText(this.x, textY, this.text, {
             fill: textColor,
             'font-size': '18',
             'font-family': 'sans-serif',

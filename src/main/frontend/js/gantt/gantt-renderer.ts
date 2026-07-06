@@ -4,7 +4,7 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {intToHex} from '../color-utils.js';
-import {createLine, createRect, createSvgElement, createText} from '../svg-utils.js';
+import {SvgUtils} from '../svg-utils.js';
 import {calculateDayCount, calculateDayIndex, getDayMidnight, MS} from '../date-utils.js';
 import {Milestone} from '../milestone.js';
 import {Milestones} from '../milestones.js';
@@ -75,20 +75,20 @@ export class GanttRenderer extends AbstractGanttRenderer {
         for (const task of this.tasks) {
             const rowY = calendarH + task.rowIndex * (this.getTaskHeight() + 1);
             //grid
-            g.appendChild(createRect(dayLeft, rowY - 1, this.dayWidth, 1, {fill: gridColor}));
-            g.appendChild(createRect(dayLeft, rowY, 1, this.getTaskHeight(), {fill: gridColor}));
+            g.appendChild(SvgUtils.createRect(dayLeft, rowY - 1, this.dayWidth, 1, {fill: gridColor}));
+            g.appendChild(SvgUtils.createRect(dayLeft, rowY, 1, this.getTaskHeight(), {fill: gridColor}));
             const bgColor = this.getGanttDayStripeColor(task, dayDate);
             //background
-            g.appendChild(createRect(dayLeft + 1, rowY, this.dayWidth - 1, this.getTaskHeight(), {fill: bgColor}));
+            g.appendChild(SvgUtils.createRect(dayLeft + 1, rowY, this.dayWidth - 1, this.getTaskHeight(), {fill: bgColor}));
             const ex = getCalendarException(dayDate, task.calendarExceptions);
             if (ex?.letter && this.dayWidth >= 14) {
                 const cx = dayLeft + this.dayWidth / 2;
-                const letter = createText(cx, rowY + this.getTaskHeight() / 2, ex.letter, {
+                const letter = SvgUtils.createText(cx, rowY + this.getTaskHeight() / 2, ex.letter, {
                     fill: intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
                     'font-size': '22', 'font-family': 'sans-serif', 'font-weight': 'bold',
                     'text-anchor': 'middle', 'dominant-baseline': 'middle',
                 });
-                letter.appendChild(createSvgElement('title', {}, ex.type || 'Off-day'));
+                letter.appendChild(SvgUtils.createSvgElement('title', {}, ex.type || 'Off-day'));
                 g.appendChild(letter);
             }
         }
@@ -101,12 +101,12 @@ export class GanttRenderer extends AbstractGanttRenderer {
     }
 
     renderNowLine(totalHeight: number): SVGGElement {
-        const g = createSvgElement('g', {class: 'now-line'});
+        const g = SvgUtils.createSvgElement('g', {class: 'now-line'});
         const containerWidth = this.containerWidth;
         const nowIdx = calculateDayIndex(this.currentDate!, this.chartStart!);
         const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
         if (xPos < 0 || xPos > containerWidth) return g;
-        g.appendChild(createLine(xPos, 0, xPos, totalHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
+        g.appendChild(SvgUtils.createLine(xPos, 0, xPos, totalHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
         return g;
     }
 
@@ -116,7 +116,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         const totalH = calendarH + taskAreaH;
         this._calendarH = y + calendarH;
 
-        const gDayBars = createSvgElement('g', {class: 'day-bars'});
+        const gDayBars = SvgUtils.createSvgElement('g', {class: 'day-bars'});
         const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
         const lastDay = Math.min(this.totalDays - 1, firstDay + Math.ceil(this.containerWidth / this.dayWidth) + 2);
         for (let d = firstDay; d <= lastDay; d++) {
@@ -134,7 +134,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         this.calendarXAxes.drawCalendar(svg, false, this.containerWidth);
         this.calendarXAxes.drawMilestones(svg);
 
-        const gTasks = createSvgElement('g', {class: 'tasks'});
+        const gTasks = SvgUtils.createSvgElement('g', {class: 'tasks'});
         this.drawGanttChart(gTasks);
         svg.appendChild(gTasks);
 

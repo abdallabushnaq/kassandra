@@ -5,7 +5,7 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {intToHex} from './color-utils.js';
-import {createText} from './svg-utils.js';
+import {SvgUtils} from './svg-utils.js';
 import {Theme} from './theme/theme.js';
 import {FontSpec} from "./font-spec.js";
 
@@ -46,7 +46,7 @@ export class FooterElement {
         const maxAscent = this.font.maxAscent;
         const textY = this.y + maxAscent + 1;
 
-        svg.appendChild(createText(this.x, textY, this.text, {
+        svg.appendChild(SvgUtils.createText(this.x, textY, this.text, {
             fill: textColor,
             'font-size': fontSize,
             'font-family': 'sans-serif',
@@ -55,7 +55,7 @@ export class FooterElement {
         if (this.key) {
             const approxKeyWidth = this.key.length * 5;
             const keyX = Math.max(this.x + 10, this.width - approxKeyWidth - 1);
-            svg.appendChild(createText(keyX, textY, this.key, {
+            svg.appendChild(SvgUtils.createText(keyX, textY, this.key, {
                 fill: textColor,
                 'font-size': fontSize,
                 'font-family': 'sans-serif',
