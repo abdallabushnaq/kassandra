@@ -3,7 +3,7 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {intToHex} from '../color-utils.js';
+import {ColorUtils} from '../color-utils.js';
 import {SvgUtils} from '../svg-utils.js';
 import {calculateDayCount, calculateDayIndex, getDayMidnight, MS} from '../date-utils.js';
 import {Milestone} from '../milestone.js';
@@ -71,7 +71,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
     override drawDayBars(g: SVGElement, dayDate: Date, calendarH = 0): void {
         const dayIdx = calculateDayIndex(dayDate, this.chartStart!);
         const dayLeft = this.dayIndexToPixelX(dayIdx);
-        const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+        const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
         for (const task of this.tasks) {
             const rowY = calendarH + task.rowIndex * (this.getTaskHeight() + 1);
             //grid
@@ -84,7 +84,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
             if (ex?.letter && this.dayWidth >= 14) {
                 const cx = dayLeft + this.dayWidth / 2;
                 const letter = SvgUtils.createText(cx, rowY + this.getTaskHeight() / 2, ex.letter, {
-                    fill: intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
+                    fill: ColorUtils.intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
                     'font-size': '22', 'font-family': 'sans-serif', 'font-weight': 'bold',
                     'text-anchor': 'middle', 'dominant-baseline': 'middle',
                 });
@@ -141,3 +141,4 @@ export class GanttRenderer extends AbstractGanttRenderer {
         svg.appendChild(this.renderNowLine(y + totalH));
     }
 }
+

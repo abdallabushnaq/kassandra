@@ -4,7 +4,7 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {convertSprintColorToRgba} from '../color-utils.js';
+import {ColorUtils} from '../color-utils.js';
 import {SvgUtils} from '../svg-utils.js';
 import {calculateDayCount, calculateDayIndex, getDayMidnight} from '../date-utils.js';
 import {AbstractRenderer} from '../abstract-renderer.js';
@@ -190,7 +190,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
 
                 this.sprintHitAreas.push({sprint, x: sprintX, y: laneY, width: sprintW, height: SPRINT_H});
 
-                const fillColor = convertSprintColorToRgba(sprint.color);
+                const fillColor = ColorUtils.convertSprintColorToRgba(sprint.color);
                 const rect = SvgUtils.createRect(sprintX, laneY, sprintW, SPRINT_H, {fill: fillColor});
                 rect.appendChild(SvgUtils.createSvgElement('title', {}, this.buildSprintTooltip(sprint)));
                 g.appendChild(rect);
@@ -249,3 +249,4 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         this.drawMilestones(svg);
     }
 }
+

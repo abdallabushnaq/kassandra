@@ -5,7 +5,7 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {intToHex} from './color-utils.js';
+import {ColorUtils} from './color-utils.js';
 import {SvgUtils} from './svg-utils.js';
 import {addDay, calculateDays, getWeekOfYear, getWeekSunday, maxDate} from './date-utils.js';
 import {GraphColorUtil} from './graph-color-util.js';
@@ -246,11 +246,11 @@ export class CalendarXAxes {
         if (x1 + (x2 - x1) <= 0 || x1 >= (viewportWidth || 9999)) return;
         const cellWidth = x2 - x1 + 1;
         const group = svgGroup.appendChild(SvgUtils.createGroup(x1, y1));
-        group.appendChild(SvgUtils.createRect(0, 0, cellWidth - 1, cellHeight - 1, {fill: intToHex(backgroundColor)}));//leave 1px for border right and bottom
+        group.appendChild(SvgUtils.createRect(0, 0, cellWidth - 1, cellHeight - 1, {fill: ColorUtils.intToHex(backgroundColor)}));//leave 1px for border right and bottom
 
         if (borderColor && cellWidth > 1) {
             group.appendChild(SvgUtils.createLine(cellWidth - 1 + 0.5, 0, cellWidth - 1 + 0.5, cellHeight - 1, {
-                stroke: intToHex(borderColor),
+                stroke: ColorUtils.intToHex(borderColor),
                 'stroke-width': '1',
             }));
         }
@@ -260,7 +260,7 @@ export class CalendarXAxes {
             const maxAscent = font.maxAscent;
             const textX = centered ? (cellWidth - 1) / 2 : 2;
             group.appendChild(SvgUtils.createText(textX, (cellHeight - 1) / 2 + maxAscent / 2, text, {
-                fill: intToHex(textColor),
+                fill: ColorUtils.intToHex(textColor),
                 'font-size': fontSize,
                 'font-family': 'sans-serif',
                 'text-anchor': centered ? 'middle' : 'start',
@@ -314,7 +314,7 @@ export class CalendarXAxes {
         const FLAG_HEIGHT = 13;
         const theme = this.theme;
         const darkRed = '#cc4a31';
-        const milestoneTextColor = intToHex(theme.xAxesTheme?.milestoneTextColor, '#ffffff');
+        const milestoneTextColor = ColorUtils.intToHex(theme.xAxesTheme?.milestoneTextColor, '#ffffff');
 
         if (text?.charAt(0) === 'N' && drawNowLine) {
             // now line
@@ -338,7 +338,7 @@ export class CalendarXAxes {
             parentGroup.appendChild(SvgUtils.createRect(
                 x - this.milestone.width / 2, y,
                 this.milestone.width, this.milestone.height - 1,
-                {fill: intToHex(fillColor)},
+                {fill: ColorUtils.intToHex(fillColor)},
             ));
             const textEl = SvgUtils.createText(x - 1, y + this.milestone.height / 2 + 1, text, {
                 fill: milestoneTextColor,
@@ -359,13 +359,13 @@ export class CalendarXAxes {
                 parentGroup.appendChild(SvgUtils.createSvgElement('line', {
                     x1: x, y1: y + this.milestone.height,
                     x2: x, y2: y + this.milestone.height + 3,
-                    stroke: intToHex(flagTextColor), 'stroke-width': '1',
+                    stroke: ColorUtils.intToHex(flagTextColor), 'stroke-width': '1',
                 }));
                 parentGroup.appendChild(SvgUtils.createText(
                     x - this.milestone.width / 2 + 2, flagY + FLAG_HEIGHT - 5,
                     this._formatDateForFlag(time),
                     {
-                        fill: intToHex(flagTextColor),
+                        fill: ColorUtils.intToHex(flagTextColor),
                         'font-size': '11px',
                         'font-family': 'sans-serif',
                         'text-anchor': 'start'

@@ -4,7 +4,7 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {intToHex} from './color-utils.js';
+import {ColorUtils} from './color-utils.js';
 import {SvgUtils} from './svg-utils.js';
 import {Theme} from './theme/theme.js';
 import {FontSpec} from "./font-spec.js";
@@ -41,7 +41,7 @@ export class FooterElement {
      */
     draw(svg: SVGElement): void {
         if (!this.text) return;
-        const textColor = intToHex(this._theme.chartTheme.footerTextColor, '#2c7bf4');
+        const textColor = ColorUtils.intToHex(this._theme.chartTheme.footerTextColor, '#2c7bf4');
         const fontSize = this.font && 'size' in this.font ? String(this.font.size) : '10';
         const maxAscent = this.font.maxAscent;
         const textY = this.y + maxAscent + 1;

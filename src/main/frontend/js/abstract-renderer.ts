@@ -4,7 +4,7 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {intToHex} from './color-utils.js';
+import {ColorUtils} from './color-utils.js';
 import {SvgUtils} from './svg-utils.js';
 import {calculateDays} from './date-utils.js';
 import {CalendarXAxes} from './calendar-x-axes.js';
@@ -75,11 +75,11 @@ export abstract class AbstractRenderer implements IRenderer {
         const dw = this.calendarXAxes.dayOfWeek.getWidth() ?? 0;
         g.appendChild(SvgUtils.createRect(
             x - (dw / 2), this.diagram.y, dw - 1, this.diagram.height,
-            {fill: intToHex(color)},
+            {fill: ColorUtils.intToHex(color)},
         ));
         g.appendChild(SvgUtils.createRect(
             x - (dw / 2) + (dw - 1), this.diagram.y, (dw - 1) + 1, this.diagram.height,
-            {fill: intToHex(this.theme.ganttTheme.gridColor)},
+            {fill: ColorUtils.intToHex(this.theme.ganttTheme.gridColor)},
         ));
     }
 

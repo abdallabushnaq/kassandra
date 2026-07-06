@@ -3,7 +3,7 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {ColorUtil, convertSprintColorToRgba, hexToRgbaWithAlpha, intToHex} from '../color-utils.js';
+import {ColorUtils} from '../color-utils.js';
 import {SvgUtils} from '../svg-utils.js';
 import {calculateDayIndex, MS} from '../date-utils.js';
 import {AbstractRenderer} from '../abstract-renderer.js';
@@ -110,9 +110,9 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     getDayOfWeekStripBgColor(dayDate: Date): string {
         const dow = dayDate.getDay();
-        if (dow === 6) return intToHex(this.theme.chartTheme.dayOfweekSaturdayBgColor, '#d7d7d7');
-        if (dow === 0) return intToHex(this.theme.chartTheme.dayOfweekSundayBgColor, '#d7d7d7');
-        return intToHex(this.theme.xAxesTheme.dayOfweekBgColor, '#ffffff');
+        if (dow === 6) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSaturdayBgColor, '#d7d7d7');
+        if (dow === 0) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSundayBgColor, '#d7d7d7');
+        return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfweekBgColor, '#ffffff');
     }
 
     getGanttDayStripeColor(task: TaskDto, dayDate: Date): string {
@@ -123,18 +123,18 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const exception = getCalendarException(dayDate, task.calendarExceptions);
         if (exception) {
             const t = exception.type;
-            if (t === 'VACATION') return intToHex(this.theme.ganttTheme.vacationBgColor, '#a0c8ff');
-            if (t === 'TRIP') return intToHex(this.theme.ganttTheme.tripBgColor, '#c8a0ff');
-            if (t === 'SICK') return intToHex(this.theme.ganttTheme.sickBgColor, '#ffa0a0');
-            return intToHex(this.theme.ganttTheme.holidayBgColor, '#ffd0a0');
+            if (t === 'VACATION') return ColorUtils.intToHex(this.theme.ganttTheme.vacationBgColor, '#a0c8ff');
+            if (t === 'TRIP') return ColorUtils.intToHex(this.theme.ganttTheme.tripBgColor, '#c8a0ff');
+            if (t === 'SICK') return ColorUtils.intToHex(this.theme.ganttTheme.sickBgColor, '#ffa0a0');
+            return ColorUtils.intToHex(this.theme.ganttTheme.holidayBgColor, '#ffd0a0');
         }
-        return intToHex(this.theme.xAxesTheme.dayOfMonthWeekendBgColor, '#d7d7d7');
+        return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfMonthWeekendBgColor, '#d7d7d7');
     }
 
     // override drawDayBars(g: SVGElement, dayDate: Date, calendarH = 0): void {
     //     const dayIdx = calculateDayIndex(dayDate, this.chartStart!);
     //     const dayLeft = this.dayIndexToPixelX(dayIdx);
-    //     const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+    //     const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
     //     for (const task of this.tasks) {
     //         const rowY = calendarH + task.rowIndex * (this.getTaskHeight() + 1);
     //         g.appendChild(SvgUtils.createRect(dayLeft, rowY - 1, this.dayWidth, 1, {fill: gridColor}));
@@ -145,7 +145,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     //         if (exception?.letter && this.dayWidth >= 14) {
     //             const cx = dayLeft + this.dayWidth / 2;
     //             const letter = SvgUtils.createText(cx, rowY + LINE_HEIGHT / 2, exception.letter, {
-    //                 fill: intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
+    //                 fill: ColorUtils.intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
     //                 'font-size': String(NONE_WORKING_DAY_FONT_SIZE),
     //                 'font-family': 'sans-serif', 'font-weight': 'bold',
     //                 'text-anchor': 'middle', 'dominant-baseline': 'middle',
@@ -161,8 +161,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     drawCriticalMarker(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number): void {
         const borderColor = task.critical
-            ? intToHex(this.theme.ganttTheme.criticalTaskBorderColor, '#ff0000')
-            : intToHex(this.theme.ganttTheme.taskBorderColor, '#888888');
+            ? ColorUtils.intToHex(this.theme.ganttTheme.criticalTaskBorderColor, '#ff0000')
+            : ColorUtils.intToHex(this.theme.ganttTheme.taskBorderColor, '#888888');
 
         const startDayIdx = calculateDayIndex(task.start!, this.chartStart!);
         const finishDayIdx = calculateDayIndex(task.finish!, this.chartStart!);
@@ -210,8 +210,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     drawId(g: SVGElement, task: TaskDto, y: number): void {
         const x1 = this.dayIndexToPixelX(0);
         const x2 = x1 + this.dayWidth;
-        const fillColor = intToHex(this.theme.ganttTheme.idBgColor, '#cccccc');
-        const textColor = intToHex(this.theme.ganttTheme.idTextColor, '#000000');
+        const fillColor = ColorUtils.intToHex(this.theme.ganttTheme.idBgColor, '#cccccc');
+        const textColor = ColorUtils.intToHex(this.theme.ganttTheme.idTextColor, '#000000');
         g.appendChild(SvgUtils.createRect(x1 + 1, y - this.getTaskHeight() / 2, x2 - x1 - 1, this.getTaskHeight(), {fill: fillColor}));
         const keyText = SvgUtils.createText(x1 + 4, y, task.key || '', {
             fill: textColor, 'font-size': '12', 'font-family': 'sans-serif', 'dominant-baseline': 'middle',
@@ -228,17 +228,22 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     drawMilestoneTask(g: SVGElement, task: TaskDto, x1: number, y: number, _labelInside: boolean, taskName: string): void {
         const mW = this.getTaskHeight() / 2 - TASK_BODY_BORDER;
-        const fillColor = task.fillColor ? convertSprintColorToRgba(task.fillColor) : '#808080';
+        const fillColor = task.fillColor ? ColorUtils.convertSprintColorToRgba(task.fillColor) : '#808080';
         const borderColor = task.borderColor || '#888888';
         const points = [
             `${x1},${y - mW}`, `${x1 + mW},${y}`,
             `${x1},${y + mW}`, `${x1 - mW},${y}`,
             `${x1},${y - mW}`,
         ].join(' ');
-        const poly = SvgUtils.createSvgElement('polygon', {points, fill: fillColor, stroke: borderColor, 'stroke-width': '1'});
+        const poly = SvgUtils.createSvgElement('polygon', {
+            points,
+            fill: fillColor,
+            stroke: borderColor,
+            'stroke-width': '1'
+        });
         poly.appendChild(SvgUtils.createSvgElement('title', {}, this.generateTaskToolTip(task)));
         g.appendChild(poly);
-        const textColor = task.textColor || intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
+        const textColor = task.textColor || ColorUtils.intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
         const labelX = x1 + mW / 2 + 10;
         const dateStr = task.start ? new Date(task.start).toLocaleDateString() : '';
         const label = `${taskName || ''} (${dateStr})`;
@@ -268,8 +273,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             + this.calculateX(sourceTask.start!, getDayAt8AM(sourceTask.start), SECONDS_PER_DAY)
             - RESOURCE_NAME_TO_TASK_GAP;
         const arrowColor = (sourceTask.critical && targetTask.critical)
-            ? intToHex(this.theme.ganttTheme.criticalRelationColor, '#ff0000')
-            : intToHex(this.theme.ganttTheme.relationColor, '#3466ed');
+            ? ColorUtils.intToHex(this.theme.ganttTheme.criticalRelationColor, '#ff0000')
+            : ColorUtils.intToHex(this.theme.ganttTheme.relationColor, '#3466ed');
         g.appendChild(SvgUtils.createRect(ax1 + 1, y1, ax2 - ax1, 1, {fill: arrowColor}));
         g.appendChild(SvgUtils.createRect(ax2, y1 + 1, 1, yMid - y1, {fill: arrowColor}));
         const d = 5;
@@ -286,8 +291,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     drawStoryBody(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number, marker: string | null): void {
         const fillColor = task.fillColor
-            ? convertSprintColorToRgba(task.fillColor)
-            : intToHex(this.theme.ganttTheme.storyColor, '#444444');
+            ? ColorUtils.convertSprintColorToRgba(task.fillColor)
+            : ColorUtils.intToHex(this.theme.ganttTheme.storyColor, '#444444');
         const tooltip = this.generateTaskToolTip(task);
         const th = this.getTaskHeight();
 
@@ -359,7 +364,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         marker: string | null,
         conflict: unknown,
     ): void {
-        const textColor = task.textColor || intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
+        const textColor = task.textColor || ColorUtils.intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
         const taskName = task.name || '';
         const th = this.getTaskHeight();
         const fillColor = this.theme.burndownTheme.getAuthorColor(28);
@@ -386,11 +391,11 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
             if (progress > 0) {
                 //draw progress if it fints in side the task
-                let blendedColor = ColorUtil.calculateColorBlending(fillColor, ColorUtil.WHITE);
+                let blendedColor = ColorUtils.calculateColorBlending(fillColor, ColorUtils.WHITE);
                 if (progress > 0.5) {
-                    blendedColor = ColorUtil.calculateColorBlending(fillColor, blendedColor);// we are drawing two times
+                    blendedColor = ColorUtils.calculateColorBlending(fillColor, blendedColor);// we are drawing two times
                 }
-                const highestContrast = ColorUtil.heighestContrast(blendedColor);
+                const highestContrast = ColorUtils.highestContrast(blendedColor);
                 const barWidth = x2 - x1;
                 const text = `${Math.round(progress * 100)}%`;
                 const fm = new FontMetrics(AbstractGanttRenderer.taskProgressFont);
@@ -466,7 +471,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                     let segX: number, segW: number;
 
                     if (isWorkingDay(dayDate, task.calendarExceptions)) {
-                        const fill = convertSprintColorToRgba(fillColor);
+                        const fill = ColorUtils.convertSprintColorToRgba(fillColor);
                         if (days === 0) {
                             segX = x1;
                             segW = x2 - x1;
@@ -484,7 +489,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                         rect.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
                         g.appendChild(rect);
                     } else {
-                        const weekendFill = hexToRgbaWithAlpha(fillColor, this.theme.ganttTheme.taskWeekEndTransparency);
+                        const weekendFill = ColorUtils.hexToRgbaWithAlpha(fillColor, this.theme.ganttTheme.taskWeekEndTransparency);
                         const xStart4 = this.dayIndexToPixelX(dayIdx);
                         const rectW = SvgUtils.createRect(xStart4, y1, this.dayWidth, h, {fill: weekendFill});
                         rectW.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
@@ -494,8 +499,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
                 if (progress > 0) {
                     const progressFill = task.progressColor
-                        ? convertSprintColorToRgba(task.progressColor)
-                        : hexToRgbaWithAlpha(fillColor, 200);
+                        ? ColorUtils.convertSprintColorToRgba(task.progressColor)
+                        : ColorUtils.hexToRgbaWithAlpha(fillColor, 200);
                     const progressW = Math.floor((x2 - x1) * progress - 1);
                     if (progressW > 0) {
                         const pRect = SvgUtils.createRect(x1 + 1, y1 + 2, progressW, h - 4, {fill: progressFill});
@@ -513,10 +518,10 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             const clipId = 'ta-' + String(task.id).replace(/-/g, '');
             g.appendChild(SvgUtils.createClipPath(clipId, x1, y - th / 2 + 2, x2 - x1 - 1, th - 4));
             const grp = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
-            let cur = fillColor ? convertSprintColorToRgba(fillColor) : '#aaaaaa';
+            let cur = fillColor ? ColorUtils.convertSprintColorToRgba(fillColor) : '#aaaaaa';
             for (let ax = x1 - 16; ax < x2; ax += 16) {
                 this.drawRibbon(grp, aY1, ax, aY2, 25, 15, cur);
-                cur = (cur === (fillColor ? convertSprintColorToRgba(fillColor) : '#aaaaaa')) ? '#ffffff' : (fillColor ? convertSprintColorToRgba(fillColor) : '#aaaaaa');
+                cur = (cur === (fillColor ? ColorUtils.convertSprintColorToRgba(fillColor) : '#aaaaaa')) ? '#ffffff' : (fillColor ? ColorUtils.convertSprintColorToRgba(fillColor) : '#aaaaaa');
             }
             g.appendChild(grp);
         }
@@ -544,3 +549,4 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         return s;
     }
 }
+

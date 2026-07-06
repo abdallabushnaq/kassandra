@@ -4,7 +4,7 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {intToHex} from './color-utils.js';
+import {ColorUtils} from './color-utils.js';
 import {SvgUtils} from './svg-utils.js';
 import {Theme} from './theme/theme.js';
 
@@ -33,13 +33,13 @@ export abstract class AbstractCanvas {
 
     /** Fills the entire SVG with the theme background color. */
     drawBackground(svg: SVGGElement): void {
-        const bgColor = intToHex(this.theme.chartTheme.backgroundColor, '#fffff0');
+        const bgColor = ColorUtils.intToHex(this.theme.chartTheme.backgroundColor, '#fffff0');
         svg.appendChild(SvgUtils.createRect(0, 0, this.chartWidth, this.chartHeight, {fill: bgColor}));
     }
 
     /** Draws a 1px border around the chart. */
     drawBorder(svg: SVGGElement): void {
-        const borderColor = intToHex(this.theme.chartTheme.chartBorderColor, '#aaaaaa');
+        const borderColor = ColorUtils.intToHex(this.theme.chartTheme.chartBorderColor, '#aaaaaa');
         svg.appendChild(SvgUtils.createRect(0.5, 0.5, this.chartWidth - 1, this.chartHeight - 1, {
             fill: 'none',
             stroke: borderColor,
