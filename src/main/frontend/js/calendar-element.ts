@@ -9,14 +9,12 @@ import {FontSpec} from "./font-spec.js";
 
 export class CalendarElement {
     font: FontSpec;
-    bgColor: unknown;
+    bgColor: number | null;
     width: number | null;
     height: number;
     y: number;
 
-    // metrics: FontMetricsData | null;
-
-    constructor(font: FontSpec, bgColor: unknown, width: number | null, height: number) {
+    constructor(font: FontSpec, bgColor: number | null, width: number | null, height: number) {
         this.font = font;
         this.bgColor = bgColor;
         this.width = width;
@@ -24,8 +22,8 @@ export class CalendarElement {
         this.y = 0;
     }
 
-    getWidth(): number | null {
-        return this.width;
+    getWidth(): number {
+        return this.width ? this.width : 0;
     }
 
     setWidth(w: number): void {

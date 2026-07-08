@@ -76,6 +76,7 @@ public class GanttChartDto {
          * First visible day of the chart (UTC midnight).
          */
         public LocalDateTime chartStart;
+        public int           firstDayX;
         /**
          * Current date/time (for the "now" marker line).
          */

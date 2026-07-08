@@ -47,6 +47,7 @@ import java.util.Map;
  *
  * @author abdalla.bushnaq
  */
+@Deprecated
 public class BurnDownRenderer extends AbstractRenderer {
 
     private static final String                 ERROR_106_AGNTT_START_DATE_NOT_MACTHING_SPRINT_START_DATE = "Error #106: Gantt start date %s does not match sprint start date %s. Ignoring Gantt chart guide information";

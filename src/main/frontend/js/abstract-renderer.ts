@@ -62,10 +62,8 @@ export abstract class AbstractRenderer implements IRenderer {
 
     calculateDayX(date: Date): number {
         const firstMilestoneDay = this.milestones.firstMilestone!;
-        const firstMilestoneX = this.firstDayX + (this.calendarXAxes.dayOfWeek.getWidth() ?? 0) / 2;
-        return firstMilestoneX
-            + (DateUtils.calculateDays(firstMilestoneDay, date) - this.scrollOffset + this.calendarXAxes.priRun)
-            * (this.calendarXAxes.dayOfWeek.getWidth() ?? 0);
+        const firstMilestoneX = this.firstDayX + this.calendarXAxes.dayOfWeek.getWidth() / 2;
+        return firstMilestoneX + (DateUtils.calculateDays(firstMilestoneDay, date) - this.scrollOffset + this.calendarXAxes.priRun) * (this.calendarXAxes.dayOfWeek.getWidth());
     }
 
     /** Override per-renderer to draw day background bars. */

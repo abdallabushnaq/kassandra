@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.report.burndown;
 
 import de.bushnaq.abdalla.kassandra.report.AbstractChart;
 
+@Deprecated
 public class BurnDownChart extends AbstractChart {
 
     public BurnDownChart(String relativeCssPath, RenderDao dao) throws Exception {

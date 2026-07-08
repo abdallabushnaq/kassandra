@@ -39,9 +39,6 @@ import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart;
-import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
-import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
-import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.report.html.util.HtmlUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
@@ -51,7 +48,6 @@ import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
-import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import de.bushnaq.abdalla.util.date.ReportUtil;
 import jakarta.annotation.security.PermitAll;
@@ -601,17 +597,17 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
             // Handle exception appropriately
         }
         ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
-        {
-            try {
-                RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprint.getName(), ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
-                GanttChart chart = new GanttChart("/", dao);
-                chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), sprint.getName(), "references/debug");
-            } catch (Exception e) {
-                logger.error("Error generating gantt chart", e);
-
-            }
-
-        }
+//        {
+//            try {
+//                RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprint.getName(), ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
+//                GanttChart chart = new GanttChart("/", dao);
+//                chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), sprint.getName(), "references/debug");
+//            } catch (Exception e) {
+//                logger.error("Error generating gantt chart", e);
+//
+//            }
+//
+//        }
 
     }
 

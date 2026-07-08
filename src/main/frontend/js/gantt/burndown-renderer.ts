@@ -16,6 +16,7 @@ import {CalendarSize} from "Frontend/js/calendar-size";
 // ── DTO (sent by GanttBurndownChartService / GanttBurndownChartDto) ─────────
 
 export interface BurndownMetaDto {
+    firstDayX: number;
     chartStart: string;
     chartEnd: string;
     sprintStart: string;
@@ -249,7 +250,7 @@ export class BurndownRenderer extends AbstractRenderer {
         // Java: initSize(dao.firstDayX, true, dao.calendarSize) — sizing happens per-draw() in this
         // interactive port instead (see draw()), since containerWidth/dayWidth can change on
         // zoom/pan/resize, unlike the static Java export.
-        this.initSize(this.firstDayX, true, this.calendarSize, this.containerWidth);
+        this.initSize(this.data.burndownMeta.firstDayX, true, this.calendarSize, this.containerWidth);
         const rMilestone = this.milestones.get('R');
         const eMilestone = this.milestones.get('E');
         if (rMilestone && eMilestone && rMilestone.time.getTime() > eMilestone.time.getTime()) {
@@ -316,7 +317,7 @@ export class BurndownRenderer extends AbstractRenderer {
     // ── Java: protected void createBurnDownChart() ──
     private createBurnDownChart(svg: SVGElement): void {
         const firstDay = this.milestones.firstMilestone!;
-        const firstDayX = this.calculateDayX(this.chartStart);
+        const firstDayX = this.diagram.x + this.calendarXAxes.dayOfWeek.getWidth() / 2;
         const sMilestone = this.milestones.get('S')!;
         const startX = firstDayX + (this.calendarXAxes.priRun + DateUtils.calculateDays(firstDay, sMilestone.time)) * this.dayWidth;
 

@@ -32,6 +32,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 
+import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
+
 /**
  * Builds a {@link GanttBurndownChartDto} from a fully-loaded {@link Sprint} so that
  * the client-side {@code gantt-burndown-bundle.js} can render an interactive,
@@ -48,11 +50,11 @@ public class GanttBurndownChartService {
     /**
      * Default extra days shown after sprintEnd (matches GanttChartService).
      */
-    public static final int DEFAULT_POST_RUN = GanttChartService.DEFAULT_POST_RUN;
+    public static final  int  DEFAULT_POST_RUN        = GanttChartService.DEFAULT_POST_RUN;
     /**
      * Default extra days shown before sprintStart (matches GanttChartService).
      */
-    public static final int DEFAULT_PRE_RUN  = GanttChartService.DEFAULT_PRE_RUN;
+    public static final  int  DEFAULT_PRE_RUN         = GanttChartService.DEFAULT_PRE_RUN;
     /**
      * Seconds in a 7.5-hour working day (8:00–12:00, 13:00–16:30).
      */
@@ -133,6 +135,7 @@ public class GanttBurndownChartService {
 
         // ── Build burndown meta ────────────────────────────────────────────────
         GanttBurndownChartDto.BurndownMeta meta = dto.burndownMeta;
+        meta.firstDayX    = Y_AXIS_WIDTH;
         meta.chartStart   = chartStart;
         meta.chartEnd     = chartEnd;
         meta.sprintStart  = sprint.getStart();

@@ -52,15 +52,16 @@ public class GanttChartService {
     /**
      * Default number of extra days rendered after the last task finishes.
      */
-    public static final int DEFAULT_POST_RUN = 14;
+    public static final int       DEFAULT_POST_RUN = 14;
     /**
      * Default number of extra days rendered before the first task starts.
      */
-    public static final int DEFAULT_PRE_RUN  = 14;
-    private final DarkTheme  darkTheme;
+    public static final int       DEFAULT_PRE_RUN  = 14;
+    private final       DarkTheme darkTheme;
 
     // ── Public API ────────────────────────────────────────────────────────────
     private final LightTheme lightTheme;
+
     @Autowired
     public GanttChartService(LightTheme lightTheme, DarkTheme darkTheme) {
         this.lightTheme = lightTheme;
@@ -112,6 +113,7 @@ public class GanttChartService {
             if (today.isAfter(chartEndDate)) chartEndDate = today.plusDays(1);
         }
 
+        dto.meta.firstDayX               = 0;
         dto.meta.chartStart              = chartStartDate.atStartOfDay();
         dto.meta.chartEnd                = chartEndDate.atStartOfDay();
         dto.meta.now                     = now;

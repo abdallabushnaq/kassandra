@@ -442,9 +442,11 @@ export class CalendarXAxes {
                     this.dayOfMonth.setY(this.week.getY() + this.week.getHeight());
                 else
                     this.dayOfMonth.setY(this.week.getY());
-                this.dayOfWeek.setY(this.isDayOfMonthVisible()
-                    ? this.dayOfMonth.getY() + this.dayOfMonth.getHeight()
-                    : this.week.getY() + this.week.getHeight());
+                if (this.isDayOfMonthVisible()) {
+                    this.dayOfWeek.setY(this.dayOfMonth.getY() + this.dayOfMonth.getHeight());
+                } else {
+                    this.dayOfWeek.setY(this.week.getY() + this.week.getHeight());
+                }
                 this.milestone.y = this.dayOfWeek.getY();
                 this.milestone.flagY = this.dayOfWeek.getY() + this.milestone.height;
             }

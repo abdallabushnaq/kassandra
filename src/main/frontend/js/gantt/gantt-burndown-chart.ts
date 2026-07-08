@@ -16,6 +16,7 @@ export class GanttBurndownChart extends AbstractChart {
         const ganttData: GanttChartDto = {
             tasks: data.tasks || [],
             meta: {
+                firstDayX: data.burndownMeta.firstDayX,
                 chartStart: data.burndownMeta.chartStart,
                 chartEnd: data.burndownMeta.chartEnd,
                 now: data.burndownMeta.now || undefined,

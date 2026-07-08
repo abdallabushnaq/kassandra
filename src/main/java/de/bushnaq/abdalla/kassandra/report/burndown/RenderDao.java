@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Deprecated
 public class RenderDao {
     public CalendarSize           calendarSize = CalendarSize.YEARS;
     public int                    chartHeight;

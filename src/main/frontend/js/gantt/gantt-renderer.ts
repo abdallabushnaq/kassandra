@@ -14,6 +14,7 @@ import {AbstractGanttRenderer, DEFAULT_DW, TaskDto} from './abstract-gantt-rende
 import {CalendarSize} from "Frontend/js/calendar-size";
 
 export interface GanttChartMeta {
+    firstDayX: number;
     chartStart: string;
     chartEnd: string;
     now?: string;
@@ -37,6 +38,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
     static GANTT_TASK_POST_SPACE: number = 0;
     static GANTT_TASK_PRI_SPACE: number = 0;
     calendarSize: CalendarSize;
+    data: GanttChartDto;
 
     constructor(data: GanttChartDto, theme: Theme, preRun: number, postRun: number) {
         const chartStart = DateUtils.getDayMidnight(new Date(data.meta.chartStart));
@@ -61,6 +63,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
 
         super(theme, milestones, data.meta.preRun || 0, data.meta.postRun || 0);
 
+        this.data = data;
         this.tasks = data.tasks || [];
         this.chartStart = chartStart;
         this.totalDays = DateUtils.calculateDayCount(chartStart, chartEnd);
@@ -70,6 +73,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         for (const task of this.tasks) {
             this._taskById[String(task.id)] = task;
         }
+        this.initSize(data.meta.firstDayX, false, this.calendarSize, this.containerWidth);
     }
 
     override calculateDayWidth(): void {
@@ -91,22 +95,24 @@ export class GanttRenderer extends AbstractGanttRenderer {
         return this.calendarXAxes.getHeight() + GanttRenderer.GANTT_TASK_PRI_SPACE + this.calculateNumberOfTasks(this.tasks) * (this.getTaskHeight() + 1) + GanttRenderer.GANTT_TASK_POST_SPACE;
     }
 
-    override drawDayBars(g: SVGElement, dayDate: Date, calendarH = 0): void {
-        const dayIdx = DateUtils.calculateDayIndex(dayDate, this.chartStart!);
-        const dayLeft = this.dayIndexToPixelX(dayIdx);
+    override drawDayBars(g: SVGElement, currentDay: Date, calendarH = 0): void {
+        const x = this.calculateDayX(currentDay);
+        // const dayIdx = DateUtils.calculateDayIndex(currentDay, this.chartStart!);
+        // const dayLeft = this.dayIndexToPixelX(dayIdx);
         const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
         for (const task of this.tasks) {
-            const rowY = calendarH + task.rowIndex * (this.getTaskHeight() + 1);
+            const y1 = calendarH + task.rowIndex * (this.getTaskHeight() + 1);
+            const x1 = x - (this.calendarXAxes.dayOfWeek.getWidth() / 2 - 1);
             //grid
-            g.appendChild(SvgUtils.createRect(dayLeft, rowY - 1, this.dayWidth, 1, {fill: gridColor}));
-            g.appendChild(SvgUtils.createRect(dayLeft, rowY, 1, this.getTaskHeight(), {fill: gridColor}));
-            const bgColor = this.getGanttDayStripeColor(task, dayDate);
+            g.appendChild(SvgUtils.createRect(x1 - 1, y1 - 1, this.dayWidth, 1, {fill: gridColor}));//top --
+            g.appendChild(SvgUtils.createRect(x1 - 1, y1, 1, this.getTaskHeight(), {fill: gridColor}));//left |
+            const bgColor = this.getGanttDayStripeColor(task, currentDay);
             //background
-            g.appendChild(SvgUtils.createRect(dayLeft + 1, rowY, this.dayWidth - 1, this.getTaskHeight(), {fill: bgColor}));
-            const ex = getCalendarException(dayDate, task.calendarExceptions);
+            g.appendChild(SvgUtils.createRect(x1 + 1, y1, this.dayWidth - 1, this.getTaskHeight(), {fill: bgColor}));
+            const ex = getCalendarException(currentDay, task.calendarExceptions);
             if (ex?.letter && this.dayWidth >= 14) {
-                const cx = dayLeft + this.dayWidth / 2;
-                const letter = SvgUtils.createText(cx, rowY + this.getTaskHeight() / 2, ex.letter, {
+                const cx = x1 + this.dayWidth / 2;
+                const letter = SvgUtils.createText(cx, y1 + this.getTaskHeight() / 2, ex.letter, {
                     fill: ColorUtils.intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
                     'font-size': '22', 'font-family': 'sans-serif', 'font-weight': 'bold',
                     'text-anchor': 'middle', 'dominant-baseline': 'middle',
@@ -116,6 +122,47 @@ export class GanttRenderer extends AbstractGanttRenderer {
             }
         }
     }
+
+//     @Override
+//     public void drawDayBars(LocalDate currentDay) {
+//     int ganttUniqueId = 0;
+//     for (Task task : sprint.getTasks()) {
+//     ProjectCalendar pc   = task.getEffectiveCalendar();
+//     Integer         lane = taskHeight.get(ganttUniqueId + "-" + task.getId());
+//     int             y    = lane + getTaskHeight() / 2;
+//     int             x    = calculateDayX(currentDay);
+//     int             y1   = y - getTaskHeight() / 2;
+//     int             x1   = x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1);
+// {
+//     //grid
+//     graphics2D.setColor(theme.ganttTheme.gridColor);
+//     graphics2D.fillRect(x1 - 1, y1 - 1, calendarXAxes.dayOfWeek.getWidth(), 1);//top --
+//     graphics2D.fillRect(x1 - 1, y1, 1, getTaskHeight());//left |
+// }
+// {
+//     //background
+//     graphics2D.setColor(GraphColorUtil.getGanttDayStripeColor(theme, pc, currentDay));
+//     Shape s = new Rectangle(x1, y1, calendarXAxes.dayOfWeek.getWidth() - 1, getTaskHeight());
+//
+//     ProjectCalendarException exception = GraphColorUtil.getException(theme, pc, currentDay);
+//     if (exception != null) {
+//         String letter = GraphColorUtil.getOffDayLetter(exception);
+//         if (letter != null) {
+//             graphics2D.fill(s);
+//             graphics2D.setColor(theme.ganttTheme.outOfOfficeColor);
+//             graphics2D.setFont(NoneWorkingDayFont);
+//             FontMetrics fm      = graphics2D.getFontMetrics();
+//             int         yShift  = fm.getAscent() - fm.getHeight() / 2 - 1;
+//             int         xShift  = fm.stringWidth(letter) / 2;
+//             String      tooltip = createOffDayToolTip(exception);
+//             graphics2D.drawString(letter, x - xShift, y + yShift, tooltip);
+//         }
+//     } else {
+//         graphics2D.fill(s);
+//     }
+// }
+// }
+// }
 
     drawGanttChart(g: SVGElement): void {
         for (const task of this.tasks) {
@@ -133,7 +180,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         return g;
     }
 
-    override draw(svg: SVGSVGElement, _x: number, y: number): void {
+    override draw(svg: SVGSVGElement, x: number, y: number): void {
         const calendarH = this.calendarXAxes.getHeight();
         const taskAreaH = this.tasks.length * (this.getTaskHeight() + 1);
         const totalH = calendarH + taskAreaH;
@@ -148,11 +195,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         }
         svg.appendChild(gDayBars);
 
-        this.calendarXAxes.initPosition(0, y);
-        // this.calendarXAxes.draw(
-        //     svg, this.chartStart!, this.totalDays,
-        //     this.dayWidth, this.scrollOffset, this.containerWidth, this.milestones,
-        // );
+        this.calendarXAxes.initPosition(this.firstDayX + x, y);
         this.calendarXAxes.initSize(this.containerWidth, this.dayWidth, this.calendarAtBottom, this.calendarSize);
         this.calendarXAxes.drawCalendar(svg, false, this.containerWidth);
         this.calendarXAxes.drawMilestones(svg);

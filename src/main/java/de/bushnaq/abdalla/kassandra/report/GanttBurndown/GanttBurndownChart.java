@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttRenderer;
 
 
+@Deprecated
 public class GanttBurndownChart extends AbstractChart {
     private final BurnDownRenderer bdr;
     private final GanttRenderer    gr;

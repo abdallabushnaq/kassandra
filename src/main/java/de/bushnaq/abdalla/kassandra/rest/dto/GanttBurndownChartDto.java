@@ -29,16 +29,16 @@ public class GanttBurndownChartDto {
      * Per-author accumulated work series for the stacked burndown bars.
      * Sorted by author name for consistent legend ordering.
      */
-    public List<AuthorSeriesDto> authors = new ArrayList<>();
+    public List<AuthorSeriesDto>       authors      = new ArrayList<>();
     /**
      * Burndown chart metadata.
      */
-    public BurndownMeta burndownMeta = new BurndownMeta();
+    public BurndownMeta                burndownMeta = new BurndownMeta();
     /**
      * Gantt-derived planned burn-down guide (with buffer — all leaf tasks).
      * Same indexing as {@link #ganttGuideWithoutBuffer}.
      */
-    public List<Long> ganttGuideWithBuffer;
+    public List<Long>                  ganttGuideWithBuffer;
     /**
      * Gantt-derived planned burn-down guide (without buffer — only tasks that
      * have impact on cost).
@@ -46,11 +46,11 @@ public class GanttBurndownChartDto {
      * (day 0 = {@code burndownMeta.chartStart}).
      * {@code null} when no Gantt task data is available.
      */
-    public List<Long> ganttGuideWithoutBuffer;
+    public List<Long>                  ganttGuideWithoutBuffer;
     /**
      * Gantt task rows for the bottom section (reuses {@link GanttChartDto.TaskDto}).
      */
-    public List<GanttChartDto.TaskDto> tasks = new ArrayList<>();
+    public List<GanttChartDto.TaskDto> tasks        = new ArrayList<>();
 
     // ── Nested classes ──────────────────────────────────────────────────────
 
@@ -67,31 +67,31 @@ public class GanttBurndownChartDto {
          * Length = {@code totalDays + 3}.
          * Mirrors Java: {@code usersWorkPerDayAccumulated.get(user)[d].duration.getSeconds()}.
          */
-        public List<Long> accumulatedWorkPerDay = new ArrayList<>();
+        public List<Long>   accumulatedWorkPerDay = new ArrayList<>();
         /**
          * Bar fill color in {@code #rrggbbaa} format.
          * Mirrors Java: {@code generateBurnDownColor(user.getColor())} →
          * lighten user color 75% towards white, alpha = 128.
          */
-        public String color;
+        public String       color;
         /**
          * Tooltip HTML for each day-slot (parallel to {@link #accumulatedWorkPerDay}).
          * Element {@code d} = HTML for work logged <em>on</em> day {@code d − 1}.
          * {@code null}/empty at slots where no work was logged.
          */
-        public List<String> tooltipPerDay = new ArrayList<>();
+        public List<String> tooltipPerDay         = new ArrayList<>();
         /**
          * Total remaining work attributed to this author in seconds.
          */
-        public long totalRemainingSeconds;
+        public long         totalRemainingSeconds;
         /**
          * Total work logged by this author in seconds.
          */
-        public long totalWorkedSeconds;
+        public long         totalWorkedSeconds;
         /**
          * Author display name (for legend and tooltips).
          */
-        public String userName;
+        public String       userName;
     }
 
     /**
@@ -100,7 +100,7 @@ public class GanttBurndownChartDto {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class BurndownMeta {
 
-        public CalendarSize calendarSize;
+        public CalendarSize  calendarSize;
         /**
          * Chart window end: {@code sprintEnd + postRun} days.
          */
@@ -114,7 +114,8 @@ public class GanttBurndownChartDto {
          * Optimal guide: best-case estimated work in seconds.
          * Currently the same as {@link #maxWorkedSeconds}.
          */
-        public long estimatedBestWorkSeconds;
+        public long          estimatedBestWorkSeconds;
+        public int firstDayX;
         /**
          * F milestone: date of the first worklog entry. {@code null} if no worklogs.
          */
@@ -128,7 +129,7 @@ public class GanttBurndownChartDto {
          * Y-axis maximum in seconds: total estimated work (worked + remaining).
          * Mirrors Java: {@code DateUtil.add(sprint.getWorked(), sprint.getRemaining())}.
          */
-        public long maxWorkedSeconds;
+        public long          maxWorkedSeconds;
         /**
          * N milestone: current date/time. {@code null} when hidden (sprint closed
          * and now is more than 7 days after sprintEnd).
@@ -137,11 +138,11 @@ public class GanttBurndownChartDto {
         /**
          * Days shown after {@code sprintEnd} in the chart window.
          */
-        public int postRun;
+        public int           postRun;
         /**
          * Days shown before {@code sprintStart} in the chart window.
          */
-        public int preRun;
+        public int           preRun;
         /**
          * R milestone: projected release date. {@code null} if unavailable.
          */
@@ -149,7 +150,7 @@ public class GanttBurndownChartDto {
         /**
          * {@code true} if the sprint is closed (shows CLOSED watermark).
          */
-        public boolean sprintClosed;
+        public boolean       sprintClosed;
         /**
          * E milestone: sprint planned end date (= {@code sprint.getEnd()}).
          */
@@ -157,7 +158,7 @@ public class GanttBurndownChartDto {
         /**
          * Sprint name shown in the caption.
          */
-        public String sprintName;
+        public String        sprintName;
         /**
          * S milestone: sprint planned start date (= {@code sprint.getStart()}).
          */
@@ -165,14 +166,14 @@ public class GanttBurndownChartDto {
         /**
          * Sprint status: ACTIVE, CLOSED, PLANNING, etc.
          */
-        public String sprintStatus;
+        public String        sprintStatus;
         /**
          * Theme colors, serialized as a nested {@link ThemeDto} object.
          */
-        public ThemeDto     theme;
+        public ThemeDto      theme;
         /**
          * Total chart days from {@code chartStart} to {@code chartEnd} inclusive.
          */
-        public int totalDays;
+        public int           totalDays;
     }
 }
