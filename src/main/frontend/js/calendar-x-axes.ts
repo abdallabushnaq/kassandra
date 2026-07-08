@@ -69,13 +69,35 @@ export class CalendarXAxes {
      * Calculates total pixel height of the calendar header for a given day width.
      * Mirrors Java: CalendarXAxes.getHeight()
      */
-    getHeight(_dayWidth: number, _hasMilestones: boolean): number {
-        let height = this.year.getHeight();
-        if (this.isMonthVisible()) height += this.month.getHeight();
-        if (this.isDayOfMonthVisible()) height += this.dayOfMonth.getHeight();
-        if (this.isDayOfWeekVisible()) height += this.dayOfWeek.getHeight();
-        if (this.isWeekVisible()) height += this.week.getHeight();
-        if (this.milestonesVisible()) height += this.milestone.getHeight() + this.milestone.getHeight();
+    // getHeight(): number {
+    //     let height = this.year.getHeight();
+    //     if (this.isMonthVisible()) height += this.month.getHeight();
+    //     if (this.isDayOfMonthVisible()) height += this.dayOfMonth.getHeight();
+    //     if (this.isDayOfWeekVisible()) height += this.dayOfWeek.getHeight();
+    //     if (this.isWeekVisible()) height += this.week.getHeight();
+    //     if (this.milestonesVisible()) height += this.milestone.getHeight() + this.milestone.getHeight();
+    //     return height;
+    // }
+    getHeight(): number {
+        let height = 0;
+        if (this.isYearVisible()) {
+            height += this.year.getHeight();
+        }
+        if (this.isMonthVisible()) {
+            height += this.month.getHeight();
+        }
+        if (this.isWeekVisible()) {
+            height += this.week.getHeight();
+        }
+        if (this.isDayOfWeekVisible()) {
+            height += this.dayOfWeek.getHeight();
+            height += this.dayOfMonth.getHeight();
+        } else if (this.milestonesVisible()) {
+            height += this.milestone.getHeight();
+        }
+        if (this.milestonesVisible()) {
+            height += this.milestone.getFlagHeight();
+        }
         return height;
     }
 
@@ -378,6 +400,13 @@ export class CalendarXAxes {
     initPosition(x: number, y: number): void {
         this.x = x;
         if (this.calendarAtBottom) {
+            // flag
+            // milestone, dayOfWeek
+            // dayOfMonth
+            // week
+            // month
+            // year
+
             this.milestone.flagY = y;
             this.milestone.y = this.milestone.flagY + this.milestone.flagHeight;
             this.dayOfWeek.setY(this.milestone.y);
@@ -405,10 +434,14 @@ export class CalendarXAxes {
                 this.milestone.y = this.dayOfWeek.getY();
                 this.milestone.flagY = this.dayOfWeek.getY() + this.milestone.height;
             } else {
+                //year and month are not visible
                 this.year.setY(y);
                 this.month.setY(y);
                 this.week.setY(y);
-                this.dayOfMonth.setY(this.week.getY() + this.week.getHeight());
+                if (this.isWeekVisible())
+                    this.dayOfMonth.setY(this.week.getY() + this.week.getHeight());
+                else
+                    this.dayOfMonth.setY(this.week.getY());
                 this.dayOfWeek.setY(this.isDayOfMonthVisible()
                     ? this.dayOfMonth.getY() + this.dayOfMonth.getHeight()
                     : this.week.getY() + this.week.getHeight());
@@ -440,6 +473,10 @@ export class CalendarXAxes {
 
     isMonthVisible(): boolean {
         return CalendarSize.YEARS === this.calendarSize && (this.dayOfWeek.getWidth() ?? 0) >= MONTH_MIN_DAY_WIDTH;
+    }
+
+    isYearVisible(): boolean {
+        return CalendarSize.YEARS === this.calendarSize;
     }
 
     isWeekVisible(): boolean {

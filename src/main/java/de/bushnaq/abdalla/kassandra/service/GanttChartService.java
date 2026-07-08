@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.service;
 
 import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
@@ -48,21 +49,23 @@ import java.util.List;
 @Slf4j
 public class GanttChartService {
 
+    /**
+     * Default number of extra days rendered after the last task finishes.
+     */
+    public static final int DEFAULT_POST_RUN = 14;
+    /**
+     * Default number of extra days rendered before the first task starts.
+     */
+    public static final int DEFAULT_PRE_RUN  = 14;
     private final DarkTheme  darkTheme;
-    private final LightTheme lightTheme;
 
+    // ── Public API ────────────────────────────────────────────────────────────
+    private final LightTheme lightTheme;
     @Autowired
     public GanttChartService(LightTheme lightTheme, DarkTheme darkTheme) {
         this.lightTheme = lightTheme;
         this.darkTheme  = darkTheme;
     }
-
-    // ── Public API ────────────────────────────────────────────────────────────
-
-    /** Default number of extra days rendered before the first task starts. */
-    public static final int DEFAULT_PRE_RUN  = 14;
-    /** Default number of extra days rendered after the last task finishes. */
-    public static final int DEFAULT_POST_RUN = 14;
 
     /**
      * Builds the complete DTO for the given sprint using default preRun/postRun padding.
@@ -85,11 +88,11 @@ public class GanttChartService {
      * days after the latest task finish.  This leaves space for user names (left margin) and
      * task names that overflow the right edge of a bar.
      *
-     * @param sprint   fully loaded sprint (tasks, users, worklogs must be populated)
-     * @param now      current date/time used for the "N" now-marker
-     * @param dark     {@code true} → use dark theme colours
-     * @param preRun   number of extra days to show before the earliest task start
-     * @param postRun  number of extra days to show after the latest task finish
+     * @param sprint  fully loaded sprint (tasks, users, worklogs must be populated)
+     * @param now     current date/time used for the "N" now-marker
+     * @param dark    {@code true} → use dark theme colours
+     * @param preRun  number of extra days to show before the earliest task start
+     * @param postRun number of extra days to show after the latest task finish
      * @return populated DTO ready for JSON serialisation
      */
     public GanttChartDto build(Sprint sprint, LocalDateTime now, boolean dark, int preRun, int postRun) {
@@ -109,16 +112,17 @@ public class GanttChartService {
             if (today.isAfter(chartEndDate)) chartEndDate = today.plusDays(1);
         }
 
-        dto.meta.chartStart = chartStartDate.atStartOfDay();
-        dto.meta.chartEnd   = chartEndDate.atStartOfDay();
-        dto.meta.now        = now;
-        dto.meta.sprintName = sprint.getName();
+        dto.meta.chartStart              = chartStartDate.atStartOfDay();
+        dto.meta.chartEnd                = chartEndDate.atStartOfDay();
+        dto.meta.now                     = now;
+        dto.meta.sprintName              = sprint.getName();
         dto.meta.sprintEarliestStartDate = sprint.getEarliestStartDate();
         dto.meta.sprintLatestFinishDate  = sprint.getLatestFinishDate();
-        dto.meta.sprintStatus = sprint.getStatus().name();
-        dto.meta.preRun     = preRun;
-        dto.meta.postRun    = postRun;
-        dto.meta.theme = ThemeDto.fromTheme(theme);
+        dto.meta.sprintStatus            = sprint.getStatus().name();
+        dto.meta.preRun                  = preRun;
+        dto.meta.postRun                 = postRun;
+        dto.meta.theme                   = ThemeDto.fromTheme(theme);
+        dto.meta.calendarSize            = CalendarSize.YEARS;
 
 
         // ── Task rows ─────────────────────────────────────────────────────
@@ -172,10 +176,10 @@ public class GanttChartService {
 
         Color fillColor;
         if (dto.milestone) {
-            fillColor   = theme.ganttTheme.milestoneBgColor;
+            fillColor     = theme.ganttTheme.milestoneBgColor;
             dto.textColor = colorToHex(theme.ganttTheme.milestoneTextColor);
         } else if (dto.story) {
-            fillColor   = theme.ganttTheme.storyColor;
+            fillColor     = theme.ganttTheme.storyColor;
             dto.textColor = colorToHex(theme.ganttTheme.storyTextColor);
         } else if (task.getAssignedUser() != null && task.getAssignedUser().getColor() != null) {
             Color userColor = task.getAssignedUser().getColor();
@@ -221,7 +225,9 @@ public class GanttChartService {
 
     // ── Colour utilities ──────────────────────────────────────────────────────
 
-    /** Converts a Java {@link Color} to a 6-digit hex string (#rrggbb). */
+    /**
+     * Converts a Java {@link Color} to a 6-digit hex string (#rrggbb).
+     */
     private static String colorToHex(Color color) {
         if (color == null) return "#000000";
         return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
@@ -237,14 +243,16 @@ public class GanttChartService {
         return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue(), a);
     }
 
-    /** Returns the single-letter code for an off-day type. */
+    /**
+     * Returns the single-letter code for an off-day type.
+     */
     private static String getOffDayLetter(OffDayType type) {
         if (type == null) return "H";
         return switch (type) {
             case VACATION -> "V";
-            case TRIP     -> "T";
-            case SICK     -> "S";
-            case HOLIDAY  -> "H";
+            case TRIP -> "T";
+            case SICK -> "S";
+            case HOLIDAY -> "H";
         };
     }
 }

@@ -103,7 +103,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     override calculateChartHeight(): number {
         const calH = this.calendarXAxes
-            ? this.calendarXAxes.getHeight(this.dayWidth, this.milestones.list.length > 0)
+            ? this.calendarXAxes.getHeight()
             : 0;
         return calH + this.tasks.length * (this.getTaskHeight() + 1);
     }

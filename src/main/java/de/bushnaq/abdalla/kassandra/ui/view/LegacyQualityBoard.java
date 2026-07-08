@@ -17,10 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -41,16 +38,20 @@ import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart;
+import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
+import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
+import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.report.html.util.HtmlUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
-import de.bushnaq.abdalla.kassandra.rest.dto.GanttBurndownChartDto;
-import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.service.SprintExportService;
 import de.bushnaq.abdalla.kassandra.ui.HtmlColor;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
+import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
+import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import de.bushnaq.abdalla.util.date.ReportUtil;
 import jakarta.annotation.security.PermitAll;
@@ -61,7 +62,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.ByteArrayInputStream;
 import java.time.Clock;
@@ -77,84 +77,82 @@ import java.util.stream.Collectors;
 // Create a utility method for generating two-part cells
 
 
-@Route(value = "quality-board", layout = MainLayout.class)
-@PageTitle("Quality Board")
-@Menu(order = 8, icon = "vaadin:chart-3d", title = "Quality Board")
+@Route(value = "legacy-quality-board", layout = MainLayout.class)
+@PageTitle("Legacy Quality Board")
+@Menu(order = 12, icon = "vaadin:chart-3d", title = "Legacy Quality Board")
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
-public class QualityBoard extends Main implements AfterNavigationObserver {
-    public static final String                    GANTT_BURNDOWN_CONTAINER_ID = "quality-board-gantt-burndown-container";
-    public static final String                    MENU_ITEM_ID                = "/quality-board";
-    public static final String                    SPRINT_GRID_NAME_PREFIX     = "sprint-grid-name-";
-    public static final String                    SPRINT_SELECTOR_ID          = "sprint-selector";
+public class LegacyQualityBoard extends Main implements AfterNavigationObserver {
+    public static final String                  MENU_ITEM_ID            = "/quality-board";
+    public static final String                  SPRINT_GRID_NAME_PREFIX = "sprint-grid-name-";
+    public static final String                  SPRINT_SELECTOR_ID      = "sprint-selector";
     /**
      * All non-Backlog sprints belonging to the current feature, used to populate the sprint selector.
      */
-    private             List<Sprint>              allFeatureSprints           = new ArrayList<>();
+    private             List<Sprint>            allFeatureSprints       = new ArrayList<>();
     /**
      * Container for the burndown SVG (the spanning column in the stats grid).
      */
-    private             Div                       burnDownContainer;
+    private             Div                     burnDownContainer;
     //    /**
 //     * In-flight async burndown generation; cancelled before a new run starts.
 //     */
 //    private             CompletableFuture<Void> burndownGenerationFuture;
-    private final       Clock                     clock;
+    private final       Clock                   clock;
     @Autowired
-    protected           Context                   context;
-    private final       LocalDateTime             created;
-    private final       GanttErrorHandler         eh                          = new GanttErrorHandler();
-    private final       FeatureApi                featureApi;
-    private             UUID                      featureId;
+    protected           Context                 context;
+    private final       LocalDateTime           created;
+    private final       GanttErrorHandler       eh                      = new GanttErrorHandler();
+    private final       FeatureApi              featureApi;
+    private             UUID                    featureId;
     /**
      * Container for the Gantt chart SVG.
      */
-    private             Div                       ganttBurndownChartContainer;
-    @Autowired
-    private             GanttBurndownChartService ganttBurndownChartService;
-    private             GanttUtil                 ganttUtil;
+    private             Div                     ganttBurndownChartContainer;
+    /**
+     * In-flight async Gantt generation; cancelled before a new run starts.
+     */
+    private             CompletableFuture<Void> ganttGenerationFuture;
+    private             GanttUtil               ganttUtil;
     /**
      * Persistent header layout (sprint selector + page title) — survives content reloads.
      */
-    private final       HorizontalLayout          header;
+    private final       HorizontalLayout        header;
     /**
      * Avatar image shown next to the page title — updated to reflect the selected sprint.
      */
-    private final       Image                     headerAvatar;
-    private final       HtmlUtil                  htmlUtil                    = new HtmlUtil();
+    private final       Image                   headerAvatar;
+    private final       HtmlUtil                htmlUtil                = new HtmlUtil();
     /**
      * Guard flag: prevents {@link #updateUrlParameters()} from firing during programmatic selector restores.
      */
-    private             boolean                   isRestoringFromUrl          = false;
-    private final       JsonMapper                jsonMapper;
-    final               Logger                    logger                      = LoggerFactory.getLogger(this.getClass());
-    private final       LocalDateTime             now;
-    private final       H2                        pageTitle;
-    private final       ProductApi                productApi;
-    private             UUID                      productId;
-    private             Sprint                    sprint;
-    private final       SprintApi                 sprintApi;
+    private             boolean                 isRestoringFromUrl      = false;
+    final               Logger                  logger                  = LoggerFactory.getLogger(this.getClass());
+    private final       LocalDateTime           now;
+    private final       H2                      pageTitle;
+    private final       ProductApi              productApi;
+    private             UUID                    productId;
+    private             Sprint                  sprint;
+    private final       SprintApi               sprintApi;
     @Autowired
-    private             SprintExportService       sprintExportService;
-    private             UUID                      sprintId;
+    private             SprintExportService     sprintExportService;
+    private             UUID                    sprintId;
     /**
      * Sprint selector ComboBox — lets the user switch sprints without leaving the page.
      */
-    private final       ComboBox<Sprint>          sprintSelector;
-    private             SprintStatistics          sprintStatistics;
-    private final       TaskApi                   taskApi;
+    private final       ComboBox<Sprint>        sprintSelector;
+    private             SprintStatistics        sprintStatistics;
+    private final       TaskApi                 taskApi;
     /**
      * Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}.
      */
-    private             Registration              themeChangedRegistration;
-    private final       UserApi                   userApi;
-    private final       VersionApi                versionApi;
-    private             UUID                      versionId;
-    private final       WorklogApi                worklogApi;
+    private             Registration            themeChangedRegistration;
+    private final       UserApi                 userApi;
+    private final       VersionApi              versionApi;
+    private             UUID                    versionId;
+    private final       WorklogApi              worklogApi;
 
-    public QualityBoard(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi,
-                        VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock,
-                        JsonMapper jsonMapper) {
+    public LegacyQualityBoard(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock) {
         created         = LocalDateTime.now(clock);
         this.worklogApi = worklogApi;
         this.taskApi    = taskApi;
@@ -164,7 +162,6 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         this.featureApi = featureApi;
         this.userApi    = userApi;
         this.clock      = clock;
-        this.jsonMapper = jsonMapper;
         this.now        = ParameterOptions.getLocalNow();
 
         pageTitle = new H2("Sprint Quality Board");
@@ -378,12 +375,6 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
      */
     private void createGanttBurndownChart() {
         ganttBurndownChartContainer = new Div();
-        ganttBurndownChartContainer.setId(GANTT_BURNDOWN_CONTAINER_ID);
-        ganttBurndownChartContainer.getStyle()
-                .set("width", "100%")
-                .set("overflow-x", "hidden")
-                .set("min-height", "120px")
-                .set("margin-top", "var(--lumo-space-xs)");
         add(ganttBurndownChartContainer);
 
         add(createDownloadToolbar());
@@ -474,30 +465,56 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     }
 
     /**
-     * Builds the combined Gantt/burndown DTO server-side and pushes it to the browser so
-     * {@code gantt-burndown-bundle.js} can render the interactive client-side chart.
+     * Generates the Gantt chart SVG asynchronously, then updates {@link #ganttBurndownChartContainer}
+     * on the UI thread via {@link UI#access(com.vaadin.flow.server.Command)}.
+     * Cancels any in-flight previous generation before starting a new one.
      */
     private void generateGanttBurndownChartAsync() {
         if (sprint == null) {
             return;
         }
-        getUI().ifPresent(ui -> {
-            boolean isDark = ui.getElement().getThemeList().contains(Lumo.DARK);
+        if (ganttGenerationFuture != null && !ganttGenerationFuture.isDone()) {
+            ganttGenerationFuture.cancel(true);
+        }
+        ganttBurndownChartContainer.removeAll();
+
+        UI             ui             = UI.getCurrent();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Sprint         sprintSnapshot = sprint;
+        log.info("created sprint snapshot for chart generation");
+
+        ganttGenerationFuture = CompletableFuture.supplyAsync(() -> {
+            SecurityContext ctx = SecurityContextHolder.createEmptyContext();
+            ctx.setAuthentication(authentication);
+            SecurityContextHolder.setContext(ctx);
             try {
-                GanttBurndownChartDto dto  = ganttBurndownChartService.build(sprint, ParameterOptions.getLocalNow(), isDark);
-                String                json = jsonMapper.writeValueAsString(dto);
-                ganttBurndownChartContainer.removeAll();
-                ui.getPage().executeJs(
-                        "import('/js/generated/gantt/gantt-burndown-bundle.js')" +
-                                ".then(() => window.mountGanttBurndownChart($0, JSON.parse($1)));",
-                        GANTT_BURNDOWN_CONTAINER_ID, json
-                );
-                log.debug("Gantt burndown chart DTO pushed to client for sprint '{}'", sprint.getName());
+                Svg                svg   = new Svg();
+                GanttBurndownChart chart = RenderUtil.generateGanttBurnChartSvg(context, sprintSnapshot, svg);
+                return new Object[]{svg, chart};
             } catch (Exception e) {
-                logger.error("Failed to build Gantt burndown chart data for sprint '{}'", sprint.getName(), e);
-                ganttBurndownChartContainer.removeAll();
-                ganttBurndownChartContainer.add(new Paragraph("Error generating gantt burndown chart: " + e.getMessage()));
+                throw new RuntimeException("Error generating Gantt chart", e);
+            } finally {
+                SecurityContextHolder.clearContext();
             }
+        }).thenAccept(result -> {
+            Svg                svg   = (Svg) result[0];
+            GanttBurndownChart chart = (GanttBurndownChart) result[1];
+            ui.access(() -> {
+                ganttBurndownChartContainer.removeAll();
+                svg.getStyle().set("margin-top", "var(--lumo-space-m)");
+                svg.setClassName("qtip-shadow");
+                ganttBurndownChartContainer.setWidth(chart.getChartWidth() + "px");
+                ganttBurndownChartContainer.add(svg);
+                ui.push();
+            });
+        }).exceptionally(ex -> {
+            logger.error("Error generating Gantt chart", ex);
+            ui.access(() -> {
+                ganttBurndownChartContainer.removeAll();
+                ganttBurndownChartContainer.add(new Paragraph("Error generating gantt chart: " + ex.getMessage()));
+                ui.push();
+            });
+            return null;
         });
     }
 
@@ -585,14 +602,14 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         }
         ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
         {
-//            try {
-//                RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprint.getName(), ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
-//                GanttChart chart = new GanttChart("/", dao);
-//                chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), sprint.getName(), "references/debug");
-//            } catch (Exception e) {
-//                logger.error("Error generating gantt chart", e);
-//
-//            }
+            try {
+                RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprint.getName(), ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
+                GanttChart chart = new GanttChart("/", dao);
+                chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), sprint.getName(), "references/debug");
+            } catch (Exception e) {
+                logger.error("Error generating gantt chart", e);
+
+            }
 
         }
 

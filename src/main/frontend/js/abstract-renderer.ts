@@ -31,7 +31,7 @@ export abstract class AbstractRenderer implements IRenderer {
 
     constructor(theme: Theme, milestones: Milestones, preRun: number, postRun: number) {
         this.chartWidth = 0;
-        this.chartHeight = 0;
+        this.chartHeight = 400;
         this.theme = theme;
         this.milestones = milestones;
         this.days = 3;
@@ -93,6 +93,25 @@ export abstract class AbstractRenderer implements IRenderer {
             + 1 + this.calendarXAxes.priRun + this.calendarXAxes.postRun;
     }
 
+    /**
+     * Mirrors Java: protected void initPosition(int x, int y).
+     * Positions the calendar header and the diagram (plot area) either with the calendar
+     * above the diagram (default) or below it (calendarAtBottom), matching the Java layout
+     * exactly so combined charts (e.g. GanttBurndownChart) can stack a burndown plot with its
+     * calendar drawn at the bottom directly above the Gantt chart's own calendar.
+     */
+    initPosition(x: number, y: number): void {
+        this.firstDayX = x;
+        if (this.calendarAtBottom) {
+            this.calendarXAxes.initPosition(x, y);
+            this.diagram.initPosition(x, y);
+            this.calendarXAxes.initPosition(x, this.diagram.y + this.diagram.height + 1);
+        } else {
+            this.calendarXAxes.initPosition(x, y);
+            this.diagram.initPosition(x, this.calendarXAxes.year.getY() + this.calendarXAxes.getHeight());
+        }
+    }
+
     initSize(x: number, calendarAtBottom: boolean, calendarSize: CalendarSize, containerWidth: number): void {
         this.calendarAtBottom = calendarAtBottom;
         this.calendarXAxes.calendarSize = calendarSize;
@@ -100,16 +119,27 @@ export abstract class AbstractRenderer implements IRenderer {
         this.chartWidth = containerWidth;
         this.chartHeight = this.calculateChartHeight();
         this.firstDayX = x;
-        this.calendarXAxes.initSize(
-            this.chartWidth,
-            this.calendarXAxes.dayOfWeek.getWidth() ?? 0,
-            calendarAtBottom,
-            calendarSize,
-        );
-        this.diagram.initSize(
-            this.chartWidth - x,
-            this.chartHeight - this.calendarXAxes.getHeight(this.calendarXAxes.dayOfWeek.getWidth() ?? 0, false),
-        );
+        // if (calendarAtBottom) {
+        this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth() ?? 0, calendarAtBottom, calendarSize,);
+        this.diagram.initSize(this.chartWidth - x, this.chartHeight - this.calendarXAxes.getHeight(),);
+        this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth() ?? 0, calendarAtBottom, calendarSize,);
+        // } else {
+        //     this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth() ?? 0, calendarAtBottom, calendarSize,);
+        //     this.diagram.initSize(this.chartWidth - x, this.chartHeight - this.calendarXAxes.getHeight(),);
+        //     this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth() ?? 0, calendarAtBottom, calendarSize,);
+        // }
+
+
+        // if (calendarAtBottom) {
+        //     calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+        //     diagram.initSize(chartWidth - x, chartHeight - calendarXAxes.getHeight());
+        //     calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+        // } else {
+        //     calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+        //     diagram.initSize(chartWidth - x, chartHeight - calendarXAxes.getHeight());
+        //     calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+        // }
+
     }
 
     protected drawCalendar(g: SVGElement, drawDays: boolean = true, viewportWidth: number) {

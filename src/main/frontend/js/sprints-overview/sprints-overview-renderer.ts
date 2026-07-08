@@ -117,7 +117,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     }
 
     override calculateChartHeight(): number {
-        const calH = this.calendarXAxes ? this.calendarXAxes.getHeight(this.dayWidth, false) : 0;
+        const calH = this.calendarXAxes ? this.calendarXAxes.getHeight() : 0;
         return calH + this.calculateLaneAreaHeight();
     }
 
@@ -235,7 +235,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     initPosition(x: number, y: number): void {
         this.firstDayX = x;
         this.calendarXAxes.initPosition(x, y);
-        this.diagram.initPosition(x, this.calendarXAxes.year.getY() + this.calendarXAxes.getHeight(this.dayWidth, false));
+        this.diagram.initPosition(x, this.calendarXAxes.year.getY() + this.calendarXAxes.getHeight());
     }
 
     drawCalendar(svg: SVGElement, drawDays: boolean, viewportWidth: number = this.diagram.width): void {

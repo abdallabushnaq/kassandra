@@ -305,15 +305,9 @@ public abstract class AbstractRenderer {
         firstDayX       = x;
         bankHolidayFont = new Font(Font.SANS_SERIF, Font.PLAIN, Math.min(14, (int) (calendarXAxes.dayOfWeek.getWidth() * 1.1)));
 
-        if (calendarAtBottom) {
-            calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
-            diagram.initSize(chartWidth - x, chartHeight - calendarXAxes.getHeight());
-            calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
-        } else {
-            calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
-            diagram.initSize(chartWidth - x, chartHeight - calendarXAxes.getHeight());
-            calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
-        }
+        calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+        diagram.initSize(chartWidth - x, chartHeight - calendarXAxes.getHeight());
+        calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
     }
 
     public void setDayWidth(int dayWidth) {

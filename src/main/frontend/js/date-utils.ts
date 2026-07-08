@@ -83,6 +83,22 @@ export class DateUtils {
     }
 
     /**
+     * Counts working days (Mon–Fri) from start to end inclusive.
+     * Mirrors Java: DateUtil.calculateWorkingDaysIncluding(LocalDate start, LocalDate end).
+     */
+    static calculateWorkingDaysIncluding(start: Date, end: Date): number {
+        let count = 0;
+        let current = DateUtils.getDayMidnight(start);
+        const endDay = DateUtils.getDayMidnight(end);
+        while (current.getTime() <= endDay.getTime()) {
+            const dow = current.getDay();
+            if (dow !== 0 && dow !== 6) count++;
+            current = new Date(current.getTime() + DateUtils.MS);
+        }
+        return count;
+    }
+
+    /**
      * Creates a date string in format "EEEE dd MMMM yyyy".
      * Mirrors: Java DateUtil.createDateString(LocalDate date, DateTimeFormatter formatter)
      */
@@ -95,4 +111,3 @@ export class DateUtils {
         return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
     }
 }
-

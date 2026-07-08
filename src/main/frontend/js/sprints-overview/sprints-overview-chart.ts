@@ -25,7 +25,7 @@ export class SprintsOverviewChart extends AbstractChart {
         renderer.scrollOffset = scrollOffset;
         renderer.containerWidth = containerWidth;
 
-        const calendarH = renderer.calendarXAxes.getHeight(dayWidth, false);
+        const calendarH = renderer.calendarXAxes.getHeight();
         const lanesH = renderer.calculateLaneAreaHeight();
         const contentH = calendarH + lanesH;
 

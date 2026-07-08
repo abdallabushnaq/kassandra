@@ -11,6 +11,7 @@ import {Milestones} from '../milestones.js';
 import {Theme} from '../theme/theme.js';
 import {getCalendarException} from './date-helpers.js';
 import {AbstractGanttRenderer, DEFAULT_DW, TaskDto} from './abstract-gantt-renderer.js';
+import {CalendarSize} from "Frontend/js/calendar-size";
 
 export interface GanttChartMeta {
     chartStart: string;
@@ -22,6 +23,7 @@ export interface GanttChartMeta {
     sprintName?: string;
     preRun?: number;
     postRun?: number;
+    calendarSize: CalendarSize;
     theme?: Record<string, unknown>;
 }
 
@@ -30,7 +32,12 @@ export interface GanttChartDto {
     meta: GanttChartMeta;
 }
 
+
 export class GanttRenderer extends AbstractGanttRenderer {
+    static GANTT_TASK_POST_SPACE: number = 0;
+    static GANTT_TASK_PRI_SPACE: number = 0;
+    calendarSize: CalendarSize;
+
     constructor(data: GanttChartDto, theme: Theme, preRun: number, postRun: number) {
         const chartStart = DateUtils.getDayMidnight(new Date(data.meta.chartStart));
         const chartEnd = DateUtils.getDayMidnight(new Date(data.meta.chartEnd));
@@ -58,6 +65,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         this.chartStart = chartStart;
         this.totalDays = DateUtils.calculateDayCount(chartStart, chartEnd);
         this.currentDate = now;
+        this.calendarSize = data.meta.calendarSize;
 
         for (const task of this.tasks) {
             this._taskById[String(task.id)] = task;
@@ -66,6 +74,21 @@ export class GanttRenderer extends AbstractGanttRenderer {
 
     override calculateDayWidth(): void {
         this.dayWidth = DEFAULT_DW;
+    }
+
+
+    calculateNumberOfTasks(tasks: TaskDto[]): number {
+        let size = 0;
+        for (const task of tasks) {
+            // if (this.isValidTask(task)) {
+            size++;
+            // }
+        }
+        return size;
+    }
+
+    override calculateChartHeight(): number {
+        return this.calendarXAxes.getHeight() + GanttRenderer.GANTT_TASK_PRI_SPACE + this.calculateNumberOfTasks(this.tasks) * (this.getTaskHeight() + 1) + GanttRenderer.GANTT_TASK_POST_SPACE;
     }
 
     override drawDayBars(g: SVGElement, dayDate: Date, calendarH = 0): void {
@@ -111,7 +134,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
     }
 
     override draw(svg: SVGSVGElement, _x: number, y: number): void {
-        const calendarH = this.calendarXAxes.getHeight(this.dayWidth, this.milestones.list.length > 0);
+        const calendarH = this.calendarXAxes.getHeight();
         const taskAreaH = this.tasks.length * (this.getTaskHeight() + 1);
         const totalH = calendarH + taskAreaH;
         this._calendarH = y + calendarH;
@@ -130,7 +153,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         //     svg, this.chartStart!, this.totalDays,
         //     this.dayWidth, this.scrollOffset, this.containerWidth, this.milestones,
         // );
-        this.calendarXAxes.initSize(this.containerWidth, this.dayWidth, this.calendarAtBottom, this.calendarXAxes.calendarSize);
+        this.calendarXAxes.initSize(this.containerWidth, this.dayWidth, this.calendarAtBottom, this.calendarSize);
         this.calendarXAxes.drawCalendar(svg, false, this.containerWidth);
         this.calendarXAxes.drawMilestones(svg);
 

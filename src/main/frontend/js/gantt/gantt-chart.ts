@@ -19,7 +19,7 @@ export class GanttChart extends AbstractChart {
         renderer.scrollOffset = scrollOffset;
         renderer.containerWidth = containerWidth;
 
-        const calendarH = renderer.calendarXAxes.getHeight(dayWidth, renderer.milestones.list.length > 0);
+        const calendarH = renderer.calendarXAxes.getHeight();
         const taskAreaH = renderer.tasks.length * (renderer.getTaskHeight() + 1);
         const contentH = calendarH + taskAreaH;
 

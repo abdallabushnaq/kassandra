@@ -94,5 +94,46 @@ export class ColorUtils {
         }
     }
 
-}
+    /**
+     * Lightens a 0xRRGGBB color by blending it towards white.
+     * Mirrors Java: ColorUtil.lightenColor(color, factor).
+     * @param color  0xRRGGBB integer
+     * @param factor 0.0 = no change, 1.0 = full white
+     */
+    static lightenColor(color: number, factor: number): number {
+        const r = (color >> 16) & 0xff;
+        const g = (color >> 8) & 0xff;
+        const b = color & 0xff;
+        const lr = Math.round(r + (255 - r) * factor);
+        const lg = Math.round(g + (255 - g) * factor);
+        const lb = Math.round(b + (255 - b) * factor);
+        return (lr << 16) | (lg << 8) | lb;
+    }
 
+    /**
+     * Converts a 0xRRGGBB integer + separate alpha (0–255) to an rgba() CSS string.
+     * @param color  0xRRGGBB integer (or null → fallback)
+     * @param alpha  0–255 alpha
+     * @param fallback default when color is null
+     */
+    static intToRgba(color: number | null | undefined, alpha: number, fallback = 'rgba(0,0,0,0.5)'): string {
+        if (color == null) return fallback;
+        const r = (color >> 16) & 0xff;
+        const g = (color >> 8) & 0xff;
+        const b = color & 0xff;
+        return `rgba(${r},${g},${b},${(alpha / 255).toFixed(3)})`;
+    }
+
+    /**
+     * Returns a new {@link Color} identical to the given color but with the specified alpha value.
+     *
+     * @param c1    the source color (RGB components are preserved)
+     * @param alpha the new alpha value in the range {@code [0, 255]};
+     *              {@code 0} is fully transparent, {@code 255} is fully opaque
+     * @return a new {@link Color} with the same RGB components and the new alpha
+     */
+    static setAlpha(c1: number, alpha: number): number {
+        return (c1 & 0x00ffffff) | (alpha << 24);
+    }
+
+}
