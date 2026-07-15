@@ -348,7 +348,6 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         }
         try (Profiler pc = new Profiler(SampleType.JPA)) {
             for (Sprint sprint : peg.getSprints()) {
-                sprint.initUserMap(peg.getSprintUser(sprint.getId()));
                 peg.taskApi.updateBatch(sprint.getTasks(), sprint.getId());
                 peg.sprintApi.update(sprint);
             }
@@ -419,6 +418,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
             peg.createDeliveryBufferTask(sprint, Duration.ZERO);
             try (Profiler pc2 = new Profiler(SampleType.CPU)) {
                 sprint.initialize();
+                sprint.initUserMap(peg.getSprintUser(sprint.getId()));
             }
             try (Profiler pc3 = new Profiler(SampleType.CPU)) {
                 levelResourcesAndPersist(testInfo, sprint, null);
@@ -656,20 +656,20 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         } while (anyChanged);
     }
 
-    /**
-     * Loads a sprint from the database and fully initializes it with its users and tasks,
-     * making it ready for overlap detection or resource leveling.
-     *
-     * @param sprintId id of the sprint to load
-     * @return fully initialized {@link Sprint}
-     */
-    private Sprint loadSprintWithTasks(UUID sprintId) {
-        Sprint sprint = peg.sprintApi.getById(sprintId);
-        sprint.initialize();
-        sprint.initUserMap(peg.userApi.getAll(sprintId));
-        sprint.initTaskMap(peg.taskApi.getAll(sprintId), peg.worklogApi.getAll(sprintId));
-        return sprint;
-    }
+//    /**
+//     * Loads a sprint from the database and fully initializes it with its users and tasks,
+//     * making it ready for overlap detection or resource leveling.
+//     *
+//     * @param sprintId id of the sprint to load
+//     * @return fully initialized {@link Sprint}
+//     */
+//    private Sprint loadSprintWithTasks(UUID sprintId) {
+//        Sprint sprint = peg.sprintApi.getById(sprintId);
+//        sprint.initialize();
+//        sprint.initUserMap(peg.userApi.getAll(sprintId));
+//        sprint.initTaskMap(peg.taskApi.getAll(sprintId), peg.worklogApi.getAll(sprintId));
+//        return sprint;
+//    }
 
     private void logProjectTasks(String fileName, Sprint sprint, String referenceFileName, Sprint referenceSprint) {
         logger.trace("----------------------------------------------------------------------");
