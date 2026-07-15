@@ -51,17 +51,18 @@ public class DatabaseDebugService {
         List<String> columnNames = entityManager.createNativeQuery(
                 "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " +
                         "WHERE TABLE_SCHEMA = SCHEMA() AND TABLE_NAME = '" + tableName + "' " +
-                        "ORDER BY ORDINAL_POSITION"
+                        "ORDER BY COLUMN_NAME"
         ).getResultList();
 
         @SuppressWarnings("unchecked")
         List<String> columnTypes = entityManager.createNativeQuery(
                 "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS " +
                         "WHERE TABLE_SCHEMA = SCHEMA() AND TABLE_NAME = '" + tableName + "' " +
-                        "ORDER BY ORDINAL_POSITION"
+                        "ORDER BY COLUMN_NAME"
         ).getResultList();
 
-        List<?> results = entityManager.createNativeQuery("SELECT * FROM " + tableName).getResultList();
+        String selectClause = String.join(", ", columnNames);
+        List<?> results = entityManager.createNativeQuery("SELECT " + selectClause + " FROM " + tableName).getResultList();
 
         if (results.isEmpty()) {
             return "";
@@ -160,7 +161,7 @@ public class DatabaseDebugService {
     private List<String> getAllTableNames() {
         @SuppressWarnings("unchecked")
         List<String> tableNames = entityManager.createNativeQuery(
-                "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = SCHEMA()"
+                "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = SCHEMA() ORDER BY TABLE_NAME"
         ).getResultList();
 
         return tableNames.stream()
