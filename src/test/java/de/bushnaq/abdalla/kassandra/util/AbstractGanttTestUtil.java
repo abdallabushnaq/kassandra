@@ -514,20 +514,20 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
                 // iterate over all tasks
                 for (Task task : sprint.getTasks()) {
                     if (task.isTask() && task.isImpactOnCost()) {
-
-                        if (!day.isBefore(task.getStart().toLocalDate()) && !day.isAfter(task.getFinish().toLocalDate())) {
-                            // Day is on or after task start && on or before finish
-                            if (sprint.getName().equals("Paris") && task.getAssignedUser().getName().equals("Christopher Paul")) {
-                                if (task.getEffectiveCalendar().isWorkingDate(LocalDate.of(2025, 8, 20))) {
-                                    log.error("mist");
+                        if (!task.getRemainingEstimate().isZero()) {
+                            //still work to be done
+                            if (!day.isBefore(task.getStart().toLocalDate()) /*&& !day.isAfter(task.getFinish().toLocalDate())*/) {
+                                // Day is on or after task start && on or before finish
+                                if (sprint.getName().equals("Paris") && task.getAssignedUser().getName().equals("Christopher Paul")) {
+                                    if (task.getEffectiveCalendar().isWorkingDate(LocalDate.of(2025, 8, 20))) {
+                                        log.error("mist");
+                                    }
                                 }
-                            }
 
-                            if (task.getEffectiveCalendar().isWorkingDate(day)) {
-                                // is a working day for this user
+                                if (task.getEffectiveCalendar().isWorkingDate(day)) {
+                                    // is a working day for this user
 //                                if (task.getStart().isBefore(startOfDay) || task.getStart().isEqual(startOfDay))
-                                {
-                                    if (!task.getRemainingEstimate().isZero()) {
+                                    {
                                         if (TaskUtil.areAllPredecessorsDone(task, sprint)) {
                                             // we have the whole day
                                             double performance = 1f;//daily performance is usually 100% of the resource availability
