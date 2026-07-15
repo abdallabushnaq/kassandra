@@ -128,6 +128,7 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
     private final       H2                      pageTitle;
     private final       ProductApi              productApi;
     private             UUID                    productId;
+    protected           RenderUtil              renderUtil;
     private             Sprint                  sprint;
     private final       SprintApi               sprintApi;
     @Autowired
@@ -148,7 +149,8 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
     private             UUID                    versionId;
     private final       WorklogApi              worklogApi;
 
-    public LegacyQualityBoard(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock) {
+    public LegacyQualityBoard(RenderUtil renderUtil, WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi, VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock) {
+        this.renderUtil = renderUtil;
         created         = LocalDateTime.now(clock);
         this.worklogApi = worklogApi;
         this.taskApi    = taskApi;
@@ -485,7 +487,7 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
             SecurityContextHolder.setContext(ctx);
             try {
                 Svg                svg   = new Svg();
-                GanttBurndownChart chart = RenderUtil.generateGanttBurnChartSvg(context, sprintSnapshot, svg);
+                GanttBurndownChart chart = renderUtil.generateGanttBurnChartSvg(context, sprintSnapshot, svg);
                 return new Object[]{svg, chart};
             } catch (Exception e) {
                 throw new RuntimeException("Error generating Gantt chart", e);
@@ -596,7 +598,8 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
             logger.error("Error loading sprint data", e);
             // Handle exception appropriately
         }
-        ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
+//        ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());//TODO leveling resources should not happen at this point
+//        ganttUtil.injectDeliveryBuffer(eh, sprint);
 //        {
 //            try {
 //                RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprint.getName(), ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);

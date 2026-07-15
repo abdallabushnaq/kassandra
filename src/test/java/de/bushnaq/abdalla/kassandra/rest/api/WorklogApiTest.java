@@ -36,7 +36,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 
 
 @Tag("UnitTest")
@@ -71,12 +70,12 @@ public class WorklogApiTest extends AbstractTestUtil {
 
             Task    task1    = peg.addTask(sprint, null, "Project Phase 1", LocalDateTime.now(), Duration.ofDays(10), null, null, null);
             Task    task2    = peg.addTask(sprint, task1, "Design", LocalDateTime.now(), Duration.ofDays(4), null, user1, null);
-            Worklog worklog1 = peg.addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
+            Worklog worklog1 = peg.addWorklog(task2, user1, LocalDateTime.now(), Duration.ofHours(2), "Design work 1");
             debugUtil.logJson(worklog1);
-            Worklog worklog2 = peg.addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
+            Worklog worklog2 = peg.addWorklog(task2, user1, LocalDateTime.now(), Duration.ofHours(2), "Design work 1");
             Task    task3    = peg.addTask(sprint, task1, "Implementation", LocalDateTime.now().plusDays(4), Duration.ofDays(6), null, user1, task1);
-            Worklog worklog3 = peg.addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 1");
-            Worklog worklog4 = peg.addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 2");
+            Worklog worklog3 = peg.addWorklog(task3, user1, LocalDateTime.now(), Duration.ofHours(1), "Implementation 1");
+            Worklog worklog4 = peg.addWorklog(task3, user1, LocalDateTime.now(), Duration.ofHours(1), "Implementation 2");
         }
 
         printTables();
@@ -95,11 +94,11 @@ public class WorklogApiTest extends AbstractTestUtil {
             Sprint  sprint   = peg.addRandomSprint(feature);
             Task    task1    = peg.addTask(sprint, null, "Project Phase 1", LocalDateTime.now(), Duration.ofDays(10), null, null, null);
             Task    task2    = peg.addTask(sprint, task1, "Design", LocalDateTime.now(), Duration.ofDays(4), null, user1, null);
-            Worklog worklog1 = peg.addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
-            Worklog worklog2 = peg.addWorklog(task2, user1, OffsetDateTime.now(), Duration.ofHours(2), "Design work 1");
+            Worklog worklog1 = peg.addWorklog(task2, user1, LocalDateTime.now(), Duration.ofHours(2), "Design work 1");
+            Worklog worklog2 = peg.addWorklog(task2, user1, LocalDateTime.now(), Duration.ofHours(2), "Design work 1");
             Task    task3    = peg.addTask(sprint, task1, "Implementation", LocalDateTime.now().plusDays(4), Duration.ofDays(6), null, user1, task1);
-            Worklog worklog3 = peg.addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 1");
-            Worklog worklog4 = peg.addWorklog(task3, user1, OffsetDateTime.now(), Duration.ofHours(1), "Implementation 2");
+            Worklog worklog3 = peg.addWorklog(task3, user1, LocalDateTime.now(), Duration.ofHours(1), "Implementation 1");
+            Worklog worklog4 = peg.addWorklog(task3, user1, LocalDateTime.now(), Duration.ofHours(1), "Implementation 2");
         }
 
         peg.testAllAndPrintTables();

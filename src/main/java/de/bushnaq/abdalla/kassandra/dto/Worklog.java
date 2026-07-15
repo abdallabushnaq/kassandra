@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.dto;
 import lombok.*;
 
 import java.time.Duration;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -30,15 +30,15 @@ import java.util.UUID;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Worklog extends AbstractTimeAware implements Comparable<Worklog> {
 
-    private UUID           authorId;
-    private String         comment;
-    private UUID           id;
-    private UUID           sprintId;
-    private OffsetDateTime start;
-    private UUID           taskId;
-    private Duration       timeRemainingEstimate;
-    private Duration       timeSpent;
-    private UUID           updateAuthorId;
+    private UUID          authorId;
+    private String        comment;
+    private UUID          id;
+    private UUID          sprintId;
+    private LocalDateTime start;
+    private UUID          taskId;
+    private Duration      timeRemainingEstimate;
+    private Duration      timeSpent;
+    private UUID          updateAuthorId;
 
     @Override
     public int compareTo(Worklog other) {

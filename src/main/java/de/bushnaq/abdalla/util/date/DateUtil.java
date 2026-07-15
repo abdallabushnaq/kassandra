@@ -110,6 +110,18 @@ public class DateUtil {
         }
     }
 
+    @Deprecated()
+    //TODO use user calendar"
+    public static LocalDateTime calculateDayEndTime(LocalDateTime time) {
+        return time.truncatedTo(ChronoUnit.DAYS).withHour(16).withMinute(30);
+    }
+
+    @Deprecated()
+    //TODO use user calendar"
+    public static LocalDateTime calculateDayStartTime(LocalDateTime time) {
+        return time.truncatedTo(ChronoUnit.DAYS).withHour(8);
+    }
+
     public static int calculateDays(LocalDate first, LocalDate last) {
         return calculateDays(first.atStartOfDay(), last.atStartOfDay());
     }
@@ -127,10 +139,14 @@ public class DateUtil {
         return (int) noOfDaysBetween.toDays();
     }
 
+    @Deprecated()
+    //TODO use user calendar"
     public static LocalDateTime calculateLunchStartTime(LocalDateTime time) {
         return time.truncatedTo(ChronoUnit.DAYS).withHour(12);
     }
 
+    @Deprecated()
+    //TODO use user calendar"
     public static LocalDateTime calculateLunchStopTime(LocalDateTime time) {
         return time.truncatedTo(ChronoUnit.DAYS).withHour(13);
     }
@@ -799,10 +815,14 @@ public class DateUtil {
         return overlapping;
     }
 
+    @Deprecated()
+    //TODO "use user calendar"
     public static boolean isWorkDay(LocalDate c) {
         return (c.getDayOfWeek() != DayOfWeek.SATURDAY && c.getDayOfWeek() != DayOfWeek.SUNDAY);
     }
 
+    @Deprecated()
+    //TODO "use user calendar"
     public static boolean isWorkDay(LocalDateTime c) {
         return (c.getDayOfWeek() != DayOfWeek.SATURDAY && c.getDayOfWeek() != DayOfWeek.SUNDAY);
     }

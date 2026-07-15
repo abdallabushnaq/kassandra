@@ -28,7 +28,7 @@ import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
 
 import java.time.Duration;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -55,7 +55,7 @@ public class WorklogDAO extends AbstractTimeAwareDAO {
     private UUID sprintId;
 
     @Column(nullable = false)
-    private OffsetDateTime start;
+    private LocalDateTime start;
 
     @Column(nullable = false)
     private UUID     taskId;

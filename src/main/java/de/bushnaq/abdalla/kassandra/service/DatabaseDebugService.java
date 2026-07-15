@@ -22,11 +22,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
@@ -173,35 +168,35 @@ public class DatabaseDebugService {
                 .toList();
     }
 
-    /**
-     * Writes all database tables to {@value #DB_OUTPUT_FILE}.
-     *
-     * @return the absolute path of the output file
-     * @throws IOException if the file cannot be written
-     */
-    @Deprecated
-    public Path printDatabaseTables() throws IOException {
-        log.info("Printing database tables to {}", DB_OUTPUT_FILE);
-
-        Path outputPath = Paths.get(DB_OUTPUT_FILE).toAbsolutePath();
-
-        try (PrintWriter writer = new PrintWriter(new FileWriter(outputPath.toFile()))) {
-            writer.println("=== Database Content ===");
-            writer.println();
-
-            for (String tableName : getAllTableNames()) {
-                String content = buildTableContent(tableName);
-                if (!content.isEmpty()) {
-                    writer.print(content);
-                }
-            }
-
-            writer.flush();
-        }
-
-        log.info("Database tables written to {}", outputPath);
-        return outputPath;
-    }
+//    /**
+//     * Writes all database tables to {@value #DB_OUTPUT_FILE}.
+//     *
+//     * @return the absolute path of the output file
+//     * @throws IOException if the file cannot be written
+//     */
+//    @Deprecated
+//    public Path printDatabaseTables() throws IOException {
+//        log.info("Printing database tables to {}", DB_OUTPUT_FILE);
+//
+//        Path outputPath = Paths.get(DB_OUTPUT_FILE).toAbsolutePath();
+//
+//        try (PrintWriter writer = new PrintWriter(new FileWriter(outputPath.toFile()))) {
+//            writer.println("=== Database Content ===");
+//            writer.println();
+//
+//            for (String tableName : getAllTableNames()) {
+//                String content = buildTableContent(tableName);
+//                if (!content.isEmpty()) {
+//                    writer.print(content);
+//                }
+//            }
+//
+//            writer.flush();
+//        }
+//
+//        log.info("Database tables written to {}", outputPath);
+//        return outputPath;
+//    }
 
     /**
      * Prints all non-empty tables in the current schema to {@link System#out}.

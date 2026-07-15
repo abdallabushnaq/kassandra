@@ -34,6 +34,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.*;
 
 import java.awt.*;
@@ -49,6 +50,7 @@ import java.util.stream.Collectors;
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Slf4j
 public class User extends AbstractTimeAware implements Comparable<User> {
     @JsonManagedReference
     private List<Availability> availabilities = new ArrayList<>();
@@ -420,6 +422,7 @@ public class User extends AbstractTimeAware implements Comparable<User> {
                 pce.setName(String.format("%s (%s/%s)", holiday.getDescription(), location.getCountry(), location.getState()));
             }
         }
+
     }
 
     /**

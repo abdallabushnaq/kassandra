@@ -9,7 +9,9 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
+import de.bushnaq.abdalla.kassandra.report.dao.BurnDownGuide;
 import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
+import de.bushnaq.abdalla.kassandra.report.dao.Milestones;
 import de.bushnaq.abdalla.kassandra.report.dao.WorklogRemaining;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
@@ -18,16 +20,15 @@ import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.rest.dto.GanttBurndownChartDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.GanttChartDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.ThemeDto;
+import de.bushnaq.abdalla.util.ErrorException;
+import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.xmlgraphics.java2d.color.ColorUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
-import java.time.DayOfWeek;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
@@ -50,29 +51,31 @@ public class GanttBurndownChartService {
     /**
      * Default extra days shown after sprintEnd (matches GanttChartService).
      */
-    public static final  int  DEFAULT_POST_RUN        = GanttChartService.DEFAULT_POST_RUN;
+    public static final  int               DEFAULT_POST_RUN        = GanttChartService.DEFAULT_POST_RUN;
     /**
      * Default extra days shown before sprintStart (matches GanttChartService).
      */
-    public static final  int  DEFAULT_PRE_RUN         = GanttChartService.DEFAULT_PRE_RUN;
+    public static final  int               DEFAULT_PRE_RUN         = GanttChartService.DEFAULT_PRE_RUN;
+    private static final int               ONE_WEEK                = 7;
+    private static final long              SECONDS_PER_HOUR        = 60 * 60;
     /**
      * Seconds in a 7.5-hour working day (8:00–12:00, 13:00–16:30).
      */
-    private static final long SECONDS_PER_WORKING_DAY = 75L * 6L * 60L; // 27000
-
-    private final DarkTheme         darkTheme;
-    private final GanttChartService ganttChartService;
-    private final LightTheme        lightTheme;
+    private static final long              SECONDS_PER_WORKING_DAY = 75L * 6L * 60L; // 27000
+    private final        DarkTheme         darkTheme;
+    private final        GanttChartService ganttChartService;
+    private final        LightTheme        lightTheme;
+    // ── Public API ─────────────────────────────────────────────────────────────
+    public               Milestones        milestones;
 
     @Autowired
-    public GanttBurndownChartService(LightTheme lightTheme, DarkTheme darkTheme,
-                                     GanttChartService ganttChartService) {
+    public GanttBurndownChartService(LightTheme lightTheme, DarkTheme darkTheme, GanttChartService ganttChartService) {
         this.lightTheme        = lightTheme;
         this.darkTheme         = darkTheme;
         this.ganttChartService = ganttChartService;
     }
 
-    // ── Public API ─────────────────────────────────────────────────────────────
+    // ── Private helpers ─────────────────────────────────────────────────────────
 
     /**
      * Builds the DTO using default preRun/postRun padding.
@@ -94,8 +97,7 @@ public class GanttBurndownChartService {
      * @param preRun  extra days before sprintStart
      * @param postRun extra days after sprintEnd
      */
-    public GanttBurndownChartDto build(Sprint sprint, LocalDateTime now, boolean dark,
-                                       int preRun, int postRun) {
+    public GanttBurndownChartDto build(Sprint sprint, LocalDateTime now, boolean dark, int preRun, int postRun) {
         Theme                 theme = dark ? darkTheme : lightTheme;
         GanttBurndownChartDto dto   = new GanttBurndownChartDto();
 
@@ -108,8 +110,8 @@ public class GanttBurndownChartService {
                 .toList();
 
         // ── Chart window ────────────────────────────────────────────────────────
-        LocalDate chartStartDate = sprint.getEarliestStartDate().toLocalDate().minusDays(preRun);
-        LocalDate chartEndDate   = sprint.getLatestFinishDate().toLocalDate().plusDays(postRun);
+        LocalDate chartStartDate = sprint.getEarliestStartDate().toLocalDate();
+        LocalDate chartEndDate   = sprint.getLatestFinishDate().toLocalDate();
 
         // Extend to include 'now' (unless sprint is closed)
         if (now != null && !sprint.isClosed()) {
@@ -128,7 +130,7 @@ public class GanttBurndownChartService {
         int           lastDayWithValue = 0;
 
         for (Worklog w : sortedWorklogs) {
-            LocalDateTime wdt = w.getStart().toLocalDateTime();
+            LocalDateTime wdt = w.getStart();
             if (firstWorklogDt == null || wdt.isBefore(firstWorklogDt)) firstWorklogDt = wdt;
             if (lastWorklogDt == null || wdt.isAfter(lastWorklogDt)) lastWorklogDt = wdt;
         }
@@ -313,8 +315,6 @@ public class GanttBurndownChartService {
         return dto;
     }
 
-    // ── Private helpers ─────────────────────────────────────────────────────────
-
     /**
      * Computes gantt-derived planned burn-down guides and stores them in the DTO.
      * Mirrors Java: {@code BurnDownRenderer.initGanttGuide()} +
@@ -384,6 +384,151 @@ public class GanttBurndownChartService {
         return sb.toString();
     }
 
+    protected LocalDate calculateDayFromIndex(int index) {
+        LocalDate firstMilestoneDay = milestones.firstMilestone;
+        return DateUtil.addDay(firstMilestoneDay, index);
+    }
+
+    protected int calculateDayIndex(LocalDate date) {
+        LocalDate firstMilestoneDay = milestones.firstMilestone;
+        return DateUtil.calculateDays(firstMilestoneDay, date);
+    }
+
+    protected int calculateDayIndex(LocalDateTime date) {
+        return calculateDayIndex(date.toLocalDate());
+    }
+
+    private void calculateWorkPerDay(Sprint sprint, Task task, BurnDownGuide guide, boolean print) throws Exception {
+        //TODO must use user calendar for start/end times
+        LocalDateTime start = task.getStart();
+        LocalDateTime stop  = task.getFinish();
+        if (!task.isMilestone()) {
+            if (GanttUtil.isValidTask(task) && !task.isMilestone() && task.getChildTasks().isEmpty()) {
+                if (stop.isBefore(start) || stop.isEqual(start)) {
+                    sprint.exceptions.add(new ErrorException(String.format("Task %s finish time has to be after start time. Ignoring task.", task.getName())));
+                } else {
+                    //                    Duration duration0 = task.getDuration();
+//                    for (User assignment : task.getAssignedUser())
+                    {
+//                        Resource resource =  assignment.getResource();
+
+//                        Number availability = assignment.getUnits();
+                        Number availability = task.getAvailability();
+                        if (/*resource != null &&*/ availability != null) {
+                            int  startDayIndex = calculateDayIndex(start);
+                            int  stopDayIndex  = calculateDayIndex(stop);
+                            long oneDay        = 75 * SECONDS_PER_HOUR / 10;
+                            //                            long oneHour = SECONDS_PER_HOUR;
+                            if (stopDayIndex == startDayIndex) {
+                                // ---We assume that a task is worked on every day from 8:00 - 12:00, 13:00 - 16:30 (7.5h, with lunch time at 12:00)
+                                // start time might not be in the morning at exactly 8:00
+                                // stop time might not be in the afternoon 15:30
+                                LocalDateTime lunchStartTime = DateUtil.calculateLunchStartTime(start);
+                                LocalDateTime lunchStopTime  = DateUtil.calculateLunchStopTime(start);
+                                if (start.isBefore(lunchStartTime) || start.isEqual(lunchStartTime)) {
+                                    // if(start <= 12:00)
+                                    if (stop.isBefore(lunchStartTime) || stop.isEqual(lunchStartTime)) {
+                                        // if(stop <= 12:00)
+                                        // (stop - start)/7.5
+                                        double   fraction = (double) Duration.between(start, stop).getSeconds() / oneDay;
+                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                        if (print)
+                                            System.out.printf("[1] %s start & stop <= 12:00 fraction=%f work=%s%n", task.getName(), fraction, work);
+                                        guide.add(startDayIndex, work);
+                                    } else if (stop.isAfter(lunchStopTime) || stop.isEqual(lunchStopTime)) {
+                                        // if(stop >= 13:00)
+                                        // ( stop - start -1h )/7.5
+                                        double   fraction = (double) Duration.between(start, stop).minusHours(1).getSeconds() / oneDay;
+                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                        if (print)
+                                            System.out.printf("[2] %s start <= 12:00 & stop >= 13:00 fraction=%f work=%s%n", task.getName(), fraction, work);
+                                        guide.add(startDayIndex, work);
+                                    } else {
+                                        throw new Exception(String.format("Task %s stop within lunch time", task.getName()));
+                                    }
+                                } else if (start.isAfter(lunchStopTime) || start.isEqual(lunchStopTime)) {
+                                    // if(start >= 13:00 && stop >= 13:00)
+                                    // (stop - Start))/7.5
+                                    double   fraction = ((double) Duration.between(start, stop).getSeconds()) / oneDay;
+                                    Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                    if (print)
+                                        System.out.printf("[3] %s start >= 13:00 & stop >= 13:00 fraction=%f work=%s%n", task.getName(), fraction, work);
+                                    guide.add(startDayIndex, work);
+                                } else {
+                                    throw new Exception(String.format("Task %s stop before start", task.getName()));
+                                }
+
+                            } else {
+                                // start
+                                {
+                                    // ---We assume that a task is worked on every day from 8:00 - 12:00, 13:00 -  16:30 (7.5h, with lunch time at 12:00)
+                                    // start time might not be in the morning at exactly 8:00
+                                    LocalDateTime lunchStartTime = DateUtil.calculateLunchStartTime(start);
+                                    LocalDateTime lunchStopTime  = DateUtil.calculateLunchStopTime(start);
+                                    if (start.isBefore(lunchStartTime) || start.isEqual(lunchStartTime)) {
+                                        double   fraction = ((double) Duration.between(start.toLocalTime(), LocalTime.of(16, 30)).minusHours(1).getSeconds()) / oneDay;
+                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                        if (print)
+                                            System.out.printf("[4] %s start <= 12:00 & stop > today fraction=%f work=%s%n", task.getName(), fraction, work);
+                                        guide.add(startDayIndex, work);
+                                    } else if (start.isAfter(lunchStopTime) || start.isEqual(lunchStopTime)) {
+                                        double   fraction = ((double) Duration.between(start.toLocalTime(), LocalTime.of(16, 30)).minusHours(1).getSeconds()) / oneDay;
+                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                        if (print)
+                                            System.out.printf("[5] %s start  >= 13:00 & stop > today fraction=%f work=%s%n", task.getName(), fraction, work);
+                                        guide.add(startDayIndex, work);
+                                    } else {
+                                        throw new Exception(String.format("Task %s start within lunch time", task.getName()));
+                                    }
+                                }
+                                // end
+                                {
+                                    // ---We assume that a task is worked on every day from 8:00 - 12:00, 13:00 - 16:30 (7.5h, with lunch time at 12:00)
+                                    // last day, stop time might not be in the afternoon 16:30
+                                    LocalDateTime lunchStartTime = DateUtil.calculateLunchStartTime(stop);
+                                    LocalDateTime lunchStopTime  = DateUtil.calculateLunchStopTime(stop);
+                                    if (stop.isBefore(lunchStartTime) || stop.isEqual(lunchStartTime)) {
+                                        // if(stop <= 12:00)
+                                        // (stop - 8:00)/7.5
+                                        double   fraction = ((double) Duration.between(LocalTime.of(8, 0), stop.toLocalTime()).getSeconds()) / oneDay;
+                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                        if (print)
+                                            System.out.printf("[6] %s start < today & stop <= 12:00 fraction=%f work=%s%n", task.getName(), fraction, work);
+                                        guide.add(stopDayIndex, work);
+                                    } else if (stop.isAfter(lunchStopTime) || stop.isEqual(lunchStopTime)) {
+                                        // if(stop >= 13:00)
+                                        // (stop - 8:00 -1h)/7.5
+                                        double   fraction = ((double) Duration.between(LocalTime.of(8, 0), stop.toLocalTime()).minusHours(1).getSeconds()) / oneDay;
+                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                        if (print)
+                                            System.out.printf("[7] %s start < today & stop >= 13:00 fraction=%f work=%s%n", task.getName(), fraction, work);
+                                        guide.add(stopDayIndex, work);
+                                    } else {
+                                        throw new Exception(String.format("Task %s stop within lunch time", task.getName()));
+                                    }
+                                }
+                            }
+                            if (startDayIndex + 1 < stopDayIndex) {
+                                for (int index = startDayIndex + 1; index < stopDayIndex; index++) {
+                                    LocalDate today = calculateDayFromIndex(index);
+                                    if (task.getEffectiveCalendar().isWorkingDate(today))
+//                                    if (isResourceWorkingDay(context, task.getAssignedUser(), today))
+                                    {
+                                        Duration work = Duration.ofSeconds((long) (availability.doubleValue() * SECONDS_PER_WORKING_DAY));
+                                        if (print)
+                                            System.out.printf("[8] %s start < today & stop > today fraction=1.0 work=%s%n", task.getName(), work);
+                                        guide.add(index, work);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+
     /**
      * Converts a Java {@link Color} to a 6-digit hex string (#rrggbb).
      */
@@ -420,6 +565,32 @@ public class GanttBurndownChartService {
         return result;
     }
 
+    protected void createMilestones(Sprint sprint, LocalDateTime now/*, LocalDateTime firstWorklog, LocalDateTime lastWorklog*/) {
+        //TODO should we include first and last worklog date?
+        milestones = new Milestones(sprint.getName());
+        if (sprint.getStart() != null) {
+            milestones.add(sprint.getStart().toLocalDate(), "S", "Start (Start of project)", Color.blue);
+        }
+        milestones.add(now.toLocalDate(), "N", "Now (current date)", Color.blue);
+        if (sprint.getEnd() != null) {
+            milestones.add(sprint.getEnd().toLocalDate(), "E", "End (End of project)", Color.blue);
+        }
+        if (sprint.getReleaseDate() != null) {
+            milestones.add(sprint.getReleaseDate().toLocalDate(), "R", "Release (Estimated release date)", Color.blue);
+        }
+        if (isHideNow(now, sprint.getEnd(), sprint.isClosed())) {
+            milestones.remove("N");
+        }
+//        if (firstWorklog != null && (sprint.getStart() == null || !firstWorklog.toLocalDate().isEqual(sprint.getStart().toLocalDate()))) {
+//            milestones.add(firstWorklog.toLocalDate(), "F", "First punch-in", Color.blue);
+//        }
+//        if (lastWorklog != null && (sprint.getEnd() == null || !lastWorklog.toLocalDate().isEqual(sprint.getEnd().toLocalDate()))) {
+//            milestones.add(lastWorklog.toLocalDate(), "L", "Last punch-out", Color.blue);
+//        }
+        milestones.calculate();
+        // milestones.print();//debugging code
+    }
+
     /**
      * Formats a Duration as "Xh Ym".
      * Mirrors Java: {@code DateUtil.create24hDurationString(duration, false, true, false)}.
@@ -433,8 +604,40 @@ public class GanttBurndownChartService {
         return minutes + "m";
     }
 
+    /**
+     * Initialize BurnDownGuide object from gantt chart of this project to visualize
+     * planned burn down rate
+     *
+     * @throws Exception
+     */
+    public void initGanttGuide(Sprint sprint, LocalDateTime now, BurnDownGuide burndownguide, boolean isWithBuffer) throws Exception {
+        createMilestones(sprint, now/*, dao.firstWorklog, dao.lastWorklog*/);
+        System.out.println("--------------------------------------------------------------------------------------------");
+
+        for (Task task : sprint.getTasks()) {
+            if (!task.isMilestone() && task.getChildTasks().isEmpty()) {
+                //only include tasks that have an impact on the cost, as otherwise they are also not included in the sprint (e.g. delivery buffers)
+                if (task.isImpactOnCost() || isWithBuffer) {
+                    calculateWorkPerDay(sprint, task, burndownguide, false);
+                }
+            }
+        }
+        burndownguide.convertToAccumulatedValues();
+        System.out.println("--------------------------------------------------------------------------------------------");
+    }
+
+    protected boolean isHideNow(LocalDateTime now, LocalDateTime end, boolean completed) {
+        if (completed) {
+            // We do not want to keep drawing the graph further and further to include the
+            // current date, if it is closed.
+            return end != null && now.isAfter(DateUtil.addDay(end, ONE_WEEK));
+        }
+        return false;
+    }
+
     private static boolean isWorkingDay(LocalDate day) {
         DayOfWeek dow = day.getDayOfWeek();
         return dow != DayOfWeek.SATURDAY && dow != DayOfWeek.SUNDAY;
     }
+
 }

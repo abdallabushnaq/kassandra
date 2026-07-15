@@ -4,13 +4,13 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import { Milestone } from './milestone.js';
+import {Milestone} from './milestone.js';
 
 export class Milestones {
-    list:            Milestone[];
-    map:             Record<string, Milestone>;
-    firstMilestone:  Date | null;
-    lastMilestone:   Date | null;
+    list: Milestone[];
+    map: Record<string, Milestone>;
+    firstMilestone: Date;
+    lastMilestone: Date;
 
     /**
      * @param milestonesList Optional initial list of milestones
@@ -19,14 +19,14 @@ export class Milestones {
      */
     constructor(milestonesList: Milestone[] = [], firstDate: Date | null = null, lastDate: Date | null = null) {
         this.list = milestonesList.slice();
-        this.map  = {};
+        this.map = {};
 
         for (const m of this.list) {
             if (m?.symbol) this.map[m.symbol] = m;
         }
 
-        this.firstMilestone = firstDate ?? (this.list.length > 0 ? this.list[0].time : null);
-        this.lastMilestone  = lastDate  ?? (this.list.length > 0 ? this.list[this.list.length - 1].time : null);
+        this.firstMilestone = firstDate ?? (this.list.length > 0 ? this.list[0].time : new Date());
+        this.lastMilestone = lastDate ?? (this.list.length > 0 ? this.list[this.list.length - 1].time : new Date());
     }
 
     /**
@@ -61,7 +61,7 @@ export class Milestones {
         this.list.sort((a, b) => a.compareTo(b));
         if (this.list.length > 0) {
             this.firstMilestone = this.list[0].time;
-            this.lastMilestone  = this.list[this.list.length - 1].time;
+            this.lastMilestone = this.list[this.list.length - 1].time;
         }
     }
 
@@ -87,7 +87,7 @@ export class Milestones {
      */
     clear(): void {
         this.list = [];
-        this.map  = {};
+        this.map = {};
     }
 
     /**

@@ -23,6 +23,7 @@ import ch.qos.logback.classic.Logger;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.util.MPXJReader;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
@@ -44,8 +47,11 @@ import java.time.OffsetDateTime;
  */
 @Tag("UnitTest")
 @Slf4j
+@Component
 public class TestResourceLeveling extends AbstractGanttTester {
-    private final String testFolder = "references/resource-leveling";
+    @Autowired
+    private       GanttBurndownChartService service;
+    private final String                    testFolder = "references/resource-leveling";
 
     @BeforeEach
     public void beforeEach() {
@@ -56,7 +62,7 @@ public class TestResourceLeveling extends AbstractGanttTester {
 
     @Test
     public void gantt_01(TestInfo testInfo) throws Exception {
-        MPXJReader g = new MPXJReader("references/resource-leveling", true);
+        MPXJReader g = new MPXJReader(service, "references/resource-leveling", true);
         g.testTheme = ETheme.light;
         Sprint sprint = g.load(Path.of("references/resource-leveling/Tokyo.xml"), false);
 

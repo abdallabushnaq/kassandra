@@ -47,10 +47,7 @@ import org.springframework.web.server.ServerErrorException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.awt.*;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.UnaryOperator;
@@ -199,7 +196,7 @@ public class PersistingEntityGenerator {
     public User addRandomUser(LocalDate firstDate) {
         String       name  = nameGenerator.generateUserName(getUserIndex());
         String       email = nameGenerator.generateUserEmail(getUserIndex());
-        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.7f);
+        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.7f, null);
         GanttContext gc    = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
@@ -219,7 +216,7 @@ public class PersistingEntityGenerator {
         String    email     = nameGenerator.generateUserEmail(getUserIndex());
         LocalDate firstDate = ParameterOptions.getNow().toLocalDate();
 
-        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.7f);
+        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.7f, null);
         GanttContext gc    = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
@@ -240,13 +237,17 @@ public class PersistingEntityGenerator {
         String       name      = nameGenerator.generateUserName(index);
         String       email     = nameGenerator.generateUserEmail(getUserIndex());
         LocalDate    firstDate = ParameterOptions.getNow().toLocalDate().minusYears(1);
-        User         saved     = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), availability);
+        User         saved     = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), availability, null);
         GanttContext gc        = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
         offDayGenerator.addRandomOffDays(saved, firstDate);
         testUsers();
         return saved;
+    }
+
+    public void addRandomUsers(int count) {
+        addRandomUsers(count, null);
     }
 
     /**
@@ -256,7 +257,7 @@ public class PersistingEntityGenerator {
      *
      * @param count the number of users to add
      */
-    public void addRandomUsers(int count) {
+    public void addRandomUsers(int count, WorkWeek workWeek) {
         for (int i = 0; i < count; i++) {
             long      time      = System.currentTimeMillis();
             String    name      = nameGenerator.generateUserName(getUserIndex());
@@ -264,18 +265,19 @@ public class PersistingEntityGenerator {
             LocalDate firstDate = ParameterOptions.getNow().toLocalDate().minusYears(2);
             User      saved;
             if (email.equalsIgnoreCase("christopher.paul@kassandra.org"))
-                saved = addUser(name, email, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.5f);
+                saved = addUser(name, email, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.5f, workWeek);
             else
-                saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.5f + ((float) random.nextInt(5)) / 5f);
+                saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.5f + ((float) random.nextInt(6)) / 10f, workWeek);
             System.out.println("Adding user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms");
             saved.initialize();
             time = System.currentTimeMillis();
-            if (saved.getOffDays().isEmpty()) {
-                //only in case it is a new user
-                offDayGenerator.addRandomOffDays(saved, firstDate);
-            }
-            Profiler.log("generateRandomOffDays");
-            System.out.println("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and " + offDayGenerator.getOffDaysIterations() + " iterations");
+            //TODO off-days need to be generated after planning
+//            if (saved.getOffDays().isEmpty()) {
+//                //only in case it is a new user
+//                offDayGenerator.addRandomOffDays(saved, firstDate);
+//            }
+//            Profiler.log("generateRandomOffDays");
+//            System.out.println("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and " + offDayGenerator.getOffDaysIterations() + " iterations");
         }
 //        printTables();
         testUsers();
@@ -329,7 +331,7 @@ public class PersistingEntityGenerator {
         });
     }
 
-    public User addUser(String name, String email, String roles, String country, String state, LocalDate start, Color color, float availability) {
+    public User addUser(String name, String email, String roles, String country, String state, LocalDate start, Color color, float availability, WorkWeek workWeek) {
         // Check if user already exists by email
         User existingUser = null;
         try {
@@ -356,9 +358,9 @@ public class PersistingEntityGenerator {
         User saved = eg.addUser(name, email, roles, start, color, user -> {
             user.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
             user.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
-            userApi.persist(user);
+            User s = userApi.persist(user);
             log.info("Created user: " + user.getName() + " with email: " + user.getEmail());
-            return user;
+            return s;
         });
         userApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), basePrompt,
                 darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
@@ -368,12 +370,17 @@ public class PersistingEntityGenerator {
         addLocation(saved, country, state, start);
         addAvailability(saved, availability, start);
 
-        // Assign the default Western work week starting on the user's first working day
-        WorkWeek defaultWorkWeek = workWeekApi.getAll().stream()
-                .filter(ww -> DefaultEntitiesInitializer.WORK_WEEK_5X8.equals(ww.getName()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Default work week '" + DefaultEntitiesInitializer.WORK_WEEK_5X8 + "' not found"));
-        addWorkWeek(saved, defaultWorkWeek, start);
+        if (workWeek != null) {
+            // assign given work week
+            addWorkWeek(saved, workWeek, start);
+        } else {
+            // Assign the default Western work week starting on the user's first working day
+            WorkWeek defaultWorkWeek = workWeekApi.getAll().stream()
+                    .filter(ww -> DefaultEntitiesInitializer.WORK_WEEK_5X8.equals(ww.getName()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Default work week '" + DefaultEntitiesInitializer.WORK_WEEK_5X8 + "' not found"));
+            addWorkWeek(saved, defaultWorkWeek, start);
+        }
 
         System.out.println("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
@@ -405,7 +412,7 @@ public class PersistingEntityGenerator {
         user.addUserWorkWeek(saved);
     }
 
-    public Worklog addWorklog(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
+    public Worklog addWorklog(Task task, User user, LocalDateTime start, Duration timeSpent, String comment) {
         return eg.addWorklog(task, user, start, timeSpent, comment, worklogApi::persist);
     }
 
@@ -425,7 +432,7 @@ public class PersistingEntityGenerator {
      * @param comment   log comment
      * @return the buffered (not yet persisted) worklog
      */
-    protected Worklog addWorklogToBuffer(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
+    protected Worklog addWorklogToBuffer(Task task, User user, LocalDateTime start, Duration timeSpent, String comment) {
         Worklog worklog = eg.addWorklog(task, user, start, timeSpent, comment, UnaryOperator.identity());
         // Add to in-memory state immediately so accounting (timeSpent, remainingEstimate) stays correct.
         // The actual DB persist is deferred – call flushWorklogBuffer(sprint) when done.
@@ -436,6 +443,7 @@ public class PersistingEntityGenerator {
     public Task createDeliveryBufferTask(Sprint sprint, Duration minWork) {
         //create the buffer task
         Task task = new Task();
+        task.setOrderId(getTasks().size());
         task.setName(Task.DELIVERY_BUFFER);
         task.setImpactOnCost(false);//delivery buffer has no impact on cost
         if (sprint != null) {
@@ -446,14 +454,12 @@ public class PersistingEntityGenerator {
 
         Task saved = taskApi.persist(task);
 //        Task saved = task;
-        saved.setId(UUID.randomUUID());
         if (sprint != null) {
             saved.setSprint(sprint);
             sprint.addTask(saved);
         }
-        return task;
+        return saved;
     }
-
 
     /**
      * Flushes all buffered worklogs for the given sprint to the database in a single batch HTTP call.
@@ -487,9 +493,8 @@ public class PersistingEntityGenerator {
         worklogBuffer.removeAll(pending);
     }
 
-
-    public void generateRandomSickDays() {
-        offDayGenerator.generateRandomSickDays();
+    public void generateRandomSickDays(List<User> users) {
+        offDayGenerator.generateRandomSickDays(users);
     }
 
     public Color generateUserColor(int userIndex) {
@@ -545,6 +550,18 @@ public class PersistingEntityGenerator {
 
     public int getSprintIndex() {
         return eg.getSprintIndex();
+    }
+
+    public List<Task> getSprintTasks(UUID id) {
+        return eg.getSprintTasks(id);
+    }
+
+    public List<User> getSprintUser(UUID sprintId) {
+        return eg.getSprintUser(sprintId);
+    }
+
+    public List<Worklog> getSprintWorklogs(UUID id) {
+        return eg.getWorklogs().stream().filter(worklog -> worklog.getSprintId().equals(id)).toList();
     }
 
     public List<Sprint> getSprints() {
@@ -624,6 +641,36 @@ public class PersistingEntityGenerator {
         productAclApi   = new ProductAclApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
         workWeekApi     = new WorkWeekApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
         userWorkWeekApi = new UserWorkWeekApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+    }
+
+    public WorkWeek persistWorkWeek(String name, String description, LocalTime startTime, LocalTime breakStart, LocalTime breakEnd, LocalTime endTime, boolean isSaturdayWorkingDay, boolean isSundayWorkingDay, boolean isMondayWorkingDay, boolean isTuesdayWorkingDay, boolean isWednesdayWorkingDay, boolean isThursdayWorkingDay, boolean isFridayWorkingDay) {
+        WorkDaySchedule workingDay = new WorkDaySchedule(startTime, endTime, breakStart, breakEnd);
+
+        WorkWeek ww = new WorkWeek();
+        ww.setName(name);
+        ww.setDescription(description);
+        if (isMondayWorkingDay) {
+            ww.setMonday(workingDay);
+        }
+        if (isTuesdayWorkingDay) {
+            ww.setTuesday(new WorkDaySchedule(startTime, endTime, breakStart, breakEnd));
+        }
+        if (isWednesdayWorkingDay) {
+            ww.setWednesday(new WorkDaySchedule(startTime, endTime, breakStart, breakEnd));
+        }
+        if (isThursdayWorkingDay) {
+            ww.setThursday(new WorkDaySchedule(startTime, endTime, breakStart, breakEnd));
+        }
+        if (isFridayWorkingDay) {
+            ww.setFriday(new WorkDaySchedule(startTime, endTime, breakStart, breakEnd));
+        }
+        if (isSaturdayWorkingDay) {
+            ww.setSaturday(new WorkDaySchedule(startTime, endTime, breakStart, breakEnd));
+        }
+        if (isSundayWorkingDay) {
+            ww.setSunday(new WorkDaySchedule(startTime, endTime, breakStart, breakEnd));
+        }
+        return workWeekApi.persist(ww);
     }
 
     public void removeAvailability(Availability availability, User user) {

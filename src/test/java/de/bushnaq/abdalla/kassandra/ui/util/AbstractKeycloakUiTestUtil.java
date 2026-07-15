@@ -162,7 +162,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     public void setupTestUser() {
         String    testUserEmail = "christopher.paul@kassandra.org";
         LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
-        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f);
+        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f, null);
         //ensure tests that generate more users will find the correct expectations.
         peg.getUsers().clear();
         peg.setUserIndex(peg.getUserIndex() - 1);//ensure Christopher Paul is always the first user created

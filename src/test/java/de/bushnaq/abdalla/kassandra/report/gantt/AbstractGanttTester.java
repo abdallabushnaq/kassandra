@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.util.DTOAsserts;
 import de.bushnaq.abdalla.kassandra.util.MPXJReader;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -30,6 +31,8 @@ import net.sf.mpxj.ProjectFile;
 import net.sf.mpxj.reader.UniversalProjectReader;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.TestInfo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -46,15 +49,18 @@ import java.util.stream.Stream;
 import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 
 @Slf4j
+@Component
 public class AbstractGanttTester extends DTOAsserts {
-    private final DateTimeFormatter dtfymdhmss = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm:ss.SSS");
+    private final DateTimeFormatter         dtfymdhmss = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm:ss.SSS");
+    @Autowired
+    private       GanttBurndownChartService service;
     /**
      * Theme used when generating Gantt charts in {@link #evaluate}.
      * Defaults to {@link ETheme#dark} to preserve pre-existing test reference images.
      * Sub-classes (e.g. {@code CriticalTest}) may set this field before calling
      * {@link #executeTest} to switch the rendering theme.
      */
-    protected     ETheme            testTheme  = ETheme.dark;
+    protected     ETheme                    testTheme  = ETheme.dark;
 
     /**
      * Compares two Lombok {@code toString()} outputs field by field and returns the actual
@@ -91,10 +97,10 @@ public class AbstractGanttTester extends DTOAsserts {
 
     private void evaluate(TestInfo testInfo, String testFolder, String referenceFileName, String fileName) throws Exception {
 
-        MPXJReader referenceProject = new MPXJReader(testFolder, true);
+        MPXJReader referenceProject = new MPXJReader(service, testFolder, true);
         Sprint     referenceSprint  = referenceProject.load(Path.of(referenceFileName), true);
 
-        MPXJReader project = new MPXJReader(testFolder, false);
+        MPXJReader project = new MPXJReader(service, testFolder, false);
         Sprint     sprint  = project.load(Path.of(fileName), true);
         project.levelResources(testInfo, sprint, null);
         project.testTheme = testTheme;

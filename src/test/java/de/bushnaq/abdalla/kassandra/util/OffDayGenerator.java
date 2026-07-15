@@ -245,10 +245,10 @@ public class OffDayGenerator {
         }
     }
 
-    public void generateRandomSickDays() {
+    public void generateRandomSickDays(List<User> users) {
         try (Profiler pc = new Profiler(SampleType.CPU)) {
-            List<User> all = userApi.getAll();
-            for (User user : all) {
+//            List<User> users = userApi.getAll();
+            for (User user : users) {
                 user.initialize();
                 LocalDate employmentDate = ParameterOptions.getNow().toLocalDate().minusYears(1);
 

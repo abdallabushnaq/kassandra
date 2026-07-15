@@ -26,10 +26,12 @@ import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
+import de.bushnaq.abdalla.util.TaskUtil;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -51,10 +53,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -83,6 +82,8 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
     protected final      List<Throwable>           exceptions                = new ArrayList<>();
     @Autowired
     protected            PersistingEntityGenerator peg;
+    @Autowired
+    private              GanttBurndownChartService service;
     protected            String                    testReferenceResultFolder = "test-reference-results";
     protected            String                    testResultFolder          = "test-results";
 
@@ -90,7 +91,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         int       count         = 1;
         String    testUserEmail = "christopher.paul@kassandra.org";
         LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
-        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f);
+        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f, null);
 
         for (int i = 0; i < count; i++) {
             Product product = peg.addProduct(peg.nameGenerator.generateProductName(i));
@@ -101,32 +102,6 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         peg.testProducts();
     }
 
-    /**
-     * Returns {@code true} when all predecessors of the given task—including predecessors
-     * declared on any ancestor task in the parent hierarchy—have a zero
-     * {@code remainingEstimate} (i.e. are done).
-     * <p>
-     * Predecessors that cannot be resolved within the sprint (e.g. cross-sprint relations)
-     * are treated as done so they do not block execution.
-     * </p>
-     *
-     * @param task   the task to check
-     * @param sprint the sprint that owns the task
-     * @return {@code true} if no unfinished predecessors exist; {@code false} otherwise
-     */
-    private boolean areAllPredecessorsDone(Task task, Sprint sprint) {
-        Task cursor = task;
-        while (cursor != null) {
-            for (Relation relation : cursor.getPredecessors()) {
-                Task predecessor = sprint.getTaskById(relation.getPredecessorId());
-                if (predecessor != null && !predecessor.getRemainingEstimate().isZero()) {
-                    return false;
-                }
-            }
-            cursor = cursor.getParentTask();
-        }
-        return true;
-    }
 
     @BeforeEach
     protected void beforeEach(TestInfo testInfo) {
@@ -259,7 +234,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         sprint.recalculate(ParameterOptions.getLocalNow());
 //        sprint.recalculate(ParameterOptions.getLocalNow());
         RenderDao     dao         = RenderUtil.createBurndownRenderDao(context, sprint, TestInfoUtil.getTestMethodName(testInfo), ParameterOptions.getLocalNow(), width, height,  /*urlPrefix +*/ "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
-        BurnDownChart chart       = new BurnDownChart("/", dao);
+        BurnDownChart chart       = new BurnDownChart(service, "/", dao);
         String        description = testInfo.getDisplayName().replace("_", "-");
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testResultFolder);
     }
@@ -340,9 +315,10 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
 
     private void generateProductsInternal(TestInfo testInfo, RandomCase randomCase) throws Exception {
         peg.random.setSeed(randomCase.getSeed());
+        WorkWeek ww = peg.persistWorkWeek("western 5x7.5", "Monday-Friday 8:00 - 12:00, 13:00 - 16:30", LocalTime.of(8, 0), LocalTime.of(12, 0), LocalTime.of(13, 0), LocalTime.of(16, 30), false, false, true, true, true, true, true);
         peg.getUsers().clear();
         try (Profiler pc = new Profiler(SampleType.JPA)) {
-            peg.addRandomUsers(randomCase.getMaxNumberOfUsers());
+            peg.addRandomUsers(randomCase.getMaxNumberOfUsers(), ww);
         }
         UserGroup group = peg.userGroupApi.create("Team", "Dev team", new HashSet<>(peg.getUsers().stream().map(User::getId).toList()));
         Profiler.log("generating users for test case " + randomCase.getTestCaseIndex());
@@ -372,12 +348,14 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         }
         try (Profiler pc = new Profiler(SampleType.JPA)) {
             for (Sprint sprint : peg.getSprints()) {
+                sprint.initUserMap(peg.getSprintUser(sprint.getId()));
                 peg.taskApi.updateBatch(sprint.getTasks(), sprint.getId());
                 peg.sprintApi.update(sprint);
             }
         }
         ParameterOptions.setNow(randomCase.getNow());
-        peg.generateRandomSickDays();
+        peg.generateRandomSickDays(peg.getUsers().stream().toList());
+        //TODO sprint user calendars are not initialized with user off days.
         generateWorkLogs();
     }
 
@@ -391,16 +369,19 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
     @Transactional
     private void generateSprint(TestInfo testInfo, RandomCase randomCase, Feature project) throws Exception {
         int numberOfUsers = randomCase.getMaxNumberOfUsers();
+        peg.random.setSeed(peg.nameGenerator.generateSprintName(peg.getSprintIndex()).hashCode());
 //        System.out.println("Number of users=" + numberOfUsers);
         try (Profiler pc1 = new Profiler(SampleType.JPA)) {
             // Capture current sprint index before creating the sprint
             int    currentSprintIndex = peg.getCurrentSprintIndex();
             Sprint generatedSprint    = peg.addRandomSprint(project);
             Sprint sprint             = generatedSprint;//sprintApi.getById(generatedSprint.getId());
+            sprint.initialize();
             if (randomCase.getMaxNumberOfStories() > 0) {
                 int           numberOfStories = peg.random.nextInt(randomCase.getMaxNumberOfStories()) + 1;
                 LocalDateTime startDateTime   = randomCase.getStartDate().atStartOfDay().plusHours(8);
-                Task          startMilestone  = peg.addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
+                startDateTime = sprint.getCalendar().getNextWorkStart(startDateTime);
+                Task startMilestone = peg.addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
 
                 // Get shuffled story names for this sprint to ensure variety
                 List<String> sprintStoryNames = peg.nameGenerator.getShuffledStoryNames(currentSprintIndex, numberOfStories);
@@ -419,7 +400,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
                         String maxWork          = String.format("%dh", (int) maxHours);
                         String workName         = NameGenerator.generateWorkName(storyName, t);
                         Task   depenedenycyTask = null;
-                        if (peg.random.nextFloat(1) > 0.5f) {
+                        if (peg.random.nextFloat(1) > 0.5f && !sprint.getTasks().isEmpty()) {
                             int tries = 8;
                             do {
                                 depenedenycyTask = sprint.getTasks().get(peg.random.nextInt(sprint.getTasks().size()));
@@ -439,8 +420,6 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
             try (Profiler pc2 = new Profiler(SampleType.CPU)) {
                 sprint.initialize();
             }
-            sprint.initUserMap(peg.userApi.getAll(sprint.getId()));
-            sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));
             try (Profiler pc3 = new Profiler(SampleType.CPU)) {
                 levelResourcesAndPersist(testInfo, sprint, null);
             }
@@ -469,14 +448,20 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         }
     }
 
-    private void generateWorkLogs() {
+    private void generateWorkLogs() throws Exception {
+
+
         log.info("--------------------------");
         log.info("Generating work logs start");
         for (Sprint sprint : peg.getSprints()) {
+            log.info("--------------------------");
+            log.info("Generating work logs start for {}", sprint.getName());
+//            sprint.initializeCalendars();//make sure the new exceptions are in the user calendars.
             // ~60 % of sprints run on schedule; ~40 % carry a delay of up to MAX_DELAY_FACTOR.
             float delay = peg.random.nextFloat() < (1f - DELAY_PROBABILITY) ? 0.0f : peg.random.nextFloat() * MAX_DELAY_FACTOR;
             log.debug("Sprint '{}' delay factor: {}", sprint.getName(), delay);
             generateWorklogs(sprint, delay, ParameterOptions.getLocalNow());
+            log.info("--------------------------");
         }
         log.info("Generating work logs end");
         log.info("--------------------------");
@@ -508,19 +493,19 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
             final long SECONDS_PER_WORKING_DAY = 75 * 6 * 60;
 
             // Step 1: pre-inflate remaining estimates when this sprint is delayed.
-            if (delay > 0f) {
-                for (Task task : sprint.getTasks()) {
-                    if (task.isTask() && task.isImpactOnCost()) {
-                        Duration maxEstimate = task.getMaxEstimate();
-                        if (maxEstimate != null && !maxEstimate.isZero()) {
-                            long     extraSeconds = (long) (delay * maxEstimate.getSeconds() * peg.random.nextFloat());
-                            Duration inflated     = maxEstimate.plusSeconds(extraSeconds);
-                            log.debug("Inflating task '{}': minEstimate={}, inflated remainingEstimate={} (delay={})", task.getName(), task.getMinEstimate(), inflated, delay);
-                            task.setRemainingEstimate(inflated);
-                        }
-                    }
-                }
-            }
+//            if (delay > 0f) {
+//                for (Task task : sprint.getTasks()) {
+//                    if (task.isTask() && task.isImpactOnCost()) {
+//                        Duration maxEstimate = task.getMaxEstimate();
+//                        if (maxEstimate != null && !maxEstimate.isZero()) {
+//                            long     extraSeconds = (long) (delay * maxEstimate.getSeconds() * peg.random.nextFloat());
+//                            Duration inflated     = maxEstimate.plusSeconds(extraSeconds);
+//                            log.debug("Inflating task '{}': minEstimate={}, inflated remainingEstimate={} (delay={})", task.getName(), task.getMinEstimate(), inflated, delay);
+//                            task.setRemainingEstimate(inflated);
+//                        }
+//                    }
+//                }
+//            }
             Duration rest = Duration.ofSeconds(1);
             // Step 2: iterate over the days of the sprint
             for (LocalDate day = sprint.getStart().toLocalDate(); !rest.equals(Duration.ZERO) && now.toLocalDate().isAfter(day); day = day.plusDays(1)) {
@@ -529,31 +514,46 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
                 // iterate over all tasks
                 for (Task task : sprint.getTasks()) {
                     if (task.isTask() && task.isImpactOnCost()) {
-                        Number availability = task.getAvailability();
-                        if (!day.isBefore(task.getStart().toLocalDate())) {
-                            // Day is on or after task start
+
+                        if (!day.isBefore(task.getStart().toLocalDate()) && !day.isAfter(task.getFinish().toLocalDate())) {
+                            // Day is on or after task start && on or before finish
+                            if (sprint.getName().equals("Paris") && task.getAssignedUser().getName().equals("Christopher Paul")) {
+                                if (task.getEffectiveCalendar().isWorkingDate(LocalDate.of(2025, 8, 20))) {
+                                    log.error("mist");
+                                }
+                            }
+
                             if (task.getEffectiveCalendar().isWorkingDate(day)) {
                                 // is a working day for this user
-                                if (task.getStart().isBefore(startOfDay) || task.getStart().isEqual(startOfDay)) {
+//                                if (task.getStart().isBefore(startOfDay) || task.getStart().isEqual(startOfDay))
+                                {
                                     if (!task.getRemainingEstimate().isZero()) {
-                                        if (areAllPredecessorsDone(task, sprint)) {
+                                        if (TaskUtil.areAllPredecessorsDone(task, sprint)) {
                                             // we have the whole day
                                             double performance = 1f;//daily performance is usually 100% of the resource availability
-                                            if (peg.random.nextFloat() < 0.2f) {
-                                                //in rare cases, performance can be much worse or better than usual, e.g. due to unexpected problems or overtime
-                                                double minPerformance = 0.5f;//minimum performance of a resource (underwork)
-                                                double maxPerformance = 1.2f;//maximum performance of a resource (overwork)
-                                                performance = minPerformance + peg.random.nextFloat() * (maxPerformance - minPerformance);
-                                            }
-                                            Duration maxWork = Duration.ofSeconds((long) ((performance * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
-                                            Duration w       = maxWork;
-                                            Duration delta   = task.getRemainingEstimate().minus(w);
-                                            if (delta.isZero() || delta.isPositive()) {
-                                            } else {
+//                                            if (peg.random.nextFloat() < 0.2f) {
+//                                                //in rare cases, performance can be much worse or better than usual, e.g. due to unexpected problems or overtime
+//                                                double minPerformance = 0.5f;//minimum performance of a resource (underwork)
+//                                                double maxPerformance = 1.2f;//maximum performance of a resource (overwork)
+//                                                performance = minPerformance + peg.random.nextFloat() * (maxPerformance - minPerformance);
+//                                            }
+//                                            if (sprint.getName().equals("Sydney")) {
+//                                                System.out.println();
+//                                            }
+                                            Duration maxTaskWork = TaskUtil.getTaskWorkPerDay(sprint, day, task, true);
+                                            Duration maxWork     = Duration.ofSeconds((long) ((performance * maxTaskWork.getSeconds())));//TODO use user calendar for working day length
+                                            Duration w           = maxWork;
+                                            Duration delta       = task.getRemainingEstimate().minus(w);
+                                            if (delta.isNegative()) {
                                                 w = task.getRemainingEstimate();
                                             }
-                                            peg.addWorklogToBuffer(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
-                                            task.calculateStatus();
+                                            if (day.atStartOfDay().toLocalDate().isEqual(task.getStart().toLocalDate())) {
+                                                //first day
+                                                peg.addWorklogToBuffer(task, task.getAssignedUser(), task.getStart(), w, task.getName());
+                                            } else {
+                                                peg.addWorklogToBuffer(task, task.getAssignedUser(), day.atStartOfDay().plusHours(8), w, task.getName());//TODO use user calendar
+                                            }
+                                            task.calculateStatus(true);
                                         } else {
                                             log.debug("Task '{}' blocked on {} – predecessor not yet done", task.getName(), day);
                                         }
@@ -787,6 +787,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         for (Task task : sprint.getTasks()) {
             if (task.isMilestone() && task.getTaskMode() == TaskMode.MANUALLY_SCHEDULED && task.getStart() != null) {
                 LocalDateTime shiftedStart = task.getStart().plusDays(shiftDays);
+                shiftedStart = sprint.getCalendar().getNextWorkStart(shiftedStart);//adjust for weekends and holidays
                 logger.debug("Shifting milestone '{}' of sprint '{}' from {} to {} (+{} days)", task.getName(), sprint.getName(), task.getStart(), shiftedStart, shiftDays);
                 task.setStart(shiftedStart);
 //                taskApi.update(task);
@@ -800,7 +801,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         }
         // Reload from DB so that the leveler sees the updated milestone date
 //        levelResources(loadSprintWithTasks(sprint.getId()));
-        //TODO do we need to always reload thewhole spritn from db for leveling?
+        //TODO do we need to always reload the whole sprint from db for leveling?
         levelResources(sprint);
         return true;
     }

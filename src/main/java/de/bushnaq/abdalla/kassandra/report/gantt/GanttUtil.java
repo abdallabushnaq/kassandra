@@ -355,7 +355,7 @@ public class GanttUtil {
         return task != null && task.getStart() != null;
     }
 
-    private void injectDeliveryBuffer(GanttErrorHandler eh, Sprint sprint) {
+    public void injectDeliveryBuffer(GanttErrorHandler eh, Sprint sprint) {
         logger.info("Calculate delivery buffer start");
         Duration deliveryBuffer = calculateDeliveryBuffer(eh, sprint);
         //add delivery buffer to the correct task
@@ -673,7 +673,7 @@ public class GanttUtil {
     }
 
     private void printCase(String caseName, String id, String taskName, String methodName, String start, String finish, String duration) {
-        logger.trace(String.format("[%s] [%2s][%-20s][%-9s][%20s][%20s][%19s]", caseName, id, taskName, methodName, start, finish, duration));
+        logger.info(String.format("[%s] [%2s][%-20s][%-9s][%20s][%20s][%19s]", caseName, id, taskName, methodName, start, finish, duration));
     }
 
     private void printCase(String caseName, String methodName, Task task) {
@@ -726,6 +726,14 @@ public class GanttUtil {
         } else if (!hasChildTasks(task)) {//task
             Duration duration = getMinDurationFromWork(eh, task);
             task.setDuration(duration);
+//            for (ProjectCalendarWeek workWeek : calendar.getWorkWeeks()) {
+//                for (ProjectCalendarHours calendarHour : workWeek.getCalendarHours()) {
+//                    for (LocalTimeRange localTimeRange : calendarHour) {
+//                        System.out.println("start=" + localTimeRange.getStart() + " end=" + localTimeRange.getEnd());
+//                    }
+//                }
+//            }
+
             LocalDateTime finish = calendar.getDate(start, MpxjUtil.toMpjxDuration(duration));
             task.setFinish(finish);
         } else {//parent

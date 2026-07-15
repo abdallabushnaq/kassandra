@@ -1,7 +1,7 @@
 console.log('Tooltips script loaded!');
 
 // Self-executing function to initialize tooltips immediately
-(function() {
+(function () {
     console.log('Tooltip initialization starting immediately');
 
     // Define an array of selectors for tooltip triggering elements
@@ -31,7 +31,7 @@ console.log('Tooltips script loaded!');
     tooltip.style.fontSize = '14px';
     tooltip.style.zIndex = '10000';
     tooltip.style.pointerEvents = 'none';
-    tooltip.style.maxWidth = '300px';
+    tooltip.style.maxWidth = '600px';
     tooltip.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.2)';
     document.body.appendChild(tooltip);
     console.log('Tooltip container created with id: custom-tooltip-container');

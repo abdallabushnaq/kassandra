@@ -94,7 +94,7 @@ public class DefaultEntitiesInitializer implements ApplicationRunner {
                                                boolean mon, boolean tue, boolean wed, boolean thu, boolean fri, boolean sat, boolean sun) {
         if (workWeekRepository.findByName(name).isEmpty()) {
             LocalTime workStart  = LocalTime.of(8, 0);
-            LocalTime workEnd    = LocalTime.of(17, 0);
+            LocalTime workEnd    = LocalTime.of(16, 30);
             LocalTime lunchStart = LocalTime.of(12, 0);
             LocalTime lunchEnd   = LocalTime.of(13, 0);
 
@@ -188,13 +188,13 @@ public class DefaultEntitiesInitializer implements ApplicationRunner {
 
         // Create default work weeks if they don't exist
         createDefaultWorkWeekIfAbsent(WORK_WEEK_5X8,
-                "Standard Monday–Friday 8-hour work week with a 1-hour lunch break",
+                "Standard Monday–Friday 7.5-hour work week with a 1-hour lunch break",
                 true, true, true, true, true, false, false);
         createDefaultWorkWeekIfAbsent(WORK_WEEK_ISLAMIC_5X8,
-                "Sunday–Thursday 8-hour work week (common in Arab countries) with a 1-hour lunch break",
+                "Sunday–Thursday 7.5-hour work week (common in Arab countries) with a 1-hour lunch break",
                 true, true, true, true, false, false, true);
         createDefaultWorkWeekIfAbsent(WORK_WEEK_JEWISH_5X8,
-                "Sunday–Thursday 8-hour work week (Israeli work week) with a 1-hour lunch break",
+                "Sunday–Thursday 7.5-hour work week (Israeli work week) with a 1-hour lunch break",
                 true, true, true, true, false, false, true);
     }
 

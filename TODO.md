@@ -12,6 +12,7 @@
     2. remove the generator annotation
     3. use entitymanager to persist
 7. sort db printout
+8. remove fallback parameter in ColorUtils.intToHex
 
 ## Feature
 
@@ -35,6 +36,7 @@
 16. gantt task tooltip not accessible on the pprogress number.
 17. a lot of Gantt charts are not actually resource leveled. Example Demo, testCaseIndex=1, sprint=Paris,
 18. all js charts are drawn 2 times.
+19. gantt chart task tooltip is missing many items from legacy code.
 
 # Failing Tests
 

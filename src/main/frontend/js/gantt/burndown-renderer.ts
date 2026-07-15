@@ -102,7 +102,7 @@ export class BurndownRenderer extends AbstractRenderer {
     ganttWorkWithoutBufferPerDayAccumulated: number[] | null = null;
     private eBestWork: number;
     private eWorstWork: number | null;
-    private extrapolationColor!: string;
+    private extrapolationColor!: number | null;
     private maxActualWorked: number;
     private maxWorked!: number;
     private sprintClosed: boolean;
@@ -254,9 +254,9 @@ export class BurndownRenderer extends AbstractRenderer {
         const rMilestone = this.milestones.get('R');
         const eMilestone = this.milestones.get('E');
         if (rMilestone && eMilestone && rMilestone.time.getTime() > eMilestone.time.getTime()) {
-            this.extrapolationColor = ColorUtils.intToHex(this.theme.burndownTheme.delayEventColor, '#cc0000');
+            this.extrapolationColor = this.theme.burndownTheme.delayEventColor;
         } else {
-            this.extrapolationColor = ColorUtils.intToHex(this.theme.burndownTheme.inTimeColor, '#2e8b57');
+            this.extrapolationColor = this.theme.burndownTheme.inTimeColor;
         }
         // Java: calculateAuthorContribution(...), the per-day usersWorkPerDayAccumulated construction,
         // and the final milestones.add("L", ..., hidden=true) refinement are all pre-computed
@@ -322,7 +322,8 @@ export class BurndownRenderer extends AbstractRenderer {
         const startX = firstDayX + (this.calendarXAxes.priRun + DateUtils.calculateDays(firstDay, sMilestone.time)) * this.dayWidth;
 
         this.drawAuthorLegend(svg);
-        this.drawLegend(svg);
+        this.drawLegend(svg, this.diagram.width - 130, this.diagram.y, this.extrapolationColor);
+
 
         if (this.maxWorked && this.maxWorked !== 0) {
             // y axis markings
@@ -397,33 +398,6 @@ export class BurndownRenderer extends AbstractRenderer {
         }));
     }
 
-    // ── Java: protected void drawLegend() / AbstractRenderer.drawLegend(x, y, interpolationColor) ──
-    private drawLegend(svg: SVGElement): void {
-        const x = this.containerWidth - 130;
-        const y = this.diagram.y;
-        const lineHeight = 14;
-        let legendY = y + lineHeight;
-        const legendX1 = x;
-        const legendX2 = legendX1 + 10;
-        const legendTextX = legendX2 + 4;
-        const textColor = ColorUtils.intToHex(this.theme.burndownTheme.tickTextColor, '#334155');
-        const optimalColor = ColorUtils.intToHex(this.theme.burndownTheme.optimaleGuideColor, '#a855f7');
-
-        const row = (color: string, label: string, dashed = false): void => {
-            svg.appendChild(SvgUtils.createLine(legendX1, legendY, legendX2, legendY, {
-                stroke: color, 'stroke-width': STANDARD_LINE_STROKE_WIDTH,
-                'stroke-dasharray': dashed ? '3' : undefined,
-            }));
-            svg.appendChild(SvgUtils.createText(legendTextX, legendY + 1, label, {
-                fill: textColor, 'font-size': '10px', 'font-family': 'sans-serif',
-            }));
-            legendY += lineHeight;
-        };
-
-        row(optimalColor, 'Guideline', true);
-        row(this.extrapolationColor, 'extrapolated release date');
-        row(ColorUtils.intToHex(this.theme.burndownTheme.borderColor, '#334155'), 'Remaining work');
-    }
 
     // ── Java: private void drawBurnDown(LocalDate firstDay, int firstDayX, Duration estimatedWork) ──
     private drawBurnDown(svg: SVGElement, firstDay: Date, firstDayX: number): void {
@@ -627,7 +601,7 @@ export class BurndownRenderer extends AbstractRenderer {
             const markY = plotBottom - 1 - this.calculateGraphHight(timeMark);
             if (lastMarkY - markY > 12) {
                 svg.appendChild(SvgUtils.createRect(startX - 4 - this.dayWidth / 2, markY, 4, 1, {fill: tickColor}));
-                svg.appendChild(SvgUtils.createRect(startX - 1, markY, this.containerWidth - startX, 1, {fill: gridColor}));
+                svg.appendChild(SvgUtils.createRect(startX - 1, markY, this.diagram.width - startX, 1, {fill: gridColor}));
                 const label = `${Math.round(timeMark / mark)}${markUnit}`;
                 svg.appendChild(SvgUtils.createText(this.yAxis.x + this.yAxis.width - 5, markY, label, {
                     fill: textColor, 'font-size': '11px', 'font-family': 'sans-serif',

@@ -31,6 +31,7 @@ import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.report.overview.SprintsOverviewChart;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
@@ -40,6 +41,7 @@ import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectFile;
 import org.junit.jupiter.api.TestInfo;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
@@ -53,15 +55,21 @@ import java.util.UUID;
 import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
 
 @Slf4j
+@Service
 public class GanttGenerator extends EntityGenerator {
-
-    protected final Random random    = new Random();
+    protected final Random                    random    = new Random();
+    private final   GanttBurndownChartService service;
     /**
      * Theme used for Gantt chart generation in tests.
      * Defaults to {@link ETheme#dark} to preserve pre-existing test reference images.
      * Tests that need to switch theme (e.g. {@code CriticalTest}) set this field directly.
      */
-    public          ETheme testTheme = ETheme.dark;
+    public          ETheme                    testTheme = ETheme.dark;
+
+    public GanttGenerator(GanttBurndownChartService service) {
+        super();
+        this.service = service;
+    }
 
     /**
      * Returns {@code true} when all predecessors of the given task—including predecessors
@@ -106,7 +114,7 @@ public class GanttGenerator extends EntityGenerator {
             sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name();
         }
         RenderDao     dao         = RenderUtil.createBurndownRenderDao(context, sprint, sprintName, ParameterOptions.getLocalNow(), 0, 36 * 10,  /*urlPrefix +*/ "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
-        BurnDownChart chart       = new BurnDownChart("/", dao);
+        BurnDownChart chart       = new BurnDownChart(service, "/", dao);
         String        description = testInfo.getDisplayName().replace("_", "-");
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
     }
@@ -127,7 +135,7 @@ public class GanttGenerator extends EntityGenerator {
         }
         RenderDao          burndownDao = RenderUtil.createBurndownRenderDao(context, sprint, "gannt-burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
         RenderDao          ganttDao    = RenderUtil.createGanttRenderDao(context, sprint, "gannt-burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH, CalendarSize.DAYS);
-        GanttBurndownChart chart       = new GanttBurndownChart("/", burndownDao, ganttDao);
+        GanttBurndownChart chart       = new GanttBurndownChart(service, "/", burndownDao, ganttDao);
 //        GanttBurndownChart chart = new GanttBurndownChart(context, "", "/", "Gantt Burndown Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
 //        String     description = testCaseInfo.getDisplayName().replace("_", "-");
         String description = TestInfoUtil.getTestMethodName(testInfo);
@@ -250,8 +258,13 @@ public class GanttGenerator extends EntityGenerator {
                                             } else {
                                                 w = task.getRemainingEstimate();
                                             }
-                                            Worklog worklog = addWorklog(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
-                                            task.calculateStatus();
+                                            if (day.atStartOfDay().toLocalDate().isEqual(task.getStart().toLocalDate())) {
+                                                //first day
+                                                Worklog worklog = addWorklog(task, task.getAssignedUser(), task.getStart(), w, task.getName());
+                                            } else {
+                                                Worklog worklog = addWorklog(task, task.getAssignedUser(), day.atStartOfDay().plusHours(8), w, task.getName());//TODO use user calendar
+                                            }
+                                            task.calculateStatus(true);
                                         } else {
                                             log.debug("Task '{}' blocked on {} – predecessor not yet done", task.getName(), day);
                                         }
@@ -311,9 +324,14 @@ public class GanttGenerator extends EntityGenerator {
                                         } else {
                                             w = task.getRemainingEstimate();
                                         }
-                                        Worklog worklog = addWorklog(task, task.getAssignedUser(), DateUtil.localDateTimeToOffsetDateTime(day.atStartOfDay()), w, task.getName());
+                                        if (day.atStartOfDay().toLocalDate().isEqual(task.getStart().toLocalDate())) {
+                                            //first day
+                                            Worklog worklog = addWorklog(task, task.getAssignedUser(), task.getStart(), w, task.getName());
+                                        } else {
+                                            Worklog worklog = addWorklog(task, task.getAssignedUser(), day.atStartOfDay().plusHours(8), w, task.getName());//TODO use user calendar
+                                        }
 
-                                        task.calculateStatus();
+                                        task.calculateStatus(true);
                                     }
                                 }
                             }

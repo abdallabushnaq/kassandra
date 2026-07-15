@@ -107,6 +107,9 @@ public class Profiler implements AutoCloseable {
     }
 
     public static void generateResult() {
+        if (intermediateSampleSet == null) {
+
+        }
         intermediateResult = new ProfilerResult(intermediateSampleSet.getTotalStart(), intermediateSampleSet);
     }
 

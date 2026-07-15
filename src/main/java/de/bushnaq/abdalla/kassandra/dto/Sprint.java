@@ -433,20 +433,17 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
                     hours.add(new LocalTimeRange(LocalTime.of(13, 0), LocalTime.of(16, 30)));
                 }
             }
-//            BankHolidayReader bhr = new BankHolidayReader();
-//            context.bankHolidays = bhr.read(context.parameters.smbParameters, ParameterOptions.now.toLocalDate());
-//            for (LocalDate ld : context.bankHolidays.keySet()) {
-//                // System.out.println(ld.toString() + " " + bankHolidays.get(ld));
-//                ProjectCalendarException calendarException = projectCalendar.addCalendarException(ld, ld);
-//                calendarException.setName(context.bankHolidays.get(ld));
-//            }
-
         }
         ProjectCalendar projectPropertiesCalendar = projectProperties.getDefaultCalendar();
         if (projectPropertiesCalendar == null) {
             projectProperties.setDefaultCalendar(projectCalendar);
         }
+    }
 
+    public void initializeCalendars() {
+        for (User user : getUserMap().values()) {
+            user.initialize(this);
+        }
     }
 
     public boolean isAllChildTasksDone() {
@@ -481,7 +478,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
         propagateTimeTracking();
         if (getRemaining() != null && getRemaining().isZero() && worklogs != null && !worklogs.isEmpty()) {
             //if all work has been done, set the release date to the last worklog date
-            releaseDate = DateUtil.offsetDateTimeToLocalDateTime(worklogs.getLast().getStart());
+            releaseDate = worklogs.getLast().getStart();
         } else {
             //calculate the release date based on the work done and the remaining work
             releaseDate = ReportUtil.calculateReleaseDate(getStart(), now, getWorked(), DateUtil.add(getWorked(), getRemaining()));

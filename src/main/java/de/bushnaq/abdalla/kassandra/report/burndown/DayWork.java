@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.util.date.DateUtil;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,9 +50,9 @@ public class DayWork {
         this.duration = duration;
     }
 
-    public static String transactionsToTooltips(List<List<String>> transactions, String authorName) {
+    public static String transactionsToTooltips(List<List<String>> transactions, String authorName, LocalDate localDate) {
         if (transactions != null && !transactions.isEmpty()) {
-            String tooltip = authorName + " <table><tr> <th><b>Key</b></th> <th><b>Work</b></th> <th><b>Summary</b></th></tr>";
+            String tooltip = authorName + " (" + localDate + ") <table style='text-align: left;border-spacing: 8px;'><tr> <th><b>Key</b></th> <th><b>Work</b></th> <th><b>Summary</b></th></tr>";
 
             for (List<String> ll : transactions) {
                 tooltip += "<tr>";

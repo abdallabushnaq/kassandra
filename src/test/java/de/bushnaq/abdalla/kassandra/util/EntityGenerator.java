@@ -28,7 +28,6 @@ import java.awt.*;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
@@ -283,11 +282,11 @@ public class EntityGenerator {
         return saved;
     }
 
-    protected Worklog addWorklog(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment) {
+    protected Worklog addWorklog(Task task, User user, LocalDateTime start, Duration timeSpent, String comment) {
         return addWorklog(task, user, start, timeSpent, comment, UnaryOperator.identity());
     }
 
-    protected Worklog addWorklog(Task task, User user, OffsetDateTime start, Duration timeSpent, String comment, UnaryOperator<Worklog> persister) {
+    protected Worklog addWorklog(Task task, User user, LocalDateTime start, Duration timeSpent, String comment, UnaryOperator<Worklog> persister) {
         Worklog worklog = new Worklog();
         worklog.setId(UUID.randomUUID());
         worklog.setSprintId(task.getSprintId());
@@ -311,6 +310,32 @@ public class EntityGenerator {
         task.setMinEstimate(minWork);
 
         return task;
+    }
+
+    public List<Task> getSprintTasks(UUID id) {
+        return getTasks().stream().filter(task -> task.getSprintId().equals(id)).toList();
+    }
+
+    public List<User> getSprintUser(UUID sprintId) {
+        List<User> users = new ArrayList<>();
+        for (Task task : getTasks()) {
+            if (task.getSprintId().equals(sprintId) && task.getResourceId() != null) {
+                User user = getUserById(task.getResourceId());
+                if (user != null && !users.contains(user)) {
+                    users.add(user);
+                }
+            }
+        }
+        return users;
+    }
+
+    private User getUserById(UUID resourceId) {
+        for (User user : getUsers()) {
+            if (user.getId().equals(resourceId)) {
+                return user;
+            }
+        }
+        return null;
     }
 
     public void init() {

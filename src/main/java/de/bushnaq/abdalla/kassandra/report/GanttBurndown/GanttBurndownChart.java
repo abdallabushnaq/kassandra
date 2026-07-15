@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.report.AbstractChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttRenderer;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 
 
 @Deprecated
@@ -28,11 +29,11 @@ public class GanttBurndownChart extends AbstractChart {
     private final BurnDownRenderer bdr;
     private final GanttRenderer    gr;
 
-    public GanttBurndownChart(String relativeCssPath, RenderDao burndownDao, RenderDao ganttDao) throws Exception {
+    public GanttBurndownChart(GanttBurndownChartService service, String relativeCssPath, RenderDao burndownDao, RenderDao ganttDao) throws Exception {
         super("Gantt Burndown Chart", ganttDao.sprint.getName(), relativeCssPath, ganttDao.name, ganttDao.name, null, ganttDao.cssClass, ganttDao.kassandraTheme);
         burndownDao.preRun  = Math.max(burndownDao.preRun, ganttDao.preRun);
         burndownDao.postRun = Math.max(burndownDao.postRun, ganttDao.postRun);
-        bdr                 = new BurnDownRenderer(burndownDao);
+        bdr                 = new BurnDownRenderer(service, burndownDao);
         gr                  = new GanttRenderer(ganttDao);
         getRenderers().add(bdr);
         getRenderers().add(gr);

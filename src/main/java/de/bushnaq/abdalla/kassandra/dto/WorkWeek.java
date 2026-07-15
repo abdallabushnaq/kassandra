@@ -26,6 +26,7 @@ import java.util.UUID;
  * DTO representing a globally-defined work week.
  * Each instance describes the working schedule for all seven days of the week.
  * Work weeks are assigned to users via {@link UserWorkWeek}.
+ * Default is all week none working days.
  */
 @Getter
 @Setter
@@ -34,65 +35,51 @@ import java.util.UUID;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class WorkWeek extends AbstractTimeAware implements Comparable<WorkWeek> {
 
-    /** Unique human-readable name (e.g. "5x8", "Arabic 5x8"). */
-    private String          name;
-
-    /** Optional description. */
-    private String          description;
-
-    /** Primary key. */
-    private UUID            id;
-
+    /**
+     * Optional description.
+     */
+    private String description;
+    /**
+     * Friday schedule.
+     */
+    private WorkDaySchedule friday = new WorkDaySchedule();
+    /**
+     * Primary key.
+     */
+    private UUID id;
+    /**
+     * Monday schedule.
+     */
+    private WorkDaySchedule monday = new WorkDaySchedule();
+    /**
+     * Unique human-readable name (e.g. "5x8", "Arabic 5x8").
+     */
+    private String name;
+    /**
+     * Saturday schedule.
+     */
+    private WorkDaySchedule saturday = new WorkDaySchedule();
+    /**
+     * Sunday schedule.
+     */
+    private WorkDaySchedule sunday = new WorkDaySchedule();
+    /**
+     * Thursday schedule.
+     */
+    private WorkDaySchedule thursday = new WorkDaySchedule();
+    /**
+     * Tuesday schedule.
+     */
+    private WorkDaySchedule tuesday = new WorkDaySchedule();
     /**
      * Number of {@link UserWorkWeek} assignments that reference this work week.
      * Populated by the server; zero when no users are assigned.
      */
-    private int             userCount;
-
-    /** Monday schedule. */
-    private WorkDaySchedule monday    = new WorkDaySchedule();
-
-    /** Tuesday schedule. */
-    private WorkDaySchedule tuesday   = new WorkDaySchedule();
-
-    /** Wednesday schedule. */
-    private WorkDaySchedule wednesday = new WorkDaySchedule();
-
-    /** Thursday schedule. */
-    private WorkDaySchedule thursday  = new WorkDaySchedule();
-
-    /** Friday schedule. */
-    private WorkDaySchedule friday    = new WorkDaySchedule();
-
-    /** Saturday schedule. */
-    private WorkDaySchedule saturday  = new WorkDaySchedule();
-
-    /** Sunday schedule. */
-    private WorkDaySchedule sunday    = new WorkDaySchedule();
-
-    @Override
-    public int compareTo(WorkWeek other) {
-        if (this.id == null || other.id == null) return 0;
-        return this.id.compareTo(other.id);
-    }
-
+    private int userCount;
     /**
-     * Returns a summary string listing the abbreviations of working days.
-     * Used as display text in the grid.
-     *
-     * @return comma-separated abbreviations of working days, e.g. "Mon, Tue, Wed, Thu, Fri"
+     * Wednesday schedule.
      */
-    public String getWorkingDaysSummary() {
-        StringBuilder sb = new StringBuilder();
-        addDay(sb, monday,    "Mon");
-        addDay(sb, tuesday,   "Tue");
-        addDay(sb, wednesday, "Wed");
-        addDay(sb, thursday,  "Thu");
-        addDay(sb, friday,    "Fri");
-        addDay(sb, saturday,  "Sat");
-        addDay(sb, sunday,    "Sun");
-        return sb.toString();
-    }
+    private WorkDaySchedule wednesday = new WorkDaySchedule();
 
     private void addDay(StringBuilder sb, WorkDaySchedule schedule, String label) {
         if (schedule != null && schedule.isWorkingDay()) {
@@ -101,22 +88,27 @@ public class WorkWeek extends AbstractTimeAware implements Comparable<WorkWeek> 
         }
     }
 
+    @Override
+    public int compareTo(WorkWeek other) {
+        if (this.id == null || other.id == null) return 0;
+        return this.id.compareTo(other.id);
+    }
+
     /**
-     * Returns the working-time schedule for the given day of the week.
+     * Computes the net working minutes for a single day schedule, excluding the lunch break when present.
      *
-     * @param dayOfWeek the day to look up
-     * @return the {@link WorkDaySchedule} for that day; never {@code null}
+     * @param schedule the day schedule to evaluate
+     * @return net working minutes
      */
-    public WorkDaySchedule getScheduleForDay(DayOfWeek dayOfWeek) {
-        return switch (dayOfWeek) {
-            case MONDAY -> monday;
-            case TUESDAY -> tuesday;
-            case WEDNESDAY -> wednesday;
-            case THURSDAY -> thursday;
-            case FRIDAY -> friday;
-            case SATURDAY -> saturday;
-            case SUNDAY -> sunday;
-        };
+    private int computeMinutesForSchedule(WorkDaySchedule schedule) {
+        if (schedule.getWorkStart() == null || schedule.getWorkEnd() == null) {
+            return (int) (7.5 * 60);
+        }
+        int total = (int) java.time.Duration.between(schedule.getWorkStart(), schedule.getWorkEnd()).toMinutes();
+        if (schedule.getLunchStart() != null && schedule.getLunchEnd() != null) {
+            total -= (int) java.time.Duration.between(schedule.getLunchStart(), schedule.getLunchEnd()).toMinutes();
+        }
+        return total;
     }
 
     /**
@@ -153,20 +145,39 @@ public class WorkWeek extends AbstractTimeAware implements Comparable<WorkWeek> 
     }
 
     /**
-     * Computes the net working minutes for a single day schedule, excluding the lunch break when present.
+     * Returns the working-time schedule for the given day of the week.
      *
-     * @param schedule the day schedule to evaluate
-     * @return net working minutes
+     * @param dayOfWeek the day to look up
+     * @return the {@link WorkDaySchedule} for that day; never {@code null}
      */
-    private int computeMinutesForSchedule(WorkDaySchedule schedule) {
-        if (schedule.getWorkStart() == null || schedule.getWorkEnd() == null) {
-            return (int) (7.5 * 60);
-        }
-        int total = (int) java.time.Duration.between(schedule.getWorkStart(), schedule.getWorkEnd()).toMinutes();
-        if (schedule.getLunchStart() != null && schedule.getLunchEnd() != null) {
-            total -= (int) java.time.Duration.between(schedule.getLunchStart(), schedule.getLunchEnd()).toMinutes();
-        }
-        return total;
+    public WorkDaySchedule getScheduleForDay(DayOfWeek dayOfWeek) {
+        return switch (dayOfWeek) {
+            case MONDAY -> monday;
+            case TUESDAY -> tuesday;
+            case WEDNESDAY -> wednesday;
+            case THURSDAY -> thursday;
+            case FRIDAY -> friday;
+            case SATURDAY -> saturday;
+            case SUNDAY -> sunday;
+        };
+    }
+
+    /**
+     * Returns a summary string listing the abbreviations of working days.
+     * Used as display text in the grid.
+     *
+     * @return comma-separated abbreviations of working days, e.g. "Mon, Tue, Wed, Thu, Fri"
+     */
+    public String getWorkingDaysSummary() {
+        StringBuilder sb = new StringBuilder();
+        addDay(sb, monday, "Mon");
+        addDay(sb, tuesday, "Tue");
+        addDay(sb, wednesday, "Wed");
+        addDay(sb, thursday, "Thu");
+        addDay(sb, friday, "Fri");
+        addDay(sb, saturday, "Sat");
+        addDay(sb, sunday, "Sun");
+        return sb.toString();
     }
 }
 

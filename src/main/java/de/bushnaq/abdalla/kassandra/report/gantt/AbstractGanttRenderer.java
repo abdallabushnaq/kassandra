@@ -638,8 +638,9 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
             progress = String.format("%2.0f%%", task.getProgress().doubleValue() * 100);
 
         }
-        String duration = DateUtil.createDurationString(task.getDuration(), true, true, true);
-        String toolTip  = "";
+        String duration      = DateUtil.createDurationString(task.getDuration(), true, true, true);
+        String minEstimation = DateUtil.createDurationString(task.getMinEstimate(), true, true, true);
+        String toolTip       = "";
         if (marker != null) {
             toolTip += String.format("%s<br>", marker);
         } else {
@@ -652,6 +653,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
             String primaryResourceName = resourceName;
             toolTip += String.format("<b>Resource</b> %s<br>", primaryResourceName + resourceUtelization);
         }
+        toolTip += String.format("<b>Min Estimation</b> %s<br>", minEstimation);
         toolTip += String.format("<b>Duration</b> %s<br>", duration);
         toolTip += String.format("<b>Start</b> %s<br>", start);
         toolTip += String.format("<b>Finish</b> %s<br>", finish);

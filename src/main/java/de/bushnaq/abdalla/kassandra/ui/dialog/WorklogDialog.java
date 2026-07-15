@@ -41,8 +41,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -249,7 +247,7 @@ public class WorklogDialog extends Dialog {
             timeSpentField.setValue(DateUtil.createWorkDayDurationString(existingWorklog.getTimeSpent()));
             commentField.setValue(existingWorklog.getComment() != null ? existingWorklog.getComment() : "");
             if (existingWorklog.getStart() != null) {
-                dateTimePicker.setValue(existingWorklog.getStart().toLocalDateTime());
+                dateTimePicker.setValue(existingWorklog.getStart());
             }
         }
 
@@ -319,7 +317,7 @@ public class WorklogDialog extends Dialog {
             }
 
             // Convert LocalDateTime to OffsetDateTime (using system default zone, then convert to UTC)
-            OffsetDateTime startDateTime = dateTimePicker.getValue().atZone(ZoneOffset.systemDefault()).toOffsetDateTime();
+            LocalDateTime startDateTime = dateTimePicker.getValue();
 
             if (isEditMode) {
                 saveEditMode(timeSpent, timeRemaining, startDateTime);
@@ -340,7 +338,7 @@ public class WorklogDialog extends Dialog {
      * @param timeRemaining parsed time remaining duration, or {@code null} if not specified
      * @param startDateTime the log date/time
      */
-    private void saveCreateMode(Duration timeSpent, Duration timeRemaining, OffsetDateTime startDateTime) {
+    private void saveCreateMode(Duration timeSpent, Duration timeRemaining, LocalDateTime startDateTime) {
         // Create worklog
         Worklog worklog = new Worklog();
         worklog.setTaskId(task.getId());
@@ -380,7 +378,7 @@ public class WorklogDialog extends Dialog {
      * @param timeRemaining new parsed time remaining, or {@code null} if not specified
      * @param startDateTime new log date/time
      */
-    private void saveEditMode(Duration newTimeSpent, Duration timeRemaining, OffsetDateTime startDateTime) {
+    private void saveEditMode(Duration newTimeSpent, Duration timeRemaining, LocalDateTime startDateTime) {
         Duration oldTimeSpent = existingWorklog.getTimeSpent();
 
         // Mutate the existing worklog in place (same object reference held by task.getWorklogs())

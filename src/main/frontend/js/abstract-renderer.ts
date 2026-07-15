@@ -14,8 +14,12 @@ import {GraphColorUtil} from './graph-color-util.js';
 import {Theme} from './theme/theme.js';
 import {Milestones} from './milestones.js';
 import type {IRenderer} from './renderer-interface.js';
+import {TextAlignment} from "./TextAlignment.js";
+import {FontMetrics} from "./font-metrics.js";
+import {FontSpec} from "./font-spec.js";
 
 export abstract class AbstractRenderer implements IRenderer {
+    protected static readonly STANDARD_LINE_STROKE_WIDTH: number = 3.1;
     chartWidth: number;
     chartHeight: number;
     theme: Theme;
@@ -140,8 +144,120 @@ export abstract class AbstractRenderer implements IRenderer {
 
     }
 
+    drawGraphText(g: SVGElement, x: number, y: number, text: string, textColor: number | null, font: FontSpec, aligned: TextAlignment) {
+        const fm = new FontMetrics(font);
+        const textWidth = fm.stringWidth(text);
+        switch (aligned) {
+            case TextAlignment.left:
+                g.appendChild(SvgUtils.createRect(x, y - 9 + 2, textWidth, 12, {fill: ColorUtils.intToHex(this.theme.chartTheme.graphTextBackgroundColor)}));
+                // graphics2D.fillRect(x, y - 9 + 2, width, 12);
+                // graphics2D.setColor(textColor);
+                // graphics2D.drawString(text, x, y + 2);
+                g.appendChild(SvgUtils.createText(x, y + 2, text, {
+                    fill: ColorUtils.intToHex(textColor),
+                    'font-size': font.size,
+                    'font-family': font.family,
+                    'text-anchor': 'left',
+                }));
+                break;
+            case TextAlignment.right:
+                // graphics2D.fillRect(x - width, y - 9 + 2, width, 12);
+                g.appendChild(SvgUtils.createRect(x - textWidth, y - 9 + 2, textWidth, 12, {fill: ColorUtils.intToHex(textColor)}));
+                // graphics2D.setColor(textColor);
+                // graphics2D.drawString(text, x - width, y + 2);
+                g.appendChild(SvgUtils.createText(x - textWidth, y + 2, text, {
+                    fill: ColorUtils.intToHex(textColor),
+                    'font-size': font.size,
+                    'font-family': font.family,
+                    'text-anchor': 'right',
+                }));
+                break;
+        }
+
+    }
+
+    // ── Java: protected void drawLegend() / AbstractRenderer.drawLegend(x, y, interpolationColor) ──
+    protected drawLegend(svg: SVGElement, x: number, y: number, interpolationColor: number | null): void {
+        const lineHeight = 14;
+        let legendY = y + lineHeight;
+        const legendX1 = x;
+        const legendX2 = legendX1 + 10;
+        let legendTextY = legendY + 1;
+        let legendTextX = legendX2 + 4;
+        const milestoneX = legendX1 + 5;
+        let milestoneY = legendY - this.calendarXAxes.milestone.height / 2;
+
+        svg.appendChild(SvgUtils.createLine(legendX1, legendY, legendX2, legendY, {
+            stroke: ColorUtils.intToHex(this.theme.chartTheme.surroundingSquareColor),
+            'stroke-width': AbstractRenderer.STANDARD_LINE_STROKE_WIDTH,
+            'stroke-dasharray': '3'
+        }));
+        this.drawGraphText(svg, legendTextX, legendTextY, "Guideline", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+
+        legendY += lineHeight;
+        legendTextY += lineHeight;
+        milestoneY += lineHeight;
+        svg.appendChild(SvgUtils.createLine(legendX1, legendY, legendX2, legendY, {
+            stroke: ColorUtils.intToHex(interpolationColor),
+            'stroke-width': AbstractRenderer.STANDARD_LINE_STROKE_WIDTH
+        }));
+        this.drawGraphText(svg, legendTextX, legendTextY, "extrapolated release date", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+
+        legendY += lineHeight;
+        legendTextY += lineHeight;
+        milestoneY += lineHeight;
+        svg.appendChild(SvgUtils.createLine(legendX1, legendY, legendX2, legendY, {
+            stroke: ColorUtils.intToHex(this.theme.burndownTheme.borderColor),
+            'stroke-width': AbstractRenderer.STANDARD_LINE_STROKE_WIDTH
+        }));
+        this.drawGraphText(svg, legendTextX, legendTextY, "Remaining work", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+
+        legendY += lineHeight;
+        legendTextY += lineHeight;
+        milestoneY += lineHeight;
+        this.calendarXAxes.drawMilestone(svg, null, null, milestoneX, milestoneY, this.theme.xAxesTheme.pastEventColor, "S", true, null, null, false, false);// start
+        this.drawGraphText(svg, legendTextX, legendTextY, "Start date (sprint)", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+
+        legendY += lineHeight;
+        legendTextY += lineHeight;
+        milestoneY += lineHeight;
+        this.calendarXAxes.drawMilestone(svg, null, null, milestoneX, milestoneY, this.theme.xAxesTheme.nowEventColor, "N", true, null, null, false, false);// now
+        this.drawGraphText(svg, legendTextX, legendTextY, "Now date", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+
+        legendY += lineHeight;
+        legendTextY += lineHeight;
+        milestoneY += lineHeight;
+        this.calendarXAxes.drawMilestone(svg, null, null, milestoneX, milestoneY, this.theme.burndownTheme.delayEventColor, "R", true, null, null, false, false);// release
+        this.drawGraphText(svg, legendTextX, legendTextY, "Release date", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+
+        legendY += lineHeight;
+        legendTextY += lineHeight;
+        milestoneY += lineHeight;
+        this.calendarXAxes.drawMilestone(svg, null, null, milestoneX, milestoneY, this.theme.xAxesTheme.futureEventColor, "E", true, null, null, false, false);// end
+        this.drawGraphText(svg, legendTextX, legendTextY, "End date (sprint)", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+
+        legendY += lineHeight;
+        legendTextY += lineHeight;
+        milestoneY += lineHeight;
+        this.calendarXAxes.drawMilestone(svg, null, null, milestoneX, milestoneY, this.theme.xAxesTheme.futureEventColor, "F", true, null, null, false, false);// first
+        this.drawGraphText(svg, legendTextX, legendTextY, "First punch-in", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+
+        legendY += lineHeight;
+        legendTextY += lineHeight;
+        milestoneY += lineHeight;
+        this.calendarXAxes.drawMilestone(svg, null, null, milestoneX, milestoneY, this.theme.xAxesTheme.futureEventColor, "L", true, null, null, false, false);// Last
+        this.drawGraphText(svg, legendTextX, legendTextY, "Last punch-out", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+    }
+
+    protected calculateDayIndex(date: Date): number {
+        const firstMilestoneDay = this.milestones.firstMilestone;
+        return DateUtils.calculateDays(firstMilestoneDay, date);
+    }
+
     protected drawCalendar(g: SVGElement, drawDays: boolean = true, viewportWidth: number) {
         this.calendarXAxes.drawCalendar(g, drawDays, viewportWidth);
     }
+
+
 }
 

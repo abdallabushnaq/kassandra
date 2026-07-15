@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.util.GanttGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -49,7 +51,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Tag("UnitTest")
 @Slf4j
 public class DynamicGanttBurndownTest extends AbstractGanttTester {
-    private final String testFolder = "references/gantt-burndown";
+    @Autowired
+    private       GanttBurndownChartService service;
+    private final String                    testFolder = "references/gantt-burndown";
 
     @BeforeEach
     public void beforeEach() {
@@ -60,7 +64,7 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
 
     @Test
     public void test(TestInfo testInfo) throws Exception {
-        GanttGenerator g         = new GanttGenerator();
+        GanttGenerator g         = new GanttGenerator(service);
         User           resource1 = g.addUser("resource1", 0.3f);
         User           resource2 = g.addUser("resource2", 0.7f);
         Sprint         sprint    = g.addSprint();
@@ -86,7 +90,7 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
     @Test
     public void testDeliveryBuffer1(TestInfo testInfo) throws Exception {
         testTheme = ETheme.light;
-        GanttGenerator g         = new GanttGenerator();
+        GanttGenerator g         = new GanttGenerator(service);
         User           resource1 = g.addUser("resource1", 0.3f);
         User           resource2 = g.addUser("resource2", 0.7f);
         Sprint         sprint    = g.addSprint();

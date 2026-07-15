@@ -327,7 +327,7 @@ export class CalendarXAxes {
     drawMilestone(
         parentGroup: SVGElement,
         m: import('./milestone').Milestone | null,
-        time: Date, x: number, y: number,
+        time: Date | null, x: number, y: number,
         fillColor: number | null, text: string,
         visible: boolean,
         flagY: number | null, flagTextColor: number | null,
@@ -489,12 +489,17 @@ export class CalendarXAxes {
         return !this.milestones.empty();
     }
 
-    private _formatDateForTooltip(date: Date): string {
-        return date.toLocaleDateString('en-US', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
+    private _formatDateForTooltip(date: Date | null): string {
+        return date ? date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }) : '';
     }
 
-    private _formatDateForFlag(date: Date): string {
+    private _formatDateForFlag(date: Date | null): string {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        return `${months[date.getMonth()]}.${date.getDate()}`;
+        return date ? `${months[date.getMonth()]}.${date.getDate()}` : '';
     }
 }

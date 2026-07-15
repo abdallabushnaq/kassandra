@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.util;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.util.MpxjUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import net.sf.mpxj.*;
@@ -45,8 +46,8 @@ public class MPXJReader extends GanttGenerator {
     protected           String                                             testFolder;
     protected           Map<String, User>                                  userMap     = new HashMap<>();
 
-    public MPXJReader(String testFolder, boolean includeLevelingInfo) {
-        super();
+    public MPXJReader(GanttBurndownChartService service, String testFolder, boolean includeLevelingInfo) {
+        super(service);
         this.testFolder          = testFolder;
         this.includeLevelingInfo = includeLevelingInfo;
     }

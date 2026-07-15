@@ -21,14 +21,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.bushnaq.abdalla.util.DurationDeserializer;
 import de.bushnaq.abdalla.util.DurationSerializer;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectCalendar;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -55,10 +58,10 @@ import java.util.UUID;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @ToString(callSuper = false)
+@Slf4j
 public class Task implements Comparable<Task> {
 
     public static final String         DELIVERY_BUFFER   = "Delivery buffer (from critical path tasks)";
@@ -181,12 +184,16 @@ public class Task implements Comparable<Task> {
     @JsonIgnore
     private             List<Worklog>  worklogs          = new ArrayList<>();
 
+    public Task() {
+        this.setId(UUID.randomUUID());
+    }
+
     /**
      * clear all work data, so that we can reinitialize using worklogs
      */
     public void add(List<Worklog> worklogs) {
-        OffsetDateTime last                  = OffsetDateTime.MIN;
-        Duration       timeRemainingEstimate = null;
+        LocalDateTime last                  = LocalDateTime.MIN;
+        Duration      timeRemainingEstimate = null;
         this.worklogs.clear();
         timeSpent = Duration.ZERO;
         for (Worklog worklog : worklogs) {
@@ -257,8 +264,10 @@ public class Task implements Comparable<Task> {
         worklogs.add(worklog);
     }
 
-    public void calculateStatus() {
+    public void calculateStatus(boolean enableLog) {
         if (getRemainingEstimate().isZero() && !getTaskStatus().equals(TaskStatus.DONE)) {
+            if (enableLog)
+                log.info("Task '{}' is DONE", getName());
             setTaskStatus(TaskStatus.DONE);
             if (getParentTask() != null && getParentTask().isAllChildTasksDone()) {
                 //set story status to DONE because all child tasks are DONE
@@ -266,6 +275,8 @@ public class Task implements Comparable<Task> {
                 if (sprint.isAllChildTasksDone()) {
                     //set sprint status to CLOSED because all tasks are DONE
                     sprint.setStatus(Status.CLOSED);
+                    if (enableLog)
+                        log.info("Sprint '{}' is CLOSED", sprint.getName());
                 }
             }
         } else {
