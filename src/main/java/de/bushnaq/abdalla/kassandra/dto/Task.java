@@ -137,7 +137,7 @@ public class Task implements Comparable<Task> {
     /**
      * The completion progress of the task (0-1).
      */
-    private             Number         progress          = 0;
+    private             Float          progress          = 0f;
     /**
      * The estimated person days remaining to complete the task.
      */
@@ -560,7 +560,7 @@ public class Task implements Comparable<Task> {
      * Progress is calculated as: timeSpent / (timeSpent + remainingEstimate).
      */
     public void recalculate() {
-        double fraction = ((double) getTimeSpent().toSeconds()) / getTimeSpent().plus(getRemainingEstimate()).toSeconds();
+        float fraction = ((float) getTimeSpent().toSeconds()) / getTimeSpent().plus(getRemainingEstimate()).toSeconds();
         setProgress(fraction);
     }
 

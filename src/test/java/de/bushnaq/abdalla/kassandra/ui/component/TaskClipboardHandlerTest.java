@@ -64,7 +64,7 @@ public class TaskClipboardHandlerTest {
         task.setRemainingEstimate(minEstimate);
         task.setTaskMode(TaskMode.AUTO_SCHEDULED);
         task.setTaskStatus(TaskStatus.TODO);
-        task.setProgress(0);
+        task.setProgress(0f);
         return task;
     }
 

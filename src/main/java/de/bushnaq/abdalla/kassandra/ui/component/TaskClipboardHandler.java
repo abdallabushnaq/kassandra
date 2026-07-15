@@ -264,7 +264,7 @@ public class TaskClipboardHandler {
         task.setTaskMode(TaskMode.AUTO_SCHEDULED);
         task.setOrderId(-1);
         task.setCritical(false);
-        task.setProgress(0);
+        task.setProgress(0f);
 //        task.getMinEstimate(task.getMinEstimate());
         task.setRemainingEstimate(task.getMinEstimate());
         if (task.getName() == null || task.getName().isBlank()) {

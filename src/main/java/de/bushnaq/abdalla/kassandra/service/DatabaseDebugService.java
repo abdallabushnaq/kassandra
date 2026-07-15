@@ -68,10 +68,10 @@ public class DatabaseDebugService {
             return "";
         }
 
-        // Calculate column widths: start with header width, then widen for data.
+        // Calculate column widths: start with header width and type width, then widen for data.
         int[] maxWidths = new int[columnNames.size()];
         for (int i = 0; i < columnNames.size(); i++) {
-            maxWidths[i] = columnNames.get(i).length();
+            maxWidths[i] = Math.max(columnNames.get(i).length(), columnTypes.get(i).length());
         }
         for (Object row : results) {
             if (row instanceof Object[] cells) {
@@ -93,10 +93,17 @@ public class DatabaseDebugService {
         StringBuilder output = new StringBuilder();
         output.append("\n").append(tableName).append(":\n").append(separator).append("\n");
 
-        // Header.
+        // Header with column names.
         output.append("|");
         for (int i = 0; i < columnNames.size(); i++) {
             output.append(String.format(" %-" + maxWidths[i] + "s |", columnNames.get(i)));
+        }
+        output.append("\n");
+
+        // Type row.
+        output.append("|");
+        for (int i = 0; i < columnTypes.size(); i++) {
+            output.append(String.format(" %-" + maxWidths[i] + "s |", columnTypes.get(i)));
         }
         output.append("\n").append(separator).append("\n");
 

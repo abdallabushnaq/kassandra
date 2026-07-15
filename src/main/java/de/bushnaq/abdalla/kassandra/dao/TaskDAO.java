@@ -84,7 +84,7 @@ public class TaskDAO {
     @JoinColumn(name = "task_id", referencedColumnName = "id")
     private List<RelationDAO>                           predecessors      = new ArrayList<>();
     @Column(nullable = false)
-    private Number                                      progress;
+    private Float                                       progress;
     @Column(nullable = true)
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
