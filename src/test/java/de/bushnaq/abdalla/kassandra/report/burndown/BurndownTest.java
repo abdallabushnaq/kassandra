@@ -72,8 +72,8 @@ public class BurndownTest extends AbstractGanttTestUtil {
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(1, 10, 2, 1, 2, 1),//
-                new RandomCase(2, 10, 3, 2, 3, 1)//
+                new RandomCase(1, 10, 2, 1, 1, 2, 1),//
+                new RandomCase(2, 10, 3, 2, 2, 3, 1)//
         };
         return Arrays.stream(randomCases).toList();
     }

@@ -83,7 +83,7 @@ public class CalendarTest extends AbstractGanttTestUtil {
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 6, 0, 13)//
+                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 6, 6, 0, 13)//
         };
         return Arrays.stream(randomCases).toList();
     }

@@ -48,11 +48,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.Duration;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Introduction video showcasing Work Week management in Kassandra.
@@ -288,13 +284,13 @@ public class Test_08_UserWorkWeekIntroductionVideo extends AbstractIntroductionV
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 
-    private static List<RandomCase> listRandomCases() {
-        // "now" is set to May 5 2025 so that June 1st is a near-future date in the narrative.
-        RandomCase[] randomCases = new RandomCase[]{
-                new RandomCase(1, OffsetDateTime.parse("2025-05-05T08:00:00+01:00"), LocalDate.parse("2025-04-28"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 12, 6, 13)
-        };
-        return Arrays.stream(randomCases).toList();
-    }
+//    private static List<RandomCase> listRandomCases() {
+//        // "now" is set to May 5 2025 so that June 1st is a near-future date in the narrative.
+//        RandomCase[] randomCases = new RandomCase[]{
+//                new RandomCase(1, OffsetDateTime.parse("2025-05-05T08:00:00+01:00"), LocalDate.parse("2025-04-28"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 12, 12, 6, 13)
+//        };
+//        return Arrays.stream(randomCases).toList();
+//    }
 }
 
 

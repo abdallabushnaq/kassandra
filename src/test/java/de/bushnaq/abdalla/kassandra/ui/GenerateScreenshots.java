@@ -137,7 +137,7 @@ public class GenerateScreenshots extends AbstractKeycloakUiTestUtil {
                         2, 2,
                         2, 2,
                         1, 5,
-                        5, 8, 8, 6, 7)//official demo data
+                        5, 8, 8, 8, 6, 7)//official demo data
 //                new RandomCase(
 //                        1,
 //                        OffsetDateTime.parse("2026-02-02T08:00:00+01:00"),

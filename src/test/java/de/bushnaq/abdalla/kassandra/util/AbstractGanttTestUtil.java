@@ -367,7 +367,11 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
 
     @Transactional
     private void generateSprint(TestInfo testInfo, RandomCase randomCase, Feature project) throws Exception {
-        int numberOfUsers = randomCase.getMaxNumberOfUsers();
+        int maxUsersPerSprint = Math.min(randomCase.getMaxNumberOfUsersPerSprint(), peg.getUsers().size());
+        int numberOfUsers = peg.random.nextInt(maxUsersPerSprint) + 1;
+        List<User> shuffledUsers = new ArrayList<>(peg.getUsers());
+        Collections.shuffle(shuffledUsers, peg.random);
+        List<User> sprintUsers = shuffledUsers.subList(0, numberOfUsers);
         peg.random.setSeed(peg.nameGenerator.generateSprintName(peg.getSprintIndex()).hashCode());
 //        System.out.println("Number of users=" + numberOfUsers);
         try (Profiler pc1 = new Profiler(SampleType.JPA)) {
@@ -390,9 +394,9 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
                     Task   story         = peg.addParentTask(storyName, sprint, null, startMilestone);
                     int    numberOfTasks = peg.random.nextInt(randomCase.getMaxNumberOfTasks()) + 1;
                     for (int t = 0; t < numberOfTasks; t++) {
-                        int userIndex = peg.random.nextInt(numberOfUsers);
+                        int userIndex = peg.random.nextInt(sprintUsers.size());
 //                    System.out.println("User index=" + userIndex);
-                        User   user             = peg.getUsers().stream().sorted(Comparator.comparing(User::getName)).toList().get(userIndex);
+                        User   user             = sprintUsers.get(userIndex);
                         float  minHours         = peg.random.nextFloat(randomCase.getMaxTaskDurationDays() * 7.5f) + 1;
                         float  maxHours         = minHours + peg.random.nextFloat() * minHours;
                         String minWork          = String.format("%dh", (int) minHours);
@@ -516,21 +520,19 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
                     if (task.isTask() && task.isImpactOnCost()) {
                         if (!task.getRemainingEstimate().isZero()) {
                             //still work to be done
-                            if (!day.isBefore(task.getStart().toLocalDate()) /*&& !day.isAfter(task.getFinish().toLocalDate())*/) {
+                            if (!day.isBefore(task.getStart().toLocalDate())) {
                                 // Day is on or after task start && on or before finish
-                                if (sprint.getName().equals("Paris") && task.getAssignedUser().getName().equals("Christopher Paul")) {
-                                    if (task.getEffectiveCalendar().isWorkingDate(LocalDate.of(2025, 8, 20))) {
-                                        log.error("mist");
-                                    }
-                                }
+//                                if (sprint.getName().equals("Paris") && task.getAssignedUser().getName().equals("Christopher Paul")) {
+//                                    if (task.getEffectiveCalendar().isWorkingDate(LocalDate.of(2025, 8, 20))) {
+//                                        log.error("mist");
+//                                    }
+//                                }
 
                                 if (task.getEffectiveCalendar().isWorkingDate(day)) {
                                     // is a working day for this user
-//                                if (task.getStart().isBefore(startOfDay) || task.getStart().isEqual(startOfDay))
-                                    {
-                                        if (TaskUtil.areAllPredecessorsDone(task, sprint)) {
-                                            // we have the whole day
-                                            double performance = 1f;//daily performance is usually 100% of the resource availability
+                                    if (TaskUtil.areAllPredecessorsDone(task, sprint)) {
+                                        // we have the whole day
+                                        double performance = 1f;//daily performance is usually 100% of the resource availability
 //                                            if (peg.random.nextFloat() < 0.2f) {
 //                                                //in rare cases, performance can be much worse or better than usual, e.g. due to unexpected problems or overtime
 //                                                double minPerformance = 0.5f;//minimum performance of a resource (underwork)
@@ -540,23 +542,22 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
 //                                            if (sprint.getName().equals("Sydney")) {
 //                                                System.out.println();
 //                                            }
-                                            Duration maxTaskWork = TaskUtil.getTaskWorkPerDay(sprint, day, task, true);
-                                            Duration maxWork     = Duration.ofSeconds((long) ((performance * maxTaskWork.getSeconds())));//TODO use user calendar for working day length
-                                            Duration w           = maxWork;
-                                            Duration delta       = task.getRemainingEstimate().minus(w);
-                                            if (delta.isNegative()) {
-                                                w = task.getRemainingEstimate();
-                                            }
-                                            if (day.atStartOfDay().toLocalDate().isEqual(task.getStart().toLocalDate())) {
-                                                //first day
-                                                peg.addWorklogToBuffer(task, task.getAssignedUser(), task.getStart(), w, task.getName());
-                                            } else {
-                                                peg.addWorklogToBuffer(task, task.getAssignedUser(), day.atStartOfDay().plusHours(8), w, task.getName());//TODO use user calendar
-                                            }
-                                            task.calculateStatus(true);
-                                        } else {
-                                            log.debug("Task '{}' blocked on {} – predecessor not yet done", task.getName(), day);
+                                        Duration maxTaskWork = TaskUtil.getTaskWorkPerDay(sprint, day, task, true);
+                                        Duration maxWork     = Duration.ofSeconds((long) ((performance * maxTaskWork.getSeconds())));//TODO use user calendar for working day length
+                                        Duration w           = maxWork;
+                                        Duration delta       = task.getRemainingEstimate().minus(w);
+                                        if (delta.isNegative()) {
+                                            w = task.getRemainingEstimate();
                                         }
+                                        if (day.atStartOfDay().toLocalDate().isEqual(task.getStart().toLocalDate())) {
+                                            //first day
+                                            peg.addWorklogToBuffer(task, task.getAssignedUser(), task.getStart(), w, task.getName());
+                                        } else {
+                                            peg.addWorklogToBuffer(task, task.getAssignedUser(), day.atStartOfDay().plusHours(8), w, task.getName());//TODO use user calendar
+                                        }
+                                        task.calculateStatus(true);
+                                    } else {
+                                        log.debug("Task '{}' blocked on {} – predecessor not yet done", task.getName(), day);
                                     }
                                 }
                             }

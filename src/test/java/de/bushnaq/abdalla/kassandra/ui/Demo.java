@@ -148,7 +148,7 @@ public class Demo extends AbstractKeycloakUiTestUtil {
                         1, 1,
                         2, 2,
                         1, 1,
-                        5, 8, 8, 6, 7),//minimalistic demo data
+                        5, 8, 8, 4, 6, 7),//minimalistic demo data
 //                new RandomCase(3,
 //                        OffsetDateTime.parse("2026-02-02T08:00:00+01:00"),
 //                        LocalDate.parse("2025-08-04"),

@@ -46,10 +46,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -273,12 +269,12 @@ public class Test_14_KassandraAgentIntroductionVideo extends AbstractIntroductio
 
     }
 
-    private static List<RandomCase> listRandomCases() {
-        RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(3, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 2, 2, 2, 2, 2, 2, 1, 5, 5, 8, 8, 6, 7)//
-        };
-        return Arrays.stream(randomCases).toList();
-    }
+//    private static List<RandomCase> listRandomCases() {
+//        RandomCase[] randomCases = new RandomCase[]{//
+//                new RandomCase(3, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 2, 2, 2, 2, 2, 2, 1, 5, 5, 8, 8, 8, 6, 7)//
+//        };
+//        return Arrays.stream(randomCases).toList();
+//    }
 
 
 }

@@ -44,11 +44,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.List;
 
 @Tag("IntroductionVideo")
 @ExtendWith(SpringExtension.class)
@@ -282,11 +278,11 @@ public class Test_12_StoryAndTaskRelationsIntroductionVideo extends AbstractIntr
         return sprint;
     }
 
-    private static List<RandomCase> listRandomCases() {
-        RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 12, 6, 13)//
-        };
-        return Arrays.stream(randomCases).toList();
-    }
+//    private static List<RandomCase> listRandomCases() {
+//        RandomCase[] randomCases = new RandomCase[]{//
+//                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 12, 12, 6, 13)//
+//        };
+//        return Arrays.stream(randomCases).toList();
+//    }
 
 }

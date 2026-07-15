@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.Kassandra;
+import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -32,9 +33,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.*;
 
 /**
  * Abstract base class for introduction video tests that interact with the Kassandra AI chat panel.
@@ -140,6 +141,13 @@ public abstract class AbstractIntroductionVideo extends AbstractKeycloakUiTestUt
         return false;
     }
 
+    protected static List<RandomCase> listRandomCases() {
+        RandomCase[] randomCases = new RandomCase[]{//
+                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 12, 4, 6, 13)//
+        };
+        return Arrays.stream(randomCases).toList();
+    }
+
     private String prepareVideoName(String videoName) {
         return videoName.toLowerCase().replaceAll("[\\\\/:*?\"<>|_,. ]", "-");
     }
@@ -186,12 +194,6 @@ public abstract class AbstractIntroductionVideo extends AbstractKeycloakUiTestUt
         seleniumHandler.popWaitDuration();
     }
 
-    protected void waitForStableDiffusion() {
-        seleniumHandler.pushWaitDuration(Duration.ofSeconds(120));
-        seleniumHandler.waitForElementToBeInteractable(ImagePromptDialog.ID_GENERATE_BUTTON);
-        seleniumHandler.popWaitDuration();
-    }
-
     /**
      * Waits up to 120 seconds for the dark-avatar generation to finish, indicated by the dark
      * update button ({@link ImagePromptDialog#ID_DARK_UPDATE_BUTTON}) becoming interactable again.
@@ -199,6 +201,12 @@ public abstract class AbstractIntroductionVideo extends AbstractKeycloakUiTestUt
     protected void waitForDarkStableDiffusion() {
         seleniumHandler.pushWaitDuration(Duration.ofSeconds(120));
         seleniumHandler.waitForElementToBeInteractable(ImagePromptDialog.ID_DARK_UPDATE_BUTTON);
+        seleniumHandler.popWaitDuration();
+    }
+
+    protected void waitForStableDiffusion() {
+        seleniumHandler.pushWaitDuration(Duration.ofSeconds(120));
+        seleniumHandler.waitForElementToBeInteractable(ImagePromptDialog.ID_GENERATE_BUTTON);
         seleniumHandler.popWaitDuration();
     }
 }
