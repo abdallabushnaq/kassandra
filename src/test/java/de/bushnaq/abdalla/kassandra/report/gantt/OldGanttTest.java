@@ -22,8 +22,9 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.util.AbstractGanttTestUtil;
-import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
+import de.bushnaq.abdalla.kassandra.util.BurnDownUtil;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
@@ -52,6 +53,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void gantt_01(TestInfo testInfo) throws Exception {
+        context.parameters.setTheme(ETheme.light);
 //        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
 //        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
 //        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
@@ -81,7 +83,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         sprint.initUserMap(peg.userApi.getAll(sprint.getId()));
         sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));
         levelResourcesAndPersist(testInfo, sprint, null);
-        generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
+        BurnDownUtil.generateWorklogs(peg, sprint, 0f, ParameterOptions.getLocalNow());
         generateGanttChart(testInfo, sprint.getId(), null);
         generateBurndownChart(testInfo, sprint.getId());
     }
@@ -92,6 +94,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void gantt_02(TestInfo testInfo) throws Exception {
+        context.parameters.setTheme(ETheme.light);
 //        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
 //        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
 //        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
@@ -126,7 +129,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         sprint.initUserMap(peg.userApi.getAll(sprint.getId()));
         sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));
         levelResourcesAndPersist(testInfo, sprint, null);
-        generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
+        BurnDownUtil.generateWorklogs(peg, sprint, 0f, ParameterOptions.getLocalNow());
         generateGanttChart(testInfo, sprint.getId(), null);
         generateBurndownChart(testInfo, sprint.getId());
     }
@@ -137,6 +140,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void gantt_03(TestInfo testInfo) throws Exception {
+        context.parameters.setTheme(ETheme.light);
 //        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
 //        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
 //        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
@@ -176,7 +180,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         sprint.initUserMap(peg.userApi.getAll(sprint.getId()));
         sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));
         levelResourcesAndPersist(testInfo, sprint, null);
-        generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
+        BurnDownUtil.generateWorklogs(peg, sprint, 0f, ParameterOptions.getLocalNow());
         generateGanttChart(testInfo, sprint.getId(), null);
         generateBurndownChart(testInfo, sprint.getId());
     }

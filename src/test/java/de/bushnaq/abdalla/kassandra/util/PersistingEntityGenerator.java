@@ -136,7 +136,6 @@ public class PersistingEntityGenerator {
         }
     }
 
-
     public Task addParentTask(String name, Sprint sprint, Task parent, Task dependency) {
         return addTask(sprint, parent, name, null, Duration.ofDays(0), null, null, dependency);
     }
@@ -641,6 +640,13 @@ public class PersistingEntityGenerator {
         productAclApi   = new ProductAclApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
         workWeekApi     = new WorkWeekApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
         userWorkWeekApi = new UserWorkWeekApi(testRestTemplate.getRestTemplate(), jsonMapper, baseUrl);
+    }
+
+    public void persistTasksAndSprint(Sprint sprint) {
+        try (Profiler pc = new Profiler(SampleType.JPA)) {
+            taskApi.updateBatch(sprint.getTasks(), sprint.getId());
+            sprintApi.update(sprint);
+        }
     }
 
     public WorkWeek persistWorkWeek(String name, String description, LocalTime startTime, LocalTime breakStart, LocalTime breakEnd, LocalTime endTime, boolean isSaturdayWorkingDay, boolean isSundayWorkingDay, boolean isMondayWorkingDay, boolean isTuesdayWorkingDay, boolean isWednesdayWorkingDay, boolean isThursdayWorkingDay, boolean isFridayWorkingDay) {

@@ -31,7 +31,6 @@ import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
-import de.bushnaq.abdalla.util.TaskUtil;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -66,13 +65,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @Slf4j
 public class AbstractGanttTestUtil extends AbstractTestUtil {
-    /**
-     * Probability that a sprint runs with zero delay (on schedule).
-     */
-    private static final float                     DELAY_PROBABILITY         = 0.4f;
-    /**
-     * Maximum over-run factor applied to {@code maxEstimate} when a sprint is delayed.
-     */
     private static final float                     MAX_DELAY_FACTOR          = 0.3f;
     @Autowired
     protected            Context                   context;
@@ -223,50 +215,15 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
     }
 
     protected void generateBurndownChart(TestInfo testInfo, UUID sprintId, int width, int height) throws Exception {
-//        initializeInstances();
-//        sprint.initialize();
-//        sprint.initUserMap(userApi.getAll(sprint.getId()));
-//        sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
         Sprint sprint = peg.sprintApi.getById(sprintId);
         sprint.initialize();
         sprint.initUserMap(peg.userApi.getAll(sprintId));
         sprint.initTaskMap(peg.taskApi.getAll(sprintId), peg.worklogApi.getAll(sprintId));
         sprint.recalculate(ParameterOptions.getLocalNow());
-//        sprint.recalculate(ParameterOptions.getLocalNow());
-        RenderDao     dao         = RenderUtil.createBurndownRenderDao(context, sprint, TestInfoUtil.getTestMethodName(testInfo), ParameterOptions.getLocalNow(), width, height,  /*urlPrefix +*/ "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
+        RenderDao     dao         = RenderUtil.createBurndownRenderDao(context, sprint, TestInfoUtil.getTestMethodName(testInfo) + "-burndown", ParameterOptions.getLocalNow(), width, height,  /*urlPrefix +*/ "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
         BurnDownChart chart       = new BurnDownChart(service, "/", dao);
         String        description = testInfo.getDisplayName().replace("_", "-");
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testResultFolder);
-    }
-
-    //TODO remove
-    private void generateDebugGanttCharts(TestInfo testInfo, String testFolder) throws Exception {
-        for (Sprint sprint : peg.getSprints()) {
-//            sprint.initialize();
-//            sprint.initUserMap(userApi.getAll(sprint.getId()));
-//            sprint.initTaskMap(taskApi.getAll(sprint.getId()), worklogApi.getAll(sprint.getId()));
-//            sprint.recalculate(ParameterOptions.getLocalNow());
-            Context context = new Context(null);
-//            context.parameters.setTheme(testTheme);
-            String sprintName = sprint.getName() + "-demo-gantt";
-//            if (testInfo.getDisplayName().indexOf('=') != -1) {
-//                String displayName;
-//                if (testInfo.getDisplayName().indexOf('"') != -1) {
-//                    displayName = testInfo.getDisplayName().substring(testInfo.getDisplayName().indexOf('"') + 1, testInfo.getDisplayName().lastIndexOf('"'));
-//                } else {
-//                    displayName = testInfo.getDisplayName();
-//                }
-//                sprintName = displayName + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
-//            } else {
-//                sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
-//            }
-            RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
-            GanttChart chart = new GanttChart("/", dao);
-//            GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
-//        String     description = testCaseInfo.getDisplayName().replace("_", "-");
-            String description = TestInfoUtil.getTestMethodName(testInfo);
-            chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
-        }
     }
 
     protected void generateGanttChart(TestInfo testInfo, UUID sprintId, ProjectFile projectFile) throws Exception {
@@ -275,11 +232,9 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         sprint.initUserMap(peg.userApi.getAll(sprintId));
         sprint.initTaskMap(peg.taskApi.getAll(sprintId), peg.worklogApi.getAll(sprintId));
         sprint.recalculate(ParameterOptions.getLocalNow());
-        RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
-        GanttChart chart = new GanttChart("/", dao);
-//        GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", TestInfoUtil.getTestMethodName(testInfo) + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
-//        String     description = testCaseInfo.getDisplayName().replace("_", "-");
-        String description = TestInfoUtil.getTestMethodName(testInfo);
+        RenderDao  dao         = RenderUtil.createGanttRenderDao(context, sprint, TestInfoUtil.getTestMethodName(testInfo) + "-gantt", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
+        GanttChart chart       = new GanttChart("/", dao);
+        String     description = TestInfoUtil.getTestMethodName(testInfo);
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testResultFolder);
         compareResults(projectFile, testInfo);
     }
@@ -355,7 +310,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         ParameterOptions.setNow(randomCase.getNow());
         peg.generateRandomSickDays(peg.getUsers().stream().toList());
         //TODO sprint user calendars are not initialized with user off days.
-        generateWorkLogs();
+        BurnDownUtil.generateWorkLogs(peg);
     }
 
     private int generateRandomValue(int minNumber, int maxNumberExclusive) {
@@ -367,9 +322,9 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
 
     @Transactional
     private void generateSprint(TestInfo testInfo, RandomCase randomCase, Feature project) throws Exception {
-        int maxUsersPerSprint = Math.min(randomCase.getMaxNumberOfUsersPerSprint(), peg.getUsers().size());
-        int numberOfUsers = peg.random.nextInt(maxUsersPerSprint) + 1;
-        List<User> shuffledUsers = new ArrayList<>(peg.getUsers());
+        int        maxUsersPerSprint = Math.min(randomCase.getMaxNumberOfUsersPerSprint(), peg.getUsers().size());
+        int        numberOfUsers     = peg.random.nextInt(maxUsersPerSprint) + 1;
+        List<User> shuffledUsers     = new ArrayList<>(peg.getUsers());
         Collections.shuffle(shuffledUsers, peg.random);
         List<User> sprintUsers = shuffledUsers.subList(0, numberOfUsers);
         peg.random.setSeed(peg.nameGenerator.generateSprintName(peg.getSprintIndex()).hashCode());
@@ -452,125 +407,6 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         }
     }
 
-    private void generateWorkLogs() throws Exception {
-
-
-        log.info("--------------------------");
-        log.info("Generating work logs start");
-        for (Sprint sprint : peg.getSprints()) {
-            log.info("--------------------------");
-            log.info("Generating work logs start for {}", sprint.getName());
-//            sprint.initializeCalendars();//make sure the new exceptions are in the user calendars.
-            // ~60 % of sprints run on schedule; ~40 % carry a delay of up to MAX_DELAY_FACTOR.
-            float delay = peg.random.nextFloat() < (1f - DELAY_PROBABILITY) ? 0.0f : peg.random.nextFloat() * MAX_DELAY_FACTOR;
-            log.debug("Sprint '{}' delay factor: {}", sprint.getName(), delay);
-            generateWorklogs(sprint, delay, ParameterOptions.getLocalNow());
-            log.info("--------------------------");
-        }
-        log.info("Generating work logs end");
-        log.info("--------------------------");
-    }
-
-    /**
-     * Generates worklogs for the tasks in the sprint, simulating a team working day-by-day.
-     * <p>
-     * <b>Estimate inflation (delay &gt; 0):</b> before the day-loop starts, each leaf task's
-     * {@code remainingEstimate} is inflated in-memory to a value sampled from
-     * {@code [maxEstimate, maxEstimate * (1 + delay)]}, so that delayed sprints exceed the
-     * worst-case estimate.  Tasks in sprints with {@code delay == 0} keep their original
-     * {@code minEstimate}.
-     * </p>
-     * <p>
-     * <b>Dependency gate:</b> work is only logged for a task when all of its predecessors—
-     * including predecessors declared on any ancestor task in the hierarchy—have a zero
-     * {@code remainingEstimate} (i.e. are effectively done).
-     * </p>
-     *
-     * @param sprint the sprint to generate worklogs for
-     * @param delay  over-run factor (0 = no over-run; 0.3 = up to 30 % above {@code maxEstimate})
-     * @param now    the simulated current date/time; work is only logged for days before this date
-     */
-    @Transactional
-    protected void generateWorklogs(Sprint sprint, float delay, LocalDateTime now) {
-        try (Profiler pc = new Profiler(SampleType.CPU)) {
-
-            final long SECONDS_PER_WORKING_DAY = 75 * 6 * 60;
-
-            // Step 1: pre-inflate remaining estimates when this sprint is delayed.
-//            if (delay > 0f) {
-//                for (Task task : sprint.getTasks()) {
-//                    if (task.isTask() && task.isImpactOnCost()) {
-//                        Duration maxEstimate = task.getMaxEstimate();
-//                        if (maxEstimate != null && !maxEstimate.isZero()) {
-//                            long     extraSeconds = (long) (delay * maxEstimate.getSeconds() * peg.random.nextFloat());
-//                            Duration inflated     = maxEstimate.plusSeconds(extraSeconds);
-//                            log.debug("Inflating task '{}': minEstimate={}, inflated remainingEstimate={} (delay={})", task.getName(), task.getMinEstimate(), inflated, delay);
-//                            task.setRemainingEstimate(inflated);
-//                        }
-//                    }
-//                }
-//            }
-            Duration rest = Duration.ofSeconds(1);
-            // Step 2: iterate over the days of the sprint
-            for (LocalDate day = sprint.getStart().toLocalDate(); !rest.equals(Duration.ZERO) && now.toLocalDate().isAfter(day); day = day.plusDays(1)) {
-                LocalDateTime startOfDay = day.atStartOfDay().plusHours(8);
-                rest = Duration.ZERO;
-                // iterate over all tasks
-                for (Task task : sprint.getTasks()) {
-                    if (task.isTask() && task.isImpactOnCost()) {
-                        if (!task.getRemainingEstimate().isZero()) {
-                            //still work to be done
-                            if (!day.isBefore(task.getStart().toLocalDate())) {
-                                // Day is on or after task start && on or before finish
-//                                if (sprint.getName().equals("Paris") && task.getAssignedUser().getName().equals("Christopher Paul")) {
-//                                    if (task.getEffectiveCalendar().isWorkingDate(LocalDate.of(2025, 8, 20))) {
-//                                        log.error("mist");
-//                                    }
-//                                }
-
-                                if (task.getEffectiveCalendar().isWorkingDate(day)) {
-                                    // is a working day for this user
-                                    if (TaskUtil.areAllPredecessorsDone(task, sprint)) {
-                                        // we have the whole day
-                                        double performance = 1f;//daily performance is usually 100% of the resource availability
-//                                            if (peg.random.nextFloat() < 0.2f) {
-//                                                //in rare cases, performance can be much worse or better than usual, e.g. due to unexpected problems or overtime
-//                                                double minPerformance = 0.5f;//minimum performance of a resource (underwork)
-//                                                double maxPerformance = 1.2f;//maximum performance of a resource (overwork)
-//                                                performance = minPerformance + peg.random.nextFloat() * (maxPerformance - minPerformance);
-//                                            }
-//                                            if (sprint.getName().equals("Sydney")) {
-//                                                System.out.println();
-//                                            }
-                                        Duration maxTaskWork = TaskUtil.getTaskWorkPerDay(sprint, day, task, true);
-                                        Duration maxWork     = Duration.ofSeconds((long) ((performance * maxTaskWork.getSeconds())));//TODO use user calendar for working day length
-                                        Duration w           = maxWork;
-                                        Duration delta       = task.getRemainingEstimate().minus(w);
-                                        if (delta.isNegative()) {
-                                            w = task.getRemainingEstimate();
-                                        }
-                                        if (day.atStartOfDay().toLocalDate().isEqual(task.getStart().toLocalDate())) {
-                                            //first day
-                                            peg.addWorklogToBuffer(task, task.getAssignedUser(), task.getStart(), w, task.getName());
-                                        } else {
-                                            peg.addWorklogToBuffer(task, task.getAssignedUser(), day.atStartOfDay().plusHours(8), w, task.getName());//TODO use user calendar
-                                        }
-                                        task.calculateStatus(true);
-                                    } else {
-                                        log.debug("Task '{}' blocked on {} – predecessor not yet done", task.getName(), day);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    rest = rest.plus(task.getRemainingEstimate()); // accumulate the rest
-                }
-            }
-            sprint.recalculate(ParameterOptions.getLocalNow());
-        }
-        peg.flushWorklogBuffer(sprint);
-        persistTasksAndSprint(sprint);
-    }
 
     private int getMaxTaskNameLength(List<Task> taskList) {
         int maxNameLength = 0;
@@ -616,7 +452,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         levelResources(sprint);
 
         //save back to the database
-        persistTasksAndSprint(sprint);
+        peg.persistTasksAndSprint(sprint);
         if (projectFile == null) {
             try (Profiler pc = new Profiler(SampleType.FILE)) {
                 storeExpectedResult(testInfo, sprint);
@@ -756,13 +592,6 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
             if (GanttUtil.isValidTask(task)) {
                 logTask(task, referenceSprint.getTaskById(task.getId()), maxNameLength);
             }
-        }
-    }
-
-    private void persistTasksAndSprint(Sprint sprint) {
-        try (Profiler pc = new Profiler(SampleType.JPA)) {
-            peg.taskApi.updateBatch(sprint.getTasks(), sprint.getId());
-            peg.sprintApi.update(sprint);
         }
     }
 

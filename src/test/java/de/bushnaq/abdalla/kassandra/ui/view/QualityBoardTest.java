@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
+import de.bushnaq.abdalla.kassandra.util.BurnDownUtil;
 import de.bushnaq.abdalla.kassandra.util.NameGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -124,7 +125,7 @@ public class QualityBoardTest extends AbstractKeycloakUiTestUtil {
         sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));
 
         levelResourcesAndPersist(testInfo, sprint, null);
-        generateWorklogs(sprint, 0f, ParameterOptions.getLocalNow());
+        BurnDownUtil.generateWorklogs(peg, sprint, 0f, ParameterOptions.getLocalNow());
 //        seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         aboutViewTester.login(
                 "christopher.paul@kassandra.org",
