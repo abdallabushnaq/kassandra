@@ -9,10 +9,8 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
-import de.bushnaq.abdalla.kassandra.report.dao.BurnDownGuide;
-import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
-import de.bushnaq.abdalla.kassandra.report.dao.Milestones;
-import de.bushnaq.abdalla.kassandra.report.dao.WorklogRemaining;
+import de.bushnaq.abdalla.kassandra.report.burndown.DayWork;
+import de.bushnaq.abdalla.kassandra.report.dao.*;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
@@ -33,6 +31,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 
+import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED;
 import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
 
 /**
@@ -51,22 +50,25 @@ public class GanttBurndownChartService {
     /**
      * Default extra days shown after sprintEnd (matches GanttChartService).
      */
-    public static final  int               DEFAULT_POST_RUN        = GanttChartService.DEFAULT_POST_RUN;
+    public static final  int               DEFAULT_POST_RUN                                          = GanttChartService.DEFAULT_POST_RUN;
     /**
      * Default extra days shown before sprintStart (matches GanttChartService).
      */
-    public static final  int               DEFAULT_PRE_RUN         = GanttChartService.DEFAULT_PRE_RUN;
-    private static final int               ONE_WEEK                = 7;
-    private static final long              SECONDS_PER_HOUR        = 60 * 60;
+    public static final  int               DEFAULT_PRE_RUN                                           = GanttChartService.DEFAULT_PRE_RUN;
+    private static final String            ERROR_106_AGNTT_START_DATE_NOT_MACTHING_SPRINT_START_DATE = "Error #106: Gantt start date %s does not match sprint start date %s. Ignoring Gantt chart guide information";
+    private static final int               ONE_WEEK                                                  = 7;
+    private static final long              SECONDS_PER_HOUR                                          = 60 * 60;
     /**
      * Seconds in a 7.5-hour working day (8:00–12:00, 13:00–16:30).
      */
-    private static final long              SECONDS_PER_WORKING_DAY = 75L * 6L * 60L; // 27000
+    private static final long              SECONDS_PER_WORKING_DAY                                   = 75L * 6L * 60L; // 27000
     private final        DarkTheme         darkTheme;
     private final        GanttChartService ganttChartService;
     private final        LightTheme        lightTheme;
     // ── Public API ─────────────────────────────────────────────────────────────
     public               Milestones        milestones;
+
+    // ── Private helpers ─────────────────────────────────────────────────────────
 
     @Autowired
     public GanttBurndownChartService(LightTheme lightTheme, DarkTheme darkTheme, GanttChartService ganttChartService) {
@@ -75,8 +77,6 @@ public class GanttBurndownChartService {
         this.ganttChartService = ganttChartService;
     }
 
-    // ── Private helpers ─────────────────────────────────────────────────────────
-
     /**
      * Builds the DTO using default preRun/postRun padding.
      *
@@ -84,7 +84,7 @@ public class GanttBurndownChartService {
      * @param now    current date/time for the "N" milestone
      * @param dark   {@code true} → dark theme colours
      */
-    public GanttBurndownChartDto build(Sprint sprint, LocalDateTime now, boolean dark) {
+    public GanttBurndownChartDto build(Sprint sprint, LocalDateTime now, boolean dark) throws Exception {
         return build(sprint, now, dark, DEFAULT_PRE_RUN, DEFAULT_POST_RUN);
     }
 
@@ -97,12 +97,21 @@ public class GanttBurndownChartService {
      * @param preRun  extra days before sprintStart
      * @param postRun extra days after sprintEnd
      */
-    public GanttBurndownChartDto build(Sprint sprint, LocalDateTime now, boolean dark, int preRun, int postRun) {
+    public GanttBurndownChartDto build(Sprint sprint, LocalDateTime now, boolean dark, int preRun, int postRun) throws Exception {
         Theme                 theme = dark ? darkTheme : lightTheme;
         GanttBurndownChartDto dto   = new GanttBurndownChartDto();
 
-        List<Worklog>          worklogs        = sprint.getWorklogs() != null ? sprint.getWorklogs() : List.of();
-        List<WorklogRemaining> wlRemainingList = sprint.getWorklogRemaining() != null ? sprint.getWorklogRemaining() : List.of();
+        List<Worklog>          worklogs                   = sprint.getWorklogs() != null ? sprint.getWorklogs() : List.of();
+        List<WorklogRemaining> wlRemainingList            = sprint.getWorklogRemaining() != null ? sprint.getWorklogRemaining() : List.of();
+        AuthorsContribution    usersTotalContribution     = new AuthorsContribution();
+        Map<User, DayWork[]>   usersWorkPerDayAccumulated = new HashMap<>();// work per author and day, were every day has the amount of work done at all previous days, first day has 0 work done
+
+
+        createMilestones(sprint, now);
+        calculateAuthorContribution(sprint, worklogs, wlRemainingList, usersTotalContribution);
+
+//        calculateUserWorkPerDayAccumulated(sprint, milestones, worklogs, wlRemainingList, usersTotalContribution, usersWorkPerDayAccumulated);//TODO stop passing Milestonres as parameter
+
 
         // Sort worklogs chronologically for correct running-total computation
         List<Worklog> sortedWorklogs = worklogs.stream()
@@ -296,7 +305,25 @@ public class GanttBurndownChartService {
         }
 
         // ── Gantt guides ───────────────────────────────────────────────────────
-        buildGanttGuides(sprint, chartStart, totalDays, dto);
+        {
+//            int startDayIndex = calculateDayIndex(sprint.getStart());
+            int stopDayIndex = calculateDayIndex(sprint.getEnd());
+
+            BurnDownGuide ganttWorkWithoutBufferPerDayAccumulated = new BurnDownGuide(sprint.getStart(), stopDayIndex);
+            BurnDownGuide ganttWorkWithBufferPerDayAccumulated    = new BurnDownGuide(sprint.getStart(), stopDayIndex);
+            initGanttGuide(sprint, now, ganttWorkWithoutBufferPerDayAccumulated, false);
+            initGanttGuide(sprint, now, ganttWorkWithBufferPerDayAccumulated, true);
+            dto.ganttGuideWithoutBuffer = new ArrayList<>();
+            for (Duration duration : ganttWorkWithoutBufferPerDayAccumulated.getDwindlingWork()) {
+                dto.ganttGuideWithoutBuffer.add(duration.toSeconds());
+            }
+            dto.ganttGuideWithBuffer = new ArrayList<>();
+            for (Duration duration : ganttWorkWithBufferPerDayAccumulated.getDwindlingWork()) {
+                dto.ganttGuideWithBuffer.add(duration.toSeconds());
+            }
+        }
+
+//        buildGanttGuides(sprint, chartStart, totalDays, dto);
 
         // Raise maxWorked if guides exceed it
         if (dto.ganttGuideWithoutBuffer != null && !dto.ganttGuideWithoutBuffer.isEmpty()) {
@@ -384,6 +411,30 @@ public class GanttBurndownChartService {
         return sb.toString();
     }
 
+    public void calculateAuthorContribution(Sprint sprint, List<Worklog> worklogList, List<WorklogRemaining> worklogRemaining,
+                                            AuthorsContribution authorsContribution) {
+        if (worklogRemaining != null) {
+            for (WorklogRemaining work : worklogRemaining) {
+                AuthorContribution ac = authorsContribution.get(work.getAuthor());
+                if (ac == null) {
+                    ac = new AuthorContribution();
+                    authorsContribution.put(work.getAuthor(), ac);
+                }
+                ac.addRemaining(work.getRemaining());
+            }
+        }
+        if (worklogList != null) {
+            for (Worklog work : worklogList) {
+                AuthorContribution ac = authorsContribution.get(sprint.getUser(work.getAuthorId()));
+                if (ac == null) {
+                    ac = new AuthorContribution();
+                    authorsContribution.put(sprint.getUser(work.getAuthorId()), ac);
+                }
+                ac.addWorked(work.getTimeSpent());
+            }
+        }
+    }
+
     protected LocalDate calculateDayFromIndex(int index) {
         LocalDate firstMilestoneDay = milestones.firstMilestone;
         return DateUtil.addDay(firstMilestoneDay, index);
@@ -396,6 +447,91 @@ public class GanttBurndownChartService {
 
     protected int calculateDayIndex(LocalDateTime date) {
         return calculateDayIndex(date.toLocalDate());
+    }
+
+    public void calculateUserWorkPerDayAccumulated(Sprint sprint, Milestones milestones, List<Worklog> worklog, List<WorklogRemaining> worklogRemaining, AuthorsContribution usersTotalContribution, Map<User, DayWork[]> usersWorkPerDayAccumulated) {
+        this.milestones = milestones;
+        Map<User, Duration> authorWorkSum = new HashMap<>();// total work done by any author
+        for (User user : usersTotalContribution.getSortedKeyList()) {
+            if (authorWorkSum.get(user) == null) {
+                authorWorkSum.put(user, Duration.ZERO);
+            }
+        }
+        int days = DateUtil.calculateDays(milestones.firstMilestone, milestones.lastMilestone) + 1;
+        if (worklog != null) {
+            int lastDayIndexWithValue = 0;// the last day any author has data
+            System.out.println("========================================================================================");
+            for (Worklog work : worklog) {
+//                if (sprint.getTaskById(work.getTaskId()).getKey().equals("T-2"))
+//                if (sprint.getUser(work.getAuthorId()).getName().equals("Jennifer Holleman")) {
+//                    System.out.println("start=" + work.getStart() + " " + DateUtil.createDurationString(work.getTimeSpent(), false, true, true) + " " + sprint.getUser(work.getAuthorId()).getName());
+//                }
+                Duration  aws     = authorWorkSum.get(sprint.getUser(work.getAuthorId()));
+                DayWork[] dayWork = usersWorkPerDayAccumulated.get(sprint.getUser(work.getAuthorId()));
+                if (dayWork == null) {
+                    // create a list of work per day for authors that have worked
+                    dayWork    = new DayWork[days + 3];// first value is 0
+                    dayWork[0] = new DayWork();
+                    usersWorkPerDayAccumulated.put(sprint.getUser(work.getAuthorId()), dayWork);
+                }
+                aws = aws.plus(work.getTimeSpent());
+                authorWorkSum.put(sprint.getUser(work.getAuthorId()), aws);
+                int day = (DateUtil.calculateDays(milestones.firstMilestone, DateUtil.toDayPrecision(work.getStart())));
+                if (day < 0) {
+                    // ignore any data before first day of sprint
+                    day = 0;
+                }
+                if (day < days) {
+                    {
+                        if (dayWork[day + 1] != null) {
+                            dayWork[day + 1].setDuration(aws);
+                            dayWork[day + 1].add(sprint, work);
+                        } else {
+                            dayWork[day + 1] = new DayWork(aws);// every day has the amount of work done at that day and all days before that
+                            dayWork[day + 1].add(sprint, work);
+                        }
+                        if (!aws.isZero()) {
+                            lastDayIndexWithValue = Math.max(day, lastDayIndexWithValue);
+                        }
+                    }
+                } else {
+//                    numberOfWorkExceptions++;
+                    log.error(WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED);
+                }
+
+            }
+            System.out.println("========================================================================================");
+            milestones.add(calculateDayFromIndex(lastDayIndexWithValue + 1), "L", "last value + 1", Color.red, true);
+        }
+        milestones.calculate();
+        int nowDayIndex = (DateUtil.calculateDays(milestones.firstMilestone, DateUtil.min(milestones.lastMilestone, milestones.get("N").time)));
+        for (User user : usersTotalContribution.getSortedKeyList()) {
+            Duration  last = Duration.ZERO;
+            DayWork[] aw   = usersWorkPerDayAccumulated.get(user);
+            if (aw == null) {
+                // create a list of work per day for authors that have no work done yet and thus
+                // where missed in the above use case involving worklog
+                aw    = new DayWork[days + 3];
+                aw[0] = new DayWork();
+                usersWorkPerDayAccumulated.put(user, aw);
+            }
+            // fill in empty parts of the days list
+            for (int i = 1; i < usersWorkPerDayAccumulated.get(user).length; i++) {
+                if (i <= nowDayIndex + 2) {
+                    if (usersWorkPerDayAccumulated.get(user)[i] == null
+                            || last.toSeconds() > usersWorkPerDayAccumulated.get(user)[i].duration.toSeconds()) {
+                        usersWorkPerDayAccumulated.get(user)[i] = new DayWork(last);
+                    }
+                    last = usersWorkPerDayAccumulated.get(user)[i].duration;
+                } else {
+                    // ignore anything after today (only makes sense in a test scenario, where we
+                    // simulate a now time in the past)
+                    if (usersWorkPerDayAccumulated.get(user)[i] == null) {
+                        usersWorkPerDayAccumulated.get(user)[i] = new DayWork(Duration.ZERO);
+                    }
+                }
+            }
+        }
     }
 
     private void calculateWorkPerDay(Sprint sprint, Task task, BurnDownGuide guide, boolean print) throws Exception {
@@ -565,30 +701,32 @@ public class GanttBurndownChartService {
         return result;
     }
 
-    protected void createMilestones(Sprint sprint, LocalDateTime now/*, LocalDateTime firstWorklog, LocalDateTime lastWorklog*/) {
-        //TODO should we include first and last worklog date?
-        milestones = new Milestones(sprint.getName());
-        if (sprint.getStart() != null) {
-            milestones.add(sprint.getStart().toLocalDate(), "S", "Start (Start of project)", Color.blue);
-        }
-        milestones.add(now.toLocalDate(), "N", "Now (current date)", Color.blue);
-        if (sprint.getEnd() != null) {
-            milestones.add(sprint.getEnd().toLocalDate(), "E", "End (End of project)", Color.blue);
-        }
-        if (sprint.getReleaseDate() != null) {
-            milestones.add(sprint.getReleaseDate().toLocalDate(), "R", "Release (Estimated release date)", Color.blue);
-        }
-        if (isHideNow(now, sprint.getEnd(), sprint.isClosed())) {
-            milestones.remove("N");
-        }
+    protected void createMilestones(Sprint sprint, LocalDateTime now) {
+        if (milestones == null) {
+            //TODO should we include first and last worklog date?
+            milestones = new Milestones(sprint.getName());
+            if (sprint.getStart() != null) {
+                milestones.add(sprint.getStart().toLocalDate(), "S", "Start (Start of project)", Color.blue);
+            }
+            milestones.add(now.toLocalDate(), "N", "Now (current date)", Color.blue);
+            if (sprint.getEnd() != null) {
+                milestones.add(sprint.getEnd().toLocalDate(), "E", "End (End of project)", Color.blue);
+            }
+            if (sprint.getReleaseDate() != null) {
+                milestones.add(sprint.getReleaseDate().toLocalDate(), "R", "Release (Estimated release date)", Color.blue);
+            }
+            if (isHideNow(now, sprint.getEnd(), sprint.isClosed())) {
+                milestones.remove("N");
+            }
 //        if (firstWorklog != null && (sprint.getStart() == null || !firstWorklog.toLocalDate().isEqual(sprint.getStart().toLocalDate()))) {
 //            milestones.add(firstWorklog.toLocalDate(), "F", "First punch-in", Color.blue);
 //        }
 //        if (lastWorklog != null && (sprint.getEnd() == null || !lastWorklog.toLocalDate().isEqual(sprint.getEnd().toLocalDate()))) {
 //            milestones.add(lastWorklog.toLocalDate(), "L", "Last punch-out", Color.blue);
 //        }
-        milestones.calculate();
-        // milestones.print();//debugging code
+            milestones.calculate();
+            // milestones.print();//debugging code
+        }
     }
 
     /**
@@ -611,7 +749,6 @@ public class GanttBurndownChartService {
      * @throws Exception
      */
     public void initGanttGuide(Sprint sprint, LocalDateTime now, BurnDownGuide burndownguide, boolean isWithBuffer) throws Exception {
-        createMilestones(sprint, now/*, dao.firstWorklog, dao.lastWorklog*/);
         System.out.println("--------------------------------------------------------------------------------------------");
 
         for (Task task : sprint.getTasks()) {

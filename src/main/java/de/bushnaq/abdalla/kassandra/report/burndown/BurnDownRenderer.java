@@ -52,34 +52,33 @@ import java.util.Map;
 @Deprecated
 public class BurnDownRenderer extends AbstractRenderer {
 
-    private static final String                    ERROR_106_AGNTT_START_DATE_NOT_MACTHING_SPRINT_START_DATE = "Error #106: Gantt start date %s does not match sprint start date %s. Ignoring Gantt chart guide information";
-    private static final int                       ONE_WEEK                                                  = 7;
-    private static final long                      ONE_WORK_MONTH                                            = 20L * 75L * 60L * 6L;
-    private static final long                      ONE_WORK_WEEK                                             = 5L * 75L * 60L * 6L;
-    private static final long                      SECONDS_PER_HOUR                                          = 60 * 60;
-    private static final long                      SECONDS_PER_WORKING_DAY                                   = 75 * 6 * 60;
-    private static final String                    WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED             = "Work outside allowed time boundaries occurred";
-    public static final  int                       Y_AXIS_WIDTH                                              = 50;
-    private static final float                     fine_LINE_STROKE_WIDTH                                    = 1f;
-    private static final DateTimeFormatter         sdfymd                                                    = DateTimeFormatter.ofPattern("yyyy.MMM.dd");
+    private static final int                       ONE_WEEK                                      = 7;
+    private static final long                      ONE_WORK_MONTH                                = 20L * 75L * 60L * 6L;
+    private static final long                      ONE_WORK_WEEK                                 = 5L * 75L * 60L * 6L;
+    private static final long                      SECONDS_PER_HOUR                              = 60 * 60;
+    private static final long                      SECONDS_PER_WORKING_DAY                       = 75 * 6 * 60;
+    public static final  String                    WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED = "Work outside allowed time boundaries occurred";
+    public static final  int                       Y_AXIS_WIDTH                                  = 50;
+    private static final float                     fine_LINE_STROKE_WIDTH                        = 1f;
+    private static final DateTimeFormatter         sdfymd                                        = DateTimeFormatter.ofPattern("yyyy.MMM.dd");
     private              Context                   context;
     private              Duration                  eBestWork;
     private              Duration                  eWorstWork;
     private              Color                     extrapolationColor;
-    public               BurnDownGuide             ganttWorkWithBufferPerDayAccumulated                      = null;// max work per day, were every day has the amount of work planned at that day and all days before that
-    public               BurnDownGuide             ganttWorkWithoutBufferPerDayAccumulated                   = null;// min work per day, were every day has the amount of work planned at that day and all days before that
+    public               BurnDownGuide             ganttWorkWithBufferPerDayAccumulated          = null;// max work per day, were every day has the amount of work planned at that day and all days before that
+    public               BurnDownGuide             ganttWorkWithoutBufferPerDayAccumulated       = null;// min work per day, were every day has the amount of work planned at that day and all days before that
     protected            Theme                     kassandraTheme;
     protected            LocalDateTime             lastWorklog;
     private final        Duration                  maxActualWorked;
     private              Duration                  maxWorked;
-    private              int                       numberOfWorkExceptions                                    = 0;
+    private final        int                       numberOfWorkExceptions                        = 0;
     private final        GanttBurndownChartService service;
     private final        Sprint                    sprint;
     private              boolean                   sprintClosed;
-    protected            AuthorsContribution       usersTotalContribution                                    = new AuthorsContribution();
-    private final        Map<User, DayWork[]>      usersWorkPerDayAccumulated                                = new HashMap<>();// work per author and day, were every day has the amount of work done at all previous days, first day has 0 work done
-    private              List<Worklog>             worklog;
-    private              List<WorklogRemaining>    worklogRemaining;
+    protected            AuthorsContribution       usersTotalContribution                        = new AuthorsContribution();
+    private final        Map<User, DayWork[]>      usersWorkPerDayAccumulated                    = new HashMap<>();// work per author and day, were every day has the amount of work done at all previous days, first day has 0 work done
+    private              List<Worklog>             worklogs;
+    private              List<WorklogRemaining>    worklogsRemaining;
     private              GraphSquare               yAxis;
 
     public BurnDownRenderer(GanttBurndownChartService service, RenderDao dao) throws Exception {
@@ -100,29 +99,6 @@ public class BurnDownRenderer extends AbstractRenderer {
         }
     }
 
-    public void calculateAuthorContribution(List<Worklog> worklogList, List<WorklogRemaining> worklogRemaining,
-                                            AuthorsContribution authorsContribution) {
-        if (worklogRemaining != null) {
-            for (WorklogRemaining work : worklogRemaining) {
-                AuthorContribution ac = authorsContribution.get(work.getAuthor());
-                if (ac == null) {
-                    ac = new AuthorContribution();
-                    authorsContribution.put(work.getAuthor(), ac);
-                }
-                ac.addRemaining(work.getRemaining());
-            }
-        }
-        if (worklogList != null) {
-            for (Worklog work : worklogList) {
-                AuthorContribution ac = authorsContribution.get(sprint.getUser(work.getAuthorId()));
-                if (ac == null) {
-                    ac = new AuthorContribution();
-                    authorsContribution.put(sprint.getUser(work.getAuthorId()), ac);
-                }
-                ac.addWorked(work.getTimeSpent());
-            }
-        }
-    }
 
     protected int calculateAuthorGraphHeight(Duration authorDelta, Duration authorEstimated, Duration sumEstimated) {
         long maxAuthorGraphHeight = (diagram.height * authorEstimated.getSeconds()) / sumEstimated.getSeconds();
@@ -300,7 +276,7 @@ public class BurnDownRenderer extends AbstractRenderer {
         if (maxWorked != null && !maxWorked.isZero()) {
             // y axis markings
             drawYAxes(startX, maxWorked);
-            if (worklog != null && worklog.size() != 0) {
+            if (worklogs != null && worklogs.size() != 0) {
                 drawBurnDown(firstDay, firstDayX, maxWorked);
             }
             if (sprintClosed) {
@@ -463,7 +439,7 @@ public class BurnDownRenderer extends AbstractRenderer {
             Duration worked     = Duration.ZERO;
             int      yesterdayX = 0;
             int      yesterdayY = 0;
-            for (Worklog work : worklog) {
+            for (Worklog work : worklogs) {
                 if (work.getStart().toLocalDate().isBefore(milestones.get("N").time)) {
                     worked = worked.plus(work.getTimeSpent());
                     int x = firstDayX + DateUtil.calculateDays(firstDay, DateUtil.toDayPrecision(work.getStart())) * calendarXAxes.dayOfWeek.getWidth();
@@ -486,7 +462,7 @@ public class BurnDownRenderer extends AbstractRenderer {
             // ---Draw last polygon
             drawBorder(lastX, lastY, yesterdayX, yesterdayY);
             // to now
-            if (worklog.size() != 0) {
+            if (worklogs.size() != 0) {
                 int x = firstDayX + DateUtil.calculateDays(firstDay, milestones.get("N").time) * calendarXAxes.dayOfWeek.getWidth();
                 if (x != lastX) {
                     drawBorder(lastX, lastY, x, lastY);
@@ -667,97 +643,18 @@ public class BurnDownRenderer extends AbstractRenderer {
             extrapolationColor = kassandraTheme.burndownTheme.inTimeColor;
         }
 
-        calculateAuthorContribution(worklog, worklogRemaining, usersTotalContribution);
+        service.calculateAuthorContribution(sprint, worklogs, worklogsRemaining, usersTotalContribution);
 
-        Map<User, Duration> authorWorkSum = new HashMap<>();// total work done by any author
-        for (User user : usersTotalContribution.getSortedKeyList()) {
-            if (authorWorkSum.get(user) == null) {
-                authorWorkSum.put(user, Duration.ZERO);
-            }
-        }
-        int days = DateUtil.calculateDays(milestones.firstMilestone, milestones.lastMilestone) + 1;
-        if (worklog != null) {
-            int lastDayIndexWithValue = 0;// the last day any author has data
-            System.out.println("========================================================================================");
-            for (Worklog work : worklog) {
-//                if (sprint.getTaskById(work.getTaskId()).getKey().equals("T-2"))
-//                if (sprint.getUser(work.getAuthorId()).getName().equals("Jennifer Holleman")) {
-//                    System.out.println("start=" + work.getStart() + " " + DateUtil.createDurationString(work.getTimeSpent(), false, true, true) + " " + sprint.getUser(work.getAuthorId()).getName());
-//                }
-                Duration  aws     = authorWorkSum.get(sprint.getUser(work.getAuthorId()));
-                DayWork[] dayWork = usersWorkPerDayAccumulated.get(sprint.getUser(work.getAuthorId()));
-                if (dayWork == null) {
-                    // create a list of work per day for authors that have worked
-                    dayWork    = new DayWork[days + 3];// first value is 0
-                    dayWork[0] = new DayWork();
-                    usersWorkPerDayAccumulated.put(sprint.getUser(work.getAuthorId()), dayWork);
-                }
-                aws = aws.plus(work.getTimeSpent());
-                authorWorkSum.put(sprint.getUser(work.getAuthorId()), aws);
-                int day = (DateUtil.calculateDays(milestones.firstMilestone, DateUtil.toDayPrecision(work.getStart())));
-                if (day < 0) {
-                    // ignore any data before first day of sprint
-                    day = 0;
-                }
-                if (day < days) {
-                    {
-                        if (dayWork[day + 1] != null) {
-                            dayWork[day + 1].setDuration(aws);
-                            dayWork[day + 1].add(sprint, work);
-                        } else {
-                            dayWork[day + 1] = new DayWork(aws);// every day has the amount of work done at that day and all days before that
-                            dayWork[day + 1].add(sprint, work);
-                        }
-                        if (!aws.isZero()) {
-                            lastDayIndexWithValue = Math.max(day, lastDayIndexWithValue);
-                        }
-                    }
-                } else {
-                    numberOfWorkExceptions++;
-                    logger.error(WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED);
-                }
+        service.calculateUserWorkPerDayAccumulated(sprint, milestones, worklogs, worklogsRemaining, usersTotalContribution, usersWorkPerDayAccumulated);
 
-            }
-            System.out.println("========================================================================================");
-            milestones.add(calendarFromDayIndex(lastDayIndexWithValue + 1), "L", "last value + 1", Color.red, true);
-        }
-        milestones.calculate();
-        int nowDayIndex = (DateUtil.calculateDays(milestones.firstMilestone, DateUtil.min(milestones.lastMilestone, milestones.get("N").time)));
-        for (User user : usersTotalContribution.getSortedKeyList()) {
-            Duration  last = Duration.ZERO;
-            DayWork[] aw   = usersWorkPerDayAccumulated.get(user);
-            if (aw == null) {
-                // create a list of work per day for authors that have no work done yet and thus
-                // where missed in the above use case involving worklog
-                aw    = new DayWork[days + 3];
-                aw[0] = new DayWork();
-                usersWorkPerDayAccumulated.put(user, aw);
-            }
-            // fill in empty parts of the days list
-            for (int i = 1; i < usersWorkPerDayAccumulated.get(user).length; i++) {
-                if (i <= nowDayIndex + 2) {
-                    if (usersWorkPerDayAccumulated.get(user)[i] == null
-                            || last.toSeconds() > usersWorkPerDayAccumulated.get(user)[i].duration.toSeconds()) {
-                        usersWorkPerDayAccumulated.get(user)[i] = new DayWork(last);
-                    }
-                    last = usersWorkPerDayAccumulated.get(user)[i].duration;
-                } else {
-                    // ignore anything after today (only makes sense in a test scenario, where we
-                    // simulate a now time in the past)
-                    if (usersWorkPerDayAccumulated.get(user)[i] == null) {
-                        usersWorkPerDayAccumulated.get(user)[i] = new DayWork(Duration.ZERO);
-                    }
-                }
-            }
-        }
-
-        if (usersTotalContribution.size() != 0) {
+        if (!usersTotalContribution.isEmpty()) {
             for (User user : usersTotalContribution.getSortedKeyList()) {
                 authors.add(user);
             }
         }
 //        authors.calculateColors(kassandraTheme, true);
     }
+
 
     /**
      * Initialize BurnDownGuide object from gantt chart of this project to visualize
@@ -774,8 +671,8 @@ public class BurnDownRenderer extends AbstractRenderer {
         int startDayIndex = calculateDayIndex(sprintStartDate);
         int stopDayIndex  = calculateDayIndex(sprintEndDate);
 
-        ganttWorkWithoutBufferPerDayAccumulated = new BurnDownGuide(context, sprintStartDate, startDayIndex, stopDayIndex);
-        ganttWorkWithBufferPerDayAccumulated    = new BurnDownGuide(context, sprintStartDate, startDayIndex, stopDayIndex);
+        ganttWorkWithoutBufferPerDayAccumulated = new BurnDownGuide(sprintStartDate, stopDayIndex);
+        ganttWorkWithBufferPerDayAccumulated    = new BurnDownGuide(sprintStartDate, stopDayIndex);
         service.initGanttGuide(sprint, now, ganttWorkWithoutBufferPerDayAccumulated, false);
         service.initGanttGuide(sprint, now, ganttWorkWithBufferPerDayAccumulated, true);
 //        for (Task task : sprint.getTasks()) {
@@ -870,15 +767,15 @@ public class BurnDownRenderer extends AbstractRenderer {
 //    }
 
     private void processingInit(RenderDao dao) throws IOException {
-        this.context          = dao.context;
-        this.worklog          = dao.worklog;
-        this.lastWorklog      = dao.lastWorklog;
-        this.worklogRemaining = dao.worklogRemaining;
-        this.eBestWork        = dao.estimatedBestWork;
-        this.eWorstWork       = dao.estimatedWorstWork;
-        this.maxWorked        = dao.maxWorked;
-        this.sprintClosed     = dao.sprint.isClosed();
-        this.kassandraTheme   = dao.kassandraTheme;
+        this.context           = dao.context;
+        this.worklogs          = dao.worklog;
+        this.lastWorklog       = dao.lastWorklog;
+        this.worklogsRemaining = dao.worklogRemaining;
+        this.eBestWork         = dao.estimatedBestWork;
+        this.eWorstWork        = dao.estimatedWorstWork;
+        this.maxWorked         = dao.maxWorked;
+        this.sprintClosed      = dao.sprint.isClosed();
+        this.kassandraTheme    = dao.kassandraTheme;
         createMilestones(dao.start, dao.now, dao.sprint.getLatestFinishDate(), dao.firstWorklog, dao.lastWorklog, dao.sprint.getReleaseDate(), dao.sprint.isClosed());
 
         init(dao);

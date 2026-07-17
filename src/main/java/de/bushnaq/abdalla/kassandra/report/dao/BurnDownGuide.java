@@ -1,8 +1,8 @@
 package de.bushnaq.abdalla.kassandra.report.dao;
 
-import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +20,7 @@ public class BurnDownGuide {
     private final int               days;
     // work planned at that day and all days before that, first day has the total
     // and last day has the last work done
+    @Getter
     private       Duration[]        dwindlingWork = null;// work per day, were every day has the total amount reduced by the amount of
     private final Logger            logger        = LoggerFactory.getLogger(this.getClass());
     public final  DateTimeFormatter sdtf          = DateTimeFormatter.ofPattern("yyyy.MMM.dd HH:mm", Util.locale);
@@ -28,7 +29,7 @@ public class BurnDownGuide {
     // private String xlsxFile = null;
     private       Duration[]        work          = null;// work per day, were every day has the total amount reduced by the amount of
 
-    public BurnDownGuide(Context context, LocalDateTime sprintStartDate, int startDayIndex, int endDayIndex)
+    public BurnDownGuide(LocalDateTime sprintStartDate, int endDayIndex)
             throws Exception {
 
 

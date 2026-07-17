@@ -549,15 +549,18 @@ export class BurndownRenderer extends AbstractRenderer {
      */
     private drawPlannedBurnDownGuide(svg: SVGElement, firstDayX: number, guide: number[]): void {
         let lastX = 0;
-        let lastY: number = this.isPlannedBurnDownGuideAvailable()
-            ? this.diagram.y + this.diagram.height - this.calculateGraphHight(guide[this.toArrayIndex(0)] || 0)
-            : this.diagram.y + this.diagram.height - this.calculateGraphHight(this.maxWorked);
+        let lastY: number = 0;
+        if (this.isPlannedBurnDownGuideAvailable()) {
+            lastY = this.diagram.y + this.diagram.height - this.calculateGraphHight(guide[0])
+        } else {
+            lastY = this.diagram.y + this.diagram.height - this.calculateGraphHight(this.maxWorked);
+        }
         const color = ColorUtils.intToHex(this.theme.burndownTheme.plannedGuideColor, '#3b82f6');
 
         // Java: guide.getSize() — the guide's own (firstMilestone-relative) length.
-        const guideSize = guide.length - this.calendarXAxes.priRun;
-        for (let i = 0; i < guideSize; i++) {
-            const r = guide[this.toArrayIndex(i)] || 0;
+        // const guideSize = guide.length - this.calendarXAxes.priRun;
+        for (let i = 0; i < guide.length; i++) {
+            const r = guide[i];
             const x = firstDayX + (this.calendarXAxes.priRun + i) * this.dayWidth - this.dayWidth / 2 + 1;
             const y = this.diagram.y + this.diagram.height - this.calculateGraphHight(r);
             if (i !== 0) {
