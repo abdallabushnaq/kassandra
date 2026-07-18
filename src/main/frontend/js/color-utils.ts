@@ -8,6 +8,29 @@ export class ColorUtils {
     static BLACK: number = 0x000000;
 
     /**
+     * Converts a 0xAARRGGBB integer (as sent by Java with alpha encoded via {@code alpha << 24})
+     * to a CSS hex color string in #rrggbbaa format.
+     * Mirrors the inverse of Java ThemeDto.rgb() helper.
+     *
+     * @param value   0xAARRGGBB integer with alpha in bits 24–31, or null/undefined/string
+     * @param fallback default color when value is null (defaults to '#ffffff')
+     * @returns CSS hex color string, e.g. '#3a7bc8ff'
+     */
+    static intToHexWithAlpha(value: number | string | null | undefined, fallback = '#ffffff'): string {
+        if (value == null) return fallback;
+        if (typeof value === 'string') return value;
+        if (typeof value === 'number') {
+            const unsigned = value >>> 0;
+            const r = (unsigned >> 16) & 0xff;
+            const g = (unsigned >> 8) & 0xff;
+            const b = unsigned & 0xff;
+            const a = (unsigned >> 24) & 0xff;
+            return '#' + [r, g, b, a].map(x => x.toString(16).padStart(2, '0')).join('');
+        }
+        return fallback;
+    }
+
+    /**
      * Converts a 0xRRGGBB integer (as sent by the server ThemeDto) to a CSS hex color string.
      * Mirrors the inverse of Java ThemeDto.rgb() helper.
      *
@@ -133,7 +156,7 @@ export class ColorUtils {
      * @return a new {@link Color} with the same RGB components and the new alpha
      */
     static setAlpha(c1: number, alpha: number): number {
-        return (c1 & 0x00ffffff) | (alpha << 24);
+        return (c1 & 0x00ffffff) | ((alpha & 0xff) << 24);
     }
 
 }

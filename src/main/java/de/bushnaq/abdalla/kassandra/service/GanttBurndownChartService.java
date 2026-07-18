@@ -21,7 +21,6 @@ import de.bushnaq.abdalla.kassandra.rest.dto.ThemeDto;
 import de.bushnaq.abdalla.util.ErrorException;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.xmlgraphics.java2d.color.ColorUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -110,13 +109,11 @@ public class GanttBurndownChartService {
         createMilestones(sprint, now);
         calculateAuthorContribution(sprint, worklogs, wlRemainingList, usersTotalContribution);
 
-//        calculateUserWorkPerDayAccumulated(sprint, milestones, worklogs, wlRemainingList, usersTotalContribution, usersWorkPerDayAccumulated);//TODO stop passing Milestonres as parameter
+        calculateUserWorkPerDayAccumulated(sprint, milestones, worklogs, wlRemainingList, usersTotalContribution, usersWorkPerDayAccumulated);//TODO stop passing Milestonres as parameter
 
 
         // Sort worklogs chronologically for correct running-total computation
-        List<Worklog> sortedWorklogs = worklogs.stream()
-                .sorted(Comparator.comparing(Worklog::getStart))
-                .toList();
+        List<Worklog> sortedWorklogs = worklogs.stream().sorted(Comparator.comparing(Worklog::getStart)).toList();
 
         // ── Chart window ────────────────────────────────────────────────────────
         LocalDate chartStartDate = sprint.getEarliestStartDate().toLocalDate();
@@ -177,58 +174,59 @@ public class GanttBurndownChartService {
 
         // ── Collect unique authors (worklogs first, then worklogRemaining) ─────
         // Use LinkedHashMap to preserve insertion order (matches Java's sorted-key-list order)
-        Map<UUID, User> authorMap     = new LinkedHashMap<>();
-        Map<UUID, Long> workedSecs    = new HashMap<>();
-        Map<UUID, Long> remainingSecs = new HashMap<>();
-
+        Map<UUID, User> authorMap = new LinkedHashMap<>();
+//        Map<UUID, Long> workedSecs    = new HashMap<>();
+//        Map<UUID, Long> remainingSecs = new HashMap<>();
+//
         for (Worklog w : sortedWorklogs) {
             User u = sprint.getUser(w.getAuthorId());
-            if (u != null) authorMap.put(u.getId(), u);
-        }
-        for (WorklogRemaining wr : wlRemainingList) {
-            User u = wr.getAuthor();
-            if (u != null) {
+            if (u != null)
                 authorMap.put(u.getId(), u);
-                remainingSecs.merge(u.getId(), wr.getRemaining().getSeconds(), Long::sum);
-            }
         }
-        for (UUID id : authorMap.keySet()) {
-            workedSecs.put(id, 0L);
-        }
-
-        // ── Per-author accumulated work arrays ─────────────────────────────────
-        int                 arrayLen   = totalDays + 3;
-        Map<UUID, long[]>   workArrays = new LinkedHashMap<>();
+//        for (WorklogRemaining wr : wlRemainingList) {
+//            User u = wr.getAuthor();
+//            if (u != null) {
+//                authorMap.put(u.getId(), u);
+//                remainingSecs.merge(u.getId(), wr.getRemaining().getSeconds(), Long::sum);
+//            }
+//        }
+//        for (UUID id : authorMap.keySet()) {
+//            workedSecs.put(id, 0L);
+//        }
+//
+//        // ── Per-author accumulated work arrays ─────────────────────────────────
+        int arrayLen = totalDays + 3;
+//        Map<UUID, long[]>   workArrays = new LinkedHashMap<>();
         Map<UUID, String[]> tooltipArr = new LinkedHashMap<>();
-
+//
         for (UUID id : authorMap.keySet()) {
-            workArrays.put(id, new long[arrayLen]);
+//            workArrays.put(id, new long[arrayLen]);
             tooltipArr.put(id, new String[arrayLen]);
         }
-
-        // Running totals per author (for accumulation)
-        Map<UUID, Long> running = new HashMap<>();
-        for (UUID id : authorMap.keySet()) running.put(id, 0L);
-
+//
+//        // Running totals per author (for accumulation)
+//        Map<UUID, Long> running = new HashMap<>();
+//        for (UUID id : authorMap.keySet()) running.put(id, 0L);
+//
         for (Worklog w : sortedWorklogs) {
             User u = sprint.getUser(w.getAuthorId());
             if (u == null) continue;
             UUID id = u.getId();
-
-            long newTotal = running.getOrDefault(id, 0L) + w.getTimeSpent().getSeconds();
-            running.put(id, newTotal);
-            workedSecs.merge(id, w.getTimeSpent().getSeconds(), Long::sum);
-
-            // Day offset from chartStart
+//
+//            long newTotal = running.getOrDefault(id, 0L) + w.getTimeSpent().getSeconds();
+//            running.put(id, newTotal);
+//            workedSecs.merge(id, w.getTimeSpent().getSeconds(), Long::sum);
+//
+//            // Day offset from chartStart
             LocalDate workDay = w.getStart().toLocalDate();
             int       day     = (int) ChronoUnit.DAYS.between(chartStart.toLocalDate(), workDay);
             if (day < 0) day = 0;
-
+//
             if (day + 1 < arrayLen) {
-                workArrays.get(id)[day + 1] = newTotal;
-                                              lastDayWithValue = Math.max(day, lastDayWithValue);
-
-                // Build tooltip entry: "key | duration | comment"
+//                workArrays.get(id)[day + 1] = newTotal;
+//                                              lastDayWithValue = Math.max(day, lastDayWithValue);
+//
+//                // Build tooltip entry: "key | duration | comment"
                 Task   t       = sprint.getTaskById(w.getTaskId());
                 String key     = (t != null) ? t.getKey() : "?";
                 String dur     = formatDuration(w.getTimeSpent());
@@ -236,6 +234,26 @@ public class GanttBurndownChartService {
                 String entry   = key + "\t" + "<b>" + dur + "</b>" + "\t" + comment;
                 String prev    = tooltipArr.get(id)[day + 1];
                 tooltipArr.get(id)[day + 1] = (prev != null && !prev.isEmpty()) ? prev + "\n" + entry : entry;
+            }
+        }
+        if (!usersTotalContribution.isEmpty()) {
+            for (User user : usersTotalContribution.getSortedKeyList()) {
+                GanttBurndownChartDto.AuthorSeriesDto a = new GanttBurndownChartDto.AuthorSeriesDto();
+                a.userName              = user.getName();
+                a.color                 = user.getColor().getRGB();
+                a.totalRemainingSeconds = usersTotalContribution.get(user).remaining.toSeconds();
+                a.totalWorkedSeconds    = usersTotalContribution.get(user).worked.toSeconds();
+                a.accumulatedWorkPerDay = new ArrayList<Long>();
+                for (int i = 0; i < usersWorkPerDayAccumulated.get(user).length; i++) {
+                    DayWork dw = usersWorkPerDayAccumulated.get(user)[i];
+                    a.accumulatedWorkPerDay.add(dw.duration.toSeconds());
+                }
+                String[] tt = tooltipArr.get(user.getId());
+                for (int d = 0; d < arrayLen; d++) {
+                    a.tooltipPerDay.add(buildTooltip(tt[d], user.getName()));
+                }
+//
+                dto.authors.add(a);
             }
         }
 
@@ -252,57 +270,65 @@ public class GanttBurndownChartService {
             nowDayIndex = Math.max(0, Math.min(nowDayIndex, totalDays - 1));
         }
 
-        // Forward-fill each author's array up to nowDayIndex + 2
-        for (UUID id : authorMap.keySet()) {
-            long[] aw   = workArrays.get(id);
-            long   last = 0;
-            for (int i = 1; i < arrayLen; i++) {
-                if (i <= nowDayIndex + 2) {
-                    if (aw[i] == 0 || last > aw[i]) aw[i] = last;
-                    last = aw[i];
-                }
-            }
-        }
+//        // Forward-fill each author's array up to nowDayIndex + 2
+//        for (UUID id : authorMap.keySet()) {
+//            long[] aw   = workArrays.get(id);
+//            long   last = 0;
+//            for (int i = 1; i < arrayLen; i++) {
+//                if (i <= nowDayIndex + 2) {
+//                    if (aw[i] == 0 || last > aw[i]) aw[i] = last;
+//                    last = aw[i];
+//                }
+//            }
+//        }
 
         // ── Build AuthorSeriesDto list ─────────────────────────────────────────
         // Sort authors by descending total estimated work (worked + remaining), matching
         // Java's AuthorsContribution.getSortedKeyList() / MapValueCopmparator behaviour,
         // so that the stacking order in BurnDownRenderer.drawBurnDown() is faithful.
         List<UUID> sortedAuthorIds = new ArrayList<>(authorMap.keySet());
-        sortedAuthorIds.sort((a1, a2) -> {
-            long t1 = workedSecs.getOrDefault(a1, 0L) + remainingSecs.getOrDefault(a1, 0L);
-            long t2 = workedSecs.getOrDefault(a2, 0L) + remainingSecs.getOrDefault(a2, 0L);
-            return Long.compare(t2, t1);
-        });
-
-        int colorIdx = 0;
-        for (UUID id : sortedAuthorIds) {
-            User                                  u = authorMap.get(id);
-            GanttBurndownChartDto.AuthorSeriesDto a = new GanttBurndownChartDto.AuthorSeriesDto();
-            a.userName              = u.getName();
-            a.totalWorkedSeconds    = workedSecs.getOrDefault(id, 0L);
-            a.totalRemainingSeconds = remainingSecs.getOrDefault(id, 0L);
-
-            // Color: lighten user color by 75% towards white, alpha = 128 (~50%)
-            Color userColor = u.getColor();
-            if (userColor == null) {
-                int ci = colorIdx % theme.burndownTheme.burnDownColor.length;
-                userColor = theme.burndownTheme.burnDownColor[ci];
+        if (!usersTotalContribution.isEmpty()) {
+            for (User user : usersTotalContribution.getSortedKeyList()) {
+                sortedAuthorIds.add(user.getId());
             }
-            Color lightened = ColorUtil.lightenColor(userColor, 0.75f);
-            a.color = colorToHexWithAlpha(lightened, 128);
-
-            // Arrays
-            long[]   aw = workArrays.get(id);
-            String[] tt = tooltipArr.get(id);
-            for (int d = 0; d < arrayLen; d++) {
-                a.accumulatedWorkPerDay.add(aw[d]);
-                a.tooltipPerDay.add(buildTooltip(tt[d], u.getName()));
-            }
-
-            dto.authors.add(a);
-            colorIdx++;
         }
+
+
+//        sortedAuthorIds.sort((a1, a2) -> {
+//            long t1 = workedSecs.getOrDefault(a1, 0L) + remainingSecs.getOrDefault(a1, 0L);
+//            long t2 = workedSecs.getOrDefault(a2, 0L) + remainingSecs.getOrDefault(a2, 0L);
+//            return Long.compare(t2, t1);
+//        });
+//
+//        int colorIdx = 0;
+//        for (UUID id : sortedAuthorIds) {
+//            User                                  u = authorMap.get(id);
+//            GanttBurndownChartDto.AuthorSeriesDto a = new GanttBurndownChartDto.AuthorSeriesDto();
+//            a.userName              = u.getName();
+//            a.totalWorkedSeconds    = workedSecs.getOrDefault(id, 0L);
+//            a.totalRemainingSeconds = remainingSecs.getOrDefault(id, 0L);
+//
+//            // Color: lighten user color by 75% towards white, alpha = 128 (~50%)
+//            Color userColor = u.getColor();
+//            if (userColor == null) {
+//                int ci = colorIdx % theme.burndownTheme.burnDownColor.length;
+//                userColor = theme.burndownTheme.burnDownColor[ci];
+//            }
+//            Color lightened = ColorUtil.lightenColor(userColor, 0.75f);
+//            a.color = colorToHexWithAlpha(lightened, 128);
+//
+//            // Arrays
+//            long[]   aw = workArrays.get(id);
+//            String[] tt = tooltipArr.get(id);
+//            for (int d = 0; d < arrayLen; d++) {
+//                a.accumulatedWorkPerDay.add(aw[d]);
+//                a.tooltipPerDay.add(buildTooltip(tt[d], u.getName()));
+//            }
+//
+//            dto.authors.add(a);
+//            colorIdx++;
+//        }
+
 
         // ── Gantt guides ───────────────────────────────────────────────────────
         {

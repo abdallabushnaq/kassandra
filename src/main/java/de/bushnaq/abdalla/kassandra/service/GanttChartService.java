@@ -241,7 +241,7 @@ public class GanttChartService {
      */
     private static String colorToHexWithAlpha(Color color, int alpha) {
         if (color == null) return "#000000ff";
-        int a = Math.max(0, Math.min(255, alpha));
+        int a = alpha & 0xff;
         return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue(), a);
     }
 

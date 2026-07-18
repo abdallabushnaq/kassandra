@@ -39,7 +39,7 @@ export interface BurndownMetaDto {
 
 export interface AuthorSeriesDto {
     userName?: string | null;
-    color?: string | null;
+    color: number;
     totalWorkedSeconds: number;
     totalRemainingSeconds: number;
     accumulatedWorkPerDay: number[];
@@ -384,15 +384,15 @@ export class BurndownRenderer extends AbstractRenderer {
         const lineHeight = 14;
         let ay = this.diagram.y + lineHeight * authors.length;
         for (const author of authors) {
-            this.drawAuthor(svg, x, ay, authorLegendWidth, author.color || 'rgba(31,143,255,0.31)', author.userName || 'Unknown');
+            this.drawAuthor(svg, x, ay, authorLegendWidth, author.color, author.userName || 'Unknown');
             ay -= lineHeight;
         }
     }
 
     // ── Java: protected void drawAuthor(int x, int y, int with, Color fillColor, String text, ...) ──
-    private drawAuthor(svg: SVGElement, x: number, y: number, width: number, fillColor: string, text: string): void {
+    private drawAuthor(svg: SVGElement, x: number, y: number, width: number, fillColor: number, text: string): void {
         const textColor = ColorUtils.intToHex(this.theme.burndownTheme.tickTextColor, '#334155');
-        svg.appendChild(SvgUtils.createRect(x, y - 6, width + 4, 12, {fill: fillColor}));
+        svg.appendChild(SvgUtils.createRect(x, y - 6, width + 4, 12, {fill: ColorUtils.intToHex(fillColor, '#1f8fff')}));
         svg.appendChild(SvgUtils.createText(x + 2, y + 3, text, {
             fill: textColor, 'font-size': '10px', 'font-family': 'sans-serif', 'font-weight': 'bold',
         }));
@@ -438,12 +438,11 @@ export class BurndownRenderer extends AbstractRenderer {
                 let tooltip: string | null = null;
                 let y = 0;
                 if (dayIndex <= maxDayIndex + 2) {
-                    const arrIndex = this.toArrayIndex(dayIndex);
-                    const authorDelta = (arrIndex >= 0 && arrIndex < author.accumulatedWorkPerDay.length) ? author.accumulatedWorkPerDay[arrIndex] : 0;
-                    currentDayAuthorGraphHeight = this.calculateAuthorGraphHeight(authorDelta || 0, authorEstimatedWork, this.maxWorked);
+                    // const arrIndex = this.toArrayIndex(dayIndex);
+                    currentDayAuthorGraphHeight = this.calculateAuthorGraphHeight(author.accumulatedWorkPerDay[dayIndex], authorEstimatedWork, this.maxWorked);
                     y = this.diagram.y + this.diagram.height - graphHeight[dayIndex] - currentDayAuthorGraphHeight;
                     if (dayIndex > 0) {
-                        const tIdx = this.toArrayIndex(dayIndex - 1);
+                        const tIdx = dayIndex - 1;
                         tooltip = (tIdx >= 0 && tIdx < author.tooltipPerDay.length) ? author.tooltipPerDay[tIdx] : null;
                     }
                 }
@@ -451,12 +450,12 @@ export class BurndownRenderer extends AbstractRenderer {
                 if (x !== lastX) {
                     // ---a new day started, so we can draw the polygon of last day
                     if (yesterdayX !== 0 && lastX !== 0) {
-                        const dayForWeekday = this.calendarFromDayIndex(dayIndex - 2);
-                        const weekday = dayForWeekday.getDay() !== 0 && dayForWeekday.getDay() !== 6;
+                        const DayFromDayIndex = this.calendarFromDayIndex(dayIndex - 1);
                         this.drawPolygon(group, yesterdayX, yesterdayY, yesterdayY2, lastX, lastY, lastY2,
-                            authorIndex === authors.length - 1, weekday,
+                            authorIndex === authors.length - 1, DateUtils.isWorkDay(DayFromDayIndex),
                             ColorUtils.intToHex(this.theme.burndownTheme.borderColor, '#334155'),
-                            author.color || 'rgba(31,143,255,0.31)', tooltip, author.userName || '');
+                            this.generateBurnDownColor(author.color), tooltip, author.userName || '');
+                        //TODO use generateBurnDownColor(user.getColor())
                     }
                     yesterdayX = lastX;
                     yesterdayY = lastY;
@@ -473,6 +472,11 @@ export class BurndownRenderer extends AbstractRenderer {
         }
 
         svg.appendChild(group);
+    }
+
+    private generateBurnDownColor(color: number): string {
+        color = ColorUtils.lightenColor(color, 0.75);
+        return ColorUtils.intToHexWithAlpha(ColorUtils.setAlpha(color, 128));
     }
 
     /**
@@ -504,14 +508,18 @@ export class BurndownRenderer extends AbstractRenderer {
                 `${x2 - dw / 2 + 1},${y4}`,
                 `${x1 - dw / 2},${y3}`,
             ];
-        const polygon = SvgUtils.createSvgElement('polygon', {points: points.join(' '), fill: color, stroke: 'none'});
+        const polygon = SvgUtils.createSvgElement('polygon', {
+            points: points.join(' '),
+            fill: color,
+            stroke: 'none'
+        });
         if (tooltip) {
             polygon.setAttribute('data-tooltip-html', tooltip);
             polygon.setAttribute('pointer-events', 'all');
         }
         svg.appendChild(polygon);
         if (drawBorder) {
-            svg.appendChild(SvgUtils.createLine(x1, y1, x2 - 1, y2, {
+            svg.appendChild(SvgUtils.createLine(x1 - dw / 2, y1, x2 - 1 - dw / 2, y2, {
                 stroke: borderColor, 'stroke-width': STANDARD_LINE_STROKE_WIDTH,
             }));
         }

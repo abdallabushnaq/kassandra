@@ -65,7 +65,7 @@ export class DateUtils {
      */
     static getWeekSunday(date: Date): Date {
         const result = new Date(date);
-        const day  = result.getDay();
+        const day = result.getDay();
         const diff = result.getDate() - day + (day === 0 ? -6 : 1);
         result.setDate(diff + 6);
         return result;
@@ -103,11 +103,16 @@ export class DateUtils {
      * Mirrors: Java DateUtil.createDateString(LocalDate date, DateTimeFormatter formatter)
      */
     static createDateString(date: Date): string {
-        const days   = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const months = [
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December',
         ];
         return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    }
+
+    //TODO "use user calendar"
+    static isWorkDay(c: Date): boolean {
+        return (c.getDay() != 6 && c.getDay() != 0);
     }
 }

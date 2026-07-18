@@ -73,7 +73,7 @@ public class GanttBurndownChartDto {
          * Mirrors Java: {@code generateBurnDownColor(user.getColor())} →
          * lighten user color 75% towards white, alpha = 128.
          */
-        public String       color;
+        public long         color;
         /**
          * Tooltip HTML for each day-slot (parallel to {@link #accumulatedWorkPerDay}).
          * Element {@code d} = HTML for work logged <em>on</em> day {@code d − 1}.
@@ -115,7 +115,7 @@ public class GanttBurndownChartDto {
          * Currently the same as {@link #maxWorkedSeconds}.
          */
         public long          estimatedBestWorkSeconds;
-        public int firstDayX;
+        public int           firstDayX;
         /**
          * F milestone: date of the first worklog entry. {@code null} if no worklogs.
          */
