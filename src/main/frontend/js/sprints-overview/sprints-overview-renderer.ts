@@ -29,8 +29,8 @@ export interface SprintDto {
     id: number | string;
     key?: string;
     name?: string;
-    start?: string;
-    end?: string;
+    start: Date | null;
+    end: Date | null;
     status?: string;
     color?: string;
     hasGantt?: boolean;
@@ -64,6 +64,18 @@ export interface HitArea {
     height: number;
 }
 
+/**
+ * convert string date representative to Date
+ * @param sprint
+ */
+function convertSprintDates(sprint: SprintDto): SprintDto {
+    return {
+        ...sprint,
+        start: sprint.start ? new Date(sprint.start as any) : null,
+        end: sprint.end ? new Date(sprint.end as any) : null,
+    };
+}
+
 export class SprintsOverviewRenderer extends AbstractRenderer {
     lanes: LaneDto[];
     chartStart: Date;
@@ -88,7 +100,11 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
 
         super(theme, milestones, preRun, postRun);
 
-        this.lanes = data.lanes || [];
+
+        this.lanes = (data.lanes || []).map(lane => ({
+            ...lane,
+            sprints: lane.sprints.map(convertSprintDates),
+        }));
         this.chartStart = chartStart;
         this.chartEnd = chartEnd;
         this.currentDate = currentDate;
@@ -182,8 +198,8 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
 
             (lane.sprints || []).forEach((sprint) => {
                 if (!sprint.start || !sprint.end) return;
-                const startIdx = DateUtils.calculateDayIndex(sprint.start, this.chartStart);
-                const endIdx = DateUtils.calculateDayIndex(sprint.end, this.chartStart);
+                const startIdx = this.calculateDayIndex(sprint.start);
+                const endIdx = this.calculateDayIndex(sprint.end);
                 const sprintX = this.dayIndexToPixelX(startIdx);
                 const sprintW = (endIdx - startIdx + 1) * this.dayWidth - 1;
                 if (sprintX + sprintW < 0 || sprintX > containerWidth) return;

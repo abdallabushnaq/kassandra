@@ -9,13 +9,7 @@ import {DateUtils} from '../date-utils.js';
 import {AbstractRenderer} from '../abstract-renderer.js';
 import {Theme} from '../theme/theme.js';
 import {Milestones} from '../milestones.js';
-import {
-    CalendarException,
-    getCalendarException,
-    getDayAt8AM,
-    isWorkingDay,
-    parseLocalDateTime,
-} from './date-helpers.js';
+import {CalendarException, getCalendarException, isWorkingDay,} from './date-helpers.js';
 import {FontMetrics} from "../font-metrics.js";
 import {FontSpec} from "../font-spec.js";
 
@@ -39,8 +33,8 @@ export interface TaskDto {
     id: number | string;
     key?: string;
     name?: string;
-    start?: string;
-    finish?: string;
+    start: Date | null;
+    finish: Date | null;
     rowIndex: number;
     fillColor?: string;
     textColor?: string;
@@ -86,15 +80,6 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     dayIndexToPixelX(dayIndex: number): number {
         return (dayIndex - this.scrollOffset) * this.dayWidth;
-    }
-
-    calculateX(datetimeStr: string, startTimeStr: string | null, secondsPerDay: number): number {
-        const date = parseLocalDateTime(datetimeStr)!;
-        const startTime = parseLocalDateTime(startTimeStr)!;
-        const dayIndex = DateUtils.calculateDayIndex(datetimeStr, this.chartStart!);
-        const workedSeconds = (date.getTime() - startTime.getTime()) / 1000;
-        const timeOfDayX = Math.floor(workedSeconds * this.dayWidth / secondsPerDay);
-        return this.dayIndexToPixelX(dayIndex) + timeOfDayX;
     }
 
     getTaskHeight(): number {
@@ -164,8 +149,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             ? ColorUtils.intToHex(this.theme.ganttTheme.criticalTaskBorderColor, '#ff0000')
             : ColorUtils.intToHex(this.theme.ganttTheme.taskBorderColor, '#888888');
 
-        const startDayIdx = DateUtils.calculateDayIndex(task.start!, this.chartStart!);
-        const finishDayIdx = DateUtils.calculateDayIndex(task.finish!, this.chartStart!);
+        const startDayIdx = this.calculateDayIndex(task.start!);
+        const finishDayIdx = this.calculateDayIndex(task.finish!);
         const days = finishDayIdx - startDayIdx;
 
         for (let day = 0; day <= days; day++) {
@@ -268,9 +253,9 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             yEnd = y2;
             yMid = y2 + 5;
         }
-        const ax1 = this.calculateX(targetTask.finish!, getDayAt8AM(targetTask.finish), SECONDS_PER_DAY);
+        const ax1 = this.calculateX(targetTask.finish!, DateUtils.withTime(targetTask.finish, 8, 0), SECONDS_PER_DAY);
         const ax2 = RELATION_CORNER_LENGTH
-            + this.calculateX(sourceTask.start!, getDayAt8AM(sourceTask.start), SECONDS_PER_DAY)
+            + this.calculateX(sourceTask.start!, DateUtils.withTime(sourceTask.start, 8, 0), SECONDS_PER_DAY)
             - RESOURCE_NAME_TO_TASK_GAP;
         const arrowColor = (sourceTask.critical && targetTask.critical)
             ? ColorUtils.intToHex(this.theme.ganttTheme.criticalRelationColor, '#ff0000')
@@ -338,8 +323,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         _drawOutOfOffice: boolean,
     ): void {
         if (!task.start || !task.finish) return;
-        const x1 = this.calculateX(task.start, getDayAt8AM(task.start)!, SECONDS_PER_DAY);
-        const x2 = this.calculateX(task.finish, getDayAt8AM(task.finish)!, SECONDS_PER_DAY);
+        const x1 = this.calculateX(task.start, DateUtils.withTime(task.start, 8, 0)!, SECONDS_PER_DAY);
+        const x2 = this.calculateX(task.finish, DateUtils.withTime(task.finish, 8, 0)!, SECONDS_PER_DAY);
         const y = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
 
         this.drawTaskInner(g, task, x1, x2, y, labelInside, alien, marker, conflict);
@@ -461,8 +446,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             const y1 = y - th / 2 + TASK_BODY_BORDER;
             const h = th - TASK_BODY_BORDER * 2;
             if (x2 - x1 - 2 > 0) {
-                const startDayIdx = DateUtils.calculateDayIndex(task.start!, this.chartStart!);
-                const finishDayIdx = DateUtils.calculateDayIndex(task.finish!, this.chartStart!);
+                const startDayIdx = this.calculateDayIndex(task.start!);
+                const finishDayIdx = this.calculateDayIndex(task.finish!);
                 const days = finishDayIdx - startDayIdx;
 
                 for (let day = 0; day <= days; day++) {

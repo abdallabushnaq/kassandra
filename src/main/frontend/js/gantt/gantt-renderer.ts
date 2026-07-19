@@ -33,6 +33,17 @@ export interface GanttChartDto {
     meta: GanttChartMeta;
 }
 
+/**
+ * convert string date representative to Date
+ * @param task
+ */
+function convertTaskDates(task: TaskDto): TaskDto {
+    return {
+        ...task,
+        start: task.start ? new Date(task.start as any) : null,
+        finish: task.finish ? new Date(task.finish as any) : null,
+    };
+}
 
 export class GanttRenderer extends AbstractGanttRenderer {
     static GANTT_TASK_POST_SPACE: number = 0;
@@ -64,7 +75,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         super(theme, milestones, data.meta.preRun || 0, data.meta.postRun || 0);
 
         this.data = data;
-        this.tasks = data.tasks || [];
+        this.tasks = (data.tasks || []).map(convertTaskDates);//convert all dates from string to Date
         this.chartStart = chartStart;
         this.totalDays = DateUtils.calculateDayCount(chartStart, chartEnd);
         this.currentDate = now;
@@ -79,7 +90,6 @@ export class GanttRenderer extends AbstractGanttRenderer {
     override calculateDayWidth(): void {
         this.dayWidth = DEFAULT_DW;
     }
-
 
     calculateNumberOfTasks(tasks: TaskDto[]): number {
         let size = 0;
@@ -173,7 +183,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
     renderNowLine(totalHeight: number): SVGGElement {
         const g = SvgUtils.createSvgElement('g', {class: 'now-line'});
         const containerWidth = this.containerWidth;
-        const nowIdx = DateUtils.calculateDayIndex(this.currentDate!, this.chartStart!);
+        const nowIdx = this.calculateDayIndex(this.currentDate);
         const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
         if (xPos < 0 || xPos > containerWidth) return g;
         g.appendChild(SvgUtils.createLine(xPos, 0, xPos, totalHeight, {stroke: '#cc0000', 'stroke-width': '2'}));

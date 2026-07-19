@@ -42,6 +42,14 @@ export class DateUtils {
     }
 
     /**
+     * Truncates a date to day precision (removes hours, minutes, seconds, milliseconds).
+     * Returns local midnight (00:00:00 local time).
+     */
+    static toDayPrecision(date: Date): Date {
+        return DateUtils.getDayMidnight(date);
+    }
+
+    /**
      * Adds days to a date.
      * Mirrors: Java DateUtil.addDay(LocalDate start, int days)
      */
@@ -114,5 +122,13 @@ export class DateUtils {
     //TODO "use user calendar"
     static isWorkDay(c: Date): boolean {
         return (c.getDay() != 6 && c.getDay() != 0);
+    }
+
+    static withTime(date: Date | null, hourse: number, minutes: number): Date | null {
+        if (date == null)
+            return null;
+        date = DateUtils.getDayMidnight(date);
+        date.setHours(hourse, minutes);
+        return date;
     }
 }

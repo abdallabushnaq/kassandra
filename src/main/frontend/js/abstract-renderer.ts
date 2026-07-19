@@ -70,6 +70,22 @@ export abstract class AbstractRenderer implements IRenderer {
         return firstMilestoneX + (DateUtils.calculateDays(firstMilestoneDay, date) - this.scrollOffset + this.calendarXAxes.priRun) * (this.calendarXAxes.dayOfWeek.getWidth());
     }
 
+    calculateX(date: Date, startTime: Date | null, secondsPerDay: number): number {
+        if (startTime == null)
+            return 0;
+        const firstMilestoneDay = this.milestones.firstMilestone;
+        const firstMilestoneX = this.firstDayX + this.calendarXAxes.dayOfWeek.getWidth() / 2;
+        // const dayIndex = DateUtils.calculateDayIndex(datetimeStr, this.chartStart!);
+        const workedToday = (date.getTime() - startTime.getTime()) / 1000;
+        // const timeOfDayX = Math.floor(workedToday * this.calendarXAxes.dayOfWeek.getWidth() / secondsPerDay);
+        // return this.dayIndexToPixelX(dayIndex) + timeOfDayX;
+        const dayX = firstMilestoneX + (DateUtils.calculateDays(firstMilestoneDay, DateUtils.toDayPrecision(date)) + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth();
+        const timeOfDayX = Math.floor(((workedToday * this.calendarXAxes.dayOfWeek.getWidth()) / secondsPerDay));
+        return dayX + timeOfDayX;
+
+    }
+
+
     /** Override per-renderer to draw day background bars. */
     drawDayBars(g: SVGElement, currentDay: Date, _calendarH?: number): void {
         const color = GraphColorUtil.getDayOfWeekBgColor(this.theme, currentDay);
@@ -249,7 +265,9 @@ export abstract class AbstractRenderer implements IRenderer {
         this.drawGraphText(svg, legendTextX, legendTextY, "Last punch-out", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
     }
 
-    protected calculateDayIndex(date: Date): number {
+    protected calculateDayIndex(date: Date | null): number {
+        if (date == null)
+            return 0;
         const firstMilestoneDay = this.milestones.firstMilestone;
         return DateUtils.calculateDays(firstMilestoneDay, date);
     }

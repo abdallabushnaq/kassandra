@@ -116,9 +116,8 @@ public abstract class AbstractRenderer {
         // String createDateTimeString = DateUtil.createDateTimeString(date);
         //        LocalDateTime timeOfDay = LocalDateTimeUtil.getTimeOfDayInMillis(date);
         Duration workedToday = Duration.between(startTime, date);
-        int dayX = firstMilestoneX
-                + (DateUtil.calculateDays(firstMilestoneDay, DateUtil.toDayPrecision(date)) + calendarXAxes.getPriRun()) * calendarXAxes.dayOfWeek.getWidth();
-        int timeOfDayX = (int) (((workedToday.getSeconds()) * calendarXAxes.dayOfWeek.getWidth()) / secondsPerDay);
+        int      dayX        = firstMilestoneX + (DateUtil.calculateDays(firstMilestoneDay, DateUtil.toDayPrecision(date)) + calendarXAxes.getPriRun()) * calendarXAxes.dayOfWeek.getWidth();
+        int      timeOfDayX  = (int) (((workedToday.getSeconds()) * calendarXAxes.dayOfWeek.getWidth()) / secondsPerDay);
         return dayX + timeOfDayX;
     }
 

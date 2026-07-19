@@ -19,20 +19,20 @@ export function parseLocalDateTime(str: string | Date | null | undefined): Date 
     return new Date(str);
 }
 
-/**
- * Returns "8:00 AM on same day" datetime string for a given LocalDateTime string.
- * Mirrors Java: date.truncatedTo(ChronoUnit.DAYS).withHour(8)
- */
-export function getDayAt8AM(datetimeStr: string | null | undefined): string | null {
-    if (!datetimeStr) return null;
-    return datetimeStr.split('T')[0] + 'T08:00:00';
-}
+// /**
+//  * Returns "8:00 AM on same day" datetime string for a given LocalDateTime string.
+//  * Mirrors Java: date.truncatedTo(ChronoUnit.DAYS).withHour(8)
+//  */
+// export function getDayAt8AM(datetimeStr: string | null | undefined): string | null {
+//     if (!datetimeStr) return null;
+//     return datetimeStr.split('T')[0] + 'T08:00:00';
+// }
 
 export interface CalendarException {
-    from:    string;
-    to:      string;
-    type?:   string;
-    name?:   string;
+    from: string;
+    to: string;
+    type?: string;
+    name?: string;
     letter?: string;
 }
 
@@ -40,7 +40,7 @@ export function getCalendarException(date: Date, exceptions: CalendarException[]
     if (!exceptions?.length) return null;
     for (const ex of exceptions) {
         const from = parseLocalDate(ex.from);
-        const to   = parseLocalDate(ex.to);
+        const to = parseLocalDate(ex.to);
         if (from && to && date >= from && date <= to) return ex;
     }
     return null;
@@ -50,6 +50,7 @@ export function getCalendarException(date: Date, exceptions: CalendarException[]
  * Mirrors Java: ProjectCalendar.isWorkingDate(LocalDate).
  * Returns true for Mon–Fri weekdays with no calendar exception.
  */
+//TODO use user calendar
 export function isWorkingDay(date: Date, exceptions: CalendarException[] | null | undefined): boolean {
     const dow = date.getDay();
     if (dow === 0 || dow === 6) return false;
