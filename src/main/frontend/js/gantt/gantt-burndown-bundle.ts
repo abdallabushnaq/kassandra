@@ -6,9 +6,10 @@
 import {DateUtils} from '../date-utils.js';
 import {Theme} from '../theme/theme.js';
 import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from './abstract-gantt-renderer.js';
-import {BurndownRenderer, GanttBurndownChartDto} from './burndown-renderer.js';
+import {BurndownRenderer} from './burndown-renderer.js';
 import {GanttRenderer} from './gantt-renderer.js';
 import {GanttBurndownChart} from './gantt-burndown-chart.js';
+import {GanttBurndownChartDto} from './dto/gantt-burndown-chart-dto.js';
 
 function viewStateKey(containerId: string): string {
     return 'kassandra.chart.' + containerId.replace(/-container$/, '') + '.view';

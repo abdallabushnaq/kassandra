@@ -12,6 +12,11 @@ import {CalendarSize} from '../calendar-size.js';
 import {Milestone} from '../milestone.js';
 import {Milestones} from '../milestones.js';
 import {Theme} from '../theme/theme.js';
+import {SprintDto} from './dto/sprint-dto.js';
+import {LaneDto} from './dto/lane-dto.js';
+import {SprintOverviewMeta} from './dto/sprint-overview-meta.js';
+import {SprintOverviewDto} from './dto/sprint-overview-dto.js';
+import {HitArea} from './dto/hit-area.js';
 
 // ── Layout constants (mirrors Java SprintsOverviewRenderer) ──────────────
 const LINE_HEIGHT = 13;
@@ -24,45 +29,6 @@ export const DEFAULT_DW = 8;
 export const MIN_DW = 1;
 export const MAX_DW = 80;
 export const ZOOM_STEP = 1.25;
-
-export interface SprintDto {
-    id: number | string;
-    key?: string;
-    name?: string;
-    start: Date | null;
-    end: Date | null;
-    status?: string;
-    color?: string;
-    hasGantt?: boolean;
-    delay?: boolean;
-}
-
-export interface LaneDto {
-    laneId: number;
-    sprints: SprintDto[];
-}
-
-export interface SprintOverviewMeta {
-    chartStart: string;
-    chartEnd: string;
-    now: string;
-    laneCount: number;
-    xAxesTheme?: Record<string, unknown>;
-    theme?: Record<string, unknown>;
-}
-
-export interface SprintOverviewDto {
-    lanes: LaneDto[];
-    meta: SprintOverviewMeta;
-}
-
-export interface HitArea {
-    sprint: SprintDto;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
 
 /**
  * convert string date representative to Date

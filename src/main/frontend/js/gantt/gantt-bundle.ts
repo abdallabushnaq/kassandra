@@ -7,7 +7,8 @@
 import {Theme} from '../theme/theme.js';
 import {DateUtils} from '../date-utils.js';
 import {GanttChart} from './gantt-chart.js';
-import {GanttChartDto, GanttRenderer} from './gantt-renderer.js';
+import {GanttRenderer} from './gantt-renderer.js';
+import {GanttChartDto} from './dto/gantt-chart-dto.js';
 import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from './abstract-gantt-renderer.js';
 
 // ── localStorage helpers ────────────────────────────────────────────────────

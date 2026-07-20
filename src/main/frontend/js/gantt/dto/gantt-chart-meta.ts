@@ -1,0 +1,22 @@
+// gantt/dto/gantt-chart-meta.ts
+// Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
+
+import {CalendarSize} from "Frontend/js/calendar-size";
+
+/**
+ * DTO representing metadata for a Gantt chart.
+ */
+export interface GanttChartMeta {
+    firstDayX: number;
+    chartStart: string;
+    chartEnd: string;
+    now?: string;
+    sprintEarliestStartDate: string;
+    sprintLatestFinishDate: string;
+    sprintStatus?: string;
+    sprintName?: string;
+    preRun?: number;
+    postRun?: number;
+    calendarSize: CalendarSize;
+    theme?: Record<string, unknown>;
+}

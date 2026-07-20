@@ -10,28 +10,11 @@ import {Milestone} from '../milestone.js';
 import {Milestones} from '../milestones.js';
 import {Theme} from '../theme/theme.js';
 import {getCalendarException} from './date-helpers.js';
-import {AbstractGanttRenderer, DEFAULT_DW, TaskDto} from './abstract-gantt-renderer.js';
+import {AbstractGanttRenderer, DEFAULT_DW} from './abstract-gantt-renderer.js';
 import {CalendarSize} from "Frontend/js/calendar-size";
-
-export interface GanttChartMeta {
-    firstDayX: number;
-    chartStart: string;
-    chartEnd: string;
-    now?: string;
-    sprintEarliestStartDate: string;
-    sprintLatestFinishDate: string;
-    sprintStatus?: string;
-    sprintName?: string;
-    preRun?: number;
-    postRun?: number;
-    calendarSize: CalendarSize;
-    theme?: Record<string, unknown>;
-}
-
-export interface GanttChartDto {
-    tasks: TaskDto[];
-    meta: GanttChartMeta;
-}
+import {TaskDto} from './dto/task-dto.js';
+import {GanttChartDto} from './dto/gantt-chart-dto.js';
+import {GanttChartMeta} from './dto/gantt-chart-meta.js';
 
 /**
  * convert string date representative to Date

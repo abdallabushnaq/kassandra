@@ -12,47 +12,9 @@ import {Milestones} from '../milestones.js';
 import {SvgUtils} from '../svg-utils.js';
 import {Theme} from '../theme/theme.js';
 import {CalendarSize} from "Frontend/js/calendar-size";
-
-// ── DTO (sent by GanttBurndownChartService / GanttBurndownChartDto) ─────────
-
-export interface BurndownMetaDto {
-    firstDayX: number;
-    chartStart: string;
-    chartEnd: string;
-    sprintStart: string;
-    sprintEnd: string;
-    now?: string | null;
-    firstWorklogDate?: string | null;
-    lastWorklogDate?: string | null;
-    releaseDate?: string | null;
-    maxWorkedSeconds: number;
-    estimatedBestWorkSeconds: number;
-    sprintName?: string | null;
-    sprintStatus?: string | null;
-    sprintClosed: boolean;
-    preRun: number;
-    postRun: number;
-    totalDays: number;
-    theme?: Record<string, unknown>;
-    calendarSize: CalendarSize;
-}
-
-export interface AuthorSeriesDto {
-    userName?: string | null;
-    color: number;
-    totalWorkedSeconds: number;
-    totalRemainingSeconds: number;
-    accumulatedWorkPerDay: number[];
-    tooltipPerDay: (string | null)[];
-}
-
-export interface GanttBurndownChartDto {
-    burndownMeta: BurndownMetaDto;
-    authors: AuthorSeriesDto[];
-    ganttGuideWithoutBuffer?: number[] | null;
-    ganttGuideWithBuffer?: number[] | null;
-    tasks: import('./abstract-gantt-renderer.js').TaskDto[];
-}
+import {GanttBurndownChartDto} from './dto/gantt-burndown-chart-dto.js';
+import {BurndownMetaDto} from './dto/burndown-meta-dto.js';
+import {AuthorSeriesDto} from './dto/author-series-dto.js';
 
 // ── Constants (mirrors Java BurnDownRenderer static fields) ─────────────────
 const ONE_WEEK = 7;

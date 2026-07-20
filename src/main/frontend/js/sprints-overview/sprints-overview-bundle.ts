@@ -9,13 +9,13 @@ import {DateUtils} from '../date-utils.js';
 import {SprintsOverviewChart} from './sprints-overview-chart.js';
 import {
     DEFAULT_DW,
-    HitArea,
     MAX_DW,
     MIN_DW,
-    SprintOverviewDto,
     SprintsOverviewRenderer,
     ZOOM_STEP
 } from './sprints-overview-renderer.js';
+import {HitArea} from './dto/hit-area.js';
+import {SprintOverviewDto} from './dto/sprint-overview-dto.js';
 import {hideContextMenu, showContextMenuForSprint} from './context-menu.js';
 
 // ── localStorage helpers ────────────────────────────────────────────────────

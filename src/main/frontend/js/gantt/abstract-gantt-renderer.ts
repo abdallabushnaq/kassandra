@@ -9,7 +9,9 @@ import {DateUtils} from '../date-utils.js';
 import {AbstractRenderer} from '../abstract-renderer.js';
 import {Theme} from '../theme/theme.js';
 import {Milestones} from '../milestones.js';
-import {CalendarException, getCalendarException, isWorkingDay,} from './date-helpers.js';
+import {getCalendarException, isWorkingDay} from './date-helpers.js';
+import {CalendarException} from './dto/calendar-exception.js';
+import {TaskDto} from './dto/task-dto.js';
 import {FontMetrics} from "../font-metrics.js";
 import {FontSpec} from "../font-spec.js";
 
@@ -27,31 +29,6 @@ export const DEFAULT_DW = 20;
 export const MIN_DW = 2;
 export const MAX_DW = 80;
 export const ZOOM_STEP = 1.25;
-
-// ── Task DTO ─────────────────────────────────────────────────────────────────
-export interface TaskDto {
-    id: number | string;
-    key?: string;
-    name?: string;
-    start: Date | null;
-    finish: Date | null;
-    rowIndex: number;
-    fillColor?: string;
-    textColor?: string;
-    borderColor?: string;
-    progressColor?: string;
-    progress?: number;
-    milestone?: boolean;
-    story?: boolean;
-    critical?: boolean;
-    manuallyScheduled?: boolean;
-    assignedUserName?: string | null;
-    assignedUserAvailability?: string | null;
-    assignedUserCountry?: string | null;
-    assignedUserState?: string | null;
-    calendarExceptions?: CalendarException[];
-    predecessors?: { predecessorId: number | string; visible?: boolean }[];
-}
 
 export abstract class AbstractGanttRenderer extends AbstractRenderer {
     private static readonly taskProgressFont: FontSpec = new FontSpec(FontSpec.SANS_SERIF, 8, FontSpec.PLAIN);

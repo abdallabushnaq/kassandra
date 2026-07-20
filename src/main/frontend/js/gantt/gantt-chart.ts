@@ -5,7 +5,8 @@
 
 import {AbstractChart} from '../abstract-chart.js';
 import {Theme} from '../theme/theme.js';
-import {GanttChartDto, GanttRenderer} from './gantt-renderer.js';
+import {GanttRenderer} from './gantt-renderer.js';
+import {GanttChartDto} from './dto/gantt-chart-dto.js';
 
 export class GanttChart extends AbstractChart {
     constructor(data: GanttChartDto, theme: Theme) {

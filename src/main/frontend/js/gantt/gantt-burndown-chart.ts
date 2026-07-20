@@ -5,9 +5,11 @@
 
 import {AbstractChart} from '../abstract-chart.js';
 import {Theme} from '../theme/theme.js';
-import {GanttChartDto, GanttRenderer} from './gantt-renderer.js';
-import {BurndownRenderer, GanttBurndownChartDto} from './burndown-renderer.js';
+import {GanttRenderer} from './gantt-renderer.js';
+import {BurndownRenderer} from './burndown-renderer.js';
 import {CalendarSize} from '../calendar-size.js';
+import {GanttChartDto} from './dto/gantt-chart-dto.js';
+import {GanttBurndownChartDto} from './dto/gantt-burndown-chart-dto.js';
 
 export class GanttBurndownChart extends AbstractChart {
     constructor(data: GanttBurndownChartDto, theme: Theme) {

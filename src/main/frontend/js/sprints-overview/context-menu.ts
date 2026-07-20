@@ -34,12 +34,7 @@ export function hideContextMenu(): void {
     if (contextMenuSingleton) contextMenuSingleton.style.display = 'none';
 }
 
-export interface SprintMenuItem {
-    id:     number | string;
-    name?:  string;
-    key?:   string;
-    status?: string;
-}
+import {SprintMenuItem} from './dto/sprint-menu-item.js';
 
 export function showContextMenuForSprint(clientX: number, clientY: number, sprint: SprintMenuItem): void {
     const menu = getOrCreateContextMenu();

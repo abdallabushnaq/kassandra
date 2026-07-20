@@ -6,7 +6,8 @@
 import {AbstractChart} from '../abstract-chart.js';
 import {CalendarSize} from '../calendar-size.js';
 import {Theme} from '../theme/theme.js';
-import {SprintOverviewDto, SprintsOverviewRenderer} from './sprints-overview-renderer.js';
+import {SprintsOverviewRenderer} from './sprints-overview-renderer.js';
+import {SprintOverviewDto} from './dto/sprint-overview-dto.js';
 
 export class SprintsOverviewChart extends AbstractChart {
     constructor(data: SprintOverviewDto, theme: Theme) {
