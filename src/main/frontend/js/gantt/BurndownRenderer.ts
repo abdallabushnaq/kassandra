@@ -394,7 +394,7 @@ export class BurndownRenderer extends AbstractRenderer {
             const maxDayIndex = nowDayIndex;
 
             for (let dayIndex = 0; dayIndex <= maxDayIndex + 2; dayIndex++) {
-                const x = firstDayX + (this.calendarXAxes.priRun + dayIndex) * this.dayWidth;
+                const x = firstDayX + (dayIndex - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth();
                 let currentDayAuthorGraphHeight = 0;
                 let tooltip: string | null = null;
                 let y = 0;
@@ -495,11 +495,12 @@ export class BurndownRenderer extends AbstractRenderer {
         const color = ColorUtils.intToHex(this.theme.burndownTheme.optimaleGuideColor, '#a855f7');
 
         let workingdays = 0;
-        let lastX = firstDayX + this.dayWidth * DateUtils.calculateDays(firstDay, firstDay) - this.dayWidth / 2 + 1;
+        let lastX = firstDayX + (DateUtils.calculateDays(firstDay, firstDay) - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth() - this.calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
         let lastY = this.diagram.y + this.diagram.height - this.calculateGraphHight(estimatedWork);
 
         for (let currentDay = new Date(firstDay); currentDay.getTime() <= lastDay.getTime(); currentDay = DateUtils.addDay(currentDay, 1)) {
-            const daysX = firstDayX + this.dayWidth * (this.calendarXAxes.priRun + DateUtils.calculateDays(firstDay, currentDay)) + this.dayWidth / 2 - 1;
+            const daysX = firstDayX + (DateUtils.calculateDays(firstDay, currentDay) - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth() + this.calendarXAxes.dayOfWeek.getWidth() / 2 - 1;
+            // const daysX = this.calculateX(currentDay, firstDay, SECONDS_PER_WORKING_DAY)
             const dow = currentDay.getDay();
             if (dow !== 6 && dow !== 0) workingdays++;
             const work = estimatedWork - workingdays * workPerWorkingDay;
@@ -530,7 +531,7 @@ export class BurndownRenderer extends AbstractRenderer {
         // const guideSize = guide.length - this.calendarXAxes.priRun;
         for (let i = 0; i < guide.length; i++) {
             const r = guide[i];
-            const x = firstDayX + (this.calendarXAxes.priRun + i) * this.dayWidth - this.dayWidth / 2 + 1;
+            const x = firstDayX + (i - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth() - this.calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
             const y = this.diagram.y + this.diagram.height - this.calculateGraphHight(r);
             if (i !== 0) {
                 svg.appendChild(SvgUtils.createLine(lastX, lastY, x, y, {

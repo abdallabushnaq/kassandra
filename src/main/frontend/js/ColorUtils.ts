@@ -39,9 +39,12 @@ export class ColorUtils {
      * @returns CSS hex color string, e.g. '#3a7bc8'
      */
     static intToHex(value: number | string | null | undefined, fallback = '#ffffff'): string {
-        if (value == null) return fallback;
-        if (typeof value === 'string') return value;
-        if (typeof value === 'number') return '#' + (value >>> 0).toString(16).padStart(6, '0').slice(-6);
+        if (value == null)
+            return fallback;
+        if (typeof value === 'string')
+            return value;
+        if (typeof value === 'number')
+            return '#' + (value >>> 0).toString(16).padStart(6, '0').slice(-6);
         return fallback;
     }
 

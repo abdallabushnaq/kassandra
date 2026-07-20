@@ -88,9 +88,14 @@ function createChart(
     }
 
     function constrainScrollOffset() {
-        scrollOffset = Math.max(0, Math.min(
+        const max = Math.max(0, gantt.totalDays - getContainerWidth() / dayWidth);
+        const min = Math.min(
             Math.max(0, gantt.totalDays - getContainerWidth() / dayWidth),
             scrollOffset,
+        );
+        scrollOffset = Math.max(0, Math.min(
+            Math.max(0, gantt.totalDays - getContainerWidth() / dayWidth),
+            scrollOffset
         ));
     }
 
@@ -132,7 +137,8 @@ function createChart(
     }
 
     function scheduleRender() {
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        if (animationFrameId)
+            cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(redrawChart);
     }
 
@@ -156,7 +162,8 @@ function createChart(
     let dragState: { startX: number; startOffset: number } | null = null;
 
     function handlePointerDown(e: PointerEvent) {
-        if (e.button !== 0) return;
+        if (e.button !== 0)
+            return;
         dragState = {startX: e.clientX, startOffset: scrollOffset};
         container.setPointerCapture(e.pointerId);
         container.style.cursor = 'grabbing';
@@ -164,7 +171,8 @@ function createChart(
     }
 
     function handlePointerMove(e: PointerEvent) {
-        if (!dragState) return;
+        if (!dragState)
+            return;
         scrollOffset = dragState.startOffset - (e.clientX - dragState.startX) / dayWidth;
         constrainScrollOffset();
         scheduleRender();

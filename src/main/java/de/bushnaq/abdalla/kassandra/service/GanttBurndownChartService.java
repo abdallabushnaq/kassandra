@@ -116,8 +116,8 @@ public class GanttBurndownChartService {
         List<Worklog> sortedWorklogs = worklogs.stream().sorted(Comparator.comparing(Worklog::getStart)).toList();
 
         // ── Chart window ────────────────────────────────────────────────────────
-        LocalDate chartStartDate = sprint.getEarliestStartDate().toLocalDate();
-        LocalDate chartEndDate   = sprint.getLatestFinishDate().toLocalDate();
+        LocalDate chartStartDate = sprint.getEarliestStartDate().toLocalDate().minusDays(preRun);
+        LocalDate chartEndDate   = sprint.getLatestFinishDate().toLocalDate().plusDays(postRun);
 
         // Extend to include 'now' (unless sprint is closed)
         if (now != null && !sprint.isClosed()) {

@@ -32,7 +32,6 @@ export const ZOOM_STEP = 1.25;
 export abstract class AbstractGanttRenderer extends AbstractRenderer {
     private static readonly taskProgressFont: FontSpec = new FontSpec(FontSpec.SANS_SERIF, 8, FontSpec.PLAIN);
     dayWidth: number;
-    scrollOffset: number;
     containerWidth: number;
     chartStart: Date | null;
     totalDays: number;
@@ -58,7 +57,6 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     constructor(theme: Theme, milestones: Milestones, preRun: number, postRun: number) {
         super(theme, milestones, preRun, postRun);
         this.dayWidth = DEFAULT_DW;
-        this.scrollOffset = 0;
         this.containerWidth = 800;
         this.chartStart = null;
         this.totalDays = 0;
