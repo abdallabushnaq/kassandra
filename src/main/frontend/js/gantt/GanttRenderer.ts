@@ -70,6 +70,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
     }
 
     override calculateDayWidth(): void {
+        super.calculateDayWidth();
         this.dayWidth = DEFAULT_DW;
     }
 

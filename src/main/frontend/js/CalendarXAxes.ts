@@ -105,10 +105,7 @@ export class CalendarXAxes {
         if (!this.parent) return;
 
         const firstDay = DateUtils.addDay(this.milestones.firstMilestone!, -this.priRun);
-        const lastDay = DateUtils.maxDate(
-            DateUtils.addDay(this.milestones.lastMilestone!, this.postRun),
-            DateUtils.addDay(this.milestones.firstMilestone!, this.parent.days - 1),
-        );
+        const lastDay = DateUtils.maxDate(this.milestones.lastMilestone!, DateUtils.addDay(this.milestones.firstMilestone!, this.parent.days - 1));
 
         let yearWasDrawn = false;
         let monthWasDrawn = false;

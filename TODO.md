@@ -1,18 +1,17 @@
 # TODO
 
 1. still need to run npm run build:static to generate debugging version of js f
-2.
-3. rename all mcp tpo IDs
-2. GENERATOR. ensure some projects show delay, are not started or are finished closed.
-3. add better error handling in api.
-4. remove default test password from AbstractApi.
-5. make sure getAll will filter via alc in db, not in memory.
-6. make all entities client side id generated
+2. rename all mcp tpo IDs
+3. GENERATOR. ensure some projects show delay, are not started or are finished closed.
+4. add better error handling in api.
+5. remove default test password from AbstractApi.
+6. make sure getAll will filter via alc in db, not in memory.
+7. make all entities client side id generated
     1. dto and dao need default constructors that set the id
     2. remove the generator annotation
     3. use entitymanager to persist
-7. sort db printout
-8. remove fallback parameter in ColorUtils.intToHex
+8. sort db printout
+9. remove fallback parameter in ColorUtils.intToHex
 
 ## Feature
 
@@ -44,10 +43,11 @@
 2. FIXED: Gantt grid only spans from S to E.
 3. FIXED: Gantt footer missing generated message.
 4. FIXED: Burndown Watermark not transparent.
-5. Burndown Authors legend location too much to the right.
-6. post-run should be 3 weeks not 2.
+5. FIXED: Burndown Authors legend location too much to the right.
+6. FIXED: post-run should be 3 weeks not 2.
 7. buffer not resource aligned.
 8. optimal burndown chart guide missing.
+9. burndown chart calendar day width is not aligned with gantt chart day width.
 
 # Failing Tests
 
