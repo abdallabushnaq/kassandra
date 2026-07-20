@@ -341,7 +341,7 @@ export class BurndownRenderer extends AbstractRenderer {
             const w = (author.userName?.length || 0) * (fontSize * 0.6);
             authorLegendWidth = Math.max(authorLegendWidth, w);
         }
-        const x = this.containerWidth - 130 - authorLegendWidth - 5;
+        const x = this.diagram.width - 130 - authorLegendWidth - 5;
         const lineHeight = 14;
         let ay = this.diagram.y + lineHeight * authors.length;
         for (const author of authors) {
