@@ -4,19 +4,19 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {ColorUtils} from './color-utils.js';
-import {SvgUtils} from './svg-utils.js';
-import {DateUtils} from './date-utils.js';
-import {CalendarXAxes} from './calendar-x-axes.js';
-import {CalendarSize} from './calendar-size.js';
-import {GraphSquare} from './graph-square.js';
-import {GraphColorUtil} from './graph-color-util.js';
-import {Theme} from './theme/theme.js';
-import {Milestones} from './milestones.js';
-import type {IRenderer} from './renderer-interface.js';
+import {ColorUtils} from './ColorUtils.js';
+import {SvgUtils} from './SvgUtils.js';
+import {DateUtils} from './DateUtils.js';
+import {CalendarXAxes} from './CalendarXAxes.js';
+import {CalendarSize} from './CalendarSize.js';
+import {GraphSquare} from './GraphSquare.js';
+import {GraphColorUtil} from './GraphColorUtil.js';
+import {Theme} from './theme/Theme.js';
+import {Milestones} from './Milestones.js';
+import type {IRenderer} from './IRenderer.js';
 import {TextAlignment} from "./TextAlignment.js";
-import {FontMetrics} from "./font-metrics.js";
-import {FontSpec} from "./font-spec.js";
+import {FontMetrics} from "./FontMetrics.js";
+import {FontSpec} from "./FontSpec.js";
 
 export abstract class AbstractRenderer implements IRenderer {
     protected static readonly STANDARD_LINE_STROKE_WIDTH: number = 3.1;

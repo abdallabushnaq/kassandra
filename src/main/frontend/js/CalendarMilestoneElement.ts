@@ -4,7 +4,7 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {FontSpec} from './font-spec.js';
+import {FontSpec} from './FontSpec.js';
 
 export class CalendarMilestoneElement {
     font: FontSpec;

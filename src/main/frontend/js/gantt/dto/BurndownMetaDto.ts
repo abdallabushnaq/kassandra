@@ -1,7 +1,7 @@
 // gantt/dto/burndown-meta-dto.ts
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {CalendarSize} from "Frontend/js/calendar-size";
+import {CalendarSize} from "../../CalendarSize.js";
 
 /**
  * DTO representing metadata for a burndown chart.

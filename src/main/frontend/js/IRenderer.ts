@@ -4,17 +4,18 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import type { Milestones } from './milestones.js';
-import type { GraphSquare } from './graph-square.js';
-import type { Theme }       from './theme/theme.js';
+import type {Milestones} from './Milestones.js';
+import type {GraphSquare} from './GraphSquare.js';
+import type {Theme} from './theme/Theme.js';
 
 export interface IRenderer {
-    theme:        Theme;
-    milestones:   Milestones;
+    theme: Theme;
+    milestones: Milestones;
     scrollOffset: number;
-    days:         number;
-    firstDayX:    number;
-    diagram:      GraphSquare;
+    days: number;
+    firstDayX: number;
+    diagram: GraphSquare;
+
     /** Called once per visible day column during calendar rendering. */
     drawDayBars(g: SVGElement, dayDate: Date, calendarH?: number): void;
 }

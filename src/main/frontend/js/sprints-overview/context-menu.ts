@@ -34,7 +34,7 @@ export function hideContextMenu(): void {
     if (contextMenuSingleton) contextMenuSingleton.style.display = 'none';
 }
 
-import {SprintMenuItem} from './dto/sprint-menu-item.js';
+import {SprintMenuItem} from './dto/SprintMenuItem.js';
 
 export function showContextMenuForSprint(clientX: number, clientY: number, sprint: SprintMenuItem): void {
     const menu = getOrCreateContextMenu();

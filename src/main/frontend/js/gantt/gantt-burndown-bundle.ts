@@ -3,13 +3,13 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {DateUtils} from '../date-utils.js';
-import {Theme} from '../theme/theme.js';
-import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from './abstract-gantt-renderer.js';
-import {BurndownRenderer} from './burndown-renderer.js';
-import {GanttRenderer} from './gantt-renderer.js';
-import {GanttBurndownChart} from './gantt-burndown-chart.js';
-import {GanttBurndownChartDto} from './dto/gantt-burndown-chart-dto.js';
+import {DateUtils} from '../DateUtils.js';
+import {Theme} from '../theme/Theme.js';
+import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from './AbstractGanttRenderer.js';
+import {BurndownRenderer} from './BurndownRenderer.js';
+import {GanttRenderer} from './GanttRenderer.js';
+import {GanttBurndownChart} from './GanttBurndownChart.js';
+import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 
 function viewStateKey(containerId: string): string {
     return 'kassandra.chart.' + containerId.replace(/-container$/, '') + '.view';
@@ -41,7 +41,9 @@ function saveViewState(containerId: string, dayWidth: number, scrollOffset: numb
 
 interface ChartHandle {
     render(): void;
+
     schedule(): void;
+
     destroy(): void;
 }
 
@@ -105,6 +107,7 @@ function createChart(
     }
 
     let saveTimerId: ReturnType<typeof setTimeout> | null = null;
+
     function scheduleSave() {
         if (saveTimerId) clearTimeout(saveTimerId);
         saveTimerId = setTimeout(() => saveViewState(containerId, dayWidth, scrollOffset), 250);

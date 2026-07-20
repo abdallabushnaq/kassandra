@@ -3,17 +3,16 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {ColorUtils} from '../color-utils.js';
-import {SvgUtils} from '../svg-utils.js';
-import {DateUtils} from '../date-utils.js';
-import {AbstractRenderer} from '../abstract-renderer.js';
-import {Theme} from '../theme/theme.js';
-import {Milestones} from '../milestones.js';
+import {ColorUtils} from '../ColorUtils.js';
+import {SvgUtils} from '../SvgUtils.js';
+import {DateUtils} from '../DateUtils.js';
+import {AbstractRenderer} from '../AbstractRenderer.js';
+import {Theme} from '../theme/Theme.js';
+import {Milestones} from '../Milestones.js';
 import {getCalendarException, isWorkingDay} from './date-helpers.js';
-import {CalendarException} from './dto/calendar-exception.js';
-import {TaskDto} from './dto/task-dto.js';
-import {FontMetrics} from "../font-metrics.js";
-import {FontSpec} from "../font-spec.js";
+import {TaskDto} from './dto/TaskDto.js';
+import {FontMetrics} from "../FontMetrics.js";
+import {FontSpec} from "../FontSpec.js";
 
 // ── Constants (mirrors Java AbstractGanttRenderer field declarations) ────────
 const FINE_LINE_STROKE_WIDTH = 1.0;

@@ -3,13 +3,13 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {AbstractChart} from '../abstract-chart.js';
-import {Theme} from '../theme/theme.js';
-import {GanttRenderer} from './gantt-renderer.js';
-import {BurndownRenderer} from './burndown-renderer.js';
-import {CalendarSize} from '../calendar-size.js';
-import {GanttChartDto} from './dto/gantt-chart-dto.js';
-import {GanttBurndownChartDto} from './dto/gantt-burndown-chart-dto.js';
+import {AbstractChart} from '../AbstractChart.js';
+import {Theme} from '../theme/Theme.js';
+import {GanttRenderer} from './GanttRenderer.js';
+import {BurndownRenderer} from './BurndownRenderer.js';
+import {CalendarSize} from '../CalendarSize.js';
+import {GanttChartDto} from './dto/GanttChartDto.js';
+import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 
 export class GanttBurndownChart extends AbstractChart {
     constructor(data: GanttBurndownChartDto, theme: Theme) {

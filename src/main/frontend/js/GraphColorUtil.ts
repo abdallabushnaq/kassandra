@@ -4,7 +4,7 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import { Theme } from './theme/theme.js';
+import {Theme} from './theme/Theme.js';
 
 export class GraphColorUtil {
 
@@ -36,7 +36,11 @@ export class GraphColorUtil {
      */
     static getDayOfWeekBgColor(theme: Theme, date: Date): number | null {
         switch (date.getDay()) {
-            case 1: case 2: case 3: case 4: case 5: // Mon–Fri
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5: // Mon–Fri
                 return theme.xAxesTheme.dayOfweekBgColor;
             case 6: // Saturday
                 return theme.xAxesTheme.dayOfweekSaturdayBgColor;
@@ -53,7 +57,11 @@ export class GraphColorUtil {
      */
     static getDayOfWeekStripBgColor(theme: Theme, date: Date): number | null {
         switch (date.getDay()) {
-            case 1: case 2: case 3: case 4: case 5: // Mon–Fri
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5: // Mon–Fri
                 return theme.xAxesTheme.dayOfweekBgColor;
             case 6: // Saturday
                 return theme.chartTheme.dayOfweekSaturdayBgColor;
@@ -90,8 +98,8 @@ export class GraphColorUtil {
     static getOffDayLetter(exception: { name?: string } | null | undefined): string | null {
         if (exception != null) {
             if (exception.name === 'VACATION') return 'V';
-            if (exception.name === 'TRIP')     return 'T';
-            if (exception.name === 'SICK')     return 'S';
+            if (exception.name === 'TRIP') return 'T';
+            if (exception.name === 'SICK') return 'S';
             return 'H';
         }
         return null;

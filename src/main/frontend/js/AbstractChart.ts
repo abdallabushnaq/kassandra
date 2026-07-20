@@ -4,17 +4,17 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import { AbstractCanvas }   from './abstract-canvas.js';
-import { AbstractRenderer } from './abstract-renderer.js';
-import { CaptionElement }   from './caption-element.js';
-import { FooterElement }    from './footer-element.js';
-import { Theme }            from './theme/theme.js';
+import {AbstractCanvas} from './AbstractCanvas.js';
+import {AbstractRenderer} from './AbstractRenderer.js';
+import {CaptionElement} from './CaptionElement.js';
+import {FooterElement} from './FooterElement.js';
+import {Theme} from './theme/Theme.js';
 
 export abstract class AbstractChart extends AbstractCanvas {
     captionElement: CaptionElement;
-    footerElement:  FooterElement;
-    renderers:      AbstractRenderer[];
-    firstDayX:      number;
+    footerElement: FooterElement;
+    renderers: AbstractRenderer[];
+    firstDayX: number;
 
     /**
      * @param caption           Chart title text
@@ -25,22 +25,22 @@ export abstract class AbstractChart extends AbstractCanvas {
      * @param theme             Theme instance
      */
     constructor(
-        caption:           string | null,
+        caption: string | null,
         projectRequestKey: string,
-        relateCssPath:     string,
-        _column:           string,
-        _imageName:        string,
-        theme:             Theme,
+        relateCssPath: string,
+        _column: string,
+        _imageName: string,
+        theme: Theme,
     ) {
         super(theme);
         this.captionElement = new CaptionElement(caption, relateCssPath, theme);
-        this.footerElement  = new FooterElement(
+        this.footerElement = new FooterElement(
             `Copyright \u00A9 ${new Date().getFullYear()}`,
             projectRequestKey || '',
             theme,
         );
-        this.renderers  = [];
-        this.firstDayX  = 0;
+        this.renderers = [];
+        this.firstDayX = 0;
     }
 
     /** Adds a renderer to the list. */
@@ -52,7 +52,7 @@ export abstract class AbstractChart extends AbstractCanvas {
     override setChartWidth(chartWidth: number): void {
         super.setChartWidth(chartWidth);
         if (this.captionElement) this.captionElement.width = this.chartWidth;
-        if (this.footerElement)  this.footerElement.width  = this.chartWidth;
+        if (this.footerElement) this.footerElement.width = this.chartWidth;
     }
 
     override drawCaption(svg: SVGSVGElement): void {

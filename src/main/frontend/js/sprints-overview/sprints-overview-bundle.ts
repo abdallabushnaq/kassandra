@@ -4,18 +4,12 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {Theme} from '../theme/theme.js';
-import {DateUtils} from '../date-utils.js';
-import {SprintsOverviewChart} from './sprints-overview-chart.js';
-import {
-    DEFAULT_DW,
-    MAX_DW,
-    MIN_DW,
-    SprintsOverviewRenderer,
-    ZOOM_STEP
-} from './sprints-overview-renderer.js';
-import {HitArea} from './dto/hit-area.js';
-import {SprintOverviewDto} from './dto/sprint-overview-dto.js';
+import {Theme} from '../theme/Theme.js';
+import {DateUtils} from '../DateUtils.js';
+import {SprintsOverviewChart} from './SprintsOverviewChart.js';
+import {DEFAULT_DW, MAX_DW, MIN_DW, SprintsOverviewRenderer, ZOOM_STEP} from './SprintsOverviewRenderer.js';
+import {HitArea} from './dto/HitArea.js';
+import {SprintOverviewDto} from './dto/SprintOverviewDto.js';
 import {hideContextMenu, showContextMenuForSprint} from './context-menu.js';
 
 // ── localStorage helpers ────────────────────────────────────────────────────

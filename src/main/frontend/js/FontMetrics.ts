@@ -16,7 +16,7 @@
  */
 
 
-import {FontSpec} from "./font-spec.js";
+import {FontSpec} from "./FontSpec.js";
 
 /**
  * Pixel-based font metrics for a single font specification.

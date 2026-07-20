@@ -4,19 +4,18 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {ColorUtils} from '../color-utils.js';
-import {SvgUtils} from '../svg-utils.js';
-import {DateUtils} from '../date-utils.js';
-import {AbstractRenderer} from '../abstract-renderer.js';
-import {CalendarSize} from '../calendar-size.js';
-import {Milestone} from '../milestone.js';
-import {Milestones} from '../milestones.js';
-import {Theme} from '../theme/theme.js';
-import {SprintDto} from './dto/sprint-dto.js';
-import {LaneDto} from './dto/lane-dto.js';
-import {SprintOverviewMeta} from './dto/sprint-overview-meta.js';
-import {SprintOverviewDto} from './dto/sprint-overview-dto.js';
-import {HitArea} from './dto/hit-area.js';
+import {ColorUtils} from '../ColorUtils.js';
+import {SvgUtils} from '../SvgUtils.js';
+import {DateUtils} from '../DateUtils.js';
+import {AbstractRenderer} from '../AbstractRenderer.js';
+import {CalendarSize} from '../CalendarSize.js';
+import {Milestone} from '../Milestone.js';
+import {Milestones} from '../Milestones.js';
+import {Theme} from '../theme/Theme.js';
+import {SprintDto} from './dto/SprintDto.js';
+import {LaneDto} from './dto/LaneDto.js';
+import {SprintOverviewDto} from './dto/SprintOverviewDto.js';
+import {HitArea} from './dto/HitArea.js';
 
 // ── Layout constants (mirrors Java SprintsOverviewRenderer) ──────────────
 const LINE_HEIGHT = 13;

@@ -4,11 +4,11 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {BurndownTheme} from './burndown-theme.js';
-import {CalendarTheme} from './calendar-theme.js';
-import {ChartTheme} from './chart-theme.js';
-import {GanttTheme} from './gantt-theme.js';
-import {XAxesTheme} from './xaxes-theme.js';
+import {BurndownTheme} from './BurndownTheme.js';
+import {CalendarTheme} from './CalendarTheme.js';
+import {ChartTheme} from './ChartTheme.js';
+import {GanttTheme} from './GanttTheme.js';
+import {XAxesTheme} from './XAxesTheme.js';
 
 export class Theme {
     readonly themeVariance: string;

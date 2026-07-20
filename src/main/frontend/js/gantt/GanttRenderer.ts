@@ -3,18 +3,17 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {ColorUtils} from '../color-utils.js';
-import {SvgUtils} from '../svg-utils.js';
-import {DateUtils} from '../date-utils.js';
-import {Milestone} from '../milestone.js';
-import {Milestones} from '../milestones.js';
-import {Theme} from '../theme/theme.js';
+import {ColorUtils} from '../ColorUtils.js';
+import {SvgUtils} from '../SvgUtils.js';
+import {DateUtils} from '../DateUtils.js';
+import {Milestone} from '../Milestone.js';
+import {Milestones} from '../Milestones.js';
+import {Theme} from '../theme/Theme.js';
 import {getCalendarException} from './date-helpers.js';
-import {AbstractGanttRenderer, DEFAULT_DW} from './abstract-gantt-renderer.js';
-import {CalendarSize} from "Frontend/js/calendar-size";
-import {TaskDto} from './dto/task-dto.js';
-import {GanttChartDto} from './dto/gantt-chart-dto.js';
-import {GanttChartMeta} from './dto/gantt-chart-meta.js';
+import {AbstractGanttRenderer, DEFAULT_DW} from './AbstractGanttRenderer.js';
+import {CalendarSize} from "../CalendarSize.js";
+import {TaskDto} from './dto/TaskDto.js';
+import {GanttChartDto} from './dto/GanttChartDto.js';
 
 /**
  * convert string date representative to Date

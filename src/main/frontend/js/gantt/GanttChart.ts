@@ -3,10 +3,10 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {AbstractChart} from '../abstract-chart.js';
-import {Theme} from '../theme/theme.js';
-import {GanttRenderer} from './gantt-renderer.js';
-import {GanttChartDto} from './dto/gantt-chart-dto.js';
+import {AbstractChart} from '../AbstractChart.js';
+import {Theme} from '../theme/Theme.js';
+import {GanttRenderer} from './GanttRenderer.js';
+import {GanttChartDto} from './dto/GanttChartDto.js';
 
 export class GanttChart extends AbstractChart {
     constructor(data: GanttChartDto, theme: Theme) {

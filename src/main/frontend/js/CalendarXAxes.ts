@@ -5,17 +5,17 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {ColorUtils} from './color-utils.js';
-import {SvgUtils} from './svg-utils.js';
-import {DateUtils} from './date-utils.js';
-import {GraphColorUtil} from './graph-color-util.js';
-import {CalendarElement} from './calendar-element.js';
-import {FontSpec} from "./font-spec.js";
-import {CalendarMilestoneElement} from './calendar-milestone-element.js';
-import {CalendarSize} from './calendar-size.js';
-import type {IRenderer} from './renderer-interface.js';
-import type {Milestones} from './milestones.js';
-import type {Theme} from './theme/theme.js';
+import {ColorUtils} from './ColorUtils.js';
+import {SvgUtils} from './SvgUtils.js';
+import {DateUtils} from './DateUtils.js';
+import {GraphColorUtil} from './GraphColorUtil.js';
+import {CalendarElement} from './CalendarElement.js';
+import {FontSpec} from "./FontSpec.js";
+import {CalendarMilestoneElement} from './CalendarMilestoneElement.js';
+import {CalendarSize} from './CalendarSize.js';
+import type {IRenderer} from './IRenderer.js';
+import type {Milestones} from './Milestones.js';
+import type {Theme} from './theme/Theme.js';
 
 const DAY_OF_MONTH_MIN_DAY_WIDTH = 16;
 const DAY_OF_WEEK_MIN_DAY_WIDTH = 10;
@@ -315,7 +315,7 @@ export class CalendarXAxes {
 
     drawMilestoneShort(
         svg: SVGElement,
-        m: import('./milestone').Milestone | null,
+        m: import('./Milestone').Milestone | null,
         time: Date, x: number,
         fillColor: number | null, text: string,
         visible: boolean, flagTextColor: number | null,
@@ -326,7 +326,7 @@ export class CalendarXAxes {
 
     drawMilestone(
         parentGroup: SVGElement,
-        m: import('./milestone').Milestone | null,
+        m: import('./Milestone').Milestone | null,
         time: Date | null, x: number, y: number,
         fillColor: number | null, text: string,
         visible: boolean,

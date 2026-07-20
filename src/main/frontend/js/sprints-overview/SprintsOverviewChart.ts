@@ -3,11 +3,11 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {AbstractChart} from '../abstract-chart.js';
-import {CalendarSize} from '../calendar-size.js';
-import {Theme} from '../theme/theme.js';
-import {SprintsOverviewRenderer} from './sprints-overview-renderer.js';
-import {SprintOverviewDto} from './dto/sprint-overview-dto.js';
+import {AbstractChart} from '../AbstractChart.js';
+import {CalendarSize} from '../CalendarSize.js';
+import {Theme} from '../theme/Theme.js';
+import {SprintsOverviewRenderer} from './SprintsOverviewRenderer.js';
+import {SprintOverviewDto} from './dto/SprintOverviewDto.js';
 
 export class SprintsOverviewChart extends AbstractChart {
     constructor(data: SprintOverviewDto, theme: Theme) {

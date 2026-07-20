@@ -3,18 +3,17 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {AbstractRenderer} from '../abstract-renderer.js';
-import {ColorUtils} from '../color-utils.js';
-import {DateUtils} from '../date-utils.js';
-import {GraphSquare} from '../graph-square.js';
-import {Milestone} from '../milestone.js';
-import {Milestones} from '../milestones.js';
-import {SvgUtils} from '../svg-utils.js';
-import {Theme} from '../theme/theme.js';
-import {CalendarSize} from "Frontend/js/calendar-size";
-import {GanttBurndownChartDto} from './dto/gantt-burndown-chart-dto.js';
-import {BurndownMetaDto} from './dto/burndown-meta-dto.js';
-import {AuthorSeriesDto} from './dto/author-series-dto.js';
+import {AbstractRenderer} from '../AbstractRenderer.js';
+import {ColorUtils} from '../ColorUtils.js';
+import {DateUtils} from '../DateUtils.js';
+import {GraphSquare} from '../GraphSquare.js';
+import {Milestone} from '../Milestone.js';
+import {Milestones} from '../Milestones.js';
+import {SvgUtils} from '../SvgUtils.js';
+import {Theme} from '../theme/Theme.js';
+import {CalendarSize} from "../CalendarSize.js";
+import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
+import {BurndownMetaDto} from './dto/BurndownMetaDto.js';
 
 // ── Constants (mirrors Java BurnDownRenderer static fields) ─────────────────
 const ONE_WEEK = 7;

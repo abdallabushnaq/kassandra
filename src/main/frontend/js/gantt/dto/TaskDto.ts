@@ -1,7 +1,7 @@
 // gantt/dto/task-dto.ts
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {CalendarException} from './calendar-exception.js';
+import {CalendarException} from './CalendarException.js';
 
 /**
  * DTO representing a task in the Gantt chart.

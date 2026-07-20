@@ -4,10 +4,10 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {ColorUtils} from './color-utils.js';
-import {SvgUtils} from './svg-utils.js';
-import {Theme} from './theme/theme.js';
-import {FontSpec} from "./font-spec.js";
+import {ColorUtils} from './ColorUtils.js';
+import {SvgUtils} from './SvgUtils.js';
+import {Theme} from './theme/Theme.js';
+import {FontSpec} from "./FontSpec.js";
 
 export class FooterElement {
     text: string | null;

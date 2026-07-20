@@ -28,7 +28,7 @@ export function parseLocalDateTime(str: string | Date | null | undefined): Date 
 //     return datetimeStr.split('T')[0] + 'T08:00:00';
 // }
 
-import {CalendarException} from './dto/calendar-exception.js';
+import {CalendarException} from './dto/CalendarException.js';
 
 export function getCalendarException(date: Date, exceptions: CalendarException[] | null | undefined): CalendarException | null {
     if (!exceptions?.length) return null;
