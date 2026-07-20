@@ -180,15 +180,15 @@ export class GanttRenderer extends AbstractGanttRenderer {
         }
     }
 
-    renderNowLine(totalHeight: number): SVGGElement {
-        const g = SvgUtils.createSvgElement('g', {class: 'now-line'});
-        const containerWidth = this.containerWidth;
-        const nowIdx = this.calculateDayIndex(this.currentDate);
-        const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
-        if (xPos < 0 || xPos > containerWidth) return g;
-        g.appendChild(SvgUtils.createLine(xPos, 0, xPos, totalHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
-        return g;
-    }
+    // renderNowLine(totalHeight: number): SVGGElement {
+    //     const g = SvgUtils.createSvgElement('g', {class: 'now-line'});
+    //     const containerWidth = this.containerWidth;
+    //     const nowIdx = this.calculateDayIndex(this.currentDate);
+    //     const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
+    //     if (xPos < 0 || xPos > containerWidth) return g;
+    //     g.appendChild(SvgUtils.createLine(xPos, 0, xPos, totalHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
+    //     return g;
+    // }
 
     override draw(svg: SVGSVGElement, x: number, y: number): void {
         const calendarH = this.calendarXAxes.getHeight();
@@ -214,7 +214,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         this.drawGanttChart(gTasks);
         svg.appendChild(gTasks);
 
-        svg.appendChild(this.renderNowLine(y + totalH));
+        // svg.appendChild(this.renderNowLine(y + totalH));
     }
 }
 

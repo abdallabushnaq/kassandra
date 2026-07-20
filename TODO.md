@@ -38,6 +38,16 @@
 18. all js charts are drawn 2 times.
 19. gantt chart task tooltip is missing many items from legacy code.
 
+# Latest Bugs
+
+1. Gantt and burndown charts do not scroll.
+2. Gantt grid only spans from S to E.
+3. Gantt footer missing generated message.
+4. Burndown Watermark not transparent.
+5. Burndown Authors legend location too much to the right.
+6. post-run should be 3 weeks not 2.
+7. buffer not resource aligned.
+
 # Failing Tests
 
 1. 2 TestTest (dependency to task with higher orderId fails to level)

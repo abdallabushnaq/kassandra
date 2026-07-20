@@ -85,6 +85,16 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     dayWidth: number;
     containerWidth: number;
     sprintHitAreas: HitArea[];
+    // 24-hour format
+    readonly options24: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    };
+    dateTimeFormat: Intl.DateTimeFormat = new Intl.DateTimeFormat('en-DE', this.options24);
 
     constructor(data: SprintOverviewDto, theme: Theme, preRun: number, postRun: number) {
         const chartStart = new Date(data.meta.chartStart || Date.now());
@@ -126,15 +136,6 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
 
     override calculateDayWidth(): void {
         // no-op: day width is controlled by scroll/zoom state
-    }
-
-    calculateLaneAreaHeight(): number {
-        return this.lanes.length * LANE_H + 8;
-    }
-
-    override calculateChartHeight(): number {
-        const calH = this.calendarXAxes ? this.calendarXAxes.getHeight() : 0;
-        return calH + this.calculateLaneAreaHeight();
     }
 
     // renderWeekendStripes(baseY: number, baseHeight: number): SVGGElement {
@@ -187,6 +188,15 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     //     }
     //     return g;
     // }
+
+    calculateLaneAreaHeight(): number {
+        return this.lanes.length * LANE_H + 8;
+    }
+
+    override calculateChartHeight(): number {
+        const calH = this.calendarXAxes ? this.calendarXAxes.getHeight() : 0;
+        return calH + this.calculateLaneAreaHeight();
+    }
 
     drawGraph(svg: SVGElement): void {
         this.sprintHitAreas = [];
@@ -242,8 +252,8 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         let tooltip = sprint.name || '';
         if (sprint.key) tooltip += `\nKey: ${sprint.key}`;
         if (sprint.status) tooltip += `\nStatus: ${sprint.status}`;
-        if (sprint.start) tooltip += `\nStart: ${new Date(sprint.start).toLocaleDateString()}`;
-        if (sprint.end) tooltip += `\nEnd: ${new Date(sprint.end).toLocaleDateString()}`;
+        if (sprint.start) tooltip += `\nStart: ${DateUtils.toLocalYMDHMString(sprint.start, this.dateTimeFormat)}`;
+        if (sprint.end) tooltip += `\nEnd: ${DateUtils.toLocalYMDHMString(sprint.end, this.dateTimeFormat)}`;
         if (sprint.delay) tooltip += '\n(DELAYED)';
         return tooltip;
     }

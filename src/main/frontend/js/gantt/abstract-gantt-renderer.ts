@@ -64,6 +64,20 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     tasks: TaskDto[];
     _calendarH: number;
     _taskById: Record<string, TaskDto>;
+    // 24-hour format
+    readonly options24: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    };
+    dateTimeFormat: Intl.DateTimeFormat = new Intl.DateTimeFormat('en-DE', this.options24);
+
+    // dayIndexToPixelX(dayIndex: number): number {
+    //     return (dayIndex - this.scrollOffset) * this.dayWidth;
+    // }
 
     constructor(theme: Theme, milestones: Milestones, preRun: number, postRun: number) {
         super(theme, milestones, preRun, postRun);
@@ -78,10 +92,6 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         this._taskById = {};
     }
 
-    dayIndexToPixelX(dayIndex: number): number {
-        return (dayIndex - this.scrollOffset) * this.dayWidth;
-    }
-
     getTaskHeight(): number {
         return LINE_HEIGHT;
     }
@@ -91,29 +101,6 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             ? this.calendarXAxes.getHeight()
             : 0;
         return calH + this.tasks.length * (this.getTaskHeight() + 1);
-    }
-
-    getDayOfWeekStripBgColor(dayDate: Date): string {
-        const dow = dayDate.getDay();
-        if (dow === 6) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSaturdayBgColor, '#d7d7d7');
-        if (dow === 0) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSundayBgColor, '#d7d7d7');
-        return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfweekBgColor, '#ffffff');
-    }
-
-    getGanttDayStripeColor(task: TaskDto, dayDate: Date): string {
-        const dow = dayDate.getDay();
-        if (dow === 6 || dow === 0 || isWorkingDay(dayDate, task.calendarExceptions)) {
-            return this.getDayOfWeekStripBgColor(dayDate);
-        }
-        const exception = getCalendarException(dayDate, task.calendarExceptions);
-        if (exception) {
-            const t = exception.type;
-            if (t === 'VACATION') return ColorUtils.intToHex(this.theme.ganttTheme.vacationBgColor, '#a0c8ff');
-            if (t === 'TRIP') return ColorUtils.intToHex(this.theme.ganttTheme.tripBgColor, '#c8a0ff');
-            if (t === 'SICK') return ColorUtils.intToHex(this.theme.ganttTheme.sickBgColor, '#ffa0a0');
-            return ColorUtils.intToHex(this.theme.ganttTheme.holidayBgColor, '#ffd0a0');
-        }
-        return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfMonthWeekendBgColor, '#d7d7d7');
     }
 
     // override drawDayBars(g: SVGElement, dayDate: Date, calendarH = 0): void {
@@ -141,6 +128,29 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     //     }
     // }
 
+    getDayOfWeekStripBgColor(dayDate: Date): string {
+        const dow = dayDate.getDay();
+        if (dow === 6) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSaturdayBgColor, '#d7d7d7');
+        if (dow === 0) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSundayBgColor, '#d7d7d7');
+        return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfweekBgColor, '#ffffff');
+    }
+
+    getGanttDayStripeColor(task: TaskDto, dayDate: Date): string {
+        const dow = dayDate.getDay();
+        if (dow === 6 || dow === 0 || isWorkingDay(dayDate, task.calendarExceptions)) {
+            return this.getDayOfWeekStripBgColor(dayDate);
+        }
+        const exception = getCalendarException(dayDate, task.calendarExceptions);
+        if (exception) {
+            const t = exception.type;
+            if (t === 'VACATION') return ColorUtils.intToHex(this.theme.ganttTheme.vacationBgColor, '#a0c8ff');
+            if (t === 'TRIP') return ColorUtils.intToHex(this.theme.ganttTheme.tripBgColor, '#c8a0ff');
+            if (t === 'SICK') return ColorUtils.intToHex(this.theme.ganttTheme.sickBgColor, '#ffa0a0');
+            return ColorUtils.intToHex(this.theme.ganttTheme.holidayBgColor, '#ffd0a0');
+        }
+        return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfMonthWeekendBgColor, '#d7d7d7');
+    }
+
     drawConflictMarker(_g: SVGElement, _y: number, _conflict: unknown): void { /* team planner only */
     }
 
@@ -149,43 +159,54 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             ? ColorUtils.intToHex(this.theme.ganttTheme.criticalTaskBorderColor, '#ff0000')
             : ColorUtils.intToHex(this.theme.ganttTheme.taskBorderColor, '#888888');
 
-        const startDayIdx = this.calculateDayIndex(task.start!);
-        const finishDayIdx = this.calculateDayIndex(task.finish!);
-        const days = finishDayIdx - startDayIdx;
+        // Calculate days between start and finish (both truncated to day precision)
+        const startTruncated = DateUtils.getDayMidnight(task.start!);
+        const finishTruncated = DateUtils.getDayMidnight(task.finish!);
+        const days = Math.floor((finishTruncated.getTime() - startTruncated.getTime()) / DateUtils.MS);
+        const th = this.getTaskHeight();
 
         for (let day = 0; day <= days; day++) {
-            const dayIdx = startDayIdx + day;
-            const dayDate = new Date(this.chartStart!.getTime() + dayIdx * DateUtils.MS);
-            const working = isWorkingDay(dayDate, task.calendarExceptions);
-            const xStart = this.dayIndexToPixelX(dayIdx);
-            const xFinish = xStart + this.dayWidth;
+            const currentDay = new Date(startTruncated.getTime() + day * DateUtils.MS);
+            const working = isWorkingDay(currentDay, task.calendarExceptions);
 
             if (working) {
-                const th = this.getTaskHeight();
                 if (days === 0) {
+                    // This is the left and right end
                     g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER, x2 - x1 + 1, 1, {fill: borderColor}));
                     g.appendChild(SvgUtils.createRect(x1, y + th / 2 - TASK_BODY_BORDER - 1, x2 - x1 + 1, 1, {fill: borderColor}));
                     g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
                     g.appendChild(SvgUtils.createRect(x2, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
                 } else if (day === 0) {
+                    // This is the left end
+                    const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
+                    const nextDayAt8 = new Date(currentDayAt8.getTime() + SECONDS_PER_DAY * 1000);
+                    const xFinish = this.calculateX(nextDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
                     g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER, xFinish - x1, 1, {fill: borderColor}));
                     g.appendChild(SvgUtils.createRect(x1, y + th / 2 - TASK_BODY_BORDER - 1, xFinish - x1, 1, {fill: borderColor}));
                     g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
                 } else if (day === days) {
+                    // This is the right end
+                    const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
+                    const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
                     g.appendChild(SvgUtils.createRect(xStart, y - th / 2 + TASK_BODY_BORDER, x2 - xStart + 1, 1, {fill: borderColor}));
                     g.appendChild(SvgUtils.createRect(xStart, y + th / 2 - TASK_BODY_BORDER - 1, x2 - xStart + 1, 1, {fill: borderColor}));
                     g.appendChild(SvgUtils.createRect(x2, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
                 } else {
-                    g.appendChild(SvgUtils.createRect(xStart, y - th / 2 + TASK_BODY_BORDER, this.dayWidth, 1, {fill: borderColor}));
-                    g.appendChild(SvgUtils.createRect(xStart, y + th / 2 - TASK_BODY_BORDER - 1, this.dayWidth, 1, {fill: borderColor}));
+                    // This is the middle
+                    const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
+                    const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+                    g.appendChild(SvgUtils.createRect(xStart, y - th / 2 + TASK_BODY_BORDER, this.calendarXAxes.dayOfWeek.getWidth(), 1, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createRect(xStart, y + th / 2 - TASK_BODY_BORDER - 1, this.calendarXAxes.dayOfWeek.getWidth(), 1, {fill: borderColor}));
                 }
             } else {
-                for (let i = 0; i < this.dayWidth - 1; i++) {
-                    if ((dayIdx * this.dayWidth + i) % 4 === 0) {
-                        const px = xStart + i;
-                        const th = this.getTaskHeight();
-                        g.appendChild(SvgUtils.createRect(px, y - th / 2 + TASK_BODY_BORDER, 2, 1, {fill: borderColor}));
-                        g.appendChild(SvgUtils.createRect(px, y + th / 2 - TASK_BODY_BORDER - 1, 2, 1, {fill: borderColor}));
+                // Non-working day (weekend) - draw dashed border
+                const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
+                const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+                for (let i = 0; i < this.calendarXAxes.dayOfWeek.getWidth() - 1; i++) {
+                    const x = i + xStart;
+                    if (x % 4 === 0) {
+                        g.appendChild(SvgUtils.createRect(x, y - th / 2 + TASK_BODY_BORDER, 2, 1, {fill: borderColor}));
+                        g.appendChild(SvgUtils.createRect(x, y + th / 2 - TASK_BODY_BORDER - 1, 2, 1, {fill: borderColor}));
                     }
                 }
             }
@@ -193,15 +214,18 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     }
 
     drawId(g: SVGElement, task: TaskDto, y: number): void {
-        const x1 = this.dayIndexToPixelX(0);
-        const x2 = x1 + this.dayWidth;
+        const x1 = this.firstDayX;
+        const x2 = x1 + this.calendarXAxes.dayOfWeek.getWidth();
+        // const x1 = this.dayIndexToPixelX(0);
+        // const x2 = x1 + this.dayWidth;
         const fillColor = ColorUtils.intToHex(this.theme.ganttTheme.idBgColor, '#cccccc');
         const textColor = ColorUtils.intToHex(this.theme.ganttTheme.idTextColor, '#000000');
         g.appendChild(SvgUtils.createRect(x1 + 1, y - this.getTaskHeight() / 2, x2 - x1 - 1, this.getTaskHeight(), {fill: fillColor}));
         const keyText = SvgUtils.createText(x1 + 4, y, task.key || '', {
             fill: textColor, 'font-size': '12', 'font-family': 'sans-serif', 'dominant-baseline': 'middle',
         });
-        if (task.name) keyText.appendChild(SvgUtils.createSvgElement('title', {}, task.name));
+        if (task.name)
+            keyText.appendChild(SvgUtils.createSvgElement('title', {}, task.name));
         g.appendChild(keyText);
     }
 
@@ -230,7 +254,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         g.appendChild(poly);
         const textColor = task.textColor || ColorUtils.intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
         const labelX = x1 + mW / 2 + 10;
-        const dateStr = task.start ? new Date(task.start).toLocaleDateString() : '';
+        const dateStr = task.start ? DateUtils.toLocalYMDHMString(task.start, this.dateTimeFormat) : '';
         const label = `${taskName || ''} (${dateStr})`;
         const lbl = SvgUtils.createText(labelX, y, label, {
             fill: textColor, 'font-size': '12', 'font-family': 'sans-serif', 'dominant-baseline': 'middle',
@@ -323,8 +347,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         _drawOutOfOffice: boolean,
     ): void {
         if (!task.start || !task.finish) return;
-        const x1 = this.calculateX(task.start, DateUtils.withTime(task.start, 8, 0)!, SECONDS_PER_DAY);
-        const x2 = this.calculateX(task.finish, DateUtils.withTime(task.finish, 8, 0)!, SECONDS_PER_DAY);
+        const x1 = this.calculateX(task.start, DateUtils.withTime(task.start, 8, 0)!, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+        const x2 = this.calculateX(task.finish, DateUtils.withTime(task.finish, 8, 0)!, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
         const y = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
 
         this.drawTaskInner(g, task, x1, x2, y, labelInside, alien, marker, conflict);
@@ -445,44 +469,58 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         if (!alien) {
             const y1 = y - th / 2 + TASK_BODY_BORDER;
             const h = th - TASK_BODY_BORDER * 2;
-            if (x2 - x1 - 2 > 0) {
-                const startDayIdx = this.calculateDayIndex(task.start!);
-                const finishDayIdx = this.calculateDayIndex(task.finish!);
-                const days = finishDayIdx - startDayIdx;
+            if (x2 - x1 - 1 - 1 > 0) {
+                // Calculate days between start and finish (both truncated to day precision)
+                const startTruncated = DateUtils.getDayMidnight(task.start!);
+                const finishTruncated = DateUtils.getDayMidnight(task.finish!);
+                const days = Math.floor((finishTruncated.getTime() - startTruncated.getTime()) / DateUtils.MS);
 
                 for (let day = 0; day <= days; day++) {
-                    const dayIdx = startDayIdx + day;
-                    const dayDate = new Date(this.chartStart!.getTime() + dayIdx * DateUtils.MS);
+                    const currentDay = new Date(startTruncated.getTime() + day * DateUtils.MS);
                     let segX: number, segW: number;
 
-                    if (isWorkingDay(dayDate, task.calendarExceptions)) {
+                    if (isWorkingDay(currentDay, task.calendarExceptions)) {
                         const fill = ColorUtils.convertSprintColorToRgba(fillColor);
                         if (days === 0) {
+                            // This is the left and right end
                             segX = x1;
                             segW = x2 - x1;
                         } else if (day === 0) {
+                            // This is the left end
+                            const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
+                            const nextDayAt8 = new Date(currentDayAt8.getTime() + SECONDS_PER_DAY * 1000);
+                            const xFinish = this.calculateX(nextDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
                             segX = x1;
-                            segW = this.dayIndexToPixelX(dayIdx) + this.dayWidth - x1;
+                            segW = xFinish - x1;
                         } else if (day === days) {
-                            segX = this.dayIndexToPixelX(dayIdx);
-                            segW = x2 - segX + 1;
+                            // This is the right end
+                            const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
+                            const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+                            segX = xStart;
+                            segW = x2 - xStart + 1;
                         } else {
-                            segX = this.dayIndexToPixelX(dayIdx);
-                            segW = this.dayWidth;
+                            // This is the middle
+                            const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
+                            const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+                            segX = xStart;
+                            segW = this.calendarXAxes.dayOfWeek.getWidth();
                         }
                         const rect = SvgUtils.createRect(segX, y1, segW, h, {fill});
                         rect.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
                         g.appendChild(rect);
                     } else {
+                        // Weekend/non-working day
                         const weekendFill = ColorUtils.hexToRgbaWithAlpha(fillColor, this.theme.ganttTheme.taskWeekEndTransparency);
-                        const xStart4 = this.dayIndexToPixelX(dayIdx);
-                        const rectW = SvgUtils.createRect(xStart4, y1, this.dayWidth, h, {fill: weekendFill});
+                        const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
+                        const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+                        const rectW = SvgUtils.createRect(xStart, y1, this.calendarXAxes.dayOfWeek.getWidth(), h, {fill: weekendFill});
                         rectW.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
                         g.appendChild(rectW);
                     }
                 }
 
-                if (progress > 0) {
+                // Progress bar
+                if (progress > 0.0) {
                     const progressFill = task.progressColor
                         ? ColorUtils.convertSprintColorToRgba(task.progressColor)
                         : ColorUtils.hexToRgbaWithAlpha(fillColor, 200);
@@ -525,12 +563,18 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     generateTaskToolTip(task: TaskDto): string {
         let s = task.name || '';
-        if (task.key) s += `\nKey: ${task.key}`;
-        if (task.start) s += `\nStart: ${new Date(task.start).toLocaleDateString()}`;
-        if (task.finish) s += `\nFinish: ${new Date(task.finish).toLocaleDateString()}`;
-        if (task.assignedUserName) s += `\nResource: ${task.assignedUserName}`;
-        if (task.assignedUserAvailability) s += `\nAvailability: ${task.assignedUserAvailability}`;
-        if (task.progress && task.progress > 0) s += `\nProgress: ${Math.round(task.progress * 100)}%`;
+        if (task.key)
+            s += `\nKey: ${task.key}`;
+        if (task.start)
+            s += `\nStart: ${DateUtils.toLocalYMDHMString(task.start, this.dateTimeFormat)}`;
+        if (task.finish)
+            s += `\nFinish: ${DateUtils.toLocalYMDHMString(task.finish, this.dateTimeFormat)}`;
+        if (task.assignedUserName)
+            s += `\nResource: ${task.assignedUserName}`;
+        if (task.assignedUserAvailability)
+            s += `\nAvailability: ${task.assignedUserAvailability}`;
+        if (task.progress && task.progress > 0)
+            s += `\nProgress: ${Math.round(task.progress * 100)}%`;
         return s;
     }
 }

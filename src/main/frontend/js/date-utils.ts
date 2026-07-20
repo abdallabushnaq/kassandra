@@ -131,4 +131,8 @@ export class DateUtils {
         date.setHours(hourse, minutes);
         return date;
     }
+
+    static toLocalYMDHMString(date: Date, dateTimeFormat: Intl.DateTimeFormat): string {
+        return dateTimeFormat.format(date);
+    }
 }
