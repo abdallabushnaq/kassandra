@@ -43,7 +43,7 @@
 1. FIXED: Gantt and burndown charts do not scroll.
 2. FIXED: Gantt grid only spans from S to E.
 3. FIXED: Gantt footer missing generated message.
-4. Burndown Watermark not transparent.
+4. FIXED: Burndown Watermark not transparent.
 5. Burndown Authors legend location too much to the right.
 6. post-run should be 3 weeks not 2.
 7. buffer not resource aligned.

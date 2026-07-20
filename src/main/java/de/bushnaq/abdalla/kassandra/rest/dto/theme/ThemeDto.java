@@ -165,8 +165,12 @@ public class ThemeDto {
      * Converts a {@link Color} to a 0xRRGGBB integer (alpha discarded).
      */
     private static Integer rgb(Color c) {
-        if (c == null) return null;
-        return ((c.getRed() & 0xff) << 16) | ((c.getGreen() & 0xff) << 8) | (c.getBlue() & 0xff);
+        if (c == null)
+            return null;
+        int a = c.getAlpha();
+        if (a == 0)
+            a = 0xff;
+        return (a << 24) | (c.getRed() << 16) | (c.getGreen() << 8) | c.getBlue();
     }
 }
 

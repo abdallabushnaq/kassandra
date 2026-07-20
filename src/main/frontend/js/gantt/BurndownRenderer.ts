@@ -437,7 +437,7 @@ export class BurndownRenderer extends AbstractRenderer {
 
     private generateBurnDownColor(color: number): string {
         color = ColorUtils.lightenColor(color, 0.75);
-        return ColorUtils.intToHexWithAlpha(ColorUtils.setAlpha(color, 128));
+        return ColorUtils.intToHex(ColorUtils.setAlpha(color, 128));
     }
 
     /**
