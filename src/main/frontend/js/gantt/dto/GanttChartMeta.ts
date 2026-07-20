@@ -1,4 +1,4 @@
-// gantt/dto/gantt-chart-meta.ts
+// gantt/dto/gantt-chart-sprintOverviewMetaDto.ts
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {CalendarSize} from "../../CalendarSize.js";
@@ -10,6 +10,7 @@ export interface GanttChartMeta {
     firstDayX: number;
     chartStart: string;
     chartEnd: string;
+    copyright: string;
     now?: string;
     sprintEarliestStartDate: string;
     sprintLatestFinishDate: string;

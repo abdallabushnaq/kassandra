@@ -10,7 +10,7 @@ import {GanttChartDto} from './dto/GanttChartDto.js';
 
 export class GanttChart extends AbstractChart {
     constructor(data: GanttChartDto, theme: Theme) {
-        super('Gantt Chart', data.meta.sprintName || '', '', '', 'gantt-chart', theme);
+        super('Gantt Chart', data.meta.copyright, data.meta.sprintName || '', '', '', 'gantt-chart', theme);
         this.addRenderer(new GanttRenderer(data, theme, 5, 5));
     }
 

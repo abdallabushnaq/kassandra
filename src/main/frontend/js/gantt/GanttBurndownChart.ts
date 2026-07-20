@@ -13,26 +13,27 @@ import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 
 export class GanttBurndownChart extends AbstractChart {
     constructor(data: GanttBurndownChartDto, theme: Theme) {
-        super('Gantt Burndown Chart', data.burndownMeta.sprintName || '', '', '', 'gantt-burndown-chart', theme);
+        super('Gantt Burndown Chart', data.meta.copyright, data.meta.sprintName || '', '', '', 'gantt-burndown-chart', theme);
         this.addRenderer(new BurndownRenderer(data, theme));
         const ganttData: GanttChartDto = {
             tasks: data.tasks || [],
             meta: {
-                firstDayX: data.burndownMeta.firstDayX,
-                chartStart: data.burndownMeta.chartStart,
-                chartEnd: data.burndownMeta.chartEnd,
-                now: data.burndownMeta.now || undefined,
-                sprintEarliestStartDate: data.burndownMeta.sprintStart,
-                sprintLatestFinishDate: data.burndownMeta.sprintEnd,
-                sprintStatus: data.burndownMeta.sprintStatus || undefined,
-                sprintName: data.burndownMeta.sprintName || undefined,
-                preRun: data.burndownMeta.preRun,
-                postRun: data.burndownMeta.postRun,
-                theme: data.burndownMeta.theme,
+                firstDayX: data.meta.firstDayX,
+                chartStart: data.meta.chartStart,
+                chartEnd: data.meta.chartEnd,
+                copyright: data.meta.copyright,
+                now: data.meta.now || undefined,
+                sprintEarliestStartDate: data.meta.sprintStart,
+                sprintLatestFinishDate: data.meta.sprintEnd,
+                sprintStatus: data.meta.sprintStatus || undefined,
+                sprintName: data.meta.sprintName || undefined,
+                preRun: data.meta.preRun,
+                postRun: data.meta.postRun,
+                theme: data.meta.theme,
                 calendarSize: CalendarSize.MONTHS
             },
         };
-        this.addRenderer(new GanttRenderer(ganttData, theme, data.burndownMeta.preRun || 0, data.burndownMeta.postRun || 0));
+        this.addRenderer(new GanttRenderer(ganttData, theme, data.meta.preRun || 0, data.meta.postRun || 0));
     }
 
     updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number): void {

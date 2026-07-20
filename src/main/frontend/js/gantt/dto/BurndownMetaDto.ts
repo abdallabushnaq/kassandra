@@ -1,4 +1,4 @@
-// gantt/dto/burndown-meta-dto.ts
+// gantt/dto/burndown-sprintOverviewMetaDto-dto.ts
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {CalendarSize} from "../../CalendarSize.js";
@@ -10,6 +10,7 @@ export interface BurndownMetaDto {
     firstDayX: number;
     chartStart: string;
     chartEnd: string;
+    copyright: string;
     sprintStart: string;
     sprintEnd: string;
     now?: string | null;

@@ -44,7 +44,7 @@ import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
-import de.bushnaq.abdalla.kassandra.rest.dto.GanttChartDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttChartDto;
 import de.bushnaq.abdalla.kassandra.service.GanttChartService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.CrossGridDragDropCoordinator;

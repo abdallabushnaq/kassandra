@@ -5,7 +5,7 @@ import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
-import de.bushnaq.abdalla.kassandra.rest.dto.SprintOverviewDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.overview.SprintOverviewDto;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,15 +27,15 @@ import static org.mockito.Mockito.when;
 public class SprintsOverviewServiceTest {
 
     @Mock
-    FeatureRepository featureRepository;
+    FeatureRepository      featureRepository;
     @Mock
-    ProductAclService productAclService;
+    ProductAclService      productAclService;
     @InjectMocks
     SprintsOverviewService service;
     @Mock
-    SprintRepository  sprintRepository;
+    SprintRepository       sprintRepository;
     @Mock
-    VersionRepository versionRepository;
+    VersionRepository      versionRepository;
 
     @BeforeEach
     void setUp() {

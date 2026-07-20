@@ -71,7 +71,7 @@ export class BurndownRenderer extends AbstractRenderer {
     private calendarSize: CalendarSize;
 
     constructor(data: GanttBurndownChartDto, theme: Theme) {
-        const meta = data.burndownMeta;
+        const meta = data.meta;
         // Java: super(dao) — AbstractRenderer(RenderDao) sets theme/chartWidth/chartHeight/milestones/
         // calendarXAxes. milestones starts empty here; createMilestones() (called below from
         // processingInit) populates it, mirroring BurnDownRenderer(RenderDao) -> processingInit(dao)
@@ -98,11 +98,11 @@ export class BurndownRenderer extends AbstractRenderer {
         // Java re-derives maxWorked here as max(dao.maxWorked, ganttWork*PerDayAccumulated.get(0))
         // once isPlannedBurnDownGuideAvailable(). GanttBurndownChartService already performs this
         // exact adjustment server-side ("Raise maxWorked if guides exceed it"), so
-        // meta.maxWorkedSeconds already reflects it here.
+        // sprintOverviewMetaDto.maxWorkedSeconds already reflects it here.
         this.maxWorked = meta.maxWorkedSeconds;
         this.eBestWork = meta.estimatedBestWorkSeconds;
         this.eWorstWork = null; // dao.estimatedWorstWork has no DTO equivalent yet
-        this.calendarSize = data.burndownMeta.calendarSize;
+        this.calendarSize = data.meta.calendarSize;
 
         // Java: processingInit(dao) -> createMilestones(...) -> init(dao)
         this.processingInit(meta);
@@ -211,7 +211,7 @@ export class BurndownRenderer extends AbstractRenderer {
         // Java: initSize(dao.firstDayX, true, dao.calendarSize) — sizing happens per-draw() in this
         // interactive port instead (see draw()), since containerWidth/dayWidth can change on
         // zoom/pan/resize, unlike the static Java export.
-        this.initSize(this.data.burndownMeta.firstDayX, true, this.calendarSize, this.containerWidth);
+        this.initSize(this.data.meta.firstDayX, true, this.calendarSize, this.containerWidth);
         const rMilestone = this.milestones.get('R');
         const eMilestone = this.milestones.get('E');
         if (rMilestone && eMilestone && rMilestone.time.getTime() > eMilestone.time.getTime()) {

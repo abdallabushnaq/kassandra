@@ -49,7 +49,7 @@ import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
-import de.bushnaq.abdalla.kassandra.rest.dto.SprintOverviewDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.overview.SprintOverviewDto;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.SprintsOverviewService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
@@ -83,7 +83,7 @@ import java.util.stream.Collectors;
  *
  * <p>Theme changes are handled by the server-side {@link ThemeChangedEvent}: when the user
  * switches themes {@link #refreshClientChart()} is called again, which rebuilds the
- * {@link de.bushnaq.abdalla.kassandra.rest.dto.SprintOverviewDto} with the new theme and
+ * {@link SprintOverviewDto} with the new theme and
  * pushes fresh data to the browser.  The browser never fetches
  * {@code /api/overview/sprints} directly.
  */

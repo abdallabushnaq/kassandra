@@ -18,6 +18,7 @@ export abstract class AbstractChart extends AbstractCanvas {
 
     /**
      * @param caption           Chart title text
+     * @param copyright         Copyright text shown in footer
      * @param projectRequestKey Sprint key shown in footer (may be '')
      * @param relateCssPath     CSS path (for caption link; not used in SVG)
      * @param _column           Grid column (not used in SVG rendering)
@@ -26,6 +27,7 @@ export abstract class AbstractChart extends AbstractCanvas {
      */
     constructor(
         caption: string | null,
+        copyright: string,
         projectRequestKey: string,
         relateCssPath: string,
         _column: string,
@@ -34,11 +36,7 @@ export abstract class AbstractChart extends AbstractCanvas {
     ) {
         super(theme);
         this.captionElement = new CaptionElement(caption, relateCssPath, theme);
-        this.footerElement = new FooterElement(
-            `Copyright \u00A9 ${new Date().getFullYear()}`,
-            projectRequestKey || '',
-            theme,
-        );
+        this.footerElement = new FooterElement(copyright, projectRequestKey || '', theme,);
         this.renderers = [];
         this.firstDayX = 0;
     }
@@ -62,5 +60,6 @@ export abstract class AbstractChart extends AbstractCanvas {
     override drawFooter(svg: SVGSVGElement): void {
         this.footerElement?.draw(svg);
     }
+
 }
 

@@ -5,6 +5,7 @@
 
 package de.bushnaq.abdalla.kassandra.service;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -15,10 +16,13 @@ import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
-import de.bushnaq.abdalla.kassandra.rest.dto.GanttBurndownChartDto;
-import de.bushnaq.abdalla.kassandra.rest.dto.GanttChartDto;
-import de.bushnaq.abdalla.kassandra.rest.dto.ThemeDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.AuthorSeriesDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.BurndownMetaDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttBurndownChartDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttChartDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.theme.ThemeDto;
 import de.bushnaq.abdalla.util.ErrorException;
+import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,14 +145,15 @@ public class GanttBurndownChartService {
             if (lastWorklogDt == null || wdt.isAfter(lastWorklogDt)) lastWorklogDt = wdt;
         }
 
-        // ── Build burndown meta ────────────────────────────────────────────────
-        GanttBurndownChartDto.BurndownMeta meta = dto.burndownMeta;
+        // ── Build burndown sprintOverviewMetaDto ────────────────────────────────────────────────
+        BurndownMetaDto meta = dto.meta;
         meta.firstDayX    = Y_AXIS_WIDTH;
         meta.chartStart   = chartStart;
         meta.chartEnd     = chartEnd;
         meta.sprintStart  = sprint.getStart();
         meta.sprintEnd    = sprint.getEnd();
         meta.now          = now;
+        meta.copyright    = Util.generateCopyrightString(ParameterOptions.getLocalNow());
         meta.releaseDate  = sprint.getReleaseDate();
         meta.preRun       = preRun;
         meta.postRun      = postRun;
@@ -238,7 +243,7 @@ public class GanttBurndownChartService {
         }
         if (!usersTotalContribution.isEmpty()) {
             for (User user : usersTotalContribution.getSortedKeyList()) {
-                GanttBurndownChartDto.AuthorSeriesDto a = new GanttBurndownChartDto.AuthorSeriesDto();
+                AuthorSeriesDto a = new AuthorSeriesDto();
                 a.userName              = user.getName();
                 a.color                 = user.getColor().getRGB();
                 a.totalRemainingSeconds = usersTotalContribution.get(user).remaining.toSeconds();

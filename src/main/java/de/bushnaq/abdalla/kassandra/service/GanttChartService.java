@@ -17,14 +17,19 @@
 
 package de.bushnaq.abdalla.kassandra.service;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
-import de.bushnaq.abdalla.kassandra.rest.dto.GanttChartDto;
-import de.bushnaq.abdalla.kassandra.rest.dto.ThemeDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.CalendarExceptionDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttChartDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.RelationDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.TaskDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.theme.ThemeDto;
+import de.bushnaq.abdalla.util.Util;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.xmlgraphics.java2d.color.ColorUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,6 +121,7 @@ public class GanttChartService {
         dto.meta.firstDayX               = 0;
         dto.meta.chartStart              = chartStartDate.atStartOfDay();
         dto.meta.chartEnd                = chartEndDate.atStartOfDay();
+        dto.meta.copyright               = Util.generateCopyrightString(ParameterOptions.getLocalNow());
         dto.meta.now                     = now;
         dto.meta.sprintName              = sprint.getName();
         dto.meta.sprintEarliestStartDate = sprint.getEarliestStartDate();
@@ -141,8 +147,8 @@ public class GanttChartService {
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
-    private GanttChartDto.TaskDto buildTaskDto(Task task, int rowIndex, Theme theme) {
-        GanttChartDto.TaskDto dto = new GanttChartDto.TaskDto();
+    private TaskDto buildTaskDto(Task task, int rowIndex, Theme theme) {
+        TaskDto dto = new TaskDto();
 
         // ── Identity / scheduling fields ─────────────────────────────────
         dto.id                = task.getId();
@@ -200,7 +206,7 @@ public class GanttChartService {
         // ── Dependency relations ─────────────────────────────────────────
         if (task.getPredecessors() != null) {
             for (Relation relation : task.getPredecessors()) {
-                GanttChartDto.RelationDto rd = new GanttChartDto.RelationDto();
+                RelationDto rd = new RelationDto();
                 rd.predecessorId = relation.getPredecessorId();
                 rd.visible       = relation.isVisible();
                 dto.predecessors.add(rd);
@@ -212,7 +218,7 @@ public class GanttChartService {
             List<OffDay> offDays = task.getAssignedUser().getOffDays();
             if (offDays != null) {
                 for (OffDay offDay : offDays) {
-                    GanttChartDto.CalendarExceptionDto ex = new GanttChartDto.CalendarExceptionDto();
+                    CalendarExceptionDto ex = new CalendarExceptionDto();
                     ex.from   = offDay.getFirstDay();
                     ex.to     = offDay.getLastDay();
                     ex.type   = offDay.getType() != null ? offDay.getType().name() : "HOLIDAY";

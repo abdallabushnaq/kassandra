@@ -15,7 +15,7 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.rest.dto;
+package de.bushnaq.abdalla.kassandra.rest.dto.theme;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
@@ -34,131 +34,17 @@ import java.awt.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ThemeDto {
 
-    /** "light" or "dark" – mirrors {@code Theme.themeVariance.name()} */
-    public String          themeVariance;
-    public ChartThemeDto   chartTheme    = new ChartThemeDto();
-    public GanttThemeDto   ganttTheme    = new GanttThemeDto();
-    public XAxesThemeDto   xAxesTheme    = new XAxesThemeDto();
-    public CalendarThemeDto calendarTheme = new CalendarThemeDto();
     public BurndownThemeDto burndownTheme = new BurndownThemeDto();
+    public CalendarThemeDto calendarTheme = new CalendarThemeDto();
+    public ChartThemeDto    chartTheme    = new ChartThemeDto();
+    public GanttThemeDto    ganttTheme    = new GanttThemeDto();
+    /**
+     * "light" or "dark" – mirrors {@code Theme.themeVariance.name()}
+     */
+    public String           themeVariance;
+    public XAxesThemeDto    xAxesTheme    = new XAxesThemeDto();
 
     // ── Sub-theme DTOs ─────────────────────────────────────────────────────────
-
-    /** Mirrors Java: {@code ChartTheme} */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class ChartThemeDto {
-        public Integer backgroundColor;
-        public Integer captionTextColor;
-        public Integer chartBorderColor;
-        public Integer dayOfweekSaturdayBgColor;
-        public Integer dayOfweekSundayBgColor;
-        public Integer footerTextColor;
-        public Integer graphTextBackgroundColor;
-        public Integer surroundingSquareColor;
-    }
-
-    /** Mirrors Java: {@code GanttTheme} */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class GanttThemeDto {
-        public Integer criticalRelationColor;
-        public Integer criticalTaskBorderColor;
-        public Integer gridColor;
-        public Integer holidayBgColor;
-        public Integer idBgColor;
-        public Integer idTextColor;
-        public Integer milestoneBgColor;
-        public Integer milestoneTextColor;
-        public Integer outOfOfficeColor;
-        public Integer relationColor;
-        public Integer requestMilestoneColor;
-        public Integer sickBgColor;
-        public Integer storyColor;
-        public Integer storyTextColor;
-        public Integer taskBorderColor;
-        public Integer taskTextColor;
-        public Integer taskTickLineColor;
-        public Integer taskTickTextColor;
-        /** 0–255; alpha for normal task segments */
-        public Integer taskTransparency;
-        /** 0–255; alpha for non-working-day task segments */
-        public Integer taskWeekEndTransparency;
-        public Integer tripBgColor;
-        public Integer vacationBgColor;
-    }
-
-    /** Mirrors Java: {@code XAxesTheme} */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class XAxesThemeDto {
-        // Day of Month
-        public Integer   dayOfMonthBgColor;
-        public Integer   dayOfMonthBorderColor;
-        public Integer   dayOfMonthTextColor;
-        public Integer   dayOfMonthWeekendBgColor;
-        public Integer   dayOfMonthWeekendTextColor;
-        // Day of Week
-        public Integer   dayOfWeekBorderColor;
-        public Integer   dayOfWeekTextColor;
-        public Integer   dayOfWeekWeekendTextColor;
-        public Integer   dayOfweekBgColor;
-        public Integer   dayOfweekSaturdayBgColor;
-        public Integer   dayOfweekSundayBgColor;
-        // Events
-        public Integer   futureEventColor;
-        public Integer   milestoneFlagColor;
-        public Integer   milestoneTextColor;
-        // Month
-        public Integer[] monthBgColors = new Integer[12];
-        public Integer   monthBorderColor;
-        public Integer   monthTextColor;
-        // Now / Past
-        public Integer   nowEventColor;
-        public Integer   pastEventColor;
-        // Week
-        public Integer   weekBgColor;
-        public Integer   weekBorderColor;
-        public Integer   weekTextColor;
-        // Year
-        public Integer   yearBgColor;
-        public Integer   yearBorderColor;
-        public Integer   yearTextColor;
-    }
-
-    /** Mirrors Java: {@code CalendarTheme} */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class CalendarThemeDto {
-        public Integer fillingDayTextColor;
-        public Integer holidayBgColor;
-        public Integer holidayTextColor;
-        public Integer monthNameColor;
-        public Integer normalDayTextColor;
-        public Integer sickBgColor;
-        public Integer sickTextColor;
-        public Integer todayBgColor;
-        public Integer todayTextColor;
-        public Integer tripBgColor;
-        public Integer tripTextColor;
-        public Integer vacationBgColor;
-        public Integer vacationTextColor;
-        public Integer weekDayTextColor;
-        public Integer weekendBgColor;
-        public Integer weekendTextColor;
-        public Integer yearTextColor;
-    }
-
-    /** Mirrors Java: {@code BurndownTheme} */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class BurndownThemeDto {
-        public Integer   borderColor;
-        /** 12-element array – mirrors {@code BurndownTheme.burnDownColor[]} */
-        public Integer[] burnDownColor = new Integer[12];
-        public Integer   delayEventColor;
-        public Integer   inTimeColor;
-        public Integer   optimaleGuideColor;
-        public Integer   plannedGuideColor;
-        public Integer   tickTextColor;
-        public Integer   ticksColor;
-        public Integer   watermarkColor;
-    }
 
     // ── Factory ────────────────────────────────────────────────────────────────
 
@@ -275,7 +161,9 @@ public class ThemeDto {
         return dto;
     }
 
-    /** Converts a {@link Color} to a 0xRRGGBB integer (alpha discarded). */
+    /**
+     * Converts a {@link Color} to a 0xRRGGBB integer (alpha discarded).
+     */
     private static Integer rgb(Color c) {
         if (c == null) return null;
         return ((c.getRed() & 0xff) << 16) | ((c.getGreen() & 0xff) << 8) | (c.getBlue() & 0xff);

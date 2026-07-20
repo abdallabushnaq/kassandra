@@ -9,7 +9,7 @@ import {TaskDto} from './TaskDto.js';
  * DTO representing a complete Gantt burndown chart.
  */
 export interface GanttBurndownChartDto {
-    burndownMeta: BurndownMetaDto;
+    meta: BurndownMetaDto;
     authors: AuthorSeriesDto[];
     ganttGuideWithoutBuffer?: number[] | null;
     ganttGuideWithBuffer?: number[] | null;

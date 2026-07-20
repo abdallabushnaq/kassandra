@@ -11,7 +11,7 @@ import {SprintOverviewDto} from './dto/SprintOverviewDto.js';
 
 export class SprintsOverviewChart extends AbstractChart {
     constructor(data: SprintOverviewDto, theme: Theme) {
-        super('Project Overview Chart', '', '', '', 'sprints-overview-chart', theme);
+        super('Project Overview Chart', data.meta.copyright, '', '', '', 'sprints-overview-chart', theme);
         this.addRenderer(new SprintsOverviewRenderer(data, theme, 5, 5));
     }
 

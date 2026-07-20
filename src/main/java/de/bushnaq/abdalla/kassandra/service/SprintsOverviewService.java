@@ -1,5 +1,6 @@
 package de.bushnaq.abdalla.kassandra.service;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dao.SprintDAO;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
@@ -8,8 +9,11 @@ import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
-import de.bushnaq.abdalla.kassandra.rest.dto.SprintOverviewDto;
-import de.bushnaq.abdalla.kassandra.rest.dto.ThemeDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.overview.LaneDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.overview.SprintDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.overview.SprintOverviewDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.theme.ThemeDto;
+import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -133,6 +137,7 @@ public class SprintsOverviewService {
 
         dto.meta.chartStart = minDate.atStartOfDay();
         dto.meta.chartEnd   = maxDate.atStartOfDay();
+        dto.meta.copyright  = Util.generateCopyrightString(ParameterOptions.getLocalNow());
 
         // compute lanes: reuse overlapping logic. Only consider sprints with both start and end for lane placement
         Map<Integer, List<SprintDAO>> projectScheduleList = new TreeMap<>();
@@ -174,10 +179,10 @@ public class SprintsOverviewService {
 
         // fill lanes in DTO
         for (int laneId : projectScheduleList.keySet()) {
-            SprintOverviewDto.LaneDto lane = new SprintOverviewDto.LaneDto();
+            LaneDto lane = new LaneDto();
             lane.laneId = laneId;
             for (SprintDAO s : projectScheduleList.get(laneId)) {
-                SprintOverviewDto.SprintDto sd = new SprintOverviewDto.SprintDto();
+                SprintDto sd = new SprintDto();
                 sd.id   = s.getId();
                 sd.key  = "S-" + s.getId();
                 sd.name = s.getName();

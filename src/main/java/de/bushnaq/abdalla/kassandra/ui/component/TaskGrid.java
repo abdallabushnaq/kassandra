@@ -1367,19 +1367,19 @@ public class TaskGrid extends TreeGrid<Task> {
     @ClientCallable
     public void setCtrlKeyPressed(boolean ctrlKeyPressed) {
         this.isCtrlKeyPressed = ctrlKeyPressed;
-        log.debug("Ctrl/Meta key state set to: {}", ctrlKeyPressed);
+        log.debug("Ctrl/SprintOverviewMetaDto key state set to: {}", ctrlKeyPressed);
     }
 
     private void setupDragAndDrop() {
         // Enable row reordering with drag and drop in edit mode
         setRowsDraggable(true); // Will be enabled in edit mode
 
-        // Setup JavaScript to capture Ctrl/Meta key state during drag operations
+        // Setup JavaScript to capture Ctrl/SprintOverviewMetaDto key state during drag operations
         getElement().executeJs(
                 """
                         const grid = this;
                         
-                        // Use Ctrl (Windows/Linux) and Meta (macOS) to toggle dependency drag mode.
+                        // Use Ctrl (Windows/Linux) and SprintOverviewMetaDto (macOS) to toggle dependency drag mode.
                         if (!grid.__modifierKeyHandlersInstalled) {
                             grid.__modifierKeyHandlersInstalled = true;
                             grid.__ctrlKeyPressed = false; // local state to avoid repeat spam
@@ -1397,14 +1397,14 @@ public class TaskGrid extends TreeGrid<Task> {
                                 send(pressed);
                             };
                             window.addEventListener('keydown', (e) => {
-                                if ((e.key === 'Control' || e.key === 'Meta')) {
+                                if ((e.key === 'Control' || e.key === 'SprintOverviewMetaDto')) {
                                     if (e.repeat) return;
                                     console.log('Keydown: Control pressed');
                                     syncState(true);
                                 }
                             }, true);
                             window.addEventListener('keyup', (e) => {
-                                if ((e.key === 'Control' || e.key === 'Meta')) {
+                                if ((e.key === 'Control' || e.key === 'SprintOverviewMetaDto')) {
                                     console.log('Keyup: Control released');
                                     syncState(false);
                                 }
@@ -1526,7 +1526,7 @@ public class TaskGrid extends TreeGrid<Task> {
                 switch (dragMode) {
                     case "dependency": {
                         log.info("dropped {} on {}", draggedTask.getKey(), dropTargetTask.getKey());
-                        // Check if Ctrl/Meta key is pressed to modify behavior
+                        // Check if Ctrl/SprintOverviewMetaDto key is pressed to modify behavior
                         handleDependencyDrop(draggedTask, dropTargetTask);
                         onSaveAllChangesAndRefresh.run();
                     }

@@ -75,7 +75,7 @@ function createChart(
     options: { containerId?: string } = {},
 ): ChartHandle {
     const containerId = options.containerId || container.id || 'gantt-burndown-chart';
-    const theme = new Theme(data.burndownMeta.theme as Record<string, unknown>);
+    const theme = new Theme(data.meta.theme as Record<string, unknown>);
     const chart = new GanttBurndownChart(data, theme);
     const burndown = chart.renderers[0] as BurndownRenderer;
     const gantt = chart.renderers[1] as GanttRenderer;
@@ -105,7 +105,7 @@ function createChart(
         scrollOffset = saved.scrollOffset;
         constrainScrollOffset();
     } else {
-        const referenceDate = gantt.currentDate || burndown.currentDate || new Date(data.burndownMeta.sprintStart);
+        const referenceDate = gantt.currentDate || burndown.currentDate || new Date(data.meta.sprintStart);
         const todayIdx = DateUtils.calculateDayIndex(referenceDate, gantt.chartStart!);
         const visibleDays = getContainerWidth() / dayWidth;
         scrollOffset = Math.max(0, Math.min(gantt.totalDays - visibleDays, todayIdx - visibleDays * 0.2));

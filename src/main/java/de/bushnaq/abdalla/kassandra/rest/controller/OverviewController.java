@@ -1,7 +1,7 @@
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
-import de.bushnaq.abdalla.kassandra.rest.dto.SprintOverviewDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.overview.SprintOverviewDto;
 import de.bushnaq.abdalla.kassandra.service.SprintsOverviewService;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
