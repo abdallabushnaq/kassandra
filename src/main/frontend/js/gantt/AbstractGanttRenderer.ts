@@ -188,7 +188,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     }
 
     drawId(g: SVGElement, task: TaskDto, y: number): void {
-        const x1 = this.firstDayX;
+        const x1 = this.firstDayX - this.scrollOffset * this.dayWidth;
         const x2 = x1 + this.calendarXAxes.dayOfWeek.getWidth();
         // const x1 = this.dayIndexToPixelX(0);
         // const x2 = x1 + this.dayWidth;
