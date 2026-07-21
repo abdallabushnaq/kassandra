@@ -265,12 +265,12 @@ export abstract class AbstractRenderer implements IRenderer {
         this.drawGraphText(svg, legendTextX, legendTextY, "Last punch-out", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
     }
 
-    protected calculateDayIndex(date: Date | null): number {
-        if (date == null)
-            return 0;
-        const firstMilestoneDay = this.milestones.firstMilestone;
-        return DateUtils.calculateDays(firstMilestoneDay, date);
-    }
+    // protected calculateDayIndex(date: Date | null): number {
+    //     if (date == null)
+    //         return 0;
+    //     const firstMilestoneDay = this.milestones.firstMilestone;
+    //     return DateUtils.calculateDays(firstMilestoneDay, date);
+    // }
 
     protected drawCalendar(g: SVGElement, drawDays: boolean = true, viewportWidth: number) {
         this.calendarXAxes.drawCalendar(g, drawDays, viewportWidth);

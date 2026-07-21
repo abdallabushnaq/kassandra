@@ -95,9 +95,9 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         return (this.calendarXAxes.dayOfWeek.getWidth() ?? 0) * this.days;
     }
 
-    dayIndexToPixelX(dayIndex: number): number {
-        return this.firstDayX + (dayIndex - this.scrollOffset + this.preRun) * this.dayWidth;
-    }
+    // dayIndexToPixelX(dayIndex: number): number {
+    //     return this.firstDayX + (dayIndex - this.scrollOffset + this.preRun) * this.dayWidth;
+    // }
 
     override calculateDayWidth(): void {
         // no-op: day width is controlled by scroll/zoom state
@@ -173,10 +173,10 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
 
             (lane.sprints || []).forEach((sprint) => {
                 if (!sprint.start || !sprint.end) return;
-                const startIdx = this.calculateDayIndex(sprint.start);
-                const endIdx = this.calculateDayIndex(sprint.end);
-                const sprintX = this.dayIndexToPixelX(startIdx);
-                const sprintW = (endIdx - startIdx + 1) * this.dayWidth - 1;
+                // const startIdx = this.calculateDayIndex(sprint.start);
+                // const endIdx = this.calculateDayIndex(sprint.end);
+                const sprintX = this.calculateDayX(sprint.start);
+                const sprintW = DateUtils.calculateDayCount(sprint.start, sprint.end) * this.dayWidth - 1;
                 if (sprintX + sprintW < 0 || sprintX > containerWidth) return;
 
                 this.sprintHitAreas.push({sprint, x: sprintX, y: laneY, width: sprintW, height: SPRINT_H});

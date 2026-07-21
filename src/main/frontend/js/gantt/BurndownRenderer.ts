@@ -279,8 +279,8 @@ export class BurndownRenderer extends AbstractRenderer {
     private createBurnDownChart(svg: SVGElement): void {
         const firstDay = this.milestones.firstMilestone!;
         const firstDayX = this.diagram.x + this.calendarXAxes.dayOfWeek.getWidth() / 2;
-        const sMilestone = this.milestones.get('S')!;
-        const startX = firstDayX + (this.calendarXAxes.priRun + DateUtils.calculateDays(firstDay, sMilestone.time)) * this.dayWidth;
+        const startMilestone = this.milestones.get('S')!;
+        const startX = firstDayX + (DateUtils.calculateDays(firstDay, startMilestone.time) - this.scrollOffset + this.calendarXAxes.priRun) * this.dayWidth;
 
         this.drawAuthorLegend(svg);
         this.drawLegend(svg, this.diagram.width - 130, this.diagram.y, this.extrapolationColor);
@@ -318,11 +318,11 @@ export class BurndownRenderer extends AbstractRenderer {
             }
 
             // release extrapolation (Velocity)
-            const rMilestone = this.milestones.get('R');
-            if (rMilestone) {
-                const x1 = startX - this.dayWidth / 2 + 1;
+            const releaseMilestone = this.milestones.get('R');
+            if (releaseMilestone) {
+                const x1 = startX - (this.scrollOffset - this.calendarXAxes.priRun) * this.dayWidth - this.dayWidth / 2 + 1;
                 const y1 = this.diagram.y + this.diagram.height - this.calculateGraphHight(this.maxActualWorked);
-                const x = firstDayX + (this.calendarXAxes.priRun + DateUtils.calculateDays(firstDay, rMilestone.time)) * this.dayWidth;
+                const x = firstDayX + (DateUtils.calculateDays(firstDay, releaseMilestone.time) - this.scrollOffset + this.calendarXAxes.priRun) * this.dayWidth;
                 svg.appendChild(SvgUtils.createLine(x1, y1, x, this.diagram.y + this.diagram.height, {
                     stroke: this.extrapolationColor, 'stroke-width': STANDARD_LINE_STROKE_WIDTH,
                 }));
@@ -576,7 +576,7 @@ export class BurndownRenderer extends AbstractRenderer {
                 svg.appendChild(SvgUtils.createRect(startX - 4 - this.dayWidth / 2, markY, 4, 1, {fill: tickColor}));
                 svg.appendChild(SvgUtils.createRect(startX - 1, markY, this.diagram.width - startX, 1, {fill: gridColor}));
                 const label = `${Math.round(timeMark / mark)}${markUnit}`;
-                svg.appendChild(SvgUtils.createText(this.yAxis.x + this.yAxis.width - 5, markY, label, {
+                svg.appendChild(SvgUtils.createText(this.yAxis.x + this.yAxis.width - 5 - this.scrollOffset * this.dayWidth, markY, label, {
                     fill: textColor, 'font-size': '11px', 'font-family': 'sans-serif',
                     'text-anchor': 'end', 'dominant-baseline': 'middle',
                 }));

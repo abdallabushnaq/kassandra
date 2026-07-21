@@ -51,6 +51,8 @@
 10. several sprints will fail to render.
 11. several sprints will render wrong (no burn down visible).
 12. FIXED: key not visible in footer.
+13. FIXED: y-axis of burndown chart is not scrolling.
+14. ID calls of Gantt chart are not scrolling.
 
 # Failing Tests
 
