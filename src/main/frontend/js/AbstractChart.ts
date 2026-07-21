@@ -36,7 +36,7 @@ export abstract class AbstractChart extends AbstractCanvas {
     ) {
         super(theme);
         this.captionElement = new CaptionElement(caption, relateCssPath, theme);
-        this.footerElement = new FooterElement(copyright, projectRequestKey || '', theme,);
+        this.footerElement = new FooterElement(copyright, projectRequestKey, theme);
         this.renderers = [];
         this.firstDayX = 0;
     }

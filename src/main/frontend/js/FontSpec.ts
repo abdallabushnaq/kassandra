@@ -18,10 +18,10 @@ export class FontSpec {
     static readonly SANS_SERIF: string = 'Sans-Serif';
     static readonly BOLD: string = 'bold';
     static readonly PLAIN: string = 'normal';
-    family: string;
-    size: number;
-    weight: string;
-    maxAscent: number;
+    public family: string;
+    public size: number;
+    public weight: string;
+    public maxAscent: number;
 
     constructor(family: string, size: number, weight: string) {
         this.family = family;

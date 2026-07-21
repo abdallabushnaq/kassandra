@@ -48,6 +48,9 @@
 7. buffer not resource aligned.
 8. optimal burndown chart guide missing.
 9. burndown chart calendar day width is not aligned with gantt chart day width.
+10. several sprints will fail to render.
+11. several sprints will render wrong (no burn down visible).
+12. FIXED: key not visible in footer.
 
 # Failing Tests
 
