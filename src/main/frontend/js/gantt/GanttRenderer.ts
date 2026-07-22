@@ -10,7 +10,7 @@ import {Milestone} from '../Milestone.js';
 import {Milestones} from '../Milestones.js';
 import {Theme} from '../theme/Theme.js';
 import {getCalendarException} from './date-helpers.js';
-import {AbstractGanttRenderer, DEFAULT_DW} from './AbstractGanttRenderer.js';
+import {AbstractGanttRenderer} from './AbstractGanttRenderer.js';
 import {CalendarSize} from "../CalendarSize.js";
 import {TaskDto} from './dto/TaskDto.js';
 import {GanttChartDto} from './dto/GanttChartDto.js';
@@ -69,9 +69,13 @@ export class GanttRenderer extends AbstractGanttRenderer {
         this.initSize(data.meta.firstDayX, false, this.calendarSize, this.containerWidth);
     }
 
+    // override calculateDayWidth(): void {
+    //     super.calculateDayWidth();
+    //     this.dayWidth = DEFAULT_DW;
+    // }
     override calculateDayWidth(): void {
-        super.calculateDayWidth();
-        this.dayWidth = DEFAULT_DW;
+        this.calendarXAxes.dayOfWeek.setWidth(this.dayWidth);
+        this.calendarXAxes.dayOfMonth.setWidth(this.dayWidth);
     }
 
     calculateNumberOfTasks(tasks: TaskDto[]): number {

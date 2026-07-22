@@ -98,8 +98,13 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     // }
 
     override calculateDayWidth(): void {
-        // no-op: day width is controlled by scroll/zoom state
+        this.calendarXAxes.dayOfWeek.setWidth(this.dayWidth);
+        this.calendarXAxes.dayOfMonth.setWidth(this.dayWidth);
     }
+
+    // override calculateDayWidth(): void {
+    //     // no-op: day width is controlled by scroll/zoom state
+    // }
 
     // renderWeekendStripes(baseY: number, baseHeight: number): SVGGElement {
     //     const g = SvgUtils.createSvgElement('g', {class: 'weekend-stripes'});

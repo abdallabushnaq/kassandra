@@ -127,6 +127,7 @@ export class BurndownRenderer extends AbstractRenderer {
      */
     override calculateDayWidth(): void {
         this.calendarXAxes.dayOfWeek.setWidth(this.dayWidth);
+        this.calendarXAxes.dayOfMonth.setWidth(this.dayWidth);
     }
 
     // override calculateChartHeight(): number {
