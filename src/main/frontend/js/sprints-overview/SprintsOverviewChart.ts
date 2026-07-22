@@ -19,12 +19,16 @@ export class SprintsOverviewChart extends AbstractChart {
      * Updates renderer scroll/zoom state and recomputes chart dimensions.
      * Called before each render frame.
      */
-    updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number): void {
+    updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void {
+        this.containerWidth = containerWidth;
+        this.containerHeight = containerHeight;
+
         const renderer = this.renderers[0] as SprintsOverviewRenderer;
         renderer.dayWidth = dayWidth;
         renderer.calendarXAxes.dayOfWeek.width = dayWidth;
         renderer.scrollOffset = scrollOffset;
         renderer.containerWidth = containerWidth;
+        renderer.containerHeight = containerHeight;
 
         const calendarH = renderer.calendarXAxes.getHeight();
         const lanesH = renderer.calculateLaneAreaHeight();
@@ -36,7 +40,7 @@ export class SprintsOverviewChart extends AbstractChart {
         renderer.initSize(this.renderers[0].firstDayX, false, CalendarSize.YEARS, containerWidth - 2 * this.borderWidth);
     }
 
-    override createReport(svg: SVGSVGElement): void {
+    override createReport(svg: SVGElement): void {
         (this.renderers[0] as SprintsOverviewRenderer).draw(svg, this.borderWidth, this.captionElement.height + this.borderWidth);
     }
 }

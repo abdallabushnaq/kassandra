@@ -70,6 +70,10 @@ function createChart(
         return Math.max(200, container.clientWidth || 800);
     }
 
+    function getContainerHeight() {
+        return Math.max(200, container.clientHeight || 600);
+    }
+
     function constrainScrollOffset() {
         const max = Math.max(0, renderer.totalDays - getContainerWidth() / dayWidth);
         const min = Math.min(
@@ -103,7 +107,7 @@ function createChart(
     let animationFrameId: number | null = null;
 
     function redrawChart() {
-        chart.updateViewState(dayWidth, scrollOffset, getContainerWidth());
+        chart.updateViewState(dayWidth, scrollOffset, getContainerWidth(), getContainerHeight());
         chart.render(container);
     }
 

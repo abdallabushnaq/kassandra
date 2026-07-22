@@ -55,8 +55,6 @@ export class BurndownRenderer extends AbstractRenderer {
     currentDate: Date | null;
     /** Day pixel width, externally driven by zoom (see gantt-burndown-bundle.ts). */
     dayWidth: number;
-    /** Visible viewport width in pixels, externally driven by container size. */
-    containerWidth: number;
     /** max work per day, were every day has the amount of work planned at that day and all days before that */
     ganttWorkWithBufferPerDayAccumulated: number[] | null = null;
     /** min work per day, were every day has the amount of work planned at that day and all days before that */
@@ -89,7 +87,6 @@ export class BurndownRenderer extends AbstractRenderer {
         this.days = this.totalDays;
         this.currentDate = meta.now ? DateUtils.getDayMidnight(new Date(meta.now)) : null;
         this.dayWidth = 20;
-        this.containerWidth = 800;
 
         this.sprintClosed = meta.sprintClosed;
         this.ganttWorkWithoutBufferPerDayAccumulated = data.ganttGuideWithoutBuffer || null;
@@ -138,7 +135,7 @@ export class BurndownRenderer extends AbstractRenderer {
     // }
 
     // ── Java: public void draw(ExtendedGraphics2D graphics2D, int x, int y) ──
-    override draw(svg: SVGSVGElement, x: number, y: number): void {
+    override draw(svg: SVGElement, x: number, y: number): void {
         // Java: init(dao) -> initSize(...) is called once during construction; here we redo the
         // size computation on every draw() because containerWidth/dayWidth can change between
         // renders (interactive zoom/pan/resize), unlike the static Java export.
@@ -245,8 +242,8 @@ export class BurndownRenderer extends AbstractRenderer {
         return ((authorEstimatedSeconds - authorDeltaSeconds) * maxAuthorGraphHeight) / authorEstimatedSeconds;
     }
 
-    // ── Java: protected int calculateGraphHight(Duration hight) ──
-    private calculateGraphHight(seconds: number): number {
+    // ── Java: protected int calculateGraphHeight(Duration height) ──
+    private calculateGraphHeight(seconds: number): number {
         return (seconds * this.diagram.height) / this.maxWorked;
     }
 
@@ -325,7 +322,7 @@ export class BurndownRenderer extends AbstractRenderer {
             const releaseMilestone = this.milestones.get('R');
             if (releaseMilestone) {
                 const x1 = startX - this.dayWidth / 2 + 1;
-                const y1 = this.diagram.y + this.diagram.height - this.calculateGraphHight(this.maxActualWorked);
+                const y1 = this.diagram.y + this.diagram.height - this.calculateGraphHeight(this.maxActualWorked);
                 const x = firstDayX + (DateUtils.calculateDays(firstDay, releaseMilestone.time) - this.scrollOffset + this.calendarXAxes.priRun) * this.dayWidth + this.dayWidth / 2;
                 svg.appendChild(SvgUtils.createLine(x1, y1, x, this.diagram.y + this.diagram.height, {
                     stroke: ColorUtils.intToHex(this.extrapolationColor),
@@ -371,9 +368,7 @@ export class BurndownRenderer extends AbstractRenderer {
         // Java: if (context.parameters.detailed) { ... } — detailed is always true in practice (see
         // ParameterOptions.detailed: "should always be true, otherwise resources will not be shown
         // in burn down chart"), so the non-detailed (simple border-only) branch is not ported here.
-        const clipId = `burndown-clip-${++burndownClipSeq}`;
-        svg.appendChild(SvgUtils.createClipPath(clipId, this.diagram.x, this.diagram.y, this.diagram.width, this.diagram.height));
-        const group = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
+        const group = SvgUtils.createGroup();
 
         const authors = this.data.authors; // Java: usersTotalContribution.getSortedKeyList() (pre-sorted server-side)
 
@@ -502,7 +497,7 @@ export class BurndownRenderer extends AbstractRenderer {
 
         let workingdays = 0;
         let lastX = firstDayX + (DateUtils.calculateDays(firstDay, firstDay) - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth() - this.calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
-        let lastY = this.diagram.y + this.diagram.height - this.calculateGraphHight(estimatedWork);
+        let lastY = this.diagram.y + this.diagram.height - this.calculateGraphHeight(estimatedWork);
 
         for (let currentDay = new Date(firstDay); currentDay.getTime() <= lastDay.getTime(); currentDay = DateUtils.addDay(currentDay, 1)) {
             const daysX = firstDayX + (DateUtils.calculateDays(firstDay, currentDay) - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth() + this.calendarXAxes.dayOfWeek.getWidth() / 2 - 1;
@@ -510,7 +505,7 @@ export class BurndownRenderer extends AbstractRenderer {
             const dow = currentDay.getDay();
             if (dow !== 6 && dow !== 0) workingdays++;
             const work = estimatedWork - workingdays * workPerWorkingDay;
-            const y = this.diagram.y + this.diagram.height - this.calculateGraphHight(work);
+            const y = this.diagram.y + this.diagram.height - this.calculateGraphHeight(work);
             svg.appendChild(SvgUtils.createLine(lastX, lastY, daysX, y, {
                 stroke: color, 'stroke-width': STANDARD_LINE_STROKE_WIDTH, 'stroke-dasharray': '3',
             }));
@@ -527,9 +522,9 @@ export class BurndownRenderer extends AbstractRenderer {
         let lastX = 0;
         let lastY: number = 0;
         if (this.isPlannedBurnDownGuideAvailable()) {
-            lastY = this.diagram.y + this.diagram.height - this.calculateGraphHight(guide[0])
+            lastY = this.diagram.y + this.diagram.height - this.calculateGraphHeight(guide[0])
         } else {
-            lastY = this.diagram.y + this.diagram.height - this.calculateGraphHight(this.maxWorked);
+            lastY = this.diagram.y + this.diagram.height - this.calculateGraphHeight(this.maxWorked);
         }
         const color = ColorUtils.intToHex(this.theme.burndownTheme.plannedGuideColor, '#3b82f6');
 
@@ -538,7 +533,7 @@ export class BurndownRenderer extends AbstractRenderer {
         for (let i = 0; i < guide.length; i++) {
             const r = guide[i];
             const x = firstDayX + (i - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth() - this.calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
-            const y = this.diagram.y + this.diagram.height - this.calculateGraphHight(r);
+            const y = this.diagram.y + this.diagram.height - this.calculateGraphHeight(r);
             if (i !== 0) {
                 svg.appendChild(SvgUtils.createLine(lastX, lastY, x, y, {
                     stroke: color, 'stroke-width': STANDARD_LINE_STROKE_WIDTH, 'stroke-dasharray': '3',
@@ -577,7 +572,7 @@ export class BurndownRenderer extends AbstractRenderer {
         const textColor = ColorUtils.intToHex(this.theme.burndownTheme.tickTextColor, '#334155');
         let lastMarkY = 99999;
         for (let timeMark = 0; timeMark < estimatedWork; timeMark += mark) {
-            const markY = plotBottom - 1 - this.calculateGraphHight(timeMark);
+            const markY = plotBottom - 1 - this.calculateGraphHeight(timeMark);
             if (lastMarkY - markY > 12) {
                 svg.appendChild(SvgUtils.createRect(startX - 4 - this.dayWidth / 2, markY, 4, 1, {fill: tickColor}));
                 svg.appendChild(SvgUtils.createRect(startX - 1, markY, this.diagram.width - startX, 1, {fill: gridColor}));

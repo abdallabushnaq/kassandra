@@ -50,11 +50,13 @@ export class SvgUtils {
      * Creates an SVG group element with specified attributes.
      */
     static createGroup(
-        x: number, y: number,
+        x?: number, y?: number,
         additionalAttrs?: SvgAttrs
     ): SVGGElement {
         const group = document.createElementNS(SVG_NS, 'g');
-        group.setAttribute('transform', `translate(${x}, ${y})`);
+        if (x !== undefined && y !== undefined) {
+            group.setAttribute('transform', `translate(${x}, ${y})`);
+        }
         if (additionalAttrs) {
             for (const key of Object.keys(additionalAttrs)) {
                 const val = additionalAttrs[key];

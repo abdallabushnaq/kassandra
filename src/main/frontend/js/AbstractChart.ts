@@ -10,6 +10,7 @@ import {CaptionElement} from './CaptionElement.js';
 import {FooterElement} from './FooterElement.js';
 import {Theme} from './theme/Theme.js';
 
+
 export abstract class AbstractChart extends AbstractCanvas {
     captionElement: CaptionElement;
     footerElement: FooterElement;
@@ -53,13 +54,14 @@ export abstract class AbstractChart extends AbstractCanvas {
         if (this.footerElement) this.footerElement.width = this.chartWidth;
     }
 
-    override drawCaption(svg: SVGSVGElement): void {
+    override drawCaption(svg: SVGElement): void {
         this.captionElement?.draw(svg);
     }
 
-    override drawFooter(svg: SVGSVGElement): void {
+    override drawFooter(svg: SVGElement): void {
         this.footerElement?.draw(svg);
     }
+
 
 }
 

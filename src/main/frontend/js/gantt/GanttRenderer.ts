@@ -173,7 +173,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
     //     return g;
     // }
 
-    override draw(svg: SVGSVGElement, x: number, y: number): void {
+    override draw(svg: SVGElement, x: number, y: number): void {
         const calendarH = this.calendarXAxes.getHeight();
         const taskAreaH = this.tasks.length * (this.getTaskHeight() + 1);
         const totalH = calendarH + taskAreaH;

@@ -48,14 +48,16 @@
 7. buffer not resource aligned.
 8. FIXED: release extrapolation chart guide missing.
 9. burndown chart calendar day width is not aligned with gantt chart day width.
-10. several sprints will fail to render (end of graph disappears when zooming in).
+10. FIXED: several sprints will fail to render (end of graph disappears when zooming in).
 11. several sprints will fail to render (no burn down visible).
-12. FIXED: key not visible in footer.
-13. FIXED: y-axis of burndown chart is not scrolling.
-14. FIXED: ID cells of Gantt chart are not scrolling.
-15. FIXED: Gantt chart dependencies rendered half a day to the right.
-16. FIXED: Burndown chart missing tooltip.
-17. Chart mouse shape should be an arrow, not hand.
+12. several sprints will fail to render (grows with time).
+13. FIXED: key not visible in footer.
+14. FIXED: y-axis of burndown chart is not scrolling.
+15. FIXED: ID cells of Gantt chart are not scrolling.
+16. FIXED: Gantt chart dependencies rendered half a day to the right.
+17. FIXED: Burndown chart missing tooltip.
+18. Chart mouse shape should be an arrow, not hand.
+19. tasks overarching offdays draw dotted borders strange (dotted lines will not scroll correctly).
 
 # Failing Tests
 

@@ -14,11 +14,15 @@ export class GanttChart extends AbstractChart {
         this.addRenderer(new GanttRenderer(data, theme, 5, 5));
     }
 
-    updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number): void {
+    updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void {
+        this.containerWidth = containerWidth;
+        this.containerHeight = containerHeight;
+
         const renderer = this.renderers[0] as GanttRenderer;
         renderer.dayWidth = dayWidth;
         renderer.scrollOffset = scrollOffset;
         renderer.containerWidth = containerWidth;
+        renderer.containerHeight = containerHeight;
 
         const calendarH = renderer.calendarXAxes.getHeight();
         const taskAreaH = renderer.tasks.length * (renderer.getTaskHeight() + 1);
@@ -29,7 +33,7 @@ export class GanttChart extends AbstractChart {
         this.footerElement.y = contentH + this.captionElement.height;
     }
 
-    override createReport(svg: SVGSVGElement): void {
+    override createReport(svg: SVGElement): void {
         (this.renderers[0] as GanttRenderer).draw(svg, 0, this.captionElement.height);
     }
 }

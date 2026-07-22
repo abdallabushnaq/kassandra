@@ -48,7 +48,6 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     currentDate: Date;
     totalDays: number;
     dayWidth: number;
-    containerWidth: number;
     sprintHitAreas: HitArea[];
     // 24-hour format
     readonly options24: Intl.DateTimeFormatOptions = {
@@ -85,7 +84,6 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         this.currentDate = currentDate;
         this.totalDays = DateUtils.calculateDayCount(chartStart, chartEnd);
         this.dayWidth = DEFAULT_DW;
-        this.containerWidth = 800;
         this.sprintHitAreas = [];
 
         this.initSize(0, false, CalendarSize.YEARS, this.chartWidth);
@@ -195,7 +193,6 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
                         'font-size': '12',
                         'font-family': 'Arial,sans-serif',
                         'font-weight': 'bold',
-                        'clip-path': `url(#${clipId})`,
                     }));
                 }
             });
@@ -233,7 +230,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         this.calendarXAxes.drawCalendar(svg, drawDays, viewportWidth);
     }
 
-    override draw(svg: SVGSVGElement, x: number, y: number): void {
+    override draw(svg: SVGElement, x: number, y: number): void {
         this.initPosition(x, y);
         this.drawCalendar(svg, true);
         this.drawGraph(svg);

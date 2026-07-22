@@ -32,6 +32,9 @@ export abstract class AbstractRenderer implements IRenderer {
     postRun: number;
     diagram: GraphSquare;
     calendarAtBottom: boolean;
+    /** Visible viewport width in pixels, externally driven by container size. */
+    containerWidth: number;
+    containerHeight: number;
 
     constructor(theme: Theme, milestones: Milestones, preRun: number, postRun: number) {
         this.chartWidth = 0;
@@ -46,6 +49,8 @@ export abstract class AbstractRenderer implements IRenderer {
         this.calendarAtBottom = false;
         this.diagram = new GraphSquare();
         this.calendarXAxes = new CalendarXAxes(this, preRun, postRun);
+        this.containerWidth = 800;
+        this.containerHeight = 600;
     }
 
     calculateChartHeight(): number {
@@ -57,7 +62,7 @@ export abstract class AbstractRenderer implements IRenderer {
     }
 
     /** Abstract – draw chart content into the SVG. */
-    draw(_svg: SVGSVGElement, _x: number, _y: number): void { /* to be overridden */
+    draw(_svg: SVGElement, _x: number, _y: number): void { /* to be overridden */
     }
 
     drawMilestones(svg: SVGElement): void {

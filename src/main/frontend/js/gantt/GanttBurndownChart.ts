@@ -36,17 +36,22 @@ export class GanttBurndownChart extends AbstractChart {
         this.addRenderer(new GanttRenderer(ganttData, theme, data.meta.preRun || 0, data.meta.postRun || 0));
     }
 
-    updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number): void {
+    updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void {
+        this.containerWidth = containerWidth;
+        this.containerHeight = containerHeight;
+
         const burndown = this.renderers[0] as BurndownRenderer;
         const gantt = this.renderers[1] as GanttRenderer;
 
         burndown.dayWidth = dayWidth;
         burndown.scrollOffset = scrollOffset;
         burndown.containerWidth = containerWidth;
+        burndown.containerHeight = containerHeight;
 
         gantt.dayWidth = dayWidth;
         gantt.scrollOffset = scrollOffset;
         gantt.containerWidth = containerWidth;
+        gantt.containerHeight = containerHeight;
 
         const burndownHeight = burndown.calculateChartHeight();
         const ganttCalendarH = gantt.calendarXAxes.getHeight();
@@ -58,7 +63,7 @@ export class GanttBurndownChart extends AbstractChart {
         this.footerElement.y = burndownHeight + ganttHeight + this.captionElement.height;
     }
 
-    override createReport(svg: SVGSVGElement): void {
+    override createReport(svg: SVGElement): void {
         const burndown = this.renderers[0] as BurndownRenderer;
         const gantt = this.renderers[1] as GanttRenderer;
         // svg.appendChild(SvgUtils.createRect(0, 0, this.chartWidth, this.chartHeight, {fill: '#f00000'}));
