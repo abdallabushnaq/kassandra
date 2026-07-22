@@ -50,8 +50,10 @@ export abstract class AbstractChart extends AbstractCanvas {
     /** Sets the chart width and propagates it to caption and footer. */
     override setChartWidth(chartWidth: number): void {
         super.setChartWidth(chartWidth);
-        if (this.captionElement) this.captionElement.width = this.chartWidth;
-        if (this.footerElement) this.footerElement.width = this.chartWidth;
+        if (this.captionElement)
+            this.captionElement.width = this.chartWidth;
+        if (this.footerElement)
+            this.footerElement.width = this.chartWidth;
     }
 
     override drawCaption(svg: SVGElement): void {

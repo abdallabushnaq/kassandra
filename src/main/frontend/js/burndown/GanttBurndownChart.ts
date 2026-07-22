@@ -51,28 +51,30 @@ export class GanttBurndownChart extends AbstractChart {
     updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void {
         this.containerWidth = containerWidth;
         this.containerHeight = containerHeight;
+        this.setChartWidth(containerWidth);
 
         const burndown = this.renderers[0] as BurndownRenderer;
-        const gantt = this.renderers[1] as GanttRenderer;
 
         burndown.dayWidth = dayWidth;
         burndown.calculateDayWidth();//TODO handle day width on AbstractRenderer level
         burndown.scrollOffset = scrollOffset;
         burndown.containerWidth = containerWidth;
         burndown.containerHeight = containerHeight;
+        burndown.init();
 
+        const gantt = this.renderers[1] as GanttRenderer;
         gantt.dayWidth = dayWidth;
         gantt.calculateDayWidth();//TODO handle day width on AbstractRenderer level
         gantt.scrollOffset = scrollOffset;
         gantt.containerWidth = containerWidth;
         gantt.containerHeight = containerHeight;
+        gantt.init();
 
         const burndownHeight = burndown.calculateChartHeight();
         const ganttCalendarH = gantt.calendarXAxes.getHeight();
         const ganttTaskAreaH = gantt.tasks.length * (gantt.getTaskHeight() + 1);
         const ganttHeight = ganttCalendarH + ganttTaskAreaH;
 
-        this.setChartWidth(containerWidth);
         this.setChartHeight(burndownHeight + ganttHeight + this.captionElement.height + this.footerElement.height - 1);
         this.footerElement.y = burndownHeight + ganttHeight + this.captionElement.height;
     }

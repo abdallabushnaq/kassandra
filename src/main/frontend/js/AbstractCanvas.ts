@@ -77,6 +77,7 @@ export abstract class AbstractCanvas {
             height: this.chartHeight,
             style: 'display:block;user-select:none;shape-rendering:crispEdges',
         });
+        //--- lets clip to the size of our container.
         const clippedSvg = this.createClipPath(svg);
         this.drawBackground(clippedSvg);
         this.drawCaption(clippedSvg);
@@ -91,10 +92,8 @@ export abstract class AbstractCanvas {
         const clipId = `ChartClip-${++AbstractCanvas.burndownClipSeq}`;
         svg.appendChild(SvgUtils.createClipPath(clipId, 0, 0, this.containerWidth, this.containerHeight));
         const group = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
-        // const group = SvgUtils.createGroup(0, 0);
         svg.appendChild(group);
         return group;
-        // return svg;
     }
 }
 

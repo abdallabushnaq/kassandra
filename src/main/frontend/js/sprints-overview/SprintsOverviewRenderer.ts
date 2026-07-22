@@ -85,7 +85,10 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         this.totalDays = DateUtils.calculateDayCount(chartStart, chartEnd);
         this.dayWidth = DEFAULT_DW;
         this.sprintHitAreas = [];
+        this.init();
+    }
 
+    public init() {
         this.initSize(0, false, CalendarSize.YEARS, this.chartWidth);
     }
 

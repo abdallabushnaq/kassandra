@@ -66,10 +66,14 @@ export class GanttRenderer extends AbstractGanttRenderer {
         for (const task of this.tasks) {
             this._taskById[String(task.id)] = task;
         }
-        this.initSize(data.meta.firstDayX, false, this.calendarSize, this.containerWidth);
+        this.init();
     }
 
-    // override calculateDayWidth(): void {
+    public init() {
+        this.initSize(this.data.meta.firstDayX, false, this.calendarSize, this.containerWidth);
+    }
+
+// override calculateDayWidth(): void {
     //     super.calculateDayWidth();
     //     this.dayWidth = DEFAULT_DW;
     // }

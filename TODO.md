@@ -59,6 +59,9 @@
 17. FIXED: Burndown chart missing tooltip.
 18. Chart mouse shape should be an arrow, not hand.
 19. tasks overarching offdays draw dotted borders strange (dotted lines will not scroll correctly).
+20. FIXED: Burndown legend not scrolling and not affected by zoom.
+21. chartWidth is contained in diagram.width adn dayWidth is contained in calendarXAxis.dayOfWeek.width. We should
+    consolidate.
 
 # Failing Tests
 

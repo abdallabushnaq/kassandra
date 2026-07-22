@@ -17,6 +17,7 @@ export class GanttChart extends AbstractChart {
     updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void {
         this.containerWidth = containerWidth;
         this.containerHeight = containerHeight;
+        this.setChartWidth(containerWidth);
 
         const renderer = this.renderers[0] as GanttRenderer;
         renderer.dayWidth = dayWidth;
@@ -24,12 +25,12 @@ export class GanttChart extends AbstractChart {
         renderer.scrollOffset = scrollOffset;
         renderer.containerWidth = containerWidth;
         renderer.containerHeight = containerHeight;
+        renderer.init();
 
         const calendarH = renderer.calendarXAxes.getHeight();
         const taskAreaH = renderer.tasks.length * (renderer.getTaskHeight() + 1);
         const contentH = calendarH + taskAreaH;
 
-        this.setChartWidth(containerWidth);
         this.setChartHeight(contentH + this.captionElement.height + this.footerElement.height - 1);
         this.footerElement.y = contentH + this.captionElement.height;
     }

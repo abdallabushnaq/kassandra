@@ -167,6 +167,24 @@ export class BurndownRenderer extends AbstractRenderer {
 
     // ── Java: protected void createMilestones(LocalDateTime start, LocalDateTime now, LocalDateTime end,
 
+    // ── Java: public void init(RenderDao dao) ──
+    public init(): void {
+        // Java: initSize(dao.firstDayX, true, dao.calendarSize) — sizing happens per-draw() in this
+        // interactive port instead (see draw()), since containerWidth/dayWidth can change on
+        // zoom/pan/resize, unlike the static Java export.
+        this.initSize(this.data.meta.firstDayX, true, this.calendarSize, this.containerWidth);
+        const rMilestone = this.milestones.get('R');
+        const eMilestone = this.milestones.get('E');
+        if (rMilestone && eMilestone && rMilestone.time.getTime() > eMilestone.time.getTime()) {
+            this.extrapolationColor = this.theme.burndownTheme.delayEventColor;
+        } else {
+            this.extrapolationColor = this.theme.burndownTheme.inTimeColor;
+        }
+        // Java: calculateAuthorContribution(...), the per-day usersWorkPerDayAccumulated construction,
+        // and the final milestones.add("L", ..., hidden=true) refinement are all pre-computed
+        // server-side in GanttBurndownChartService and delivered via data.authors / data.ganttGuide*.
+    }
+
     // ── Java: private void processingInit(RenderDao dao) ──
     private processingInit(meta: BurndownMetaDto): void {
         this.createMilestones(
@@ -218,24 +236,6 @@ export class BurndownRenderer extends AbstractRenderer {
         // worklog falls outside [sprintStart, sprintEnd] (see toArrayIndex()).
         if (start) this.milestones.firstMilestone = start;
         if (end) this.milestones.lastMilestone = end;
-    }
-
-    // ── Java: public void init(RenderDao dao) ──
-    private init(): void {
-        // Java: initSize(dao.firstDayX, true, dao.calendarSize) — sizing happens per-draw() in this
-        // interactive port instead (see draw()), since containerWidth/dayWidth can change on
-        // zoom/pan/resize, unlike the static Java export.
-        this.initSize(this.data.meta.firstDayX, true, this.calendarSize, this.containerWidth);
-        const rMilestone = this.milestones.get('R');
-        const eMilestone = this.milestones.get('E');
-        if (rMilestone && eMilestone && rMilestone.time.getTime() > eMilestone.time.getTime()) {
-            this.extrapolationColor = this.theme.burndownTheme.delayEventColor;
-        } else {
-            this.extrapolationColor = this.theme.burndownTheme.inTimeColor;
-        }
-        // Java: calculateAuthorContribution(...), the per-day usersWorkPerDayAccumulated construction,
-        // and the final milestones.add("L", ..., hidden=true) refinement are all pre-computed
-        // server-side in GanttBurndownChartService and delivered via data.authors / data.ganttGuide*.
     }
 
     /**
