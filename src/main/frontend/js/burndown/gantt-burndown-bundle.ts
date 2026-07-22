@@ -1,15 +1,27 @@
-// gantt/gantt-burndown-bundle.ts
-// Entry point for the interactive combined Gantt + burndown chart bundle.
-//
-// Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
+/*
+ *
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 
-import {DateUtils} from '../DateUtils.js';
-import {Theme} from '../theme/Theme.js';
-import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from './AbstractGanttRenderer.js';
-import {BurndownRenderer} from './BurndownRenderer.js';
-import {GanttRenderer} from './GanttRenderer.js';
-import {GanttBurndownChart} from './GanttBurndownChart.js';
-import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
+import {DateUtils} from '../DateUtils';
+import {Theme} from '../theme/Theme';
+import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from '../gantt/AbstractGanttRenderer';
+import {BurndownRenderer} from './BurndownRenderer';
+import {GanttRenderer} from '../gantt/GanttRenderer';
+import {GanttBurndownChart} from './GanttBurndownChart';
+import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto';
 
 function viewStateKey(containerId: string): string {
     return 'kassandra.chart.' + containerId.replace(/-container$/, '') + '.view';

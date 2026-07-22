@@ -1,19 +1,31 @@
-// gantt/burndown-renderer.ts
-// Mirrors Java: de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer extends AbstractRenderer
-//
-// Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
+/*
+ *
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 
-import {AbstractRenderer} from '../AbstractRenderer.js';
-import {ColorUtils} from '../ColorUtils.js';
-import {DateUtils} from '../DateUtils.js';
-import {GraphSquare} from '../GraphSquare.js';
-import {Milestone} from '../Milestone.js';
-import {Milestones} from '../Milestones.js';
-import {SvgUtils} from '../SvgUtils.js';
-import {Theme} from '../theme/Theme.js';
-import {CalendarSize} from "../CalendarSize.js";
-import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
-import {BurndownMetaDto} from './dto/BurndownMetaDto.js';
+import {AbstractRenderer} from '../AbstractRenderer';
+import {ColorUtils} from '../ColorUtils';
+import {DateUtils} from '../DateUtils';
+import {GraphSquare} from '../GraphSquare';
+import {Milestone} from '../Milestone';
+import {Milestones} from '../Milestones';
+import {SvgUtils} from '../SvgUtils';
+import {Theme} from '../theme/Theme';
+import {CalendarSize} from "../CalendarSize";
+import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto';
+import {BurndownMetaDto} from './dto/BurndownMetaDto';
 
 // ── Constants (mirrors Java BurnDownRenderer static fields) ─────────────────
 const ONE_WEEK = 7;
