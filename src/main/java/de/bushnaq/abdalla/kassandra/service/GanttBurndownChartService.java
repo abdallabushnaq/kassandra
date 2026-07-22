@@ -254,11 +254,12 @@ public class GanttBurndownChartService {
                 for (int i = 0; i < usersWorkPerDayAccumulated.get(user).length; i++) {
                     DayWork dw = usersWorkPerDayAccumulated.get(user)[i];
                     a.accumulatedWorkPerDay.add(dw.duration.toSeconds());
+                    a.tooltipPerDay.add(DayWork.transactionsToTooltips(dw.transactions, user.getName(), calendarFromDayIndex(i)));
                 }
-                String[] tt = tooltipArr.get(user.getId());
-                for (int d = 0; d < arrayLen; d++) {
-                    a.tooltipPerDay.add(buildTooltip(tt[d], user.getName()));
-                }
+//                String[] tt = tooltipArr.get(user.getId());
+//                for (int d = 0; d < arrayLen; d++) {
+//                    a.tooltipPerDay.add(buildTooltip(tt[d], user.getName()));
+//                }
 //
                 dto.authors.add(a);
             }
@@ -698,6 +699,10 @@ public class GanttBurndownChartService {
                 }
             }
         }
+    }
+
+    private LocalDate calendarFromDayIndex(int dayIndex) {
+        return milestones.firstMilestone.plusDays(dayIndex);
     }
 
     /**
