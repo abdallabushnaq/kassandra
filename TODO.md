@@ -53,6 +53,7 @@
 12. FIXED: key not visible in footer.
 13. FIXED: y-axis of burndown chart is not scrolling.
 14. FIXED: ID cells of Gantt chart are not scrolling.
+15. FIXED: Gantt chart dependencies rendered half a day to the right.
 
 # Failing Tests
 

@@ -251,19 +251,17 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             yEnd = y2;
             yMid = y2 + 5;
         }
-        const ax1 = this.calculateX(targetTask.finish!, DateUtils.withTime(targetTask.finish, 8, 0), SECONDS_PER_DAY);
-        const ax2 = RELATION_CORNER_LENGTH
-            + this.calculateX(sourceTask.start!, DateUtils.withTime(sourceTask.start, 8, 0), SECONDS_PER_DAY)
-            - RESOURCE_NAME_TO_TASK_GAP;
+        const x1 = this.calculateX(targetTask.finish!, DateUtils.withTime(targetTask.finish, 8, 0), SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+        const x2 = RELATION_CORNER_LENGTH + this.calculateX(sourceTask.start!, DateUtils.withTime(sourceTask.start, 8, 0), SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2 - RESOURCE_NAME_TO_TASK_GAP;
         const arrowColor = (sourceTask.critical && targetTask.critical)
             ? ColorUtils.intToHex(this.theme.ganttTheme.criticalRelationColor, '#ff0000')
             : ColorUtils.intToHex(this.theme.ganttTheme.relationColor, '#3466ed');
-        g.appendChild(SvgUtils.createRect(ax1 + 1, y1, ax2 - ax1, 1, {fill: arrowColor}));
-        g.appendChild(SvgUtils.createRect(ax2, y1 + 1, 1, yMid - y1, {fill: arrowColor}));
+        g.appendChild(SvgUtils.createRect(x1 + 1, y1, x2 - x1, 1, {fill: arrowColor}));
+        g.appendChild(SvgUtils.createRect(x2, y1 + 1, 1, yMid - y1, {fill: arrowColor}));
         const d = 5;
         const pts = y2 > y1
-            ? `${ax2 - d},${yEnd - d + sign} ${ax2 + d},${yEnd - d + sign} ${ax2},${yEnd + sign}`
-            : `${ax2 + d},${yEnd + d + sign} ${ax2 - d},${yEnd + d + sign} ${ax2},${yEnd + sign}`;
+            ? `${x2 - d},${yEnd - d + sign} ${x2 + d},${yEnd - d + sign} ${x2},${yEnd + sign}`
+            : `${x2 + d},${yEnd + d + sign} ${x2 - d},${yEnd + d + sign} ${x2},${yEnd + sign}`;
         g.appendChild(SvgUtils.createSvgElement('polygon', {points: pts, fill: arrowColor}));
     }
 
