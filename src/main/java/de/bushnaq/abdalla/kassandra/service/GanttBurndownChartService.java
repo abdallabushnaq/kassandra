@@ -164,10 +164,12 @@ public class GanttBurndownChartService {
         meta.theme        = ThemeDto.fromTheme(theme);
 
         Duration maxWorked = Duration.ZERO;
-        if (sprint.getWorked() != null) maxWorked = maxWorked.plus(sprint.getWorked());
-        if (sprint.getRemaining() != null) maxWorked = maxWorked.plus(sprint.getRemaining());
-        meta.maxWorkedSeconds         = maxWorked.getSeconds();
-        meta.estimatedBestWorkSeconds = maxWorked.getSeconds();
+        if (sprint.getWorked() != null)
+            maxWorked = maxWorked.plus(sprint.getWorked());
+        if (sprint.getRemaining() != null)
+            maxWorked = maxWorked.plus(sprint.getRemaining());
+        meta.maxWorkedSeconds         = maxWorked.toSeconds();
+        meta.estimatedBestWorkSeconds = maxWorked.toSeconds();
         meta.calendarSize             = CalendarSize.YEARS;
 
         // Hide "N" milestone: if sprint closed and now is >7 days after sprintEnd
@@ -357,14 +359,16 @@ public class GanttBurndownChartService {
 //        buildGanttGuides(sprint, chartStart, totalDays, dto);
 
         // Raise maxWorked if guides exceed it
-        if (dto.ganttGuideWithoutBuffer != null && !dto.ganttGuideWithoutBuffer.isEmpty()) {
-            long gMax = dto.ganttGuideWithoutBuffer.get(0);
-            if (gMax > meta.maxWorkedSeconds) meta.maxWorkedSeconds = gMax;
-        }
-        if (dto.ganttGuideWithBuffer != null && !dto.ganttGuideWithBuffer.isEmpty()) {
-            long gMax = dto.ganttGuideWithBuffer.get(0);
-            if (gMax > meta.maxWorkedSeconds) meta.maxWorkedSeconds = gMax;
-        }
+//        if (dto.ganttGuideWithoutBuffer != null && !dto.ganttGuideWithoutBuffer.isEmpty()) {
+//            long gMax = dto.ganttGuideWithoutBuffer.get(0);
+//            if (gMax > meta.maxWorkedSeconds)
+//                meta.maxWorkedSeconds = gMax;
+//        }
+//        if (dto.ganttGuideWithBuffer != null && !dto.ganttGuideWithBuffer.isEmpty()) {
+//            long gMax = dto.ganttGuideWithBuffer.get(0);
+//            if (gMax > meta.maxWorkedSeconds)
+//                meta.maxWorkedSeconds = gMax;
+//        }
 
         // ── Gantt task rows (delegate to GanttChartService) ───────────────────
         GanttChartDto ganttDto = ganttChartService.build(sprint, now, dark, preRun, postRun);

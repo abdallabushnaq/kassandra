@@ -92,14 +92,18 @@ export class BurndownRenderer extends AbstractRenderer {
         this.containerWidth = 800;
 
         this.sprintClosed = meta.sprintClosed;
-        this.maxActualWorked = meta.maxWorkedSeconds;
         this.ganttWorkWithoutBufferPerDayAccumulated = data.ganttGuideWithoutBuffer || null;
         this.ganttWorkWithBufferPerDayAccumulated = data.ganttGuideWithBuffer || null;
-        // Java re-derives maxWorked here as max(dao.maxWorked, ganttWork*PerDayAccumulated.get(0))
-        // once isPlannedBurnDownGuideAvailable(). GanttBurndownChartService already performs this
-        // exact adjustment server-side ("Raise maxWorked if guides exceed it"), so
-        // sprintOverviewMetaDto.maxWorkedSeconds already reflects it here.
+        // was the estimation in the gantt chart actually bigger than the current estimation?
+        this.maxActualWorked = meta.maxWorkedSeconds;
         this.maxWorked = meta.maxWorkedSeconds;
+        if (this.ganttWorkWithoutBufferPerDayAccumulated) {
+            this.maxWorked = Math.max(this.maxWorked, this.ganttWorkWithoutBufferPerDayAccumulated[0]);
+        }
+        if (this.ganttWorkWithBufferPerDayAccumulated) {
+            this.maxWorked = Math.max(this.maxWorked, this.ganttWorkWithBufferPerDayAccumulated[0]);
+        }
+        // this.maxWorked = meta.maxWorkedSeconds;
         this.eBestWork = meta.estimatedBestWorkSeconds;
         this.eWorstWork = null; // dao.estimatedWorstWork has no DTO equivalent yet
         this.calendarSize = data.meta.calendarSize;
@@ -320,11 +324,13 @@ export class BurndownRenderer extends AbstractRenderer {
             // release extrapolation (Velocity)
             const releaseMilestone = this.milestones.get('R');
             if (releaseMilestone) {
-                const x1 = startX - (this.scrollOffset - this.calendarXAxes.priRun) * this.dayWidth - this.dayWidth / 2 + 1;
+                const x1 = startX - this.dayWidth / 2 + 1;
                 const y1 = this.diagram.y + this.diagram.height - this.calculateGraphHight(this.maxActualWorked);
-                const x = firstDayX + (DateUtils.calculateDays(firstDay, releaseMilestone.time) - this.scrollOffset + this.calendarXAxes.priRun) * this.dayWidth;
+                const x = firstDayX + (DateUtils.calculateDays(firstDay, releaseMilestone.time) - this.scrollOffset + this.calendarXAxes.priRun) * this.dayWidth + this.dayWidth / 2;
                 svg.appendChild(SvgUtils.createLine(x1, y1, x, this.diagram.y + this.diagram.height, {
-                    stroke: this.extrapolationColor, 'stroke-width': STANDARD_LINE_STROKE_WIDTH,
+                    stroke: ColorUtils.intToHex(this.extrapolationColor),
+                    'stroke-width': STANDARD_LINE_STROKE_WIDTH,
+                    'stroke-dasharray': '3'
                 }));
             }
         }

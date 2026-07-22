@@ -46,13 +46,13 @@
 5. FIXED: Burndown Authors legend location too much to the right.
 6. FIXED: post-run should be 3 weeks not 2.
 7. buffer not resource aligned.
-8. optimal burndown chart guide missing.
+8. FIXED: release extrapolation chart guide missing.
 9. burndown chart calendar day width is not aligned with gantt chart day width.
 10. several sprints will fail to render.
 11. several sprints will render wrong (no burn down visible).
 12. FIXED: key not visible in footer.
 13. FIXED: y-axis of burndown chart is not scrolling.
-14. ID calls of Gantt chart are not scrolling.
+14. FIXED: ID cells of Gantt chart are not scrolling.
 
 # Failing Tests
 
