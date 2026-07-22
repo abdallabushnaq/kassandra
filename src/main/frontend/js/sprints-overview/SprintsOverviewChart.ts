@@ -25,6 +25,7 @@ export class SprintsOverviewChart extends AbstractChart {
 
         const renderer = this.renderers[0] as SprintsOverviewRenderer;
         renderer.dayWidth = dayWidth;
+        renderer.calculateDayWidth();//TODO handle day width on AbstractRenderer level
         renderer.calendarXAxes.dayOfWeek.width = dayWidth;
         renderer.scrollOffset = scrollOffset;
         renderer.containerWidth = containerWidth;

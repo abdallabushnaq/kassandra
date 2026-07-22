@@ -15,13 +15,13 @@
  *
  */
 
-import {AbstractChart} from '../AbstractChart';
-import {Theme} from '../theme/Theme';
-import {GanttRenderer} from '../gantt/GanttRenderer';
-import {BurndownRenderer} from './BurndownRenderer';
-import {CalendarSize} from '../CalendarSize';
-import {GanttChartDto} from '../gantt/dto/GanttChartDto';
-import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto';
+import {AbstractChart} from '../AbstractChart.js';
+import {Theme} from '../theme/Theme.js';
+import {GanttRenderer} from '../gantt/GanttRenderer.js';
+import {BurndownRenderer} from './BurndownRenderer.js';
+import {CalendarSize} from '../CalendarSize.js';
+import {GanttChartDto} from '../gantt/dto/GanttChartDto.js';
+import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 
 export class GanttBurndownChart extends AbstractChart {
     constructor(data: GanttBurndownChartDto, theme: Theme) {
@@ -56,11 +56,13 @@ export class GanttBurndownChart extends AbstractChart {
         const gantt = this.renderers[1] as GanttRenderer;
 
         burndown.dayWidth = dayWidth;
+        burndown.calculateDayWidth();//TODO handle day width on AbstractRenderer level
         burndown.scrollOffset = scrollOffset;
         burndown.containerWidth = containerWidth;
         burndown.containerHeight = containerHeight;
 
         gantt.dayWidth = dayWidth;
+        gantt.calculateDayWidth();//TODO handle day width on AbstractRenderer level
         gantt.scrollOffset = scrollOffset;
         gantt.containerWidth = containerWidth;
         gantt.containerHeight = containerHeight;

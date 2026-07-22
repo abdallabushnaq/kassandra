@@ -47,7 +47,8 @@
 6. FIXED: post-run should be 3 weeks not 2.
 7. buffer not resource aligned.
 8. FIXED: release extrapolation chart guide missing.
-9. burndown chart calendar day width is not aligned with gantt chart day width.
+9. FIXED: burndown chart calendar day width is not aligned with gantt chart day width when zooming, fixed when
+   scrolling.
 10. FIXED: several sprints will fail to render (end of graph disappears when zooming in).
 11. several sprints will fail to render (no burn down visible).
 12. several sprints will fail to render (grows with time).

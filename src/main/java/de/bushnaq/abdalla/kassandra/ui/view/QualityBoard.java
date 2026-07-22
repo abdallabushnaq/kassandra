@@ -488,7 +488,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
                 String                json = jsonMapper.writeValueAsString(dto);
                 ganttBurndownChartContainer.removeAll();
                 ui.getPage().executeJs(
-                        "import('/js/generated/gantt/gantt-burndown-bundle.js')" +
+                        "import('/js/generated/burndown/gantt-burndown-bundle.js')" +
                                 ".then(() => window.mountGanttBurndownChart($0, JSON.parse($1)));",
                         GANTT_BURNDOWN_CONTAINER_ID, json
                 );

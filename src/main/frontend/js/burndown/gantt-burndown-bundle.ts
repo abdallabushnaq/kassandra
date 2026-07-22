@@ -15,13 +15,13 @@
  *
  */
 
-import {DateUtils} from '../DateUtils';
-import {Theme} from '../theme/Theme';
-import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from '../gantt/AbstractGanttRenderer';
-import {BurndownRenderer} from './BurndownRenderer';
-import {GanttRenderer} from '../gantt/GanttRenderer';
-import {GanttBurndownChart} from './GanttBurndownChart';
-import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto';
+import {DateUtils} from '../DateUtils.js';
+import {Theme} from '../theme/Theme.js';
+import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from '../gantt/AbstractGanttRenderer.js';
+import {BurndownRenderer} from './BurndownRenderer.js';
+import {GanttRenderer} from '../gantt/GanttRenderer.js';
+import {GanttBurndownChart} from './GanttBurndownChart.js';
+import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 
 function viewStateKey(containerId: string): string {
     return 'kassandra.chart.' + containerId.replace(/-container$/, '') + '.view';

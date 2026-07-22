@@ -15,17 +15,17 @@
  *
  */
 
-import {AbstractRenderer} from '../AbstractRenderer';
-import {ColorUtils} from '../ColorUtils';
-import {DateUtils} from '../DateUtils';
-import {GraphSquare} from '../GraphSquare';
-import {Milestone} from '../Milestone';
-import {Milestones} from '../Milestones';
-import {SvgUtils} from '../SvgUtils';
-import {Theme} from '../theme/Theme';
-import {CalendarSize} from "../CalendarSize";
-import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto';
-import {BurndownMetaDto} from './dto/BurndownMetaDto';
+import {AbstractRenderer} from '../AbstractRenderer.js';
+import {ColorUtils} from '../ColorUtils.js';
+import {DateUtils} from '../DateUtils.js';
+import {GraphSquare} from '../GraphSquare.js';
+import {Milestone} from '../Milestone.js';
+import {Milestones} from '../Milestones.js';
+import {SvgUtils} from '../SvgUtils.js';
+import {Theme} from '../theme/Theme.js';
+import {CalendarSize} from "../CalendarSize.js";
+import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
+import {BurndownMetaDto} from './dto/BurndownMetaDto.js';
 
 // ── Constants (mirrors Java BurnDownRenderer static fields) ─────────────────
 const ONE_WEEK = 7;

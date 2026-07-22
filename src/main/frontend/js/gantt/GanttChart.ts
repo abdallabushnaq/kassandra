@@ -20,6 +20,7 @@ export class GanttChart extends AbstractChart {
 
         const renderer = this.renderers[0] as GanttRenderer;
         renderer.dayWidth = dayWidth;
+        renderer.calculateDayWidth();//TODO handle day width on AbstractRenderer level
         renderer.scrollOffset = scrollOffset;
         renderer.containerWidth = containerWidth;
         renderer.containerHeight = containerHeight;
