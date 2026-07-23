@@ -430,7 +430,6 @@ export class BurndownRenderer extends AbstractRenderer {
                             authorIndex === authors.length - 1, DateUtils.isWorkDay(DayFromDayIndex),
                             ColorUtils.intToHex(this.theme.burndownTheme.borderColor, '#334155'),
                             this.generateBurnDownColor(author.color), tooltip, author.userName || '');
-                        //TODO use generateBurnDownColor(user.getColor())
                     }
                     yesterdayX = lastX;
                     yesterdayY = lastY;

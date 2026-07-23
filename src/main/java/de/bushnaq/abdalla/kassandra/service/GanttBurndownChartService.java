@@ -202,47 +202,47 @@ public class GanttBurndownChartService {
 //        }
 //
 //        // ── Per-author accumulated work arrays ─────────────────────────────────
-        int arrayLen = totalDays + 3;
+//        int arrayLen = totalDays + 3;
 //        Map<UUID, long[]>   workArrays = new LinkedHashMap<>();
-        Map<UUID, String[]> tooltipArr = new LinkedHashMap<>();
+//        Map<UUID, String[]> tooltipArr = new LinkedHashMap<>();
 //
-        for (UUID id : authorMap.keySet()) {
+//        for (UUID id : authorMap.keySet()) {
 //            workArrays.put(id, new long[arrayLen]);
-            tooltipArr.put(id, new String[arrayLen]);
-        }
+//            tooltipArr.put(id, new String[arrayLen]);
+//        }
 //
 //        // Running totals per author (for accumulation)
 //        Map<UUID, Long> running = new HashMap<>();
 //        for (UUID id : authorMap.keySet()) running.put(id, 0L);
 //
-        for (Worklog w : sortedWorklogs) {
-            User u = sprint.getUser(w.getAuthorId());
-            if (u == null) continue;
-            UUID id = u.getId();
+//        for (Worklog w : sortedWorklogs) {
+//            User u = sprint.getUser(w.getAuthorId());
+//            if (u == null) continue;
+//            UUID id = u.getId();
 //
 //            long newTotal = running.getOrDefault(id, 0L) + w.getTimeSpent().getSeconds();
 //            running.put(id, newTotal);
 //            workedSecs.merge(id, w.getTimeSpent().getSeconds(), Long::sum);
 //
 //            // Day offset from chartStart
-            LocalDate workDay = w.getStart().toLocalDate();
-            int       day     = (int) ChronoUnit.DAYS.between(chartStart.toLocalDate(), workDay);
-            if (day < 0) day = 0;
+//            LocalDate workDay = w.getStart().toLocalDate();
+//            int       day     = (int) ChronoUnit.DAYS.between(chartStart.toLocalDate(), workDay);
+//            if (day < 0) day = 0;
 //
-            if (day + 1 < arrayLen) {
+//            if (day + 1 < arrayLen) {
 //                workArrays.get(id)[day + 1] = newTotal;
 //                                              lastDayWithValue = Math.max(day, lastDayWithValue);
 //
 //                // Build tooltip entry: "key | duration | comment"
-                Task   t       = sprint.getTaskById(w.getTaskId());
-                String key     = (t != null) ? t.getKey() : "?";
-                String dur     = formatDuration(w.getTimeSpent());
-                String comment = w.getComment() != null ? w.getComment() : "";
-                String entry   = key + "\t" + "<b>" + dur + "</b>" + "\t" + comment;
-                String prev    = tooltipArr.get(id)[day + 1];
-                tooltipArr.get(id)[day + 1] = (prev != null && !prev.isEmpty()) ? prev + "\n" + entry : entry;
-            }
-        }
+//                Task   t       = sprint.getTaskById(w.getTaskId());
+//                String key     = (t != null) ? t.getKey() : "?";
+//                String dur     = formatDuration(w.getTimeSpent());
+//                String comment = w.getComment() != null ? w.getComment() : "";
+//                String entry   = key + "\t" + "<b>" + dur + "</b>" + "\t" + comment;
+//                String prev    = tooltipArr.get(id)[day + 1];
+//                tooltipArr.get(id)[day + 1] = (prev != null && !prev.isEmpty()) ? prev + "\n" + entry : entry;
+//            }
+//        }
         if (!usersTotalContribution.isEmpty()) {
             for (User user : usersTotalContribution.getSortedKeyList()) {
                 AuthorSeriesDto a = new AuthorSeriesDto();
@@ -487,6 +487,16 @@ public class GanttBurndownChartService {
 
     public void calculateUserWorkPerDayAccumulated(Sprint sprint, Milestones milestones, List<Worklog> worklog, List<WorklogRemaining> worklogRemaining, AuthorsContribution usersTotalContribution, Map<User, DayWork[]> usersWorkPerDayAccumulated) {
         this.milestones = milestones;
+        LocalDate lastDate = LocalDate.MIN;
+        if (worklog != null) {
+            for (Worklog work : worklog) {
+                if (work.getStart().toLocalDate().isAfter(lastDate)) {
+                    lastDate = work.getStart().toLocalDate();
+                }
+            }
+        }
+        milestones.add(lastDate, "L", "last value + 1", Color.red, true);
+        milestones.calculate();
         Map<User, Duration> authorWorkSum = new HashMap<>();// total work done by any author
         for (User user : usersTotalContribution.getSortedKeyList()) {
             if (authorWorkSum.get(user) == null) {
@@ -537,9 +547,7 @@ public class GanttBurndownChartService {
 
             }
             System.out.println("========================================================================================");
-            milestones.add(calculateDayFromIndex(lastDayIndexWithValue + 1), "L", "last value + 1", Color.red, true);
         }
-        milestones.calculate();
         int nowDayIndex = (DateUtil.calculateDays(milestones.firstMilestone, DateUtil.min(milestones.lastMilestone, milestones.get("N").time)));
         for (User user : usersTotalContribution.getSortedKeyList()) {
             Duration  last = Duration.ZERO;

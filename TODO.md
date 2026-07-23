@@ -50,7 +50,7 @@
 9. FIXED: burndown chart calendar day width is not aligned with gantt chart day width when zooming, fixed when
    scrolling.
 10. FIXED: several sprints will fail to render (end of graph disappears when zooming in).
-11. several sprints will fail to render (no burn down visible).
+11. FIXED: several sprints will fail to render (only partly visible).
 12. several sprints will fail to render (grows with time).
 13. FIXED: key not visible in footer.
 14. FIXED: y-axis of burndown chart is not scrolling.
@@ -62,6 +62,7 @@
 20. FIXED: Burndown legend not scrolling and not affected by zoom.
 21. chartWidth is contained in diagram.width adn dayWidth is contained in calendarXAxis.dayOfWeek.width. We should
     consolidate.
+22. Milestone flag connector going wrong direction.
 
 # Failing Tests
 
