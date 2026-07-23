@@ -672,7 +672,6 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             return;
         }
         context.syncTheme();
-//        generateBurnDownChartAsync();
         generateGanttBurndownChartAsync();
     }
 

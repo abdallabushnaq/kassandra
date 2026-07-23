@@ -63,7 +63,7 @@
 21. chartWidth is contained in diagram.width adn dayWidth is contained in calendarXAxis.dayOfWeek.width. We should
     consolidate.
 22. Milestone flag connector going wrong direction.
-23. sprints will fail to render (browser never returns).
+23. FIXED: sprints will fail to render (browser never returns).
 
 # Failing Tests
 

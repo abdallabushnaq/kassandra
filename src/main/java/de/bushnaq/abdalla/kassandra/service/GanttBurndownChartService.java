@@ -496,8 +496,10 @@ public class GanttBurndownChartService {
                 }
             }
         }
-        milestones.add(lastDate, "L", "last value + 1", Color.red, true);
-        milestones.calculate();
+        if (lastDate.isAfter(LocalDate.MIN)) {
+            milestones.add(lastDate, "L", "last value + 1", Color.red, true);
+            milestones.calculate();
+        }
         Map<User, Duration> authorWorkSum = new HashMap<>();// total work done by any author
         for (User user : usersTotalContribution.getSortedKeyList()) {
             if (authorWorkSum.get(user) == null) {
