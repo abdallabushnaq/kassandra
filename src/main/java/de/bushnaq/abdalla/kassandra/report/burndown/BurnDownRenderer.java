@@ -554,7 +554,8 @@ public class BurnDownRenderer extends AbstractRenderer {
     }
 
     /**
-     * x1,y1-----------------x2,y1 | | | | | x2,y2 | | | |
+     * x1,y1-----------------x2,y1
+     * | | | | | x2,y2 | | | |
      * x1,y3-----------------x2,y4
      *
      * @param x2

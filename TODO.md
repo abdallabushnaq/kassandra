@@ -18,13 +18,13 @@
 # Bugs
 
 1. users are retired by their name instead of their email address.
-2. AvailabilityTest.userSecurity() generates several exceptions on server side that the test does not catch.
+2. AvailabilityTest.userSecurity () generates several exceptions on server side that the test does not catch.
 3. fix resource leveling not handling dependency to later story (TestTest).
 4. gantt calendar should be using sprint calendar and user calendar.
 5. many places only reference lightAvatar, but not dark.
 6. editing a worklog messes up the remaining work.
 7. AI agent is very slow in introduction video.
-8. selecting newly created sprint crashes with: "de.bushnaq.abdalla.kassandra.dto.Sprint.getEnd() is null.
+8. selecting newly created sprint crashes with: "de.bushnaq.abdalla.kassandra.dto.Sprint.getEnd () is null.
 9. gantt is not using user weekend from calendar.
 10. Product show id instead of key
 11. Feature shows id instead of key
@@ -51,7 +51,7 @@
    scrolling.
 10. FIXED: several sprints will fail to render (end of graph disappears when zooming in).
 11. FIXED: several sprints will fail to render (only partly visible).
-12. several sprints will fail to render (grows with time).
+12. FIXED: sprints will fail to render (grows with time).
 13. FIXED: key not visible in footer.
 14. FIXED: y-axis of burndown chart is not scrolling.
 15. FIXED: ID cells of Gantt chart are not scrolling.
@@ -63,6 +63,7 @@
 21. chartWidth is contained in diagram.width adn dayWidth is contained in calendarXAxis.dayOfWeek.width. We should
     consolidate.
 22. Milestone flag connector going wrong direction.
+23. sprints will fail to render (browser never returns).
 
 # Failing Tests
 

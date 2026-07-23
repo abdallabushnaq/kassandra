@@ -101,6 +101,7 @@ public class GanttBurndownChartService {
      * @param postRun extra days after sprintEnd
      */
     public GanttBurndownChartDto build(Sprint sprint, LocalDateTime now, boolean dark, int preRun, int postRun) throws Exception {
+        milestones = null;
         Theme                 theme = dark ? darkTheme : lightTheme;
         GanttBurndownChartDto dto   = new GanttBurndownChartDto();
 
@@ -758,7 +759,7 @@ public class GanttBurndownChartService {
             }
             milestones.add(now.toLocalDate(), "N", "Now (current date)", Color.blue);
             if (sprint.getEnd() != null) {
-                milestones.add(sprint.getEnd().toLocalDate(), "E", "End (End of project)", Color.blue);
+                milestones.add(sprint.getLatestFinishDate().toLocalDate(), "E", "End (End of project)", Color.blue);
             }
             if (sprint.getReleaseDate() != null) {
                 milestones.add(sprint.getReleaseDate().toLocalDate(), "R", "Release (Estimated release date)", Color.blue);
