@@ -6,9 +6,7 @@ import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
-import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
-import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.rest.dto.overview.LaneDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.overview.SprintDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.overview.SprintOverviewDto;
@@ -29,26 +27,17 @@ import java.util.List;
 @Slf4j
 public class SprintsOverviewService {
 
-    private final DarkTheme         darkTheme;
-    private final FeatureRepository featureRepository;
-    private final LightTheme        lightTheme;
-    private final ProductAclService productAclService;
-    private final SprintRepository  sprintRepository;
-    private final VersionRepository versionRepository;
+    private final DarkTheme        darkTheme;
+    private final LightTheme       lightTheme;
+    private final SprintRepository sprintRepository;
 
     @Autowired
     public SprintsOverviewService(SprintRepository sprintRepository,
-                                  FeatureRepository featureRepository,
-                                  VersionRepository versionRepository,
-                                  ProductAclService productAclService,
                                   LightTheme lightTheme,
                                   DarkTheme darkTheme) {
-        this.sprintRepository  = sprintRepository;
-        this.featureRepository = featureRepository;
-        this.versionRepository = versionRepository;
-        this.productAclService = productAclService;
-        this.lightTheme        = lightTheme;
-        this.darkTheme         = darkTheme;
+        this.sprintRepository = sprintRepository;
+        this.lightTheme       = lightTheme;
+        this.darkTheme        = darkTheme;
     }
 
     private <T extends Comparable<? super T>> List<T> asSortedList(Collection<T> c) {

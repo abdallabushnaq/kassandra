@@ -16,6 +16,7 @@ import {SprintDto} from './dto/SprintDto.js';
 import {LaneDto} from './dto/LaneDto.js';
 import {SprintOverviewDto} from './dto/SprintOverviewDto.js';
 import {HitArea} from './dto/HitArea.js';
+import {AbstractChart} from '../AbstractChart.js';
 
 // ── Layout constants (mirrors Java SprintsOverviewRenderer) ──────────────
 const LINE_HEIGHT = 13;
@@ -60,7 +61,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     };
     dateTimeFormat: Intl.DateTimeFormat = new Intl.DateTimeFormat('en-DE', this.options24);
 
-    constructor(data: SprintOverviewDto, theme: Theme, preRun: number, postRun: number) {
+    constructor(chart: AbstractChart, data: SprintOverviewDto, theme: Theme, preRun: number, postRun: number) {
         const chartStart = new Date(data.meta.chartStart || Date.now());
         const chartEnd = new Date(data.meta.chartEnd || Date.now());
         const currentDate = new Date(data.meta.now);
@@ -72,7 +73,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         ];
         const milestones = new Milestones(milestonesList, chartStart, chartEnd);
 
-        super(theme, milestones, preRun, postRun);
+        super(chart, theme, milestones, preRun, postRun);
 
 
         this.lanes = (data.lanes || []).map(lane => ({

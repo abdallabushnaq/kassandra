@@ -26,6 +26,7 @@ import {Theme} from '../theme/Theme.js';
 import {CalendarSize} from "../CalendarSize.js";
 import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 import {BurndownMetaDto} from './dto/BurndownMetaDto.js';
+import {AbstractChart} from '../AbstractChart.js';
 
 // ── Constants (mirrors Java BurnDownRenderer static fields) ─────────────────
 const ONE_WEEK = 7;
@@ -80,13 +81,13 @@ export class BurndownRenderer extends AbstractRenderer {
     private yAxis!: GraphSquare;
     private calendarSize: CalendarSize;
 
-    constructor(data: GanttBurndownChartDto, theme: Theme) {
+    constructor(chart: AbstractChart, data: GanttBurndownChartDto, theme: Theme) {
         const meta = data.meta;
         // Java: super(dao) — AbstractRenderer(RenderDao) sets theme/chartWidth/chartHeight/milestones/
         // calendarXAxes. milestones starts empty here; createMilestones() (called below from
         // processingInit) populates it, mirroring BurnDownRenderer(RenderDao) -> processingInit(dao)
         // -> createMilestones(...).
-        super(theme, new Milestones([]), meta.preRun || 0, meta.postRun || 0);
+        super(chart, theme, new Milestones([]), meta.preRun || 0, meta.postRun || 0);
 
         this.data = data;
         // Java: init(dao) -> initSize(dao.firstDayX, true, dao.calendarSize) — BurnDownRenderer

@@ -1,17 +1,16 @@
 # TODO
 
-1. still need to run npm run build:static to generate debugging version of js f
-2. rename all mcp tpo IDs
-3. GENERATOR. ensure some projects show delay, are not started or are finished closed.
-4. add better error handling in api.
-5. remove default test password from AbstractApi.
-6. make sure getAll will filter via alc in db, not in memory.
-7. make all entities client side id generated
+1. rename all mcp tpo IDs
+2. GENERATOR. ensure some projects show delay, are not started or are finished closed.
+3. add better error handling in api.
+4. remove default test password from AbstractApi.
+5. make sure getAll will filter via alc in db, not in memory.
+6. make all entities client side id generated
     1. dto and dao need default constructors that set the id
     2. remove the generator annotation
     3. use entitymanager to persist
-8. sort db printout
-9. remove fallback parameter in ColorUtils.intToHex
+7. sort db printout
+8. remove fallback parameter in ColorUtils.intToHex
 
 ## Feature
 
@@ -39,31 +38,15 @@
 
 # Latest Bugs
 
-1. FIXED: Gantt and burndown charts do not scroll.
-2. FIXED: Gantt grid only spans from S to E.
-3. FIXED: Gantt footer missing generated message.
-4. FIXED: Burndown Watermark not transparent.
-5. FIXED: Burndown Authors legend location too much to the right.
-6. FIXED: post-run should be 3 weeks not 2.
-7. buffer not resource aligned.
-8. FIXED: release extrapolation chart guide missing.
-9. FIXED: burndown chart calendar day width is not aligned with gantt chart day width when zooming, fixed when
-   scrolling.
-10. FIXED: several sprints will fail to render (end of graph disappears when zooming in).
-11. FIXED: several sprints will fail to render (only partly visible).
-12. FIXED: sprints will fail to render (grows with time).
-13. FIXED: key not visible in footer.
-14. FIXED: y-axis of burndown chart is not scrolling.
-15. FIXED: ID cells of Gantt chart are not scrolling.
-16. FIXED: Gantt chart dependencies rendered half a day to the right.
-17. FIXED: Burndown chart missing tooltip.
-18. Chart mouse shape should be an arrow, not hand.
-19. tasks overarching offdays draw dotted borders strange (dotted lines will not scroll correctly).
-20. FIXED: Burndown legend not scrolling and not affected by zoom.
-21. chartWidth is contained in diagram.width adn dayWidth is contained in calendarXAxis.dayOfWeek.width. We should
-    consolidate.
-22. Milestone flag connector going wrong direction.
-23. FIXED: sprints will fail to render (browser never returns).
+1. buffer not resource aligned.
+2. FIXED: Chart mouse shape should be an arrow, not hand.
+3. tasks overarching off-days draw dotted borders strange (dotted lines will not scroll correctly).
+4. chartWidth is contained in diagram.width and dayWidth is contained in calendarXAxis.dayOfWeek.width. We should
+   consolidate.
+5. Milestone flag connector going wrong direction.
+6. Big Gantt charts might take longer to render and scroll.
+7. Off-day letter not vertically centered in day cell.
+8. FIXED: some sprint overview charts show too early start for a sprint, like for Barcelona.
 
 # Failing Tests
 

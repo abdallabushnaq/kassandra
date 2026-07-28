@@ -17,6 +17,6 @@ export interface IRenderer {
     diagram: GraphSquare;
 
     /** Called once per visible day column during calendar rendering. */
-    drawDayBars(g: SVGElement, dayDate: Date, calendarH?: number): void;
+    drawDayBars(g: SVGElement, dayDate: Date): void;
 }
 

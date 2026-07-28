@@ -262,7 +262,8 @@ export class CalendarXAxes {
         svgGroup: SVGElement,
         viewportWidth: number,
     ): void {
-        if (x1 + (x2 - x1) <= 0 || x1 >= (viewportWidth || 9999)) return;
+        if (SvgUtils.isClipped(x1, x2, viewportWidth))
+            return;
         const cellWidth = x2 - x1 + 1;
         const group = svgGroup.appendChild(SvgUtils.createGroup(x1, y1));
         group.appendChild(SvgUtils.createRect(0, 0, cellWidth - 1, cellHeight - 1, {fill: ColorUtils.intToHex(backgroundColor)}));//leave 1px for border right and bottom

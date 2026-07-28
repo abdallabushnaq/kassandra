@@ -26,7 +26,7 @@ import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 export class GanttBurndownChart extends AbstractChart {
     constructor(data: GanttBurndownChartDto, theme: Theme) {
         super('Gantt Burndown Chart', data.meta.copyright, data.meta.sprintName || '', '', '', 'gantt-burndown-chart', theme);
-        this.addRenderer(new BurndownRenderer(data, theme));
+        this.addRenderer(new BurndownRenderer(this, data, theme));
         const ganttData: GanttChartDto = {
             tasks: data.tasks || [],
             meta: {
@@ -45,7 +45,7 @@ export class GanttBurndownChart extends AbstractChart {
                 calendarSize: CalendarSize.MONTHS
             },
         };
-        this.addRenderer(new GanttRenderer(ganttData, theme, data.meta.preRun || 0, data.meta.postRun || 0));
+        this.addRenderer(new GanttRenderer(this, ganttData, theme, data.meta.preRun || 0, data.meta.postRun || 0));
     }
 
     updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void {

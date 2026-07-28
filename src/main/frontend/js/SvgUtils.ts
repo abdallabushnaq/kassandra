@@ -108,5 +108,9 @@ export class SvgUtils {
         defs.appendChild(clipPath);
         return defs;
     }
+
+    static isClipped(x1: number, x2: number, viewportWidth: number) {
+        return x1 + (x2 - x1) <= 0 || x1 >= viewportWidth;
+    }
 }
 

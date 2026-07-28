@@ -11,7 +11,7 @@ import {GanttChartDto} from './dto/GanttChartDto.js';
 export class GanttChart extends AbstractChart {
     constructor(data: GanttChartDto, theme: Theme) {
         super('Gantt Chart', data.meta.copyright, data.meta.sprintName || '', '', '', 'gantt-chart', theme);
-        this.addRenderer(new GanttRenderer(data, theme, 5, 5));
+        this.addRenderer(new GanttRenderer(this, data, theme, 5, 5));
     }
 
     updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void {

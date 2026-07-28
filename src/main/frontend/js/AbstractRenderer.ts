@@ -17,9 +17,11 @@ import type {IRenderer} from './IRenderer.js';
 import {TextAlignment} from "./TextAlignment.js";
 import {FontMetrics} from "./FontMetrics.js";
 import {FontSpec} from "./FontSpec.js";
+import {AbstractChart} from "Frontend/src/main/frontend/js/AbstractChart";
 
 export abstract class AbstractRenderer implements IRenderer {
     protected static readonly STANDARD_LINE_STROKE_WIDTH: number = 3.1;
+    chart: AbstractChart;
     chartWidth: number;
     chartHeight: number;
     theme: Theme;
@@ -36,7 +38,8 @@ export abstract class AbstractRenderer implements IRenderer {
     containerWidth: number;
     containerHeight: number;
 
-    constructor(theme: Theme, milestones: Milestones, preRun: number, postRun: number) {
+    constructor(chart: AbstractChart, theme: Theme, milestones: Milestones, preRun: number, postRun: number) {
+        this.chart = chart;
         this.chartWidth = 0;
         this.chartHeight = 400;
         this.theme = theme;
@@ -92,16 +95,18 @@ export abstract class AbstractRenderer implements IRenderer {
 
 
     /** Override per-renderer to draw day background bars. */
-    drawDayBars(g: SVGElement, currentDay: Date, _calendarH?: number): void {
-        const color = GraphColorUtil.getDayOfWeekBgColor(this.theme, currentDay);
+    drawDayBars(g: SVGElement, currentDay: Date): void {
         const x = this.calculateDayX(currentDay);
         const dw = this.calendarXAxes.dayOfWeek.getWidth() ?? 0;
+        if (SvgUtils.isClipped(x - dw / 2, x - (dw / 2) + dw - 1, this.chart.containerWidth))
+            return;
+        const color = GraphColorUtil.getDayOfWeekBgColor(this.theme, currentDay);
         g.appendChild(SvgUtils.createRect(
             x - (dw / 2), this.diagram.y, dw - 1, this.diagram.height,
             {fill: ColorUtils.intToHex(color)},
         ));
         g.appendChild(SvgUtils.createRect(
-            x - (dw / 2) + (dw - 1), this.diagram.y, (dw - 1) + 1, this.diagram.height,
+            x - (dw / 2) + (dw - 1), this.diagram.y, /*(dw - 1) +*/ 1, this.diagram.height,
             {fill: ColorUtils.intToHex(this.theme.ganttTheme.gridColor)},
         ));
     }

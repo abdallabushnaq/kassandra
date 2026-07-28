@@ -13,6 +13,7 @@ import {getCalendarException, isWorkingDay} from './date-helpers.js';
 import {TaskDto} from './dto/TaskDto.js';
 import {FontMetrics} from "../FontMetrics.js";
 import {FontSpec} from "../FontSpec.js";
+import {AbstractChart} from '../AbstractChart.js';
 
 // ── Constants (mirrors Java AbstractGanttRenderer field declarations) ────────
 const FINE_LINE_STROKE_WIDTH = 1.0;
@@ -31,6 +32,7 @@ export const ZOOM_STEP = 1.25;
 
 export abstract class AbstractGanttRenderer extends AbstractRenderer {
     private static readonly taskProgressFont: FontSpec = new FontSpec(FontSpec.SANS_SERIF, 8, FontSpec.PLAIN);
+    private static readonly graphFont: FontSpec = new FontSpec(FontSpec.SANS_SERIF, 12, FontSpec.PLAIN);
     dayWidth: number;
     chartStart: Date | null;
     totalDays: number;
@@ -53,8 +55,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     //     return (dayIndex - this.scrollOffset) * this.dayWidth;
     // }
 
-    constructor(theme: Theme, milestones: Milestones, preRun: number, postRun: number) {
-        super(theme, milestones, preRun, postRun);
+    constructor(chart: AbstractChart, theme: Theme, milestones: Milestones, preRun: number, postRun: number) {
+        super(chart, theme, milestones, preRun, postRun);
         this.dayWidth = DEFAULT_DW;
         this.chartStart = null;
         this.totalDays = 0;
@@ -127,6 +129,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     }
 
     drawCriticalMarker(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number): void {
+        if (SvgUtils.isClipped(x1, x2, this.chart.containerWidth))
+            return;
         const borderColor = task.critical
             ? ColorUtils.intToHex(this.theme.ganttTheme.criticalTaskBorderColor, '#ff0000')
             : ColorUtils.intToHex(this.theme.ganttTheme.taskBorderColor, '#888888');
@@ -209,6 +213,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     drawMilestoneTask(g: SVGElement, task: TaskDto, x1: number, y: number, _labelInside: boolean, taskName: string): void {
         const mW = this.getTaskHeight() / 2 - TASK_BODY_BORDER;
+        if (SvgUtils.isClipped(x1 - mW, x1 + mW, this.chart.containerWidth))
+            return;
         const fillColor = task.fillColor ? ColorUtils.convertSprintColorToRgba(task.fillColor) : '#808080';
         const borderColor = task.borderColor || '#888888';
         const points = [
@@ -251,6 +257,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         }
         const x1 = this.calculateX(targetTask.finish!, DateUtils.withTime(targetTask.finish, 8, 0), SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
         const x2 = RELATION_CORNER_LENGTH + this.calculateX(sourceTask.start!, DateUtils.withTime(sourceTask.start, 8, 0), SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2 - RESOURCE_NAME_TO_TASK_GAP;
+        if (SvgUtils.isClipped(x1, x2, this.chart.containerWidth))
+            return;
         const arrowColor = (sourceTask.critical && targetTask.critical)
             ? ColorUtils.intToHex(this.theme.ganttTheme.criticalRelationColor, '#ff0000')
             : ColorUtils.intToHex(this.theme.ganttTheme.relationColor, '#3466ed');
@@ -269,6 +277,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     }
 
     drawStoryBody(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number, marker: string | null): void {
+        if (SvgUtils.isClipped(x1, x2, this.chart.containerWidth))
+            return;
         const fillColor = task.fillColor
             ? ColorUtils.convertSprintColorToRgba(task.fillColor)
             : ColorUtils.intToHex(this.theme.ganttTheme.storyColor, '#444444');
@@ -346,7 +356,6 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const textColor = task.textColor || ColorUtils.intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
         const taskName = task.name || '';
         const th = this.getTaskHeight();
-        const fillColor = this.theme.burndownTheme.getAuthorColor(28);
 
         if (task.milestone && !task.story) {
             this.drawMilestoneTask(g, task, x1, y, false, taskName);
@@ -367,31 +376,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             this.drawConflictMarker(g, y, conflict);
             this.drawCriticalMarker(g, task, x1, x2, y);
             this.drawManualMarker(g, task, x1, y, false);
-
-            if (progress > 0) {
-                //draw progress if it fints in side the task
-                let blendedColor = ColorUtils.calculateColorBlending(fillColor, ColorUtils.WHITE);
-                if (progress > 0.5) {
-                    blendedColor = ColorUtils.calculateColorBlending(fillColor, blendedColor);// we are drawing two times
-                }
-                const highestContrast = ColorUtils.highestContrast(blendedColor);
-                const barWidth = x2 - x1;
-                const text = `${Math.round(progress * 100)}%`;
-                const fm = new FontMetrics(AbstractGanttRenderer.taskProgressFont);
-                const textWidth = fm.stringWidth(text);
-                if (textWidth < barWidth) {
-                    const clipId2 = 'pt-' + String(task.id).replace(/-/g, '');
-                    g.appendChild(SvgUtils.createClipPath(clipId2, x1 + 1, y - th / 2 + RESOURCE_NAME_TO_TASK_GAP, x2 - x1 - 3, th - 6));
-                    g.appendChild(SvgUtils.createText(x1 + barWidth / 2, y, text, {
-                        fill: highestContrast,
-                        'font-size': AbstractGanttRenderer.taskProgressFont.size,
-                        'font-family': AbstractGanttRenderer.taskProgressFont.family,
-                        'text-anchor': 'middle',
-                        'dominant-baseline': 'middle',
-                        'clip-path': `url(#${clipId2})`,
-                    }));
-                }
-            }
+            this.drawProgress(g, task, x1, x2, y, progress);
 
             const labelRight = x2 + TASK_NAME_TO_TASK_GAP;
             if (labelRight < this.containerWidth + 40) {
@@ -407,31 +392,44 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                     g.appendChild(nameLabel);
                 }
             }
+            this.drawUserName(g, task, x1, y, textColor);
+        }
+    }
 
-            if (task.assignedUserName) {
-                const rn = task.assignedUserName;
-                const rnWidth = rn.length * 7;
-                const rnX = x1 - rnWidth - RESOURCE_NAME_TO_TASK_GAP;
-                if (rnX > -100) {
-                    const clipId4 = 'rn-' + String(task.id).replace(/-/g, '');
-                    const clipW4 = Math.min(120, x1 > 0 ? x1 : 0);
-                    if (clipW4 > 8) {
-                        g.appendChild(SvgUtils.createClipPath(clipId4, Math.max(0, rnX), y - th, clipW4, th * 2));
-                        const rLabel = SvgUtils.createText(rnX + rnWidth, y, rn, {
-                            fill: textColor, 'font-size': '12', 'font-family': 'sans-serif',
-                            'text-anchor': 'end', 'dominant-baseline': 'middle',
-                            'clip-path': `url(#${clipId4})`,
-                        });
-                        rLabel.appendChild(SvgUtils.createSvgElement('title', {},
-                            this.generateTaskNameToolTip(rn, task.assignedUserAvailability, task.assignedUserCountry, task.assignedUserState)));
-                        g.appendChild(rLabel);
-                    }
-                }
+    drawProgress(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number, progress: number) {
+        if (SvgUtils.isClipped(x1, x2, this.chart.containerWidth))
+            return;
+        const fillColor = this.theme.burndownTheme.getAuthorColor(28);
+        const th = this.getTaskHeight();
+        if (progress > 0) {
+            //draw progress if it fits inside the task
+            let blendedColor = ColorUtils.calculateColorBlending(fillColor, ColorUtils.WHITE);
+            if (progress > 0.5) {
+                blendedColor = ColorUtils.calculateColorBlending(fillColor, blendedColor);// we are drawing two times
+            }
+            const highestContrast = ColorUtils.highestContrast(blendedColor);
+            const barWidth = x2 - x1;
+            const text = `${Math.round(progress * 100)}%`;
+            const fm = new FontMetrics(AbstractGanttRenderer.taskProgressFont);
+            const textWidth = fm.stringWidth(text);
+            if (textWidth < barWidth) {
+                const clipId2 = 'pt-' + String(task.id).replace(/-/g, '');
+                g.appendChild(SvgUtils.createClipPath(clipId2, x1 + 1, y - th / 2 + RESOURCE_NAME_TO_TASK_GAP, x2 - x1 - 3, th - 6));
+                g.appendChild(SvgUtils.createText(x1 + barWidth / 2, y, text, {
+                    fill: highestContrast,
+                    'font-size': AbstractGanttRenderer.taskProgressFont.size,
+                    'font-family': AbstractGanttRenderer.taskProgressFont.family,
+                    'text-anchor': 'middle',
+                    'dominant-baseline': 'middle',
+                    'clip-path': `url(#${clipId2})`,
+                }));
             }
         }
     }
 
     drawTaskBody(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number, alien: boolean, progress: number): void {
+        if (SvgUtils.isClipped(x1, x2, this.chart.containerWidth))
+            return;
         const fillColor = task.fillColor;
         const tooltip = this.generateTaskToolTip(task);
         const th = this.getTaskHeight();
@@ -546,6 +544,33 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         if (task.progress && task.progress > 0)
             s += `\nProgress: ${Math.round(task.progress * 100)}%`;
         return s;
+    }
+
+    private drawUserName(g: SVGElement, task: TaskDto, x1: number, y: number, textColor: string) {
+        if (task.assignedUserName) {
+            const resourceName = task.assignedUserName;
+            const fm = new FontMetrics(AbstractGanttRenderer.graphFont);
+            const textWidth = fm.stringWidth(resourceName);
+            if (SvgUtils.isClipped(x1, x1 + textWidth, this.chart.containerWidth))
+                return;
+            const th = this.getTaskHeight();
+            const rnX = x1 - textWidth - RESOURCE_NAME_TO_TASK_GAP;
+            if (rnX > -100) {
+                const clipId4 = 'rn-' + String(task.id).replace(/-/g, '');
+                const clipW4 = Math.min(120, x1 > 0 ? x1 : 0);
+                if (clipW4 > 8) {
+                    g.appendChild(SvgUtils.createClipPath(clipId4, Math.max(0, rnX), y - th, clipW4, th * 2));
+                    const rLabel = SvgUtils.createText(rnX + textWidth, y, resourceName, {
+                        fill: textColor, 'font-size': '12', 'font-family': 'sans-serif',
+                        'text-anchor': 'end', 'dominant-baseline': 'middle',
+                        'clip-path': `url(#${clipId4})`,
+                    });
+                    rLabel.appendChild(SvgUtils.createSvgElement('title', {},
+                        this.generateTaskNameToolTip(resourceName, task.assignedUserAvailability, task.assignedUserCountry, task.assignedUserState)));
+                    g.appendChild(rLabel);
+                }
+            }
+        }
     }
 }
 

@@ -359,7 +359,8 @@ public class GanttUtil {
         logger.info("Calculate delivery buffer start");
         Duration deliveryBuffer = calculateDeliveryBuffer(eh, sprint);
         //add delivery buffer to the correct task
-        if (deliveryBuffer.getSeconds() > 6) {
+//        if (deliveryBuffer.getSeconds() > 6)
+        {
             //use 6 seconds accuracy
             deliveryBufferTask = findDeliveryBuffertask(eh, sprint);
             if (deliveryBufferTask != null) {

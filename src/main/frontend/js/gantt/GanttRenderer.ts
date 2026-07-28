@@ -14,6 +14,7 @@ import {AbstractGanttRenderer} from './AbstractGanttRenderer.js';
 import {CalendarSize} from "../CalendarSize.js";
 import {TaskDto} from './dto/TaskDto.js';
 import {GanttChartDto} from './dto/GanttChartDto.js';
+import {AbstractChart} from '../AbstractChart.js';
 
 /**
  * convert string date representative to Date
@@ -33,7 +34,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
     calendarSize: CalendarSize;
     data: GanttChartDto;
 
-    constructor(data: GanttChartDto, theme: Theme, preRun: number, postRun: number) {
+    constructor(chart: AbstractChart, data: GanttChartDto, theme: Theme, preRun: number, postRun: number) {
         const chartStart = DateUtils.getDayMidnight(new Date(data.meta.chartStart));
         const chartEnd = DateUtils.getDayMidnight(new Date(data.meta.chartEnd));
         const now = data.meta.now ? DateUtils.getDayMidnight(new Date(data.meta.now)) : DateUtils.getDayMidnight(new Date());
@@ -54,7 +55,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
             milestonesList.length > 0 ? milestonesList[milestonesList.length - 1].time : chartStart,
         );
 
-        super(theme, milestones, data.meta.preRun || 0, data.meta.postRun || 0);
+        super(chart, theme, milestones, data.meta.preRun || 0, data.meta.postRun || 0);
 
         this.data = data;
         this.tasks = (data.tasks || []).map(convertTaskDates);//convert all dates from string to Date
@@ -96,14 +97,15 @@ export class GanttRenderer extends AbstractGanttRenderer {
         return this.calendarXAxes.getHeight() + GanttRenderer.GANTT_TASK_PRI_SPACE + this.calculateNumberOfTasks(this.tasks) * (this.getTaskHeight() + 1) + GanttRenderer.GANTT_TASK_POST_SPACE;
     }
 
-    override drawDayBars(g: SVGElement, currentDay: Date, calendarH = 0): void {
+    override drawDayBars(g: SVGElement, currentDay: Date): void {
         const x = this.calculateDayX(currentDay);
-        // const dayIdx = DateUtils.calculateDayIndex(currentDay, this.chartStart!);
-        // const dayLeft = this.dayIndexToPixelX(dayIdx);
+        const x1 = x - (this.calendarXAxes.dayOfWeek.getWidth() / 2 - 1);
+        if (SvgUtils.isClipped(x1 - 1, x1 - 1 + this.dayWidth, this.chart.containerWidth))
+            return;
         const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
         for (const task of this.tasks) {
-            const y1 = calendarH + task.rowIndex * (this.getTaskHeight() + 1);
-            const x1 = x - (this.calendarXAxes.dayOfWeek.getWidth() / 2 - 1);
+            const y1 = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
+
             //grid
             g.appendChild(SvgUtils.createRect(x1 - 1, y1 - 1, this.dayWidth, 1, {fill: gridColor}));//top --
             g.appendChild(SvgUtils.createRect(x1 - 1, y1, 1, this.getTaskHeight(), {fill: gridColor}));//left |
@@ -187,18 +189,18 @@ export class GanttRenderer extends AbstractGanttRenderer {
         const totalH = calendarH + taskAreaH;
         this._calendarH = y + calendarH;
 
-        const gDayBars = SvgUtils.createSvgElement('g', {class: 'day-bars'});
+        // const gDayBars = SvgUtils.createSvgElement('g', {class: 'day-bars'});
         const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
         const lastDay = Math.min(this.totalDays - 1, firstDay + Math.ceil(this.containerWidth / this.dayWidth) + 2);
-        for (let d = firstDay; d <= lastDay; d++) {
-            const dayDate = new Date(this.chartStart!.getTime() + d * DateUtils.MS);
-            this.drawDayBars(gDayBars, dayDate, this._calendarH);
-        }
-        svg.appendChild(gDayBars);
+        // for (let d = firstDay; d <= lastDay; d++) {
+        //     const dayDate = new Date(this.chartStart!.getTime() + d * DateUtils.MS);
+        //     this.drawDayBars(gDayBars, dayDate, this._calendarH);
+        // }
+        // svg.appendChild(gDayBars);
 
         this.calendarXAxes.initPosition(this.firstDayX + x, y);
         this.calendarXAxes.initSize(this.containerWidth, this.dayWidth, this.calendarAtBottom, this.calendarSize);
-        this.calendarXAxes.drawCalendar(svg, false, this.containerWidth);
+        this.calendarXAxes.drawCalendar(svg, true, this.containerWidth);
         this.calendarXAxes.drawMilestones(svg);
 
         const gTasks = SvgUtils.createSvgElement('g', {class: 'tasks'});

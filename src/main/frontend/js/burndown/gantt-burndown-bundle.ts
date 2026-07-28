@@ -182,7 +182,7 @@ function createChart(
             return;
         dragState = {startX: e.clientX, startOffset: scrollOffset};
         container.setPointerCapture(e.pointerId);
-        container.style.cursor = 'grabbing';
+        // container.style.cursor = 'grabbing';
         e.preventDefault();
     }
 
@@ -199,7 +199,7 @@ function createChart(
             dragState = null;
             scheduleSave();
         }
-        container.style.cursor = 'grab';
+        // container.style.cursor = 'grab';
     }
 
     function hideTooltip() {
@@ -251,7 +251,7 @@ function createChart(
         container.innerHTML = '';
     }
 
-    container.style.cursor = 'grab';
+    // container.style.cursor = 'grab';
     container.addEventListener('wheel', handleWheelEvent as EventListener, {passive: false});
     container.addEventListener('pointerdown', handlePointerDown as EventListener, {passive: false});
     container.addEventListener('pointermove', handlePointerMove as EventListener, {passive: true});
