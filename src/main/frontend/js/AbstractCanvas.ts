@@ -18,6 +18,8 @@ export abstract class AbstractCanvas {
     containerWidth: number;
     /** Visible viewport height in pixels, externally driven by container size. */
     containerHeight: number;
+    /** Reference to the scrolling group element for fast translate-only scroll updates. */
+    protected scrollingGroupEl: SVGGElement | null = null;
 
     constructor(theme: Theme) {
         this.chartWidth = 0;
@@ -81,7 +83,10 @@ export abstract class AbstractCanvas {
         const clippedSvg = this.createClipPath(svg);
         this.drawBackground(clippedSvg);
         this.drawCaption(clippedSvg);
-        this.createReport(clippedSvg);
+        const scrollingGroup = SvgUtils.createGroup(0, 0, {'scrollingGroup': 'scroll'});
+        this.scrollingGroupEl = scrollingGroup;
+        clippedSvg.appendChild(scrollingGroup);
+        this.createReport(scrollingGroup);
         this.drawFooter(clippedSvg);
         this.drawBorder(clippedSvg);
         container.innerHTML = '';
@@ -94,6 +99,18 @@ export abstract class AbstractCanvas {
         const group = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
         svg.appendChild(group);
         return group;
+    }
+
+    /**
+     * Updates the horizontal translation of the scrolling group without a full SVG rebuild.
+     * Used for fast scroll-only updates; a lazy full redraw should follow to correct culling gaps.
+     *
+     * @param tx Horizontal translation in pixels (negative = scroll right / forward in time).
+     */
+    updateScrollTranslate(tx: number): void {
+        if (this.scrollingGroupEl) {
+            this.scrollingGroupEl.setAttribute('transform', `translate(${tx}, 0)`);
+        }
     }
 }
 

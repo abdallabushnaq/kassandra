@@ -94,6 +94,10 @@ function createChart(
 
     let dayWidth = DEFAULT_DW;
     let scrollOffset = 0;
+    /** scrollOffset value that was in effect when the last full SVG render completed. */
+    let renderedScrollOffset = 0;
+    /** Timer for debounced lazy full-redraw after translate-only scroll events. */
+    let lazyRedrawTimerId: ReturnType<typeof setTimeout> | null = null;
 
     function getContainerWidth() {
         return Math.max(200, container.clientWidth || 800);
@@ -146,10 +150,29 @@ function createChart(
     }
 
     function redrawChart() {
+        renderedScrollOffset = scrollOffset;
         container.style.position = 'relative';
         chart.updateViewState(dayWidth, scrollOffset, getContainerWidth(), getContainerHeight());
         chart.render(container);
         ensureTooltip();
+    }
+
+    /** Applies horizontal scroll as a CSS transform on the scrolling group — no SVG rebuild. */
+    function applyScrollTranslation() {
+        const tx = -(scrollOffset - renderedScrollOffset) * dayWidth;
+        chart.updateScrollTranslate(tx);
+    }
+
+    /**
+     * Schedules a full SVG redraw 150 ms after the last translate-only scroll event.
+     * This corrects viewport-culling gaps that may appear at the scroll edges during fast panning.
+     */
+    function scheduleLazyRedraw() {
+        if (lazyRedrawTimerId) clearTimeout(lazyRedrawTimerId);
+        lazyRedrawTimerId = setTimeout(() => {
+            lazyRedrawTimerId = null;
+            scheduleRender();
+        }, 150);
     }
 
     function scheduleRender() {
@@ -161,18 +184,24 @@ function createChart(
     function handleWheelEvent(e: WheelEvent) {
         e.preventDefault();
         if (e.deltaX !== 0) {
+            // Horizontal scroll — fast path: translate the group, defer the full redraw.
             scrollOffset += e.deltaX / dayWidth;
+            constrainScrollOffset();
+            applyScrollTranslation();
+            scheduleLazyRedraw();
+            scheduleSave();
         } else {
+            // Vertical scroll = zoom — always requires a full redraw.
             const rect = container.getBoundingClientRect();
             const mouseX = e.clientX != null ? e.clientX - rect.left : getContainerWidth() / 2;
             const dayUnder = scrollOffset + mouseX / dayWidth;
             const factor = e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
             dayWidth = Math.max(MIN_DW, Math.min(MAX_DW, dayWidth * factor));
             scrollOffset = dayUnder - mouseX / dayWidth;
+            constrainScrollOffset();
+            scheduleRender();
+            scheduleSave();
         }
-        constrainScrollOffset();
-        scheduleRender();
-        scheduleSave();
     }
 
     let dragState: { startX: number; startOffset: number } | null = null;
@@ -191,7 +220,8 @@ function createChart(
             return;
         scrollOffset = dragState.startOffset - (e.clientX - dragState.startX) / dayWidth;
         constrainScrollOffset();
-        scheduleRender();
+        applyScrollTranslation();
+        scheduleLazyRedraw();
     }
 
     function handlePointerUp() {
@@ -248,6 +278,7 @@ function createChart(
         resizeObserver?.disconnect();
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         if (saveTimerId) clearTimeout(saveTimerId);
+        if (lazyRedrawTimerId) clearTimeout(lazyRedrawTimerId);
         container.innerHTML = '';
     }
 
