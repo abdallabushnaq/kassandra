@@ -18,8 +18,8 @@ export abstract class AbstractCanvas {
     containerWidth: number;
     /** Visible viewport height in pixels, externally driven by container size. */
     containerHeight: number;
-    /** Reference to the scrolling group element for fast translate-only scroll updates. */
-    protected scrollingGroupEl: SVGGElement | null = null;
+    /** Reference to the content group element for fast transform-only scroll and visual-zoom updates. */
+    protected contentGroupEl: SVGGElement | null = null;
 
     constructor(theme: Theme) {
         this.chartWidth = 0;
@@ -83,8 +83,8 @@ export abstract class AbstractCanvas {
         const clippedSvg = this.createClipPath(svg);
         this.drawBackground(clippedSvg);
         this.drawCaption(clippedSvg);
-        const scrollingGroup = SvgUtils.createGroup(0, 0, {'scrollingGroup': 'scroll'});
-        this.scrollingGroupEl = scrollingGroup;
+        const scrollingGroup = SvgUtils.createGroup(0, 0, {'contentGroup': 'content'});
+        this.contentGroupEl = scrollingGroup;
         clippedSvg.appendChild(scrollingGroup);
         this.createReport(scrollingGroup);
         this.drawFooter(clippedSvg);
@@ -95,6 +95,7 @@ export abstract class AbstractCanvas {
 
     createClipPath(svg: SVGSVGElement): SVGElement {
         const clipId = `ChartClip-${++AbstractCanvas.burndownClipSeq}`;
+        //--- lets not clip the bottom in case the browser is hiding the rest
         svg.appendChild(SvgUtils.createClipPath(clipId, 0, 0, this.containerWidth, 10000));
         const group = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
         svg.appendChild(group);
@@ -102,14 +103,19 @@ export abstract class AbstractCanvas {
     }
 
     /**
-     * Updates the horizontal translation of the scrolling group without a full SVG rebuild.
-     * Used for fast scroll-only updates; a lazy full redraw should follow to correct culling gaps.
+     * Applies a combined scroll-translate and visual-scale transform to the content group without
+     * a full SVG rebuild. The transform is {@code translate(tx, ty) scale(scale)}.
+     * <p>
+     * Callers must pass {@code tx = visualPanX + visualScale * scrollTxGroup} so that the scroll
+     * translation is applied inside the scale, preventing visual jumps when lazy full redraws fire.
      *
-     * @param tx Horizontal translation in pixels (negative = scroll right / forward in time).
+     * @param tx    Combined horizontal translation (visual pan + scaled scroll offset) in pixels.
+     * @param ty    Vertical translation (visual pan only) in pixels.
+     * @param scale Uniform visual scale factor (1.0 = no visual zoom).
      */
-    updateScrollTranslate(tx: number): void {
-        if (this.scrollingGroupEl) {
-            this.scrollingGroupEl.setAttribute('transform', `translate(${tx}, 0)`);
+    updateContentTransform(tx: number, ty: number, scale: number): void {
+        if (this.contentGroupEl) {
+            this.contentGroupEl.setAttribute('transform', `translate(${tx}, ${ty}) scale(${scale})`);
         }
     }
 }

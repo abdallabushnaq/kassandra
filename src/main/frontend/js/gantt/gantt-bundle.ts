@@ -41,6 +41,12 @@ function saveViewState(containerId: string, dayWidth: number, scrollOffset: numb
     }
 }
 
+// ── Visual-zoom constants ───────────────────────────────────────────────────
+/** Per-notch scale factor for Ctrl+wheel / trackpad-pinch visual zoom. */
+const VISUAL_ZOOM_STEP = 1.1;
+const VISUAL_ZOOM_MIN = 0.1;
+const VISUAL_ZOOM_MAX = 10.0;
+
 // ── Chart factory ───────────────────────────────────────────────────────────
 
 interface ChartHandle {
@@ -69,6 +75,10 @@ function createChart(
     let renderedScrollOffset = 0;
     /** Timer for debounced lazy full-redraw after translate-only scroll events. */
     let lazyRedrawTimerId: ReturnType<typeof setTimeout> | null = null;
+    /** Visual-zoom state — purely presentational, does not affect the data model. */
+    let visualScale = 1.0;
+    let visualPanX = 0;
+    let visualPanY = 0;
 
     function getContainerWidth() {
         return Math.max(200, container.clientWidth || 800);
@@ -114,12 +124,19 @@ function createChart(
         renderedScrollOffset = scrollOffset;
         chart.updateViewState(dayWidth, scrollOffset, getContainerWidth(), getContainerHeight());
         chart.render(container);
+        applyContentTransform(); // re-apply visual scale after the SVG is rebuilt
     }
 
-    /** Applies horizontal scroll as a CSS transform on the scrolling group — no SVG rebuild. */
-    function applyScrollTranslation() {
-        const tx = -(scrollOffset - renderedScrollOffset) * dayWidth;
-        chart.updateScrollTranslate(tx);
+    /**
+     * Applies the combined content transform to the group element without rebuilding the SVG.
+     *
+     * The scroll translation is placed *inside* the scale so that the lazy full-redraw never
+     * produces a visual jump:  tx = vpX + scale × scrollTxGroup.
+     */
+    function applyContentTransform() {
+        const scrollTxGroup = -(scrollOffset - renderedScrollOffset) * dayWidth;
+        const tx = visualPanX + visualScale * scrollTxGroup;
+        chart.updateContentTransform(tx, visualPanY, visualScale);
     }
 
     /**
@@ -142,15 +159,30 @@ function createChart(
 
     function handleWheelEvent(e: WheelEvent) {
         e.preventDefault();
-        if (e.deltaX !== 0) {
+        if (e.ctrlKey) {
+            // Ctrl+wheel on desktop, or trackpad pinch (fires as ctrlKey=true WheelEvent).
+            // Fast path: update the group transform only; lazy redraw corrects culling.
+            const rect = container.getBoundingClientRect();
+            const cx = e.clientX - rect.left;
+            const cy = e.clientY - rect.top;
+            const delta = e.deltaY < 0 ? VISUAL_ZOOM_STEP : 1 / VISUAL_ZOOM_STEP;
+            const newScale = Math.max(VISUAL_ZOOM_MIN, Math.min(VISUAL_ZOOM_MAX, visualScale * delta));
+            const d = newScale / visualScale; // actual factor after clamping
+            visualPanX = cx * (1 - d) + visualPanX * d;
+            visualPanY = cy * (1 - d) + visualPanY * d;
+            visualScale = newScale;
+            applyContentTransform();
+            scheduleLazyRedraw();
+        } else if (e.deltaX !== 0) {
             // Horizontal scroll — fast path: translate the group, defer the full redraw.
             scrollOffset += e.deltaX / dayWidth;
             constrainScrollOffset();
-            applyScrollTranslation();
+            applyContentTransform();
             scheduleLazyRedraw();
             scheduleSave();
         } else {
-            // Vertical scroll = zoom — always requires a full redraw.
+            // Vertical scroll = dayWidth zoom — always requires a full redraw.
+            // Reset visual zoom so pixel positions remain coherent after dayWidth changes.
             const rect = container.getBoundingClientRect();
             const mouseX = e.clientX != null ? e.clientX - rect.left : getContainerWidth() / 2;
             const dayUnder = scrollOffset + mouseX / dayWidth;
@@ -158,6 +190,9 @@ function createChart(
             dayWidth = Math.max(MIN_DW, Math.min(MAX_DW, dayWidth * factor));
             scrollOffset = dayUnder - mouseX / dayWidth;
             constrainScrollOffset();
+            visualScale = 1.0;
+            visualPanX = 0;
+            visualPanY = 0;
             scheduleRender();
             scheduleSave();
         }
@@ -177,9 +212,10 @@ function createChart(
     function handlePointerMove(e: PointerEvent) {
         if (!dragState)
             return;
-        scrollOffset = dragState.startOffset - (e.clientX - dragState.startX) / dayWidth;
+        // Divide by visualScale so dragging always pans 1:1 with screen pixels, regardless of zoom.
+        scrollOffset = dragState.startOffset - (e.clientX - dragState.startX) / (dayWidth * visualScale);
         constrainScrollOffset();
-        applyScrollTranslation();
+        applyContentTransform();
         scheduleLazyRedraw();
     }
 
