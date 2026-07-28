@@ -95,7 +95,7 @@ export abstract class AbstractCanvas {
 
     createClipPath(svg: SVGSVGElement): SVGElement {
         const clipId = `ChartClip-${++AbstractCanvas.burndownClipSeq}`;
-        svg.appendChild(SvgUtils.createClipPath(clipId, 0, 0, this.containerWidth, this.containerHeight));
+        svg.appendChild(SvgUtils.createClipPath(clipId, 0, 0, this.containerWidth, 10000));
         const group = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
         svg.appendChild(group);
         return group;
