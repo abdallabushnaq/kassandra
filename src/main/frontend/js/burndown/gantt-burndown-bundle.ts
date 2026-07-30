@@ -118,14 +118,9 @@ function createChart(
     }
 
     function constrainScrollOffset() {
-        const max = Math.max(0, gantt.totalDays - getContainerWidth() / dayWidth);
-        const min = Math.min(
-            Math.max(0, gantt.totalDays - getContainerWidth() / dayWidth),
-            scrollOffset,
-        );
         scrollOffset = Math.max(0, Math.min(
-            Math.max(0, gantt.totalDays - getContainerWidth() / dayWidth),
-            scrollOffset
+            Math.max(0, gantt.totalDays - getContainerWidth() / (dayWidth * visualScale)),
+            scrollOffset,
         ));
     }
 
@@ -178,6 +173,8 @@ function createChart(
         const scrollTxGroup = -(scrollOffset - renderedScrollOffset) * dayWidth;
         const tx = visualPanX + visualScale * scrollTxGroup;
         chart.updateContentTransform(tx, visualPanY, visualScale);
+        // Grow/shrink the SVG to fit the scaled content; no vertical clipping.
+        chart.updateSvgHeight(chart.chartHeight * visualScale);
     }
 
     /**
@@ -203,15 +200,20 @@ function createChart(
         if (e.ctrlKey) {
             // Ctrl+wheel on desktop, or trackpad pinch (fires as ctrlKey=true WheelEvent).
             // Fast path: update the group transform only; lazy redraw corrects culling.
+            // Vertical zoom is top-anchored (visualPanY stays 0): the chart grows/shrinks downward.
             const rect = container.getBoundingClientRect();
             const cx = e.clientX - rect.left;
-            const cy = e.clientY - rect.top;
             const delta = e.deltaY < 0 ? VISUAL_ZOOM_STEP : 1 / VISUAL_ZOOM_STEP;
             const newScale = Math.max(VISUAL_ZOOM_MIN, Math.min(VISUAL_ZOOM_MAX, visualScale * delta));
             const d = newScale / visualScale; // actual factor after clamping
-            visualPanX = cx * (1 - d) + visualPanX * d;
-            visualPanY = cy * (1 - d) + visualPanY * d;
+            const newVisualPanX = cx * (1 - d) + visualPanX * d;
             visualScale = newScale;
+            // Absorb the pan offset into scrollOffset so that visualPanX stays 0.
+            // screen_x(D) = visualPanX + visualScale*dayWidth*(D - scrollOffset)
+            // Setting visualPanX=0: scrollOffset_new = scrollOffset - newVisualPanX/(scale*dayWidth)
+            scrollOffset -= newVisualPanX / (visualScale * dayWidth);
+            visualPanX = 0;
+            constrainScrollOffset();
             applyContentTransform();
             scheduleLazyRedraw();
         } else if (e.deltaX !== 0) {

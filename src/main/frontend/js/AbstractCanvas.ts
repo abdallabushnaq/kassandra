@@ -20,6 +20,18 @@ export abstract class AbstractCanvas {
     containerHeight: number;
     /** Reference to the content group element for fast transform-only scroll and visual-zoom updates. */
     protected contentGroupEl: SVGGElement | null = null;
+    /** Reference to the root SVG element so its height can be updated on visual zoom without a full rebuild. */
+    protected svgEl: SVGSVGElement | null = null;
+    /** Reference to the background rect so it can be resized together with the SVG on visual zoom. */
+    protected backgroundEl: SVGRectElement | null = null;
+    /** Reference to the border rect so it can be resized together with the SVG on visual zoom. */
+    protected borderEl: SVGRectElement | null = null;
+    /**
+     * Wrapper group around the footer, set by AbstractChart.drawFooter.
+     * Translated downward by (scaledHeight − chartHeight) so the footer
+     * stays at the bottom of the chart when visual zoom is active.
+     */
+    protected footerGroupEl: SVGGElement | null = null;
 
     constructor(theme: Theme) {
         this.chartWidth = 0;
@@ -43,17 +55,21 @@ export abstract class AbstractCanvas {
     /** Fills the entire SVG with the theme background color. */
     drawBackground(svg: SVGElement): void {
         const bgColor = ColorUtils.intToHex(this.theme.chartTheme.backgroundColor, '#fffff0');
-        svg.appendChild(SvgUtils.createRect(0, 0, this.chartWidth, this.chartHeight, {fill: bgColor}));
+        const rect = SvgUtils.createRect(0, 0, this.chartWidth, this.chartHeight, {fill: bgColor});
+        this.backgroundEl = rect;
+        svg.appendChild(rect);
     }
 
     /** Draws a 1px border around the chart. */
     drawBorder(svg: SVGElement): void {
         const borderColor = ColorUtils.intToHex(this.theme.chartTheme.chartBorderColor, '#aaaaaa');
-        svg.appendChild(SvgUtils.createRect(0.5, 0.5, this.chartWidth - 1, this.chartHeight - 1, {
+        const rect = SvgUtils.createRect(0.5, 0.5, this.chartWidth - 1, this.chartHeight - 1, {
             fill: 'none',
             stroke: borderColor,
             'stroke-width': '1',
-        }));
+        });
+        this.borderEl = rect;
+        svg.appendChild(rect);
     }
 
     /** Abstract – implemented by AbstractChart to draw the caption. */
@@ -79,6 +95,7 @@ export abstract class AbstractCanvas {
             height: this.chartHeight,
             style: 'display:block;user-select:none;shape-rendering:crispEdges',
         });
+        this.svgEl = svg;
         //--- lets clip to the size of our container.
         const clippedSvg = this.createClipPath(svg);
         this.drawBackground(clippedSvg);
@@ -116,6 +133,29 @@ export abstract class AbstractCanvas {
     updateContentTransform(tx: number, ty: number, scale: number): void {
         if (this.contentGroupEl) {
             this.contentGroupEl.setAttribute('transform', `translate(${tx}, ${ty}) scale(${scale})`);
+        }
+    }
+
+    /**
+     * Updates the SVG root element's height to accommodate the current visual-zoom scale.
+     * Also resizes the background and border rects, which live outside the content group and
+     * therefore do not receive the scale transform automatically.
+     * Called after {@link updateContentTransform} so the container grows/shrinks with the content.
+     *
+     * @param height New height in pixels (typically {@code chartHeight * visualScale}).
+     */
+    updateSvgHeight(height: number): void {
+        const h = Math.ceil(height);
+        this.svgEl?.setAttribute('height', String(h));
+        this.backgroundEl?.setAttribute('height', String(h));
+        this.borderEl?.setAttribute('height', String(h - 1));
+        if (this.footerGroupEl) {
+            // Move footer down by exactly the extra pixels added by the visual zoom.
+            // At render time the footer sits at footerElement.y inside the unscaled SVG.
+            // After zoom the SVG grows to h = chartHeight * scale, so the footer must
+            // shift down by (h - chartHeight) to remain at the bottom of the chart.
+            const delta = h - this.chartHeight;
+            this.footerGroupEl.setAttribute('transform', `translate(0, ${delta})`);
         }
     }
 }

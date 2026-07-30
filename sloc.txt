@@ -204,7 +204,7 @@
 | kassandra.report.GanttBurndown       | GanttBurndownChart.java                                          | src      |        7 |        0 |       17 |       30 |       54 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.report.burndown            | BurnDownChart.java                                               | src      |        7 |        0 |       16 |       18 |       41 |
-| kassandra.report.burndown            | BurnDownRenderer.java                                            | src      |       56 |       34 |      118 |      578 |      786 |
+| kassandra.report.burndown            | BurnDownRenderer.java                                            | src      |       56 |       35 |      118 |      578 |      787 |
 | kassandra.report.burndown            | BurnDownUtilTest.java                                            | src      |       23 |       18 |       23 |      163 |      227 |
 | kassandra.report.burndown            | BurndownTest.java                                                | src      |        9 |        0 |       16 |       57 |       82 |
 | kassandra.report.burndown            | DayWork.java                                                     | src      |       11 |        0 |       17 |       42 |       70 |
@@ -258,7 +258,7 @@
 | kassandra.report.gantt               | GanttContext.java                                                | src      |       13 |        0 |       43 |       80 |      136 |
 | kassandra.report.gantt               | GanttRenderer.java                                               | src      |       19 |        6 |       29 |      163 |      217 |
 | kassandra.report.gantt               | GanttTest.java                                                   | src      |       10 |       19 |       16 |       36 |       81 |
-| kassandra.report.gantt               | GanttUtil.java                                                   | src      |       78 |       17 |      182 |      706 |      983 |
+| kassandra.report.gantt               | GanttUtil.java                                                   | src      |       78 |       17 |      183 |      706 |      984 |
 | kassandra.report.gantt               | LevelingResourcesException.java                                  | src      |        2 |        0 |       16 |        6 |       24 |
 | kassandra.report.gantt               | OldGanttTest.java                                                | src      |       20 |        9 |       34 |      125 |      188 |
 | kassandra.report.gantt               | TestResourceLeveling.java                                        | src      |        9 |        8 |       16 |       40 |       73 |
@@ -359,10 +359,26 @@
 | kassandra.rest.debug                 | JsonResponseLogger.java                                          | src      |        8 |        0 |       16 |       47 |       71 |
 | kassandra.rest.debug                 | RequestLoggingFilter.java                                        | src      |       18 |        0 |       19 |       75 |      112 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.rest.dto                   | GanttBurndownChartDto.java                                       | src      |       10 |      119 |        5 |       45 |      179 |
-| kassandra.rest.dto                   | GanttChartDto.java                                               | src      |       10 |      140 |       16 |       60 |      226 |
-| kassandra.rest.dto                   | SprintOverviewDto.java                                           | src      |        9 |        7 |        0 |       36 |       52 |
-| kassandra.rest.dto                   | ThemeDto.java                                                    | src      |       21 |       16 |       30 |      217 |      284 |
+| kassandra.rest.dto.gantt             | AuthorSeriesDto.java                                             | src      |        5 |       29 |       16 |       13 |       63 |
+| kassandra.rest.dto.gantt             | BurndownMetaDto.java                                             | src      |        5 |       59 |       16 |       28 |      108 |
+| kassandra.rest.dto.gantt             | CalendarExceptionDto.java                                        | src      |        3 |       17 |       16 |        8 |       44 |
+| kassandra.rest.dto.gantt             | GanttBurndownChartDto.java                                       | src      |        7 |       31 |       17 |       12 |       67 |
+| kassandra.rest.dto.gantt             | GanttChartDto.java                                               | src      |        7 |        7 |       16 |        9 |       39 |
+| kassandra.rest.dto.gantt             | GanttMetaDto.java                                                | src      |        4 |       38 |       16 |       19 |       77 |
+| kassandra.rest.dto.gantt             | RelationDto.java                                                 | src      |        3 |        9 |       16 |        6 |       34 |
+| kassandra.rest.dto.gantt             | TaskDto.java                                                     | src      |        3 |       69 |       16 |       28 |      116 |
++--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
+| kassandra.rest.dto.overview          | LaneDto.java                                                     | src      |        3 |        0 |       16 |        7 |       26 |
+| kassandra.rest.dto.overview          | SprintDto.java                                                   | src      |        3 |        0 |       16 |       18 |       37 |
+| kassandra.rest.dto.overview          | SprintOverviewDto.java                                           | src      |        8 |        3 |       16 |        9 |       36 |
+| kassandra.rest.dto.overview          | SprintOverviewMetaDto.java                                       | src      |        4 |        4 |       16 |       12 |       36 |
++--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
+| kassandra.rest.dto.theme             | BurndownThemeDto.java                                            | src      |        3 |        6 |       16 |       14 |       39 |
+| kassandra.rest.dto.theme             | CalendarThemeDto.java                                            | src      |        3 |        3 |       16 |       22 |       44 |
+| kassandra.rest.dto.theme             | ChartThemeDto.java                                               | src      |        3 |        3 |       16 |       13 |       35 |
+| kassandra.rest.dto.theme             | GanttThemeDto.java                                               | src      |        3 |        9 |       16 |       27 |       55 |
+| kassandra.rest.dto.theme             | ThemeDto.java                                                    | src      |       16 |       22 |       23 |      115 |      176 |
+| kassandra.rest.dto.theme             | XAxesThemeDto.java                                               | src      |        3 |        3 |       23 |       30 |       59 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.rest.exception             | UniqueConstraintViolationException.java                          | src      |        7 |       19 |       16 |       21 |       63 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -387,11 +403,11 @@
 | kassandra.service                    | AboutBoxService.java                                             | src      |       21 |       71 |       24 |      111 |      227 |
 | kassandra.service                    | AclSecurityService.java                                          | src      |       19 |       71 |       18 |      108 |      216 |
 | kassandra.service                    | DatabaseDebugService.java                                        | src      |       26 |       41 |       50 |      127 |      244 |
-| kassandra.service                    | GanttBurndownChartService.java                                   | src      |       68 |       65 |      156 |      517 |      806 |
-| kassandra.service                    | GanttChartService.java                                           | src      |       30 |       50 |       31 |      151 |      262 |
+| kassandra.service                    | GanttBurndownChartService.java                                   | src      |       69 |       65 |      192 |      505 |      831 |
+| kassandra.service                    | GanttChartService.java                                           | src      |       30 |       50 |       31 |      157 |      268 |
 | kassandra.service                    | ProductAclService.java                                           | src      |       25 |       72 |       16 |      117 |      230 |
 | kassandra.service                    | SprintExportService.java                                         | src      |       20 |       53 |       24 |      121 |      218 |
-| kassandra.service                    | SprintsOverviewService.java                                      | src      |       29 |        0 |       33 |      162 |      224 |
+| kassandra.service                    | SprintsOverviewService.java                                      | src      |       29 |        0 |       33 |      156 |      218 |
 | kassandra.service                    | SprintsOverviewServiceTest.java                                  | src      |       13 |        0 |        3 |       60 |       76 |
 | kassandra.service                    | UserGroupService.java                                            | src      |       24 |       62 |       19 |      105 |      210 |
 | kassandra.service                    | UserRoleMigrationService.java                                    | src      |       18 |       17 |       22 |       72 |      129 |
@@ -513,7 +529,7 @@
 | kassandra.ui.view                    | OffDayListViewTest.java                                          | src      |       23 |       77 |       35 |      142 |      277 |
 | kassandra.ui.view                    | ProductListView.java                                             | src      |       41 |        6 |       23 |      334 |      404 |
 | kassandra.ui.view                    | ProductListViewTest.java                                         | src      |       35 |      119 |       24 |      224 |      402 |
-| kassandra.ui.view                    | QualityBoard.java                                                | src      |       66 |       84 |       62 |      604 |      816 |
+| kassandra.ui.view                    | QualityBoard.java                                                | src      |       66 |       84 |       61 |      604 |      815 |
 | kassandra.ui.view                    | QualityBoardTest.java                                            | src      |       11 |        0 |       18 |      116 |      145 |
 | kassandra.ui.view                    | SprintListView.java                                              | src      |       63 |       74 |       50 |      615 |      802 |
 | kassandra.ui.view                    | SprintListViewTest.java                                          | src      |       15 |       82 |       24 |      113 |      234 |
@@ -630,5 +646,5 @@
 | util                                 | TaskUtil.java                                                    | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                        | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 68 package(s)                        | 561 file(s)                                                      | java     |    12606 |    12688 |    17014 |    68305 |   110613 |
+| 70 package(s)                        | 575 file(s)                                                      | java     |    12643 |    12719 |    17302 |    68325 |   110989 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
