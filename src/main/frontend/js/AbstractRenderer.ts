@@ -38,11 +38,11 @@ export abstract class AbstractRenderer implements IRenderer {
     containerWidth: number;
     containerHeight: number;
 
-    constructor(chart: AbstractChart, theme: Theme, milestones: Milestones, preRun: number, postRun: number) {
+    protected constructor(chart: AbstractChart, milestones: Milestones, preRun: number, postRun: number) {
         this.chart = chart;
         this.chartWidth = 0;
         this.chartHeight = 400;
-        this.theme = theme;
+        this.theme = chart.theme;
         this.milestones = milestones;
         this.days = 3;
         this.firstDayX = 0;

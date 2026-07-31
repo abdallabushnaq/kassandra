@@ -79,19 +79,29 @@ function createChart(
     let visualScale = 1.0;
     let visualPanX = 0;
     let visualPanY = 0;
+    /** Vertical scroll position in unscaled group pixels (0 = top). Active only when chart.verticalScrollEnabled. */
+    let scrollYOffset = 0;
 
     function getContainerWidth() {
         return Math.max(200, container.clientWidth || 800);
     }
 
     function getContainerHeight() {
-        return Math.max(200, container.clientHeight || 600);
+        return Math.max(200, Math.min(chart.chartHeight, container.clientHeight || 600));
     }
 
     function constrainScrollOffset() {
         scrollOffset = Math.max(0, Math.min(
             Math.max(0, renderer.totalDays - getContainerWidth() / (dayWidth * visualScale)),
             scrollOffset
+        ));
+    }
+
+    function constrainScrollYOffset() {
+        if (!chart.verticalScrollEnabled) return;
+        scrollYOffset = Math.max(0, Math.min(
+            Math.max(0, chart.chartHeight - getContainerHeight() / visualScale),
+            scrollYOffset,
         ));
     }
 
@@ -131,8 +141,11 @@ function createChart(
     function applyContentTransform() {
         const scrollTxGroup = -(scrollOffset - renderedScrollOffset) * dayWidth;
         const tx = visualPanX + visualScale * scrollTxGroup;
-        chart.updateContentTransform(tx, visualPanY, visualScale);
-        // Grow/shrink the SVG to fit the scaled content; no vertical clipping.
+        // Vertical: renderer always draws from Y=0, so the full scrollYOffset is always the translation.
+        const scrollTyGroup = chart.verticalScrollEnabled ? -scrollYOffset : 0;
+        const ty = visualPanY + visualScale * scrollTyGroup;
+        chart.updateContentTransform(tx, ty, visualScale);
+        // Grow/shrink the SVG to fit the scaled content; updateSvgHeight respects verticalScrollEnabled.
         chart.updateSvgHeight(chart.chartHeight * visualScale);
     }
 
@@ -173,6 +186,7 @@ function createChart(
             scrollOffset -= newVisualPanX / (visualScale * dayWidth);
             visualPanX = 0;
             constrainScrollOffset();
+            constrainScrollYOffset();
             applyContentTransform();
             scheduleLazyRedraw();
         } else if (e.deltaX !== 0) {
@@ -182,6 +196,12 @@ function createChart(
             applyContentTransform();
             scheduleLazyRedraw();
             scheduleSave();
+        } else if (chart.verticalScrollEnabled) {
+            // Vertical scroll when verticalScrollEnabled — pan Y, fast path.
+            scrollYOffset += e.deltaY / visualScale;
+            constrainScrollYOffset();
+            applyContentTransform();
+            scheduleLazyRedraw();
         } else {
             // Vertical scroll = dayWidth zoom — always requires a full redraw.
             // Reset visual zoom so pixel positions remain coherent after dayWidth changes.
@@ -200,12 +220,12 @@ function createChart(
         }
     }
 
-    let dragState: { startX: number; startOffset: number } | null = null;
+    let dragState: { startX: number; startOffset: number; startY: number; startYOffset: number } | null = null;
 
     function handlePointerDown(e: PointerEvent) {
         if (e.button !== 0)
             return;
-        dragState = {startX: e.clientX, startOffset: scrollOffset};
+        dragState = {startX: e.clientX, startOffset: scrollOffset, startY: e.clientY, startYOffset: scrollYOffset};
         container.setPointerCapture(e.pointerId);
         // container.style.cursor = 'grabbing';
         e.preventDefault();
@@ -217,6 +237,10 @@ function createChart(
         // Divide by visualScale so dragging always pans 1:1 with screen pixels, regardless of zoom.
         scrollOffset = dragState.startOffset - (e.clientX - dragState.startX) / (dayWidth * visualScale);
         constrainScrollOffset();
+        if (chart.verticalScrollEnabled) {
+            scrollYOffset = dragState.startYOffset - (e.clientY - dragState.startY) / visualScale;
+            constrainScrollYOffset();
+        }
         applyContentTransform();
         scheduleLazyRedraw();
     }

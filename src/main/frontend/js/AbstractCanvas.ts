@@ -9,31 +9,38 @@ import {SvgUtils} from './SvgUtils.js';
 import {Theme} from './theme/Theme.js';
 
 export abstract class AbstractCanvas {
-    static burndownClipSeq = 0;
-    chartWidth: number;
-    chartHeight: number;
-    borderWidth: number;
     theme: Theme;
     /** Visible viewport width in pixels, externally driven by container size. */
     containerWidth: number;
+    chartHeight: number;
+    /**
+     * When {@code true}, the SVG height is fixed to {@link containerHeight} and the
+     * content group can be scrolled vertically via {@code scrollYOffset} in the bundle.
+     * The clip path then clips vertically at {@link containerHeight}.
+     * Defaults to {@code false} (current behaviour: chart grows to fit content).
+     */
+    verticalScrollEnabled: boolean = false;
+    protected chartWidth: number;
+    protected borderWidth: number;
     /** Visible viewport height in pixels, externally driven by container size. */
-    containerHeight: number;
-    /** Reference to the content group element for fast transform-only scroll and visual-zoom updates. */
-    protected contentGroupEl: SVGGElement | null = null;
-    /** Reference to the root SVG element so its height can be updated on visual zoom without a full rebuild. */
-    protected svgEl: SVGSVGElement | null = null;
-    /** Reference to the background rect so it can be resized together with the SVG on visual zoom. */
-    protected backgroundEl: SVGRectElement | null = null;
-    /** Reference to the border rect so it can be resized together with the SVG on visual zoom. */
-    protected borderEl: SVGRectElement | null = null;
+    protected containerHeight: number;
     /**
      * Wrapper group around the footer, set by AbstractChart.drawFooter.
      * Translated downward by (scaledHeight − chartHeight) so the footer
      * stays at the bottom of the chart when visual zoom is active.
      */
     protected footerGroupEl: SVGGElement | null = null;
+    /** Reference to the background rect so it can be resized together with the SVG on visual zoom. */
+    private backgroundEl: SVGRectElement | null = null;
+    /** Reference to the border rect so it can be resized together with the SVG on visual zoom. */
+    private borderEl: SVGRectElement | null = null;
+    /** Reference to the root SVG element so its height can be updated on visual zoom without a full rebuild. */
+    private svgEl: SVGSVGElement | null = null;
+    /** Reference to the content group element for fast transform-only scroll and visual-zoom updates. */
+    private contentGroupEl: SVGGElement | null = null;
+    private burndownClipSeq = 0;
 
-    constructor(theme: Theme) {
+    protected constructor(theme: Theme) {
         this.chartWidth = 0;
         this.chartHeight = 0;
         this.borderWidth = 1;
@@ -111,9 +118,12 @@ export abstract class AbstractCanvas {
     }
 
     createClipPath(svg: SVGSVGElement): SVGElement {
-        const clipId = `ChartClip-${++AbstractCanvas.burndownClipSeq}`;
-        //--- lets not clip the bottom in case the browser is hiding the rest
-        svg.appendChild(SvgUtils.createClipPath(clipId, 0, 0, this.containerWidth, 10000));
+        const clipId = `ChartClip-${++this.burndownClipSeq}`;
+        // When vertical scroll is enabled, clip at containerHeight so content beyond the
+        // viewport is hidden and the SVG element itself stays fixed at containerHeight.
+        // Otherwise, use an arbitrarily large value to avoid clipping the bottom.
+        const clipH = this.verticalScrollEnabled ? this.containerHeight : 10000;
+        svg.appendChild(SvgUtils.createClipPath(clipId, 0, 0, this.containerWidth, clipH));
         const group = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
         svg.appendChild(group);
         return group;
@@ -141,20 +151,24 @@ export abstract class AbstractCanvas {
      * Also resizes the background and border rects, which live outside the content group and
      * therefore do not receive the scale transform automatically.
      * Called after {@link updateContentTransform} so the container grows/shrinks with the content.
+     * <p>
+     * When {@link verticalScrollEnabled} is {@code true}, the SVG is kept at
+     * {@link containerHeight} and the footer translation is left at zero (the footer
+     * stays at its original render position and is visible when scrolled to the bottom).
      *
      * @param height New height in pixels (typically {@code chartHeight * visualScale}).
      */
     updateSvgHeight(height: number): void {
-        const h = Math.ceil(height);
+        const h = this.verticalScrollEnabled
+            ? Math.ceil(this.containerHeight)
+            : Math.ceil(height);
         this.svgEl?.setAttribute('height', String(h));
         this.backgroundEl?.setAttribute('height', String(h));
         this.borderEl?.setAttribute('height', String(h - 1));
         if (this.footerGroupEl) {
-            // Move footer down by exactly the extra pixels added by the visual zoom.
-            // At render time the footer sits at footerElement.y inside the unscaled SVG.
-            // After zoom the SVG grows to h = chartHeight * scale, so the footer must
-            // shift down by (h - chartHeight) to remain at the bottom of the chart.
-            const delta = h - this.chartHeight;
+            // When vertical scroll is active, keep footer at its rendered position (delta=0).
+            // Otherwise, shift it down by the extra pixels added by the visual zoom scale.
+            const delta = this.verticalScrollEnabled ? 0 : (h - this.chartHeight);
             this.footerGroupEl.setAttribute('transform', `translate(0, ${delta})`);
         }
     }

@@ -22,7 +22,6 @@ import {GraphSquare} from '../GraphSquare.js';
 import {Milestone} from '../Milestone.js';
 import {Milestones} from '../Milestones.js';
 import {SvgUtils} from '../SvgUtils.js';
-import {Theme} from '../theme/Theme.js';
 import {CalendarSize} from "../CalendarSize.js";
 import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 import {BurndownMetaDto} from './dto/BurndownMetaDto.js';
@@ -72,22 +71,22 @@ export class BurndownRenderer extends AbstractRenderer {
     ganttWorkWithBufferPerDayAccumulated: number[] | null = null;
     /** min work per day, were every day has the amount of work planned at that day and all days before that */
     ganttWorkWithoutBufferPerDayAccumulated: number[] | null = null;
-    private eBestWork: number;
-    private eWorstWork: number | null;
+    private readonly eBestWork: number;
+    private readonly eWorstWork: number | null;
     private extrapolationColor!: number | null;
-    private maxActualWorked: number;
-    private maxWorked!: number;
-    private sprintClosed: boolean;
+    private readonly maxActualWorked: number;
+    private readonly maxWorked!: number;
+    private readonly sprintClosed: boolean;
     private yAxis!: GraphSquare;
-    private calendarSize: CalendarSize;
+    private readonly calendarSize: CalendarSize;
 
-    constructor(chart: AbstractChart, data: GanttBurndownChartDto, theme: Theme) {
+    constructor(chart: AbstractChart, data: GanttBurndownChartDto) {
         const meta = data.meta;
         // Java: super(dao) — AbstractRenderer(RenderDao) sets theme/chartWidth/chartHeight/milestones/
         // calendarXAxes. milestones starts empty here; createMilestones() (called below from
         // processingInit) populates it, mirroring BurnDownRenderer(RenderDao) -> processingInit(dao)
         // -> createMilestones(...).
-        super(chart, theme, new Milestones([]), meta.preRun || 0, meta.postRun || 0);
+        super(chart, new Milestones([]), meta.preRun || 0, meta.postRun || 0);
 
         this.data = data;
         // Java: init(dao) -> initSize(dao.firstDayX, true, dao.calendarSize) — BurnDownRenderer

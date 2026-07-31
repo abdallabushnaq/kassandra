@@ -13,10 +13,11 @@ import {Theme} from './theme/Theme.js';
 
 
 export abstract class AbstractChart extends AbstractCanvas {
-    captionElement: CaptionElement;
-    footerElement: FooterElement;
     renderers: AbstractRenderer[];
-    firstDayX: number;
+    protected captionElement: CaptionElement;
+    protected footerElement: FooterElement;
+
+    // private firstDayX: number;
 
     /**
      * @param caption           Chart title text
@@ -27,7 +28,7 @@ export abstract class AbstractChart extends AbstractCanvas {
      * @param _imageName        File name hint (not used in interactive rendering)
      * @param theme             Theme instance
      */
-    constructor(
+    protected constructor(
         caption: string | null,
         copyright: string,
         projectRequestKey: string,
@@ -40,12 +41,7 @@ export abstract class AbstractChart extends AbstractCanvas {
         this.captionElement = new CaptionElement(caption, relateCssPath, theme);
         this.footerElement = new FooterElement(copyright, projectRequestKey, theme);
         this.renderers = [];
-        this.firstDayX = 0;
-    }
-
-    /** Adds a renderer to the list. */
-    addRenderer(renderer: AbstractRenderer): void {
-        this.renderers.push(renderer);
+        // this.firstDayX = 0;
     }
 
     /** Sets the chart width and propagates it to caption and footer. */
@@ -68,6 +64,11 @@ export abstract class AbstractChart extends AbstractCanvas {
         this.footerGroupEl = group as SVGGElement;
         svg.appendChild(group);
         this.footerElement?.draw(group);
+    }
+
+    /** Adds a renderer to the list. */
+    protected addRenderer(renderer: AbstractRenderer): void {
+        this.renderers.push(renderer);
     }
 
 

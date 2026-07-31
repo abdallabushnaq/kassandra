@@ -8,7 +8,6 @@ import {SvgUtils} from '../SvgUtils.js';
 import {DateUtils} from '../DateUtils.js';
 import {Milestone} from '../Milestone.js';
 import {Milestones} from '../Milestones.js';
-import {Theme} from '../theme/Theme.js';
 import {getCalendarException} from './date-helpers.js';
 import {AbstractGanttRenderer} from './AbstractGanttRenderer.js';
 import {CalendarSize} from "../CalendarSize.js";
@@ -34,7 +33,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
     calendarSize: CalendarSize;
     data: GanttChartDto;
 
-    constructor(chart: AbstractChart, data: GanttChartDto, theme: Theme, preRun: number, postRun: number) {
+    constructor(chart: AbstractChart, data: GanttChartDto, preRun: number, postRun: number) {
         const chartStart = DateUtils.getDayMidnight(new Date(data.meta.chartStart));
         const chartEnd = DateUtils.getDayMidnight(new Date(data.meta.chartEnd));
         const now = data.meta.now ? DateUtils.getDayMidnight(new Date(data.meta.now)) : DateUtils.getDayMidnight(new Date());
@@ -55,7 +54,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
             milestonesList.length > 0 ? milestonesList[milestonesList.length - 1].time : chartStart,
         );
 
-        super(chart, theme, milestones, data.meta.preRun || 0, data.meta.postRun || 0);
+        super(chart, milestones, data.meta.preRun || 0, data.meta.postRun || 0);
 
         this.data = data;
         this.tasks = (data.tasks || []).map(convertTaskDates);//convert all dates from string to Date

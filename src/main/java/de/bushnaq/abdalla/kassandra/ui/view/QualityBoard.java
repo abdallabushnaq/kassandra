@@ -382,7 +382,8 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         ganttBurndownChartContainer.getStyle()
                 .set("width", "100%")
                 .set("overflow-x", "hidden")
-                .set("min-height", "120px")
+//                .set("min-height", "120px")
+                .set("height", "100%")
                 .set("margin-top", "var(--lumo-space-xs)");
         add(ganttBurndownChartContainer);
 

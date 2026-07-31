@@ -26,7 +26,7 @@ import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 export class GanttBurndownChart extends AbstractChart {
     constructor(data: GanttBurndownChartDto, theme: Theme) {
         super('Gantt Burndown Chart', data.meta.copyright, data.meta.sprintName || '', '', '', 'gantt-burndown-chart', theme);
-        this.addRenderer(new BurndownRenderer(this, data, theme));
+        this.addRenderer(new BurndownRenderer(this, data));
         const ganttData: GanttChartDto = {
             tasks: data.tasks || [],
             meta: {

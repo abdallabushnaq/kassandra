@@ -7,7 +7,6 @@ import {ColorUtils} from '../ColorUtils.js';
 import {SvgUtils} from '../SvgUtils.js';
 import {DateUtils} from '../DateUtils.js';
 import {AbstractRenderer} from '../AbstractRenderer.js';
-import {Theme} from '../theme/Theme.js';
 import {Milestones} from '../Milestones.js';
 import {getCalendarException, isWorkingDay} from './date-helpers.js';
 import {TaskDto} from './dto/TaskDto.js';
@@ -55,8 +54,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     //     return (dayIndex - this.scrollOffset) * this.dayWidth;
     // }
 
-    constructor(chart: AbstractChart, theme: Theme, milestones: Milestones, preRun: number, postRun: number) {
-        super(chart, theme, milestones, preRun, postRun);
+    protected constructor(chart: AbstractChart, milestones: Milestones, preRun: number, postRun: number) {
+        super(chart, milestones, preRun, postRun);
         this.dayWidth = DEFAULT_DW;
         this.chartStart = null;
         this.totalDays = 0;
