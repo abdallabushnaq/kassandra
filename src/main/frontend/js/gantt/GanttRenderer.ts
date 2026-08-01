@@ -6,14 +6,13 @@
 import {ColorUtils} from '../ColorUtils.js';
 import {SvgUtils} from '../SvgUtils.js';
 import {DateUtils} from '../DateUtils.js';
-import {Milestone} from '../Milestone.js';
-import {Milestones} from '../Milestones.js';
 import {getCalendarException} from './date-helpers.js';
 import {AbstractGanttRenderer} from './AbstractGanttRenderer.js';
 import {CalendarSize} from "../CalendarSize.js";
 import {TaskDto} from './dto/TaskDto.js';
 import {GanttChartDto} from './dto/GanttChartDto.js';
 import {AbstractChart} from '../AbstractChart.js';
+import {GanttChartMeta} from "Frontend/src/main/frontend/js/gantt/dto";
 
 /**
  * convert string date representative to Date
@@ -37,29 +36,32 @@ export class GanttRenderer extends AbstractGanttRenderer {
         const chartStart = DateUtils.getDayMidnight(new Date(data.meta.chartStart));
         const chartEnd = DateUtils.getDayMidnight(new Date(data.meta.chartEnd));
         const now = data.meta.now ? DateUtils.getDayMidnight(new Date(data.meta.now)) : DateUtils.getDayMidnight(new Date());
-        const earliestStart = DateUtils.getDayMidnight(new Date(data.meta.sprintEarliestStartDate));
-        const latestFinish = DateUtils.getDayMidnight(new Date(data.meta.sprintLatestFinishDate));
-        const sprintStatus = data.meta.sprintStatus;
+        const sprintStart = DateUtils.getDayMidnight(new Date(data.meta.sprintStart));
+        const sprintEnd = DateUtils.getDayMidnight(new Date(data.meta.sprintEnd));
+        // const sprintStatus = data.meta.sprintStatus;
 
-        const milestonesList: Milestone[] = [];
-        if (sprintStatus !== 'CLOSED') {
-            milestonesList.push(new Milestone(now, 'N', 'Now (current date)', false));
-        }
-        milestonesList.push(new Milestone(earliestStart, 'S', 'Start (Start of project)', false));
-        milestonesList.push(new Milestone(latestFinish, 'E', 'End (End of project)', false));
+        // const milestonesList: Milestone[] = [];
+        // if (data.meta.sprintStatus !== 'CLOSED') {
+        //     if (now.getTime() <= DateUtils.addDay(sprintEnd, 7).getTime()) {
+        //         milestonesList.push(new Milestone(now, 'N', 'Now (current date)', false));
+        //     }
+        // }
+        // milestonesList.push(new Milestone(sprintStart, 'S', 'Start (Start of project)', false));
+        // milestonesList.push(new Milestone(sprintEnd, 'E', 'End (End of project)', false));
+        //
+        // const milestones = new Milestones(
+        //     milestonesList,
+        //     milestonesList.length > 0 ? milestonesList[0].time : chartStart,
+        //     milestonesList.length > 0 ? milestonesList[milestonesList.length - 1].time : chartStart,
+        // );
 
-        const milestones = new Milestones(
-            milestonesList,
-            milestonesList.length > 0 ? milestonesList[0].time : chartStart,
-            milestonesList.length > 0 ? milestonesList[milestonesList.length - 1].time : chartStart,
-        );
-
-        super(chart, milestones, data.meta.preRun || 0, data.meta.postRun || 0);
+        super(chart/*, milestones*/, data.meta.preRun || 0, data.meta.postRun || 0);
+        this.createMilestonesFromMeta(data.meta);
 
         this.data = data;
         this.tasks = (data.tasks || []).map(convertTaskDates);//convert all dates from string to Date
         this.chartStart = chartStart;
-        this.totalDays = DateUtils.calculateDayCount(chartStart, chartEnd);
+        this.days = this.calculateMaxDays();//DateUtils.calculateDayCount(chartStart, chartEnd);
         this.currentDate = now;
         this.calendarSize = data.meta.calendarSize;
 
@@ -73,14 +75,16 @@ export class GanttRenderer extends AbstractGanttRenderer {
         this.initSize(this.data.meta.firstDayX, false, this.calendarSize, this.containerWidth);
     }
 
-// override calculateDayWidth(): void {
-    //     super.calculateDayWidth();
-    //     this.dayWidth = DEFAULT_DW;
     // }
     override calculateDayWidth(): void {
+        this.days = this.calculateMaxDays();
         this.calendarXAxes.dayOfWeek.setWidth(this.dayWidth);
         this.calendarXAxes.dayOfMonth.setWidth(this.dayWidth);
     }
+
+// override calculateDayWidth(): void {
+    //     super.calculateDayWidth();
+    //     this.dayWidth = DEFAULT_DW;
 
     calculateNumberOfTasks(tasks: TaskDto[]): number {
         let size = 0;
@@ -103,7 +107,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
             return;
         const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
         for (const task of this.tasks) {
-            const y1 = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
+            const y1 = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) /*+ this.getTaskHeight() / 2*/;
 
             //grid
             g.appendChild(SvgUtils.createRect(x1 - 1, y1 - 1, this.dayWidth, 1, {fill: gridColor}));//top --
@@ -122,6 +126,12 @@ export class GanttRenderer extends AbstractGanttRenderer {
                 letter.appendChild(SvgUtils.createSvgElement('title', {}, ex.type || 'Off-day'));
                 g.appendChild(letter);
             }
+        }
+    }
+
+    drawGanttChart(g: SVGElement): void {
+        for (const task of this.tasks) {
+            this.drawTask(g, 0, task, true, true, false, false, null, null, true);
         }
     }
 
@@ -166,22 +176,6 @@ export class GanttRenderer extends AbstractGanttRenderer {
 // }
 // }
 
-    drawGanttChart(g: SVGElement): void {
-        for (const task of this.tasks) {
-            this.drawTask(g, 0, task, true, true, false, false, null, null, true);
-        }
-    }
-
-    // renderNowLine(totalHeight: number): SVGGElement {
-    //     const g = SvgUtils.createSvgElement('g', {class: 'now-line'});
-    //     const containerWidth = this.containerWidth;
-    //     const nowIdx = this.calculateDayIndex(this.currentDate);
-    //     const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
-    //     if (xPos < 0 || xPos > containerWidth) return g;
-    //     g.appendChild(SvgUtils.createLine(xPos, 0, xPos, totalHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
-    //     return g;
-    // }
-
     override draw(svg: SVGElement, x: number, y: number): void {
         const calendarH = this.calendarXAxes.getHeight();
         const taskAreaH = this.tasks.length * (this.getTaskHeight() + 1);
@@ -190,7 +184,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
 
         // const gDayBars = SvgUtils.createSvgElement('g', {class: 'day-bars'});
         const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
-        const lastDay = Math.min(this.totalDays - 1, firstDay + Math.ceil(this.containerWidth / this.dayWidth) + 2);
+        const lastDay = Math.min(this.days - 1, firstDay + Math.ceil(this.containerWidth / this.dayWidth) + 2);
         // for (let d = firstDay; d <= lastDay; d++) {
         //     const dayDate = new Date(this.chartStart!.getTime() + d * DateUtils.MS);
         //     this.drawDayBars(gDayBars, dayDate, this._calendarH);
@@ -207,6 +201,30 @@ export class GanttRenderer extends AbstractGanttRenderer {
         svg.appendChild(gTasks);
 
         // svg.appendChild(this.renderNowLine(y + totalH));
+    }
+
+    // renderNowLine(totalHeight: number): SVGGElement {
+    //     const g = SvgUtils.createSvgElement('g', {class: 'now-line'});
+    //     const containerWidth = this.containerWidth;
+    //     const nowIdx = this.calculateDayIndex(this.currentDate);
+    //     const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
+    //     if (xPos < 0 || xPos > containerWidth) return g;
+    //     g.appendChild(SvgUtils.createLine(xPos, 0, xPos, totalHeight, {stroke: '#cc0000', 'stroke-width': '2'}));
+    //     return g;
+    // }
+
+    private createMilestonesFromMeta(meta: GanttChartMeta) {
+        const start = DateUtils.getDayMidnight(new Date(meta.sprintStart));
+        const end = DateUtils.getDayMidnight(new Date(meta.sprintEnd));
+        let now: Date | null = null;
+        // if (!this.isHideNow(now, end, meta.sprintClosed))
+        {
+            now = meta.now ? DateUtils.getDayMidnight(new Date(meta.now)) : null;
+        }
+        // const firstWorklog = meta.firstWorklogDate ? DateUtils.getDayMidnight(new Date(meta.firstWorklogDate)) : null;
+        // const lastWorklog = meta.lastWorklogDate ? DateUtils.getDayMidnight(new Date(meta.lastWorklogDate)) : null;
+        // const release = meta.releaseDate ? DateUtils.getDayMidnight(new Date(meta.releaseDate)) : null;
+        this.createMilestones(start, now, end, null, null, null);
     }
 }
 

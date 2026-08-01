@@ -121,19 +121,10 @@ public class GanttBurndownChartService {
         List<Worklog> sortedWorklogs = worklogs.stream().sorted(Comparator.comparing(Worklog::getStart)).toList();
 
         // ── Chart window ────────────────────────────────────────────────────────
-        LocalDate chartStartDate = sprint.getEarliestStartDate().toLocalDate().minusDays(preRun);
-        LocalDate chartEndDate   = sprint.getLatestFinishDate().toLocalDate().plusDays(postRun);
-
-        // Extend to include 'now' (unless sprint is closed)
-        if (now != null && !sprint.isClosed()) {
-            LocalDate today = now.toLocalDate();
-            if (today.isBefore(chartStartDate)) chartStartDate = today.minusDays(1);
-            if (today.isAfter(chartEndDate)) chartEndDate = today.plusDays(1);
-        }
-
-        LocalDateTime chartStart = chartStartDate.atStartOfDay();
-        LocalDateTime chartEnd   = chartEndDate.atStartOfDay();
-        int           totalDays  = (int) ChronoUnit.DAYS.between(chartStart, chartEnd) + 1;
+        LocalDateTime chartStart = GanttChartService.getChartStart(sprint, now, preRun).atStartOfDay();
+        LocalDateTime chartEnd   = GanttChartService.getChartEnd(sprint, now, postRun).atStartOfDay();
+        int           totalDays  = DateUtil.calculateDays(milestones.firstMilestone, this.milestones.lastMilestone) + 1 + preRun + postRun;
+//        (int) ChronoUnit.DAYS.between(chartStart, chartEnd) + 1;
 
         // ── Milestone dates ─────────────────────────────────────────────────────
         LocalDateTime firstWorklogDt   = null;
@@ -792,6 +783,7 @@ public class GanttBurndownChartService {
         if (hours > 0) return hours + "h";
         return minutes + "m";
     }
+
 
     /**
      * Initialize BurnDownGuide object from gantt chart of this project to visualize

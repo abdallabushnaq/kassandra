@@ -18,6 +18,7 @@ import {TextAlignment} from "./TextAlignment.js";
 import {FontMetrics} from "./FontMetrics.js";
 import {FontSpec} from "./FontSpec.js";
 import {AbstractChart} from "Frontend/src/main/frontend/js/AbstractChart";
+import {Milestone} from './Milestone.js';
 
 export abstract class AbstractRenderer implements IRenderer {
     protected static readonly STANDARD_LINE_STROKE_WIDTH: number = 3.1;
@@ -25,7 +26,7 @@ export abstract class AbstractRenderer implements IRenderer {
     chartWidth: number;
     chartHeight: number;
     theme: Theme;
-    milestones: Milestones;
+    milestones: Milestones = new Milestones();
     calendarXAxes: CalendarXAxes;
     days: number;
     firstDayX: number;
@@ -38,12 +39,12 @@ export abstract class AbstractRenderer implements IRenderer {
     containerWidth: number;
     containerHeight: number;
 
-    protected constructor(chart: AbstractChart, milestones: Milestones, preRun: number, postRun: number) {
+    protected constructor(chart: AbstractChart, /*milestones: Milestones,*/ preRun: number, postRun: number) {
         this.chart = chart;
         this.chartWidth = 0;
         this.chartHeight = 400;
         this.theme = chart.theme;
-        this.milestones = milestones;
+        // this.milestones = milestones;
         this.days = 3;
         this.firstDayX = 0;
         this.scrollOffset = 0;
@@ -101,10 +102,12 @@ export abstract class AbstractRenderer implements IRenderer {
         if (SvgUtils.isClipped(x - dw / 2, x - (dw / 2) + dw - 1, this.chart.containerWidth))
             return;
         const color = GraphColorUtil.getDayOfWeekBgColor(this.theme, currentDay);
+        //day vertical bar
         g.appendChild(SvgUtils.createRect(
             x - (dw / 2), this.diagram.y, dw - 1, this.diagram.height,
             {fill: ColorUtils.intToHex(color)},
         ));
+        //draw vertical lines
         g.appendChild(SvgUtils.createRect(
             x - (dw / 2) + (dw - 1), this.diagram.y, /*(dw - 1) +*/ 1, this.diagram.height,
             {fill: ColorUtils.intToHex(this.theme.ganttTheme.gridColor)},
@@ -114,11 +117,6 @@ export abstract class AbstractRenderer implements IRenderer {
     calculateDayWidth(): void {
         this.days = this.calculateMaxDays();
         this.calendarXAxes.dayOfWeek.setWidth(this.chartWidth / this.days);
-    }
-
-    calculateMaxDays(): number {
-        return DateUtils.calculateDays(this.milestones.firstMilestone!, this.milestones.lastMilestone!)
-            + 1 + this.calendarXAxes.priRun + this.calendarXAxes.postRun;
     }
 
     /**
@@ -202,6 +200,46 @@ export abstract class AbstractRenderer implements IRenderer {
 
     }
 
+    calculateMaxDays(): number {
+        return DateUtils.calculateDays(this.milestones.firstMilestone!, this.milestones.lastMilestone!)
+            + 1 + this.calendarXAxes.priRun + this.calendarXAxes.postRun;
+    }
+
+    protected createMilestones(start: Date | null, now: Date | null, end: Date | null, firstWorklog: Date | null,
+                               lastWorklog: Date | null, release: Date | null): void {
+        if (start != null) {
+            this.milestones.addMilestone(new Milestone(start, 'S', 'Start (Start of project)'));
+        }
+        if (now != null) {
+            this.milestones.addMilestone(new Milestone(now, 'N', 'Now (current date)'));
+        }
+        if (end != null) {
+            this.milestones.addMilestone(new Milestone(end, 'E', 'End (End of project)'));
+        }
+        if (release != null) {
+            this.milestones.addMilestone(new Milestone(release, 'R', 'Release (Estimated release date)'));
+        }
+        // if (firstWorklog != null && (start == null || firstWorklog.getTime() !== start.getTime())) {
+        //     this.milestones.addMilestone(new Milestone(firstWorklog, 'F', 'First punch-in'));
+        // }
+        // if (lastWorklog != null && (end == null || lastWorklog.getTime() !== end.getTime())) {
+        //     this.milestones.addMilestone(new Milestone(lastWorklog, 'L', 'Last punch-out'));
+        // }
+        this.milestones.calculate();
+
+        // if (start)
+        //     this.milestones.firstMilestone = start;
+        // if (end)
+        //     this.milestones.lastMilestone = end;
+    }
+
+    // protected calculateDayIndex(date: Date | null): number {
+    //     if (date == null)
+    //         return 0;
+    //     const firstMilestoneDay = this.milestones.firstMilestone;
+    //     return DateUtils.calculateDays(firstMilestoneDay, date);
+    // }
+
     // ── Java: protected void drawLegend() / AbstractRenderer.drawLegend(x, y, interpolationColor) ──
     protected drawLegend(svg: SVGElement, x: number, y: number, interpolationColor: number | null): void {
         const lineHeight = 14;
@@ -275,16 +313,13 @@ export abstract class AbstractRenderer implements IRenderer {
         this.drawGraphText(svg, legendTextX, legendTextY, "Last punch-out", this.theme.burndownTheme.tickTextColor, this.calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
     }
 
-    // protected calculateDayIndex(date: Date | null): number {
-    //     if (date == null)
-    //         return 0;
-    //     const firstMilestoneDay = this.milestones.firstMilestone;
-    //     return DateUtils.calculateDays(firstMilestoneDay, date);
-    // }
-
     protected drawCalendar(g: SVGElement, drawDays: boolean = true, viewportWidth: number) {
         this.calendarXAxes.drawCalendar(g, drawDays, viewportWidth);
     }
+
+    // protected calculateMaxDays(): number {
+    //     return DateUtils.calculateDays(this.milestones.firstMilestone, this.milestones.lastMilestone) + 1 + this.calendarXAxes.priRun + this.calendarXAxes.postRun;
+    // }
 
 
 }

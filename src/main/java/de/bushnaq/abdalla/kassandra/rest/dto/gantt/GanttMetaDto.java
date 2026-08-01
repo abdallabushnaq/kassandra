@@ -53,17 +53,17 @@ public class GanttMetaDto {
      */
     public int           preRun;
     /**
-     * Earliest start date of any task in the sprint (used for milestone "S").
-     */
-    public LocalDateTime sprintEarliestStartDate;
-    /**
      * Latest finish date of any task in the sprint (used for milestone "E").
      */
-    public LocalDateTime sprintLatestFinishDate;
+    public LocalDateTime sprintEnd;
     /**
      * Name of the sprint being rendered.
      */
     public String        sprintName;
+    /**
+     * Earliest start date of any task in the sprint (used for milestone "S").
+     */
+    public LocalDateTime sprintStart;
     /**
      * Sprint status: ACTIVE, CLOSED, or PLANNING (used to determine if "N" milestone should be shown).
      */

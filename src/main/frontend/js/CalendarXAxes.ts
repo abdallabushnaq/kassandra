@@ -14,8 +14,6 @@ import {FontSpec} from "./FontSpec.js";
 import {CalendarMilestoneElement} from './CalendarMilestoneElement.js';
 import {CalendarSize} from './CalendarSize.js';
 import type {IRenderer} from './IRenderer.js';
-import type {Milestones} from './Milestones.js';
-import type {Theme} from './theme/Theme.js';
 
 const DAY_OF_MONTH_MIN_DAY_WIDTH = 16;
 const DAY_OF_WEEK_MIN_DAY_WIDTH = 10;
@@ -26,8 +24,6 @@ export class CalendarXAxes {
     parent: IRenderer;
     priRun: number;
     postRun: number;
-    milestones: Milestones;
-    theme: Theme;
     year: CalendarElement;
     month: CalendarElement;
     week: CalendarElement;
@@ -43,8 +39,6 @@ export class CalendarXAxes {
         this.parent = parent;
         this.priRun = priRun;
         this.postRun = postRun;
-        this.milestones = parent.milestones;
-        this.theme = parent.theme;
 
         const margin = 4;
         this.year = new CalendarElement(new FontSpec('sans-serif', 14, 'normal'), null, null, 13 + margin);
@@ -102,10 +96,12 @@ export class CalendarXAxes {
     }
 
     drawCalendar(svgGroup: SVGElement, drawDays: boolean, viewportWidth: number): void {
-        if (!this.parent) return;
+        // if (!this.parent)
+        //     return;
 
-        const firstDay = DateUtils.addDay(this.milestones.firstMilestone!, -this.priRun);
-        const lastDay = DateUtils.maxDate(this.milestones.lastMilestone!, DateUtils.addDay(this.milestones.firstMilestone!, this.parent.days - 1));
+        const firstDay = DateUtils.addDay(this.parent.milestones.firstMilestone!, -this.priRun);
+        const l = DateUtils.addDay(this.parent.milestones.firstMilestone!, this.parent.days - 1);
+        const lastDay = DateUtils.maxDate(this.parent.milestones.lastMilestone!, DateUtils.addDay(this.parent.milestones.firstMilestone!, this.parent.days - 1));
 
         let yearWasDrawn = false;
         let monthWasDrawn = false;
@@ -291,15 +287,16 @@ export class CalendarXAxes {
 
     /** Calculate X position for a given date. Mirrors Java: protected int calculateDayX(LocalDate date). */
     calculateDayX(date: Date): number {
-        if (!this.milestones.firstMilestone) return 0;
+        if (!this.parent.milestones.firstMilestone)
+            return 0;
         const firstMilestoneX = this.x + (this.dayOfWeek.getWidth() ?? 0) / 2;
         return firstMilestoneX
-            + (DateUtils.calculateDays(this.milestones.firstMilestone, date) - this.parent.scrollOffset + this.priRun)
+            + (DateUtils.calculateDays(this.parent.milestones.firstMilestone, date) - this.parent.scrollOffset + this.priRun)
             * (this.dayOfWeek.getWidth() ?? 0);
     }
 
     drawMilestones(svg: SVGElement): void {
-        for (const milestone of this.milestones.getList()) {
+        for (const milestone of this.parent.milestones.getList()) {
             const x = this.calculateDayX(milestone.time);
             this.drawMilestoneShort(
                 svg, milestone, milestone.time, x,
@@ -332,7 +329,7 @@ export class CalendarXAxes {
         drawFlag: boolean, drawNowLine: boolean,
     ): void {
         const FLAG_HEIGHT = 13;
-        const theme = this.theme;
+        const theme = this.parent.theme;
         const darkRed = '#cc4a31';
         const milestoneTextColor = ColorUtils.intToHex(theme.xAxesTheme?.milestoneTextColor, '#ffffff');
 
@@ -484,7 +481,7 @@ export class CalendarXAxes {
     }
 
     milestonesVisible(): boolean {
-        return !this.milestones.empty();
+        return !this.parent.milestones.empty();
     }
 
     private _formatDateForTooltip(date: Date | null): string {

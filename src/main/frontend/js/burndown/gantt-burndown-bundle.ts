@@ -121,7 +121,7 @@ function createChart(
 
     function constrainScrollOffset() {
         scrollOffset = Math.max(0, Math.min(
-            Math.max(0, gantt.totalDays - getContainerWidth() / (dayWidth * visualScale)),
+            Math.max(0, gantt.days - getContainerWidth() / (dayWidth * visualScale)),
             scrollOffset,
         ));
     }
@@ -143,7 +143,7 @@ function createChart(
         const referenceDate = gantt.currentDate || burndown.currentDate || new Date(data.meta.sprintStart);
         const todayIdx = DateUtils.calculateDayIndex(referenceDate, gantt.chartStart!);
         const visibleDays = getContainerWidth() / dayWidth;
-        scrollOffset = Math.max(0, Math.min(gantt.totalDays - visibleDays, todayIdx - visibleDays * 0.2));
+        scrollOffset = Math.max(0, Math.min(gantt.days - visibleDays, todayIdx - visibleDays * 0.2));
     }
 
     let saveTimerId: ReturnType<typeof setTimeout> | null = null;

@@ -205,8 +205,8 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             ganttChartContainer.getStyle()
                     .set("width", "100%")
                     .set("overflow-x", "hidden")
-                    .set("min-height", "600px")
-                    .set("max-height", "600px")
+                    .set("min-height", "120px")
+//                    .set("max-height", "600px")
                     .set("margin-top", "var(--lumo-space-xs)");
 
             // Create backlog grid (always shown at bottom)

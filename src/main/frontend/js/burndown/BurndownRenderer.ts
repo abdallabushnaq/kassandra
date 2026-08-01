@@ -19,8 +19,6 @@ import {AbstractRenderer} from '../AbstractRenderer.js';
 import {ColorUtils} from '../ColorUtils.js';
 import {DateUtils} from '../DateUtils.js';
 import {GraphSquare} from '../GraphSquare.js';
-import {Milestone} from '../Milestone.js';
-import {Milestones} from '../Milestones.js';
 import {SvgUtils} from '../SvgUtils.js';
 import {CalendarSize} from "../CalendarSize.js";
 import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
@@ -62,7 +60,7 @@ export class BurndownRenderer extends AbstractRenderer {
      * {@link #createMilestones} and {@link #toArrayIndex} for why/how this is reconciled.
      */
     chartStart: Date;
-    totalDays: number;
+    // totalDays: number;
     /** LocalDateTime now (the "N" milestone date, or null when hidden). */
     currentDate: Date | null;
     /** Day pixel width, externally driven by zoom (see gantt-burndown-bundle.ts). */
@@ -86,7 +84,7 @@ export class BurndownRenderer extends AbstractRenderer {
         // calendarXAxes. milestones starts empty here; createMilestones() (called below from
         // processingInit) populates it, mirroring BurnDownRenderer(RenderDao) -> processingInit(dao)
         // -> createMilestones(...).
-        super(chart, new Milestones([]), meta.preRun || 0, meta.postRun || 0);
+        super(chart/*, new Milestones([])*/, meta.preRun || 0, meta.postRun || 0);
 
         this.data = data;
         // Java: init(dao) -> initSize(dao.firstDayX, true, dao.calendarSize) — BurnDownRenderer
@@ -95,8 +93,8 @@ export class BurndownRenderer extends AbstractRenderer {
         this.calendarAtBottom = true;
 
         this.chartStart = DateUtils.getDayMidnight(new Date(meta.chartStart));
-        this.totalDays = meta.totalDays || DateUtils.calculateDayCount(this.chartStart, DateUtils.getDayMidnight(new Date(meta.chartEnd)));
-        this.days = this.totalDays;
+        // this.totalDays = this.calculateMaxDays();// meta.totalDays || DateUtils.calculateDayCount(this.chartStart, DateUtils.getDayMidnight(new Date(meta.chartEnd)));
+        this.days = this.calculateMaxDays();
         this.currentDate = meta.now ? DateUtils.getDayMidnight(new Date(meta.now)) : null;
         this.dayWidth = 20;
 
@@ -138,6 +136,7 @@ export class BurndownRenderer extends AbstractRenderer {
      * derived from a fixed chartWidth.
      */
     override calculateDayWidth(): void {
+        this.days = this.calculateMaxDays();
         this.calendarXAxes.dayOfWeek.setWidth(this.dayWidth);
         this.calendarXAxes.dayOfMonth.setWidth(this.dayWidth);
     }
@@ -187,55 +186,21 @@ export class BurndownRenderer extends AbstractRenderer {
 
     // ── Java: private void processingInit(RenderDao dao) ──
     private processingInit(meta: BurndownMetaDto): void {
-        this.createMilestones(
-            DateUtils.getDayMidnight(new Date(meta.sprintStart)),
-            meta.now ? DateUtils.getDayMidnight(new Date(meta.now)) : null,
-            DateUtils.getDayMidnight(new Date(meta.sprintEnd)),
-            meta.firstWorklogDate ? DateUtils.getDayMidnight(new Date(meta.firstWorklogDate)) : null,
-            meta.lastWorklogDate ? DateUtils.getDayMidnight(new Date(meta.lastWorklogDate)) : null,
-            meta.releaseDate ? DateUtils.getDayMidnight(new Date(meta.releaseDate)) : null,
-            meta.sprintClosed,
-        );
+        this.createMilestonesFromMeta(meta);
         this.init();
     }
 
-    //          LocalDateTime firstWorklog, LocalDateTime lastWorklog, LocalDateTime release, boolean completed) ──
-    private createMilestones(start: Date | null, now: Date | null, end: Date | null, firstWorklog: Date | null,
-                             lastWorklog: Date | null, release: Date | null, completed: boolean): void {
-        if (start != null) {
-            this.milestones.addMilestone(new Milestone(start, 'S', 'Start (Start of project)'));
+    private createMilestonesFromMeta(meta: BurndownMetaDto) {
+        const start = DateUtils.getDayMidnight(new Date(meta.sprintStart));
+        const end = DateUtils.getDayMidnight(new Date(meta.sprintEnd));
+        let now: Date | null = null;
+        if (!this.isHideNow(now, end, meta.sprintClosed)) {
+            now = meta.now ? DateUtils.getDayMidnight(new Date(meta.now)) : null;
         }
-        if (now != null) {
-            this.milestones.addMilestone(new Milestone(now, 'N', 'Now (current date)'));
-        }
-        if (end != null) {
-            this.milestones.addMilestone(new Milestone(end, 'E', 'End (End of project)'));
-        }
-        if (release != null) {
-            this.milestones.addMilestone(new Milestone(release, 'R', 'Release (Estimated release date)'));
-        }
-        if (this.isHideNow(now, end, completed)) {
-            this.milestones.remove('N');
-        }
-        if (firstWorklog != null && (start == null || firstWorklog.getTime() !== start.getTime())) {
-            this.milestones.addMilestone(new Milestone(firstWorklog, 'F', 'First punch-in'));
-        }
-        if (lastWorklog != null && (end == null || lastWorklog.getTime() !== end.getTime())) {
-            this.milestones.addMilestone(new Milestone(lastWorklog, 'L', 'Last punch-out'));
-        }
-        this.milestones.calculate();
-
-        // Adaptation (necessary, documented): this.data's per-day arrays (author.accumulatedWorkPerDay,
-        // ganttGuideWith[out]Buffer) are pre-computed server-side in GanttBurndownChartService, indexed
-        // relative to a fixed "chartStart" = sprintStart - preRun, since the server has no access to
-        // this dynamically-calculated Milestones list. Java always indexes relative to
-        // milestones.firstMilestone directly and has no separate "chartStart" concept. To guarantee the
-        // (server-fixed) data array indices stay aligned with milestones.firstMilestone/lastMilestone
-        // (used for ALL pixel geometry via calculateDayX/calculateMaxDays), we clamp them back to the
-        // sprint bounds here. This only differs from pure Java behaviour in the rare edge case where a
-        // worklog falls outside [sprintStart, sprintEnd] (see toArrayIndex()).
-        if (start) this.milestones.firstMilestone = start;
-        if (end) this.milestones.lastMilestone = end;
+        const firstWorklog = meta.firstWorklogDate ? DateUtils.getDayMidnight(new Date(meta.firstWorklogDate)) : null;
+        const lastWorklog = meta.lastWorklogDate ? DateUtils.getDayMidnight(new Date(meta.lastWorklogDate)) : null;
+        const release = meta.releaseDate ? DateUtils.getDayMidnight(new Date(meta.releaseDate)) : null;
+        this.createMilestones(start, now, end, firstWorklog, lastWorklog, release);
     }
 
     /**

@@ -92,7 +92,7 @@ function createChart(
 
     function constrainScrollOffset() {
         scrollOffset = Math.max(0, Math.min(
-            Math.max(0, renderer.totalDays - getContainerWidth() / (dayWidth * visualScale)),
+            Math.max(0, renderer.days - getContainerWidth() / (dayWidth * visualScale)),
             scrollOffset
         ));
     }
@@ -113,7 +113,7 @@ function createChart(
     } else {
         const todayIdx = DateUtils.calculateDayIndex(renderer.currentDate!, renderer.chartStart!);
         const visibleDays = getContainerWidth() / dayWidth;
-        scrollOffset = Math.max(0, Math.min(renderer.totalDays - visibleDays, todayIdx - visibleDays * 0.2));
+        scrollOffset = Math.max(0, Math.min(renderer.days - visibleDays, todayIdx - visibleDays * 0.2));
     }
 
     let saveTimerId: ReturnType<typeof setTimeout> | null = null;

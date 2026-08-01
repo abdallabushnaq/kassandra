@@ -32,6 +32,7 @@ import de.bushnaq.abdalla.kassandra.rest.dto.theme.ThemeDto;
 import de.bushnaq.abdalla.util.Util;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.xmlgraphics.java2d.color.ColorUtil;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -106,31 +107,34 @@ public class GanttChartService {
         GanttChartDto dto   = new GanttChartDto();
 
         // ── Chart date range ─────────────────────────────────────────────
-        // Extend the window by preRun / postRun days so there is room for labels
-        // printed to the left of the first bar and to the right of the last bar.
-        LocalDate chartStartDate = sprint.getEarliestStartDate().toLocalDate().minusDays(preRun);
-        LocalDate chartEndDate   = sprint.getLatestFinishDate().toLocalDate().plusDays(postRun);
+//        LocalDate chartStartDate = sprint.getEarliestStartDate().toLocalDate().minusDays(preRun);
+//        LocalDate chartEndDate   = sprint.getLatestFinishDate().toLocalDate().plusDays(postRun);
+//
+//        // Stretch range to include 'now' unless the sprint is already closed
+//        if (now != null && !Status.CLOSED.equals(sprint.getStatus())) {
+//            LocalDate today = now.toLocalDate();
+//            if (today.isBefore(chartStartDate))
+//                chartStartDate = today.minusDays(1);
+//            if (today.isAfter(chartEndDate))
+//                chartEndDate = today.plusDays(1);
+//        }
 
-        // Stretch range to include 'now' unless the sprint is already closed
-        if (now != null && !Status.CLOSED.equals(sprint.getStatus())) {
-            LocalDate today = now.toLocalDate();
-            if (today.isBefore(chartStartDate)) chartStartDate = today.minusDays(1);
-            if (today.isAfter(chartEndDate)) chartEndDate = today.plusDays(1);
-        }
-
-        dto.meta.firstDayX               = 0;
-        dto.meta.chartStart              = chartStartDate.atStartOfDay();
-        dto.meta.chartEnd                = chartEndDate.atStartOfDay();
-        dto.meta.copyright               = Util.generateCopyrightString(ParameterOptions.getLocalNow());
-        dto.meta.now                     = now;
-        dto.meta.sprintName              = sprint.getName();
-        dto.meta.sprintEarliestStartDate = sprint.getEarliestStartDate();
-        dto.meta.sprintLatestFinishDate  = sprint.getLatestFinishDate();
-        dto.meta.sprintStatus            = sprint.getStatus().name();
-        dto.meta.preRun                  = preRun;
-        dto.meta.postRun                 = postRun;
-        dto.meta.theme                   = ThemeDto.fromTheme(theme);
-        dto.meta.calendarSize            = CalendarSize.YEARS;
+        LocalDateTime chartStart = GanttChartService.getChartStart(sprint, now, preRun).atStartOfDay();
+        LocalDateTime chartEnd   = GanttChartService.getChartEnd(sprint, now, postRun).atStartOfDay();
+//        int           totalDays  = (int) ChronoUnit.DAYS.between(chartStart, chartEnd) + 1;
+        dto.meta.firstDayX    = 0;
+        dto.meta.chartStart   = chartStart;
+        dto.meta.chartEnd     = chartEnd;
+        dto.meta.copyright    = Util.generateCopyrightString(ParameterOptions.getLocalNow());
+        dto.meta.now          = now;
+        dto.meta.sprintName   = sprint.getName();
+        dto.meta.sprintStart  = sprint.getStart();
+        dto.meta.sprintEnd    = sprint.getEnd();
+        dto.meta.sprintStatus = sprint.getStatus().name();
+        dto.meta.preRun       = preRun;
+        dto.meta.postRun      = postRun;
+        dto.meta.theme        = ThemeDto.fromTheme(theme);
+        dto.meta.calendarSize = CalendarSize.YEARS;
 
 
         // ── Task rows ─────────────────────────────────────────────────────
@@ -249,6 +253,32 @@ public class GanttChartService {
         if (color == null) return "#000000ff";
         int a = alpha & 0xff;
         return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue(), a);
+    }
+
+    public static @NonNull LocalDate getChartEnd(Sprint sprint, LocalDateTime now, int postRun) {
+        // Extend the window by preRun / postRun days so there is room for labels
+        // printed to the left of the first bar and to the right of the last bar.
+        LocalDate chartEndDate = sprint.getLatestFinishDate().toLocalDate().plusDays(postRun);
+        // Extend to include 'now' (unless sprint is closed)
+        if (now != null && !sprint.isClosed()) {
+            LocalDate today = now.toLocalDate();
+            if (today.isAfter(chartEndDate))
+                chartEndDate = today.plusDays(1);
+        }
+        return chartEndDate;
+    }
+
+    public static @NonNull LocalDate getChartStart(Sprint sprint, LocalDateTime now, int preRun) {
+        // Extend the window by preRun / postRun days so there is room for labels
+        // printed to the left of the first bar and to the right of the last bar.
+        LocalDate chartStartDate = sprint.getEarliestStartDate().toLocalDate().minusDays(preRun);
+        // Extend to include 'now' (unless sprint is closed)
+        if (now != null && !sprint.isClosed()) {
+            LocalDate today = now.toLocalDate();
+            if (today.isBefore(chartStartDate))
+                chartStartDate = today.minusDays(1);
+        }
+        return chartStartDate;
     }
 
     /**

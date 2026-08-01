@@ -35,8 +35,8 @@ export class GanttBurndownChart extends AbstractChart {
                 chartEnd: data.meta.chartEnd,
                 copyright: data.meta.copyright,
                 now: data.meta.now || undefined,
-                sprintEarliestStartDate: data.meta.sprintStart,
-                sprintLatestFinishDate: data.meta.sprintEnd,
+                sprintStart: data.meta.sprintStart,
+                sprintEnd: data.meta.sprintEnd,
                 sprintStatus: data.meta.sprintStatus || undefined,
                 sprintName: data.meta.sprintName || undefined,
                 preRun: data.meta.preRun,
@@ -45,7 +45,7 @@ export class GanttBurndownChart extends AbstractChart {
                 calendarSize: CalendarSize.MONTHS
             },
         };
-        this.addRenderer(new GanttRenderer(this, ganttData, theme, data.meta.preRun || 0, data.meta.postRun || 0));
+        this.addRenderer(new GanttRenderer(this, ganttData, data.meta.preRun || 0, data.meta.postRun || 0));
     }
 
     updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void {

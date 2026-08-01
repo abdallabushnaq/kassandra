@@ -46,7 +46,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     chartStart: Date;
     chartEnd: Date;
     currentDate: Date;
-    totalDays: number;
+    // totalDays: number;
     dayWidth: number;
     sprintHitAreas: HitArea[];
     // 24-hour format
@@ -65,14 +65,15 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         const chartEnd = new Date(data.meta.chartEnd || Date.now());
         const currentDate = new Date(data.meta.now);
 
+
+        super(chart, preRun, postRun);
         const milestonesList: Milestone[] = [
             new Milestone(currentDate, 'N', 'Now (current date)', false),
             new Milestone(DateUtils.getDayMidnight(chartStart), 'S', 'Start (Start of project)', false),
             new Milestone(DateUtils.getDayMidnight(chartEnd), 'E', 'End (End of project)', false),
         ];
-        const milestones = new Milestones(milestonesList, chartStart, chartEnd);
-
-        super(chart, milestones, preRun, postRun);
+        this.milestones = new Milestones(milestonesList, chartStart, chartEnd);
+        this.milestones.calculate();
 
 
         this.lanes = (data.lanes || []).map(lane => ({
@@ -82,7 +83,8 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         this.chartStart = chartStart;
         this.chartEnd = chartEnd;
         this.currentDate = currentDate;
-        this.totalDays = DateUtils.calculateDayCount(chartStart, chartEnd);
+        this.days = this.calculateMaxDays();
+        // this.totalDays = DateUtils.calculateDayCount(chartStart, chartEnd);
         this.dayWidth = DEFAULT_DW;
         this.sprintHitAreas = [];
         this.init();
@@ -101,6 +103,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     // }
 
     override calculateDayWidth(): void {
+        this.days = this.calculateMaxDays();
         this.calendarXAxes.dayOfWeek.setWidth(this.dayWidth);
         this.calendarXAxes.dayOfMonth.setWidth(this.dayWidth);
     }

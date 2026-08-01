@@ -39,14 +39,13 @@
 # Latest Bugs
 
 1. buffer not resource aligned.
-2. FIXED: Chart mouse shape should be an arrow, not hand.
-3. tasks overarching off-days draw dotted borders strange (dotted lines will not scroll correctly).
-4. chartWidth is contained in diagram.width and dayWidth is contained in calendarXAxis.dayOfWeek.width. We should
+2. tasks overarching off-days draw dotted borders strange (dotted lines will not scroll correctly).
+3. chartWidth is contained in diagram.width and dayWidth is contained in calendarXAxis.dayOfWeek.width. We should
    consolidate.
-5. Milestone flag connector going wrong direction.
-6. FIXED: Big Gantt charts might take longer to render and scroll.
-7. Off-day letter not vertically centered in day cell.
-8. FIXED: some sprint overview charts show too early start for a sprint, like for Barcelona.
+4. Milestone flag connector going wrong direction.
+5. Off-day letter not vertically centered in day cell.
+6. Oslo, Dublin has a gap in August 26 to 27.
+7. chart zoom is reset when zooming day width.
 
 # Failing Tests
 

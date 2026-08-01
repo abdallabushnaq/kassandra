@@ -12,8 +12,8 @@ export interface GanttChartMeta {
     chartEnd: string;
     copyright: string;
     now?: string;
-    sprintEarliestStartDate: string;
-    sprintLatestFinishDate: string;
+    sprintStart: string;
+    sprintEnd: string;
     sprintStatus?: string;
     sprintName?: string;
     preRun?: number;
