@@ -32,8 +32,17 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GanttChartDto {
 
-    public GanttMetaDto  meta  = new GanttMetaDto();
-    public List<TaskDto> tasks = new ArrayList<>();
+    /**
+     * Unique assigned-user calendars referenced by the task rows.
+     */
+    public List<UserCalendarDto> calendars = new ArrayList<>();
+    /**
+     * Chart-level rendering metadata.
+     */
+    public GanttMetaDto          meta      = new GanttMetaDto();
+    /**
+     * Task rows rendered by the chart.
+     */
+    public List<TaskDto>         tasks     = new ArrayList<>();
 
 }
-

@@ -46,7 +46,7 @@
 5. FIXED: Off-day letter not vertically centered in day cell.
 6. FIXED: Oslo, Dublin has a gap in August 26 to 27.
 7. chart zoom is reset when zooming day width.
-8. Madrid Gantt is missing holidays.
+8. FIXED: Madrid Gantt is missing holidays.
 
 # Failing Tests
 

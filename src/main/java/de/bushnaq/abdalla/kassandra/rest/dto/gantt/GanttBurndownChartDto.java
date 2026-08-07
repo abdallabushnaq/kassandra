@@ -41,6 +41,10 @@ public class GanttBurndownChartDto {
      */
     public List<AuthorSeriesDto> authors = new ArrayList<>();
     /**
+     * Unique assigned-user calendars referenced by the Gantt task rows.
+     */
+    public List<UserCalendarDto> calendars = new ArrayList<>();
+    /**
      * Gantt-derived planned burn-down guide (with buffer — all leaf tasks).
      * Same indexing as {@link #ganttGuideWithoutBuffer}.
      */

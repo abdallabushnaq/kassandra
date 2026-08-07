@@ -61,6 +61,9 @@ export class GanttRenderer extends AbstractGanttRenderer {
         this.createMilestonesFromMeta(data.meta);
 
         this.data = data;
+        for (const calendar of data.calendars || []) {
+            this.calendarExceptionsById.set(String(calendar.id), calendar.exceptions || []);
+        }
         this.tasks = (data.tasks || []).map(convertTaskDates);//convert all dates from string to Date
         this.chartStart = chartStart;
         this.days = this.calculateMaxDays();//DateUtils.calculateDayCount(chartStart, chartEnd);
@@ -117,7 +120,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
             const bgColor = this.getGanttDayStripeColor(task, currentDay);
             //background
             g.appendChild(SvgUtils.createRect(x1 + 1, y1, this.dayWidth - 1, this.getTaskHeight(), {fill: bgColor}));
-            const ex = getCalendarException(currentDay, task.calendarExceptions);
+            const ex = getCalendarException(currentDay, this.getCalendarExceptions(task));
             if (ex?.letter && this.dayWidth >= 14) {
                 const cx = x1 + this.dayWidth / 2;
                 const letter = SvgUtils.createText(cx, y1 + this.getTaskHeight() / 2, ex.letter, {
@@ -127,7 +130,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
                     'dominant-baseline': 'alphabetic',
                     dy: '0.35em',
                 });
-                letter.appendChild(SvgUtils.createSvgElement('title', {}, ex.type || 'Off-day'));
+                letter.appendChild(SvgUtils.createSvgElement('title', {}, ex.name || ex.type || 'Off-day'));
                 g.appendChild(letter);
             }
         }

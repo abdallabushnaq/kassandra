@@ -47,10 +47,9 @@ public class TaskDto {
      */
     public String                     borderColor;
     /**
-     * Non-working day ranges for the assigned user (weekdays only).
-     * Weekends are excluded because the JS derives them from the day-of-week.
+     * Identifier of the assigned user's calendar in {@link GanttChartDto#calendars}.
      */
-    public List<CalendarExceptionDto> calendarExceptions = new ArrayList<>();
+    public UUID                       calendarId;
     /**
      * True if this task is on the critical path.
      */

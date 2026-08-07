@@ -365,7 +365,8 @@ public class GanttBurndownChartService {
 
         // ── Gantt task rows (delegate to GanttChartService) ───────────────────
         GanttChartDto ganttDto = ganttChartService.build(sprint, now, dark, preRun, postRun);
-        dto.tasks = ganttDto.tasks;
+        dto.calendars = ganttDto.calendars;
+        dto.tasks     = ganttDto.tasks;
 
         return dto;
     }

@@ -28,6 +28,7 @@ import de.bushnaq.abdalla.kassandra.rest.dto.gantt.CalendarExceptionDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttChartDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.RelationDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.TaskDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.UserCalendarDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.theme.ThemeDto;
 import de.bushnaq.abdalla.util.Util;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,11 @@ import org.springframework.stereotype.Service;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import net.sf.mpxj.ProjectCalendar;
+import net.sf.mpxj.ProjectCalendarException;
 
 /**
  * Builds a {@link GanttChartDto} from a fully-loaded {@link Sprint} so that
@@ -47,9 +52,9 @@ import java.util.List;
  * Gantt chart without any further server calls.
  *
  * <p>Colour computation mirrors {@code AbstractGanttRenderer.drawTask()} and
- * related methods.  Calendar exceptions are extracted from each task's
- * assigned user's off-day list so the browser can determine working vs.
- * non-working days per row.
+ * related methods. Calendar exceptions are extracted once from each assigned
+ * user's effective calendar so the browser can determine working vs.
+ * non-working days per row without duplicating holiday data.
  */
 @Service
 @Slf4j
@@ -139,9 +144,12 @@ public class GanttChartService {
 
         // ── Task rows ─────────────────────────────────────────────────────
         int rowIndex = 0;
+        Set<UUID> calendarIds = new HashSet<>();
         for (Task task : sprint.getTasks()) {
             if (GanttUtil.isValidTask(task)) {
-                dto.tasks.add(buildTaskDto(task, rowIndex, theme));
+                TaskDto taskDto = buildTaskDto(task, rowIndex, theme);
+                dto.tasks.add(taskDto);
+                addUserCalendar(dto, task.getAssignedUser(), calendarIds);
                 rowIndex++;
             }
         }
@@ -168,6 +176,7 @@ public class GanttChartService {
         dto.rowIndex          = rowIndex;
 
         if (task.getAssignedUser() != null) {
+            dto.calendarId       = task.getAssignedUser().getId();
             dto.assignedUserName = task.getAssignedUser().getName();
             // User availability percentage and location for tooltip
             if (!task.getAssignedUser().getAvailabilities().isEmpty()) {
@@ -217,22 +226,28 @@ public class GanttChartService {
             }
         }
 
-        // ── Calendar exceptions from assigned user's off-day list ────────
-        if (task.getAssignedUser() != null) {
-            List<OffDay> offDays = task.getAssignedUser().getOffDays();
-            if (offDays != null) {
-                for (OffDay offDay : offDays) {
-                    CalendarExceptionDto ex = new CalendarExceptionDto();
-                    ex.from   = offDay.getFirstDay();
-                    ex.to     = offDay.getLastDay();
-                    ex.type   = offDay.getType() != null ? offDay.getType().name() : "HOLIDAY";
-                    ex.letter = getOffDayLetter(offDay.getType());
-                    dto.calendarExceptions.add(ex);
-                }
+        return dto;
+    }
+
+    private static void addUserCalendar(GanttChartDto chart, User user, Set<UUID> calendarIds) {
+        if (user == null || user.getId() == null || !calendarIds.add(user.getId()))
+            return;
+
+        UserCalendarDto calendarDto = new UserCalendarDto();
+        calendarDto.id = user.getId();
+        ProjectCalendar calendar = user.getCalendar();
+        if (calendar != null) {
+            for (ProjectCalendarException exception : calendar.getCalendarExceptions()) {
+                CalendarExceptionDto exceptionDto = new CalendarExceptionDto();
+                exceptionDto.from   = exception.getFromDate();
+                exceptionDto.to     = exception.getToDate() != null ? exception.getToDate() : exception.getFromDate();
+                exceptionDto.name   = exception.getName();
+                exceptionDto.type   = getCalendarExceptionType(exception.getName());
+                exceptionDto.letter = getCalendarExceptionLetter(exceptionDto.type);
+                calendarDto.exceptions.add(exceptionDto);
             }
         }
-
-        return dto;
+        chart.calendars.add(calendarDto);
     }
 
     // ── Colour utilities ──────────────────────────────────────────────────────
@@ -281,18 +296,20 @@ public class GanttChartService {
         return chartStartDate;
     }
 
-    /**
-     * Returns the single-letter code for an off-day type.
-     */
-    private static String getOffDayLetter(OffDayType type) {
-        if (type == null) return "H";
+    private static String getCalendarExceptionLetter(String type) {
         return switch (type) {
-            case VACATION -> "V";
-            case TRIP -> "T";
-            case SICK -> "S";
-            case HOLIDAY -> "H";
+            case "VACATION" -> "V";
+            case "TRIP" -> "T";
+            case "SICK" -> "S";
+            default -> "H";
         };
     }
+
+    private static String getCalendarExceptionType(String name) {
+        for (OffDayType type : OffDayType.values()) {
+            if (type.name().equals(name))
+                return type.name();
+        }
+        return OffDayType.HOLIDAY.name();
+    }
 }
-
-

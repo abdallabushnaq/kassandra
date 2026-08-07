@@ -9,6 +9,7 @@ import {DateUtils} from '../DateUtils.js';
 import {AbstractRenderer} from '../AbstractRenderer.js';
 import {getCalendarException, isWorkingDay} from './date-helpers.js';
 import {TaskDto} from './dto/TaskDto.js';
+import {CalendarException} from './dto/CalendarException.js';
 import {FontMetrics} from "../FontMetrics.js";
 import {FontSpec} from "../FontSpec.js";
 import {AbstractChart} from '../AbstractChart.js';
@@ -38,6 +39,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     tasks: TaskDto[];
     _calendarH: number;
     _taskById: Record<string, TaskDto>;
+    protected calendarExceptionsById: Map<string, CalendarException[]>;
     // 24-hour format
     readonly options24: Intl.DateTimeFormatOptions = {
         year: 'numeric',
@@ -62,10 +64,15 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         this.tasks = [];
         this._calendarH = 0;
         this._taskById = {};
+        this.calendarExceptionsById = new Map();
     }
 
     getTaskHeight(): number {
         return LINE_HEIGHT;
+    }
+
+    protected getCalendarExceptions(task: TaskDto): CalendarException[] | undefined {
+        return task.calendarId ? this.calendarExceptionsById.get(String(task.calendarId)) : undefined;
     }
 
     override calculateChartHeight(): number {
@@ -85,7 +92,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     //         g.appendChild(SvgUtils.createRect(dayLeft, rowY, 1, LINE_HEIGHT, {fill: gridColor}));
     //         const bgColor = this.getGanttDayStripeColor(task, dayDate);
     //         g.appendChild(SvgUtils.createRect(dayLeft + 1, rowY, this.dayWidth - 1, LINE_HEIGHT, {fill: bgColor}));
-    //         const exception = getCalendarException(dayDate, task.calendarExceptions);
+    //         const exception = getCalendarException(dayDate, this.getCalendarExceptions(task));
     //         if (exception?.letter && this.dayWidth >= 14) {
     //             const cx = dayLeft + this.dayWidth / 2;
     //             const letter = SvgUtils.createText(cx, rowY + LINE_HEIGHT / 2, exception.letter, {
@@ -109,10 +116,10 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     getGanttDayStripeColor(task: TaskDto, dayDate: Date): string {
         const dow = dayDate.getDay();
-        if (dow === 6 || dow === 0 || isWorkingDay(dayDate, task.calendarExceptions)) {
+        if (dow === 6 || dow === 0 || isWorkingDay(dayDate, this.getCalendarExceptions(task))) {
             return this.getDayOfWeekStripBgColor(dayDate);
         }
-        const exception = getCalendarException(dayDate, task.calendarExceptions);
+        const exception = getCalendarException(dayDate, this.getCalendarExceptions(task));
         if (exception) {
             const t = exception.type;
             if (t === 'VACATION') return ColorUtils.intToHex(this.theme.ganttTheme.vacationBgColor, '#a0c8ff');
@@ -141,7 +148,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
         for (let day = 0; day <= days; day++) {
             const currentDay = new Date(startTruncated.getTime() + day * DateUtils.MS);
-            const working = isWorkingDay(currentDay, task.calendarExceptions);
+            const working = isWorkingDay(currentDay, this.getCalendarExceptions(task));
 
             if (working) {
                 if (days === 0) {
@@ -445,7 +452,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                     const currentDay = new Date(startTruncated.getTime() + day * DateUtils.MS);
                     let segX: number, segW: number;
 
-                    if (isWorkingDay(currentDay, task.calendarExceptions)) {
+                    if (isWorkingDay(currentDay, this.getCalendarExceptions(task))) {
                         const fill = ColorUtils.convertSprintColorToRgba(fillColor);
                         if (days === 0) {
                             // This is the left and right end
@@ -571,4 +578,3 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         }
     }
 }
-

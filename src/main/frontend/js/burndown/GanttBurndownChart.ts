@@ -28,6 +28,7 @@ export class GanttBurndownChart extends AbstractChart {
         super('Gantt Burndown Chart', data.meta.copyright, data.meta.sprintName || '', '', '', 'gantt-burndown-chart', theme);
         this.addRenderer(new BurndownRenderer(this, data));
         const ganttData: GanttChartDto = {
+            calendars: data.calendars || [],
             tasks: data.tasks || [],
             meta: {
                 firstDayX: data.meta.firstDayX,

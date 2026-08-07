@@ -18,6 +18,7 @@
 import {AuthorSeriesDto} from '../../gantt/dto/AuthorSeriesDto';
 import {BurndownMetaDto} from './BurndownMetaDto';
 import {TaskDto} from '../../gantt/dto/TaskDto';
+import {UserCalendarDto} from '../../gantt/dto/UserCalendarDto';
 
 /**
  * DTO representing a complete Gantt burndown chart.
@@ -27,5 +28,6 @@ export interface GanttBurndownChartDto {
     authors: AuthorSeriesDto[];
     ganttGuideWithoutBuffer?: number[] | null;
     ganttGuideWithBuffer?: number[] | null;
+    calendars: UserCalendarDto[];
     tasks: TaskDto[];
 }

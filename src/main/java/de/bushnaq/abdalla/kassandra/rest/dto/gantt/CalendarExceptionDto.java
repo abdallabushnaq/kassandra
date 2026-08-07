@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.rest.dto.gantt;
 import java.time.LocalDate;
 
 /**
- * A calendar exception (non-working day range) for a task's assigned user.
+ * A calendar exception (non-working day range) for an assigned user's calendar.
  * Weekends are NOT included here; they are derived from the day-of-week in JS.
  * Only explicit off-day overrides (vacation, sick, trip, holiday) are sent.
  */
@@ -33,6 +33,10 @@ public class CalendarExceptionDto {
      * Single-letter abbreviation: V, S, T, or H.
      */
     public String    letter;
+    /**
+     * Display name supplied by the calendar, for example the public holiday name.
+     */
+    public String    name;
     /**
      * End date of the exception range (inclusive).
      */
