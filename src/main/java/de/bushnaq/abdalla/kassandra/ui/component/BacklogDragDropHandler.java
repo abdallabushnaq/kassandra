@@ -17,12 +17,11 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
-import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
@@ -30,13 +29,13 @@ import java.util.*;
  * Centralized handler for drag-and-drop operations in the Backlog view.
  * Manages moving tasks between sprints and reordering tasks within sprints.
  */
-@Log4j2
+@Slf4j
 public class BacklogDragDropHandler {
 
     @Getter
-    private Task   draggedTask;
+    private       Task                  draggedTask;
     private final Runnable              onRefresh;
-    private Sprint sourceSprintOfDraggedTask;
+    private       Sprint                sourceSprintOfDraggedTask;
     private final Map<UUID, Sprint>     sprintMap;      // sprintId -> sprint
     private final Map<UUID, List<Task>> sprintTasksMap; // sprintId -> ordered tasks
     private final TaskApi               taskApi;

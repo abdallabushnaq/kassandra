@@ -19,7 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.view.util;
 
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.ActiveSprints;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Lazy
-@Log4j2
+@Slf4j
 public class ActiveSprintsTester extends AbstractViewTester {
 
     /**

@@ -55,8 +55,6 @@ import de.bushnaq.abdalla.util.date.DateUtil;
 import de.bushnaq.abdalla.util.date.ReportUtil;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -127,7 +125,6 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
      */
     private             boolean                   isRestoringFromUrl          = false;
     private final       JsonMapper                jsonMapper;
-    final               Logger                    logger                      = LoggerFactory.getLogger(this.getClass());
     private final       LocalDateTime             now;
     private final       H2                        pageTitle;
     private final       ProductApi                productApi;
@@ -262,7 +259,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
                     .orElse(null);
         }
         if (sprintId == null) {
-            logger.warn("No sprint found to display in QualityBoard");
+            log.warn("No sprint found to display in QualityBoard");
         }
 
         populateSprintSelector();
@@ -347,7 +344,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             try {
                 valueSpan.setTitle(htmlUtil.getHtmlTipSnippet(label));
             } catch (Exception e) {
-                logger.warn(e.getMessage(), e);
+                log.warn(e.getMessage(), e);
             }
         }
         // Apply status-based styling if status is provided
@@ -487,6 +484,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             try {
                 GanttBurndownChartDto dto  = ganttBurndownChartService.build(sprint, ParameterOptions.getLocalNow(), isDark);
                 String                json = jsonMapper.writeValueAsString(dto);
+                log.info("BurnDown Chart data size = {}", json.length());
                 ganttBurndownChartContainer.removeAll();
                 ui.getPage().executeJs(
                         "import('/js/generated/burndown/gantt-burndown-bundle.js')" +
@@ -495,7 +493,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
                 );
                 log.debug("Gantt burndown chart DTO pushed to client for sprint '{}'", sprint.getName());
             } catch (Exception e) {
-                logger.error("Failed to build Gantt burndown chart data for sprint '{}'", sprint.getName(), e);
+                log.error("Failed to build Gantt burndown chart data for sprint '{}'", sprint.getName(), e);
                 ganttBurndownChartContainer.removeAll();
                 ganttBurndownChartContainer.add(new Paragraph("Error generating gantt burndown chart: " + e.getMessage()));
             }
@@ -571,17 +569,17 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             sprint.setFeature(featureApi.getById(sprint.getFeatureId()));
             sprint.getFeature().setVersion(versionApi.getById(sprint.getFeature().getVersionId()));
             sprint.getFeature().getVersion().setProduct(productApi.getById(sprint.getFeature().getVersion().getProductId()));
-            logger.info("sprint loaded and initialized in {} ms", System.currentTimeMillis() - time);
+            log.info("sprint loaded and initialized in {} ms", System.currentTimeMillis() - time);
             time = System.currentTimeMillis();
             sprint.initUserMap(usersFuture.get());
             sprint.initTaskMap(tasksFuture.get(), worklogsFuture.get());
-            logger.info("sprint user, task and worklog maps initialized in {} ms", System.currentTimeMillis() - time);
+            log.info("sprint user, task and worklog maps initialized in {} ms", System.currentTimeMillis() - time);
             if (sprint.getStart() != null) {
                 sprint.recalculate(ParameterOptions.getLocalNow());
                 sprintStatistics = new SprintStatistics(sprint, now);
             }
         } catch (InterruptedException | ExecutionException e) {
-            logger.error("Error loading sprint data", e);
+            log.error("Error loading sprint data", e);
             // Handle exception appropriately
         }
         ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
@@ -600,7 +598,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     }
 
     private void logTime() {
-        logger.info("generated page in {}", DateUtil.create24hDurationString(Duration.between(created, LocalDateTime.now()), true, true, true, false));
+        log.info("generated page in {}", DateUtil.create24hDurationString(Duration.between(created, LocalDateTime.now()), true, true, true, false));
     }
 
     /**
@@ -657,7 +655,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
                         .ifPresent(sprintSelector::setValue);
             }
         } catch (Exception e) {
-            logger.error("Error loading sprints for selector", e);
+            log.error("Error loading sprints for selector", e);
         } finally {
             isRestoringFromUrl = false;
         }

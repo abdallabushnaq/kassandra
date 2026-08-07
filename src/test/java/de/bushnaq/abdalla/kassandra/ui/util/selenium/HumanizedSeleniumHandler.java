@@ -19,7 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.util.selenium;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
@@ -44,7 +44,7 @@ import java.util.Random;
  * @author Abdalla Bushnaq
  */
 @Component
-@Log4j2
+@Slf4j
 public class HumanizedSeleniumHandler extends SeleniumHandler {
     public static final int     SHIFTY                   = 6;
     @Getter

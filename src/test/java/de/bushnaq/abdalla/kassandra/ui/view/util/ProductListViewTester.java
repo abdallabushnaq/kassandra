@@ -22,7 +22,7 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @Component
 @Lazy
-@Log4j2
+@Slf4j
 public class ProductListViewTester extends AbstractViewTester {
 
     /**

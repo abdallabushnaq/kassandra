@@ -21,7 +21,7 @@ import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
 import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,7 +39,7 @@ import java.time.Duration;
  */
 @Component
 @Lazy
-@Log4j2
+@Slf4j
 public class AboutViewTester extends AbstractViewTester {
 
     /**

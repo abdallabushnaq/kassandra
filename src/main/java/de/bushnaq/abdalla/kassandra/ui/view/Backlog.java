@@ -53,7 +53,7 @@ import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -72,7 +72,7 @@ import java.util.concurrent.ExecutionException;
 @Menu(order = 5, icon = "vaadin:grid-v", title = "Backlog")
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
-@Log4j2
+@Slf4j
 public class Backlog extends Main implements AfterNavigationObserver, BeforeEnterObserver {
     public static final String                       BACKLOG_PAGE_TITLE_ID      = "backlog-page-title";
     public static final String                       CANCEL_BUTTON_ID           = "cancel-tasks-button";
@@ -1329,6 +1329,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                                 ".then(() => window.mountGanttChart($0, JSON.parse($1)));",
                         GANTT_CHART_CONTAINER_ID, json
                 );
+                log.info("Gantt Chart data size = {}", json.length());
                 log.debug("Gantt chart DTO pushed to client for sprint '{}'", sprint.getName());
             } catch (Exception e) {
                 log.error("Failed to build Gantt chart data for sprint '{}'", sprint.getName(), e);

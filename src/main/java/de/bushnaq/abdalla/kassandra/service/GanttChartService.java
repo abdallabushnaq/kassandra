@@ -143,13 +143,15 @@ public class GanttChartService {
 
 
         // ── Task rows ─────────────────────────────────────────────────────
-        int rowIndex = 0;
-        Set<UUID> calendarIds = new HashSet<>();
+        LocalDate calendarStart = getRenderedCalendarStart(sprint, now, preRun);
+        LocalDate calendarEnd   = getRenderedCalendarEnd(sprint, now, preRun, postRun);
+        int       rowIndex      = 0;
+        Set<UUID> calendarIds   = new HashSet<>();
         for (Task task : sprint.getTasks()) {
             if (GanttUtil.isValidTask(task)) {
                 TaskDto taskDto = buildTaskDto(task, rowIndex, theme);
                 dto.tasks.add(taskDto);
-                addUserCalendar(dto, task.getAssignedUser(), calendarIds);
+                addUserCalendar(dto, task.getAssignedUser(), calendarIds, calendarStart, calendarEnd);
                 rowIndex++;
             }
         }
@@ -229,7 +231,8 @@ public class GanttChartService {
         return dto;
     }
 
-    private static void addUserCalendar(GanttChartDto chart, User user, Set<UUID> calendarIds) {
+    private static void addUserCalendar(GanttChartDto chart, User user, Set<UUID> calendarIds,
+                                        LocalDate calendarStart, LocalDate calendarEnd) {
         if (user == null || user.getId() == null || !calendarIds.add(user.getId()))
             return;
 
@@ -238,9 +241,14 @@ public class GanttChartService {
         ProjectCalendar calendar = user.getCalendar();
         if (calendar != null) {
             for (ProjectCalendarException exception : calendar.getCalendarExceptions()) {
+                LocalDate exceptionStart = exception.getFromDate();
+                LocalDate exceptionEnd   = exception.getToDate() != null ? exception.getToDate() : exceptionStart;
+                if (exceptionStart.isAfter(calendarEnd) || exceptionEnd.isBefore(calendarStart))
+                    continue;
+
                 CalendarExceptionDto exceptionDto = new CalendarExceptionDto();
-                exceptionDto.from   = exception.getFromDate();
-                exceptionDto.to     = exception.getToDate() != null ? exception.getToDate() : exception.getFromDate();
+                exceptionDto.from   = exceptionStart.isBefore(calendarStart) ? calendarStart : exceptionStart;
+                exceptionDto.to     = exceptionEnd.isAfter(calendarEnd) ? calendarEnd : exceptionEnd;
                 exceptionDto.name   = exception.getName();
                 exceptionDto.type   = getCalendarExceptionType(exception.getName());
                 exceptionDto.letter = getCalendarExceptionLetter(exceptionDto.type);
@@ -248,6 +256,24 @@ public class GanttChartService {
             }
         }
         chart.calendars.add(calendarDto);
+    }
+
+    private static LocalDate getRenderedCalendarEnd(Sprint sprint, LocalDateTime now, int preRun, int postRun) {
+        LocalDate end = sprint.getEnd().toLocalDate();
+        if (now != null && now.toLocalDate().isAfter(end))
+            end = now.toLocalDate();
+        if (sprint.getStart().toLocalDate().isAfter(end))
+            end = sprint.getStart().toLocalDate();
+        return end.plusDays(preRun + postRun);
+    }
+
+    private static LocalDate getRenderedCalendarStart(Sprint sprint, LocalDateTime now, int preRun) {
+        LocalDate start = sprint.getStart().toLocalDate();
+        if (now != null && now.toLocalDate().isBefore(start))
+            start = now.toLocalDate();
+        if (sprint.getEnd().toLocalDate().isBefore(start))
+            start = sprint.getEnd().toLocalDate();
+        return start.minusDays(preRun);
     }
 
     // ── Colour utilities ──────────────────────────────────────────────────────

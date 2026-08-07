@@ -45,7 +45,7 @@ import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.MergedScrumBoard;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 @Menu(order = 7, icon = "vaadin:tasks", title = "Active Sprints")
 @PermitAll
 @RolesAllowed({"USER", "ADMIN"})
-@Log4j2
+@Slf4j
 public class ActiveSprints extends Main implements AfterNavigationObserver {
     public static final String                      ID_CLEAR_FILTERS_BUTTON   = "clear-filters-button";
     public static final String                      ID_GROUPING_MODE_SELECTOR = "grouping-mode-selector";

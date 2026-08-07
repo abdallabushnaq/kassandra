@@ -627,6 +627,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 //TODO instead of using a service that will read all data from db again, we can use current sprints info we already have
                 SprintOverviewDto dto  = sprintsOverviewService.getOverview(ParameterOptions.getLocalNow(), null, isDark);
                 String            json = jsonMapper.writeValueAsString(dto);
+                log.info("SprintOverview Chart data size = {}", json.length());
                 // Dev:  individual ES module files (npm run build:static)
                 // Prod: single minified bundle (npm run build:static:prod, built by Maven)
                 if (useLegacy) {
