@@ -36,6 +36,15 @@ export class CalendarXAxes {
     x: number;
 
     constructor(parent: IRenderer, priRun: number, postRun: number) {
+        const d0 = new Date(2025, 9, 24, 0, 0, 0, 0);
+        const d1 = new Date(2025, 9, 25, 0, 0, 0, 0);
+        const d2 = new Date(2025, 9, 26, 0, 0, 0, 0);
+        const d3 = new Date(2025, 9, 27, 0, 0, 0, 0);
+        const ds1 = DateUtils.calculateDays(d0, d1);
+        const ds2 = DateUtils.calculateDays(d1, d2);
+        const ds3 = DateUtils.calculateDays(d2, d3);
+
+
         this.parent = parent;
         this.priRun = priRun;
         this.postRun = postRun;

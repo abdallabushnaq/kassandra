@@ -19,16 +19,14 @@ export class DateUtils {
      * Calculates the day index (zero-based) of a date relative to a chart start date.
      */
     static calculateDayIndex(date: Date | string, chartStart: Date): number {
-        return Math.round((DateUtils.getDayMidnight(date).getTime() - chartStart.getTime()) / DateUtils.MS);
+        return DateUtils.getLocalDayNumber(date) - DateUtils.getLocalDayNumber(chartStart);
     }
 
     /**
      * Calculates the total number of days between two dates (inclusive).
      */
     static calculateDayCount(startDate: Date | string, endDate: Date | string): number {
-        return Math.round(
-            (DateUtils.getDayMidnight(endDate).getTime() - DateUtils.getDayMidnight(startDate).getTime()) / DateUtils.MS
-        ) + 1;
+        return DateUtils.calculateDays(startDate, endDate) + 1;
     }
 
     /**
@@ -36,17 +34,7 @@ export class DateUtils {
      * Mirrors: Java DateUtil.calculateDays(LocalDate startDate, LocalDate endDate)
      */
     static calculateDays(startDate: Date | string, endDate: Date | string): number {
-        return Math.floor(
-            (DateUtils.getDayMidnight(endDate).getTime() - DateUtils.getDayMidnight(startDate).getTime()) / DateUtils.MS
-        );
-    }
-
-    /**
-     * Truncates a date to day precision (removes hours, minutes, seconds, milliseconds).
-     * Returns local midnight (00:00:00 local time).
-     */
-    static toDayPrecision(date: Date): Date {
-        return DateUtils.getDayMidnight(date);
+        return DateUtils.getLocalDayNumber(endDate) - DateUtils.getLocalDayNumber(startDate);
     }
 
     /**
@@ -101,7 +89,7 @@ export class DateUtils {
         while (current.getTime() <= endDay.getTime()) {
             const dow = current.getDay();
             if (dow !== 0 && dow !== 6) count++;
-            current = new Date(current.getTime() + DateUtils.MS);
+            current.setDate(current.getDate() + 1);
         }
         return count;
     }
@@ -124,15 +112,20 @@ export class DateUtils {
         return (c.getDay() != 6 && c.getDay() != 0);
     }
 
-    static withTime(date: Date | null, hourse: number, minutes: number): Date | null {
+    static withTime(date: Date | null, hours: number, minutes: number): Date | null {
         if (date == null)
             return null;
         date = DateUtils.getDayMidnight(date);
-        date.setHours(hourse, minutes);
+        date.setHours(hours, minutes);
         return date;
     }
 
     static toLocalYMDHMString(date: Date, dateTimeFormat: Intl.DateTimeFormat): string {
         return dateTimeFormat.format(date);
+    }
+
+    private static getLocalDayNumber(date: Date | string): number {
+        const d = typeof date === 'string' ? new Date(date) : date;
+        return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DateUtils.MS;
     }
 }

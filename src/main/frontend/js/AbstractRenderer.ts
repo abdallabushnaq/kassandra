@@ -88,7 +88,7 @@ export abstract class AbstractRenderer implements IRenderer {
         const workedToday = (date.getTime() - startTime.getTime()) / 1000;
         // const timeOfDayX = Math.floor(workedToday * this.calendarXAxes.dayOfWeek.getWidth() / secondsPerDay);
         // return this.dayIndexToPixelX(dayIndex) + timeOfDayX;
-        const dayX = firstMilestoneX + (DateUtils.calculateDays(firstMilestoneDay, DateUtils.toDayPrecision(date)) - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth();
+        const dayX = firstMilestoneX + (DateUtils.calculateDays(firstMilestoneDay, date) - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth();
         const timeOfDayX = Math.floor(((workedToday * this.calendarXAxes.dayOfWeek.getWidth()) / secondsPerDay));
         return dayX + timeOfDayX;
 
