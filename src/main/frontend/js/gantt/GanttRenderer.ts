@@ -12,7 +12,8 @@ import {CalendarSize} from "../CalendarSize.js";
 import {TaskDto} from './dto/TaskDto.js';
 import {GanttChartDto} from './dto/GanttChartDto.js';
 import {AbstractChart} from '../AbstractChart.js';
-import {GanttChartMeta} from "Frontend/src/main/frontend/js/gantt/dto";
+import {GanttChartMeta} from "./dto/GanttChartMeta.js";
+import {FontSpec} from "../FontSpec.js";
 
 /**
  * convert string date representative to Date
@@ -29,6 +30,7 @@ function convertTaskDates(task: TaskDto): TaskDto {
 export class GanttRenderer extends AbstractGanttRenderer {
     static GANTT_TASK_POST_SPACE: number = 0;
     static GANTT_TASK_PRI_SPACE: number = 0;
+    private static readonly noneWorkingDayFont: FontSpec = new FontSpec(FontSpec.SANS_SERIF, 22, FontSpec.BOLD);
     calendarSize: CalendarSize;
     data: GanttChartDto;
 
@@ -120,8 +122,10 @@ export class GanttRenderer extends AbstractGanttRenderer {
                 const cx = x1 + this.dayWidth / 2;
                 const letter = SvgUtils.createText(cx, y1 + this.getTaskHeight() / 2, ex.letter, {
                     fill: ColorUtils.intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
-                    'font-size': '22', 'font-family': 'sans-serif', 'font-weight': 'bold',
-                    'text-anchor': 'middle', 'dominant-baseline': 'middle',
+                    ...SvgUtils.createFontSpecAttribute(GanttRenderer.noneWorkingDayFont),
+                    'text-anchor': 'middle',
+                    'dominant-baseline': 'alphabetic',
+                    dy: '0.35em',
                 });
                 letter.appendChild(SvgUtils.createSvgElement('title', {}, ex.type || 'Off-day'));
                 g.appendChild(letter);
@@ -227,4 +231,3 @@ export class GanttRenderer extends AbstractGanttRenderer {
         this.createMilestones(start, now, end, null, null, null);
     }
 }
-

@@ -3,6 +3,8 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
+import {FontSpec} from './FontSpec.js';
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 /** Attribute map accepted by all SVG helpers. */
@@ -12,6 +14,20 @@ export type SvgAttrs = Record<string, string | number | null | undefined>;
  * Utility class for SVG element creation.
  */
 export class SvgUtils {
+    /**
+     * Creates SVG font attributes from a font specification.
+     *
+     * @param fontSpec the source font specification
+     * @return the corresponding SVG font attributes
+     */
+    static createFontSpecAttribute(fontSpec: FontSpec): SvgAttrs {
+        return {
+            'font-size': fontSpec.size,
+            'font-family': fontSpec.family,
+            'font-weight': fontSpec.weight,
+        };
+    }
+
     /**
      * Creates an SVG element with attributes and optional text content.
      */
@@ -113,4 +129,3 @@ export class SvgUtils {
         return x1 + (x2 - x1) <= 0 || x1 >= viewportWidth;
     }
 }
-

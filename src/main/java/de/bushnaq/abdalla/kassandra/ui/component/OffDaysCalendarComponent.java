@@ -30,7 +30,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
-import de.bushnaq.abdalla.kassandra.dto.OffDay;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import lombok.Getter;
@@ -40,8 +39,6 @@ import net.sf.mpxj.ProjectCalendarException;
 
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -50,29 +47,28 @@ import java.util.function.Consumer;
  */
 public class OffDaysCalendarComponent extends VerticalLayout {
 
-    public static final  String                     CALENDAR_NEXT_YEAR_BTN              = "calendar-next-year-btn";
-    public static final  String                     CALENDAR_PREV_YEAR_BTN              = "calendar-prev-year-btn";
-    private static final String                     CLASS_FILLING_DAY                   = "calendar-filling-day";
-    private static final String                     CLASS_HOLIDAY_DAY                   = "calendar-holiday-day";
-    private static final String                     CLASS_MONTH_NAME                    = "calendar-month-name";
-    private static final String                     CLASS_NORMAL_DAY                    = "calendar-normal-day";
-    private static final String                     CLASS_SICK_DAY                      = "calendar-sick-day";
-    private static final String                     CLASS_TODAY                         = "calendar-today";
-    private static final String                     CLASS_TRIP_DAY                      = "calendar-trip-day";
-    private static final String                     CLASS_VACATION_DAY                  = "calendar-vacation-day";
-    private static final String                     CLASS_WEEKEND_DAY                   = "calendar-weekend-day";
-    private static final String                     DAY_SIZE_PX                         = "36px"; // Increased from 24px (50% larger)
-    private static final String                     LEGEND_ITEM_ID_PREFIX               = "calendar-legend-item-";
-    public static final  String                     LEGEND_ITEM_ID_PREFIX_BUSINESS_TRIP = "calendar-legend-item-business-trip";
-    public static final  String                     LEGEND_ITEM_ID_PREFIX_HOLIDAY       = "calendar-legend-item-holiday";
-    public static final  String                     LEGEND_ITEM_ID_PREFIX_SICK_LEAVE    = "calendar-legend-item-sick-leave";
-    public static final  String                     LEGEND_ITEM_ID_PREFIX_VACATION      = "calendar-legend-item-vacation";
-    private static final int                        MONTHS_PER_ROW                      = 4;
+    public static final  String              CALENDAR_NEXT_YEAR_BTN              = "calendar-next-year-btn";
+    public static final  String              CALENDAR_PREV_YEAR_BTN              = "calendar-prev-year-btn";
+    private static final String              CLASS_FILLING_DAY                   = "calendar-filling-day";
+    private static final String              CLASS_HOLIDAY_DAY                   = "calendar-holiday-day";
+    private static final String              CLASS_MONTH_NAME                    = "calendar-month-name";
+    private static final String              CLASS_NORMAL_DAY                    = "calendar-normal-day";
+    private static final String              CLASS_SICK_DAY                      = "calendar-sick-day";
+    private static final String              CLASS_TODAY                         = "calendar-today";
+    private static final String              CLASS_TRIP_DAY                      = "calendar-trip-day";
+    private static final String              CLASS_VACATION_DAY                  = "calendar-vacation-day";
+    private static final String              CLASS_WEEKEND_DAY                   = "calendar-weekend-day";
+    private static final String              DAY_SIZE_PX                         = "36px"; // Increased from 24px (50% larger)
+    private static final String              LEGEND_ITEM_ID_PREFIX               = "calendar-legend-item-";
+    public static final  String              LEGEND_ITEM_ID_PREFIX_BUSINESS_TRIP = "calendar-legend-item-business-trip";
+    public static final  String              LEGEND_ITEM_ID_PREFIX_HOLIDAY       = "calendar-legend-item-holiday";
+    public static final  String              LEGEND_ITEM_ID_PREFIX_SICK_LEAVE    = "calendar-legend-item-sick-leave";
+    public static final  String              LEGEND_ITEM_ID_PREFIX_VACATION      = "calendar-legend-item-vacation";
+    private static final int                 MONTHS_PER_ROW                      = 4;
     @Getter
-    private              int                        currentYear;
-    private final        Consumer<LocalDate>        dayClickHandler;
-    private final        Map<LocalDate, OffDayType> offDayMap                           = new HashMap<>();
-    private              User                       user;
+    private              int                 currentYear;
+    private final        Consumer<LocalDate> dayClickHandler;
+    private              User                user;
     /**
      * -- SETTER --
      * Sets the handler that will be called when the year changes.
@@ -80,7 +76,7 @@ public class OffDaysCalendarComponent extends VerticalLayout {
      * @param yearChangeHandler Consumer that handles year changes
      */
     @Setter
-    private              Consumer<Integer>          yearChangeHandler;
+    private              Consumer<Integer>   yearChangeHandler;
 
     /**
      * Creates a new year calendar component for the given user and year.
@@ -104,29 +100,6 @@ public class OffDaysCalendarComponent extends VerticalLayout {
         getStyle()
                 .set("flex-shrink", "0")
                 .set("flex-grow", "0");
-    }
-
-    /**
-     * Builds a map of dates to off day types for quick lookup.
-     */
-    private void buildOffDayMap() {
-        offDayMap.clear();
-
-        for (OffDay offDay : user.getOffDays()) {
-            LocalDate  start = offDay.getFirstDay();
-            LocalDate  end   = offDay.getLastDay();
-            OffDayType type  = offDay.getType();
-
-            // Add each day in the range to the map
-            LocalDate current = start;
-            while (!current.isAfter(end)) {
-                // Only include days for the current year
-                if (current.getYear() == currentYear) {
-                    offDayMap.put(current, type);
-                }
-                current = current.plusDays(1);
-            }
-        }
     }
 
     /**
@@ -406,8 +379,6 @@ public class OffDaysCalendarComponent extends VerticalLayout {
         }
         // Clear previous content
         removeAll();
-        // Build the off day map for quick lookup
-        buildOffDayMap();
         // Create year navigation header
         add(createYearHeader());
         // Create the calendar grid (3 rows x 4 months each)
