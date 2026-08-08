@@ -23,6 +23,8 @@ export interface TimelineChart {
 
     updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void;
 
+    updateTimelineCaption(dayWidth: number, visualScale: number): void;
+
     render(container: HTMLElement): void;
 
     updateContentTransform(tx: number, ty: number, scale: number): void;
@@ -245,6 +247,7 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
     private redrawChart(): void {
         this.renderedScrollOffset = this.scrollOffset;
         this.options.beforeRender?.();
+        this.options.chart.updateTimelineCaption(this.dayWidth, this.visualScale);
         for (const renderer of this.options.chart.renderers)
             renderer.visualScale = this.visualScale;
         this.options.chart.updateViewState(

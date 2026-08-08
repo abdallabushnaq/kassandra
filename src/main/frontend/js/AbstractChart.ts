@@ -60,6 +60,11 @@ export abstract class AbstractChart extends AbstractCanvas {
         this.captionElement?.draw(svg);
     }
 
+    /** Updates the timeline metrics shown with the caption interaction hints. */
+    public updateTimelineCaption(dayWidth: number, visualScale: number): void {
+        this.captionElement.updateTimelineMetrics(dayWidth, visualScale);
+    }
+
     override drawFooter(svg: SVGElement): void {
         // Wrap the footer elements in a <g> so updateSvgHeight can translate the whole
         // footer downward when visual zoom increases the chart height.

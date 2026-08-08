@@ -17,7 +17,7 @@ import {RenderLayer} from './RenderLayer.js';
 import type {IRenderer} from './IRenderer.js';
 
 const DAY_OF_MONTH_MIN_DAY_WIDTH = 16;
-const DAY_OF_WEEK_MIN_DAY_WIDTH = 10;
+const DAY_OF_WEEK_MIN_DAY_WIDTH = 16;
 const MONTH_MIN_DAY_WIDTH = 2;
 const WEEK_MIN_DAY_WIDTH = 2;
 
