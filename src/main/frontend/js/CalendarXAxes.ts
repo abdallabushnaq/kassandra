@@ -224,15 +224,15 @@ export class CalendarXAxes {
                 x, this.parent.diagram.y + this.parent.diagram.height,
                 {stroke: darkRed, 'stroke-width': '2'},
             ));
-            if (this.dayOfWeek.width) {
-                const r = Math.max(this.dayOfWeek.width / 3, 6) / 2;
-                parentGroup.appendChild(SvgUtils.createCircle(x,
-                    this.calendarAtBottom
-                        ? this.parent.diagram.y - r / 2
-                        : this.parent.diagram.y + this.parent.diagram.height - r,
-                    r, {fill: darkRed, 'shape-rendering': 'auto'},
-                ));
-            }
+            const diameter = Math.max((this.dayOfWeek.width ?? 0) / 3, 6);
+            const radius = diameter / 2;
+            parentGroup.appendChild(SvgUtils.createCircle(
+                x + 1,
+                this.calendarAtBottom
+                    ? this.parent.diagram.y
+                    : this.parent.diagram.y + this.parent.diagram.height - radius,
+                radius, {fill: darkRed, 'shape-rendering': 'auto'},
+            ));
         }
 
         if (visible) {

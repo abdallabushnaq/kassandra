@@ -207,7 +207,8 @@ export class GanttRenderer extends AbstractGanttRenderer {
         // }
         // svg.appendChild(gDayBars);
 
-        this.calendarXAxes.initPosition(this.firstDayX + x, y);
+        this.initPosition(this.firstDayX + x, y);
+        // this.calendarXAxes.initPosition(this.firstDayX + x, y);
         this.calendarXAxes.initSize(this.containerWidth, this.dayWidth, this.calendarAtBottom, this.calendarSize);
         this.calendarXAxes.drawCalendar(svg, true, this.containerWidth);
         this.calendarXAxes.drawMilestones(svg);
