@@ -20,6 +20,11 @@ const DAY_OF_WEEK_MIN_DAY_WIDTH = 10;
 const MONTH_MIN_DAY_WIDTH = 1;
 const WEEK_MIN_DAY_WIDTH = 2;
 
+enum CalendarDrawLayer {
+    BACKGROUND_AND_TEXT,
+    BORDERS,
+}
+
 export class CalendarXAxes {
     parent: IRenderer;
     priRun: number;
@@ -96,135 +101,8 @@ export class CalendarXAxes {
     }
 
     drawCalendar(svgGroup: SVGElement, drawDays: boolean, viewportWidth: number): void {
-        // if (!this.parent)
-        //     return;
-
-        const firstDay = DateUtils.addDay(this.parent.milestones.firstMilestone!, -this.priRun);
-        const l = DateUtils.addDay(this.parent.milestones.firstMilestone!, this.parent.days - 1);
-        const lastDay = DateUtils.maxDate(this.parent.milestones.lastMilestone!, DateUtils.addDay(this.parent.milestones.firstMilestone!, this.parent.days - 1));
-
-        let yearWasDrawn = false;
-        let monthWasDrawn = false;
-        let firstWeekWasDrawn = false;
-
-        const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-        for (let phase = 0; phase < 5; phase++) {
-            let currentDay = new Date(firstDay);
-
-            while (currentDay <= lastDay) {
-                const daysX = this.calculateDayX(currentDay);
-                const startCal = new Date(currentDay);
-
-                // Phase 4: YEAR
-                if (CalendarSize.YEARS === this.calendarSize && phase === 4 &&
-                    ((startCal.getDate() === 1 && startCal.getMonth() === 0) || !yearWasDrawn)) {
-                    const end = new Date(startCal.getFullYear(), 11, 31);
-                    if (end > lastDay) end.setTime(lastDay.getTime());
-                    const x2 = this.calculateDayX(end) - (this.dayOfWeek.getWidth() ?? 0) / 2;
-                    this.drawTextBox(
-                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2),
-                        x2 + (this.dayOfWeek.getWidth() ?? 0) - 1,//keep 1px left for border
-                        this.year.getY(), this.year.getHeight(),
-                        String(startCal.getFullYear()),
-                        this.parent.theme.xAxesTheme.yearTextColor,
-                        this.parent.theme.xAxesTheme.yearBgColor,
-                        this.parent.theme.xAxesTheme.yearBorderColor,
-                        this.year.getFont(), false, svgGroup, viewportWidth,
-                    );
-                    yearWasDrawn = true;
-                }
-                // Phase 3: MONTH
-                else if (CalendarSize.YEARS === this.calendarSize && phase === 3 &&
-                    (startCal.getDate() === 1 || !monthWasDrawn) && this.isMonthVisible()) {
-                    const end = DateUtils.addDay(new Date(startCal.getFullYear(), startCal.getMonth() + 1, 1), -1);
-                    if (end > lastDay) end.setTime(lastDay.getTime());
-                    const x2 = this.calculateDayX(end) - (this.dayOfWeek.getWidth() ?? 0) / 2;
-                    const bgColor = this.parent.theme.xAxesTheme.monthBgColors[startCal.getMonth()];
-                    this.drawTextBox(
-                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2),
-                        x2 + (this.dayOfWeek.getWidth() ?? 0) - 1,//keep 1px left for border
-                        this.month.getY(), this.month.getHeight(),
-                        months[startCal.getMonth()],
-                        this.parent.theme.xAxesTheme.monthTextColor,
-                        bgColor,
-                        this.parent.theme.xAxesTheme.monthBorderColor,
-                        this.month.getFont(), false, svgGroup, viewportWidth,
-                    );
-                    monthWasDrawn = true;
-                }
-                // Phase 2: WEEK
-                else if (CalendarSize.YEARS === this.calendarSize && phase === 2 &&
-                    (startCal.getDay() === 1 || !firstWeekWasDrawn) && this.isWeekVisible()) {
-                    const end = DateUtils.getWeekSunday(startCal);
-                    if (end > lastDay) end.setTime(lastDay.getTime());
-                    const x2 = this.calculateDayX(end) - (this.dayOfWeek.getWidth() ?? 0) / 2;
-                    const calendarWeek = this.isDayOfWeekVisible()
-                        ? 'W' + DateUtils.getWeekOfYear(currentDay)
-                        : String(currentDay.getDate());
-                    this.drawTextBox(
-                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2),
-                        x2 + (this.dayOfWeek.getWidth() ?? 0) - 1,//keep 1px left for border
-                        this.week.getY(), this.week.getHeight(),
-                        calendarWeek,
-                        this.parent.theme.xAxesTheme.weekTextColor,
-                        this.parent.theme.xAxesTheme.weekBgColor,
-                        this.parent.theme.xAxesTheme.weekBorderColor,
-                        this.week.getFont(), false, svgGroup, viewportWidth,
-                    );
-                    firstWeekWasDrawn = true;
-                }
-                // Phase 1: DAY OF MONTH / DAY OF WEEK
-                else if (phase === 1) {
-                    if (this.isDayOfMonthVisible()) {
-                        const domBgColor = GraphColorUtil.getDayOfMonthBgColor(this.parent.theme, startCal);
-                        const domTextColor = GraphColorUtil.getDayOfMonthTextColor(this.parent.theme, startCal);
-                        const dw = this.dayOfMonth.getWidth() ?? 0;
-                        this.drawTextBox(
-                            daysX - (dw / 2), daysX - (dw / 2) + (dw - 1),//keep 1px left for border
-                            this.dayOfMonth.getY(), this.dayOfMonth.getHeight(),
-                            String(startCal.getDate()),
-                            domTextColor, domBgColor,
-                            this.parent.theme.xAxesTheme.dayOfMonthBorderColor,
-                            this.dayOfMonth.getFont(), true, svgGroup, viewportWidth,
-                        );
-                    }
-                    if (this.isDayOfWeekVisible()) {
-                        const dowColor = GraphColorUtil.getDayOfWeekBgColor(this.parent.theme, startCal);
-                        const dowTextColor = GraphColorUtil.getDayOfWeekTextColor(this.parent.theme, startCal);
-                        const dowW = this.dayOfWeek.getWidth() ?? 0;
-                        this.drawTextBox(
-                            daysX - (dowW / 2), daysX - (dowW / 2) + (dowW - 1),//keep 1px left for border
-                            this.dayOfWeek.getY(), this.dayOfWeek.getHeight(),
-                            weekDays[startCal.getDay()],
-                            dowTextColor, dowColor,
-                            this.parent.theme.xAxesTheme.dayOfWeekBorderColor,
-                            this.dayOfWeek.getFont(), true, svgGroup, viewportWidth,
-                        );
-                    }
-                }
-                // Phase 0: DAY BARS and MILESTONE BACKGROUND
-                else if (phase === 0) {
-                    if (drawDays && this.isDayBarsVisible()) {
-                        this.parent.drawDayBars(svgGroup, currentDay);
-                    }
-                    if (this.milestonesVisible()) {
-                        const color = GraphColorUtil.getDayOfWeekBgColor(this.parent.theme, startCal);
-                        const textColor2 = GraphColorUtil.getDayOfWeekTextColor(this.parent.theme, startCal);
-                        const dowW = this.dayOfWeek.getWidth() ?? 0;
-                        this.drawTextBox(
-                            daysX - (dowW / 2), daysX - (dowW / 2) + (dowW - 1),//keep 1px left for border
-                            this.milestone.flagY, this.milestone.flagHeight,
-                            null, textColor2, color,
-                            this.parent.theme.xAxesTheme.dayOfWeekBorderColor,
-                            null, true, svgGroup, viewportWidth,
-                        );
-                    }
-                }
-
-                currentDay = DateUtils.addDay(currentDay, 1);
-            }
+        for (const layer of [CalendarDrawLayer.BACKGROUND_AND_TEXT, CalendarDrawLayer.BORDERS]) {
+            this.drawCalendarLayer(svgGroup, drawDays, viewportWidth, layer);
         }
     }
 
@@ -257,30 +135,40 @@ export class CalendarXAxes {
         centered: boolean,
         svgGroup: SVGElement,
         viewportWidth: number,
+        layer: CalendarDrawLayer,
     ): void {
         if (SvgUtils.isClipped(x1, x2, viewportWidth))
             return;
         const cellWidth = x2 - x1 + 1;
-        const group = svgGroup.appendChild(SvgUtils.createGroup(x1, y1));
-        group.appendChild(SvgUtils.createRect(0, 0, cellWidth - 1, cellHeight - 1, {fill: ColorUtils.intToHex(backgroundColor)}));//leave 1px for border right and bottom
+        if (layer === CalendarDrawLayer.BACKGROUND_AND_TEXT) {
+            const group = svgGroup.appendChild(SvgUtils.createGroup(x1, y1));
+            group.appendChild(SvgUtils.createRect(0, 0, cellWidth, cellHeight, {fill: ColorUtils.intToHex(backgroundColor)}));
 
-        if (borderColor && cellWidth > 1) {
-            group.appendChild(SvgUtils.createLine(cellWidth - 1 + 0.5, 0, cellWidth - 1 + 0.5, cellHeight - 1, {
+            if (text && font) {
+                const fontSize = font && 'size' in font ? String(font.size) : '10';
+                const maxAscent = font.maxAscent;
+                const textX = centered ? (cellWidth - 1) / 2 : 2;
+                group.appendChild(SvgUtils.createText(textX, (cellHeight) / 2, text, {
+                    fill: ColorUtils.intToHex(textColor),
+                    'font-size': fontSize,
+                    'font-family': 'sans-serif',
+                    'text-anchor': centered ? 'middle' : 'start',
+                    'font-weight': font.weight,
+                    'dominant-baseline': 'alphabetic',
+                    dy: '0.35em',
+                }));
+            }
+        } else if (borderColor && cellWidth > 1) {
+            const group = svgGroup.appendChild(SvgUtils.createGroup(x1, y1));
+            group.appendChild(SvgUtils.createLine(cellWidth, 0, cellWidth, cellHeight, {
                 stroke: ColorUtils.intToHex(borderColor),
                 'stroke-width': '1',
+                'vector-effect': 'non-scaling-stroke'
             }));
-        }
-
-        if (text && font) {
-            const fontSize = font && 'size' in font ? String(font.size) : '10';
-            const maxAscent = font.maxAscent;
-            const textX = centered ? (cellWidth - 1) / 2 : 2;
-            group.appendChild(SvgUtils.createText(textX, (cellHeight - 1) / 2 + maxAscent / 2, text, {
-                fill: ColorUtils.intToHex(textColor),
-                'font-size': fontSize,
-                'font-family': 'sans-serif',
-                'text-anchor': centered ? 'middle' : 'start',
-                'font-weight': font.weight,
+            group.appendChild(SvgUtils.createLine(0, cellHeight, cellWidth, cellHeight, {
+                stroke: ColorUtils.intToHex(borderColor),
+                'stroke-width': '1',
+                'vector-effect': 'non-scaling-stroke'
             }));
         }
     }
@@ -482,6 +370,153 @@ export class CalendarXAxes {
 
     milestonesVisible(): boolean {
         return !this.parent.milestones.empty();
+    }
+
+    private drawCalendarLayer(
+        svgGroup: SVGElement,
+        drawDays: boolean,
+        viewportWidth: number,
+        layer: CalendarDrawLayer,
+    ): void {
+        // if (!this.parent)
+        //     return;
+
+        const firstDay = DateUtils.addDay(this.parent.milestones.firstMilestone!, -this.priRun);
+        const l = DateUtils.addDay(this.parent.milestones.firstMilestone!, this.parent.days - 1);
+        const lastDay = DateUtils.maxDate(this.parent.milestones.lastMilestone!, DateUtils.addDay(this.parent.milestones.firstMilestone!, this.parent.days - 1));
+
+        let yearWasDrawn = false;
+        let monthWasDrawn = false;
+        let firstWeekWasDrawn = false;
+
+        const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        for (let phase = 0; phase < 5; phase++) {
+            let currentDay = new Date(firstDay);
+
+            while (currentDay <= lastDay) {
+                const daysX = this.calculateDayX(currentDay);
+                const startCal = new Date(currentDay);
+
+                // Phase 4: YEAR
+                if (CalendarSize.YEARS === this.calendarSize && phase === 4 &&
+                    ((startCal.getDate() === 1 && startCal.getMonth() === 0) || !yearWasDrawn)) {
+                    const end = new Date(startCal.getFullYear(), 11, 31);
+                    if (end > lastDay) end.setTime(lastDay.getTime());
+                    const x2 = this.calculateDayX(end) - (this.dayOfWeek.getWidth() ?? 0) / 2;
+                    this.drawTextBox(
+                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2),
+                        x2 + (this.dayOfWeek.getWidth() ?? 0) - 1,//keep 1px left for border
+                        this.year.getY(), this.year.getHeight(),
+                        String(startCal.getFullYear()),
+                        this.parent.theme.xAxesTheme.yearTextColor,
+                        this.parent.theme.xAxesTheme.yearBgColor,
+                        this.parent.theme.xAxesTheme.yearBorderColor,
+                        this.year.getFont(), false, svgGroup, viewportWidth, layer,
+                    );
+                    yearWasDrawn = true;
+                }
+                // Phase 3: MONTH
+                else if (CalendarSize.YEARS === this.calendarSize && phase === 3 &&
+                    (startCal.getDate() === 1 || !monthWasDrawn) && this.isMonthVisible()) {
+                    const end = DateUtils.addDay(new Date(startCal.getFullYear(), startCal.getMonth() + 1, 1), -1);
+                    if (end > lastDay) end.setTime(lastDay.getTime());
+                    const x2 = this.calculateDayX(end) - (this.dayOfWeek.getWidth() ?? 0) / 2;
+                    const bgColor = this.parent.theme.xAxesTheme.monthBgColors[startCal.getMonth()];
+                    this.drawTextBox(
+                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2),
+                        x2 + (this.dayOfWeek.getWidth() ?? 0) - 1,//keep 1px left for border
+                        this.month.getY(), this.month.getHeight(),
+                        months[startCal.getMonth()],
+                        this.parent.theme.xAxesTheme.monthTextColor,
+                        bgColor,
+                        this.parent.theme.xAxesTheme.monthBorderColor,
+                        this.month.getFont(), false, svgGroup, viewportWidth, layer,
+                    );
+                    monthWasDrawn = true;
+                }
+                // Phase 2: WEEK
+                else if (CalendarSize.YEARS === this.calendarSize && phase === 2 &&
+                    (startCal.getDay() === 1 || !firstWeekWasDrawn) && this.isWeekVisible()) {
+                    const end = DateUtils.getWeekSunday(startCal);
+                    if (end > lastDay) end.setTime(lastDay.getTime());
+                    const x2 = this.calculateDayX(end) - (this.dayOfWeek.getWidth() ?? 0) / 2;
+                    const calendarWeek = this.isDayOfWeekVisible()
+                        ? 'W' + DateUtils.getWeekOfYear(currentDay)
+                        : String(currentDay.getDate());
+                    this.drawTextBox(
+                        daysX - ((this.dayOfWeek.getWidth() ?? 0) / 2),
+                        x2 + (this.dayOfWeek.getWidth() ?? 0) - 1,//keep 1px left for border
+                        this.week.getY(),
+                        this.week.getHeight(),
+                        calendarWeek,
+                        this.parent.theme.xAxesTheme.weekTextColor,
+                        this.parent.theme.xAxesTheme.weekBgColor,
+                        this.parent.theme.xAxesTheme.weekBorderColor,
+                        this.week.getFont(), false, svgGroup, viewportWidth, layer,
+                    );
+                    firstWeekWasDrawn = true;
+                }
+                // Phase 1: DAY OF MONTH / DAY OF WEEK
+                else if (phase === 1) {
+                    if (this.isDayOfMonthVisible()) {
+                        const domBgColor = GraphColorUtil.getDayOfMonthBgColor(this.parent.theme, startCal);
+                        const domTextColor = GraphColorUtil.getDayOfMonthTextColor(this.parent.theme, startCal);
+                        const dw = this.dayOfMonth.getWidth() ?? 0;
+                        this.drawTextBox(
+                            daysX - (dw / 2), daysX - (dw / 2) + (dw - 1),//keep 1px left for border
+                            this.dayOfMonth.getY(), this.dayOfMonth.getHeight(),
+                            String(startCal.getDate()),
+                            domTextColor, domBgColor,
+                            this.parent.theme.xAxesTheme.dayOfMonthBorderColor,
+                            this.dayOfMonth.getFont(), true, svgGroup, viewportWidth, layer,
+                        );
+                    }
+                    if (this.isDayOfWeekVisible()) {
+                        const dowColor = GraphColorUtil.getDayOfWeekBgColor(this.parent.theme, startCal);
+                        const dowTextColor = GraphColorUtil.getDayOfWeekTextColor(this.parent.theme, startCal);
+                        const dowW = this.dayOfWeek.getWidth() ?? 0;
+                        this.drawTextBox(
+                            daysX - (dowW / 2), daysX - (dowW / 2) + (dowW - 1),//keep 1px left for border
+                            this.dayOfWeek.getY(), this.dayOfWeek.getHeight(),
+                            weekDays[startCal.getDay()],
+                            dowTextColor, dowColor,
+                            this.parent.theme.xAxesTheme.dayOfWeekBorderColor,
+                            this.dayOfWeek.getFont(), true, svgGroup, viewportWidth, layer,
+                        );
+                    }
+                }
+                // Phase 0: DAY BARS and MILESTONE BACKGROUND
+                else if (phase === 0) {
+                    if (layer === CalendarDrawLayer.BACKGROUND_AND_TEXT && drawDays && this.isDayBarsVisible()) {
+                        this.parent.drawDayBars(svgGroup, currentDay);
+                    }
+                    if (this.milestonesVisible()) {
+                        const color = GraphColorUtil.getDayOfWeekBgColor(this.parent.theme, startCal);
+                        const textColor2 = GraphColorUtil.getDayOfWeekTextColor(this.parent.theme, startCal);
+                        const dowW = this.dayOfWeek.getWidth() ?? 0;
+                        this.drawTextBox(
+                            daysX - (dowW / 2),
+                            daysX - (dowW / 2) + (dowW - 1),//keep 1px left for border
+                            this.milestone.flagY,
+                            this.milestone.flagHeight,
+                            null,
+                            textColor2,
+                            color,
+                            this.parent.theme.xAxesTheme.dayOfWeekBorderColor,
+                            null,
+                            true,
+                            svgGroup,
+                            viewportWidth,
+                            layer,
+                        );
+                    }
+                }
+
+                currentDay = DateUtils.addDay(currentDay, 1);
+            }
+        }
     }
 
     private _formatDateForTooltip(date: Date | null): string {
