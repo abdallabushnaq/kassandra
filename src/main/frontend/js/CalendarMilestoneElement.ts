@@ -12,7 +12,7 @@ export class CalendarMilestoneElement {
     width: number;
     height: number;
     flagBgColor: unknown;
-    flagFont: FontSpec | null;
+    flagFont: FontSpec;
     flagHeight: number;
     flagY: number;
     y: number;

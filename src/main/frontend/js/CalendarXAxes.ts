@@ -241,13 +241,12 @@ export class CalendarXAxes {
                 this.milestone.width, this.milestone.height - 1,
                 {fill: ColorUtils.intToHex(fillColor)},
             ));
-            const textEl = SvgUtils.createText(x - 1, y + this.milestone.height / 2 + 1, text, {
+            const textEl = SvgUtils.createText(x - 1, y + this.milestone.height / 2, text, {
                 fill: milestoneTextColor,
-                'font-size': '10px',
-                'font-family': 'sans-serif',
-                'font-weight': 'bold',
+                ...SvgUtils.createFontSpecAttribute(this.milestone.font),
                 'text-anchor': 'middle',
-                'dominant-baseline': 'middle',
+                'dominant-baseline': 'alphabetic',
+                dy: '0.35em',
             });
             if (m) {
                 textEl.appendChild(
@@ -263,12 +262,11 @@ export class CalendarXAxes {
                     stroke: ColorUtils.intToHex(flagTextColor), 'stroke-width': '1',
                 }));
                 parentGroup.appendChild(SvgUtils.createText(
-                    x - this.milestone.width / 2 + 2, flagY + FLAG_HEIGHT - 5,
+                    x - this.milestone.width / 2, flagY + this.milestone.flagHeight,
                     this._formatDateForFlag(time),
                     {
                         fill: ColorUtils.intToHex(flagTextColor),
-                        'font-size': '11px',
-                        'font-family': 'sans-serif',
+                        ...SvgUtils.createFontSpecAttribute(this.milestone.flagFont),
                         'text-anchor': 'start'
                     },
                 ));
