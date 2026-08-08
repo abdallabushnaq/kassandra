@@ -42,14 +42,10 @@
 2. tasks overarching off-days draw dotted borders strange (dotted lines will not scroll correctly).
 3. chartWidth is contained in diagram.width and dayWidth is contained in calendarXAxis.dayOfWeek.width. We should
    consolidate.
-4. Milestone flag connector going wrong direction.
-5. FIXED: chart zoom is reset when zooming day width.
-6. off-day letter barely visible on weekends.
-7. brun-down chart starting over minimum (Oslo).
-8. burndown author legend color is too dark.
-9. FIXED: day stripes of burn-down are too dark compared to gantt chart.
-10. legend is drawn below grid lines.
-11. FIXED: some lines are zoomed in, like grid lines.
+4. off-day letter barely visible on weekends.
+5. brun-down chart starting over minimum (Oslo).
+6. burndown author legend color is too dark.
+7. legend is drawn below grid lines.
 
 # Failing Tests
 

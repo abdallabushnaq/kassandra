@@ -256,13 +256,19 @@ export class CalendarXAxes {
             parentGroup.appendChild(textEl);
 
             if (drawFlag && flagY != null) {
+                const poleStartY = this.calendarAtBottom
+                    ? this.milestone.flagY + this.milestone.flagHeight - 4
+                    : y + this.milestone.height;
+                const labelY = this.calendarAtBottom
+                    ? this.milestone.flagY + this.milestone.flagHeight - 5
+                    : flagY + this.milestone.flagHeight;
                 parentGroup.appendChild(SvgUtils.createSvgElement('line', {
-                    x1: x, y1: y + this.milestone.height,
-                    x2: x, y2: y + this.milestone.height + 3,
+                    x1: x, y1: poleStartY,
+                    x2: x, y2: poleStartY + 3,
                     stroke: ColorUtils.intToHex(flagTextColor), 'stroke-width': '1',
                 }));
                 parentGroup.appendChild(SvgUtils.createText(
-                    x - this.milestone.width / 2, flagY + this.milestone.flagHeight,
+                    x - this.milestone.width / 2, labelY,
                     this._formatDateForFlag(time),
                     {
                         fill: ColorUtils.intToHex(flagTextColor),
