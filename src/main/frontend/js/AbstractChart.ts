@@ -13,33 +13,36 @@ import {Theme} from './theme/Theme.js';
 
 
 export abstract class AbstractChart extends AbstractCanvas {
+    protected static readonly TIMELINE_CONTROLS_HINT =
+        'Shift + mouse wheel: day width; Alt + mouse wheel: zoom|Left mouse button: pan';
+
     renderers: AbstractRenderer[];
     protected captionElement: CaptionElement;
     protected footerElement: FooterElement;
 
-    // private firstDayX: number;
-
     /**
-     * @param caption           Chart title text
-     * @param copyright         Copyright text shown in footer
-     * @param projectRequestKey Sprint key shown in footer (may be '')
+     * @param captionLeftText   Chart title text shown at the left corner
+     * @param captionRightText  Chart title text shown at the right corner
+     * @param footerLeftText    Footer text shown at the left corner
+     * @param footerRightText   Footer text shown at the right corner
      * @param relateCssPath     CSS path (for caption link; not used in SVG)
      * @param _column           Grid column (not used in SVG rendering)
      * @param _imageName        File name hint (not used in interactive rendering)
      * @param theme             Theme instance
      */
     protected constructor(
-        caption: string | null,
-        copyright: string,
-        projectRequestKey: string,
+        captionLeftText: string | null,
+        captionRightText: string | null,
+        footerLeftText: string | null,
+        footerRightText: string | null,
         relateCssPath: string,
         _column: string,
         _imageName: string,
         theme: Theme,
     ) {
         super(theme);
-        this.captionElement = new CaptionElement(caption, relateCssPath, theme);
-        this.footerElement = new FooterElement(copyright, projectRequestKey, theme);
+        this.captionElement = new CaptionElement(captionLeftText, captionRightText, relateCssPath, theme);
+        this.footerElement = new FooterElement(footerLeftText, footerRightText, theme);
         this.renderers = [];
         // this.firstDayX = 0;
     }
@@ -73,4 +76,3 @@ export abstract class AbstractChart extends AbstractCanvas {
 
 
 }
-

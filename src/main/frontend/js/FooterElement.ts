@@ -16,67 +16,31 @@
  */
 
 import {ColorUtils} from './ColorUtils.js';
-import {SvgUtils} from './SvgUtils.js';
 import {Theme} from './theme/Theme.js';
-import {FontSpec} from "./FontSpec.js";
+import {FontSpec} from './FontSpec.js';
+import {TextElement} from './TextElement.js';
 
 /**
  * Renders copyright text on the left and sprint key on the right.
  * Mirrors Java: FooterElement
  *
  */
-export class FooterElement {
-    public width: number;
-    public height: number;
-    public y: number;
-    private readonly text: string | null;
-    private readonly key: string | null;
-    private readonly x: number;
-    private readonly font: FontSpec;
-    private theme: Theme;
+export class FooterElement extends TextElement {
 
     /**
-     * @param text  Footer left text (e.g. copyright string; null → height = 0)
-     * @param key   Footer right text (e.g. sprint name)
+     * @param leftText  Footer text at the left corner (e.g. copyright string)
+     * @param rightText Footer text at the right corner (e.g. sprint name)
      * @param theme Theme instance (provides chartTheme.footerTextColor)
      */
-    constructor(text: string | null, key: string | null, theme: Theme) {
-        this.text = text;
-        this.key = key;
-        this.font = new FontSpec(FontSpec.SANS_SERIF, 10, FontSpec.PLAIN);
-        this.height = text != null ? 14 : 0;
-        this.width = 0;
-        this.x = 3;
-        this.y = 1;
-        this.theme = theme;
+    constructor(leftText: string | null, rightText: string | null, theme: Theme) {
+        super(leftText, rightText, theme, new FontSpec(FontSpec.SANS_SERIF, 10, FontSpec.PLAIN), 14, 3, 1);
     }
 
-    /**
-     * Draws the footer into the given SVG element.
-     * Mirrors Java: FooterElement.draw(Graphics2D).
-     */
-    public draw(svg: SVGElement): void {
-        if (this.text || this.key) {
-            const textColor = ColorUtils.intToHex(this.theme.chartTheme.footerTextColor, '#2c7bf4');
-            const maxAscent = this.font.maxAscent;
-            const textY = this.y + maxAscent + 1;
-            if (this.text) {
-                svg.appendChild(SvgUtils.createText(this.x, textY, this.text, {
-                    fill: textColor,
-                    'font-size': this.font.size,
-                    'font-family': this.font.family,
-                }));
-            }
+    protected getTextColor(): string {
+        return ColorUtils.intToHex(this.theme.chartTheme.footerTextColor, '#2c7bf4');
+    }
 
-            if (this.key) {
-                svg.appendChild(SvgUtils.createText(this.width - 4, textY, this.key, {
-                    fill: textColor,
-                    'font-size': this.font.size,
-                    'font-family': this.font.family,
-                    'text-anchor': 'end',
-                }));
-            }
-        }
+    protected getTextY(_rightAligned: boolean, _lineIndex: number): number {
+        return this.y + this.font.maxAscent + 1;
     }
 }
-

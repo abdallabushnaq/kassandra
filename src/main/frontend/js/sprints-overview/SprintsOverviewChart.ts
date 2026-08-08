@@ -11,7 +11,16 @@ import {SprintOverviewDto} from './dto/SprintOverviewDto.js';
 
 export class SprintsOverviewChart extends AbstractChart {
     constructor(data: SprintOverviewDto, theme: Theme) {
-        super('Project Overview Chart', data.meta.copyright, '', '', '', 'sprints-overview-chart', theme);
+        super(
+            'Project Overview Chart',
+            AbstractChart.TIMELINE_CONTROLS_HINT + '; Right mouse button: menu',
+            data.meta.copyright,
+            '',
+            '',
+            '',
+            'sprints-overview-chart',
+            theme,
+        );
         this.addRenderer(new SprintsOverviewRenderer(this, data, 5, 5));
     }
 
@@ -46,4 +55,3 @@ export class SprintsOverviewChart extends AbstractChart {
         (this.renderers[0] as SprintsOverviewRenderer).draw(svg, this.borderWidth, this.captionElement.height + this.borderWidth);
     }
 }
-
