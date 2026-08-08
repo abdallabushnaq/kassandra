@@ -4,58 +4,13 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
-import {Theme} from '../theme/Theme.js';
 import {DateUtils} from '../DateUtils.js';
-import {GanttChart} from './GanttChart.js';
-import {GanttRenderer} from './GanttRenderer.js';
-import {GanttChartDto} from './dto/GanttChartDto.js';
+import {ChartHandle, InteractiveTimelineChart} from '../InteractiveTimelineChart.js';
+import {Theme} from '../theme/Theme.js';
 import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from './AbstractGanttRenderer.js';
-
-// ── localStorage helpers ────────────────────────────────────────────────────
-
-function viewStateKey(containerId: string): string {
-    return 'kassandra.chart.' + containerId.replace(/-container$/, '') + '.view';
-}
-
-interface ViewState {
-    dayWidth: number;
-    scrollOffset: number;
-}
-
-function loadViewState(containerId: string): ViewState | null {
-    try {
-        const raw = localStorage.getItem(viewStateKey(containerId));
-        if (raw) {
-            const s = JSON.parse(raw) as ViewState;
-            if (typeof s.dayWidth === 'number' && typeof s.scrollOffset === 'number') return s;
-        }
-    } catch { /* unavailable */
-    }
-    return null;
-}
-
-function saveViewState(containerId: string, dayWidth: number, scrollOffset: number): void {
-    try {
-        localStorage.setItem(viewStateKey(containerId), JSON.stringify({dayWidth, scrollOffset}));
-    } catch { /* quota */
-    }
-}
-
-// ── Visual-zoom constants ───────────────────────────────────────────────────
-/** Per-notch scale factor for Ctrl+wheel / trackpad-pinch visual zoom. */
-const VISUAL_ZOOM_STEP = 1.1;
-const VISUAL_ZOOM_MIN = 0.1;
-const VISUAL_ZOOM_MAX = 10.0;
-
-// ── Chart factory ───────────────────────────────────────────────────────────
-
-interface ChartHandle {
-    render(): void;
-
-    schedule(): void;
-
-    destroy(): void;
-}
+import {GanttChart} from './GanttChart.js';
+import {GanttChartDto} from './dto/GanttChartDto.js';
+import {GanttRenderer} from './GanttRenderer.js';
 
 let currentGanttChartInstance: ChartHandle | null = null;
 
@@ -68,219 +23,24 @@ function createChart(
     const theme = new Theme(data.meta.theme as Record<string, unknown>);
     const chart = new GanttChart(data, theme);
     const renderer = chart.renderers[0] as GanttRenderer;
-
-    let dayWidth = DEFAULT_DW;
-    let scrollOffset = 0;
-    /** scrollOffset value that was in effect when the last full SVG render completed. */
-    let renderedScrollOffset = 0;
-    /** Timer for debounced lazy full-redraw after translate-only scroll events. */
-    let lazyRedrawTimerId: ReturnType<typeof setTimeout> | null = null;
-    /** Visual-zoom state — purely presentational, does not affect the data model. */
-    let visualScale = 1.0;
-    let visualPanX = 0;
-    let visualPanY = 0;
-    /** Vertical scroll position in unscaled group pixels (0 = top). Active only when chart.verticalScrollEnabled. */
-    let scrollYOffset = 0;
-
-    function getContainerWidth() {
-        return Math.max(200, container.clientWidth || 800);
-    }
-
-    function getContainerHeight() {
-        return Math.max(200, Math.min(chart.chartHeight, container.clientHeight || 600));
-    }
-
-    function constrainScrollOffset() {
-        scrollOffset = Math.max(0, Math.min(
-            Math.max(0, renderer.days - getContainerWidth() / (dayWidth * visualScale)),
-            scrollOffset
-        ));
-    }
-
-    function constrainScrollYOffset() {
-        if (!chart.verticalScrollEnabled) return;
-        scrollYOffset = Math.max(0, Math.min(
-            Math.max(0, chart.chartHeight - getContainerHeight() / visualScale),
-            scrollYOffset,
-        ));
-    }
-
-    const saved = loadViewState(containerId);
-    if (saved) {
-        dayWidth = Math.min(MAX_DW, Math.max(MIN_DW, saved.dayWidth));
-        scrollOffset = saved.scrollOffset;
-        constrainScrollOffset();
-    } else {
-        const todayIdx = DateUtils.calculateDayIndex(renderer.currentDate!, renderer.chartStart!);
-        const visibleDays = getContainerWidth() / dayWidth;
-        scrollOffset = Math.max(0, Math.min(renderer.days - visibleDays, todayIdx - visibleDays * 0.2));
-    }
-
-    let saveTimerId: ReturnType<typeof setTimeout> | null = null;
-
-    function scheduleSave() {
-        if (saveTimerId) clearTimeout(saveTimerId);
-        saveTimerId = setTimeout(() => saveViewState(containerId, dayWidth, scrollOffset), 250);
-    }
-
-    let animationFrameId: number | null = null;
-
-    function redrawChart() {
-        renderedScrollOffset = scrollOffset;
-        chart.updateViewState(dayWidth, scrollOffset, getContainerWidth(), getContainerHeight());
-        chart.render(container);
-        applyContentTransform(); // re-apply visual scale after the SVG is rebuilt
-    }
-
-    /**
-     * Applies the combined content transform to the group element without rebuilding the SVG.
-     *
-     * The scroll translation is placed *inside* the scale so that the lazy full-redraw never
-     * produces a visual jump:  tx = vpX + scale × scrollTxGroup.
-     */
-    function applyContentTransform() {
-        const scrollTxGroup = -(scrollOffset - renderedScrollOffset) * dayWidth;
-        const tx = visualPanX + visualScale * scrollTxGroup;
-        // Vertical: renderer always draws from Y=0, so the full scrollYOffset is always the translation.
-        const scrollTyGroup = chart.verticalScrollEnabled ? -scrollYOffset : 0;
-        const ty = visualPanY + visualScale * scrollTyGroup;
-        chart.updateContentTransform(tx, ty, visualScale);
-        // Grow/shrink the SVG to fit the scaled content; updateSvgHeight respects verticalScrollEnabled.
-        chart.updateSvgHeight(chart.chartHeight * visualScale);
-    }
-
-    /**
-     * Schedules a full SVG redraw 150 ms after the last translate-only scroll event.
-     * This corrects viewport-culling gaps that may appear at the scroll edges during fast panning.
-     */
-    function scheduleLazyRedraw() {
-        if (lazyRedrawTimerId) clearTimeout(lazyRedrawTimerId);
-        lazyRedrawTimerId = setTimeout(() => {
-            lazyRedrawTimerId = null;
-            scheduleRender();
-        }, 150);
-    }
-
-    function scheduleRender() {
-        if (animationFrameId)
-            cancelAnimationFrame(animationFrameId);
-        animationFrameId = requestAnimationFrame(redrawChart);
-    }
-
-    function handleWheelEvent(e: WheelEvent) {
-        e.preventDefault();
-        if (e.ctrlKey) {
-            // Ctrl+wheel on desktop, or trackpad pinch (fires as ctrlKey=true WheelEvent).
-            // Fast path: update the group transform only; lazy redraw corrects culling.
-            // Vertical zoom is top-anchored (visualPanY stays 0): the chart grows/shrinks downward.
-            const rect = container.getBoundingClientRect();
-            const cx = e.clientX - rect.left;
-            const delta = e.deltaY < 0 ? VISUAL_ZOOM_STEP : 1 / VISUAL_ZOOM_STEP;
-            const newScale = Math.max(VISUAL_ZOOM_MIN, Math.min(VISUAL_ZOOM_MAX, visualScale * delta));
-            const d = newScale / visualScale; // actual factor after clamping
-            const newVisualPanX = cx * (1 - d) + visualPanX * d;
-            visualScale = newScale;
-            // Absorb the pan offset into scrollOffset so that visualPanX stays 0.
-            // screen_x(D) = visualPanX + visualScale*dayWidth*(D - scrollOffset)
-            // Setting visualPanX=0: scrollOffset_new = scrollOffset - newVisualPanX/(scale*dayWidth)
-            scrollOffset -= newVisualPanX / (visualScale * dayWidth);
-            visualPanX = 0;
-            constrainScrollOffset();
-            constrainScrollYOffset();
-            applyContentTransform();
-            scheduleLazyRedraw();
-        } else if (e.deltaX !== 0) {
-            // Horizontal scroll — fast path: translate the group, defer the full redraw.
-            scrollOffset += e.deltaX / dayWidth;
-            constrainScrollOffset();
-            applyContentTransform();
-            scheduleLazyRedraw();
-            scheduleSave();
-        } else if (chart.verticalScrollEnabled) {
-            // Vertical scroll when verticalScrollEnabled — pan Y, fast path.
-            scrollYOffset += e.deltaY / visualScale;
-            constrainScrollYOffset();
-            applyContentTransform();
-            scheduleLazyRedraw();
-        } else {
-            // Vertical scroll = dayWidth zoom — always requires a full redraw.
-            // Reset visual zoom so pixel positions remain coherent after dayWidth changes.
-            const rect = container.getBoundingClientRect();
-            const mouseX = e.clientX != null ? e.clientX - rect.left : getContainerWidth() / 2;
-            const dayUnder = scrollOffset + mouseX / dayWidth;
-            const factor = e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
-            dayWidth = Math.max(MIN_DW, Math.min(MAX_DW, dayWidth * factor));
-            scrollOffset = dayUnder - mouseX / dayWidth;
-            constrainScrollOffset();
-            visualScale = 1.0;
-            visualPanX = 0;
-            visualPanY = 0;
-            scheduleRender();
-            scheduleSave();
-        }
-    }
-
-    let dragState: { startX: number; startOffset: number; startY: number; startYOffset: number } | null = null;
-
-    function handlePointerDown(e: PointerEvent) {
-        if (e.button !== 0)
-            return;
-        dragState = {startX: e.clientX, startOffset: scrollOffset, startY: e.clientY, startYOffset: scrollYOffset};
-        container.setPointerCapture(e.pointerId);
-        // container.style.cursor = 'grabbing';
-        e.preventDefault();
-    }
-
-    function handlePointerMove(e: PointerEvent) {
-        if (!dragState)
-            return;
-        // Divide by visualScale so dragging always pans 1:1 with screen pixels, regardless of zoom.
-        scrollOffset = dragState.startOffset - (e.clientX - dragState.startX) / (dayWidth * visualScale);
-        constrainScrollOffset();
-        if (chart.verticalScrollEnabled) {
-            scrollYOffset = dragState.startYOffset - (e.clientY - dragState.startY) / visualScale;
-            constrainScrollYOffset();
-        }
-        applyContentTransform();
-        scheduleLazyRedraw();
-    }
-
-    function handlePointerUp() {
-        if (dragState) {
-            dragState = null;
-            scheduleSave();
-        }
-        // container.style.cursor = 'grab';
-    }
-
-    let resizeObserver: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== 'undefined') {
-        resizeObserver = new ResizeObserver(scheduleRender);
-        resizeObserver.observe(container);
-    }
-
-    function cleanupChart() {
-        container.removeEventListener('wheel', handleWheelEvent as EventListener);
-        container.removeEventListener('pointerdown', handlePointerDown as EventListener);
-        container.removeEventListener('pointermove', handlePointerMove as EventListener);
-        container.removeEventListener('pointerup', handlePointerUp);
-        container.removeEventListener('pointercancel', handlePointerUp);
-        resizeObserver?.disconnect();
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
-        if (saveTimerId) clearTimeout(saveTimerId);
-        if (lazyRedrawTimerId) clearTimeout(lazyRedrawTimerId);
-        container.innerHTML = '';
-    }
-
-    // container.style.cursor = 'grab';
-    container.addEventListener('wheel', handleWheelEvent as EventListener, {passive: false});
-    container.addEventListener('pointerdown', handlePointerDown as EventListener, {passive: false});
-    container.addEventListener('pointermove', handlePointerMove as EventListener, {passive: true});
-    container.addEventListener('pointerup', handlePointerUp);
-    container.addEventListener('pointercancel', handlePointerUp);
-
-    redrawChart();
-    return {render: redrawChart, schedule: scheduleRender, destroy: cleanupChart};
+    const interactiveChart = new InteractiveTimelineChart({
+        container,
+        containerId,
+        chart,
+        renderer,
+        defaultDayWidth: DEFAULT_DW,
+        minDayWidth: MIN_DW,
+        maxDayWidth: MAX_DW,
+        dayWidthZoomStep: ZOOM_STEP,
+        getContainerHeight: () => Math.max(200, Math.min(chart.chartHeight, container.clientHeight || 600)),
+        initialScrollOffset: (dayWidth, containerWidth) => {
+            const todayIdx = DateUtils.calculateDayIndex(renderer.currentDate!, renderer.chartStart!);
+            const visibleDays = containerWidth / dayWidth;
+            return Math.max(0, Math.min(renderer.days - visibleDays, todayIdx - visibleDays * 0.2));
+        },
+    });
+    interactiveChart.render();
+    return interactiveChart;
 }
 
 // ── Public mount API (called by Backlog.java via Vaadin executeJs) ───────────
@@ -288,7 +48,8 @@ function createChart(
 function mountGanttChart(containerId: string, injectedData: GanttChartDto): void {
     const elementId = containerId || 'gantt-chart-container';
     const containerElement = document.getElementById(elementId);
-    if (!containerElement) return;
+    if (!containerElement)
+        return;
 
     currentGanttChartInstance?.destroy();
     currentGanttChartInstance = null;
@@ -301,6 +62,7 @@ function mountGanttChart(containerId: string, injectedData: GanttChartDto): void
 }
 
 // ── Expose globals for Java interop ─────────────────────────────────────────
+
 declare global {
     interface Window {
         mountGanttChart: typeof mountGanttChart;
@@ -309,4 +71,3 @@ declare global {
 }
 window.mountGanttChart = mountGanttChart;
 window.createGanttChart = createChart;
-
