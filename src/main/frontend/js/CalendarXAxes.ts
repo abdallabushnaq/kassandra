@@ -18,7 +18,7 @@ import type {IRenderer} from './IRenderer.js';
 
 const DAY_OF_MONTH_MIN_DAY_WIDTH = 16;
 const DAY_OF_WEEK_MIN_DAY_WIDTH = 10;
-const MONTH_MIN_DAY_WIDTH = 1;
+const MONTH_MIN_DAY_WIDTH = 2;
 const WEEK_MIN_DAY_WIDTH = 2;
 
 export class CalendarXAxes {
@@ -341,19 +341,19 @@ export class CalendarXAxes {
     }
 
     isDayBarsVisible(): boolean {
-        return (this.dayOfWeek.getWidth() ?? 0) >= 4;
+        return this.getEffectiveDayWidth() >= 4;
     }
 
     isDayOfMonthVisible(): boolean {
-        return (this.dayOfWeek.getWidth() ?? 0) >= DAY_OF_MONTH_MIN_DAY_WIDTH;
+        return this.getEffectiveDayWidth() >= DAY_OF_MONTH_MIN_DAY_WIDTH;
     }
 
     isDayOfWeekVisible(): boolean {
-        return (this.dayOfWeek.getWidth() ?? 0) >= DAY_OF_WEEK_MIN_DAY_WIDTH;
+        return this.getEffectiveDayWidth() >= DAY_OF_WEEK_MIN_DAY_WIDTH;
     }
 
     isMonthVisible(): boolean {
-        return CalendarSize.YEARS === this.calendarSize && (this.dayOfWeek.getWidth() ?? 0) >= MONTH_MIN_DAY_WIDTH;
+        return CalendarSize.YEARS === this.calendarSize && this.getEffectiveDayWidth() >= MONTH_MIN_DAY_WIDTH;
     }
 
     isYearVisible(): boolean {
@@ -361,11 +361,15 @@ export class CalendarXAxes {
     }
 
     isWeekVisible(): boolean {
-        return CalendarSize.YEARS === this.calendarSize && (this.dayOfWeek.getWidth() ?? 0) >= WEEK_MIN_DAY_WIDTH;
+        return CalendarSize.YEARS === this.calendarSize && this.getEffectiveDayWidth() >= WEEK_MIN_DAY_WIDTH;
     }
 
     milestonesVisible(): boolean {
         return !this.parent.milestones.empty();
+    }
+
+    private getEffectiveDayWidth(): number {
+        return (this.dayOfWeek.getWidth() ?? 0) * this.parent.visualScale;
     }
 
     private drawCalendarLayer(

@@ -32,6 +32,7 @@ export abstract class AbstractRenderer implements IRenderer {
     days: number;
     firstDayX: number;
     scrollOffset: number;
+    visualScale: number;
     preRun: number;
     postRun: number;
     diagram: GraphSquare;
@@ -49,6 +50,7 @@ export abstract class AbstractRenderer implements IRenderer {
         this.days = 3;
         this.firstDayX = 0;
         this.scrollOffset = 0;
+        this.visualScale = 1.0;
         this.preRun = preRun;
         this.postRun = postRun;
         this.calendarAtBottom = false;

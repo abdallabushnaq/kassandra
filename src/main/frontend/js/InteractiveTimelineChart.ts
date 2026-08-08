@@ -19,6 +19,7 @@
 export interface TimelineChart {
     chartHeight: number;
     verticalScrollEnabled: boolean;
+    renderers: TimelineRenderer[];
 
     updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void;
 
@@ -32,6 +33,7 @@ export interface TimelineChart {
 /** Minimal renderer data needed to constrain the timeline viewport. */
 export interface TimelineRenderer {
     days: number;
+    visualScale: number;
 }
 
 /** Public lifecycle operations returned by chart bundle factories. */
@@ -243,6 +245,8 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
     private redrawChart(): void {
         this.renderedScrollOffset = this.scrollOffset;
         this.options.beforeRender?.();
+        for (const renderer of this.options.chart.renderers)
+            renderer.visualScale = this.visualScale;
         this.options.chart.updateViewState(
             this.dayWidth,
             this.scrollOffset,
@@ -341,13 +345,12 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
             event.preventDefault();
             const rect = this.options.container.getBoundingClientRect();
             const mouseX = event.clientX != null ? event.clientX - rect.left : this.getContainerWidth() / 2;
-            const dayUnderCursor = this.scrollOffset + mouseX / this.dayWidth;
+            const dayUnderCursor = this.scrollOffset + mouseX / (this.dayWidth * this.visualScale);
             const wheelDelta = event.deltaY || event.deltaX;
             const factor = wheelDelta < 0 ? this.options.dayWidthZoomStep : 1 / this.options.dayWidthZoomStep;
             this.dayWidth = this.constrainDayWidth(this.dayWidth * factor);
-            this.scrollOffset = dayUnderCursor - mouseX / this.dayWidth;
+            this.scrollOffset = dayUnderCursor - mouseX / (this.dayWidth * this.visualScale);
             this.constrainScrollOffset();
-            this.visualScale = 1.0;
             this.visualPanX = 0;
             this.visualPanY = 0;
             this.showZoomIndicator();

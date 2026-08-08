@@ -13,6 +13,7 @@ export interface IRenderer {
     theme: Theme;
     milestones: Milestones;
     scrollOffset: number;
+    visualScale: number;
     days: number;
     firstDayX: number;
     diagram: GraphSquare;
