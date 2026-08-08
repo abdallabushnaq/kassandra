@@ -43,10 +43,11 @@
 3. chartWidth is contained in diagram.width and dayWidth is contained in calendarXAxis.dayOfWeek.width. We should
    consolidate.
 4. Milestone flag connector going wrong direction.
-5. FIXED: Off-day letter not vertically centered in day cell.
-6. FIXED: Oslo, Dublin has a gap in August 26 to 27.
-7. chart zoom is reset when zooming day width.
-8. FIXED: Madrid Gantt is missing holidays.
+5. chart zoom is reset when zooming day width.
+6. off-day letter barely visible on weekends.
+7. brun-down chart starting over minimum (Oslo).
+8. burndown author legend color is too dark.
+9.
 
 # Failing Tests
 

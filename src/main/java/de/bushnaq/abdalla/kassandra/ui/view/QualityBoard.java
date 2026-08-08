@@ -46,6 +46,7 @@ import de.bushnaq.abdalla.kassandra.report.html.util.HtmlUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttBurndownChartDto;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownExcelExportService;
 import de.bushnaq.abdalla.kassandra.service.SprintExportService;
 import de.bushnaq.abdalla.kassandra.ui.HtmlColor;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
@@ -110,6 +111,8 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     private             Div                       ganttBurndownChartContainer;
     @Autowired
     private             GanttBurndownChartService ganttBurndownChartService;
+    @Autowired
+    private             GanttBurndownExcelExportService ganttBurndownExcelExportService;
     private             GanttUtil                 ganttUtil;
     /**
      * Persistent header layout (sprint selector + page title) — survives content reloads.
@@ -270,10 +273,10 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
 
     /**
      * Builds the download toolbar placed below the Gantt/burndown chart.
-     * Contains a "Download JSON" and a "Download XML" anchor button, each backed by a
+     * Contains JSON, XML, and XLSX download anchor buttons, each backed by a
      * {@link StreamResource} that generates the export bytes on demand.
      *
-     * @return a {@link HorizontalLayout} containing the two download anchors
+     * @return a {@link HorizontalLayout} containing the download anchors
      */
     private HorizontalLayout createDownloadToolbar() {
         Sprint sprintSnapshot = sprint; // capture before async use
@@ -316,7 +319,27 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         xmlButton.getElement().setAttribute("title", "Download sprint data as Microsoft Project XML (MSPDI)");
         xmlAnchor.add(xmlButton);
 
-        HorizontalLayout toolbar = new HorizontalLayout(jsonAnchor, xmlAnchor);
+        StreamResource xlsxResource = new StreamResource(
+                sprintSnapshot.getName() + "-burndown.xlsx",
+                () -> {
+                    try {
+                        boolean                isDark = getUI().map(ui -> ui.getElement().getThemeList().contains(Lumo.DARK)).orElse(false);
+                        GanttBurndownChartDto dto    = ganttBurndownChartService.build(sprintSnapshot, ParameterOptions.getLocalNow(), isDark);
+                        return new ByteArrayInputStream(ganttBurndownExcelExportService.export(dto));
+                    } catch (Exception e) {
+                        log.error("Error generating XLSX burndown export for sprint {}", sprintSnapshot.getName(), e);
+                        return new ByteArrayInputStream(new byte[0]);
+                    }
+                });
+        xlsxResource.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        Anchor xlsxAnchor = new Anchor(xlsxResource, "");
+        xlsxAnchor.getElement().setAttribute("download", true);
+        Button xlsxButton = new Button("XLSX", new Icon(VaadinIcon.DOWNLOAD));
+        xlsxButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        xlsxButton.getElement().setAttribute("title", "Download burndown values as an Excel workbook");
+        xlsxAnchor.add(xlsxButton);
+
+        HorizontalLayout toolbar = new HorizontalLayout(jsonAnchor, xmlAnchor, xlsxAnchor);
         toolbar.getStyle()
                 .set("margin-top", "var(--lumo-space-s)")
                 .set("padding-left", "var(--lumo-space-xs)");
@@ -369,7 +392,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
 
     /**
      * Creates the Gantt/burndown chart container and the download toolbar that appears below it.
-     * The toolbar contains a JSON export anchor and an MSPDI XML export anchor; both use
+     * The toolbar contains JSON, MSPDI XML, and XLSX export anchors; each uses
      * {@link StreamResource} so the file is generated lazily on the first browser download
      * request rather than up front.
      */
