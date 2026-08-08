@@ -16,7 +16,7 @@ import {CalendarSize} from './CalendarSize.js';
 import {RenderLayer} from './RenderLayer.js';
 import type {IRenderer} from './IRenderer.js';
 
-const DAY_OF_MONTH_MIN_DAY_WIDTH = 16;
+const DAY_OF_MONTH_MIN_DAY_WIDTH = 20;
 const DAY_OF_WEEK_MIN_DAY_WIDTH = 16;
 const MONTH_MIN_DAY_WIDTH = 2;
 const WEEK_MIN_DAY_WIDTH = 2;
@@ -341,7 +341,7 @@ export class CalendarXAxes {
     }
 
     isDayBarsVisible(): boolean {
-        return this.getEffectiveDayWidth() >= 4;
+        return this.getEffectiveDayWidth() >= DAY_OF_WEEK_MIN_DAY_WIDTH;
     }
 
     isDayOfMonthVisible(): boolean {
