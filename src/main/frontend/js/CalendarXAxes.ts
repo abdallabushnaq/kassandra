@@ -146,10 +146,11 @@ export class CalendarXAxes {
                 const textX = centered ? (cellWidth - 1) / 2 : 2;
                 group.appendChild(SvgUtils.createText(textX, (cellHeight) / 2, text, {
                     fill: ColorUtils.intToHex(textColor),
-                    'font-size': fontSize,
-                    'font-family': 'sans-serif',
+                    ...SvgUtils.createFontSpecAttribute(font),
+                    // 'font-size': fontSize,
+                    // 'font-family': 'sans-serif',
                     'text-anchor': centered ? 'middle' : 'start',
-                    'font-weight': font.weight,
+                    // 'font-weight': font.weight,
                     'dominant-baseline': 'alphabetic',
                     dy: '0.35em',
                 }));

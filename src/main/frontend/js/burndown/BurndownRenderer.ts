@@ -550,13 +550,35 @@ export class BurndownRenderer extends AbstractRenderer {
         for (let timeMark = 0; timeMark < estimatedWork; timeMark += mark) {
             const markY = plotBottom - 1 - this.calculateGraphHeight(timeMark);
             if (lastMarkY - markY > 12) {
-                svg.appendChild(SvgUtils.createRect(startX - 4 - this.dayWidth / 2, markY, 4, 1, {fill: tickColor}));
-                svg.appendChild(SvgUtils.createRect(startX - 1, markY, this.diagram.width - startX, 1, {fill: gridColor}));
+                svg.appendChild(SvgUtils.createLine(
+                    startX - 4 - this.dayWidth / 2,
+                    markY,
+                    startX - 4 - this.dayWidth / 2 + 4,
+                    markY,
+                    {
+                        stroke: tickColor,
+                        'stroke-width': '1',
+                        'vector-effect': 'non-scaling-stroke'
+                    }));
+                svg.appendChild(SvgUtils.createLine(
+                    startX - 1,
+                    markY,
+                    this.diagram.width,
+                    markY,
+                    {
+                        stroke: gridColor,
+                        'stroke-width': '1',
+                        'vector-effect': 'non-scaling-stroke'
+                    }));
                 const label = `${Math.round(timeMark / mark)}${markUnit}`;
-                svg.appendChild(SvgUtils.createText(this.yAxis.x + this.yAxis.width - 5 - this.scrollOffset * this.dayWidth, markY, label, {
-                    fill: textColor, 'font-size': '11px', 'font-family': 'sans-serif',
-                    'text-anchor': 'end', 'dominant-baseline': 'middle',
-                }));
+                svg.appendChild(SvgUtils.createText(
+                    this.yAxis.x + this.yAxis.width - 5 - this.scrollOffset * this.dayWidth,
+                    markY,
+                    label,
+                    {
+                        fill: textColor, 'font-size': '11px', 'font-family': 'sans-serif',
+                        'text-anchor': 'end', 'dominant-baseline': 'middle',
+                    }));
                 lastMarkY = markY;
             }
         }
