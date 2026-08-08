@@ -86,6 +86,8 @@ interface DragState {
 const VISUAL_ZOOM_STEP = 1.1;
 const VISUAL_ZOOM_MIN = 0.1;
 const VISUAL_ZOOM_MAX = 10.0;
+const ZOOM_INDICATOR_DURATION_MS = 1500;
+const LAZY_REDRAW_DURATION_MS = 100;
 
 function viewStateKey(containerId: string): string {
     return 'kassandra.chart.' + containerId.replace(/-container$/, '') + '.view';
@@ -129,6 +131,9 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
     private animationFrameId: number | null = null;
     private dragState: DragState | null = null;
     private resizeObserver: ResizeObserver | null = null;
+    private zoomIndicator: HTMLDivElement | null = null;
+    private zoomIndicatorHideTimerId: ReturnType<typeof setTimeout> | null = null;
+    private zoomIndicatorExpiresAt = 0;
 
     constructor(private readonly options: InteractiveTimelineChartOptions<TChart>) {
         this.dayWidth = options.defaultDayWidth;
@@ -161,7 +166,7 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
      * Converts client coordinates to the chart content coordinates used by
      * chart-specific hit testing.
      */
-    public toContentCoordinates(clientX: number, clientY: number): {x: number; y: number} {
+    public toContentCoordinates(clientX: number, clientY: number): { x: number; y: number } {
         const rect = this.options.container.getBoundingClientRect();
         const scrollTxGroup = -(this.scrollOffset - this.renderedScrollOffset) * this.dayWidth;
         const tx = this.visualPanX + this.visualScale * scrollTxGroup;
@@ -182,6 +187,8 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
             clearTimeout(this.saveTimerId);
         if (this.lazyRedrawTimerId)
             clearTimeout(this.lazyRedrawTimerId);
+        if (this.zoomIndicatorHideTimerId)
+            clearTimeout(this.zoomIndicatorHideTimerId);
         this.options.container.innerHTML = '';
     }
 
@@ -242,8 +249,10 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
             this.getContainerWidth(),
             this.getContainerHeight(),
         );
+        this.zoomIndicator = null;
         this.options.chart.render(this.options.container);
         this.options.afterRender?.();
+        this.renderZoomIndicator();
         this.applyContentTransform();
     }
 
@@ -256,13 +265,53 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
         this.options.chart.updateSvgHeight(this.options.chart.chartHeight * this.visualScale);
     }
 
+    private showZoomIndicator(): void {
+        this.zoomIndicatorExpiresAt = Date.now() + ZOOM_INDICATOR_DURATION_MS;
+        this.renderZoomIndicator();
+    }
+
+    private renderZoomIndicator(): void {
+        const remainingDuration = this.zoomIndicatorExpiresAt - Date.now();
+        if (remainingDuration <= 0)
+            return;
+        if (!this.zoomIndicator) {
+            if (getComputedStyle(this.options.container).position === 'static')
+                this.options.container.style.position = 'relative';
+            this.zoomIndicator = document.createElement('div');
+            this.zoomIndicator.className = 'chart-zoom-indicator';
+            this.zoomIndicator.style.position = 'absolute';
+            this.zoomIndicator.style.top = '12px';
+            this.zoomIndicator.style.right = '12px';
+            this.zoomIndicator.style.zIndex = '1000';
+            this.zoomIndicator.style.padding = '6px 10px';
+            this.zoomIndicator.style.borderRadius = '4px';
+            this.zoomIndicator.style.background = 'rgba(15,23,42,0.88)';
+            this.zoomIndicator.style.color = '#fff';
+            this.zoomIndicator.style.fontFamily = 'sans-serif';
+            this.zoomIndicator.style.fontSize = '12px';
+            this.zoomIndicator.style.lineHeight = '1.4';
+            this.zoomIndicator.style.textAlign = 'center';
+            this.zoomIndicator.style.whiteSpace = 'pre-line';
+            this.zoomIndicator.style.pointerEvents = 'none';
+            this.options.container.appendChild(this.zoomIndicator);
+        }
+        this.zoomIndicator.textContent = `Day width: ${this.dayWidth.toFixed(1)} px\nZoom: ${Math.round(this.visualScale * 100)}%`;
+        if (this.zoomIndicatorHideTimerId)
+            clearTimeout(this.zoomIndicatorHideTimerId);
+        this.zoomIndicatorHideTimerId = setTimeout(() => {
+            this.zoomIndicator?.remove();
+            this.zoomIndicator = null;
+            this.zoomIndicatorHideTimerId = null;
+        }, remainingDuration);
+    }
+
     private scheduleLazyRedraw(): void {
         if (this.lazyRedrawTimerId)
             clearTimeout(this.lazyRedrawTimerId);
         this.lazyRedrawTimerId = setTimeout(() => {
             this.lazyRedrawTimerId = null;
             this.scheduleRender();
-        }, 150);
+        }, LAZY_REDRAW_DURATION_MS);
     }
 
     private scheduleRender(): void {
@@ -286,6 +335,7 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
             this.constrainScrollOffset();
             this.constrainScrollYOffset();
             this.applyContentTransform();
+            this.showZoomIndicator();
             this.scheduleLazyRedraw();
         } else if (event.deltaX !== 0) {
             this.scrollOffset += event.deltaX / this.dayWidth;
@@ -309,6 +359,7 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
             this.visualScale = 1.0;
             this.visualPanX = 0;
             this.visualPanY = 0;
+            this.showZoomIndicator();
             this.scheduleRender();
             this.scheduleSave();
         }
