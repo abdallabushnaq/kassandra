@@ -10,15 +10,16 @@ import {DateUtils} from './DateUtils.js';
 import {CalendarXAxes} from './CalendarXAxes.js';
 import {CalendarSize} from './CalendarSize.js';
 import {GraphSquare} from './GraphSquare.js';
-import {GraphColorUtil} from './GraphColorUtil.js';
+import {RenderLayer} from './RenderLayer.js';
 import {Theme} from './theme/Theme.js';
 import {Milestones} from './Milestones.js';
 import type {IRenderer} from './IRenderer.js';
 import {TextAlignment} from "./TextAlignment.js";
 import {FontMetrics} from "./FontMetrics.js";
 import {FontSpec} from "./FontSpec.js";
-import {AbstractChart} from "Frontend/src/main/frontend/js/AbstractChart";
+import {AbstractChart} from "./AbstractChart.js";
 import {Milestone} from './Milestone.js';
+import {GraphColorUtil} from "./GraphColorUtil.js";
 
 export abstract class AbstractRenderer implements IRenderer {
     protected static readonly STANDARD_LINE_STROKE_WIDTH: number = 3.1;
@@ -96,22 +97,27 @@ export abstract class AbstractRenderer implements IRenderer {
 
 
     /** Override per-renderer to draw day background bars. */
-    drawDayBars(g: SVGElement, currentDay: Date): void {
+    drawDayBars(g: SVGElement, currentDay: Date, layer: RenderLayer): void {
         const x = this.calculateDayX(currentDay);
         const dw = this.calendarXAxes.dayOfWeek.getWidth() ?? 0;
         if (SvgUtils.isClipped(x - dw / 2, x - (dw / 2) + dw - 1, this.chart.containerWidth))
             return;
-        const color = GraphColorUtil.getDayOfWeekBgColor(this.theme, currentDay);
-        //day vertical bar
-        g.appendChild(SvgUtils.createRect(
-            x - (dw / 2), this.diagram.y, dw - 1, this.diagram.height,
-            {fill: ColorUtils.intToHex(color)},
-        ));
-        //draw vertical lines
-        g.appendChild(SvgUtils.createRect(
-            x - (dw / 2) + (dw - 1), this.diagram.y, /*(dw - 1) +*/ 1, this.diagram.height,
-            {fill: ColorUtils.intToHex(this.theme.ganttTheme.gridColor)},
-        ));
+        const dayLeft = x - dw / 2;
+        if (layer === RenderLayer.BACKGROUND_AND_TEXT) {
+            const color = GraphColorUtil.getDayOfWeekBgColor(this.theme, currentDay);
+            g.appendChild(SvgUtils.createRect(
+                dayLeft, this.diagram.y, dw, this.diagram.height,
+                {fill: ColorUtils.intToHex(color)},
+            ));
+        } else {
+            g.appendChild(SvgUtils.createLine(
+                dayLeft + dw, this.diagram.y, dayLeft + dw, this.diagram.y + this.diagram.height,
+                {
+                    stroke: ColorUtils.intToHex(this.theme.ganttTheme.gridColor),
+                    'vector-effect': 'non-scaling-stroke',
+                },
+            ));
+        }
     }
 
     calculateDayWidth(): void {
@@ -323,4 +329,3 @@ export abstract class AbstractRenderer implements IRenderer {
 
 
 }
-

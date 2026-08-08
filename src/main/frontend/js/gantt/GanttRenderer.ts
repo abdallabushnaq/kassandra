@@ -14,6 +14,7 @@ import {GanttChartDto} from './dto/GanttChartDto.js';
 import {AbstractChart} from '../AbstractChart.js';
 import {GanttChartMeta} from "./dto/GanttChartMeta.js";
 import {FontSpec} from "../FontSpec.js";
+import {RenderLayer} from '../RenderLayer.js';
 
 /**
  * convert string date representative to Date
@@ -105,33 +106,41 @@ export class GanttRenderer extends AbstractGanttRenderer {
         return this.calendarXAxes.getHeight() + GanttRenderer.GANTT_TASK_PRI_SPACE + this.calculateNumberOfTasks(this.tasks) * (this.getTaskHeight() + 1) + GanttRenderer.GANTT_TASK_POST_SPACE;
     }
 
-    override drawDayBars(g: SVGElement, currentDay: Date): void {
+    override drawDayBars(g: SVGElement, currentDay: Date, layer: RenderLayer): void {
         const x = this.calculateDayX(currentDay);
         const x1 = x - (this.calendarXAxes.dayOfWeek.getWidth() / 2 - 1);
         if (SvgUtils.isClipped(x1 - 1, x1 - 1 + this.dayWidth, this.chart.containerWidth))
             return;
-        const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+        const dayLeft = x1 - 1;
         for (const task of this.tasks) {
             const y1 = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) /*+ this.getTaskHeight() / 2*/;
 
-            //grid
-            g.appendChild(SvgUtils.createRect(x1 - 1, y1 - 1, this.dayWidth, 1, {fill: gridColor}));//top --
-            g.appendChild(SvgUtils.createRect(x1 - 1, y1, 1, this.getTaskHeight(), {fill: gridColor}));//left |
-            const bgColor = this.getGanttDayStripeColor(task, currentDay);
-            //background
-            g.appendChild(SvgUtils.createRect(x1 + 1, y1, this.dayWidth - 1, this.getTaskHeight(), {fill: bgColor}));
-            const ex = getCalendarException(currentDay, this.getCalendarExceptions(task));
-            if (ex?.letter && this.dayWidth >= 14) {
-                const cx = x1 + this.dayWidth / 2;
-                const letter = SvgUtils.createText(cx, y1 + this.getTaskHeight() / 2, ex.letter, {
-                    fill: ColorUtils.intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
-                    ...SvgUtils.createFontSpecAttribute(GanttRenderer.noneWorkingDayFont),
-                    'text-anchor': 'middle',
-                    'dominant-baseline': 'alphabetic',
-                    dy: '0.35em',
-                });
-                letter.appendChild(SvgUtils.createSvgElement('title', {}, ex.name || ex.type || 'Off-day'));
-                g.appendChild(letter);
+            if (layer === RenderLayer.BACKGROUND_AND_TEXT) {
+                const bgColor = this.getGanttDayStripeColor(task, currentDay);
+                g.appendChild(SvgUtils.createRect(dayLeft, y1, this.dayWidth, this.getTaskHeight() + 1, {fill: bgColor}));
+                const ex = getCalendarException(currentDay, this.getCalendarExceptions(task));
+                if (ex?.letter && this.dayWidth >= 14) {
+                    const cx = x1 + this.dayWidth / 2;
+                    const letter = SvgUtils.createText(cx, y1 + this.getTaskHeight() / 2 + 1, ex.letter, {
+                        fill: ColorUtils.intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
+                        ...SvgUtils.createFontSpecAttribute(GanttRenderer.noneWorkingDayFont),
+                        'text-anchor': 'middle',
+                        'dominant-baseline': 'alphabetic',
+                        dy: '0.35em',
+                    });
+                    letter.appendChild(SvgUtils.createSvgElement('title', {}, ex.name || ex.type || 'Off-day'));
+                    g.appendChild(letter);
+                }
+            } else {
+                const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+                g.appendChild(SvgUtils.createLine(dayLeft + this.dayWidth, y1, dayLeft + this.dayWidth, y1 + this.getTaskHeight() + 1, {
+                    stroke: gridColor,
+                    'vector-effect': 'non-scaling-stroke',
+                }));//left |
+                g.appendChild(SvgUtils.createLine(dayLeft, y1 + this.getTaskHeight() + 1, dayLeft + this.dayWidth, y1 + this.getTaskHeight() + 1, {
+                    stroke: gridColor,
+                    'vector-effect': 'non-scaling-stroke',
+                }));//bottom --
             }
         }
     }

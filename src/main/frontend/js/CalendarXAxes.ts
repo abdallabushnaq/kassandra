@@ -13,17 +13,13 @@ import {CalendarElement} from './CalendarElement.js';
 import {FontSpec} from "./FontSpec.js";
 import {CalendarMilestoneElement} from './CalendarMilestoneElement.js';
 import {CalendarSize} from './CalendarSize.js';
+import {RenderLayer} from './RenderLayer.js';
 import type {IRenderer} from './IRenderer.js';
 
 const DAY_OF_MONTH_MIN_DAY_WIDTH = 16;
 const DAY_OF_WEEK_MIN_DAY_WIDTH = 10;
 const MONTH_MIN_DAY_WIDTH = 1;
 const WEEK_MIN_DAY_WIDTH = 2;
-
-enum CalendarDrawLayer {
-    BACKGROUND_AND_TEXT,
-    BORDERS,
-}
 
 export class CalendarXAxes {
     parent: IRenderer;
@@ -101,7 +97,7 @@ export class CalendarXAxes {
     }
 
     drawCalendar(svgGroup: SVGElement, drawDays: boolean, viewportWidth: number): void {
-        for (const layer of [CalendarDrawLayer.BACKGROUND_AND_TEXT, CalendarDrawLayer.BORDERS]) {
+        for (const layer of [RenderLayer.BACKGROUND_AND_TEXT, RenderLayer.BORDERS]) {
             this.drawCalendarLayer(svgGroup, drawDays, viewportWidth, layer);
         }
     }
@@ -135,12 +131,12 @@ export class CalendarXAxes {
         centered: boolean,
         svgGroup: SVGElement,
         viewportWidth: number,
-        layer: CalendarDrawLayer,
+        layer: RenderLayer,
     ): void {
         if (SvgUtils.isClipped(x1, x2, viewportWidth))
             return;
         const cellWidth = x2 - x1 + 1;
-        if (layer === CalendarDrawLayer.BACKGROUND_AND_TEXT) {
+        if (layer === RenderLayer.BACKGROUND_AND_TEXT) {
             const group = svgGroup.appendChild(SvgUtils.createGroup(x1, y1));
             group.appendChild(SvgUtils.createRect(0, 0, cellWidth, cellHeight, {fill: ColorUtils.intToHex(backgroundColor)}));
 
@@ -376,7 +372,7 @@ export class CalendarXAxes {
         svgGroup: SVGElement,
         drawDays: boolean,
         viewportWidth: number,
-        layer: CalendarDrawLayer,
+        layer: RenderLayer,
     ): void {
         // if (!this.parent)
         //     return;
@@ -489,8 +485,8 @@ export class CalendarXAxes {
                 }
                 // Phase 0: DAY BARS and MILESTONE BACKGROUND
                 else if (phase === 0) {
-                    if (layer === CalendarDrawLayer.BACKGROUND_AND_TEXT && drawDays && this.isDayBarsVisible()) {
-                        this.parent.drawDayBars(svgGroup, currentDay);
+                    if (drawDays && this.isDayBarsVisible()) {
+                        this.parent.drawDayBars(svgGroup, currentDay, layer);
                     }
                     if (this.milestonesVisible()) {
                         const color = GraphColorUtil.getDayOfWeekBgColor(this.parent.theme, startCal);

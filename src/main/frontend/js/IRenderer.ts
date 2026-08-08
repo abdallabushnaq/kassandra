@@ -6,6 +6,7 @@
 
 import type {Milestones} from './Milestones.js';
 import type {GraphSquare} from './GraphSquare.js';
+import type {RenderLayer} from './RenderLayer.js';
 import type {Theme} from './theme/Theme.js';
 
 export interface IRenderer {
@@ -17,6 +18,5 @@ export interface IRenderer {
     diagram: GraphSquare;
 
     /** Called once per visible day column during calendar rendering. */
-    drawDayBars(g: SVGElement, dayDate: Date): void;
+    drawDayBars(g: SVGElement, dayDate: Date, layer: RenderLayer): void;
 }
-
