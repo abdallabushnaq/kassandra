@@ -321,8 +321,8 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
     }
 
     private handleWheelEvent = (event: WheelEvent): void => {
-        event.preventDefault();
-        if (event.ctrlKey) {
+        if (event.altKey) {
+            event.preventDefault();
             const rect = this.options.container.getBoundingClientRect();
             const cursorX = event.clientX - rect.left;
             const delta = event.deltaY < 0 ? VISUAL_ZOOM_STEP : 1 / VISUAL_ZOOM_STEP;
@@ -337,22 +337,13 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
             this.applyContentTransform();
             this.showZoomIndicator();
             this.scheduleLazyRedraw();
-        } else if (event.deltaX !== 0) {
-            this.scrollOffset += event.deltaX / this.dayWidth;
-            this.constrainScrollOffset();
-            this.applyContentTransform();
-            this.scheduleLazyRedraw();
-            this.scheduleSave();
-        } else if (this.options.chart.verticalScrollEnabled) {
-            this.scrollYOffset += event.deltaY / this.visualScale;
-            this.constrainScrollYOffset();
-            this.applyContentTransform();
-            this.scheduleLazyRedraw();
-        } else {
+        } else if (event.shiftKey) {
+            event.preventDefault();
             const rect = this.options.container.getBoundingClientRect();
             const mouseX = event.clientX != null ? event.clientX - rect.left : this.getContainerWidth() / 2;
             const dayUnderCursor = this.scrollOffset + mouseX / this.dayWidth;
-            const factor = event.deltaY < 0 ? this.options.dayWidthZoomStep : 1 / this.options.dayWidthZoomStep;
+            const wheelDelta = event.deltaY || event.deltaX;
+            const factor = wheelDelta < 0 ? this.options.dayWidthZoomStep : 1 / this.options.dayWidthZoomStep;
             this.dayWidth = this.constrainDayWidth(this.dayWidth * factor);
             this.scrollOffset = dayUnderCursor - mouseX / this.dayWidth;
             this.constrainScrollOffset();
@@ -362,6 +353,19 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
             this.showZoomIndicator();
             this.scheduleRender();
             this.scheduleSave();
+        } else if (event.deltaX !== 0) {
+            event.preventDefault();
+            this.scrollOffset += event.deltaX / this.dayWidth;
+            this.constrainScrollOffset();
+            this.applyContentTransform();
+            this.scheduleLazyRedraw();
+            this.scheduleSave();
+        } else if (this.options.chart.verticalScrollEnabled) {
+            event.preventDefault();
+            this.scrollYOffset += event.deltaY / this.visualScale;
+            this.constrainScrollYOffset();
+            this.applyContentTransform();
+            this.scheduleLazyRedraw();
         }
     };
 

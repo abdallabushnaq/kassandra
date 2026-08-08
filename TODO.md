@@ -47,7 +47,9 @@
 6. off-day letter barely visible on weekends.
 7. brun-down chart starting over minimum (Oslo).
 8. burndown author legend color is too dark.
-9.
+9. day stripes of burn-down are too dark compared to gantt chart.
+10. legend is drawn below grid lines.
+11. some lines are zoomed in, like grid lines
 
 # Failing Tests
 
