@@ -43,9 +43,9 @@ export class GraphColorUtil {
             case 5: // Mon–Fri
                 return theme.xAxesTheme.dayOfweekBgColor;
             case 6: // Saturday
-                return theme.xAxesTheme.dayOfweekSaturdayBgColor;
+                return theme.chartTheme.dayOfweekSaturdayBgColor;
             case 0: // Sunday
-                return theme.xAxesTheme.dayOfweekSundayBgColor;
+                return theme.chartTheme.dayOfweekSundayBgColor;
             default:
                 return null;
         }

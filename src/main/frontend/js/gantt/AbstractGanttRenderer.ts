@@ -13,6 +13,7 @@ import {CalendarException} from './dto/CalendarException.js';
 import {FontMetrics} from "../FontMetrics.js";
 import {FontSpec} from "../FontSpec.js";
 import {AbstractChart} from '../AbstractChart.js';
+import {GraphColorUtil} from "../GraphColorUtil.js";
 
 // ── Constants (mirrors Java AbstractGanttRenderer field declarations) ────────
 const FINE_LINE_STROKE_WIDTH = 1.0;
@@ -39,7 +40,6 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     tasks: TaskDto[];
     _calendarH: number;
     _taskById: Record<string, TaskDto>;
-    protected calendarExceptionsById: Map<string, CalendarException[]>;
     // 24-hour format
     readonly options24: Intl.DateTimeFormatOptions = {
         year: 'numeric',
@@ -50,6 +50,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         hour12: false
     };
     dateTimeFormat: Intl.DateTimeFormat = new Intl.DateTimeFormat('en-DE', this.options24);
+    protected calendarExceptionsById: Map<string, CalendarException[]>;
 
     // dayIndexToPixelX(dayIndex: number): number {
     //     return (dayIndex - this.scrollOffset) * this.dayWidth;
@@ -71,15 +72,27 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         return LINE_HEIGHT;
     }
 
-    protected getCalendarExceptions(task: TaskDto): CalendarException[] | undefined {
-        return task.calendarId ? this.calendarExceptionsById.get(String(task.calendarId)) : undefined;
-    }
-
     override calculateChartHeight(): number {
         const calH = this.calendarXAxes
             ? this.calendarXAxes.getHeight()
             : 0;
         return calH + this.tasks.length * (this.getTaskHeight() + 1);
+    }
+
+    getGanttDayStripeColor(task: TaskDto, dayDate: Date): string {
+        const dow = dayDate.getDay();
+        if (dow === 6 || dow === 0 || isWorkingDay(dayDate, this.getCalendarExceptions(task))) {
+            return ColorUtils.intToHex(GraphColorUtil.getDayOfWeekBgColor(this.theme, dayDate));
+        }
+        const exception = getCalendarException(dayDate, this.getCalendarExceptions(task));
+        if (exception) {
+            const t = exception.type;
+            if (t === 'VACATION') return ColorUtils.intToHex(this.theme.ganttTheme.vacationBgColor, '#a0c8ff');
+            if (t === 'TRIP') return ColorUtils.intToHex(this.theme.ganttTheme.tripBgColor, '#c8a0ff');
+            if (t === 'SICK') return ColorUtils.intToHex(this.theme.ganttTheme.sickBgColor, '#ffa0a0');
+            return ColorUtils.intToHex(this.theme.ganttTheme.holidayBgColor, '#ffd0a0');
+        }
+        return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfMonthWeekendBgColor, '#d7d7d7');
     }
 
     // override drawDayBars(g: SVGElement, dayDate: Date, calendarH = 0): void {
@@ -107,28 +120,12 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     //     }
     // }
 
-    getDayOfWeekStripBgColor(dayDate: Date): string {
-        const dow = dayDate.getDay();
-        if (dow === 6) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSaturdayBgColor, '#d7d7d7');
-        if (dow === 0) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSundayBgColor, '#d7d7d7');
-        return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfweekBgColor, '#ffffff');
-    }
-
-    getGanttDayStripeColor(task: TaskDto, dayDate: Date): string {
-        const dow = dayDate.getDay();
-        if (dow === 6 || dow === 0 || isWorkingDay(dayDate, this.getCalendarExceptions(task))) {
-            return this.getDayOfWeekStripBgColor(dayDate);
-        }
-        const exception = getCalendarException(dayDate, this.getCalendarExceptions(task));
-        if (exception) {
-            const t = exception.type;
-            if (t === 'VACATION') return ColorUtils.intToHex(this.theme.ganttTheme.vacationBgColor, '#a0c8ff');
-            if (t === 'TRIP') return ColorUtils.intToHex(this.theme.ganttTheme.tripBgColor, '#c8a0ff');
-            if (t === 'SICK') return ColorUtils.intToHex(this.theme.ganttTheme.sickBgColor, '#ffa0a0');
-            return ColorUtils.intToHex(this.theme.ganttTheme.holidayBgColor, '#ffd0a0');
-        }
-        return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfMonthWeekendBgColor, '#d7d7d7');
-    }
+    // getDayOfWeekStripBgColor(dayDate: Date): string {
+    //     const dow = dayDate.getDay();
+    //     if (dow === 6) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSaturdayBgColor, '#d7d7d7');
+    //     if (dow === 0) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSundayBgColor, '#d7d7d7');
+    //     return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfweekBgColor, '#ffffff');
+    // }
 
     drawConflictMarker(_g: SVGElement, _y: number, _conflict: unknown): void { /* team planner only */
     }
@@ -549,6 +546,10 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         if (task.progress && task.progress > 0)
             s += `\nProgress: ${Math.round(task.progress * 100)}%`;
         return s;
+    }
+
+    protected getCalendarExceptions(task: TaskDto): CalendarException[] | undefined {
+        return task.calendarId ? this.calendarExceptionsById.get(String(task.calendarId)) : undefined;
     }
 
     private drawUserName(g: SVGElement, task: TaskDto, x1: number, y: number, textColor: string) {
