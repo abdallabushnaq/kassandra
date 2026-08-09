@@ -50,6 +50,8 @@ export interface ChartHandle {
 interface ViewState {
     dayWidth: number;
     scrollOffset: number;
+    scrollYOffset?: number;
+    visualScale?: number;
 }
 
 /**
@@ -102,7 +104,12 @@ function loadViewState(containerId: string): ViewState | null {
         const raw = localStorage.getItem(viewStateKey(containerId));
         if (raw) {
             const state = JSON.parse(raw) as ViewState;
-            if (typeof state.dayWidth === 'number' && typeof state.scrollOffset === 'number')
+            if (
+                Number.isFinite(state.dayWidth)
+                && Number.isFinite(state.scrollOffset)
+                && (state.scrollYOffset === undefined || Number.isFinite(state.scrollYOffset))
+                && (state.visualScale === undefined || Number.isFinite(state.visualScale))
+            )
                 return state;
         }
     } catch { /* unavailable */
@@ -110,9 +117,18 @@ function loadViewState(containerId: string): ViewState | null {
     return null;
 }
 
-function saveViewState(containerId: string, dayWidth: number, scrollOffset: number): void {
+function saveViewState(
+    containerId: string,
+    dayWidth: number,
+    scrollOffset: number,
+    scrollYOffset: number,
+    visualScale: number,
+): void {
     try {
-        localStorage.setItem(viewStateKey(containerId), JSON.stringify({dayWidth, scrollOffset}));
+        localStorage.setItem(
+            viewStateKey(containerId),
+            JSON.stringify({dayWidth, scrollOffset, scrollYOffset, visualScale}),
+        );
     } catch { /* quota */
     }
 }
@@ -200,8 +216,11 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
         const saved = loadViewState(this.options.containerId);
         if (saved) {
             this.dayWidth = this.constrainDayWidth(saved.dayWidth);
+            this.visualScale = Math.max(VISUAL_ZOOM_MIN, Math.min(VISUAL_ZOOM_MAX, saved.visualScale ?? 1.0));
             this.scrollOffset = saved.scrollOffset;
+            this.scrollYOffset = saved.scrollYOffset ?? 0;
             this.constrainScrollOffset();
+            this.constrainScrollYOffset();
             return;
         }
         this.scrollOffset = this.options.initialScrollOffset(this.dayWidth, this.getContainerWidth());
@@ -239,7 +258,13 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
         if (this.saveTimerId)
             clearTimeout(this.saveTimerId);
         this.saveTimerId = setTimeout(
-            () => saveViewState(this.options.containerId, this.dayWidth, this.scrollOffset),
+            () => saveViewState(
+                this.options.containerId,
+                this.dayWidth,
+                this.scrollOffset,
+                this.scrollYOffset,
+                this.visualScale,
+            ),
             250,
         );
     }
@@ -344,6 +369,7 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
             this.applyContentTransform();
             this.showZoomIndicator();
             this.scheduleLazyRedraw();
+            this.scheduleSave();
         } else if (event.shiftKey) {
             event.preventDefault();
             const rect = this.options.container.getBoundingClientRect();
@@ -372,6 +398,7 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
             this.constrainScrollYOffset();
             this.applyContentTransform();
             this.scheduleLazyRedraw();
+            this.scheduleSave();
         }
     };
 

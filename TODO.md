@@ -46,6 +46,7 @@
 5. brun-down chart starting over minimum (Oslo).
 6. burndown author legend color is too dark.
 7. legend is drawn below grid lines.
+8. FIXED: scrollYOffset and visualScale are not persisted in any of teh charts.
 
 # Failing Tests
 
