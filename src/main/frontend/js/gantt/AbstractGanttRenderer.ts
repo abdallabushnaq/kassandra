@@ -422,7 +422,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                     'font-size': AbstractGanttRenderer.taskProgressFont.size,
                     'font-family': AbstractGanttRenderer.taskProgressFont.family,
                     'text-anchor': 'middle',
-                    'dominant-baseline': 'middle',
+                    'dominant-baseline': 'alphabetic',
+                    dy: '0.35em',
                     'clip-path': `url(#${clipId2})`,
                 }));
             }
