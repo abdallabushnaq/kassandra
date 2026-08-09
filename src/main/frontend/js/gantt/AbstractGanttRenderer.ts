@@ -22,6 +22,7 @@ const RELATION_CORNER_LENGTH = 14;
 const RESOURCE_NAME_TO_TASK_GAP = 3;
 export const SECONDS_PER_DAY = 85 * 6 * 60; // 30600
 const TASK_BODY_BORDER = 1;
+const TASK_PROGRESS_PADDING = 4;
 const TASK_NAME_TO_TASK_GAP = 5 + 8;        // 13
 const NONE_WORKING_DAY_FONT_SIZE = 22;
 
@@ -130,7 +131,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     drawConflictMarker(_g: SVGElement, _y: number, _conflict: unknown): void { /* team planner only */
     }
 
-    drawCriticalMarker(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number): void {
+    drawTaskBorder(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number): void {
         if (SvgUtils.isClipped(x1, x2, this.chart.containerWidth))
             return;
         const borderColor = task.critical
@@ -142,6 +143,17 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const finishTruncated = DateUtils.getDayMidnight(task.finish!);
         const days = Math.floor((finishTruncated.getTime() - startTruncated.getTime()) / DateUtils.MS);
         const th = this.getTaskHeight();
+        const top = y - th / 2/* + TASK_BODY_BORDER*/;
+        const bottom = y + th / 2/* - TASK_BODY_BORDER*/;
+        const solidLineAttributes = {
+            stroke: borderColor,
+            'stroke-width': '1',
+            'vector-effect': 'non-scaling-stroke',
+        };
+        const dottedLineAttributes = {
+            ...solidLineAttributes,
+            'stroke-dasharray': '2 2',
+        };
 
         for (let day = 0; day <= days; day++) {
             const currentDay = new Date(startTruncated.getTime() + day * DateUtils.MS);
@@ -150,43 +162,40 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             if (working) {
                 if (days === 0) {
                     // This is the left and right end
-                    g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER, x2 - x1 + 1, 1, {fill: borderColor}));
-                    g.appendChild(SvgUtils.createRect(x1, y + th / 2 - TASK_BODY_BORDER - 1, x2 - x1 + 1, 1, {fill: borderColor}));
-                    g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
-                    g.appendChild(SvgUtils.createRect(x2, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createLine(x1, top, x2, top, solidLineAttributes));
+                    g.appendChild(SvgUtils.createLine(x1, bottom, x2, bottom, solidLineAttributes));
+                    g.appendChild(SvgUtils.createLine(x1, top, x1, bottom, solidLineAttributes));
+                    g.appendChild(SvgUtils.createLine(x2, top, x2, bottom, solidLineAttributes));
                 } else if (day === 0) {
                     // This is the left end
                     const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
                     const nextDayAt8 = new Date(currentDayAt8.getTime() + SECONDS_PER_DAY * 1000);
                     const xFinish = this.calculateX(nextDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-                    g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER, xFinish - x1, 1, {fill: borderColor}));
-                    g.appendChild(SvgUtils.createRect(x1, y + th / 2 - TASK_BODY_BORDER - 1, xFinish - x1, 1, {fill: borderColor}));
-                    g.appendChild(SvgUtils.createRect(x1, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createLine(x1, top, xFinish, top, solidLineAttributes));
+                    g.appendChild(SvgUtils.createLine(x1, bottom, xFinish, bottom, solidLineAttributes));
+                    g.appendChild(SvgUtils.createLine(x1, top, x1, bottom, solidLineAttributes));
                 } else if (day === days) {
                     // This is the right end
                     const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
                     const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-                    g.appendChild(SvgUtils.createRect(xStart, y - th / 2 + TASK_BODY_BORDER, x2 - xStart + 1, 1, {fill: borderColor}));
-                    g.appendChild(SvgUtils.createRect(xStart, y + th / 2 - TASK_BODY_BORDER - 1, x2 - xStart + 1, 1, {fill: borderColor}));
-                    g.appendChild(SvgUtils.createRect(x2, y - th / 2 + TASK_BODY_BORDER + 1, 1, th - TASK_BODY_BORDER * 2 - 2, {fill: borderColor}));
+                    g.appendChild(SvgUtils.createLine(xStart, top, x2, top, solidLineAttributes));
+                    g.appendChild(SvgUtils.createLine(xStart, bottom, x2, bottom, solidLineAttributes));
+                    g.appendChild(SvgUtils.createLine(x2, top, x2, bottom, solidLineAttributes));
                 } else {
                     // This is the middle
                     const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
                     const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-                    g.appendChild(SvgUtils.createRect(xStart, y - th / 2 + TASK_BODY_BORDER, this.calendarXAxes.dayOfWeek.getWidth(), 1, {fill: borderColor}));
-                    g.appendChild(SvgUtils.createRect(xStart, y + th / 2 - TASK_BODY_BORDER - 1, this.calendarXAxes.dayOfWeek.getWidth(), 1, {fill: borderColor}));
+                    const xFinish = xStart + this.calendarXAxes.dayOfWeek.getWidth();
+                    g.appendChild(SvgUtils.createLine(xStart, top, xFinish, top, solidLineAttributes));
+                    g.appendChild(SvgUtils.createLine(xStart, bottom, xFinish, bottom, solidLineAttributes));
                 }
             } else {
                 // Non-working day (weekend) - draw dashed border
                 const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
                 const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-                for (let i = 0; i < this.calendarXAxes.dayOfWeek.getWidth() - 1; i++) {
-                    const x = i + xStart;
-                    if (x % 4 === 0) {
-                        g.appendChild(SvgUtils.createRect(x, y - th / 2 + TASK_BODY_BORDER, 2, 1, {fill: borderColor}));
-                        g.appendChild(SvgUtils.createRect(x, y + th / 2 - TASK_BODY_BORDER - 1, 2, 1, {fill: borderColor}));
-                    }
-                }
+                const xFinish = xStart + this.calendarXAxes.dayOfWeek.getWidth();
+                g.appendChild(SvgUtils.createLine(xStart, top, xFinish, top, dottedLineAttributes));
+                g.appendChild(SvgUtils.createLine(xStart, bottom, xFinish, bottom, dottedLineAttributes));
             }
         }
     }
@@ -376,7 +385,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             const progress = task.progress || 0;
             this.drawTaskBody(g, task, x1, x2, y, alien, progress);
             this.drawConflictMarker(g, y, conflict);
-            this.drawCriticalMarker(g, task, x1, x2, y);
+            this.drawTaskBorder(g, task, x1, x2, y);
             this.drawManualMarker(g, task, x1, y, false);
             this.drawProgress(g, task, x1, x2, y, progress);
 
@@ -438,8 +447,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const th = this.getTaskHeight();
 
         if (!alien) {
-            const y1 = y - th / 2 + TASK_BODY_BORDER;
-            const h = th - TASK_BODY_BORDER * 2;
+            const y1 = y - th / 2/* + TASK_BODY_BORDER*/;
+            const h = th /*- TASK_BODY_BORDER * 2*/;
             if (x2 - x1 - 1 - 1 > 0) {
                 // Calculate days between start and finish (both truncated to day precision)
                 const startTruncated = DateUtils.getDayMidnight(task.start!);
@@ -468,7 +477,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                             const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
                             const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
                             segX = xStart;
-                            segW = x2 - xStart + 1;
+                            segW = x2 - xStart;
                         } else {
                             // This is the middle
                             const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
@@ -493,9 +502,9 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                 // Progress bar
                 if (progress > 0.0) {
                     const progressFill = task.progressColor ? ColorUtils.convertSprintColorToRgba(task.progressColor) : ColorUtils.hexToRgbaWithAlpha(fillColor, 200);
-                    const progressW = Math.floor((x2 - x1) * progress - 1);
+                    const progressW = Math.floor((x2 - x1) * progress);
                     if (progressW > 0) {
-                        const pRect = SvgUtils.createRect(x1 + 1, y1 + 2, progressW, h - 4, {fill: progressFill});
+                        const pRect = SvgUtils.createRect(x1, y1 + TASK_PROGRESS_PADDING, progressW, h - TASK_PROGRESS_PADDING * 2, {fill: progressFill});
                         pRect.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
                         g.appendChild(pRect);
                         if (progress < 1.0) {
