@@ -31,7 +31,7 @@ export class SvgUtils {
     /**
      * Creates an SVG element with attributes and optional text content.
      */
-    static createSvgElement<K extends keyof SVGElementTagNameMap>(
+    private static createSvgElement<K extends keyof SVGElementTagNameMap>(
         tag: K,
         attrs?: SvgAttrs,
         textContent?: string | null
@@ -45,6 +45,13 @@ export class SvgUtils {
         }
         if (textContent != null) element.textContent = textContent;
         return element;
+    }
+
+    /**
+     * Creates the root SVG element.
+     */
+    static createSvg(additionalAttrs?: SvgAttrs): SVGSVGElement {
+        return SvgUtils.createSvgElement('svg', additionalAttrs);
     }
 
     /**
@@ -65,21 +72,28 @@ export class SvgUtils {
     /**
      * Creates an SVG group element with specified attributes.
      */
+    static createGroup(additionalAttrs?: SvgAttrs): SVGGElement;
+    static createGroup(x: number, y: number, additionalAttrs?: SvgAttrs): SVGGElement;
     static createGroup(
-        x?: number, y?: number,
+        xOrAdditionalAttrs?: number | SvgAttrs,
+        y?: number,
         additionalAttrs?: SvgAttrs
     ): SVGGElement {
-        const group = document.createElementNS(SVG_NS, 'g');
-        if (x !== undefined && y !== undefined) {
-            group.setAttribute('transform', `translate(${x}, ${y})`);
+        if (typeof xOrAdditionalAttrs === 'number' && y !== undefined) {
+            return SvgUtils.createSvgElement('g', {
+                transform: `translate(${xOrAdditionalAttrs}, ${y})`,
+                ...additionalAttrs,
+            });
         }
-        if (additionalAttrs) {
-            for (const key of Object.keys(additionalAttrs)) {
-                const val = additionalAttrs[key];
-                if (val != null) group.setAttribute(key, String(val));
-            }
-        }
-        return group;
+        return SvgUtils.createSvgElement('g',
+            typeof xOrAdditionalAttrs === 'number' ? undefined : xOrAdditionalAttrs);
+    }
+
+    /**
+     * Creates an SVG polygon element.
+     */
+    static createPolygon(additionalAttrs?: SvgAttrs): SVGPolygonElement {
+        return SvgUtils.createSvgElement('polygon', additionalAttrs);
     }
 
     /**
@@ -110,6 +124,13 @@ export class SvgUtils {
         additionalAttrs?: SvgAttrs
     ): SVGCircleElement {
         return SvgUtils.createSvgElement('circle', {cx, cy, r, ...additionalAttrs});
+    }
+
+    /**
+     * Creates an SVG title element.
+     */
+    static createTitle(content: string, additionalAttrs?: SvgAttrs): SVGTitleElement {
+        return SvgUtils.createSvgElement('title', additionalAttrs, content);
     }
 
     /**

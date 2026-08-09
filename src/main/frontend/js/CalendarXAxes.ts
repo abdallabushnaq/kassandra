@@ -248,7 +248,7 @@ export class CalendarXAxes {
             });
             if (m) {
                 textEl.appendChild(
-                    SvgUtils.createSvgElement('title', {}, `${text} = ${m.name}\n${this._formatDateForTooltip(time)}`),
+                    SvgUtils.createTitle(`${text} = ${m.name}\n${this._formatDateForTooltip(time)}`),
                 );
             }
             parentGroup.appendChild(textEl);
@@ -260,9 +260,7 @@ export class CalendarXAxes {
                 const labelY = this.calendarAtBottom
                     ? this.milestone.flagY + this.milestone.flagHeight - 5
                     : flagY + this.milestone.flagHeight;
-                parentGroup.appendChild(SvgUtils.createSvgElement('line', {
-                    x1: x, y1: poleStartY,
-                    x2: x, y2: poleStartY + 3,
+                parentGroup.appendChild(SvgUtils.createLine(x, poleStartY, x, poleStartY + 3, {
                     stroke: ColorUtils.intToHex(flagTextColor), 'stroke-width': '1',
                 }));
                 parentGroup.appendChild(SvgUtils.createText(

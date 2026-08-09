@@ -446,7 +446,7 @@ export class BurndownRenderer extends AbstractRenderer {
             ]);
         }
         points.push(...[`${x1 - dw / 2},${y3}`]);
-        const polygon = SvgUtils.createSvgElement('polygon', {
+        const polygon = SvgUtils.createPolygon({
             points: points.join(' '),
             fill: color,
             stroke: 'none'

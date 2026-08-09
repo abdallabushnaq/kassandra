@@ -68,8 +68,8 @@ export abstract class AbstractChart extends AbstractCanvas {
     override drawFooter(svg: SVGElement): void {
         // Wrap the footer elements in a <g> so updateSvgHeight can translate the whole
         // footer downward when visual zoom increases the chart height.
-        const group = SvgUtils.createSvgElement('g', {});
-        this.footerGroupEl = group as SVGGElement;
+        const group = SvgUtils.createGroup();
+        this.footerGroupEl = group;
         svg.appendChild(group);
         this.footerElement?.draw(group);
     }

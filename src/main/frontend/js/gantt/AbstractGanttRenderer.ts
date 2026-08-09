@@ -115,7 +115,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     //                 'font-family': 'sans-serif', 'font-weight': 'bold',
     //                 'text-anchor': 'middle', 'dominant-baseline': 'middle',
     //             });
-    //             letter.appendChild(SvgUtils.createSvgElement('title', {}, exception.type || 'Off-day'));
+    //             letter.appendChild(SvgUtils.createTitle(exception.type || 'Off-day'));
     //             g.appendChild(letter);
     //         }
     //     }
@@ -212,7 +212,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             fill: textColor, 'font-size': '12', 'font-family': 'sans-serif', 'dominant-baseline': 'middle',
         });
         if (task.name)
-            keyText.appendChild(SvgUtils.createSvgElement('title', {}, task.name));
+            keyText.appendChild(SvgUtils.createTitle(task.name));
         g.appendChild(keyText);
     }
 
@@ -233,14 +233,14 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             `${x1},${y + mW}`, `${x1 - mW},${y}`,
             `${x1},${y - mW}`,
         ].join(' ');
-        const poly = SvgUtils.createSvgElement('polygon', {
+        const poly = SvgUtils.createPolygon({
             points,
             fill: fillColor,
             stroke: borderColor,
             'stroke-width': '1',
             'vector-effect': 'non-scaling-stroke'
         });
-        poly.appendChild(SvgUtils.createSvgElement('title', {}, this.generateTaskToolTip(task)));
+        poly.appendChild(SvgUtils.createTitle(this.generateTaskToolTip(task)));
         g.appendChild(poly);
         const textColor = task.textColor || ColorUtils.intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
         const labelX = x1 + mW / 2 + 10;
@@ -249,7 +249,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const lbl = SvgUtils.createText(labelX, y, label, {
             fill: textColor, 'font-size': '12', 'font-family': 'sans-serif', 'dominant-baseline': 'middle',
         });
-        lbl.appendChild(SvgUtils.createSvgElement('title', {}, this.generateTaskToolTip(task)));
+        lbl.appendChild(SvgUtils.createTitle(this.generateTaskToolTip(task)));
         g.appendChild(lbl);
     }
 
@@ -280,12 +280,12 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const pts = y2 > y1
             ? `${x2 - d},${yEnd - d + sign} ${x2 + d},${yEnd - d + sign} ${x2},${yEnd + sign}`
             : `${x2 + d},${yEnd + d + sign} ${x2 - d},${yEnd + d + sign} ${x2},${yEnd + sign}`;
-        g.appendChild(SvgUtils.createSvgElement('polygon', {points: pts, fill: arrowColor}));
+        g.appendChild(SvgUtils.createPolygon({points: pts, fill: arrowColor}));
     }
 
     drawRibbon(g: SVGElement, y1: number, x1: number, y2: number, delta1: number, delta2: number, ribbonColor: string): void {
         const points = `${x1},${y2} ${x1 + delta1},${y1} ${x1 + delta1 + delta2},${y1} ${x1 + delta2},${y2}`;
-        g.appendChild(SvgUtils.createSvgElement('polygon', {points, fill: ribbonColor}));
+        g.appendChild(SvgUtils.createPolygon({points, fill: ribbonColor}));
     }
 
     drawStoryBody(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number, marker: string | null): void {
@@ -308,7 +308,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                     fill: 'none',
                     'pointer-events': 'all'
                 });
-                tooltipRect.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
+                tooltipRect.appendChild(SvgUtils.createTitle(tooltip));
                 g.appendChild(tooltipRect);
             }
         } else {
@@ -316,7 +316,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             const stY2 = stY1 + th - 1;
             const clipId = 'sr-' + String(task.id).replace(/-/g, '');
             g.appendChild(SvgUtils.createClipPath(clipId, x1 + 1, y - th / 2 + 2, x2 - x1 - 1, th - 4));
-            const grp = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
+            const grp = SvgUtils.createGroup({'clip-path': `url(#${clipId})`});
             let cur = fillColor;
             for (let rx = x1 - 16; rx < x2; rx += 16) {
                 this.drawRibbon(grp, stY1, rx, stY2, 25, 15, cur);
@@ -379,7 +379,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                     fill: textColor, 'font-size': '12', 'font-family': 'sans-serif',
                     'font-weight': 'bold', 'dominant-baseline': 'middle',
                 });
-                storyLabel.appendChild(SvgUtils.createSvgElement('title', {}, this.generateTaskToolTip(task)));
+                storyLabel.appendChild(SvgUtils.createTitle(this.generateTaskToolTip(task)));
                 g.appendChild(storyLabel);
             }
         } else {
@@ -400,7 +400,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                         fill: textColor, 'font-size': '12', 'font-family': 'sans-serif',
                         'dominant-baseline': 'middle', 'clip-path': `url(#${clipId3})`,
                     });
-                    nameLabel.appendChild(SvgUtils.createSvgElement('title', {}, this.generateTaskToolTip(task)));
+                    nameLabel.appendChild(SvgUtils.createTitle(this.generateTaskToolTip(task)));
                     g.appendChild(nameLabel);
                 }
             }
@@ -487,7 +487,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                             segW = this.calendarXAxes.dayOfWeek.getWidth();
                         }
                         const rect = SvgUtils.createRect(segX, y1, segW, h, {fill});
-                        rect.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
+                        rect.appendChild(SvgUtils.createTitle(tooltip));
                         g.appendChild(rect);
                     } else {
                         // Weekend/non-working day
@@ -495,7 +495,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                         const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
                         const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
                         const rectW = SvgUtils.createRect(xStart, y1, this.calendarXAxes.dayOfWeek.getWidth(), h, {fill: weekendFill});
-                        rectW.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
+                        rectW.appendChild(SvgUtils.createTitle(tooltip));
                         g.appendChild(rectW);
                     }
                 }
@@ -506,7 +506,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                     const progressW = Math.floor((x2 - x1) * progress);
                     if (progressW > 0) {
                         const pRect = SvgUtils.createRect(x1, y1 + TASK_PROGRESS_PADDING, progressW, h - TASK_PROGRESS_PADDING * 2, {fill: progressFill});
-                        pRect.appendChild(SvgUtils.createSvgElement('title', {}, tooltip));
+                        pRect.appendChild(SvgUtils.createTitle(tooltip));
                         g.appendChild(pRect);
                         if (progress < 1.0) {
                             g.appendChild(SvgUtils.createRect(x1 + progressW, y - th / 2 + 2, 1, th - 4, {fill: '#000000'}));
@@ -519,7 +519,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             const aY2 = aY1 + th - 1;
             const clipId = 'ta-' + String(task.id).replace(/-/g, '');
             g.appendChild(SvgUtils.createClipPath(clipId, x1, y - th / 2 + 2, x2 - x1 - 1, th - 4));
-            const grp = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
+            const grp = SvgUtils.createGroup({'clip-path': `url(#${clipId})`});
             let cur = fillColor ? ColorUtils.convertSprintColorToRgba(fillColor) : '#aaaaaa';
             for (let ax = x1 - 16; ax < x2; ax += 16) {
                 this.drawRibbon(grp, aY1, ax, aY2, 25, 15, cur);
@@ -582,7 +582,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                         'text-anchor': 'end', 'dominant-baseline': 'middle',
                         'clip-path': `url(#${clipId4})`,
                     });
-                    rLabel.appendChild(SvgUtils.createSvgElement('title', {},
+                    rLabel.appendChild(SvgUtils.createTitle(
                         this.generateTaskNameToolTip(resourceName, task.assignedUserAvailability, task.assignedUserCountry, task.assignedUserState)));
                     g.appendChild(rLabel);
                 }

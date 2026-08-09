@@ -97,7 +97,7 @@ export abstract class AbstractCanvas {
      * Mirrors Java: AbstractCanvas.render(…).
      */
     render(container: HTMLElement): void {
-        const svg = SvgUtils.createSvgElement('svg', {
+        const svg = SvgUtils.createSvg({
             width: this.chartWidth,
             height: this.chartHeight,
             style: 'display:block;user-select:none;shape-rendering:crispEdges',
@@ -124,7 +124,7 @@ export abstract class AbstractCanvas {
         // Otherwise, use an arbitrarily large value to avoid clipping the bottom.
         const clipH = this.verticalScrollEnabled ? this.containerHeight : 10000;
         svg.appendChild(SvgUtils.createClipPath(clipId, 0, 0, this.containerWidth, clipH));
-        const group = SvgUtils.createSvgElement('g', {'clip-path': `url(#${clipId})`});
+        const group = SvgUtils.createGroup({'clip-path': `url(#${clipId})`});
         svg.appendChild(group);
         return group;
     }
@@ -173,4 +173,3 @@ export abstract class AbstractCanvas {
         }
     }
 }
-

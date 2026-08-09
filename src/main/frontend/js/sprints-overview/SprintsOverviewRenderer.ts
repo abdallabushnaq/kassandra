@@ -113,7 +113,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     // }
 
     // renderWeekendStripes(baseY: number, baseHeight: number): SVGGElement {
-    //     const g = SvgUtils.createSvgElement('g', {class: 'weekend-stripes'});
+    //     const g = SvgUtils.createGroup({class: 'weekend-stripes'});
     //     const containerWidth = this.containerWidth;
     //     const xAxesTheme = this.theme.xAxesTheme;
     //
@@ -147,7 +147,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     // }
 
     // renderVerticalGridLines(baseY: number, baseHeight: number): SVGGElement {
-    //     const g = SvgUtils.createSvgElement('g', {class: 'grid-lines'});
+    //     const g = SvgUtils.createGroup({class: 'grid-lines'});
     //     if (this.dayWidth < 4) return g;
     //     const containerWidth = this.containerWidth;
     //     const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
@@ -174,7 +174,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
 
     drawGraph(svg: SVGElement): void {
         this.sprintHitAreas = [];
-        const g = SvgUtils.createSvgElement('g', {class: 'sprints'});
+        const g = SvgUtils.createGroup({class: 'sprints'});
         const containerWidth = this.containerWidth;
 
         this.lanes.forEach((lane, laneIndex) => {
@@ -192,7 +192,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
 
                 const fillColor = ColorUtils.convertSprintColorToRgba(sprint.color);
                 const rect = SvgUtils.createRect(sprintX, laneY, sprintW, SPRINT_H, {fill: fillColor});
-                rect.appendChild(SvgUtils.createSvgElement('title', {}, this.buildSprintTooltip(sprint)));
+                rect.appendChild(SvgUtils.createTitle(this.buildSprintTooltip(sprint)));
                 g.appendChild(rect);
 
                 if (sprintW > 20) {
@@ -212,7 +212,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     }
 
     // renderCurrentDateLine(chartHeight: number): SVGGElement {
-    //     const g = SvgUtils.createSvgElement('g', {class: 'now-line'});
+    //     const g = SvgUtils.createGroup({class: 'now-line'});
     //     const containerWidth = this.containerWidth;
     //     const nowIdx = calculateDayIndex(this.currentDate, this.chartStart);
     //     const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
@@ -248,4 +248,3 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         this.drawMilestones(svg);
     }
 }
-

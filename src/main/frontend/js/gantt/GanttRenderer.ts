@@ -128,7 +128,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
                         'dominant-baseline': 'alphabetic',
                         dy: '0.35em',
                     });
-                    letter.appendChild(SvgUtils.createSvgElement('title', {}, ex.name || ex.type || 'Off-day'));
+                    letter.appendChild(SvgUtils.createTitle(ex.name || ex.type || 'Off-day'));
                     g.appendChild(letter);
                 }
             } else {
@@ -198,7 +198,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         const totalH = calendarH + taskAreaH;
         this._calendarH = y + calendarH;
 
-        // const gDayBars = SvgUtils.createSvgElement('g', {class: 'day-bars'});
+        // const gDayBars = SvgUtils.createGroup({class: 'day-bars'});
         const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
         const lastDay = Math.min(this.days - 1, firstDay + Math.ceil(this.containerWidth / this.dayWidth) + 2);
         // for (let d = firstDay; d <= lastDay; d++) {
@@ -213,7 +213,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         this.calendarXAxes.drawCalendar(svg, true, this.containerWidth);
         this.calendarXAxes.drawMilestones(svg);
 
-        const gTasks = SvgUtils.createSvgElement('g', {class: 'tasks'});
+        const gTasks = SvgUtils.createGroup({class: 'tasks'});
         this.drawGanttChart(gTasks);
         svg.appendChild(gTasks);
 
@@ -221,7 +221,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
     }
 
     // renderNowLine(totalHeight: number): SVGGElement {
-    //     const g = SvgUtils.createSvgElement('g', {class: 'now-line'});
+    //     const g = SvgUtils.createGroup({class: 'now-line'});
     //     const containerWidth = this.containerWidth;
     //     const nowIdx = this.calculateDayIndex(this.currentDate);
     //     const xPos = this.dayIndexToPixelX(nowIdx) + this.dayWidth / 2;
