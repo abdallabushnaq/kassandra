@@ -237,7 +237,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             points,
             fill: fillColor,
             stroke: borderColor,
-            'stroke-width': '1'
+            'stroke-width': '1',
+            'vector-effect': 'non-scaling-stroke'
         });
         poly.appendChild(SvgUtils.createSvgElement('title', {}, this.generateTaskToolTip(task)));
         g.appendChild(poly);
