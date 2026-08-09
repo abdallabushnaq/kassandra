@@ -404,7 +404,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const fillColor = this.theme.burndownTheme.getAuthorColor(28);
         const th = this.getTaskHeight();
         if (progress > 0) {
-            //draw progress if it fits inside the task
+            //draw progress % if it fits inside the task
             let blendedColor = ColorUtils.calculateColorBlending(fillColor, ColorUtils.WHITE);
             if (progress > 0.5) {
                 blendedColor = ColorUtils.calculateColorBlending(fillColor, blendedColor);// we are drawing two times
@@ -491,9 +491,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
                 // Progress bar
                 if (progress > 0.0) {
-                    const progressFill = task.progressColor
-                        ? ColorUtils.convertSprintColorToRgba(task.progressColor)
-                        : ColorUtils.hexToRgbaWithAlpha(fillColor, 200);
+                    const progressFill = task.progressColor ? ColorUtils.convertSprintColorToRgba(task.progressColor) : ColorUtils.hexToRgbaWithAlpha(fillColor, 200);
                     const progressW = Math.floor((x2 - x1) * progress - 1);
                     if (progressW > 0) {
                         const pRect = SvgUtils.createRect(x1 + 1, y1 + 2, progressW, h - 4, {fill: progressFill});
@@ -545,6 +543,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             s += `\nAvailability: ${task.assignedUserAvailability}`;
         if (task.progress && task.progress > 0)
             s += `\nProgress: ${Math.round(task.progress * 100)}%`;
+        if (task.notes)
+            s += `\nNotes: ${task.notes}`;
         return s;
     }
 

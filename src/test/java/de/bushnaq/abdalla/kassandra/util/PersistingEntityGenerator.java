@@ -318,12 +318,35 @@ public class PersistingEntityGenerator {
         return addTask(sprint, parent, name, null, DateUtil.parseWorkDayDurationString(minWorkString), DateUtil.parseWorkDayDurationString(maxWorkString), user, dependency, null, false);
     }
 
+    /**
+     * Adds a task with optional notes to a sprint.
+     *
+     * @param name          the task name
+     * @param minWorkString the minimum work duration
+     * @param maxWorkString the maximum work duration
+     * @param notes         the optional task notes
+     * @param user          the assigned user
+     * @param sprint        the containing sprint
+     * @param parent        the parent task
+     * @param dependency    the dependent task
+     * @return the persisted task
+     */
+    public Task addTask(String name, String minWorkString, String maxWorkString, String notes, User user, Sprint sprint, Task parent, Task dependency) {
+        return addTask(sprint, parent, name, null, DateUtil.parseWorkDayDurationString(minWorkString), DateUtil.parseWorkDayDurationString(maxWorkString), notes, user, dependency, null, false);
+    }
+
     public Task addTask(Sprint sprint, Task parent, String name, LocalDateTime start, Duration minWork, Duration maxWork, User user, Task dependency) {
         return addTask(sprint, parent, name, start, minWork, maxWork, user, dependency, null, false);
     }
 
     public Task addTask(Sprint sprint, Task parent, String name, LocalDateTime start, Duration minWork, Duration maxWork, User user, Task dependency, TaskMode taskMode, boolean milestone) {
+        return addTask(sprint, parent, name, start, minWork, maxWork, null, user, dependency, taskMode, milestone);
+    }
+
+    private Task addTask(Sprint sprint, Task parent, String name, LocalDateTime start, Duration minWork, Duration maxWork, String notes, User user, Task dependency, TaskMode taskMode,
+            boolean milestone) {
         return eg.addTask(sprint, parent, name, start, minWork, maxWork, user, dependency, taskMode, milestone, task -> {
+            task.setNotes(notes);
             Task saved = taskApi.persist(task);
             System.out.printf("Adding %s%n", saved.toString());
             return saved;

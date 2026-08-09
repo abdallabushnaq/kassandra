@@ -26,4 +26,5 @@ export interface TaskDto {
     assignedUserState?: string | null;
     calendarId?: string | null;
     predecessors?: { predecessorId: number | string; visible?: boolean }[];
+    notes?: string | null;
 }

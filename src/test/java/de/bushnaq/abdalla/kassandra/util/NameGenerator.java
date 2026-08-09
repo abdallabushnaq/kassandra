@@ -28,11 +28,13 @@ import java.util.logging.Logger;
 
 public class NameGenerator {
     public static final  String       PROJECT_HUB_ORG = "@kassandra.org";
+    private static final String       TASK_NOTES_DELIMITER = "\t";
     private static final Logger       logger          = Logger.getLogger(NameGenerator.class.getName().toLowerCase());
     private final        List<String> productNames;
     private final        List<String> projectNames;
     private final        List<String> sprintNames;
     private final        List<String> storyNames;
+    private final        Map<String, String> taskNotes;
     private final        Set<String>  usedStoryNames;
     private final        List<Name>   userNames;
     private final        List<String> versionNames;
@@ -47,6 +49,7 @@ public class NameGenerator {
         projectNames   = new ArrayList<>();
         sprintNames    = new ArrayList<>();
         storyNames     = new ArrayList<>();
+        taskNotes      = new HashMap<>();
         usedStoryNames = new HashSet<>();
         try {
             productNames.addAll(Files.readAllLines(Paths.get("src/test/resources/product-names.txt"))
@@ -87,6 +90,14 @@ public class NameGenerator {
                     .toList());
         } catch (IOException e) {
             logger.severe("Error reading story-names.txt: " + e.getMessage());
+        }
+        try {
+            Files.readAllLines(Paths.get("src/test/resources/task-notes.txt"))
+                    .stream()
+                    .filter(line -> line != null && !line.trim().isEmpty())
+                    .forEach(this::addTaskNote);
+        } catch (IOException e) {
+            logger.severe("Error reading task-notes.txt: " + e.getMessage());
         }
     }
 
@@ -160,6 +171,33 @@ public class NameGenerator {
             return String.format("%s - %s", storyName, workTypes[t]);
         }
         return String.format("%s - Task %d", storyName, t);
+    }
+
+    /**
+     * Returns the generated notes for a story task.
+     *
+     * @param storyName the story name
+     * @param workName  the generated task work name
+     * @return the task notes, or {@code null} when the combination is not configured
+     */
+    public String generateWorkNotes(String storyName, String workName) {
+        String storyPrefix = storyName + " - ";
+        if (!workName.startsWith(storyPrefix)) {
+            return null;
+        }
+        return taskNotes.get(createTaskNoteKey(storyName, workName.substring(storyPrefix.length())));
+    }
+
+    private void addTaskNote(String line) {
+        String[] values = line.split(TASK_NOTES_DELIMITER, 3);
+        if (values.length != 3) {
+            throw new IllegalArgumentException("Invalid task-notes.txt entry: " + line);
+        }
+        taskNotes.put(createTaskNoteKey(values[0], values[1]), values[2]);
+    }
+
+    private String createTaskNoteKey(String storyName, String workName) {
+        return storyName + TASK_NOTES_DELIMITER + workName;
     }
 
     /**

@@ -29,87 +29,91 @@ public class TaskDto {
     /**
      * User availability percentage (e.g., "100%" or "50%").
      */
-    public String                     assignedUserAvailability;
+    public String            assignedUserAvailability;
     /**
      * User's country (for tooltip).
      */
-    public String                     assignedUserCountry;
+    public String            assignedUserCountry;
     /**
      * Name of the assigned resource, shown to the left of the task bar.
      */
-    public String                     assignedUserName;
+    public String            assignedUserName;
     /**
      * User's state/region (for tooltip).
      */
-    public String                     assignedUserState;
+    public String            assignedUserState;
     /**
      * Task border color in #rrggbb format (critical vs. normal).
      */
-    public String                     borderColor;
+    public String            borderColor;
     /**
      * Identifier of the assigned user's calendar in {@link GanttChartDto#calendars}.
      */
-    public UUID                       calendarId;
+    public UUID              calendarId;
     /**
      * True if this task is on the critical path.
      */
-    public boolean                    critical;
+    public boolean           critical;
     /**
      * Task body fill color in #rrggbbaa format (8 hex digits).
      * Alpha encodes the taskTransparency (0=fully transparent, ff=opaque).
      */
-    public String                     fillColor;
+    public String            fillColor;
     /**
      * Scheduled finish date/time.
      */
-    public LocalDateTime              finish;
+    public LocalDateTime     finish;
     /**
      * Unique task identifier.
      */
-    public UUID                       id;
+    public UUID              id;
     /**
      * Short key label shown in the chart (e.g. "T-42").
      */
-    public String                     key;
+    public String            key;
     /**
      * True if manually scheduled.
      */
-    public boolean                    manuallyScheduled;
+    public boolean           manuallyScheduled;
     /**
      * True if this is a milestone (zero-duration, no children).
      */
-    public boolean                    milestone;
+    public boolean           milestone;
     /**
      * Full task name.
      */
-    public String                     name;
+    public String            name;
+    /**
+     * Additional notes or comments about the task.
+     */
+    public String            notes;
     /**
      * Finish-to-start predecessor relations for drawing dependency arrows.
      */
-    public List<RelationDto>          predecessors       = new ArrayList<>();
+    public List<RelationDto> predecessors = new ArrayList<>();
     /**
      * Completion fraction 0–1.
      */
-    public double                     progress;
+    public double            progress;
     /**
      * Progress bar fill color in #rrggbbaa format.
      * A slightly lighter version of the user's base color.
      */
-    public String                     progressColor;
+    public String            progressColor;
     /**
      * Zero-based row index used to compute the Y position in JS.
      */
-    public int                        rowIndex;
+    public int               rowIndex;
     /**
      * Scheduled start date/time.
      */
-    public LocalDateTime              start;
+    public LocalDateTime     start;
     /**
      * True if this is a story (has child tasks).
      */
-    public boolean                    story;
+    public boolean           story;
     /**
      * Task text label color in #rrggbb format.
      */
-    public String                     textColor;
+    public String            textColor;
 }

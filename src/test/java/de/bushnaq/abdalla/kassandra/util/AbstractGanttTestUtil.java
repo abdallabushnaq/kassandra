@@ -357,6 +357,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
                         String minWork          = String.format("%dh", (int) minHours);
                         String maxWork          = String.format("%dh", (int) maxHours);
                         String workName         = NameGenerator.generateWorkName(storyName, t);
+                        String notes            = peg.random.nextFloat() < 0.8f ? peg.nameGenerator.generateWorkNotes(storyName, workName) : null;
                         Task   depenedenycyTask = null;
                         if (peg.random.nextFloat(1) > 0.5f && !sprint.getTasks().isEmpty()) {
                             int tries = 8;
@@ -370,7 +371,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
                             }
                             while (depenedenycyTask == null && tries > 0);
                         }
-                        peg.addTask(workName, minWork, maxWork, user, sprint, story, depenedenycyTask);
+                        peg.addTask(workName, minWork, maxWork, notes, user, sprint, story, depenedenycyTask);
                     }
                 }
             }

@@ -366,7 +366,7 @@
 | kassandra.rest.dto.gantt             | GanttChartDto.java                                               | src      |        6 |       16 |       16 |       10 |       48 |
 | kassandra.rest.dto.gantt             | GanttMetaDto.java                                                | src      |        4 |       38 |       16 |       19 |       77 |
 | kassandra.rest.dto.gantt             | RelationDto.java                                                 | src      |        3 |        9 |       16 |        6 |       34 |
-| kassandra.rest.dto.gantt             | TaskDto.java                                                     | src      |        3 |       68 |       16 |       28 |      115 |
+| kassandra.rest.dto.gantt             | TaskDto.java                                                     | src      |        3 |       71 |       16 |       29 |      119 |
 | kassandra.rest.dto.gantt             | UserCalendarDto.java                                             | src      |        3 |        9 |       16 |        8 |       36 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.rest.dto.overview          | LaneDto.java                                                     | src      |        3 |        0 |       16 |        7 |       26 |
@@ -407,7 +407,7 @@
 | kassandra.service                    | GanttBurndownChartService.java                                   | src      |       68 |       65 |      192 |      499 |      824 |
 | kassandra.service                    | GanttBurndownExcelExportService.java                             | src      |       17 |       10 |       16 |      140 |      183 |
 | kassandra.service                    | GanttBurndownExcelExportServiceTest.java                         | src      |        9 |        0 |       16 |       47 |       72 |
-| kassandra.service                    | GanttChartService.java                                           | src      |       34 |       47 |       45 |      215 |      341 |
+| kassandra.service                    | GanttChartService.java                                           | src      |       34 |       47 |       45 |      213 |      339 |
 | kassandra.service                    | ProductAclService.java                                           | src      |       25 |       72 |       16 |      117 |      230 |
 | kassandra.service                    | SprintExportService.java                                         | src      |       20 |       53 |       24 |      121 |      218 |
 | kassandra.service                    | SprintsOverviewService.java                                      | src      |       29 |        0 |       33 |      156 |      218 |
@@ -558,7 +558,7 @@
 | kassandra.ui                         | MainLayout.java                                                  | src      |       69 |       33 |       45 |      316 |      463 |
 | kassandra.ui                         | SprintStatus.java                                                | src      |        2 |        0 |       16 |        4 |       22 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.util                       | AbstractGanttTestUtil.java                                       | src      |       56 |       27 |       65 |      517 |      665 |
+| kassandra.util                       | AbstractGanttTestUtil.java                                       | src      |       56 |       27 |       65 |      518 |      666 |
 | kassandra.util                       | AbstractLegacyGanttTestUtil.java                                 | src      |       10 |        0 |       19 |       85 |      114 |
 | kassandra.util                       | AbstractTestUtil.java                                            | src      |       14 |       16 |       20 |       66 |      116 |
 | kassandra.util                       | BurnDownUtil.java                                                | src      |       10 |       26 |       54 |       72 |      162 |
@@ -567,9 +567,9 @@
 | kassandra.util                       | GanttGenerator.java                                              | src      |       24 |       43 |       38 |      264 |      369 |
 | kassandra.util                       | H2DatabaseStateManager.java                                      | src      |       22 |       27 |       27 |      125 |      201 |
 | kassandra.util                       | MPXJReader.java                                                  | src      |       14 |        0 |       50 |      169 |      233 |
-| kassandra.util                       | NameGenerator.java                                               | src      |       26 |       15 |       25 |      172 |      238 |
+| kassandra.util                       | NameGenerator.java                                               | src      |       29 |       22 |       25 |      200 |      276 |
 | kassandra.util                       | OffDayGenerator.java                                             | src      |       33 |       22 |       34 |      208 |      297 |
-| kassandra.util                       | PersistingEntityGenerator.java                                   | src      |      117 |      100 |       55 |      728 |     1000 |
+| kassandra.util                       | PersistingEntityGenerator.java                                   | src      |      119 |      113 |       55 |      736 |     1023 |
 | kassandra.util                       | RandomCase.java                                                  | src      |        7 |        0 |       19 |       73 |       99 |
 | kassandra.util                       | TestInfoUtil.java                                                | src      |       15 |       86 |       16 |       51 |      168 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -649,5 +649,5 @@
 | util                                 | TaskUtil.java                                                    | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                        | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 70 package(s)                        | 578 file(s)                                                      | java     |    12672 |    12746 |    17363 |    68576 |   111357 |
+| 70 package(s)                        | 578 file(s)                                                      | java     |    12677 |    12769 |    17363 |    68612 |   111421 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

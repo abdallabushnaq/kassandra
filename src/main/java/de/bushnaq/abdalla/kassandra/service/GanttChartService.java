@@ -24,14 +24,12 @@ import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
-import de.bushnaq.abdalla.kassandra.rest.dto.gantt.CalendarExceptionDto;
-import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttChartDto;
-import de.bushnaq.abdalla.kassandra.rest.dto.gantt.RelationDto;
-import de.bushnaq.abdalla.kassandra.rest.dto.gantt.TaskDto;
-import de.bushnaq.abdalla.kassandra.rest.dto.gantt.UserCalendarDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.*;
 import de.bushnaq.abdalla.kassandra.rest.dto.theme.ThemeDto;
 import de.bushnaq.abdalla.util.Util;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.mpxj.ProjectCalendar;
+import net.sf.mpxj.ProjectCalendarException;
 import org.apache.xmlgraphics.java2d.color.ColorUtil;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,8 +41,6 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import net.sf.mpxj.ProjectCalendar;
-import net.sf.mpxj.ProjectCalendarException;
 
 /**
  * Builds a {@link GanttChartDto} from a fully-loaded {@link Sprint} so that
@@ -79,6 +75,33 @@ public class GanttChartService {
         this.darkTheme  = darkTheme;
     }
 
+    private static void addUserCalendar(GanttChartDto chart, User user, Set<UUID> calendarIds,
+                                        LocalDate calendarStart, LocalDate calendarEnd) {
+        if (user == null || user.getId() == null || !calendarIds.add(user.getId()))
+            return;
+
+        UserCalendarDto calendarDto = new UserCalendarDto();
+        calendarDto.id = user.getId();
+        ProjectCalendar calendar = user.getCalendar();
+        if (calendar != null) {
+            for (ProjectCalendarException exception : calendar.getCalendarExceptions()) {
+                LocalDate exceptionStart = exception.getFromDate();
+                LocalDate exceptionEnd   = exception.getToDate() != null ? exception.getToDate() : exceptionStart;
+                if (exceptionStart.isAfter(calendarEnd) || exceptionEnd.isBefore(calendarStart))
+                    continue;
+
+                CalendarExceptionDto exceptionDto = new CalendarExceptionDto();
+                exceptionDto.from   = exceptionStart.isBefore(calendarStart) ? calendarStart : exceptionStart;
+                exceptionDto.to     = exceptionEnd.isAfter(calendarEnd) ? calendarEnd : exceptionEnd;
+                exceptionDto.name   = exception.getName();
+                exceptionDto.type   = getCalendarExceptionType(exception.getName());
+                exceptionDto.letter = getCalendarExceptionLetter(exceptionDto.type);
+                calendarDto.exceptions.add(exceptionDto);
+            }
+        }
+        chart.calendars.add(calendarDto);
+    }
+
     /**
      * Builds the complete DTO for the given sprint using default preRun/postRun padding.
      *
@@ -90,6 +113,8 @@ public class GanttChartService {
     public GanttChartDto build(Sprint sprint, LocalDateTime now, boolean dark) {
         return build(sprint, now, dark, DEFAULT_PRE_RUN, DEFAULT_POST_RUN);
     }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
 
     /**
      * Builds the complete DTO for the given sprint.
@@ -159,8 +184,6 @@ public class GanttChartService {
         return dto;
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
-
     private TaskDto buildTaskDto(Task task, int rowIndex, Theme theme) {
         TaskDto dto = new TaskDto();
 
@@ -227,56 +250,11 @@ public class GanttChartService {
                 dto.predecessors.add(rd);
             }
         }
+        if (task.getNotes() != null)
+            dto.notes = task.getNotes();
 
         return dto;
     }
-
-    private static void addUserCalendar(GanttChartDto chart, User user, Set<UUID> calendarIds,
-                                        LocalDate calendarStart, LocalDate calendarEnd) {
-        if (user == null || user.getId() == null || !calendarIds.add(user.getId()))
-            return;
-
-        UserCalendarDto calendarDto = new UserCalendarDto();
-        calendarDto.id = user.getId();
-        ProjectCalendar calendar = user.getCalendar();
-        if (calendar != null) {
-            for (ProjectCalendarException exception : calendar.getCalendarExceptions()) {
-                LocalDate exceptionStart = exception.getFromDate();
-                LocalDate exceptionEnd   = exception.getToDate() != null ? exception.getToDate() : exceptionStart;
-                if (exceptionStart.isAfter(calendarEnd) || exceptionEnd.isBefore(calendarStart))
-                    continue;
-
-                CalendarExceptionDto exceptionDto = new CalendarExceptionDto();
-                exceptionDto.from   = exceptionStart.isBefore(calendarStart) ? calendarStart : exceptionStart;
-                exceptionDto.to     = exceptionEnd.isAfter(calendarEnd) ? calendarEnd : exceptionEnd;
-                exceptionDto.name   = exception.getName();
-                exceptionDto.type   = getCalendarExceptionType(exception.getName());
-                exceptionDto.letter = getCalendarExceptionLetter(exceptionDto.type);
-                calendarDto.exceptions.add(exceptionDto);
-            }
-        }
-        chart.calendars.add(calendarDto);
-    }
-
-    private static LocalDate getRenderedCalendarEnd(Sprint sprint, LocalDateTime now, int preRun, int postRun) {
-        LocalDate end = sprint.getEnd().toLocalDate();
-        if (now != null && now.toLocalDate().isAfter(end))
-            end = now.toLocalDate();
-        if (sprint.getStart().toLocalDate().isAfter(end))
-            end = sprint.getStart().toLocalDate();
-        return end.plusDays(preRun + postRun);
-    }
-
-    private static LocalDate getRenderedCalendarStart(Sprint sprint, LocalDateTime now, int preRun) {
-        LocalDate start = sprint.getStart().toLocalDate();
-        if (now != null && now.toLocalDate().isBefore(start))
-            start = now.toLocalDate();
-        if (sprint.getEnd().toLocalDate().isBefore(start))
-            start = sprint.getEnd().toLocalDate();
-        return start.minusDays(preRun);
-    }
-
-    // ── Colour utilities ──────────────────────────────────────────────────────
 
     /**
      * Converts a Java {@link Color} to a 6-digit hex string (#rrggbb).
@@ -294,6 +272,25 @@ public class GanttChartService {
         if (color == null) return "#000000ff";
         int a = alpha & 0xff;
         return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue(), a);
+    }
+
+    // ── Colour utilities ──────────────────────────────────────────────────────
+
+    private static String getCalendarExceptionLetter(String type) {
+        return switch (type) {
+            case "VACATION" -> "V";
+            case "TRIP" -> "T";
+            case "SICK" -> "S";
+            default -> "H";
+        };
+    }
+
+    private static String getCalendarExceptionType(String name) {
+        for (OffDayType type : OffDayType.values()) {
+            if (type.name().equals(name))
+                return type.name();
+        }
+        return OffDayType.HOLIDAY.name();
     }
 
     public static @NonNull LocalDate getChartEnd(Sprint sprint, LocalDateTime now, int postRun) {
@@ -322,20 +319,21 @@ public class GanttChartService {
         return chartStartDate;
     }
 
-    private static String getCalendarExceptionLetter(String type) {
-        return switch (type) {
-            case "VACATION" -> "V";
-            case "TRIP" -> "T";
-            case "SICK" -> "S";
-            default -> "H";
-        };
+    private static LocalDate getRenderedCalendarEnd(Sprint sprint, LocalDateTime now, int preRun, int postRun) {
+        LocalDate end = sprint.getEnd().toLocalDate();
+        if (now != null && now.toLocalDate().isAfter(end))
+            end = now.toLocalDate();
+        if (sprint.getStart().toLocalDate().isAfter(end))
+            end = sprint.getStart().toLocalDate();
+        return end.plusDays(preRun + postRun);
     }
 
-    private static String getCalendarExceptionType(String name) {
-        for (OffDayType type : OffDayType.values()) {
-            if (type.name().equals(name))
-                return type.name();
-        }
-        return OffDayType.HOLIDAY.name();
+    private static LocalDate getRenderedCalendarStart(Sprint sprint, LocalDateTime now, int preRun) {
+        LocalDate start = sprint.getStart().toLocalDate();
+        if (now != null && now.toLocalDate().isBefore(start))
+            start = now.toLocalDate();
+        if (sprint.getEnd().toLocalDate().isBefore(start))
+            start = sprint.getEnd().toLocalDate();
+        return start.minusDays(preRun);
     }
 }
