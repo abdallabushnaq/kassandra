@@ -23,7 +23,6 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import de.bushnaq.abdalla.kassandra.dao.OidcProviderDAO;
@@ -38,7 +37,6 @@ import jakarta.annotation.security.RolesAllowed;
  */
 @Route(value = OidcIdentityLinkView.ROUTE, layout = MainLayout.class)
 @PageTitle("Link OIDC Identity")
-@Menu(order = 101, icon = "vaadin:link", title = "Link Identity")
 @RolesAllowed("ADMIN")
 public class OidcIdentityLinkView extends VerticalLayout {
 

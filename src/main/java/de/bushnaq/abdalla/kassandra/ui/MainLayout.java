@@ -47,6 +47,8 @@ import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
+import de.bushnaq.abdalla.kassandra.ui.view.OidcIdentityLinkView;
+import de.bushnaq.abdalla.kassandra.ui.view.OidcProviderManagementView;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -338,6 +340,14 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
         // Add "Manage User Groups" and "Manage Users" menu items for admins only
         if (SecurityUtils.isAdmin()) {
+            userMenuItem.getSubMenu().addSeparator();
+
+            userMenuItem.getSubMenu().addItem("Identity Providers",
+                    e -> UI.getCurrent().navigate(OidcProviderManagementView.class));
+
+            userMenuItem.getSubMenu().addItem("Link Identity",
+                    e -> UI.getCurrent().navigate(OidcIdentityLinkView.class));
+
             var manageUserGroupsItem = userMenuItem.getSubMenu().addItem("Manage User Groups", e -> navigateToUserGroups());
             manageUserGroupsItem.setId(ID_USER_MENU_MANAGE_USER_GROUPS);
 
@@ -348,6 +358,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             manageWorkWeeksItem.setId(ID_USER_MENU_MANAGE_WORK_WEEKS);
         }
 
+        userMenuItem.getSubMenu().addSeparator();
         var manageSettingsItem = userMenuItem.getSubMenu().addItem("Manage Settings");
         manageSettingsItem.setEnabled(false);
         manageSettingsItem.setId(ID_USER_MENU_MANAGE_SETTINGS);

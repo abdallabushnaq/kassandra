@@ -546,8 +546,8 @@
 | kassandra.ui.view                    | MainView.java                                                    | src      |        5 |        7 |       16 |       10 |       38 |
 | kassandra.ui.view                    | OffDayListView.java                                              | src      |       39 |       11 |       60 |      260 |      370 |
 | kassandra.ui.view                    | OffDayListViewTest.java                                          | src      |       23 |       77 |       35 |      142 |      277 |
-| kassandra.ui.view                    | OidcIdentityLinkView.java                                        | src      |        8 |       12 |       16 |       49 |       85 |
-| kassandra.ui.view                    | OidcProviderManagementView.java                                  | src      |       13 |       11 |       16 |      100 |      140 |
+| kassandra.ui.view                    | OidcIdentityLinkView.java                                        | src      |        8 |       12 |       16 |       47 |       83 |
+| kassandra.ui.view                    | OidcProviderManagementView.java                                  | src      |       13 |       11 |       16 |       98 |      138 |
 | kassandra.ui.view                    | ProductListView.java                                             | src      |       41 |        6 |       23 |      334 |      404 |
 | kassandra.ui.view                    | ProductListViewTest.java                                         | src      |       35 |      119 |       24 |      224 |      402 |
 | kassandra.ui.view                    | QualityBoard.java                                                | src      |       67 |       84 |       62 |      624 |      837 |
@@ -575,7 +575,7 @@
 | kassandra.ui                         | GenerateScreenshots.java                                         | src      |       81 |       65 |      141 |      511 |      798 |
 | kassandra.ui                         | HtmlColor.java                                                   | src      |        6 |        0 |       36 |       22 |       64 |
 | kassandra.ui                         | MainErrorHandler.java                                            | src      |        5 |        0 |       16 |       28 |       49 |
-| kassandra.ui                         | MainLayout.java                                                  | src      |       69 |       33 |       45 |      316 |      463 |
+| kassandra.ui                         | MainLayout.java                                                  | src      |       72 |       33 |       45 |      323 |      473 |
 | kassandra.ui                         | SprintStatus.java                                                | src      |        2 |        0 |       16 |        4 |       22 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.util                       | AbstractGanttTestUtil.java                                       | src      |       56 |       27 |       65 |      518 |      666 |
@@ -669,5 +669,5 @@
 | util                                 | TaskUtil.java                                                    | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                        | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 70 package(s)                        | 598 file(s)                                                      | java     |    12838 |    13095 |    17615 |    69570 |   113118 |
+| 70 package(s)                        | 598 file(s)                                                      | java     |    12841 |    13095 |    17615 |    69573 |   113124 |
 +--------------------------------------+------------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
