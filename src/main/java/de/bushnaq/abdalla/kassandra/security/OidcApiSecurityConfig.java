@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,158 +17,58 @@
 
 package de.bushnaq.abdalla.kassandra.security;
 
-import de.bushnaq.abdalla.kassandra.service.UserRoleService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.web.SecurityFilterChain;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
- * Security configuration for REST API endpoints.
- * This class configures Spring Security to use JWT tokens for REST API authentication.
- * It's only enabled when the 'spring.security.oauth2.client.registration.keycloak.client-id' property is defined.
+ * Configures REST API authentication for enabled persisted OIDC issuers.
  */
 @EnableWebSecurity
 @Configuration
-@ConditionalOnProperty(name = "spring.security.oauth2.client.registration.keycloak.client-id")
 public class OidcApiSecurityConfig {
 
-    @Autowired(required = false)
-    private       AuthenticationManager basicAuthManager; // Inject the basic auth manager from SecurityConfig
-    @Autowired(required = false)
-    private       JwtDecoder            jwtDecoder;
-    private final Logger                logger = LoggerFactory.getLogger(OidcApiSecurityConfig.class);
     @Autowired
-    private       UserRoleService       userRoleService;
+    private AuthenticationManager                   authenticationManager;
+    @Autowired
+    private OidcAuthenticationManagerResolver      oidcAuthenticationManagerResolver;
 
     /**
-     * Configures Spring Security for REST API endpoints.
-     * This creates a separate security filter chain for the REST API that uses JWT tokens for authentication.
+     * Creates the stateless REST API filter chain.
+     *
+     * @param http Spring Security HTTP configuration
+     * @return configured API filter chain
+     * @throws Exception when Spring Security cannot build the chain
      */
     @Bean
-    @Order(1) // Higher precedence than the Vaadin security filter chain
+    @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
-        logger.info(">>> Configuring security chain (1/4) JWT security for REST API endpoints");
-
-        // Create a composite authentication manager that supports both JWT and Basic Auth
-        AuthenticationManager compositeAuthManager;
-        if (basicAuthManager != null && jwtDecoder != null) {
-            // Combine JWT and Basic Auth authentication providers
-            JwtAuthenticationProvider jwtProvider = new JwtAuthenticationProvider(jwtDecoder);
-            jwtProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter());
-
-            // Create a provider manager with both providers
-            compositeAuthManager = new ProviderManager(
-                    java.util.Arrays.asList(
-                            jwtProvider,
-                            ((ProviderManager) basicAuthManager).getProviders().get(0)
-                    )
-            );
-        } else if (jwtDecoder != null) {
-            compositeAuthManager = jwtAuthenticationManager();
-        } else if (basicAuthManager != null) {
-            compositeAuthManager = basicAuthManager;
-        } else {
-            logger.warn("No authentication providers available!");
-            compositeAuthManager = new ProviderManager(java.util.Collections.emptyList());
-        }
-
-        // Configure security for REST API endpoints
-        http
-                // Apply this filter chain only to API endpoints
+        return http
                 .securityMatcher("/api/**")
-                // Disable CSRF for API endpoints
                 .csrf(csrf -> csrf.disable())
-                // Configure session management to be stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // Configure authorization for API endpoints
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/**").authenticated())
-                // Configure both JWT token authentication AND HTTP Basic auth for API endpoints
+                .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
                 .httpBasic(httpBasic -> {
-                }) // Add HTTP Basic Authentication support
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> {
-                }))
-                .authenticationManager(compositeAuthManager);
-
-        return http.build();
-    }
-
-    /**
-     * Creates a JWT converter to load roles from database for REST API authorization.
-     * This replaces OIDC token-based roles with local database roles.
-     * This is crucial for the @PreAuthorize annotations in REST controllers to work properly.
-     */
-    @Bean
-    public Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter() {
-        JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
-        jwtConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
-            // Extract email from JWT token
-            String email = jwt.getClaim("email");
-            if (email == null || email.isEmpty()) {
-                // Fallback to preferred_username or subject
-                email = jwt.getClaim("preferred_username");
-                if (email == null || email.isEmpty()) {
-                    email = jwt.getSubject();
-                }
-            }
-
-//            logger.debug("Loading roles for OIDC user: {}", email);
-
-            // Load roles from database
-            List<String> dbRoles = userRoleService.getRolesByEmail(email);
-
-            Set<GrantedAuthority> authorities = new HashSet<>();
-            if (!dbRoles.isEmpty()) {
-                // Use database roles
-                dbRoles.forEach(role ->
-                        authorities.add(new SimpleGrantedAuthority("ROLE_" + role))
-                );
-//                logger.debug("Loaded roles from database for {}: {}", email, dbRoles);
-            } else {
-                // No user in database - assign default USER role
-//                authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-                logger.warn("User {} not found in database. Assigned default USER role.", email);
-            }
-
-            return authorities;
-        });
-        return jwtConverter;
-    }
-
-    /**
-     * Create an authentication manager that uses JWT authentication with our custom converter
-     */
-    @Bean(name = "jwtAuthenticationManager")
-    public AuthenticationManager jwtAuthenticationManager() {
-        if (jwtDecoder == null) {
-            logger.warn("JwtDecoder is null - JWT authentication will not work");
-            return new ProviderManager(java.util.Collections.emptyList());
-        }
-
-        JwtAuthenticationProvider jwtProvider = new JwtAuthenticationProvider(jwtDecoder);
-        jwtProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter());
-        return new ProviderManager(jwtProvider);
+                })
+                .exceptionHandling(handling -> handling
+                        .authenticationEntryPoint((request, response, authenticationException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.getWriter().write("Authentication required");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.getWriter().write("Access denied");
+                        }))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .authenticationManagerResolver(oidcAuthenticationManagerResolver))
+                .authenticationManager(authenticationManager)
+                .build();
     }
 }

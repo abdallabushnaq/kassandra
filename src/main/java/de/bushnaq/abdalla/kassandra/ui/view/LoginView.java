@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,12 +17,10 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -30,35 +28,45 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
-import org.springframework.core.env.Environment;
+import de.bushnaq.abdalla.kassandra.dao.OidcProviderDAO;
+import de.bushnaq.abdalla.kassandra.service.OidcProviderService;
+import de.bushnaq.abdalla.kassandra.service.SecurityConfigurationService;
+
+import java.util.List;
 
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
 
-
 /**
- * Login view that supports both OIDC and form-based authentication.
- * When OIDC is configured, it shows the OIDC login button.
- * When OIDC is not configured, it shows a standard login form.
+ * Login view that lists the currently enabled OIDC providers.
  */
-@Route("login")
+@Route(LoginView.ROUTE)
 @PageTitle("Login | Kassandra")
 @AnonymousAllowed
 public class LoginView extends VerticalLayout implements BeforeEnterObserver {
-    public static final String  FORM_LOGIN        = "form-login";
-    public static final String  LOGIN_VIEW        = "login-view";
-    // ID for OIDC login button used in tests
-    public static final String  OIDC_LOGIN_BUTTON = "oidc-login-button";
-    public static final String  ROUTE             = "login";
-    private final       boolean oidcEnabled;
 
-    public LoginView(Environment environment) {
-        this.oidcEnabled = environment.getProperty("spring.security.oauth2.client.registration.keycloak.client-id") != null;
+    /**
+     * Identifier of the login view root component.
+     */
+    public static final String LOGIN_VIEW = "login-view";
+    /**
+     * Identifier used for the sole provider button to preserve existing UI test integration.
+     */
+    public static final String OIDC_LOGIN_BUTTON = "oidc-login-button";
+    /**
+     * The public login route.
+     */
+    public static final String ROUTE      = "login";
 
+    /**
+     * Creates the dynamic provider selection page.
+     *
+     * @param oidcProviderService provider configuration service
+     */
+    public LoginView(OidcProviderService oidcProviderService, SecurityConfigurationService securityConfigurationService) {
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
-        // Create a centered container for the login
         VerticalLayout centeringLayout = new VerticalLayout();
         centeringLayout.setId(LOGIN_VIEW);
         centeringLayout.setWidth(DIALOG_DEFAULT_WIDTH);
@@ -69,66 +77,20 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
 
         H1 title = new H1("Kassandra");
         title.addClassNames(Margin.Bottom.MEDIUM);
-        centeringLayout.add(title);
-
-        // Add authentication options
-        if (oidcEnabled) {
-            centeringLayout.add(createOidcLoginButton());
-        } else {
-            centeringLayout.add(createFormLogin());
-        }
-
+        centeringLayout.add(title, createProviderButtons(oidcProviderService, securityConfigurationService));
         add(centeringLayout);
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
-        // Handle authentication errors for both OIDC and form login
-        // Errors are handled by Spring Security and the LoginForm component
+        // Authentication errors are handled by Spring Security.
     }
 
-    /**
-     * Creates a standard login form for username/password authentication
-     */
-    private Component createFormLogin() {
-        LoginForm loginForm = new LoginForm();
-        loginForm.setId(FORM_LOGIN);
-        loginForm.setAction("login");
-        loginForm.setForgotPasswordButtonVisible(false);
-
-        // Wrap in a card-like container
-        Div wrapper = new Div(loginForm);
-        wrapper.getStyle()
-                .set("background-color", "var(--lumo-base-color)")
-                .set("border-radius", "var(--lumo-border-radius-l)")
-                .set("box-shadow", "0 2px 10px var(--lumo-shade-20pct)")
-                .set("padding", "var(--lumo-space-l)");
-
-        return wrapper;
-    }
-
-    /**
-     * Creates the OIDC login button
-     */
-    private Component createOidcLoginButton() {
-        VerticalLayout container = new VerticalLayout();
-        container.setMaxWidth("400px");
-        container.setAlignItems(Alignment.CENTER);
-        container.setPadding(true);
-        container.setSpacing(true);
-
-        // Instructions
-        Paragraph instructions = new Paragraph("Please sign in with your organizational account");
-        instructions.getStyle()
-                .set("text-align", "center")
-                .set("color", "var(--lumo-secondary-text-color)")
-                .set("margin-bottom", "var(--lumo-space-m)");
-        container.add(instructions);
-
-        // OIDC login button
-        Anchor loginButton = new Anchor("/oauth2/authorization/keycloak", "🔐 Sign in with Keycloak");
-        loginButton.setRouterIgnore(true); // Prevent Vaadin from intercepting the link
-        loginButton.setId(OIDC_LOGIN_BUTTON);
+    private Anchor createProviderButton(OidcProviderDAO provider, boolean onlyProvider) {
+        Anchor loginButton = new Anchor("/oauth2/authorization/" + provider.getRegistrationId(),
+                "Sign in with " + provider.getDisplayName());
+        loginButton.setRouterIgnore(true);
+        loginButton.setId(onlyProvider ? OIDC_LOGIN_BUTTON : OIDC_LOGIN_BUTTON + "-" + provider.getRegistrationId());
         loginButton.getStyle()
                 .set("background-color", "var(--lumo-primary-color)")
                 .set("color", "var(--lumo-primary-contrast-color)")
@@ -140,25 +102,48 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
                 .set("text-align", "center")
                 .set("font-weight", "600")
                 .set("font-size", "var(--lumo-font-size-m)")
-                .set("min-width", "250px")
-                .set("transition", "all 0.2s");
+                .set("min-width", "250px");
+        return loginButton;
+    }
 
-        // Add hover effect via JavaScript
-        loginButton.getElement().executeJs(
-                "this.addEventListener('mouseenter', () => { this.style.transform = 'translateY(-2px)'; this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'; });" +
-                        "this.addEventListener('mouseleave', () => { this.style.transform = 'translateY(0)'; this.style.boxShadow = 'none'; });"
-        );
+    private Div createProviderButtons(OidcProviderService oidcProviderService,
+                                      SecurityConfigurationService securityConfigurationService) {
+        VerticalLayout container = new VerticalLayout();
+        container.setMaxWidth("400px");
+        container.setAlignItems(Alignment.CENTER);
+        container.setPadding(true);
+        container.setSpacing(true);
 
-        container.add(loginButton);
+        Paragraph instructions = new Paragraph("Please sign in with your organizational account");
+        instructions.getStyle()
+                .set("text-align", "center")
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("margin-bottom", "var(--lumo-space-m)");
+        container.add(instructions);
 
-        // Wrap in a card-like container
+        List<OidcProviderDAO> providers = oidcProviderService.getProviders().stream()
+                .filter(OidcProviderDAO::isEnabled)
+                .toList();
+        for (OidcProviderDAO provider : providers) {
+            container.add(createProviderButton(provider, providers.size() == 1));
+        }
+        if (container.getComponentCount() == 1) {
+            Anchor setupLink = new Anchor("/ui/" + SetupView.ROUTE, "Set up Kassandra");
+            setupLink.setRouterIgnore(true);
+            container.add(new Paragraph("No sign-in provider has been configured yet."), setupLink);
+        }
+        if (securityConfigurationService.hasRecoveryCredential()) {
+            Anchor recoveryLink = new Anchor("/ui/" + RecoveryView.ROUTE, "Use the recovery account");
+            recoveryLink.setRouterIgnore(true);
+            container.add(recoveryLink);
+        }
+
         Div wrapper = new Div(container);
         wrapper.getStyle()
                 .set("background-color", "var(--lumo-base-color)")
                 .set("border-radius", "var(--lumo-border-radius-l)")
                 .set("box-shadow", "0 2px 10px var(--lumo-shade-20pct)")
                 .set("padding", "var(--lumo-space-l)");
-
         return wrapper;
     }
 }

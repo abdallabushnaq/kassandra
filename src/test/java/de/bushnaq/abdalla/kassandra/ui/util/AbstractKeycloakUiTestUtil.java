@@ -23,6 +23,8 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.TtsCacheManager;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
+import de.bushnaq.abdalla.kassandra.service.OidcIdentityService;
+import de.bushnaq.abdalla.kassandra.service.OidcProviderService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,18 +47,26 @@ import java.util.Map;
 /**
  * Abstract test utility class for UI tests that require Keycloak authentication.
  * It sets up a Keycloak container with a predefined realm configuration and
- * configures Spring Security properties to interact with this Keycloak instance.
+ * creates a persisted OIDC provider and explicit identity link for the test administrator.
  *
  * @author Abdalla Bushnaq
  */
 @Testcontainers
 public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
-    private static final Logger                     logger   = LoggerFactory.getLogger(AbstractKeycloakUiTestUtil.class);
+    private static final String                     KEYCLOAK_CLIENT_ID     = "kassandra-client";
+    private static final String                     KEYCLOAK_CLIENT_SECRET = "test-client-secret";
+    private static final String                     KEYCLOAK_REALM         = "project-hub-realm";
+    private static final String                     TEST_USER_EMAIL        = "christopher.paul@kassandra.org";
+    private static final Logger                     logger                 = LoggerFactory.getLogger(AbstractKeycloakUiTestUtil.class);
     protected static     int                        allocatedPort;
     private static       KeycloakContainer          keycloakInstance;
-    private static final KeycloakContainer          keycloak = getKeycloakContainer();// Start Keycloak container with realm configuration
+    private static final KeycloakContainer          keycloak               = getKeycloakContainer();// Start Keycloak container with realm configuration
     @Autowired
     protected            PlatformTransactionManager transactionManager;
+    @Autowired
+    protected            OidcIdentityService        oidcIdentityService;
+    @Autowired
+    protected            OidcProviderService        oidcProviderService;
     @Autowired
     protected            UserRepository             userRepository;
 
@@ -105,7 +115,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
                 container.getMappedPort(8080));
     }
 
-    // Configure Spring Security to use the Keycloak container
+    // Starts Keycloak before the Spring test context is created.
     @DynamicPropertySource
     static void registerKeycloakProperties(DynamicPropertyRegistry registry) {
         // Ensure container is started
@@ -117,42 +127,10 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
             System.out.println("=== KEYCLOAK CONTAINER ALREADY RUNNING === ON PORT " + keycloakInstance.getHttpPort());
         }
 
-        // Get the actual URL that's accessible from outside the container
-        String externalUrl = getPublicFacingUrl(keycloak);
-        System.out.println("Keycloak External URL: " + externalUrl);
-
-        // Log all container environment information for debugging
-        System.out.println("Keycloak Container:");
-        System.out.println("  Auth Server URL: " + keycloak.getAuthServerUrl());
-        System.out.println("  Container IP: " + keycloak.getHost());
-        System.out.println("  HTTP Port Mapping: " + keycloak.getMappedPort(8080));
-
-        // Override the authServerUrl with our public-facing URL
-        String publicAuthServerUrl = externalUrl + "/";
-
-        // Create properties with the public URL
-        Map<String, String> props = new HashMap<>();
-        props.put("spring.security.oauth2.client.provider.keycloak.issuer-uri", publicAuthServerUrl + "realms/project-hub-realm");
-        props.put("spring.security.oauth2.client.provider.keycloak.authorization-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/auth");
-        props.put("spring.security.oauth2.client.provider.keycloak.token-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/token");
-        props.put("spring.security.oauth2.client.provider.keycloak.user-info-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/userinfo");
-        props.put("spring.security.oauth2.client.provider.keycloak.jwk-set-uri", publicAuthServerUrl + "realms/project-hub-realm/protocol/openid-connect/certs");
-        props.put("spring.security.oauth2.client.registration.keycloak.client-id", "kassandra-client");
-        props.put("spring.security.oauth2.client.registration.keycloak.client-secret", "test-client-secret");
-        props.put("spring.security.oauth2.client.registration.keycloak.scope", "openid,profile,email");
-        props.put("spring.security.oauth2.client.registration.keycloak.authorization-grant-type", "authorization_code");
-        props.put("spring.security.oauth2.client.registration.keycloak.redirect-uri", "{baseUrl}/login/oauth2/code/{registrationId}");
-
-        props.put("spring.security.oauth2.resourceserver.jwt.issuer-uri", publicAuthServerUrl + "realms/project-hub-realm");
-
-        // Register all properties
-        props.forEach((key, value) -> registry.add(key, () -> value));
     }
 
     /**
-     * Ensure the test user exists in the database with ADMIN role before each test.
-     * This is critical because OIDC authentication will look up the user by email,
-     * and if not found, assigns only USER role by default.
+     * Creates the persisted OIDC provider and links the Keycloak test administrator before each test.
      * <p>
      * Uses explicit transaction management to ensure the user is committed
      * and visible to all subsequent transactions including API calls.
@@ -160,12 +138,45 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     @BeforeEach
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void setupTestUser() {
-        String    testUserEmail = "christopher.paul@kassandra.org";
         LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
-        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f, null);
+        peg.addUser("Christopher Paul", TEST_USER_EMAIL, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f, null);
+        var provider = oidcProviderService.createProvider(
+                "Test Keycloak",
+                getIssuerUri(),
+                KEYCLOAK_CLIENT_ID,
+                KEYCLOAK_CLIENT_SECRET,
+                List.of("openid", "profile", "email"));
+        var testUser = userRepository.findByEmail(TEST_USER_EMAIL)
+                .orElseThrow(() -> new IllegalStateException("The Keycloak test user was not created"));
+        oidcIdentityService.linkIdentity(testUser.getId(), provider.getRegistrationId(), getKeycloakUserSubject(TEST_USER_EMAIL));
         //ensure tests that generate more users will find the correct expectations.
         peg.getUsers().clear();
         peg.setUserIndex(peg.getUserIndex() - 1);//ensure Christopher Paul is always the first user created
+    }
+
+    private static String getIssuerUri() {
+        return getPublicFacingUrl(keycloak) + "/realms/" + KEYCLOAK_REALM;
+    }
+
+    private static String getKeycloakUserSubject(String username) {
+        var adminClient = org.keycloak.admin.client.KeycloakBuilder.builder()
+                .serverUrl(keycloak.getAuthServerUrl())
+                .realm("master")
+                .username("admin")
+                .password("admin")
+                .clientId("admin-cli")
+                .build();
+        try {
+            return adminClient.realm(KEYCLOAK_REALM)
+                    .users()
+                    .searchByUsername(username, true)
+                    .stream()
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Keycloak test user does not exist: " + username))
+                    .getId();
+        } finally {
+            adminClient.close();
+        }
     }
 
     @AfterAll
@@ -205,9 +216,9 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
                 .clientId("admin-cli")
                 .build();
 
-        var client = adminClient.realm("project-hub-realm")
+        var client = adminClient.realm(KEYCLOAK_REALM)
                 .clients()
-                .findByClientId("kassandra-client")
+                .findByClientId(KEYCLOAK_CLIENT_ID)
                 .get(0);
 
         client.setRedirectUris(List.of(redirectUri));
@@ -222,7 +233,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         attributes.put("post.logout.redirect.uris", postLogoutRedirects);
         client.setAttributes(attributes);
 
-        adminClient.realm("project-hub-realm")
+        adminClient.realm(KEYCLOAK_REALM)
                 .clients()
                 .get(client.getId())
                 .update(client);

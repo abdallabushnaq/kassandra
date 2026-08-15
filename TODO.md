@@ -48,9 +48,8 @@
 7. legend is drawn below grid lines.
 8. FIXED: scrollYOffset and visualScale are not persisted in any of teh charts.
 
-# Failing Tests
+# setup issues
 
-1. 2 TestTest (dependency to task with higher orderId fails to level)
-2. first OldGanttTest
-3. all BurndownTest
-4. several GanttTets fail because they do not expect sprint to have any other status than STARTED.
+- server will show application running at http://localhost:8080/ui/, but this url will fail to show because user is
+  anonymous.
+- 

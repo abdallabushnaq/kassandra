@@ -47,7 +47,7 @@ import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
-import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,7 +57,7 @@ import java.util.Map;
 
 import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 
-@PermitAll // Only authenticated users can access views using this layout
+@RolesAllowed({"ADMIN", "USER"})
 //@JsModule("/tooltips.js")
 @Slf4j
 public final class MainLayout extends AppLayout implements BeforeEnterObserver {

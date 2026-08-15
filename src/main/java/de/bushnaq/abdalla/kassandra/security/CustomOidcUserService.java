@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,13 +17,13 @@
 
 package de.bushnaq.abdalla.kassandra.security;
 
-import de.bushnaq.abdalla.kassandra.service.UserRoleService;
-import lombok.extern.slf4j.Slf4j;
+import de.bushnaq.abdalla.kassandra.service.OidcIdentityService;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
@@ -33,55 +33,51 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Custom OIDC User Service that loads user roles from database ONCE during authentication
- * and stores them in the SecurityContext. This eliminates repeated database queries.
- * <p>
- * This is the proper Spring Security way to load custom authorities - the roles are
- * loaded during authentication and reused throughout the session.
+ * Loads local roles for browser OIDC logins from trusted issuer and subject links.
  */
 @Service
-@Slf4j
 public class CustomOidcUserService extends OidcUserService {
 
-    private final UserRoleService userRoleService;
+    private final OidcIdentityService oidcIdentityService;
+    private final OidcIdentityLinkService oidcIdentityLinkService;
 
-    public CustomOidcUserService(UserRoleService userRoleService) {
-        this.userRoleService = userRoleService;
+    /**
+     * Creates the OIDC user service.
+     *
+     * @param oidcIdentityService explicit OIDC identity resolver
+     * @param oidcIdentityLinkService administrator-driven identity linking coordinator
+     */
+    public CustomOidcUserService(OidcIdentityService oidcIdentityService,
+                                 OidcIdentityLinkService oidcIdentityLinkService) {
+        this.oidcIdentityService = oidcIdentityService;
+        this.oidcIdentityLinkService = oidcIdentityLinkService;
     }
 
+    /**
+     * Loads the OIDC user and replaces provider roles with Kassandra-local roles.
+     *
+     * @param userRequest OIDC user-information request
+     * @return authenticated OIDC user with local authorities
+     * @throws OAuth2AuthenticationException when the provider or identity is not trusted
+     */
     @Override
     public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
-        // Delegate to the default implementation for loading the user
         OidcUser oidcUser = super.loadUser(userRequest);
-
-        // Extract email from OIDC token
-        String email = oidcUser.getEmail();
-        if (email == null || email.isEmpty()) {
-            email = oidcUser.getPreferredUsername();
-        }
-        if (email == null || email.isEmpty()) {
-            email = oidcUser.getSubject();
-        }
-
-        log.info("🔍 Loading roles for OIDC user: {}", email);
-
-        // Load roles from database ONCE
-        List<String> dbRoles = userRoleService.getRolesByEmail(email);
-
-        // Convert to GrantedAuthority
         Set<GrantedAuthority> authorities = new HashSet<>();
-        if (!dbRoles.isEmpty()) {
-            dbRoles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
-            log.info("✅ Loaded {} roles from database for {}: {}", dbRoles.size(), email, String.join(", ", dbRoles));
-        } else {
-            // No user in database - assign default USER role
-//            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-            log.warn("⚠️ User {} not found in database. Assigned default USER role.", email);
+        try {
+            List<String> roles = oidcIdentityLinkService.consumePendingLink(userRequest, oidcUser);
+            if (roles == null) {
+                roles = oidcIdentityService.resolveRoles(
+                        oidcUser.getIdToken().getIssuer().toString(),
+                        oidcUser.getSubject(),
+                        oidcUser.getEmail(),
+                        oidcUser.getFullName(),
+                        true);
+            }
+            roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
+        } catch (IllegalStateException e) {
+            throw new OAuth2AuthenticationException(new OAuth2Error("access_denied"), e.getMessage(), e);
         }
-
-        // Create new OidcUser with database roles
-        // These roles are now stored in SecurityContext and reused for all authorization checks
         return new DefaultOidcUser(authorities, oidcUser.getIdToken(), oidcUser.getUserInfo());
     }
 }
-

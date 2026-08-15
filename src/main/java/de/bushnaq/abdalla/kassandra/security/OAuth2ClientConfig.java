@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.kassandra.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -37,7 +36,6 @@ import java.time.Duration;
  * using refresh tokens, preventing 401 errors in long-running operations.
  */
 @Configuration
-@ConditionalOnProperty(name = "spring.security.oauth2.client.registration.keycloak.client-id")
 public class OAuth2ClientConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(OAuth2ClientConfig.class);
@@ -85,4 +83,3 @@ public class OAuth2ClientConfig {
         return authorizedClientManager;
     }
 }
-
