@@ -26,7 +26,6 @@
 
 ai-test-results
 *log.*.gz
-package.json
 package-lock.json
 references/*.png
 references/*.svg
