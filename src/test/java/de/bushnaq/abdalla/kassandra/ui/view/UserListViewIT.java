@@ -1,0 +1,184 @@
+/*
+ *
+ * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
+package de.bushnaq.abdalla.kassandra.ui.view;
+
+import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.view.util.UserListViewTester;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.time.LocalDate;
+
+/**
+ * Integration test for the UserListView UI component.
+ * Tests CRUD (Create, Read, Update, Delete) operations for users in the UI.
+ * <p>
+ * These tests verify that:
+ * - Users can be created with appropriate details
+ * - Created users appear correctly in the list
+ * - Users can be edited and changes are reflected in the UI
+ * - Users can be deleted from the system
+ * - Cancellation of operations works as expected
+ * <p>
+ * The tests use {@link UserListViewTester} to interact with the UI elements
+ * and verify the expected behavior.
+ */
+@Tag("IntegrationUiTest")
+@ExtendWith(SpringExtension.class)
+@ActiveProfiles("test")
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=${test.server.port:0}",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
+@AutoConfigureTestRestTemplate
+@AutoConfigureMockMvc
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+public class UserListViewIT extends AbstractKeycloakUiTestUtil {
+    private final String                   country            = "United States (US)";  // United States
+    private final String                   email              = "user.test@example.com";
+    private final LocalDate                firstWorkingDay    = LocalDate.of(2025, 1, 15);
+    private final LocalDate                lastWorkingDay     = LocalDate.of(2026, 12, 31);
+    private final String                   name               = "User-Test";
+    private final String                   newCountry         = "United Kingdom (GB)";
+    private final String                   newEmail           = "newuser.test@example.com";
+    private final LocalDate                newFirstWorkingDay = LocalDate.of(2025, 2, 1);
+    private final LocalDate                newLastWorkingDay  = LocalDate.of(2027, 6, 30);
+    private final String                   newName            = "NewUser-Test";
+    private final String                   newState           = "England (eng)";
+    private final String                   newWorkWeek        = DefaultEntitiesInitializer.WORK_WEEK_JEWISH_5X8;
+    @Autowired
+    private       HumanizedSeleniumHandler seleniumHandler;
+    private final String                   state              = "California (ca)";  // California
+    @Autowired
+    private       UserListViewTester       UserListViewTester;
+    private final String                   workWeek           = DefaultEntitiesInitializer.WORK_WEEK_ISLAMIC_5X8;
+
+    @BeforeEach
+    public void setupTest(TestInfo testInfo) throws Exception {
+        UserListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), "christopher.paul@kassandra.org", "password");
+    }
+
+    /**
+     * Tests the behavior when creating a user but canceling the operation.
+     * <p>
+     * Verifies that when a user clicks the create user button, enters a name, and then
+     * cancels the operation, no user is created in the list.
+     *
+     * @throws Exception if any error occurs during the test
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testCreateCancel() throws Exception {
+        UserListViewTester.createUserCancel(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
+        UserListViewTester.verifyFormIsReset();
+    }
+
+    /**
+     * Tests the behavior when successfully creating a user.
+     * <p>
+     * Verifies that when a user clicks the create user button, enters all user fields,
+     * and confirms the creation, the user appears in the list.
+     *
+     * @throws Exception if any error occurs during the test
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testCreateConfirm() throws Exception {
+        UserListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
+        UserListViewTester.verifyUserDialogFields(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
+    }
+
+    /**
+     * Tests the behavior when attempting to delete a user but canceling the operation.
+     * <p>
+     * Creates a user, then attempts to delete it but cancels the confirmation dialog.
+     * Verifies that the user remains in the list.
+     *
+     * @throws Exception if any error occurs during the test
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testDeleteCancel() throws Exception {
+        UserListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
+        UserListViewTester.deleteUserCancel(name);
+    }
+
+    /**
+     * Tests the behavior when successfully deleting a user.
+     * <p>
+     * Creates a user, then deletes it by confirming the deletion in the confirmation dialog.
+     * Verifies that the user is removed from the list.
+     *
+     * @throws Exception if any error occurs during the test
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testDeleteConfirm() throws Exception {
+        UserListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
+        UserListViewTester.deleteUserConfirm(name);
+    }
+
+    /**
+     * Tests the behavior when attempting to edit a user but canceling the operation.
+     * <p>
+     * Creates a user, attempts to edit all its fields (name, email,
+     * first working day, and last working day), but cancels the edit dialog.
+     * Verifies that the original user details remain unchanged and the new values are not applied.
+     *
+     * @throws Exception if any error occurs during the test
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testEditCancel() throws Exception {
+        UserListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
+        UserListViewTester.editUserCancel(name, newName, email, newEmail, firstWorkingDay, newFirstWorkingDay, lastWorkingDay, newLastWorkingDay, country, newCountry, state, newState, workWeek, newWorkWeek);
+        UserListViewTester.verifyUserDialogFields(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
+    }
+
+    /**
+     * Tests the behavior when successfully editing a user.
+     * <p>
+     * Creates a user, edits all user fields, and confirms the edit.
+     * Verifies that the user with the new name appears in the list and the old name is removed.
+     *
+     * @throws Exception if any error occurs during the test
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testEditConfirm() throws Exception {
+        UserListViewTester.createUserConfirm(name, email, firstWorkingDay, lastWorkingDay, country, state, workWeek);
+        UserListViewTester.editUserConfirm(name, newName, newEmail, newFirstWorkingDay, newLastWorkingDay);
+        UserListViewTester.verifyUserDialogFields(newName, newEmail, newFirstWorkingDay, newLastWorkingDay, country, state, workWeek);
+    }
+}

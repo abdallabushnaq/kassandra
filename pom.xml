@@ -406,13 +406,17 @@
                         <exclude>**/ai/**/*Test.java</exclude>
                         <exclude>**/ai/**/*Tests.java</exclude>
                         <exclude>**/ai/**/*TestCase.java</exclude>
+                        <exclude>**/ai/**/*IT.java</exclude>
                         <!-- Exclude all video/recording UI tests that require a real desktop/browser -->
                         <exclude>**/introduction/*Video.java</exclude>
+                        <exclude>**/introduction/*IT.java</exclude>
                         <!-- Exclude specific tests that wait forever until the user closes the browser-->
-                        <exclude>**/ui/view/TaskListViewTest.java</exclude>
-                        <exclude>**/ui/view/SprintQualityBoardTest.java</exclude>
+                        <exclude>**/ui/view/TaskListViewIT.java</exclude>
+                        <exclude>**/ui/view/QualityBoardIT.java</exclude>
                         <exclude>**/ui/Demo.java</exclude>
                         <exclude>**/ErDiagramTest.java</exclude>
+                        <exclude>**/GenerateScreenshotsIT.java</exclude>
+                        <exclude>**/testActiveSprintsView.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>

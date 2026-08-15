@@ -1,0 +1,249 @@
+/*
+ *
+ * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
+package de.bushnaq.abdalla.kassandra.ui.view;
+
+import de.bushnaq.abdalla.kassandra.dto.Location;
+import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.view.util.LocationListViewTester;
+import de.focus_shift.jollyday.core.HolidayManager;
+import de.focus_shift.jollyday.core.ManagerParameters;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.time.LocalDate;
+import java.util.Locale;
+
+/**
+ * Integration test for the LocationListView UI component.
+ * Tests CRUD (Create, Read, Update, Delete) operations for location records in the UI.
+ * <p>
+ * These tests verify that:
+ * - Location records can be created with appropriate details
+ * - Created records appear correctly in the list
+ * - Records can be edited and changes are reflected in the UI
+ * - Records can be deleted from the system
+ * - Cancellation of operations works as expected
+ * - Validation rules are enforced (unique start dates)
+ * <p>
+ * The tests account for the fact that each user already has an initial location record
+ * for the current date when they're created.
+ * <p>
+ * The tests use {@link LocationListViewTester} to interact with the UI elements
+ * and verify the expected behavior.
+ */
+@Tag("IntegrationUiTest")
+@ExtendWith(SpringExtension.class)
+@ActiveProfiles("test")
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=${test.server.port:0}",
+                "spring.security.basic.enabled=false"// Disable basic authentication for these tests
+        }
+)
+@AutoConfigureTestRestTemplate
+@AutoConfigureMockMvc
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@Slf4j
+public class LocationListViewIT extends AbstractKeycloakUiTestUtil {
+    private final String                 country      = "United States (US)";  // United States
+    private       Location               lastLocation;
+    private       String                 lastLocationCountry;
+    private       String                 lastLocationState;
+    @Autowired
+    private       LocationListViewTester LocationListViewTester;
+    private final String                 newCountry   = "United Kingdom (GB)";  // United Kingdom
+    private final LocalDate              newStartDate = LocalDate.of(2025, 8, 1);
+    private final String                 newState     = "England (eng)"; // England
+    private final LocalDate              startDate    = LocalDate.of(2025, 6, 1);
+    private final String                 state        = "California (ca)";  // California
+    private final String                 testUsername = "christopher.paul@kassandra.org";
+
+    private String getStateDescription(String countryCode, String stateCode) {
+        // If state code equals country code, it represents the whole country
+        if (stateCode.equals(countryCode)) {
+            return "All of " + new Locale("", countryCode).getDisplayCountry();
+        }
+
+        try {
+            // Try to get description from HolidayManager's calendar hierarchy
+            HolidayManager manager     = HolidayManager.getInstance(ManagerParameters.create(countryCode));
+            String         description = manager.getCalendarHierarchy().getChildren().get(stateCode).getDescription();
+
+            if (description != null && !description.isEmpty()) {
+                return description + " (" + stateCode + ")";
+            }
+        } catch (Exception e) {
+            // If we can't get the description from HolidayManager, just use the code
+        }
+
+        // Default fallback is to just return the state code
+        return stateCode;
+    }
+
+    protected void read() {
+        User paul = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        lastLocation = paul.getLocations().getLast();
+        String countryCode = lastLocation.getCountry();
+        Locale locale      = new Locale("", countryCode);
+        lastLocationCountry = locale.getDisplayCountry() + " (" + countryCode + ")";
+//        String countryCode = location.getCountry();
+        String stateCode = lastLocation.getState();
+        lastLocationState = getStateDescription(countryCode, stateCode);
+
+    }
+
+    @BeforeEach
+    public void setupTest(TestInfo testInfo) throws Exception {
+        LocationListViewTester.switchToLocationListView(
+                testInfo.getTestClass().get().getSimpleName(),
+                generateTestCaseName(testInfo),
+                testUsername);
+        read();
+    }
+
+    /**
+     * Tests that users cannot delete their only location record.
+     * <p>
+     * Verifies that the delete button for the initial location record
+     * is disabled, preventing users from deleting their only record.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testCannotDeleteOnlyLocation() {
+        // Verify user cannot delete their only location record (the initial one)
+        LocationListViewTester.verifyCannotDeleteOnlyLocation(lastLocation.getStart());
+    }
+
+    /**
+     * Tests the behavior when creating a location record but canceling the operation.
+     * <p>
+     * Verifies that when a user clicks the create location button, enters data, and then
+     * cancels the operation, no record is created in the list.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testCreateCancel() {
+        LocationListViewTester.createLocationCancel(startDate, country, state);
+    }
+
+    /**
+     * Tests the behavior when successfully creating a location record.
+     * <p>
+     * Verifies that when a user clicks the create location button, enters all required fields,
+     * and confirms the creation, the record appears in the list with the correct values.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testCreateConfirm() {
+        LocationListViewTester.createLocationConfirm(startDate, country, state);
+    }
+
+    /**
+     * Tests the behavior when attempting to delete a location record but canceling the operation.
+     * <p>
+     * Creates a record, then attempts to delete it but cancels the confirmation dialog.
+     * Verifies that the record remains in the list.
+     * <p>
+     * Note: This test assumes the user already has the initial default location record.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testDeleteCancel() {
+        // Create a second location record
+        LocationListViewTester.createLocationConfirm(startDate, country, state);
+        // Try to delete but cancel
+        LocationListViewTester.deleteLocationCancel(startDate);
+    }
+
+    /**
+     * Tests the behavior when successfully deleting a location record.
+     * <p>
+     * Creates a record, then deletes it by confirming the deletion in the confirmation dialog.
+     * Verifies that the record is removed from the list.
+     * <p>
+     * Note: This test assumes the user already has the initial default location record.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testDeleteConfirm() {
+        // Create a second location record
+        LocationListViewTester.createLocationConfirm(startDate, country, state);
+        // Delete the newly created record
+        LocationListViewTester.deleteLocationConfirm(startDate);
+    }
+
+    /**
+     * Tests that validation prevents creation of duplicate location records with the same start date.
+     * <p>
+     * Attempts to create a record with the same start date as the initial record but different
+     * country and state. Verifies that an error is shown and the duplicate is not created.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testDuplicateStartDate() {
+        // Try to create a duplicate with the same start date as the initial record
+        LocationListViewTester.createDuplicateDateLocation(lastLocation.getStart(), newCountry, newState);
+    }
+
+    /**
+     * Tests the behavior when attempting to edit a location record but canceling the operation.
+     * <p>
+     * Creates a record, attempts to edit all its fields (start date, country, state),
+     * but cancels the edit dialog.
+     * Verifies that the original record details remain unchanged and the new values are not applied.
+     * <p>
+     * Note: This test uses the initial location record that exists when the user is created.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testEditCancel() {
+        // Edit initial record but cancel
+        LocationListViewTester.editLocationCancel(
+                lastLocation.getStart(), newStartDate,
+                lastLocationCountry, newCountry,
+                lastLocationState, newState);
+    }
+
+    /**
+     * Tests the behavior when successfully editing a location record.
+     * <p>
+     * Edits all fields of the initial location record and confirms the edit.
+     * Verifies that the record with the new values appears in the list
+     * and the old values are no longer present.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testEditConfirm() {
+        // Edit initial record and confirm
+        LocationListViewTester.editLocationConfirm(lastLocation.getStart(), newStartDate, newCountry, newState);
+    }
+}

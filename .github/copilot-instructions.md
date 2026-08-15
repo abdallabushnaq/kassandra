@@ -138,17 +138,15 @@ mvn test -Dtest="ProductApiTest,CriticalTest"
 - No Docker, no Keycloak, no external services required. Completes in under 2 minutes.
 - **Prefer this for validating code changes.**
 
-### 3. Run the full CI-eligible test suite
+### 3. Run the full unit test suite
 
 ```bash
-mvn test -Dselenium.headless=true
+mvn test
 ```
 
-- Runs all tests not excluded by Surefire file-pattern exclusions in `pom.xml` (see exclusion table below).
-- Includes `UnitTest` and `IntegrationUiTest` classes; excludes `AiUnitTest` and `IntroductionVideo` automatically.
-- Keycloak Testcontainer is pulled and started automatically on first run (~1–2 min extra).
-- Run this when changing Vaadin views, security config, or anything that affects the rendered UI.
-- Takes several minutes due to Keycloak container startup.
+- Runs all automatically discovered `*Test` classes that are not excluded by Surefire (see exclusion table below).
+- `*IT` classes are intentionally not discovered by Surefire's default test naming patterns. This keeps integration,
+  AI, and introduction-video tests separate from unit-test execution.
 
 ### 4. Run a specific test class
 
@@ -199,8 +197,8 @@ Steps (in order):
 3. Set up Chrome stable + note that WebDriverManager handles ChromeDriver.
 4. Configure Testcontainers (`testcontainers.reuse.enable=true`).
 5. **`mvn -B package --file pom.xml -DskipTests`** – build only.
-6. **`mvn test -Dselenium.headless=true`** – run tests; `AiUnitTest` and `IntroductionVideo` are excluded automatically
-   via Surefire file-pattern exclusions in `pom.xml`.
+6. **`mvn test`** – run unit tests. Integration, AI, and introduction-video tests use the `*IT` naming convention and
+   are not discovered by Surefire's standard test patterns.
 7. `mvn jacoco:report site -DskipTests` – generate coverage.
 8. Upload coverage to Codecov.
 9. Publish JUnit XML reports (`**/target/surefire-reports/TEST-*.xml`).
@@ -218,18 +216,18 @@ where.
 | Tag                 |  Can run in CI   | External dependency                       | Description                                                                                                                                                                                                                                                                                       |
 |---------------------|:----------------:|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `UnitTest`          |      ✅ Yes       | None (in-memory H2, `@WithMockUser`)      | Self-contained tests. All `rest/api/*ApiTest` classes, SVG chart tests (`GanttTest`, `BurndownTest`, `CalendarTest`), date-util tests, profiler tests.                                                                                                                                            |
-| `IntegrationUiTest` | ✅ Yes (headless) | Keycloak (auto-started via Testcontainer) | Full-stack Selenium UI tests against a live Spring Boot instance. Run headless in CI via `-Dselenium.headless=true`. All `ui/view/*ViewTest` classes.                                                                                                                                             |
-| `AiUnitTest`        |       ❌ No       | LM Studio + AI containers (see below)     | Requires local AI services. Cannot run in GitHub Actions. All tests under `ai/` package, including `AiAssistantServiceBasicTest`, `AiAssistantServiceProductTest`, `AiAssistantServiceVersionTest`, `AiAssistantServiceFeatureTest`, `AiAssistantServiceUserTest`, `AiAssistantServiceMixedTest`. |
-| `IntroductionVideo` |       ❌ No       | Real desktop browser + TTS containers     | Records introduction videos. Requires a visible browser and running TTS services. All `ui/introduction/*Video` classes.                                                                                                                                                                           |
+| `IntegrationUiTest` |       ❌ No       | Keycloak (auto-started via Testcontainer) | Full-stack Selenium UI tests against a live Spring Boot instance. They use the `*IT` naming convention and are not run by Surefire's standard `mvn test` invocation. |
+| `AiUnitTest`        |       ❌ No       | LM Studio + AI containers (see below)     | Requires local AI services. Cannot run in GitHub Actions. All tests under `ai/` package, including `AiAssistantServiceBasicIT`, `AiAssistantServiceProductIT`, `AiAssistantServiceVersionIT`, `AiAssistantServiceFeatureIT`, `AiAssistantServiceUserIT`, `AiAssistantServiceMixedIT`. |
+| `IntroductionVideo` |       ❌ No       | Real desktop browser + TTS containers     | Records introduction videos. Requires a visible browser and running TTS services. All `ui/introduction/*IT` classes. |
 
 ### External Services Required by `AiUnitTest`
 
 | Service                      | Default URL             | Docker compose location    | Purpose                                                        |
 |------------------------------|-------------------------|----------------------------|----------------------------------------------------------------|
 | LM Studio (LLM on local GPU) | `http://localhost:1234` | N/A – run manually         | Chat/completion AI for `AiAssistantService*` tests             |
-| Chatterbox TTS container     | `http://localhost:4123` | `docker/chatterbox/`       | Text-to-speech for `TestChatterboxTTS` and introduction videos |
-| Index TTS container          | (configured separately) | `docker/index-tts/`        | Alternative TTS engine for `TestIndexTTS`                      |
-| Stable Diffusion container   | `http://localhost:7860` | `docker/stable-diffusion/` | Image generation for `StableDiffusionServiceTest`              |
+| Chatterbox TTS container     | `http://localhost:4123` | `docker/chatterbox/`       | Text-to-speech for `ChatterboxTTSIT` and introduction videos |
+| Index TTS container          | (configured separately) | `docker/index-tts/`        | Alternative TTS engine for `IndexTTSIT`                      |
+| Stable Diffusion container   | `http://localhost:7860` | `docker/stable-diffusion/` | Image generation for `StableDiffusionServiceIT`              |
 
 Start Chatterbox: `cd docker/chatterbox && chatterbox-helper.bat start`
 Start Stable Diffusion: `cd docker/stable-diffusion && docker-compose up -d`
@@ -253,10 +251,11 @@ The following are explicitly excluded from Surefire in `pom.xml` and **must not*
 | Exclusion pattern                                                                               | Reason                                                     |
 |-------------------------------------------------------------------------------------------------|------------------------------------------------------------|
 | `**/LegacyGanttTest.java`                                                                       | Missing reference files not available in CI                |
-| `**/ai/**/Test*.java`, `**/ai/**/*Test.java`, `**/ai/**/*Tests.java`, `**/ai/**/*TestCase.java` | Tagged `AiUnitTest` – requires LLM / GPU / AI containers   |
-| `**/introduction/*Video.java`                                                                   | Tagged `IntroductionVideo` – requires real desktop browser |
-| `**/ui/view/TaskListViewTest.java`                                                              | Waits for user to close browser                            |
-| `**/ui/view/SprintQualityBoardTest.java`                                                        | Waits for user to close browser                            |
+| `**/ai/**/Test*.java`, `**/ai/**/*Test.java`, `**/ai/**/*Tests.java`, `**/ai/**/*TestCase.java`, `**/ai/**/*IT.java` | Tagged `AiUnitTest` – requires LLM / GPU / AI containers   |
+| `**/introduction/*Video.java`, `**/introduction/*IT.java`                                      | Tagged `IntroductionVideo` – requires real desktop browser |
+| `**/ui/view/TaskListViewIT.java`                                                                | Waits for user to close browser                            |
+| `**/ui/view/QualityBoardIT.java`                                                                | Waits for user to close browser                            |
+| `**/GenerateScreenshotsIT.java`                                                                 | Records screenshots and waits for user interaction         |
 | `**/ui/Demo.java`                                                                               | Interactive demo                                           |
 
 ---
@@ -321,4 +320,3 @@ The following are explicitly excluded from Surefire in `pom.xml` and **must not*
   Vaadin dev server from starting during tests.
 - **Running the application locally:** Default port `8080`. H2 file DB at `./db`. Vaadin UI at
   `http://localhost:8080/ui/`. Requires a running OIDC provider or a stub.
-

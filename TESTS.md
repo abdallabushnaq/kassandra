@@ -14,7 +14,6 @@
 5. all OldGanttTest
 6. all CriticalTest
 7. all GanttTest
-8. GenerateScrrenshots
-9. TaskListViewTest
+8. GenerateScreenshotsIT
+9. TaskListViewIT
 10. 
-
