@@ -53,6 +53,10 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
      */
     public static final String OIDC_LOGIN_BUTTON = "oidc-login-button";
     /**
+     * Identifier of the link that opens the first-run setup wizard.
+     */
+    public static final String SETUP_LINK        = "setup-link";
+    /**
      * The public login route.
      */
     public static final String ROUTE      = "login";
@@ -130,6 +134,7 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         if (container.getComponentCount() == 1) {
             Anchor setupLink = new Anchor("/ui/" + SetupView.ROUTE, "Set up Kassandra");
             setupLink.setRouterIgnore(true);
+            setupLink.setId(SETUP_LINK);
             container.add(new Paragraph("No sign-in provider has been configured yet."), setupLink);
         }
         if (securityConfigurationService.hasRecoveryCredential()) {

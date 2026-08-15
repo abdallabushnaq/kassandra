@@ -51,6 +51,46 @@ public class SetupView extends VerticalLayout implements BeforeEnterObserver {
      * The public setup route.
      */
     public static final String ROUTE = "setup";
+    /**
+     * Identifier of the deployment setup-token field.
+     */
+    public static final String SETUP_TOKEN_FIELD = "setup-token-field";
+    /**
+     * Identifier of the restricted recovery-password field.
+     */
+    public static final String RECOVERY_PASSWORD_FIELD = "recovery-password-field";
+    /**
+     * Identifier of the recovery-password confirmation field.
+     */
+    public static final String RECOVERY_PASSWORD_CONFIRMATION_FIELD = "recovery-password-confirmation-field";
+    /**
+     * Identifier of the button that claims the initial setup flow.
+     */
+    public static final String CLAIM_SETUP_BUTTON = "claim-setup-button";
+    /**
+     * Identifier of the OIDC provider display-name field.
+     */
+    public static final String PROVIDER_NAME_FIELD = "provider-name-field";
+    /**
+     * Identifier of the OIDC issuer URI field.
+     */
+    public static final String PROVIDER_ISSUER_URI_FIELD = "provider-issuer-uri-field";
+    /**
+     * Identifier of the OIDC client ID field.
+     */
+    public static final String PROVIDER_CLIENT_ID_FIELD = "provider-client-id-field";
+    /**
+     * Identifier of the OIDC client-secret field.
+     */
+    public static final String PROVIDER_CLIENT_SECRET_FIELD = "provider-client-secret-field";
+    /**
+     * Identifier of the OIDC scopes field.
+     */
+    public static final String PROVIDER_SCOPES_FIELD = "provider-scopes-field";
+    /**
+     * Identifier of the button that validates and saves the OIDC provider.
+     */
+    public static final String VALIDATE_PROVIDER_BUTTON = "validate-provider-button";
 
     private final OidcProviderService          oidcProviderService;
     private final SecurityConfigurationService securityConfigurationService;
@@ -95,6 +135,11 @@ public class SetupView extends VerticalLayout implements BeforeEnterObserver {
         TextField clientId = new TextField("Client ID");
         PasswordField clientSecret = new PasswordField("Client secret");
         TextField scopes = new TextField("Scopes");
+        displayName.setId(PROVIDER_NAME_FIELD);
+        issuerUri.setId(PROVIDER_ISSUER_URI_FIELD);
+        clientId.setId(PROVIDER_CLIENT_ID_FIELD);
+        clientSecret.setId(PROVIDER_CLIENT_SECRET_FIELD);
+        scopes.setId(PROVIDER_SCOPES_FIELD);
         scopes.setValue("openid,profile,email");
         Button save = new Button("Validate provider", event -> {
             try {
@@ -111,6 +156,7 @@ public class SetupView extends VerticalLayout implements BeforeEnterObserver {
                 Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
             }
         });
+        save.setId(VALIDATE_PROVIDER_BUTTON);
 
         add(new H1("Configure sign-in"), new Paragraph(
                 "Enter the details of the first OpenID Connect provider. Kassandra validates the issuer discovery document before enabling it."),
@@ -121,6 +167,9 @@ public class SetupView extends VerticalLayout implements BeforeEnterObserver {
         PasswordField setupToken = new PasswordField("Setup token");
         PasswordField recoveryPassword = new PasswordField("Recovery password");
         PasswordField confirmation = new PasswordField("Confirm recovery password");
+        setupToken.setId(SETUP_TOKEN_FIELD);
+        recoveryPassword.setId(RECOVERY_PASSWORD_FIELD);
+        confirmation.setId(RECOVERY_PASSWORD_CONFIRMATION_FIELD);
         Button continueButton = new Button("Continue", event -> {
             if (!recoveryPassword.getValue().equals(confirmation.getValue())) {
                 Notification.show("The recovery passwords do not match", 5000, Notification.Position.MIDDLE);
@@ -133,6 +182,7 @@ public class SetupView extends VerticalLayout implements BeforeEnterObserver {
                 Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
             }
         });
+        continueButton.setId(CLAIM_SETUP_BUTTON);
 
         add(new H1("Set up Kassandra"), new Paragraph(
                 "Enter the deployment setup token and create a password for the restricted recovery account."),

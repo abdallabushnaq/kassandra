@@ -44,6 +44,18 @@ public class OidcIdentityLinkView extends VerticalLayout {
      * Route for explicit OIDC identity linking.
      */
     public static final String ROUTE = "link-identity";
+    /**
+     * Identifier of the user selection field.
+     */
+    public static final String USER_FIELD = "link-identity-user-field";
+    /**
+     * Identifier of the identity-provider selection field.
+     */
+    public static final String PROVIDER_FIELD = "link-identity-provider-field";
+    /**
+     * Identifier of the button that begins OIDC authentication for linking.
+     */
+    public static final String AUTHENTICATE_AND_LINK_BUTTON = "authenticate-and-link-button";
 
     /**
      * Creates the identity linking view.
@@ -54,10 +66,12 @@ public class OidcIdentityLinkView extends VerticalLayout {
     public OidcIdentityLinkView(OidcIdentityLinkService oidcIdentityLinkService,
                                 OidcProviderService oidcProviderService) {
         ComboBox<UserDAO> user = new ComboBox<>("Kassandra user");
+        user.setId(USER_FIELD);
         user.setItems(oidcIdentityLinkService.getUsers());
         user.setItemLabelGenerator(value -> value.getName() + " <" + value.getEmail() + ">");
 
         ComboBox<OidcProviderDAO> provider = new ComboBox<>("Identity provider");
+        provider.setId(PROVIDER_FIELD);
         provider.setItems(oidcProviderService.getProviders().stream().filter(OidcProviderDAO::isEnabled).toList());
         provider.setItemLabelGenerator(OidcProviderDAO::getDisplayName);
 
@@ -74,6 +88,7 @@ public class OidcIdentityLinkView extends VerticalLayout {
                 Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
             }
         });
+        link.setId(AUTHENTICATE_AND_LINK_BUTTON);
 
         setSizeFull();
         add(new H1("Link OIDC Identity"),
