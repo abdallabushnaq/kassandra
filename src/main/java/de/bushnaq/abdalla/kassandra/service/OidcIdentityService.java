@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Resolves Kassandra roles from explicit OIDC issuer and subject links.
+ * Resolves Kassandra roles from OIDC issuer and subject links.
  */
 @Service
 public class OidcIdentityService {
@@ -51,25 +51,29 @@ public class OidcIdentityService {
     /**
      * Resolves local roles for a linked OIDC identity.
      * During protected initial setup only, the first browser identity becomes the first administrator.
+     * After setup, browser logins link an otherwise unknown subject to a pre-created user with a matching email.
      *
      * @param issuerUri validated OIDC issuer URI
      * @param subject immutable OIDC subject
-     * @param email OIDC email claim, required only for the first administrator claim
+     * @param email OIDC email claim, required to claim an administrator or link a pre-created user
      * @param displayName OIDC display name, used only when creating the first administrator
-     * @param allowInitialAdministratorClaim true only for the browser OIDC authorization-code flow
+     * @param allowBrowserIdentityLink true only for the browser OIDC authorization-code flow
      * @return local Kassandra roles
      * @throws IllegalStateException when the identity is not linked or its provider is not enabled
      */
     @Transactional
     public List<String> resolveRoles(String issuerUri, String subject, String email, String displayName,
-                                     boolean allowInitialAdministratorClaim) {
+                                     boolean allowBrowserIdentityLink) {
         OidcProviderDAO provider = oidcProviderRepository.findByIssuerUriAndEnabledTrue(issuerUri)
                 .orElseThrow(() -> new IllegalStateException("OIDC issuer is not enabled"));
         OidcIdentityDAO identity = oidcIdentityRepository.findByProviderAndSubject(provider, subject).orElse(null);
         if (identity != null) {
             return identity.getUser().getRoleList();
         }
-        identity = claimInitialAdministrator(provider, subject, email, displayName, allowInitialAdministratorClaim);
+        identity = claimInitialAdministrator(provider, subject, email, displayName, allowBrowserIdentityLink);
+        if (identity == null) {
+            identity = linkPreCreatedUser(provider, subject, email, allowBrowserIdentityLink);
+        }
         return identity.getUser().getRoleList();
     }
 
@@ -108,11 +112,13 @@ public class OidcIdentityService {
     }
 
     private OidcIdentityDAO claimInitialAdministrator(OidcProviderDAO provider, String subject, String email,
-                                                       String displayName, boolean allowInitialAdministratorClaim) {
-        if (!allowInitialAdministratorClaim
-                || securityConfigurationService.getConfiguration().getSetupState()
-                        != SecurityConfigurationDAO.SetupState.SETUP_IN_PROGRESS
+                                                       String displayName, boolean allowBrowserIdentityLink) {
+        if (securityConfigurationService.getConfiguration().getSetupState()
+                != SecurityConfigurationDAO.SetupState.SETUP_IN_PROGRESS
                 || oidcIdentityRepository.count() != 0) {
+            return null;
+        }
+        if (!allowBrowserIdentityLink) {
             throw new IllegalStateException("OIDC identity is not linked to a Kassandra user");
         }
         if (email == null || email.isBlank()) {
@@ -132,6 +138,24 @@ public class OidcIdentityService {
         identity = oidcIdentityRepository.save(identity);
         securityConfigurationService.completeSetup();
         return identity;
+    }
+
+    private OidcIdentityDAO linkPreCreatedUser(OidcProviderDAO provider, String subject, String email,
+                                                boolean allowBrowserIdentityLink) {
+        if (!allowBrowserIdentityLink) {
+            throw new IllegalStateException("OIDC identity is not linked to a Kassandra user");
+        }
+        if (email == null || email.isBlank()) {
+            throw new IllegalStateException("OIDC login must provide an email claim");
+        }
+        UserDAO user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("No Kassandra user exists for the OIDC email address"));
+
+        OidcIdentityDAO identity = new OidcIdentityDAO();
+        identity.setProvider(provider);
+        identity.setSubject(subject);
+        identity.setUser(user);
+        return oidcIdentityRepository.save(identity);
     }
 
     private UserDAO createInitialAdministrator(String email, String displayName) {

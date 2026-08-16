@@ -48,8 +48,6 @@ public class OidcSecurityConfig {
     @Autowired
     private       CustomOidcUserService        customOidcUserService;
     @Autowired
-    private       OidcIdentityLinkAuthenticationSuccessHandler oidcIdentityLinkAuthenticationSuccessHandler;
-    @Autowired
     private       SetupRecoveryAuthenticationProvider setupRecoveryAuthenticationProvider;
     private final Logger                       logger = LoggerFactory.getLogger(OidcSecurityConfig.class);
 
@@ -106,13 +104,11 @@ public class OidcSecurityConfig {
         resolver.setAuthorizationRequestCustomizer(
                 builder -> builder.additionalParameters(parameters -> parameters.put("prompt", "login")));
 
-        oidcIdentityLinkAuthenticationSuccessHandler.setDefaultTargetUrl("/ui/");
         http.oauth2Login(oauth2Config -> oauth2Config
                 .loginPage("/" + LoginView.ROUTE)
                 .defaultSuccessUrl("/ui/", true)
                 .authorizationEndpoint(authorization -> authorization.authorizationRequestResolver(resolver))
-                .userInfoEndpoint(userInfo -> userInfo.oidcUserService(customOidcUserService))
-                .successHandler(oidcIdentityLinkAuthenticationSuccessHandler));
+                .userInfoEndpoint(userInfo -> userInfo.oidcUserService(customOidcUserService)));
         http.authenticationProvider(setupRecoveryAuthenticationProvider);
         http.formLogin(formLogin -> formLogin
                 .loginPage("/" + RecoveryView.ROUTE)

@@ -32,7 +32,6 @@ import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
 import de.bushnaq.abdalla.kassandra.ui.view.LoginView;
-import de.bushnaq.abdalla.kassandra.ui.view.OidcIdentityLinkView;
 import de.bushnaq.abdalla.kassandra.ui.view.SetupView;
 import de.bushnaq.abdalla.kassandra.ui.view.UserListView;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -87,13 +86,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class InitialSetupIntroductionVideo15IT extends AbstractUiTestUtil {
 
+    private static final String                       EXAMPLE_USER_EMAIL     = "grace.martin@kassandra.org";
+    private static final String                       EXAMPLE_USER_NAME      = "Grace Martin";
     private static final KeycloakContainer            KEYCLOAK               = createKeycloak();
     private static final String                       KEYCLOAK_CLIENT_ID     = "kassandra-client";
     private static final String                       KEYCLOAK_CLIENT_SECRET = "test-client-secret";
     private static final String                       KEYCLOAK_PASSWORD      = "Kassandra-Green-Atlas-73!";
     private static final String                       KEYCLOAK_REALM         = "project-hub-realm";
-    private static final String                       EXAMPLE_USER_EMAIL     = "alex.morgan@kassandra.org";
-    private static final String                       EXAMPLE_USER_NAME      = "Alex Morgan";
     private static final NarratorAttribute            NORMAL                 = new NarratorAttribute()
             .withExaggeration(.5f).withCfgWeight(.5f).withTemperature(1f);
     private static final String                       RECOVERY_PASSWORD      = "recovery-password";
@@ -102,9 +101,9 @@ public class InitialSetupIntroductionVideo15IT extends AbstractUiTestUtil {
     private static final String                       TEST_USER_EMAIL        = "christopher.paul@kassandra.org";
     private static final InstructionVideo             VIDEO                  = new InstructionVideo();
     @Autowired
-    private              SecurityConfigurationService securityConfigurationService;
-    @Autowired
     private              OidcIdentityRepository       oidcIdentityRepository;
+    @Autowired
+    private              SecurityConfigurationService securityConfigurationService;
     @Autowired
     private              HumanizedSeleniumHandler     seleniumHandler;
 
@@ -114,6 +113,19 @@ public class InitialSetupIntroductionVideo15IT extends AbstractUiTestUtil {
         } catch (IOException e) {
             throw new IllegalStateException("Failed to allocate the first-run setup test server port", e);
         }
+    }
+
+    private void authenticateWithKeycloak(String username, boolean restartExistingKeycloakLogin) {
+        seleniumHandler.waitForElementToBeClickable("kc-login");
+        if (restartExistingKeycloakLogin && seleniumHandler.isElementPresent(By.id("kc-attempted-username"))) {
+            seleniumHandler.click("reset-login");
+            seleniumHandler.waitForElementToBeClickable("username");
+        }
+        WebElement usernameField = seleniumHandler.findElement(By.id("username"));
+        WebElement password      = seleniumHandler.findElement(By.id("password"));
+        seleniumHandler.typeIntoElement(usernameField, username);
+        seleniumHandler.typeIntoElement(password, KEYCLOAK_PASSWORD);
+        seleniumHandler.clickElement(seleniumHandler.findElement(By.id("kc-login")));
     }
 
     private static void configureKeycloakRedirectUri() {
@@ -141,41 +153,6 @@ public class InitialSetupIntroductionVideo15IT extends AbstractUiTestUtil {
         }
     }
 
-    private static void createExampleIdentity(org.keycloak.admin.client.Keycloak adminClient) {
-        var users = adminClient.realm(KEYCLOAK_REALM).users();
-        var existingUsers = users.searchByUsername(EXAMPLE_USER_EMAIL, true);
-        String userId;
-        if (existingUsers.isEmpty()) {
-            var user = new org.keycloak.representations.idm.UserRepresentation();
-            user.setUsername(EXAMPLE_USER_EMAIL);
-            user.setEmail(EXAMPLE_USER_EMAIL);
-            user.setFirstName("Alex");
-            user.setLastName("Morgan");
-            user.setEnabled(true);
-            try (var response = users.create(user)) {
-                userId = org.keycloak.admin.client.CreatedResponseUtil.getCreatedId(response);
-            }
-        } else {
-            userId = existingUsers.getFirst().getId();
-        }
-        resetPassword(users, userId);
-    }
-
-    private static void resetPassword(org.keycloak.admin.client.Keycloak adminClient, String username) {
-        var user = adminClient.realm(KEYCLOAK_REALM).users().searchByUsername(username, true).stream()
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Keycloak test user does not exist: " + username));
-        resetPassword(adminClient.realm(KEYCLOAK_REALM).users(), user.getId());
-    }
-
-    private static void resetPassword(org.keycloak.admin.client.resource.UsersResource users, String userId) {
-        var password = new org.keycloak.representations.idm.CredentialRepresentation();
-        password.setType(org.keycloak.representations.idm.CredentialRepresentation.PASSWORD);
-        password.setValue(KEYCLOAK_PASSWORD);
-        password.setTemporary(false);
-        users.get(userId).resetPassword(password);
-    }
-
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         if (!KEYCLOAK.isRunning()) {
@@ -194,7 +171,47 @@ public class InitialSetupIntroductionVideo15IT extends AbstractUiTestUtil {
         VIDEO.setTitle("15 Initial Kassandra Setup");
         VIDEO.setDescription(
                 "A guided first-run setup of Kassandra: protecting the installation with a deployment token, "
-                        + "creating the recovery account, configuring OpenID Connect, and claiming the first administrator.");
+                        + "creating the recovery account, configuring OpenID Connect, claiming the first administrator, "
+                        + "and onboarding another user through their normal first sign-in.");
+    }
+
+    private static void createExampleIdentity(org.keycloak.admin.client.Keycloak adminClient) {
+        var    users         = adminClient.realm(KEYCLOAK_REALM).users();
+        var    existingUsers = users.searchByUsername(EXAMPLE_USER_EMAIL, true);
+        String userId;
+        if (existingUsers.isEmpty()) {
+            var user = new org.keycloak.representations.idm.UserRepresentation();
+            user.setUsername(EXAMPLE_USER_EMAIL);
+            user.setEmail(EXAMPLE_USER_EMAIL);
+            user.setFirstName("Alex");
+            user.setLastName("Morgan");
+            user.setEnabled(true);
+            try (var response = users.create(user)) {
+                userId = org.keycloak.admin.client.CreatedResponseUtil.getCreatedId(response);
+            }
+        } else {
+            userId = existingUsers.getFirst().getId();
+        }
+        resetPassword(users, userId);
+    }
+
+    private void createExampleUser(Narrator narrator) throws Exception {
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_USERS);
+        seleniumHandler.waitForElementToBeClickable(UserListView.CREATE_USER_BUTTON);
+        narrate(narrator,
+                "For this example, Grace Martin already exists in Keycloak. As an administrator, I will create Grace's Kassandra user record. The email address must exactly match Grace's email address in Keycloak; it is how the first sign-in finds the intended user.");
+        seleniumHandler.click(UserListView.CREATE_USER_BUTTON);
+        seleniumHandler.setTextField(UserDialog.USER_NAME_FIELD, EXAMPLE_USER_NAME);
+        seleniumHandler.setTextField(UserDialog.USER_EMAIL_FIELD, EXAMPLE_USER_EMAIL);
+        seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, LocalDate.now());
+        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_COUNTRY_COMBO, "United States (US)");
+        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_STATE_COMBO, "California (ca)");
+        seleniumHandler.setComboBoxValue(UserDialog.USER_WORK_WEEK_COMBO, "Western 5x8");
+        seleniumHandler.click(UserDialog.CONFIRM_BUTTON);
+        seleniumHandler.ensureIsInList(UserListView.USER_GRID_NAME_PREFIX, EXAMPLE_USER_NAME);
+        narrate(narrator,
+                "Grace is now a Kassandra user with the standard User role. Creating this record alone does not grant a login session; Grace must complete her own normal provider sign-in.");
     }
 
     private static KeycloakContainer createKeycloak() {
@@ -222,8 +239,10 @@ public class InitialSetupIntroductionVideo15IT extends AbstractUiTestUtil {
         setTestCaseName(getClass().getName(), testInfo.getTestMethod().orElseThrow().getName());
 
         Narrator narrator = headless ? null : Narrator.withChatterboxTTS("tts/" + getClass().getSimpleName());
+        Narrator grace    = headless ? null : Narrator.withChatterboxTTS("tts/" + getClass().getSimpleName(), "grace");
         if (!headless) {
             narrator.setEnabled(true);
+            grace.setEnabled(true);
             HumanizedSeleniumHandler.setHumanize(true);
             seleniumHandler.showOverlay(VIDEO.getTitle(), InstructionVideo.VIDEO_SUBTITLE);
             startRecording();
@@ -238,7 +257,7 @@ public class InitialSetupIntroductionVideo15IT extends AbstractUiTestUtil {
 
         seleniumHandler.waitForElementToBeInteractable(SetupView.SETUP_TOKEN_FIELD);
         narrate(narrator,
-                "The deployment setup token protects this one-time operation. Before starting Kassandra, your deployment administrator generates a long random secret and supplies it in the KASSANDRA_SETUP_TOKEN environment variable or deployment secret. It is not created in the Kassandra user interface.");
+                "The deployment setup token protects this one-time operation. Before starting Kassandra, your deployment administrator generates a long random secret and supplies it in the KASSANDRA SETUP TOKEN environment variable or deployment secret. It is not created in the Kassandra user interface.");
         narrate(narrator,
                 "Enter that deployment secret here, then create a strong recovery password. The recovery account is restricted to setup, and lets you repair the sign-in provider configuration later.");
         seleniumHandler.setTextField(SetupView.SETUP_TOKEN_FIELD, SETUP_TOKEN);
@@ -265,79 +284,59 @@ public class InitialSetupIntroductionVideo15IT extends AbstractUiTestUtil {
 
         seleniumHandler.waitForElementToBeClickable(LoginView.OIDC_LOGIN_BUTTON);
         narrate(narrator, "The provider is ready. The first successful browser sign-in claims the initial Kassandra administrator account.");
-        loginWithKeycloak(TEST_USER_EMAIL);
+        loginWithKeycloak(TEST_USER_EMAIL, false);
         seleniumHandler.waitForElementToBeClickable(AboutView.ABOUT_PAGE_TITLE);
 
         assertEquals(SecurityConfigurationDAO.SetupState.READY, securityConfigurationService.getConfiguration().getSetupState());
         narrate(narrator,
-                "Setup is complete and the first administrator can now sign in. Every additional person needs a Kassandra user record and an explicit link to their existing identity-provider account.");
-        createAndLinkExampleUser(narrator);
-        assertEquals(2, oidcIdentityRepository.count());
+                "Setup is complete and the first administrator can now sign in. To onboard additional people, administrators create their Kassandra user records.");
+        createExampleUser(narrator);
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_LOGOUT);
+        seleniumHandler.waitForElementToBeClickable(LoginView.OIDC_LOGIN_BUTTON);
         narrate(narrator,
-                "Alex can now sign in with the configured provider. The link records the identity provider's immutable subject, so Kassandra can safely recognise Alex even if the display name changes.");
+                "Grace Martin is now ready to use Kassandra. I will sign out and hand the session over to Grace, who will sign in through the identity provider using her own credentials.");
+        if (grace != null) {
+            grace.narrateAsync(NORMAL,
+                    "Hi, Grace Martin here. My Kassandra administrator has already created my user record, so I can now choose our identity provider and sign in with my own account.");
+        }
+        loginWithKeycloak(EXAMPLE_USER_EMAIL, true);
+        seleniumHandler.waitForElementToBeClickable(AboutView.ABOUT_PAGE_TITLE);
+        assertEquals(2, oidcIdentityRepository.count());
+        narrate(grace,
+                "I now have access to Kassandra. On this first sign-in, Kassandra matched my email address to my pre-created user record and securely stored my identity provider account.");
+        narrate(grace,
+                "From now on, Kassandra recognises me by my identity provider's immutable subject, even if my display name changes. An identity with no matching Kassandra user remains denied.");
     }
 
     private String issuerUri() {
         return "http://" + KEYCLOAK.getHost() + ":" + KEYCLOAK.getMappedPort(8080) + "/realms/" + KEYCLOAK_REALM;
     }
 
-    private void createAndLinkExampleUser(Narrator narrator) throws Exception {
-        seleniumHandler.click(MainLayout.ID_USER_MENU);
-        seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_USERS);
-        seleniumHandler.waitForElementToBeClickable(UserListView.CREATE_USER_BUTTON);
-        narrate(narrator,
-                "For this example, Alex Morgan already exists in Keycloak. As an administrator, first create Alex's matching Kassandra user record.");
-        seleniumHandler.click(UserListView.CREATE_USER_BUTTON);
-        seleniumHandler.setTextField(UserDialog.USER_NAME_FIELD, EXAMPLE_USER_NAME);
-        seleniumHandler.setTextField(UserDialog.USER_EMAIL_FIELD, EXAMPLE_USER_EMAIL);
-        seleniumHandler.setDatePickerValue(UserDialog.USER_FIRST_WORKING_DAY_PICKER, LocalDate.now());
-        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_COUNTRY_COMBO, "United States (US)");
-        seleniumHandler.setComboBoxValue(UserDialog.USER_LOCATION_STATE_COMBO, "California (ca)");
-        seleniumHandler.setComboBoxValue(UserDialog.USER_WORK_WEEK_COMBO, "Western 5x8");
-        seleniumHandler.click(UserDialog.CONFIRM_BUTTON);
-        seleniumHandler.ensureIsInList(UserListView.USER_GRID_NAME_PREFIX, EXAMPLE_USER_NAME);
-
-        seleniumHandler.click(MainLayout.ID_USER_MENU);
-        seleniumHandler.click(MainLayout.ID_USER_MENU_LINK_IDENTITY);
-        seleniumHandler.waitForElementToBeInteractable(OidcIdentityLinkView.USER_FIELD);
-        narrate(narrator,
-                "Next, open Link Identity. Select Alex's Kassandra user and the provider, then authenticate as Alex. This proves control of the provider account before Kassandra binds it.");
-        seleniumHandler.setComboBoxValue(OidcIdentityLinkView.USER_FIELD,
-                EXAMPLE_USER_NAME + " <" + EXAMPLE_USER_EMAIL + ">");
-        seleniumHandler.setComboBoxValue(OidcIdentityLinkView.PROVIDER_FIELD, "Kassandra test identity provider");
-        seleniumHandler.click(OidcIdentityLinkView.AUTHENTICATE_AND_LINK_BUTTON);
-        authenticateWithKeycloak(EXAMPLE_USER_EMAIL, true);
-        seleniumHandler.waitForElementToBeInteractable(OidcIdentityLinkView.USER_FIELD);
-    }
-
-    private void loginWithKeycloak(String username) {
+    private void loginWithKeycloak(String username, boolean restartExistingKeycloakLogin) {
         seleniumHandler.click(LoginView.OIDC_LOGIN_BUTTON);
-        authenticateWithKeycloak(username, false);
-    }
-
-    private void authenticateWithKeycloak(String username, boolean clearExistingSession) {
-        if (clearExistingSession) {
-            seleniumHandler.getDriver().manage().deleteCookieNamed("KEYCLOAK_IDENTITY");
-            seleniumHandler.getDriver().manage().deleteCookieNamed("KEYCLOAK_IDENTITY_LEGACY");
-            seleniumHandler.getDriver().manage().deleteCookieNamed("KEYCLOAK_SESSION");
-            seleniumHandler.getDriver().manage().deleteCookieNamed("KEYCLOAK_SESSION_LEGACY");
-        }
-        seleniumHandler.waitForElementToBeClickable("kc-login");
-        if (clearExistingSession && seleniumHandler.isElementPresent(By.id("kc-attempted-username"))) {
-            seleniumHandler.click("reset-login");
-            seleniumHandler.waitForElementToBeClickable("username");
-        }
-        WebElement usernameField = seleniumHandler.findElement(By.id("username"));
-        WebElement password = seleniumHandler.findElement(By.id("password"));
-        seleniumHandler.typeIntoElement(usernameField, username);
-        seleniumHandler.typeIntoElement(password, KEYCLOAK_PASSWORD);
-        seleniumHandler.clickElement(seleniumHandler.findElement(By.id("kc-login")));
+        authenticateWithKeycloak(username, restartExistingKeycloakLogin);
     }
 
     private void narrate(Narrator narrator, String text) throws Exception {
         if (narrator != null) {
             narrator.narrate(NORMAL, text).pause();
         }
+    }
+
+    private static void resetPassword(org.keycloak.admin.client.Keycloak adminClient, String username) {
+        var user = adminClient.realm(KEYCLOAK_REALM).users().searchByUsername(username, true).stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Keycloak test user does not exist: " + username));
+        resetPassword(adminClient.realm(KEYCLOAK_REALM).users(), user.getId());
+    }
+
+    private static void resetPassword(org.keycloak.admin.client.resource.UsersResource users, String userId) {
+        var password = new org.keycloak.representations.idm.CredentialRepresentation();
+        password.setType(org.keycloak.representations.idm.CredentialRepresentation.PASSWORD);
+        password.setValue(KEYCLOAK_PASSWORD);
+        password.setTemporary(false);
+        users.get(userId).resetPassword(password);
     }
 
     private void startRecording() throws IOException {

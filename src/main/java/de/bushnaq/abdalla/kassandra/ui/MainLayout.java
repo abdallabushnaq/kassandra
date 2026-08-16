@@ -47,7 +47,6 @@ import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
-import de.bushnaq.abdalla.kassandra.ui.view.OidcIdentityLinkView;
 import de.bushnaq.abdalla.kassandra.ui.view.OidcProviderManagementView;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.Getter;
@@ -73,10 +72,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public static final String ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
     public static final String ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
     public static final String ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
-    /**
-     * Identifier of the administrator menu entry for linking an OIDC identity.
-     */
-    public static final String ID_USER_MENU_LINK_IDENTITY      = "main-layout-user-menu-link-identity";
     public static final String ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
     public static final String ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
     public static final String ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
@@ -348,10 +343,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
             userMenuItem.getSubMenu().addItem("Identity Providers",
                     e -> UI.getCurrent().navigate(OidcProviderManagementView.class));
-
-            var linkIdentityItem = userMenuItem.getSubMenu().addItem("Link Identity",
-                    e -> UI.getCurrent().navigate(OidcIdentityLinkView.class));
-            linkIdentityItem.setId(ID_USER_MENU_LINK_IDENTITY);
 
             var manageUserGroupsItem = userMenuItem.getSubMenu().addItem("Manage User Groups", e -> navigateToUserGroups());
             manageUserGroupsItem.setId(ID_USER_MENU_MANAGE_USER_GROUPS);

@@ -39,18 +39,14 @@ import java.util.Set;
 public class CustomOidcUserService extends OidcUserService {
 
     private final OidcIdentityService oidcIdentityService;
-    private final OidcIdentityLinkService oidcIdentityLinkService;
 
     /**
      * Creates the OIDC user service.
      *
-     * @param oidcIdentityService explicit OIDC identity resolver
-     * @param oidcIdentityLinkService administrator-driven identity linking coordinator
+     * @param oidcIdentityService OIDC identity resolver
      */
-    public CustomOidcUserService(OidcIdentityService oidcIdentityService,
-                                 OidcIdentityLinkService oidcIdentityLinkService) {
+    public CustomOidcUserService(OidcIdentityService oidcIdentityService) {
         this.oidcIdentityService = oidcIdentityService;
-        this.oidcIdentityLinkService = oidcIdentityLinkService;
     }
 
     /**
@@ -65,15 +61,12 @@ public class CustomOidcUserService extends OidcUserService {
         OidcUser oidcUser = super.loadUser(userRequest);
         Set<GrantedAuthority> authorities = new HashSet<>();
         try {
-            List<String> roles = oidcIdentityLinkService.consumePendingLink(userRequest, oidcUser);
-            if (roles == null) {
-                roles = oidcIdentityService.resolveRoles(
-                        oidcUser.getIdToken().getIssuer().toString(),
-                        oidcUser.getSubject(),
-                        oidcUser.getEmail(),
-                        oidcUser.getFullName(),
-                        true);
-            }
+            List<String> roles = oidcIdentityService.resolveRoles(
+                    oidcUser.getIdToken().getIssuer().toString(),
+                    oidcUser.getSubject(),
+                    oidcUser.getEmail(),
+                    oidcUser.getFullName(),
+                    true);
             roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
         } catch (IllegalStateException e) {
             throw new OAuth2AuthenticationException(new OAuth2Error("access_denied"), e.getMessage(), e);

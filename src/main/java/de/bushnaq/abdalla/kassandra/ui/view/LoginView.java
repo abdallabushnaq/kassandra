@@ -21,6 +21,7 @@ import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -37,7 +38,7 @@ import java.util.List;
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
 
 /**
- * Login view that lists the currently enabled OIDC providers.
+ * Login view that lets users choose from the currently enabled OIDC providers.
  */
 @Route(LoginView.ROUTE)
 @PageTitle("Login | Kassandra")
@@ -52,6 +53,14 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
      * Identifier used for the sole provider button to preserve existing UI test integration.
      */
     public static final String OIDC_LOGIN_BUTTON = "oidc-login-button";
+    /**
+     * Identifier of the provider selector shown when more than one provider is enabled.
+     */
+    public static final String OIDC_PROVIDER_SELECTOR = "oidc-provider-selector";
+    /**
+     * Identifier of the sign-in action shown with the multi-provider selector.
+     */
+    public static final String OIDC_PROVIDER_SIGN_IN_BUTTON = "oidc-provider-sign-in-button";
     /**
      * Identifier of the link that opens the first-run setup wizard.
      */
@@ -90,11 +99,11 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         // Authentication errors are handled by Spring Security.
     }
 
-    private Anchor createProviderButton(OidcProviderDAO provider, boolean onlyProvider) {
+    private Anchor createProviderButton(OidcProviderDAO provider) {
         Anchor loginButton = new Anchor("/oauth2/authorization/" + provider.getRegistrationId(),
                 "Sign in with " + provider.getDisplayName());
         loginButton.setRouterIgnore(true);
-        loginButton.setId(onlyProvider ? OIDC_LOGIN_BUTTON : OIDC_LOGIN_BUTTON + "-" + provider.getRegistrationId());
+        loginButton.setId(OIDC_LOGIN_BUTTON);
         loginButton.getStyle()
                 .set("background-color", "var(--lumo-primary-color)")
                 .set("color", "var(--lumo-primary-contrast-color)")
@@ -108,6 +117,45 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
                 .set("font-size", "var(--lumo-font-size-m)")
                 .set("min-width", "250px");
         return loginButton;
+    }
+
+    private void addProviderSelection(VerticalLayout container, List<OidcProviderDAO> providers) {
+        ComboBox<OidcProviderDAO> providerSelector = new ComboBox<>("Identity provider");
+        providerSelector.setId(OIDC_PROVIDER_SELECTOR);
+        providerSelector.setItems(providers);
+        providerSelector.setItemLabelGenerator(OidcProviderDAO::getDisplayName);
+        providerSelector.setWidthFull();
+
+        Anchor signIn = new Anchor();
+        signIn.setText("Sign in");
+        signIn.setRouterIgnore(true);
+        signIn.setId(OIDC_PROVIDER_SIGN_IN_BUTTON);
+        signIn.getElement().setAttribute("aria-disabled", "true");
+        signIn.getStyle()
+                .set("background-color", "var(--lumo-primary-color)")
+                .set("color", "var(--lumo-primary-contrast-color)")
+                .set("padding", "var(--lumo-space-m) var(--lumo-space-l)")
+                .set("border-radius", "var(--lumo-border-radius-m)")
+                .set("cursor", "not-allowed")
+                .set("opacity", "0.5")
+                .set("pointer-events", "none")
+                .set("text-decoration", "none")
+                .set("display", "inline-block")
+                .set("text-align", "center")
+                .set("font-weight", "600")
+                .set("font-size", "var(--lumo-font-size-m)")
+                .set("min-width", "250px");
+        providerSelector.addValueChangeListener(event -> {
+            OidcProviderDAO provider = event.getValue();
+            boolean selected = provider != null;
+            signIn.setHref(selected ? "/oauth2/authorization/" + provider.getRegistrationId() : null);
+            signIn.getElement().setAttribute("aria-disabled", Boolean.toString(!selected));
+            signIn.getStyle()
+                    .set("cursor", selected ? "pointer" : "not-allowed")
+                    .set("opacity", selected ? "1" : "0.5")
+                    .set("pointer-events", selected ? "auto" : "none");
+        });
+        container.add(providerSelector, signIn);
     }
 
     private Div createProviderButtons(OidcProviderService oidcProviderService,
@@ -128,8 +176,10 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         List<OidcProviderDAO> providers = oidcProviderService.getProviders().stream()
                 .filter(OidcProviderDAO::isEnabled)
                 .toList();
-        for (OidcProviderDAO provider : providers) {
-            container.add(createProviderButton(provider, providers.size() == 1));
+        if (providers.size() == 1) {
+            container.add(createProviderButton(providers.getFirst()));
+        } else if (providers.size() > 1) {
+            addProviderSelection(container, providers);
         }
         if (container.getComponentCount() == 1) {
             Anchor setupLink = new Anchor("/ui/" + SetupView.ROUTE, "Set up Kassandra");
