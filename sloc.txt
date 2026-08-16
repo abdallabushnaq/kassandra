@@ -479,7 +479,7 @@
 | kassandra.ui.introduction.util       | InstructionVideo.java                                        | src      |        5 |       43 |       16 |       19 |       83 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.introduction            | AbstractIntroductionVideo.java                               | src      |       19 |       49 |       16 |      128 |      212 |
-| kassandra.ui.introduction            | InitialSetupIntroductionVideo15IT.java                       | src      |       27 |       18 |       16 |      295 |      356 |
+| kassandra.ui.introduction            | InitialSetupIntroductionVideo15IT.java                       | src      |       43 |       18 |       16 |      422 |      499 |
 | kassandra.ui.introduction            | KassandraAgentIntroductionVideo14IT.java                     | src      |       37 |        0 |       54 |      189 |      280 |
 | kassandra.ui.introduction            | KassandraIntroductionVideo01IT.java                          | src      |       39 |       33 |       57 |      210 |      339 |
 | kassandra.ui.introduction            | LoggingWorkIntroductionVideo13IT.java                        | src      |       96 |        0 |       82 |      284 |      462 |
@@ -667,5 +667,5 @@
 | util                                 | TaskUtil.java                                                | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 70 package(s)                        | 596 file(s)                                                  | java     |    12844 |    13101 |    17583 |    69794 |   113322 |
+| 70 package(s)                        | 596 file(s)                                                  | java     |    12860 |    13101 |    17583 |    69921 |   113465 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
