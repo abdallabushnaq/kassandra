@@ -479,7 +479,7 @@
 | kassandra.ui.introduction.util       | InstructionVideo.java                                        | src      |        5 |       43 |       16 |       19 |       83 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.introduction            | AbstractIntroductionVideo.java                               | src      |       19 |       49 |       16 |      128 |      212 |
-| kassandra.ui.introduction            | InitialSetupIntroductionVideo15IT.java                       | src      |       43 |       18 |       27 |      414 |      502 |
+| kassandra.ui.introduction            | InitialSetupIntroductionVideo15IT.java                       | src      |       43 |       18 |       27 |      401 |      489 |
 | kassandra.ui.introduction            | KassandraAgentIntroductionVideo14IT.java                     | src      |       37 |        0 |       54 |      189 |      280 |
 | kassandra.ui.introduction            | KassandraIntroductionVideo01IT.java                          | src      |       39 |       33 |       57 |      210 |      339 |
 | kassandra.ui.introduction            | LoggingWorkIntroductionVideo13IT.java                        | src      |       96 |        0 |       82 |      284 |      462 |
@@ -501,7 +501,7 @@
 | kassandra.ui.util.selenium           | SeleniumTestResultExtension.java                             | src      |        9 |        0 |       17 |       42 |       68 |
 | kassandra.ui.util.selenium           | VideoRecorder.java                                           | src      |       48 |       32 |       56 |      479 |      615 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.ui.util                    | AbstractKeycloakUiTestUtil.java                              | src      |       21 |       28 |       32 |      163 |      244 |
+| kassandra.ui.util                    | AbstractKeycloakUiTestUtil.java                              | src      |       24 |       28 |       32 |      196 |      280 |
 | kassandra.ui.util                    | AbstractUiTestUtil.java                                      | src      |       10 |        0 |       16 |       37 |       63 |
 | kassandra.ui.util                    | RenderUtil.java                                              | src      |       21 |       61 |       34 |      221 |      337 |
 | kassandra.ui.util                    | VaadinUtil.java                                              | src      |       92 |      249 |       42 |      428 |      811 |
@@ -667,5 +667,5 @@
 | util                                 | TaskUtil.java                                                | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 70 package(s)                        | 596 file(s)                                                  | java     |    12860 |    13101 |    17594 |    69913 |   113468 |
+| 70 package(s)                        | 596 file(s)                                                  | java     |    12863 |    13101 |    17594 |    69933 |   113491 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

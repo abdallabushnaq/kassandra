@@ -316,41 +316,33 @@ public class InitialSetupIntroductionVideo15IT extends AbstractUiTestUtil {
 
         seleniumHandler.getAndCheck("http://localhost:" + SERVER_PORT + "/ui/" + LoginView.ROUTE);
         seleniumHandler.waitForElementToBeClickable(LoginView.SETUP_LINK);
-        narrate(narrator,
-                "Let us first try to sign in to this new Kassandra installation. There is no identity provider yet, so Kassandra offers the protected setup wizard instead of a sign-in button.");
+        narrate(narrator, "Let us first try to sign in to this new Kassandra installation. There is no identity provider yet, so Kassandra offers the protected setup wizard instead of a sign-in button.");
         seleniumHandler.click(LoginView.SETUP_LINK);
 
         seleniumHandler.waitForElementToBeInteractable(SetupView.SETUP_TOKEN_FIELD);
-        narrate(narrator,
-                "The deployment setup token protects this one-time operation. Before starting Kassandra, your deployment administrator generates a long random secret and supplies it in the KASSANDRA SETUP TOKEN environment variable or deployment secret. It is not created in the Kassandra user interface.");
-        narrate(narrator,
-                "Enter that deployment secret here, then create a strong recovery password. The recovery account is restricted to setup, and lets you repair the sign-in provider configuration later.");
+        narrate(narrator, "The deployment setup token protects this one-time operation. Before starting Kassandra, your deployment administrator generates a long random secret and supplies it in the KASSANDRA SETUP TOKEN environment variable or deployment secret. It is not created in the Kassandra user interface.");
+        narrate(narrator, "Enter that deployment secret here, then create a strong recovery password. The recovery account is restricted to setup, and lets you repair the sign-in provider configuration later.");
         seleniumHandler.setTextField(SetupView.SETUP_TOKEN_FIELD, SETUP_TOKEN);
         seleniumHandler.setTextField(SetupView.RECOVERY_PASSWORD_FIELD, RECOVERY_PASSWORD);
         seleniumHandler.setTextField(SetupView.RECOVERY_PASSWORD_CONFIRMATION_FIELD, RECOVERY_PASSWORD);
         seleniumHandler.click(SetupView.CLAIM_SETUP_BUTTON);
 
         seleniumHandler.waitForElementToBeInteractable(SetupView.PROVIDER_NAME_FIELD);
-        assertEquals(SecurityConfigurationDAO.SetupState.SETUP_IN_PROGRESS,
-                securityConfigurationService.getConfiguration().getSetupState());
-        narrate(narrator,
-                "The setup wizard now needs the identity provider's issuer, client ID, and client secret. We will obtain them from Keycloak before returning here.");
+        assertEquals(SecurityConfigurationDAO.SetupState.SETUP_IN_PROGRESS, securityConfigurationService.getConfiguration().getSetupState());
+        narrate(narrator, "The setup wizard now needs the identity provider's issuer, client ID, and client secret. We will obtain them from Keycloak before returning here.");
         String kassandraWindow = seleniumHandler.getDriver().getWindowHandle();
         seleniumHandler.getDriver().switchTo().newWindow(WindowType.TAB);
         OidcClientConfiguration oidcClient = createKeycloakClient(narrator);
         seleniumHandler.getDriver().close();
         seleniumHandler.getDriver().switchTo().window(kassandraWindow);
 
-        narrate(narrator,
-                "Now configure the organisation's OpenID Connect provider. Kassandra validates its discovery document before enabling sign-in. The provider name is only the label users see on Kassandra's sign-in page. Choose a clear name, such as Company Keycloak.");
-        narrate(narrator,
-                "We have now obtained the realm issuer, client ID, and client secret from Keycloak. I will use those values to configure Kassandra.");
+        narrate(narrator, "Now configure the organisation's OpenID Connect provider. Kassandra validates its discovery document before enabling sign-in. The provider name is only the label users see on Kassandra's sign-in page. Choose a clear name, such as Company Keycloak.");
+        narrate(narrator, "We have now obtained the realm issuer, client ID, and client secret from Keycloak. I will use those values to configure Kassandra.");
         seleniumHandler.setTextField(SetupView.PROVIDER_NAME_FIELD, "Kassandra test identity provider");
         seleniumHandler.setTextField(SetupView.PROVIDER_ISSUER_URI_FIELD, oidcClient.issuerUri());
         seleniumHandler.setTextField(SetupView.PROVIDER_CLIENT_ID_FIELD, oidcClient.clientId());
         seleniumHandler.setTextField(SetupView.PROVIDER_CLIENT_SECRET_FIELD, oidcClient.clientSecret());
-        narrate(narrator,
-                "The default scopes request the OpenID Connect identity, profile, and email claims. OpenID is required; profile and email let Kassandra create the first administrator with a useful name and email address. Leave these defaults unless your provider requires different scopes.");
+        narrate(narrator, "The default scopes request the OpenID Connect identity, profile, and email claims. OpenID is required; profile and email let Kassandra create the first administrator with a useful name and email address. Leave these defaults unless your provider requires different scopes.");
         seleniumHandler.click(SetupView.VALIDATE_PROVIDER_BUTTON);
 
         waitForProviderValidation();
@@ -359,25 +351,20 @@ public class InitialSetupIntroductionVideo15IT extends AbstractUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(AboutView.ABOUT_PAGE_TITLE);
 
         assertEquals(SecurityConfigurationDAO.SetupState.READY, securityConfigurationService.getConfiguration().getSetupState());
-        narrate(narrator,
-                "Setup is complete and the first administrator can now sign in. To onboard additional people, administrators create their Kassandra user records.");
+        narrate(narrator, "Setup is complete and the first administrator can now sign in. To onboard additional people, administrators create their Kassandra user records.");
         createExampleUser(narrator);
         seleniumHandler.click(MainLayout.ID_USER_MENU);
         seleniumHandler.click(MainLayout.ID_USER_MENU_LOGOUT);
         seleniumHandler.waitForElementToBeClickable(LoginView.OIDC_LOGIN_BUTTON);
-        narrate(narrator,
-                "Grace Martin is now ready to use Kassandra. I will sign out and hand the session over to Grace, who will sign in through the identity provider using her own credentials.");
+        narrate(narrator, "Grace Martin is now ready to use Kassandra. I will sign out and hand the session over to Grace, who will sign in through the identity provider using her own credentials.");
         if (grace != null) {
-            grace.narrateAsync(NORMAL,
-                    "Hi, Grace Martin here. My Kassandra administrator has already created my user record, so I can now choose our identity provider and sign in with my own account.");
+            grace.narrateAsync(NORMAL, "Hi, Grace Martin here. My Kassandra administrator has already created my user record, so I can now choose our identity provider and sign in with my own account.");
         }
         loginWithKeycloak(EXAMPLE_USER_EMAIL, true);
         seleniumHandler.waitForElementToBeClickable(AboutView.ABOUT_PAGE_TITLE);
         assertEquals(2, oidcIdentityRepository.count());
-        narrate(grace,
-                "I now have access to Kassandra. On this first sign-in, Kassandra matched my email address to my pre-created user record and securely stored my identity provider account.");
-        narrate(grace,
-                "From now on, Kassandra recognises me by my identity provider's immutable subject, even if my display name changes. An identity with no matching Kassandra user remains denied.");
+        narrate(grace, "I now have access to Kassandra. On this first sign-in, Kassandra matched my email address to my pre-created user record and securely stored my identity provider account.");
+        narrate(grace, "From now on, Kassandra recognises me by my identity provider's immutable subject, even if my display name changes. An identity with no matching Kassandra user remains denied.");
     }
 
     private String issuerUri() {

@@ -22,12 +22,17 @@ import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.Narrator;
 import de.bushnaq.abdalla.kassandra.ai.tts.narrator.TtsCacheManager;
+import de.bushnaq.abdalla.kassandra.repository.OidcProviderRepository;
 import de.bushnaq.abdalla.kassandra.repository.UserRepository;
+import de.bushnaq.abdalla.kassandra.security.DatabaseClientRegistrationRepository;
+import de.bushnaq.abdalla.kassandra.security.OidcAuthenticationManagerResolver;
 import de.bushnaq.abdalla.kassandra.service.OidcIdentityService;
 import de.bushnaq.abdalla.kassandra.service.OidcProviderService;
+import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +61,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     private static final String                     KEYCLOAK_CLIENT_ID     = "kassandra-client";
     private static final String                     KEYCLOAK_CLIENT_SECRET = "test-client-secret";
     private static final String                     KEYCLOAK_REALM         = "project-hub-realm";
+    private static final String                     KEYCLOAK_PROVIDER_NAME = "Test Keycloak";
     private static final String                     TEST_USER_EMAIL        = "christopher.paul@kassandra.org";
     private static final Logger                     logger                 = LoggerFactory.getLogger(AbstractKeycloakUiTestUtil.class);
     protected static     int                        allocatedPort;
@@ -67,6 +73,12 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     protected            OidcIdentityService        oidcIdentityService;
     @Autowired
     protected            OidcProviderService        oidcProviderService;
+    @Autowired
+    private              OidcProviderRepository     oidcProviderRepository;
+    @Autowired
+    private              DatabaseClientRegistrationRepository clientRegistrationRepository;
+    @Autowired
+    private              OidcAuthenticationManagerResolver    oidcAuthenticationManagerResolver;
     @Autowired
     protected            UserRepository             userRepository;
 
@@ -141,7 +153,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
         peg.addUser("Christopher Paul", TEST_USER_EMAIL, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f, null);
         var provider = oidcProviderService.createProvider(
-                "Test Keycloak",
+                KEYCLOAK_PROVIDER_NAME,
                 getIssuerUri(),
                 KEYCLOAK_CLIENT_ID,
                 KEYCLOAK_CLIENT_SECRET,
@@ -154,8 +166,32 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         peg.setUserIndex(peg.getUserIndex() - 1);//ensure Christopher Paul is always the first user created
     }
 
+    @Override
+    protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase) throws Exception {
+        super.generateProductsIfNeeded(testInfo, randomCase);
+        refreshRestoredKeycloakProvider();
+    }
+
     private static String getIssuerUri() {
         return getPublicFacingUrl(keycloak) + "/realms/" + KEYCLOAK_REALM;
+    }
+
+    private void refreshRestoredKeycloakProvider() {
+        String issuerUri = getIssuerUri();
+        var provider = oidcProviderRepository.findAll().stream()
+                .filter(candidate -> KEYCLOAK_PROVIDER_NAME.equals(candidate.getDisplayName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("The Keycloak test provider was not restored"));
+        if (issuerUri.equals(provider.getIssuerUri())) {
+            return;
+        }
+
+        String previousIssuerUri = provider.getIssuerUri();
+        provider.setIssuerUri(issuerUri);
+        oidcProviderRepository.save(provider);
+        clientRegistrationRepository.invalidate(provider.getRegistrationId());
+        oidcAuthenticationManagerResolver.invalidate(previousIssuerUri);
+        oidcAuthenticationManagerResolver.invalidate(issuerUri);
     }
 
     private static String getKeycloakUserSubject(String username) {
