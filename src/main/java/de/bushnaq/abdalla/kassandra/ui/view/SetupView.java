@@ -32,8 +32,10 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import de.bushnaq.abdalla.kassandra.dao.SecurityConfigurationDAO;
-import de.bushnaq.abdalla.kassandra.service.OidcProviderService;
+import de.bushnaq.abdalla.kassandra.dto.OidcProviderCreateRequest;
+import de.bushnaq.abdalla.kassandra.rest.api.OidcProviderApi;
 import de.bushnaq.abdalla.kassandra.service.SecurityConfigurationService;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -92,18 +94,18 @@ public class SetupView extends VerticalLayout implements BeforeEnterObserver {
      */
     public static final String VALIDATE_PROVIDER_BUTTON = "validate-provider-button";
 
-    private final OidcProviderService          oidcProviderService;
+    private final OidcProviderApi              oidcProviderApi;
     private final SecurityConfigurationService securityConfigurationService;
 
     /**
      * Creates the setup wizard.
      *
      * @param securityConfigurationService security setup lifecycle service
-     * @param oidcProviderService OIDC provider configuration service
+     * @param oidcProviderApi OIDC provider REST client
      */
-    public SetupView(SecurityConfigurationService securityConfigurationService, OidcProviderService oidcProviderService) {
+    public SetupView(SecurityConfigurationService securityConfigurationService, OidcProviderApi oidcProviderApi) {
         this.securityConfigurationService = securityConfigurationService;
-        this.oidcProviderService = oidcProviderService;
+        this.oidcProviderApi = oidcProviderApi;
 
         setSizeFull();
         setAlignItems(Alignment.CENTER);
@@ -143,16 +145,16 @@ public class SetupView extends VerticalLayout implements BeforeEnterObserver {
         scopes.setValue("openid,profile,email");
         Button save = new Button("Validate provider", event -> {
             try {
-                oidcProviderService.createProvider(
+                oidcProviderApi.create(createProviderRequest(
                         displayName.getValue(),
                         issuerUri.getValue(),
                         clientId.getValue(),
                         clientSecret.getValue(),
-                        List.of(scopes.getValue().split(",")));
+                        List.of(scopes.getValue().split(","))));
                 Notification.show("Provider validated. Sign in with it to claim the first Kassandra administrator account.",
                         7000, Notification.Position.MIDDLE);
                 getUI().ifPresent(ui -> ui.navigate(LoginView.class));
-            } catch (IllegalArgumentException | IllegalStateException e) {
+            } catch (IllegalArgumentException | IllegalStateException | ResponseStatusException e) {
                 Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
             }
         });
@@ -193,6 +195,17 @@ public class SetupView extends VerticalLayout implements BeforeEnterObserver {
         FormLayout formLayout = new FormLayout();
         formLayout.add(components);
         return formLayout;
+    }
+
+    private OidcProviderCreateRequest createProviderRequest(String displayName, String issuerUri, String clientId,
+            String clientSecret, List<String> scopes) {
+        OidcProviderCreateRequest request = new OidcProviderCreateRequest();
+        request.setDisplayName(displayName);
+        request.setIssuerUri(issuerUri);
+        request.setClientId(clientId);
+        request.setClientSecret(clientSecret);
+        request.setScopes(scopes);
+        return request;
     }
 
     private void showCurrentStep() {

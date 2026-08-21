@@ -28,10 +28,12 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import de.bushnaq.abdalla.kassandra.dao.OidcProviderDAO;
-import de.bushnaq.abdalla.kassandra.service.OidcProviderService;
+import de.bushnaq.abdalla.kassandra.dto.OidcProvider;
+import de.bushnaq.abdalla.kassandra.dto.OidcProviderCreateRequest;
+import de.bushnaq.abdalla.kassandra.rest.api.OidcProviderApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -48,16 +50,16 @@ public class OidcProviderManagementView extends VerticalLayout {
      */
     public static final String ROUTE = "identity-providers";
 
-    private final Grid<OidcProviderDAO> grid = new Grid<>(OidcProviderDAO.class, false);
-    private final OidcProviderService   oidcProviderService;
+    private final Grid<OidcProvider> grid = new Grid<>(OidcProvider.class, false);
+    private final OidcProviderApi     oidcProviderApi;
 
     /**
      * Creates the identity-provider management view.
      *
-     * @param oidcProviderService OIDC provider configuration service
+     * @param oidcProviderApi OIDC provider REST client
      */
-    public OidcProviderManagementView(OidcProviderService oidcProviderService) {
-        this.oidcProviderService = oidcProviderService;
+    public OidcProviderManagementView(OidcProviderApi oidcProviderApi) {
+        this.oidcProviderApi = oidcProviderApi;
 
         setSizeFull();
         add(new H1("Identity Providers"),
@@ -77,19 +79,19 @@ public class OidcProviderManagementView extends VerticalLayout {
         scopes.setValue("openid,profile,email");
         Button addProvider = new Button("Add provider", event -> {
             try {
-                oidcProviderService.createProvider(
+                oidcProviderApi.create(createProviderRequest(
                         displayName.getValue(),
                         issuerUri.getValue(),
                         clientId.getValue(),
                         clientSecret.getValue(),
-                        List.of(scopes.getValue().split(",")));
+                        List.of(scopes.getValue().split(","))));
                 displayName.clear();
                 issuerUri.clear();
                 clientId.clear();
                 clientSecret.clear();
                 refreshGrid();
                 Notification.show("Identity provider added");
-            } catch (IllegalArgumentException | IllegalStateException e) {
+            } catch (IllegalArgumentException | IllegalStateException | ResponseStatusException e) {
                 Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
             }
         });
@@ -101,31 +103,31 @@ public class OidcProviderManagementView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        grid.addColumn(OidcProviderDAO::getDisplayName).setHeader("Name").setAutoWidth(true);
-        grid.addColumn(OidcProviderDAO::getIssuerUri).setHeader("Issuer").setFlexGrow(1);
+        grid.addColumn(OidcProvider::getDisplayName).setHeader("Name").setAutoWidth(true);
+        grid.addColumn(OidcProvider::getIssuerUri).setHeader("Issuer").setFlexGrow(1);
         grid.addColumn(provider -> provider.isEnabled() ? "Enabled" : "Disabled").setHeader("Status").setAutoWidth(true);
         grid.addComponentColumn(this::createActions).setHeader("Actions").setAutoWidth(true);
         grid.setSizeFull();
     }
 
-    private HorizontalLayout createActions(OidcProviderDAO provider) {
+    private HorizontalLayout createActions(OidcProvider provider) {
         Button state = new Button(provider.isEnabled() ? "Disable" : "Enable", event -> {
             try {
                 if (provider.isEnabled()) {
-                    oidcProviderService.disableProvider(provider.getId());
+                    oidcProviderApi.disable(provider.getId());
                 } else {
-                    oidcProviderService.enableProvider(provider.getId());
+                    oidcProviderApi.enable(provider.getId());
                 }
                 refreshGrid();
-            } catch (IllegalArgumentException | IllegalStateException e) {
+            } catch (IllegalArgumentException | IllegalStateException | ResponseStatusException e) {
                 Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
             }
         });
         Button delete = new Button("Delete", event -> {
             try {
-                oidcProviderService.deleteProvider(provider.getId());
+                oidcProviderApi.deleteById(provider.getId());
                 refreshGrid();
-            } catch (IllegalArgumentException | IllegalStateException e) {
+            } catch (IllegalArgumentException | IllegalStateException | ResponseStatusException e) {
                 Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
             }
         });
@@ -133,6 +135,17 @@ public class OidcProviderManagementView extends VerticalLayout {
     }
 
     private void refreshGrid() {
-        grid.setItems(oidcProviderService.getProviders());
+        grid.setItems(oidcProviderApi.getAll());
+    }
+
+    private OidcProviderCreateRequest createProviderRequest(String displayName, String issuerUri, String clientId,
+            String clientSecret, List<String> scopes) {
+        OidcProviderCreateRequest request = new OidcProviderCreateRequest();
+        request.setDisplayName(displayName);
+        request.setIssuerUri(issuerUri);
+        request.setClientId(clientId);
+        request.setClientSecret(clientSecret);
+        request.setScopes(scopes);
+        return request;
     }
 }

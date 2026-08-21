@@ -53,7 +53,7 @@ public class OidcApiSecurityConfig {
         return http
                 .securityMatcher("/api/**")
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
                 .httpBasic(httpBasic -> {
                 })

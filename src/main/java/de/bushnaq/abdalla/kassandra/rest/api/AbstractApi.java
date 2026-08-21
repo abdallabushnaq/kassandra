@@ -239,6 +239,13 @@ public class AbstractApi {
                 }
             }
 
+            if (authorities.stream().anyMatch(authority -> "ROLE_SETUP_ADMIN".equals(authority.getAuthority()))) {
+                copySessionCookie(headers);
+                headers.set("Content-Type", "application/json");
+                headers.set("Accept", "application/json");
+                return headers;
+            }
+
             // Fallback to basic auth if no OIDC token is available
 //            logger.debug("Falling back to basic auth for user {}", authentication.getName());
             String username = authentication.getName();
@@ -262,6 +269,16 @@ public class AbstractApi {
         }
 
         return headers;
+    }
+
+    private void copySessionCookie(HttpHeaders headers) {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            String cookie = attributes.getRequest().getHeader(HttpHeaders.COOKIE);
+            if (cookie != null) {
+                headers.set(HttpHeaders.COOKIE, cookie);
+            }
+        }
     }
 
     /**

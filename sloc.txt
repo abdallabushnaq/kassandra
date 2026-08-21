@@ -188,6 +188,8 @@
 | kassandra.dto                        | Location.java                                                | src      |       10 |        6 |       16 |       32 |       64 |
 | kassandra.dto                        | OffDay.java                                                  | src      |       12 |        0 |       16 |       42 |       70 |
 | kassandra.dto                        | OffDayType.java                                              | src      |        2 |        0 |       16 |        6 |       24 |
+| kassandra.dto                        | OidcProvider.java                                            | src      |        5 |        4 |       16 |       17 |       42 |
+| kassandra.dto                        | OidcProviderCreateRequest.java                               | src      |        5 |        3 |       16 |       15 |       39 |
 | kassandra.dto                        | Product.java                                                 | src      |       19 |       48 |       16 |       93 |      176 |
 | kassandra.dto                        | ProductAclEntry.java                                         | src      |       11 |       13 |       17 |       36 |       77 |
 | kassandra.dto                        | Relation.java                                                | src      |        7 |        0 |       16 |       21 |       44 |
@@ -309,7 +311,7 @@
 | kassandra.repository                 | WorkWeekRepository.java                                      | src      |        6 |        9 |       16 |        8 |       39 |
 | kassandra.repository                 | WorklogRepository.java                                       | src      |        4 |        0 |       16 |        8 |       28 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.rest.api                   | AbstractApi.java                                             | src      |       53 |       22 |       62 |      299 |      436 |
+| kassandra.rest.api                   | AbstractApi.java                                             | src      |       55 |       22 |       62 |      314 |      453 |
 | kassandra.rest.api                   | AvailabilityApi.java                                         | src      |       10 |        0 |       16 |       60 |       86 |
 | kassandra.rest.api                   | AvailabilityApiTest.java                                     | src      |       36 |        0 |       71 |      254 |      361 |
 | kassandra.rest.api                   | FeatureAclApiTest.java                                       | src      |       61 |       74 |       55 |      243 |      433 |
@@ -319,6 +321,8 @@
 | kassandra.rest.api                   | LocationApiTest.java                                         | src      |       44 |        0 |       77 |      291 |      412 |
 | kassandra.rest.api                   | OffDayApi.java                                               | src      |       14 |        7 |       17 |       72 |      110 |
 | kassandra.rest.api                   | OffDayApiTest.java                                           | src      |       44 |        0 |       96 |      281 |      421 |
+| kassandra.rest.api                   | OidcProviderApi.java                                         | src      |       13 |       45 |       16 |       66 |      140 |
+| kassandra.rest.api                   | OidcProviderApiTest.java                                     | src      |       13 |       12 |       16 |       66 |      107 |
 | kassandra.rest.api                   | ProductAclApi.java                                           | src      |       13 |        0 |       16 |       83 |      112 |
 | kassandra.rest.api                   | ProductAclApiTest.java                                       | src      |       68 |      121 |       66 |      288 |      543 |
 | kassandra.rest.api                   | ProductApi.java                                              | src      |       23 |       57 |       16 |      175 |      271 |
@@ -349,6 +353,7 @@
 | kassandra.rest.controller            | FeatureController.java                                       | src      |       33 |        7 |       29 |      208 |      277 |
 | kassandra.rest.controller            | LocationController.java                                      | src      |       15 |        7 |       21 |       75 |      118 |
 | kassandra.rest.controller            | OffDayController.java                                        | src      |       20 |       19 |       23 |      117 |      179 |
+| kassandra.rest.controller            | OidcProviderController.java                                  | src      |       11 |       29 |       16 |       65 |      121 |
 | kassandra.rest.controller            | OverviewController.java                                      | src      |        6 |        0 |        0 |       28 |       34 |
 | kassandra.rest.controller            | ProductAclController.java                                    | src      |       11 |       36 |       16 |       66 |      129 |
 | kassandra.rest.controller            | ProductController.java                                       | src      |       42 |       11 |       40 |      250 |      343 |
@@ -545,13 +550,13 @@
 | kassandra.ui.view                    | MainView.java                                                | src      |        5 |        7 |       16 |       10 |       38 |
 | kassandra.ui.view                    | OffDayListView.java                                          | src      |       39 |       11 |       60 |      260 |      370 |
 | kassandra.ui.view                    | OffDayListViewIT.java                                        | src      |       23 |       77 |       35 |      142 |      277 |
-| kassandra.ui.view                    | OidcProviderManagementView.java                              | src      |       13 |       11 |       16 |       98 |      138 |
+| kassandra.ui.view                    | OidcProviderManagementView.java                              | src      |       14 |       11 |       16 |      110 |      151 |
 | kassandra.ui.view                    | ProductListView.java                                         | src      |       41 |        6 |       23 |      334 |      404 |
 | kassandra.ui.view                    | ProductListViewIT.java                                       | src      |       35 |      119 |       24 |      224 |      402 |
 | kassandra.ui.view                    | QualityBoard.java                                            | src      |       67 |       84 |       62 |      624 |      837 |
 | kassandra.ui.view                    | QualityBoardIT.java                                          | src      |       11 |        0 |       18 |      116 |      145 |
 | kassandra.ui.view                    | RecoveryView.java                                            | src      |        6 |        9 |       16 |       26 |       57 |
-| kassandra.ui.view                    | SetupView.java                                               | src      |       17 |       42 |       16 |      137 |      212 |
+| kassandra.ui.view                    | SetupView.java                                               | src      |       18 |       42 |       16 |      149 |      225 |
 | kassandra.ui.view                    | SprintListView.java                                          | src      |       63 |       74 |       50 |      616 |      803 |
 | kassandra.ui.view                    | SprintListViewIT.java                                        | src      |       15 |       82 |       24 |      113 |      234 |
 | kassandra.ui.view                    | SprintStatistics.java                                        | src      |       20 |        4 |       26 |       97 |      147 |
@@ -667,5 +672,5 @@
 | util                                 | TaskUtil.java                                                | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 70 package(s)                        | 596 file(s)                                                  | java     |    12863 |    13101 |    17594 |    69933 |   113491 |
+| 70 package(s)                        | 601 file(s)                                                  | java     |    12914 |    13194 |    17674 |    70201 |   113983 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
