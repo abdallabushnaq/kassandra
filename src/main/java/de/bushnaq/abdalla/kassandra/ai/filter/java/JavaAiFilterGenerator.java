@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -86,7 +87,7 @@ public class JavaAiFilterGenerator implements AiFilterGenerator {
     private final        KassandraProperties kassandraProperties;
 
     public JavaAiFilterGenerator(ChatClient.Builder builder,
-                                 JavaFilterCompiler javaFilterCompiler,
+                                 @Lazy JavaFilterCompiler javaFilterCompiler,
                                  KassandraProperties kassandraProperties) {
         this.chatModel           = builder.build();
         this.javaFilterCompiler  = javaFilterCompiler;

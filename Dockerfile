@@ -10,7 +10,7 @@ COPY . .
 RUN --mount=type=secret,id=maven_settings,target=/root/.m2/settings.xml,required=true \
     mvn -B package -P production -DskipTests
 
-FROM eclipse-temurin:25-jre
+FROM eclipse-temurin:25-jdk
 
 WORKDIR /opt/kassandra
 COPY --from=build /workspace/target/kassandra.jar app.jar
