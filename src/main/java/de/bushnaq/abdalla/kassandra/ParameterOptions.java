@@ -90,13 +90,13 @@ public abstract class ParameterOptions {
     }
 
     public static LocalDateTime getLocalNow() {
-        return DateUtil.offsetDateTimeToLocalDateTime(now);
+        return DateUtil.offsetDateTimeToLocalDateTime(getNow());
     }
 
     public static OffsetDateTime getNow() {
         if (now != null)
-            return now;
-        return OffsetDateTime.now();
+            return now;//test time
+        return OffsetDateTime.now();//realtime
     }
 
     public abstract void start(String[] args) throws Exception;

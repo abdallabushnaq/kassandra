@@ -411,7 +411,7 @@
 | kassandra.security                   | OAuth2ClientConfig.java                                      | src      |       12 |       18 |       18 |       37 |       85 |
 | kassandra.security                   | OidcApiSecurityConfig.java                                   | src      |        5 |       10 |       16 |       43 |       74 |
 | kassandra.security                   | OidcAuthenticationManagerResolver.java                       | src      |        9 |       15 |       16 |       76 |      116 |
-| kassandra.security                   | OidcClientRegistrationFactory.java                           | src      |        6 |       10 |       16 |       33 |       65 |
+| kassandra.security                   | OidcClientRegistrationFactory.java                           | src      |       12 |       10 |       16 |       95 |      133 |
 | kassandra.security                   | OidcSecurityConfig.java                                      | src      |       11 |       15 |       16 |       82 |      124 |
 | kassandra.security                   | SecurityConfig.java                                          | src      |       24 |       25 |       25 |      155 |      229 |
 | kassandra.security                   | SecuritySecretService.java                                   | src      |       13 |       17 |       16 |       68 |      114 |
@@ -673,5 +673,5 @@
 | util                                 | TaskUtil.java                                                | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 70 package(s)                        | 602 file(s)                                                  | java     |    12926 |    13208 |    17690 |    70306 |   114130 |
+| 70 package(s)                        | 602 file(s)                                                  | java     |    12932 |    13208 |    17690 |    70368 |   114198 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

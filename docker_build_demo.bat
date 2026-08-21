@@ -37,7 +37,8 @@ set "SETTINGS_FILE=%TEMP%\kassandra-maven-settings-%RANDOM%%RANDOM%.xml"
     echo ^</settings^>
 ) > "%SETTINGS_FILE%"
 
-docker build --secret id=maven_settings,src="%SETTINGS_FILE%" --tag kassandra-demo:latest .
+docker build --secret id=maven_settings,src="%SETTINGS_FILE%" --tag ghcr.io/abdallabushnaq/kassandra:demo .
 set "BUILD_RESULT=%ERRORLEVEL%"
 del "%SETTINGS_FILE%"
+pause
 exit /b %BUILD_RESULT%
