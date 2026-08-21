@@ -48,6 +48,9 @@ public class OidcProviderDAO extends AbstractTimeAwareDAO {
     @Column(nullable = false)
     private String  displayName;
 
+    @Column(name = "discovery_uri", length = 2048)
+    private String  discoveryUri;
+
     @Column(nullable = false)
     private boolean enabled;
 

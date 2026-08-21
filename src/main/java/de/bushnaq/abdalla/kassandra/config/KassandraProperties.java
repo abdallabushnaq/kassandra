@@ -33,6 +33,10 @@ import org.springframework.stereotype.Component;
 public class KassandraProperties {
 
     /**
+     * Bound from {@code kassandra.mode}.
+     */
+    private        Mode     mode                   = Mode.PRODUCTION;
+    /**
      * Bound from {@code kassandra.ai.*}.
      */
     private        Ai       ai                     = new Ai();
@@ -129,5 +133,13 @@ public class KassandraProperties {
          * Timeout in seconds for API requests to LM Studio.
          */
         private int     timeoutSeconds      = 300;
+    }
+
+    /**
+     * Supported Kassandra deployment modes.
+     */
+    public enum Mode {
+        PRODUCTION,
+        DEMO
     }
 }

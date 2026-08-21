@@ -1,0 +1,13 @@
+*
+!pom.xml
+!package.json
+!.prettierrc.json
+!tsconfig.json
+!tsconfig.static.json
+!types.d.ts
+!vite.config.ts
+!vite.generated.ts
+!src/
+!src/**
+!test-database-snapshots/
+!test-database-snapshots/Demo-1_20260816_144820.zip

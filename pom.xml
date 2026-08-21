@@ -41,7 +41,7 @@
         <file.encoding>utf-8</file.encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.libraray.path>${env.JAVA_HOME}\bin</java.libraray.path>
-        <vaadin.version>25.0.2</vaadin.version>
+        <vaadin.version>25.0.13</vaadin.version>
         <flow.server.version>3.1.6</flow.server.version>
         <selenium.version>4.39.0</selenium.version>
         <lombok.version>1.18.42</lombok.version>
@@ -49,6 +49,11 @@
         <!-- npm executable – default works on Linux/CI where npm is on PATH.
              On Windows the Vaadin-managed Node.js is used (see windows-npm profile). -->
         <npm.executable>npm</npm.executable>
+        <npm.install.command>install</npm.install.command>
+        <npm.install.executable>${npm.executable}</npm.install.executable>
+        <npm.path>${env.PATH}</npm.path>
+        <npm.production.command>run build:static:prod</npm.production.command>
+        <npm.production.executable>${npm.executable}</npm.production.executable>
 
     </properties>
 
@@ -493,13 +498,30 @@
                 <version>3.5.0</version>
                 <executions>
                     <execution>
+                        <id>install-frontend-dependencies</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${npm.install.executable}</executable>
+                            <commandlineArgs>${npm.install.command}</commandlineArgs>
+                            <environmentVariables>
+                                <PATH>${npm.path}</PATH>
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>build-static-ts-bundles</id>
-                        <phase>generate-resources</phase>
+                        <phase>process-classes</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
                         <configuration>
                             <executable>${npm.executable}</executable>
+                            <environmentVariables>
+                                <PATH>${npm.path}</PATH>
+                            </environmentVariables>
                             <arguments>
                                 <argument>run</argument>
                                 <argument>build:static:prod</argument>
@@ -598,7 +620,7 @@
         <!-- On Windows, npm is a .cmd script that Java's ProcessBuilder cannot run directly.
              Use node.exe + npm-cli.js instead (node.exe is a real executable).
              Vaadin's prepare-frontend goal already installs Node.js to ~/.vaadin/node/ before
-             our generate-resources step, so the path is always available. -->
+             our process-classes step, so the path is available before npm is invoked. -->
         <profile>
             <id>windows-npm</id>
             <activation>
@@ -606,6 +628,15 @@
                     <family>windows</family>
                 </os>
             </activation>
+            <properties>
+                <npm.install.command>"${user.home}/.vaadin/node/node_modules/npm/bin/npm-cli.js" install</npm.install.command>
+                <npm.install.executable>${user.home}/.vaadin/node/node.exe</npm.install.executable>
+                <npm.path>${user.home}/.vaadin/node;${env.Path}</npm.path>
+                <npm.production.command>"${user.home}/.vaadin/node/node_modules/npm/bin/npm-cli.js" run
+                    build:static:prod
+                </npm.production.command>
+                <npm.production.executable>${user.home}/.vaadin/node/node.exe</npm.production.executable>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -671,11 +702,11 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>${npm.executable}</executable>
-                                    <arguments>
-                                        <argument>run</argument>
-                                        <argument>build:static:prod</argument>
-                                    </arguments>
+                                    <executable>${npm.production.executable}</executable>
+                                    <commandlineArgs>${npm.production.command}</commandlineArgs>
+                                    <environmentVariables>
+                                        <PATH>${npm.path}</PATH>
+                                    </environmentVariables>
                                 </configuration>
                             </execution>
                         </executions>

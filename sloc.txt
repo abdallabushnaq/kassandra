@@ -142,7 +142,8 @@
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.config                     | CacheConfig.java                                             | src      |        4 |        5 |       19 |        7 |       35 |
 | kassandra.config                     | DefaultEntitiesInitializer.java                              | src      |       18 |       20 |       24 |      144 |      206 |
-| kassandra.config                     | KassandraProperties.java                                     | src      |        8 |       67 |       16 |       42 |      133 |
+| kassandra.config                     | DemoSnapshotInitializer.java                                 | src      |       10 |        8 |       16 |       84 |      118 |
+| kassandra.config                     | KassandraProperties.java                                     | src      |        9 |       73 |       16 |       47 |      145 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.dao                        | AboutImageDAO.java                                           | src      |        6 |       21 |       16 |       22 |       65 |
 | kassandra.dao                        | AbstractDateRangeDAO.java                                    | src      |        7 |        0 |       16 |       17 |       40 |
@@ -155,7 +156,7 @@
 | kassandra.dao                        | LocationDAO.java                                             | src      |        9 |        3 |       16 |       35 |       63 |
 | kassandra.dao                        | OffDayDAO.java                                               | src      |        6 |        3 |       16 |       29 |       54 |
 | kassandra.dao                        | OidcIdentityDAO.java                                         | src      |        9 |        6 |       16 |       40 |       71 |
-| kassandra.dao                        | OidcProviderDAO.java                                         | src      |       13 |        6 |       16 |       38 |       73 |
+| kassandra.dao                        | OidcProviderDAO.java                                         | src      |       14 |        6 |       16 |       40 |       76 |
 | kassandra.dao                        | ProductAclEntryDAO.java                                      | src      |        9 |       17 |       16 |       47 |       89 |
 | kassandra.dao                        | ProductAvatarDAO.java                                        | src      |        6 |        0 |       16 |       27 |       49 |
 | kassandra.dao                        | ProductAvatarGenerationDataDAO.java                          | src      |        6 |        0 |       16 |       35 |       57 |
@@ -409,8 +410,8 @@
 | kassandra.security                   | DatabaseClientRegistrationRepository.java                    | src      |       10 |       19 |       16 |       49 |       94 |
 | kassandra.security                   | OAuth2ClientConfig.java                                      | src      |       12 |       18 |       18 |       37 |       85 |
 | kassandra.security                   | OidcApiSecurityConfig.java                                   | src      |        5 |       10 |       16 |       43 |       74 |
-| kassandra.security                   | OidcAuthenticationManagerResolver.java                       | src      |        9 |       15 |       16 |       67 |      107 |
-| kassandra.security                   | OidcClientRegistrationFactory.java                           | src      |        6 |       10 |       16 |       29 |       61 |
+| kassandra.security                   | OidcAuthenticationManagerResolver.java                       | src      |        9 |       15 |       16 |       76 |      116 |
+| kassandra.security                   | OidcClientRegistrationFactory.java                           | src      |        6 |       10 |       16 |       33 |       65 |
 | kassandra.security                   | OidcSecurityConfig.java                                      | src      |       11 |       15 |       16 |       82 |      124 |
 | kassandra.security                   | SecurityConfig.java                                          | src      |       24 |       25 |       25 |      155 |      229 |
 | kassandra.security                   | SecuritySecretService.java                                   | src      |       13 |       17 |       16 |       68 |      114 |
@@ -672,5 +673,5 @@
 | util                                 | TaskUtil.java                                                | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 70 package(s)                        | 601 file(s)                                                  | java     |    12914 |    13194 |    17674 |    70201 |   113983 |
+| 70 package(s)                        | 602 file(s)                                                  | java     |    12926 |    13208 |    17690 |    70305 |   114129 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

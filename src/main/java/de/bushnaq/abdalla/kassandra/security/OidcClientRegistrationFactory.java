@@ -43,8 +43,12 @@ public class OidcClientRegistrationFactory {
      */
     public ClientRegistration create(OidcProviderDAO provider) {
         String clientSecret = securitySecretService.decrypt(provider.getClientSecretEncrypted());
+        String discoveryUri = provider.getDiscoveryUri();
+        if (discoveryUri == null || discoveryUri.isBlank()) {
+            discoveryUri = provider.getIssuerUri();
+        }
         try {
-            return ClientRegistrations.fromIssuerLocation(provider.getIssuerUri())
+            return ClientRegistrations.fromIssuerLocation(discoveryUri)
                     .registrationId(provider.getRegistrationId())
                     .clientId(provider.getClientId())
                     .clientSecret(clientSecret)

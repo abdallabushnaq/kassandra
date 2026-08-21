@@ -9,6 +9,18 @@ Project effort estimation and progress tracking and release date interpolation o
 
 see [Kassandra presentation](https://abdallabushnaq.github.io/kassandra/#/s1)
 
+## Try the demo
+
+Run the self-contained Kassandra and Keycloak demo:
+
+```bash
+docker compose -f docker-compose.demo.yml up
+```
+
+Open [http://localhost:8080/ui/](http://localhost:8080/ui/) and sign in with **demo** / **demo**.
+The demo restores a curated, disposable data snapshot on its first start and retains changes in its Docker volume.
+The public demo image is pulled automatically; no GitHub Packages credentials are required.
+
 # What makes Kassandra different?
 
 1. Self-sufficient project planning and progress tracking in one tiny server.
@@ -176,4 +188,3 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 - Projects can be locked for change, which will lock start/end dates and all milestones
 - project priority can be changed by moving them within the list
 - sprint priority can be changed by moving them within the list
-

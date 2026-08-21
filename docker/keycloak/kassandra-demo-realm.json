@@ -1,0 +1,45 @@
+{
+  "realm": "kassandra-demo",
+  "enabled": true,
+  "displayName": "Kassandra Demo",
+  "users": [
+    {
+      "username": "demo",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "User",
+      "email": "christopher.paul@kassandra.org",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "kassandra-demo",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "demo-client-secret",
+      "redirectUris": [
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8080"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8080/*"
+      },
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": false,
+      "fullScopeAllowed": true
+    }
+  ]
+}

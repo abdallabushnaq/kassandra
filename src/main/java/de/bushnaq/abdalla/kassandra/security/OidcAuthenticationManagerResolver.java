@@ -27,7 +27,9 @@ import org.springframework.security.authentication.AuthenticationManagerResolver
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
@@ -49,6 +51,8 @@ public class OidcAuthenticationManagerResolver implements AuthenticationManagerR
     private final Map<String, AuthenticationManager> managers            = new ConcurrentHashMap<>();
     @Autowired
     private       OidcIdentityService                oidcIdentityService;
+    @Autowired
+    private       OidcClientRegistrationFactory      oidcClientRegistrationFactory;
     @Autowired
     private       OidcProviderRepository             oidcProviderRepository;
 
@@ -82,15 +86,20 @@ public class OidcAuthenticationManagerResolver implements AuthenticationManagerR
     }
 
     private AuthenticationManager createAuthenticationManager(String issuerUri) {
+        var provider = oidcProviderRepository.findByIssuerUriAndEnabledTrue(issuerUri)
+                .orElseThrow(() -> new InvalidBearerTokenException("JWT issuer is not enabled"));
+        ClientRegistration registration = oidcClientRegistrationFactory.create(provider);
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(registration.getProviderDetails().getJwkSetUri()).build();
+        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuerUri));
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> oidcIdentityService
                 .resolveRoles(jwt.getIssuer().toString(), jwt.getSubject(), null, null, false)
                 .stream()
                 .<GrantedAuthority>map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                 .toList());
-        JwtAuthenticationProvider provider = new JwtAuthenticationProvider(JwtDecoders.fromIssuerLocation(issuerUri));
-        provider.setJwtAuthenticationConverter(converter);
-        return provider::authenticate;
+        JwtAuthenticationProvider authenticationProvider = new JwtAuthenticationProvider(decoder);
+        authenticationProvider.setJwtAuthenticationConverter(converter);
+        return authenticationProvider::authenticate;
     }
 
     private String readIssuer(String token) {

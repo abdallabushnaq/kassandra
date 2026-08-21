@@ -44,7 +44,6 @@ webpack.generated.js
 test-results
 test-recordings
 src/main/frontend/generated
-tsconfig.json
 types.d.ts
 vite.config.ts
 vite.generated.ts
