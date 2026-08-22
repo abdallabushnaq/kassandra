@@ -27,13 +27,13 @@ import de.bushnaq.abdalla.kassandra.security.SecuritySecretService;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Value;
 
 /**
  * Restores the curated H2 data snapshot for a new demo deployment.
@@ -46,42 +46,24 @@ public class DemoSnapshotInitializer implements ApplicationRunner {
 
     private static final String CLIENT_ID             = "kassandra-demo";
     private static final String CLIENT_SECRET         = "demo-client-secret";
+    private static final String DEFAULT_SNAPSHOT_PATH = "/opt/kassandra/demo/Demo-1.zip";
     private static final String DISCOVERY_URI         = "http://keycloak:8080/realms/kassandra-demo";
     private static final String ISSUER_URI            = "http://localhost:8180/realms/kassandra-demo";
     private static final String PROVIDER_DISPLAY_NAME = "Kassandra Demo";
-    private static final String DEFAULT_SNAPSHOT_PATH = "/opt/kassandra/demo/Demo-1_20260816_144820.zip";
-
     @Autowired
     private DatabaseClientRegistrationRepository clientRegistrationRepository;
     @Autowired
-    private JdbcTemplate                        jdbcTemplate;
+    private JdbcTemplate                         jdbcTemplate;
     @Autowired
-    private OidcAuthenticationManagerResolver  oidcAuthenticationManagerResolver;
+    private OidcAuthenticationManagerResolver    oidcAuthenticationManagerResolver;
     @Autowired
-    private OidcProviderRepository              oidcProviderRepository;
+    private OidcProviderRepository               oidcProviderRepository;
     @Autowired
-    private SecurityConfigurationRepository     securityConfigurationRepository;
+    private SecurityConfigurationRepository      securityConfigurationRepository;
     @Autowired
     private SecuritySecretService                securitySecretService;
     @Value("${kassandra.demo.snapshot-path:" + DEFAULT_SNAPSHOT_PATH + "}")
     private String                               snapshotPath;
-
-    /**
-     * Restores the snapshot and configures the bundled Keycloak provider for a new demo database.
-     *
-     * @param args application startup arguments
-     */
-    @Override
-    public void run(@NonNull ApplicationArguments args) {
-        if (securityConfigurationRepository.existsById(SecurityConfigurationDAO.CONFIGURATION_ID)) {
-            return;
-        }
-
-        restoreSnapshot();
-        configureDemoProvider();
-        markSetupReady();
-        log.info("Restored the Kassandra demo database snapshot");
-    }
 
     private void configureDemoProvider() {
         OidcProviderDAO provider = oidcProviderRepository.findAll().stream()
@@ -114,5 +96,22 @@ public class DemoSnapshotInitializer implements ApplicationRunner {
         jdbcTemplate.execute("DROP ALL OBJECTS");
         jdbcTemplate.execute("RUNSCRIPT FROM '" + snapshotPath.replace("\\", "/") + "' COMPRESSION ZIP");
         jdbcTemplate.execute("ALTER TABLE oidc_providers ADD COLUMN IF NOT EXISTS discovery_uri VARCHAR(2048)");
+    }
+
+    /**
+     * Restores the snapshot and configures the bundled Keycloak provider for a new demo database.
+     *
+     * @param args application startup arguments
+     */
+    @Override
+    public void run(@NonNull ApplicationArguments args) {
+        if (securityConfigurationRepository.existsById(SecurityConfigurationDAO.CONFIGURATION_ID)) {
+            return;
+        }
+
+        restoreSnapshot();
+        configureDemoProvider();
+        markSetupReady();
+        log.info("Restored the Kassandra demo database snapshot");
     }
 }

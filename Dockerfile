@@ -14,7 +14,7 @@ FROM eclipse-temurin:25-jdk
 
 WORKDIR /opt/kassandra
 COPY --from=build /workspace/target/kassandra.jar app.jar
-COPY test-database-snapshots/Demo-1_20260816_144820.zip demo/Demo-1_20260816_144820.zip
+COPY test-database-snapshots/Demo-1.zip demo/Demo-1.zip
 
 EXPOSE 8080
 

@@ -41,11 +41,6 @@ import java.util.Base64;
 @Slf4j
 public class StableDiffusionService {
 
-    //    public static final String LORA = ",<lora:appicons:1>";
-//    public static final String LORA = ",<lora:F2D:1>";
-    //    public static final String LORA = ",<lora:SDXL_icon_V2:1>";
-//    public static final String LORA = ", <lora:IconsRedmond:1>";
-//    public static final String LORA = ", <lora:IconsRedmondV2-Icons:1>";
     public static final String LORA = ", <lora:vector_game_icons:1>";
 
     //    public static final String                  NEGATIVE_PROMPT = "blurry, (nsfw), distorted, low quality, ugly, deformed, bad anatomy, (worst quality, low quality:2), cartoon, painting, illustration";
@@ -780,8 +775,7 @@ public class StableDiffusionService {
      * @throws StableDiffusionException if generation fails
      */
     public GeneratedImageResult text2ImgWithOriginal(String prompt, String negativePrompt, int outputSize, ProgressCallback progressCallback, long seed, double cfgScale) throws StableDiffusionException {
-        log.info("Generating image with original at size {}x{} and resized to {}x{}",
-                config.getGenerationSize(), config.getGenerationSize(), outputSize, outputSize);
+        log.info("Generating image with original at size {}x{} and resized to {}x{}", Math.max(config.getGenerationSize(), outputSize), Math.max(config.getGenerationSize(), outputSize), outputSize, outputSize);
 
         try {
             selectModel(config.getModelName());
@@ -793,8 +787,8 @@ public class StableDiffusionService {
                     .steps(config.getDefaultSteps())
                     .samplerName(config.getDefaultSampler())
                     .cfgScale(cfgScale)
-                    .width(config.getGenerationSize())
-                    .height(config.getGenerationSize())
+                    .width(Math.max(config.getGenerationSize(), outputSize))
+                    .height(Math.max(config.getGenerationSize(), outputSize))
                     .batchSize(1)
                     .seed(seed) // Random seed
                     .build();
@@ -829,8 +823,7 @@ public class StableDiffusionService {
                 byte[] resizedImage = resizeImage(originalImage, outputSize);
 
                 long responseSeed = parseSeedFromInfo(response.getInfo());
-                log.info("Successfully generated original ({}x{}) and resized ({}x{}) images with seed {}",
-                        config.getGenerationSize(), config.getGenerationSize(), outputSize, outputSize, responseSeed);
+                log.info("Successfully generated original ({}x{}) and resized ({}x{}) images with seed {}", Math.max(config.getGenerationSize(), outputSize), Math.max(config.getGenerationSize(), outputSize), outputSize, outputSize, responseSeed);
 
                 GeneratedImageResult result = new GeneratedImageResult(originalImage, prompt, resizedImage, responseSeed);
                 result.setNegativePrompt(resolvedNegativePrompt);

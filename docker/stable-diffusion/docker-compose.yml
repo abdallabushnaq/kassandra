@@ -15,7 +15,7 @@ services:
       #- COMMANDLINE_ARGS=--api --xformers --no-half --no-half-vae --listen --port 8080 --skip-torch-cuda-test
       - COMMANDLINE_ARGS=--api --xformers --listen --port 7860
       # Set default model to SD 3 Medium
-      - SD_MODEL=protovisionXLHighFidelity3D_beta0520Bakedvae.safetensors
+      - SD_MODEL=xl/bonoboXL_v20.safetensors
     deploy:
       resources:
         reservations:

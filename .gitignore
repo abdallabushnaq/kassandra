@@ -50,3 +50,4 @@ vite.generated.ts
 
 # Generated TypeScript bundles (rebuild with: npm run build:static)
 /src/main/resources/META-INF/resources/js/generated/
+!test-database-snapshots/Demo-1.zip

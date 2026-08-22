@@ -72,7 +72,7 @@ public class AboutView extends Main implements AfterNavigationObserver {
         center.setSpacing(true);
         center.setAlignItems(FlexComponent.Alignment.CENTER);
         center.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        center.setMaxWidth("560px");
+//        center.setMaxWidth("560px");
         center.setWidth("100%");
 
         // Loading placeholder
@@ -81,9 +81,9 @@ public class AboutView extends Main implements AfterNavigationObserver {
                 .set("color", "var(--lumo-secondary-text-color)")
                 .set("font-size", "var(--lumo-font-size-s)");
 
-        // Banner image – max 512 px wide, hidden until the background thread delivers the bytes
+        // Banner image – max 1024 px wide, hidden until the background thread delivers the bytes
         com.vaadin.flow.component.html.Image bannerImage = new com.vaadin.flow.component.html.Image();
-        bannerImage.setMaxWidth("512px");
+        bannerImage.setMaxWidth("1024px");
         bannerImage.setWidth("100%");
         bannerImage.getStyle()
                 .set("height", "auto")

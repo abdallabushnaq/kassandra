@@ -47,27 +47,56 @@ import java.util.Optional;
 @Slf4j
 public class AboutBoxService {
 
+    static final         String[]               SD_LORA          = {
+            "<lora:- SDXL - ptrn-no1_style_V1.0:1> ptrn-no1",
+            "<lora:Abstract_Mosaic_Pattern:0.5> Abstract_Mosaic_Pattern",
+            "<lora:AbstractPatternStyleXL:1> AbstractPatternStyle",
+            "<lora:Circuit_pattern:1> circuitpattern",
+            "<lora:floralPatterns_v10:1>",
+            "<lora:lbc_Dragon_pattern_XL:1> dragon pattern,flat,",
+            " <lora:novuschroma66 style_:1> novuschroma66 style swirl patterns",
+            "<lora:ral-dstgrtptrn-sdxl:1> ral-dstgrtptrn",
+            "<lora:Test_Golden_Patterns.:1> gold patterns, gold and black spirit, liquid gold explosion, golden smoke magic, star dust, golden milky way, black background, magic fog.",
+            "<lora:Zarabi:1> adrr-zrb, patterns, intricate weavings, rich colors",
+    };
     /**
      * Stable Diffusion prompt used to generate the daily About View banner image.
      */
-    static final  String SD_PROMPT       =
-            "oracle Kassandra prophesying in ancient Troy, dramatic moonlight, stars, digital painting, photorealistic, cinematic lighting";
-    /**
-     * Singleton row id used in the {@code about_images} table.
-     */
-    private static final Long   SINGLETON_ID    = 1L;
+    static final         String                 SD_PROMPT        =
+            """
+                    Artistic, based on patterns and lines. Abstract futuristic digital art, AI circuit boards.
+                    Futuristic neon color.
+                    The connections shape the head of kassandra of troy very futuristic robot.
+                    Ultra-sharp details.
+                    Intricate micro-details, 8k resolution, colorful.
+                    """;
     /**
      * Sentinel value stored in {@link #cachedImage} when no image is available at all
      * (SD unavailable <em>and</em> no DB record), so callers can distinguish
      * "not yet known" ({@code null}) from "definitely nothing to show" (empty array).
      */
-    private static final byte[] SD_UNAVAILABLE  = new byte[0];
-
+    private static final byte[]                 SD_UNAVAILABLE   = new byte[0];
+    /**
+     * Singleton row id used in the {@code about_images} table.
+     */
+    private static final Long                   SINGLETON_ID     = 1L;
     @Autowired
-    private AboutImageRepository aboutImageRepository;
+    private              AboutImageRepository   aboutImageRepository;
+    /**
+     * Set to {@code false} by {@link #destroy()} so that any in-flight or future call to
+     * {@link #getOrGenerateImage()} returns the sentinel value without touching the database.
+     * This prevents Hibernate "table not found" warnings when the JPA schema is dropped
+     * during Spring context teardown (e.g. between {@code @DirtiesContext} tests).
+     */
+    private volatile     boolean                active           = true;
+    /**
+     * Reference to the background pre-load thread so that {@link #destroy()} can join it.
+     */
+    private              Thread                 backgroundThread = null;
+    private volatile     LocalDate              cacheDate        = null;
+    private volatile     byte[]                 cachedImage      = null;
     @Autowired
-    private StableDiffusionService stableDiffusionService;
-
+    private              StableDiffusionService stableDiffusionService;
     /**
      * The application version, resolved from {@code kassandra.version} in
      * {@code application.properties} via Maven resource filtering at build time.
@@ -75,31 +104,11 @@ public class AboutBoxService {
      */
     @Getter
     @Value("${kassandra.version:0.0.1}")
-    private String version;
+    private              String                 version;
 
-    private volatile byte[]    cachedImage      = null;
-    private volatile LocalDate cacheDate        = null;
-    /**
-     * Set to {@code false} by {@link #destroy()} so that any in-flight or future call to
-     * {@link #getOrGenerateImage()} returns the sentinel value without touching the database.
-     * This prevents Hibernate "table not found" warnings when the JPA schema is dropped
-     * during Spring context teardown (e.g. between {@code @DirtiesContext} tests).
-     */
-    private volatile boolean   active           = true;
-    /**
-     * Reference to the background pre-load thread so that {@link #destroy()} can join it.
-     */
-    private          Thread    backgroundThread = null;
-
-    /**
-     * Kicks off a daemon background thread that pre-loads or generates the first daily
-     * image so the About View can open immediately on first use.
-     */
-    @PostConstruct
-    private void init() {
-        backgroundThread = new Thread(this::getOrGenerateImage, "about-image-init");
-        backgroundThread.setDaemon(true);
-        backgroundThread.start();
+    private void cacheFromDb(AboutImageDAO dao) {
+        cachedImage = dao.getImageData();
+        cacheDate   = dao.getImageDate();
     }
 
     /**
@@ -145,8 +154,8 @@ public class AboutBoxService {
      * </p>
      *
      * @return PNG bytes, an empty array when no image is available at all, or {@code null}
-     *         while the init thread is still running (should not be observed by callers
-     *         that block on this method)
+     * while the init thread is still running (should not be observed by callers
+     * that block on this method)
      */
     public synchronized byte[] getOrGenerateImage() {
         LocalDate today = LocalDate.now();
@@ -187,7 +196,8 @@ public class AboutBoxService {
         // 5. Generate a fresh image via Stable Diffusion
         try {
             log.info("Generating About View banner image via Stable Diffusion");
-            GeneratedImageResult result = stableDiffusionService.text2ImgWithOriginal(SD_PROMPT, 512, null, -1L, 7.0);
+            String               prompt = SD_PROMPT + " " + SD_LORA[(int) (Math.random() * SD_LORA.length)];
+            GeneratedImageResult result = stableDiffusionService.text2ImgWithOriginal(prompt, 1024, null, -1L, 3.0);
             cachedImage = result.getOriginalImage();
             cacheDate   = today;
             persistToDb(dbRecord, today, cachedImage);
@@ -212,9 +222,15 @@ public class AboutBoxService {
         return dao.getImageData() != null && dao.getImageData().length > 0;
     }
 
-    private void cacheFromDb(AboutImageDAO dao) {
-        cachedImage = dao.getImageData();
-        cacheDate   = dao.getImageDate();
+    /**
+     * Kicks off a daemon background thread that pre-loads or generates the first daily
+     * image so the About View can open immediately on first use.
+     */
+    @PostConstruct
+    private void init() {
+        backgroundThread = new Thread(this::getOrGenerateImage, "about-image-init");
+        backgroundThread.setDaemon(true);
+        backgroundThread.start();
     }
 
     private void persistToDb(Optional<AboutImageDAO> existing, LocalDate date, byte[] data) {
