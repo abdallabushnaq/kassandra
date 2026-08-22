@@ -50,6 +50,5 @@
 
 # setup issues
 
-- server will show application running at http://localhost:8080/ui/, but this url will fail to show because user is
-  anonymous.
-- 
+- about image not stored in demo db.
+ 

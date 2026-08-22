@@ -245,7 +245,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
     }
 
     protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase) throws Exception {
-        ParameterOptions.setNow(DateUtil.localDateToOffsetDateTime(randomCase.getStartDate()));
+        ParameterOptions.setNow(randomCase.getNow());
         String testCaseName = this.getClass().getName() + "-" + testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex();
         // Create a snapshot name based on the test case
         String snapshotName = testInfo.getTestClass().get().getSimpleName() + "-" + randomCase.getTestCaseIndex();
