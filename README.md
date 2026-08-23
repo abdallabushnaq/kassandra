@@ -17,9 +17,9 @@ Run the self-contained Kassandra and Keycloak demo:
 docker compose -f docker-compose.demo.yml up
 ```
 
-Open [http://localhost:8080/ui/](http://localhost:8080/ui/) and sign in with **demo** / **demo**.
-The demo restores a curated, disposable data snapshot on its first start and retains changes in its Docker volume.
-The public demo image is pulled automatically; no GitHub Packages credentials are required.
+Open [http://localhost:8080/ui/](http://localhost:8080/ui/) and sign in with **demo** / **demo**. The demo restores a
+curated, disposable data snapshot on its first start and retains changes in its Docker volume. The public demo image is
+pulled automatically; no GitHub Packages credentials are required.
 
 # What makes Kassandra different?
 
@@ -29,8 +29,6 @@ The public demo image is pulled automatically; no GitHub Packages credentials ar
 
 ## Notice
 
-- some entities support client side id generation, which means that the client can generate an id for the entity before
-  sending it to the server. This is useful to reducing the number of round trips to the server.
 - for the agent tests to run, you need to load ministral-3-8B with 20480 token context and a sed of 42.
 
 ## features
@@ -85,8 +83,8 @@ tbd
 ## Phase 2 (installable version)
 
 1. ❌ alpha release (0.1.0) of minimum viable product.
-2. ❌ docker container image.
-3. ❌ first initialization.
+2. ✅ docker container image.
+3. ✅ first initialization.
 4. ❌ server settings
 
 ## Phase 3 (optimizations)
@@ -95,21 +93,22 @@ tbd
 2. ❌ unit tests should turn off stable diffusion service to speed up tests execution.
 3. ❌ run ui tests in browser full screen mode.
 4. ❌ gantt chart generation with resource conflict visualization.
-5. ❌ keep number of clicks to minimum for daily work of developer.
-6. ❌ Audit logs
-7. ❌ lock project.
-8. ❌ give project managers ways to control schedule.
-9. ❌ give project managers ways to control resource leveling.
-10. ❌ Admin hub
-11. ❌ Performance
-12. ❌ Live updates to your inputs
-13. ❌ Live response to your Input.
-14. ✅ product page.
-15. ❌ GDPR
-16. ❌ undo
-17. ❌ history
-18. ❌ add aura theme
-19. ❌ next level of ai agent capability
+5. ❌ gantt chart resource leveling including other projects.
+6. ❌ keep number of clicks to minimum for daily work of developer.
+7. ❌ Audit logs
+8. ❌ lock project.
+9. ❌ give project managers ways to control schedule.
+10. ❌ give project managers ways to control resource leveling.
+11. ❌ Admin hub
+12. ❌ Performance
+13. ❌ Live updates to your inputs
+14. ❌ Live response to your Input.
+15. ✅ product page.
+16. ❌ GDPR
+17. ❌ undo
+18. ❌ history
+19. ❌ add aura theme
+20. ❌ next level of ai agent capability
     1. ❌ list problematic sprints.
     2. ❌ determine reason for the problem (e.g. estimation, resource availability, etc.).
     3. ❌ suggest developers with capacity to help out.
@@ -171,12 +170,11 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
    Example: [active sprints](https://github.com/kunterbunt2/project-hub/wiki/active-sprints).
 4. The UI is tested using selenium,
 5. All [introduction videos](https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs) are generated
-   using selenium, chatterbox and ffmpeg. Audio output is captured and fed to the
-   frame grabber.
+   using selenium, chatterbox and ffmpeg. Audio output is captured and fed to the frame grabber.
 6. Holidays are automatically generated based on the location of the user and the national holidays of that location.
    Example: [offday-list-view](https://github.com/abdallabushnaq/kassandra/wiki/offday%E2%80%90list%E2%80%90view).
-7. By simplifying some aspects of project management (
-   see [Limitations](https://github.com/kunterbunt2/project-hub/wiki/Limitations)), we can automate many aspects.
+7. By simplifying some aspects of project management
+   (see [Limitations](https://github.com/kunterbunt2/project-hub/wiki/Limitations)), we can automate many aspects.
 
 # License
 

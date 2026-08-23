@@ -52,9 +52,7 @@ public class AboutBoxService {
             "<lora:Abstract_Mosaic_Pattern:0.5> Abstract_Mosaic_Pattern",
             "<lora:AbstractPatternStyleXL:1> AbstractPatternStyle",
             "<lora:Circuit_pattern:1> circuitpattern",
-            "<lora:floralPatterns_v10:1>",
-            "<lora:lbc_Dragon_pattern_XL:1> dragon pattern,flat,",
-            " <lora:novuschroma66 style_:1> novuschroma66 style swirl patterns",
+            "<lora:novuschroma66 style_:1.3> novuschroma66 style swirl patterns",
             "<lora:ral-dstgrtptrn-sdxl:1> ral-dstgrtptrn",
             "<lora:Test_Golden_Patterns.:1> gold patterns, gold and black spirit, liquid gold explosion, golden smoke magic, star dust, golden milky way, black background, magic fog.",
             "<lora:Zarabi:1> adrr-zrb, patterns, intricate weavings, rich colors",
@@ -66,7 +64,7 @@ public class AboutBoxService {
             """
                     Artistic, based on patterns and lines. Abstract futuristic digital art, AI circuit boards.
                     Futuristic neon color.
-                    The connections shape the head of kassandra of troy very futuristic robot.
+                    The connections shape the barely visible face of kassandra of troy, very futuristic AI robot.
                     Ultra-sharp details.
                     Intricate micro-details, 8k resolution, colorful.
                     """;
