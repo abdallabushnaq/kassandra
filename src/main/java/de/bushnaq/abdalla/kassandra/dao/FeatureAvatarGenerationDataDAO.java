@@ -40,6 +40,8 @@ public class FeatureAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
     private String lightAvatarNegativePrompt;
     @Column(name = "light_avatar_prompt", length = 1000)
     private String lightAvatarPrompt;
+    @Column(name = "light_header_prompt", length = 1000)
+    private String lightHeaderPrompt;
     @Lob
     @Column(name = "dark_avatar_image_original")
     private byte[] darkAvatarImageOriginal;
@@ -47,6 +49,8 @@ public class FeatureAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
     private String darkAvatarNegativePrompt;
     @Column(name = "dark_avatar_prompt", length = 1000)
     private String darkAvatarPrompt;
+    @Column(name = "dark_header_prompt", length = 1000)
+    private String darkHeaderPrompt;
     @Column(name = "feature_id", unique = true, nullable = false)
     private UUID   featureId;
     @Id
@@ -54,4 +58,3 @@ public class FeatureAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
     @Column(name = "id")
     private UUID   id;
 }
-

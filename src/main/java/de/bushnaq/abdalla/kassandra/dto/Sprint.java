@@ -51,6 +51,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     @JsonIgnore
     private       ProjectCalendar calendar;
     private       String          darkAvatarHash;
+    private       String          darkHeaderHash;
     private       LocalDateTime   end;
     @JsonIgnore
     public        List<Throwable> exceptions  = new ArrayList<>();
@@ -60,6 +61,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     private       UUID            featureId;
     private       UUID            id;
     private       String          lightAvatarHash;
+    private       String          lightHeaderHash;
     private       String          name;
     @JsonSerialize(using = DurationSerializer.class)
     @JsonDeserialize(using = DurationDeserializer.class)
@@ -176,8 +178,30 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
         return url;
     }
 
+    /**
+     * Get the header URL for the given theme variant.
+     *
+     * @param dark {@code true} to request the dark-background header variant
+     * @return The header URL with hash parameter for cache-busting
+     */
+    @JsonIgnore
+    public String getHeaderUrl(boolean dark) {
+        if (dark && darkHeaderHash != null && !darkHeaderHash.isEmpty()) {
+            return "/frontend/dark-avatar-proxy/sprint-header/" + id + "?h=" + darkHeaderHash;
+        }
+        String url = "/frontend/avatar-proxy/sprint-header/" + id;
+        if (lightHeaderHash != null && !lightHeaderHash.isEmpty()) {
+            url += "?h=" + lightHeaderHash;
+        }
+        return url;
+    }
+
     private static String getDefaultAvatarPrompt(String sprintName) {
         return "app icon '" + sprintName + "'" + StableDiffusionService.LORA;
+    }
+
+    private static String getDefaultHeaderPrompt(String sprintName) {
+        return "panoramic view of " + sprintName + ", web page header, detailed, high resolution";
     }
 
     /**
@@ -210,6 +234,16 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
     }
 
     /**
+     * Generate a default dark-background header prompt for a given sprint name.
+     *
+     * @param sprintName The name of the sprint
+     * @return A default dark header prompt string
+     */
+    public static String getDefaultDarkHeaderPrompt(String sprintName) {
+        return getDefaultHeaderPrompt(sprintName) + AvatarService.DARK_PROMPT_SUFFIX;
+    }
+
+    /**
      * Return the default negative prompt used when generating light-background avatars.
      *
      * @return The default negative prompt string
@@ -238,6 +272,16 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
      */
     public static String getDefaultLightAvatarPrompt(String sprintName) {
         return getDefaultAvatarPrompt(sprintName) + AvatarService.LIGHT_PROMPT_SUFFIX;
+    }
+
+    /**
+     * Generate a default light-background header prompt for a given sprint name.
+     *
+     * @param sprintName The name of the sprint
+     * @return A default light header prompt string
+     */
+    public static String getDefaultLightHeaderPrompt(String sprintName) {
+        return getDefaultHeaderPrompt(sprintName) + AvatarService.LIGHT_PROMPT_SUFFIX;
     }
 
     @JsonIgnore

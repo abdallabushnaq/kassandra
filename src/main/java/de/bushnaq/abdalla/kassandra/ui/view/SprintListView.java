@@ -767,9 +767,15 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             } else {
                 headerAvatar.setVisible(false);
             }
+            if (single.getLightHeaderHash() != null && !single.getLightHeaderHash().isEmpty()) {
+                setSmartHeaderBackgroundUrls(single.getHeaderUrl(false), single.getHeaderUrl(true));
+            } else {
+                setSmartHeaderBackgroundUrls(null, null);
+            }
         } else {
             getHeaderPageTitle().setText("Sprints");
             headerAvatar.setVisible(false);
+            setSmartHeaderBackgroundUrls(null, null);
         }
     }
 

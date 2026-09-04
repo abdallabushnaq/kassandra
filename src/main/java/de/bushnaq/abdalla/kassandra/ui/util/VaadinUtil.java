@@ -55,6 +55,65 @@ public final class VaadinUtil {
     public static String DIALOG_DEFAULT_WIDTH = "480px";
 
     /**
+     * Applies or clears a themed entity-header background and the surfaces that keep its content readable.
+     *
+     * @param header          header layout that displays the background
+     * @param title           title displayed in the header
+     * @param backgroundUrl   cache-busted image URL, or null to clear the background
+     * @param contentSurfaces header child layouts that require a translucent background
+     */
+    public static void applyHeaderBackground(HorizontalLayout header, Component title, String backgroundUrl,
+            HorizontalLayout... contentSurfaces) {
+        if (backgroundUrl == null || backgroundUrl.isBlank()) {
+            header.getStyle().remove("background-image");
+            header.getStyle().remove("background-position");
+            header.getStyle().remove("background-size");
+            header.getStyle().remove("min-height");
+            header.getStyle().remove("padding");
+            header.getStyle().remove("border-radius");
+            title.getStyle().remove("color");
+            title.getStyle().remove("text-shadow");
+            for (HorizontalLayout contentSurface : contentSurfaces) {
+                clearHeaderContentSurface(contentSurface);
+            }
+            return;
+        }
+
+        header.getStyle()
+                .set("background-image", "linear-gradient(rgba(0, 0, 0, 0.20), rgba(0, 0, 0, 0.10)), url('" + backgroundUrl + "')")
+                .set("background-position", "center")
+                .set("background-size", "cover")
+                .set("min-height", "48px")
+                .set("padding", "0 var(--lumo-space-s)")
+                .set("border-radius", "var(--lumo-border-radius)");
+        title.getStyle()
+                .set("color", "var(--lumo-body-text-color)")
+                .remove("text-shadow");
+        for (HorizontalLayout contentSurface : contentSurfaces) {
+            applyHeaderContentSurface(contentSurface);
+        }
+    }
+
+    private static void applyHeaderContentSurface(HorizontalLayout layout) {
+        if (layout != null) {
+            layout.getStyle()
+                    .set("background-color", "color-mix(in srgb, var(--lumo-base-color) 35%, transparent)")
+                    .set("backdrop-filter", "blur(6px)")
+                    .set("border-radius", "var(--lumo-border-radius)")
+                    .set("padding", "var(--lumo-space-xs) var(--lumo-space-s)");
+        }
+    }
+
+    private static void clearHeaderContentSurface(HorizontalLayout layout) {
+        if (layout != null) {
+            layout.getStyle().remove("background-color");
+            layout.getStyle().remove("backdrop-filter");
+            layout.getStyle().remove("border-radius");
+            layout.getStyle().remove("padding");
+        }
+    }
+
+    /**
      * Creates a standardized action column with edit and delete buttons for a grid
      *
      * @param <T>                    The type of the item displayed in the grid

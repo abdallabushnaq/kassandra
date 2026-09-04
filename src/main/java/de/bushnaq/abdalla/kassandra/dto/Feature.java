@@ -35,8 +35,10 @@ import java.util.UUID;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 public class Feature extends AbstractTimeAware implements Comparable<Feature> {
     private String darkAvatarHash;
+    private String darkHeaderHash;
     private UUID   id;
     private String lightAvatarHash;
+    private String lightHeaderHash;
     private String name;
 
     @JsonIgnore
@@ -125,6 +127,20 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
     }
 
     /**
+     * Generate a default dark-background header prompt for a given feature name.
+     *
+     * @param featureName The name of the feature
+     * @return A default dark header prompt string
+     */
+    public static String getDefaultDarkHeaderPrompt(String featureName) {
+        return getDefaultHeaderPrompt(featureName)/* + AvatarService.DARK_PROMPT_SUFFIX*/;
+    }
+
+    private static String getDefaultHeaderPrompt(String featureName) {
+        return "panoramic view of " + featureName + ", web page header, detailed, high resolution";
+    }
+
+    /**
      * Return the default negative prompt used when generating light-background avatars.
      *
      * @return The default negative prompt string
@@ -153,6 +169,34 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
      */
     public static String getDefaultLightAvatarPrompt(String featureName) {
         return getDefaultAvatarPrompt(featureName) + AvatarService.LIGHT_PROMPT_SUFFIX;
+    }
+
+    /**
+     * Generate a default light-background header prompt for a given feature name.
+     *
+     * @param featureName The name of the feature
+     * @return A default light header prompt string
+     */
+    public static String getDefaultLightHeaderPrompt(String featureName) {
+        return getDefaultHeaderPrompt(featureName)/* + AvatarService.LIGHT_PROMPT_SUFFIX*/;
+    }
+
+    /**
+     * Get the header URL for the given theme variant.
+     *
+     * @param dark {@code true} to request the dark-background header variant
+     * @return The header URL with hash parameter for cache-busting
+     */
+    @JsonIgnore
+    public String getHeaderUrl(boolean dark) {
+        if (dark && darkHeaderHash != null && !darkHeaderHash.isEmpty()) {
+            return "/frontend/dark-avatar-proxy/feature-header/" + id + "?h=" + darkHeaderHash;
+        }
+        String url = "/frontend/avatar-proxy/feature-header/" + id;
+        if (lightHeaderHash != null && !lightHeaderHash.isEmpty()) {
+            url += "?h=" + lightHeaderHash;
+        }
+        return url;
     }
 
     @JsonIgnore

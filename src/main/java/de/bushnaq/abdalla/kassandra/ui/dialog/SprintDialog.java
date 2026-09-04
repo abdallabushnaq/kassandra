@@ -69,6 +69,10 @@ public class SprintDialog extends Dialog {
     private volatile    byte[]                 generatedDarkImageBytes;
     private volatile    byte[]                 generatedDarkImageBytesOriginal;
     private             String                 generatedDarkImagePrompt;
+    private             byte[]                 generatedLightHeaderImage;
+    private             byte[]                 generatedDarkHeaderImage;
+    private             String                 generatedLightHeaderPrompt;
+    private             String                 generatedDarkHeaderPrompt;
     private             byte[]                 generatedImageBytes;
     private             byte[]                 generatedImageBytesOriginal;
     private             String                 generatedImagePrompt;
@@ -254,8 +258,8 @@ public class SprintDialog extends Dialog {
         Shortcuts.addShortcutListener(this, e -> save(), Key.ENTER);
     }
 
-    private void handleGeneratedImage(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result,
-                                      de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult) {
+    private void handleGeneratedImage(GeneratedImageResult result, GeneratedImageResult darkResult,
+            GeneratedImageResult lightHeaderResult, GeneratedImageResult darkHeaderResult) {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();
@@ -265,6 +269,14 @@ public class SprintDialog extends Dialog {
             this.generatedDarkImageBytes         = darkResult.getResizedImage();
             this.generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
             this.generatedDarkImagePrompt        = darkResult.getPrompt();
+        }
+        if (lightHeaderResult != null) {
+            generatedLightHeaderImage  = lightHeaderResult.getResizedImage();
+            generatedLightHeaderPrompt = lightHeaderResult.getPrompt();
+        }
+        if (darkHeaderResult != null) {
+            generatedDarkHeaderImage  = darkHeaderResult.getResizedImage();
+            generatedDarkHeaderPrompt = darkHeaderResult.getPrompt();
         }
 
         // Update UI from callback (might be from async thread)
@@ -315,12 +327,19 @@ public class SprintDialog extends Dialog {
                 stableDiffusionService,
                 defaultPrompt,
                 "exit",
+                null,
                 this::handleGeneratedImage,
                 initialImage,
                 initialDarkImage,
+                avatarUpdateRequest != null ? avatarUpdateRequest.getLightHeaderImage() : null,
+                avatarUpdateRequest != null ? avatarUpdateRequest.getDarkHeaderImage() : null,
                 defaultDarkPrompt,
                 defaultNegativePrompt,
-                defaultDarkNegativePrompt
+                defaultDarkNegativePrompt,
+                avatarUpdateRequest != null && avatarUpdateRequest.getLightHeaderPrompt() != null
+                        ? avatarUpdateRequest.getLightHeaderPrompt() : Sprint.getDefaultLightHeaderPrompt(nameField.getValue()),
+                avatarUpdateRequest != null && avatarUpdateRequest.getDarkHeaderPrompt() != null
+                        ? avatarUpdateRequest.getDarkHeaderPrompt() : Sprint.getDefaultDarkHeaderPrompt(nameField.getValue())
         );
         imageDialog.open();
     }
@@ -365,6 +384,14 @@ public class SprintDialog extends Dialog {
             darkAvatarImage         = darkImage.getResizedImage();
             darkAvatarImageOriginal = darkImage.getOriginalImage();
         }
+        byte[] lightHeaderImage = generatedLightHeaderImage;
+        byte[] darkHeaderImage  = generatedDarkHeaderImage;
+        if (lightHeaderImage != null) {
+            sprintToSave.setLightHeaderHash(AvatarUtil.computeHash(lightHeaderImage));
+        }
+        if (darkHeaderImage != null) {
+            sprintToSave.setDarkHeaderHash(AvatarUtil.computeHash(darkHeaderImage));
+        }
         try {
             if (isEditMode) {
                 // Edit mode
@@ -372,7 +399,8 @@ public class SprintDialog extends Dialog {
 
                 if (avatarImage != null && avatarImageOriginal != null) {
                     sprintApi.updateAvatarFull(sprintToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
-                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt);
+                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt,
+                            lightHeaderImage, darkHeaderImage, generatedLightHeaderPrompt, generatedDarkHeaderPrompt);
                 }
 
                 Notification.show("Sprint updated", 3000, Notification.Position.BOTTOM_START);
@@ -382,7 +410,8 @@ public class SprintDialog extends Dialog {
 
                 if (avatarImage != null && avatarImageOriginal != null && createdSprint != null) {
                     sprintApi.updateAvatarFull(createdSprint.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
-                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt);
+                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt,
+                            lightHeaderImage, darkHeaderImage, generatedLightHeaderPrompt, generatedDarkHeaderPrompt);
                 }
 
                 Notification.show("Sprint created", 3000, Notification.Position.BOTTOM_START);

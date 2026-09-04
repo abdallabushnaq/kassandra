@@ -84,6 +84,10 @@ public class ProductDialog extends Dialog {
     private volatile    byte[]                         generatedDarkImageBytes;
     private volatile    byte[]                         generatedDarkImageBytesOriginal;
     private             String                         generatedDarkImagePrompt;
+    private             byte[]                         generatedLightHeaderImage;
+    private             byte[]                         generatedDarkHeaderImage;
+    private             String                         generatedLightHeaderPrompt;
+    private             String                         generatedDarkHeaderPrompt;
     private             String                         generatedNegativePrompt;
     private             String                         generatedDarkNegativePrompt;
     private final       Image                          headerIcon;
@@ -396,8 +400,8 @@ public class ProductDialog extends Dialog {
         }
     }
 
-    private void handleGeneratedImage(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result,
-            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult) {
+    private void handleGeneratedImage(GeneratedImageResult result, GeneratedImageResult darkResult,
+            GeneratedImageResult lightHeaderResult, GeneratedImageResult darkHeaderResult) {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();
@@ -407,6 +411,14 @@ public class ProductDialog extends Dialog {
             generatedDarkImageBytes         = darkResult.getResizedImage();
             generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
             generatedDarkImagePrompt        = darkResult.getPrompt();
+        }
+        if (lightHeaderResult != null) {
+            generatedLightHeaderImage  = lightHeaderResult.getResizedImage();
+            generatedLightHeaderPrompt = lightHeaderResult.getPrompt();
+        }
+        if (darkHeaderResult != null) {
+            generatedDarkHeaderImage  = darkHeaderResult.getResizedImage();
+            generatedDarkHeaderPrompt = darkHeaderResult.getPrompt();
         }
 
         // Update UI from callback (might be from async thread)
@@ -457,12 +469,19 @@ public class ProductDialog extends Dialog {
                 stableDiffusionService,
                 defaultPrompt,
                 "cube",
+                null,
                 this::handleGeneratedImage,
                 initialImage,
                 initialDarkImage,
+                avatarUpdateRequest != null ? avatarUpdateRequest.getLightHeaderImage() : null,
+                avatarUpdateRequest != null ? avatarUpdateRequest.getDarkHeaderImage() : null,
                 defaultDarkPrompt,
                 defaultNegativePrompt,
-                defaultDarkNegativePrompt
+                defaultDarkNegativePrompt,
+                avatarUpdateRequest != null && avatarUpdateRequest.getLightHeaderPrompt() != null
+                        ? avatarUpdateRequest.getLightHeaderPrompt() : Product.getDefaultLightHeaderPrompt(nameField.getValue()),
+                avatarUpdateRequest != null && avatarUpdateRequest.getDarkHeaderPrompt() != null
+                        ? avatarUpdateRequest.getDarkHeaderPrompt() : Product.getDefaultDarkHeaderPrompt(nameField.getValue())
         );
         imageDialog.open();
     }
@@ -510,6 +529,14 @@ public class ProductDialog extends Dialog {
             darkAvatarImage         = darkImage.getResizedImage();
             darkAvatarImageOriginal = darkImage.getOriginalImage();
         }
+        byte[] lightHeaderImage = generatedLightHeaderImage;
+        byte[] darkHeaderImage  = generatedDarkHeaderImage;
+        if (lightHeaderImage != null) {
+            productToSave.setLightHeaderHash(AvatarUtil.computeHash(lightHeaderImage));
+        }
+        if (darkHeaderImage != null) {
+            productToSave.setDarkHeaderHash(AvatarUtil.computeHash(darkHeaderImage));
+        }
         try {
             if (isEditMode) {
                 // Edit mode
@@ -517,7 +544,8 @@ public class ProductDialog extends Dialog {
 
                 if (avatarImage != null && avatarImageOriginal != null) {
                     productApi.updateAvatarFull(productToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
-                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt);
+                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt,
+                            lightHeaderImage, darkHeaderImage, generatedLightHeaderPrompt, generatedDarkHeaderPrompt);
                 }
 
                 // Update ACL entries if in edit mode
@@ -530,7 +558,8 @@ public class ProductDialog extends Dialog {
 
                 if (avatarImage != null && avatarImageOriginal != null && createdProduct != null) {
                     productApi.updateAvatarFull(createdProduct.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
-                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt);
+                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt,
+                            lightHeaderImage, darkHeaderImage, generatedLightHeaderPrompt, generatedDarkHeaderPrompt);
                 }
 
                 // Apply ACL entries for newly created product
@@ -616,4 +645,3 @@ public class ProductDialog extends Dialog {
         }
     }
 }
-

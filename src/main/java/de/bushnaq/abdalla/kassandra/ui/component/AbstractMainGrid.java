@@ -60,7 +60,11 @@ public abstract class AbstractMainGrid<T> extends Main {
      * Subclasses may call {@code getHeaderPageTitle()} to update the title text dynamically.
      */
     private       H2                 headerPageTitle;
+    private       String             darkHeaderBackgroundUrl;
+    private       String             lightHeaderBackgroundUrl;
     private       HorizontalLayout    lastHeaderRightLayout;
+    private       HorizontalLayout    smartHeader;
+    private       HorizontalLayout   smartHeaderTitleLayout;
     /**
      * Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}.
      */
@@ -111,6 +115,20 @@ public abstract class AbstractMainGrid<T> extends Main {
         if (lastHeaderRightLayout != null) {
             lastHeaderRightLayout.add(button);
         }
+    }
+
+    /**
+     * Set the theme-specific background images of the current smart header.
+     *
+     * @param lightUrl Cache-busted light header URL, or null to remove the background
+     * @param darkUrl  Cache-busted dark header URL, or null to remove the background
+     */
+    public void setSmartHeaderBackgroundUrls(String lightUrl, String darkUrl) {
+        lightHeaderBackgroundUrl = lightUrl;
+        darkHeaderBackgroundUrl  = darkUrl;
+        applySmartHeaderBackground(getUI()
+               .map(ui -> ui.getElement().getThemeList().contains("dark"))
+               .orElse(false));
     }
 
     /**
@@ -426,11 +444,13 @@ public abstract class AbstractMainGrid<T> extends Main {
         headerLayout.setSpacing(false);
         headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         headerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        smartHeader = headerLayout;
 
         // Create page title with icon
         HorizontalLayout titleLayout = new HorizontalLayout();
         titleLayout.setSpacing(false);
         titleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        smartHeaderTitleLayout = titleLayout;
 
         H2 pageTitle = new H2(title);
         headerPageTitle = pageTitle;
@@ -554,7 +574,10 @@ public abstract class AbstractMainGrid<T> extends Main {
         super.onAttach(attachEvent);
         themeChangedRegistration = ComponentUtil.addListener(
                 attachEvent.getUI(), ThemeChangedEvent.class,
-                e -> getDataProvider().refreshAll());
+                e -> {
+                    getDataProvider().refreshAll();
+                    applySmartHeaderBackground(attachEvent.getUI().getElement().getThemeList().contains("dark"));
+                });
     }
 
     /**
@@ -600,6 +623,14 @@ public abstract class AbstractMainGrid<T> extends Main {
 
         String text = String.format("Showing %d of %d rows", filteredSize, totalSize);
         rowCounter.setText(text);
+    }
+
+    private void applySmartHeaderBackground(boolean dark) {
+        if (smartHeader == null) {
+            return;
+        }
+        String backgroundUrl = dark ? darkHeaderBackgroundUrl : lightHeaderBackgroundUrl;
+        VaadinUtil.applyHeaderBackground(smartHeader, headerPageTitle, backgroundUrl, smartHeaderTitleLayout, lastHeaderRightLayout);
     }
 
 }

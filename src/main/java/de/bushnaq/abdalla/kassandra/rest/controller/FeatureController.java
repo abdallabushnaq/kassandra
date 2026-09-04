@@ -127,6 +127,8 @@ public class FeatureController {
                 .ifPresent(avatar -> {
                     response.setLightAvatarImage(avatar.getLightAvatarImage());
                     response.setDarkAvatarImage(avatar.getDarkAvatarImage());
+                    response.setLightHeaderImage(avatar.getLightHeaderImage());
+                    response.setDarkHeaderImage(avatar.getDarkHeaderImage());
                 });
 
         // Get generation data (originals + prompt)
@@ -135,7 +137,9 @@ public class FeatureController {
                     response.setLightAvatarImageOriginal(genData.getLightAvatarImageOriginal());
                     response.setDarkAvatarImageOriginal(genData.getDarkAvatarImageOriginal());
                     response.setLightAvatarPrompt(genData.getLightAvatarPrompt());
+                    response.setLightHeaderPrompt(genData.getLightHeaderPrompt());
                     response.setDarkAvatarPrompt(genData.getDarkAvatarPrompt());
+                    response.setDarkHeaderPrompt(genData.getDarkHeaderPrompt());
                     response.setLightAvatarNegativePrompt(genData.getLightAvatarNegativePrompt());
                     response.setDarkAvatarNegativePrompt(genData.getDarkAvatarNegativePrompt());
                 });
@@ -169,6 +173,49 @@ public class FeatureController {
                     if (imageBytes == null || imageBytes.length == 0) {
                         // Fall back to light image when dark variant not yet generated
                         imageBytes = avatar.getLightAvatarImage();
+                    }
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
+                    }
+                    return ResponseEntity.ok(new AvatarWrapper(imageBytes));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
+    /**
+     * Return the light-mode header image for the given feature.
+     *
+     * @param id The feature ID
+     * @return The header image, or 404 if no header exists
+     */
+    @GetMapping("/{id}/header")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<AvatarWrapper> getHeader(@PathVariable UUID id) {
+        return featureAvatarRepository.findByFeatureId(id)
+                .map(avatar -> {
+                    if (avatar.getLightHeaderImage() == null || avatar.getLightHeaderImage().length == 0) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
+                    }
+                    return ResponseEntity.ok(new AvatarWrapper(avatar.getLightHeaderImage()));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
+    /**
+     * Return the dark-mode header image for the given feature.
+     * Falls back to the light header when no dark variant has been stored yet.
+     *
+     * @param id The feature ID
+     * @return The dark header image, its light fallback, or 404 if no header exists
+     */
+    @GetMapping("/{id}/dark-header")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<AvatarWrapper> getDarkHeader(@PathVariable UUID id) {
+        return featureAvatarRepository.findByFeatureId(id)
+                .map(avatar -> {
+                    byte[] imageBytes = avatar.getDarkHeaderImage();
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        imageBytes = avatar.getLightHeaderImage();
                     }
                     if (imageBytes == null || imageBytes.length == 0) {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
@@ -236,9 +283,32 @@ public class FeatureController {
             featureRepository.save(feature);
         }
 
+        if (request.getLightHeaderImage() != null && request.getLightHeaderImage().length != 0) {
+            FeatureAvatarDAO avatar = featureAvatarRepository.findByFeatureId(id)
+                    .orElse(new FeatureAvatarDAO());
+            avatar.setFeatureId(id);
+            avatar.setLightHeaderImage(request.getLightHeaderImage());
+            featureAvatarRepository.save(avatar);
+
+            feature.setLightHeaderHash(AvatarUtil.computeHash(request.getLightHeaderImage()));
+            featureRepository.save(feature);
+        }
+
+        if (request.getDarkHeaderImage() != null && request.getDarkHeaderImage().length != 0) {
+            FeatureAvatarDAO avatar = featureAvatarRepository.findByFeatureId(id)
+                    .orElse(new FeatureAvatarDAO());
+            avatar.setFeatureId(id);
+            avatar.setDarkHeaderImage(request.getDarkHeaderImage());
+            featureAvatarRepository.save(avatar);
+
+            feature.setDarkHeaderHash(AvatarUtil.computeHash(request.getDarkHeaderImage()));
+            featureRepository.save(feature);
+        }
+
         // Update or create generation data (light + dark originals + prompts)
         if (request.getLightAvatarImageOriginal() != null || request.getDarkAvatarImageOriginal() != null
                 || request.getLightAvatarPrompt() != null || request.getDarkAvatarPrompt() != null
+                || request.getLightHeaderPrompt() != null || request.getDarkHeaderPrompt() != null
                 || request.getLightAvatarNegativePrompt() != null || request.getDarkAvatarNegativePrompt() != null) {
             FeatureAvatarGenerationDataDAO genData = featureAvatarGenerationDataRepository.findByFeatureId(id)
                     .orElse(new FeatureAvatarGenerationDataDAO());
@@ -258,6 +328,12 @@ public class FeatureController {
 
             if (request.getDarkAvatarPrompt() != null) {
                 genData.setDarkAvatarPrompt(request.getDarkAvatarPrompt());
+            }
+            if (request.getLightHeaderPrompt() != null) {
+                genData.setLightHeaderPrompt(request.getLightHeaderPrompt());
+            }
+            if (request.getDarkHeaderPrompt() != null) {
+                genData.setDarkHeaderPrompt(request.getDarkHeaderPrompt());
             }
 
             if (request.getLightAvatarNegativePrompt() != null) {

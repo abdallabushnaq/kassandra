@@ -149,6 +149,8 @@ public class SprintController {
                 .ifPresent(avatar -> {
                     response.setLightAvatarImage(avatar.getLightAvatarImage());
                     response.setDarkAvatarImage(avatar.getDarkAvatarImage());
+                    response.setLightHeaderImage(avatar.getLightHeaderImage());
+                    response.setDarkHeaderImage(avatar.getDarkHeaderImage());
                 });
 
         // Get generation data (originals + prompt)
@@ -157,7 +159,9 @@ public class SprintController {
                     response.setLightAvatarImageOriginal(genData.getLightAvatarImageOriginal());
                     response.setDarkAvatarImageOriginal(genData.getDarkAvatarImageOriginal());
                     response.setLightAvatarPrompt(genData.getLightAvatarPrompt());
+                    response.setLightHeaderPrompt(genData.getLightHeaderPrompt());
                     response.setDarkAvatarPrompt(genData.getDarkAvatarPrompt());
+                    response.setDarkHeaderPrompt(genData.getDarkHeaderPrompt());
                     response.setLightAvatarNegativePrompt(genData.getLightAvatarNegativePrompt());
                     response.setDarkAvatarNegativePrompt(genData.getDarkAvatarNegativePrompt());
                 });
@@ -201,6 +205,49 @@ public class SprintController {
                     if (imageBytes == null || imageBytes.length == 0) {
                         // Fall back to light image when dark variant not yet generated
                         imageBytes = avatar.getLightAvatarImage();
+                    }
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
+                    }
+                    return ResponseEntity.ok(new AvatarWrapper(imageBytes));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
+    /**
+     * Return the light-mode header image for the given sprint.
+     *
+     * @param id The sprint ID
+     * @return The header image, or 404 if no header exists
+     */
+    @GetMapping("/{id}/header")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<AvatarWrapper> getHeader(@PathVariable UUID id) {
+        return sprintAvatarRepository.findBySprintId(id)
+                .map(avatar -> {
+                    if (avatar.getLightHeaderImage() == null || avatar.getLightHeaderImage().length == 0) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
+                    }
+                    return ResponseEntity.ok(new AvatarWrapper(avatar.getLightHeaderImage()));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
+    /**
+     * Return the dark-mode header image for the given sprint.
+     * Falls back to the light header when no dark variant has been stored yet.
+     *
+     * @param id The sprint ID
+     * @return The dark header image, its light fallback, or 404 if no header exists
+     */
+    @GetMapping("/{id}/dark-header")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<AvatarWrapper> getDarkHeader(@PathVariable UUID id) {
+        return sprintAvatarRepository.findBySprintId(id)
+                .map(avatar -> {
+                    byte[] imageBytes = avatar.getDarkHeaderImage();
+                    if (imageBytes == null || imageBytes.length == 0) {
+                        imageBytes = avatar.getLightHeaderImage();
                     }
                     if (imageBytes == null || imageBytes.length == 0) {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND).body((AvatarWrapper) null);
@@ -273,9 +320,32 @@ public class SprintController {
             sprintRepository.save(sprint);
         }
 
+        if (request.getLightHeaderImage() != null && request.getLightHeaderImage().length != 0) {
+            SprintAvatarDAO avatar = sprintAvatarRepository.findBySprintId(id)
+                    .orElse(new SprintAvatarDAO());
+            avatar.setSprintId(id);
+            avatar.setLightHeaderImage(request.getLightHeaderImage());
+            sprintAvatarRepository.save(avatar);
+
+            sprint.setLightHeaderHash(AvatarUtil.computeHash(request.getLightHeaderImage()));
+            sprintRepository.save(sprint);
+        }
+
+        if (request.getDarkHeaderImage() != null && request.getDarkHeaderImage().length != 0) {
+            SprintAvatarDAO avatar = sprintAvatarRepository.findBySprintId(id)
+                    .orElse(new SprintAvatarDAO());
+            avatar.setSprintId(id);
+            avatar.setDarkHeaderImage(request.getDarkHeaderImage());
+            sprintAvatarRepository.save(avatar);
+
+            sprint.setDarkHeaderHash(AvatarUtil.computeHash(request.getDarkHeaderImage()));
+            sprintRepository.save(sprint);
+        }
+
         // Update or create generation data (light + dark originals + prompts)
         if (request.getLightAvatarImageOriginal() != null || request.getDarkAvatarImageOriginal() != null
                 || request.getLightAvatarPrompt() != null || request.getDarkAvatarPrompt() != null
+                || request.getLightHeaderPrompt() != null || request.getDarkHeaderPrompt() != null
                 || request.getLightAvatarNegativePrompt() != null || request.getDarkAvatarNegativePrompt() != null) {
             SprintAvatarGenerationDataDAO genData = sprintAvatarGenerationDataRepository.findBySprintId(id)
                     .orElse(new SprintAvatarGenerationDataDAO());
@@ -295,6 +365,12 @@ public class SprintController {
 
             if (request.getDarkAvatarPrompt() != null) {
                 genData.setDarkAvatarPrompt(request.getDarkAvatarPrompt());
+            }
+            if (request.getLightHeaderPrompt() != null) {
+                genData.setLightHeaderPrompt(request.getLightHeaderPrompt());
+            }
+            if (request.getDarkHeaderPrompt() != null) {
+                genData.setDarkHeaderPrompt(request.getDarkHeaderPrompt());
             }
 
             if (request.getLightAvatarNegativePrompt() != null) {

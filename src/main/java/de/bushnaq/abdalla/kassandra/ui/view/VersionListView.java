@@ -504,9 +504,15 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
             } else {
                 headerAvatar.setVisible(false);
             }
+            if (single.getLightHeaderHash() != null && !single.getLightHeaderHash().isEmpty()) {
+                setSmartHeaderBackgroundUrls(single.getHeaderUrl(false), single.getHeaderUrl(true));
+            } else {
+                setSmartHeaderBackgroundUrls(null, null);
+            }
         } else {
             getHeaderPageTitle().setText("Versions");
             headerAvatar.setVisible(false);
+            setSmartHeaderBackgroundUrls(null, null);
         }
     }
 

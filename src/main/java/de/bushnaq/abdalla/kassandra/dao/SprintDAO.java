@@ -50,6 +50,8 @@ import java.util.UUID;
 public class SprintDAO extends AbstractTimeAwareDAO {
     @Column(name = "dark_avatar_hash", length = 16)
     private String        darkAvatarHash;
+    @Column(name = "dark_header_hash", length = 16)
+    private String        darkHeaderHash;
     @Column(name = "end_date", nullable = true)  // renamed from 'end' as it is reserved in H2 databases
     private LocalDateTime end;
     @Column(nullable = false)
@@ -59,6 +61,8 @@ public class SprintDAO extends AbstractTimeAwareDAO {
     private UUID          id;
     @Column(name = "light_avatar_hash", length = 16)
     private String        lightAvatarHash;
+    @Column(name = "light_header_hash", length = 16)
+    private String        lightHeaderHash;
     @Column(nullable = false)
     private String        name;
     @JsonSerialize(using = DurationSerializer.class)

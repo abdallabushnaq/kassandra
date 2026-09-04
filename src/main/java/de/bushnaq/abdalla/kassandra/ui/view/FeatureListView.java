@@ -497,9 +497,18 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
             return;
         }
         if (selectedVersions.size() == 1) {
-            getHeaderPageTitle().setText(selectedVersions.iterator().next().getName());
+            Version selectedVersion = selectedVersions.iterator().next();
+            getHeaderPageTitle().setText(selectedVersion.getName());
+            Product selectedProduct = productMap.get(selectedVersion.getProductId());
+            if (selectedProduct != null && selectedProduct.getLightHeaderHash() != null
+                    && !selectedProduct.getLightHeaderHash().isEmpty()) {
+                setSmartHeaderBackgroundUrls(selectedProduct.getHeaderUrl(false), selectedProduct.getHeaderUrl(true));
+            } else {
+                setSmartHeaderBackgroundUrls(null, null);
+            }
         } else {
             getHeaderPageTitle().setText("Features");
+            setSmartHeaderBackgroundUrls(null, null);
         }
     }
 

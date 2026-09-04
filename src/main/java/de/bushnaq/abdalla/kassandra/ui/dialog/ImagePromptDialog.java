@@ -54,38 +54,54 @@ public class ImagePromptDialog extends Dialog {
     // Button ID constants for Selenium tests
     public static final String                 ID_ACCEPT_BUTTON              = "accept-image-button";
     public static final String                 ID_CANCEL_BUTTON              = "cancel-image-button";
-    /** Element ID of the dialog itself, used by Selenium to locate the overlay. */
-    public static final String                 IMAGE_PROMPT_DIALOG           = "image-prompt-dialog";
+    public static final String                 ID_DARK_HEADER_PROMPT_FIELD   = "dark-header-prompt-field";
+    public static final String                 ID_DARK_HEADER_UPDATE_BUTTON  = "dark-update-header-button";
     public static final String                 ID_DARK_NEGATIVE_PROMPT_FIELD = "dark-negative-prompt-field";
     public static final String                 ID_DARK_PROMPT_FIELD          = "dark-prompt-field";
     public static final String                 ID_DARK_UPDATE_BUTTON         = "dark-update-image-button";
     public static final String                 ID_DOWNLOAD_BUTTON            = "download-image-button";
     public static final String                 ID_GENERATE_BUTTON            = "generate-image-button";
     public static final String                 ID_IMAGE_PROMPT_FIELD         = "image-prompt-field";
+    public static final String                 ID_LIGHT_HEADER_PROMPT_FIELD  = "light-header-prompt-field";
+    public static final String                 ID_LIGHT_HEADER_UPDATE_BUTTON = "light-update-header-button";
     public static final String                 ID_NEGATIVE_PROMPT_FIELD      = "negative-prompt-field";
     public static final String                 ID_UPDATE_BUTTON              = "update-image-button";
     public static final String                 ID_UPLOAD_BUTTON              = "upload-image-button";
+    /**
+     * Element ID of the dialog itself, used by Selenium to locate the overlay.
+     */
+    public static final String                 IMAGE_PROMPT_DIALOG           = "image-prompt-dialog";
     private final       Button                 acceptButton;
     private final       AcceptCallback         acceptCallback;
     private final       AvatarService          avatarService;
     private final       Button                 cancelButton;
+    private final       Div                    darkHeaderPreviewContainer;
+    private final       TextArea               darkHeaderPromptField;
+    private final       Button                 darkHeaderUpdateButton;
     private final       String                 darkIconName;
     private final       TextArea               darkNegativePromptField;
     private final       Div                    darkPreviewContainer;
     private final       TextArea               darkPromptField;
-    private             Button                 darkUpdateButton;
+    private final       Button                 darkUpdateButton;
     private final       Button                 generateButton;
+    private             byte[]                 generatedDarkHeaderImage;
     private volatile    byte[]                 generatedDarkImage;
     private volatile    byte[]                 generatedDarkImageOriginal;
     private             byte[]                 generatedImage;
     private             byte[]                 generatedImageOriginal;
     private volatile    long                   generatedImageSeed            = -1L;
+    private             byte[]                 generatedLightHeaderImage;
+    private volatile    long                   generatedLightHeaderSeed      = -1L;
+    private final       HeaderAcceptCallback   headerAcceptCallback;
     private             byte[]                 initialImage;
+    private final       Div                    lightHeaderPreviewContainer;
+    private final       TextArea               lightHeaderPromptField;
+    private final       Button                 lightHeaderUpdateButton;
+    private final       Button                 lightUpdateButton;
     private final       TextArea               negativePromptField;
     private final       Div                    previewContainer;
     private final       TextArea               promptField;
     private final       StableDiffusionService stableDiffusionService;
-    private final       Button                 lightUpdateButton;
 
     /**
      * Full constructor for the side-by-side light/dark avatar preview dialog.
@@ -104,11 +120,30 @@ public class ImagePromptDialog extends Dialog {
     public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt,
                              String darkIconName, AcceptCallback acceptCallback, byte[] initialImage, byte[] initialDarkImage,
                              String defaultDarkPrompt, String defaultNegativePrompt, String defaultDarkNegativePrompt) {
+        this(avatarService, stableDiffusionService, defaultPrompt, darkIconName, acceptCallback, null, initialImage,
+                initialDarkImage, null, null, defaultDarkPrompt, defaultNegativePrompt, defaultDarkNegativePrompt, null, null);
+    }
+
+    /**
+     * Full constructor including editable light and dark header previews.
+     *
+     * @param headerAcceptCallback     callback receiving accepted avatar and header results; may be null
+     * @param initialLightHeader       existing light header image; may be null
+     * @param initialDarkHeader        existing dark header image; may be null
+     * @param defaultLightHeaderPrompt default light header prompt; may be null
+     * @param defaultDarkHeaderPrompt  default dark header prompt; may be null
+     */
+    public ImagePromptDialog(AvatarService avatarService, StableDiffusionService stableDiffusionService, String defaultPrompt,
+                             String darkIconName, AcceptCallback acceptCallback, HeaderAcceptCallback headerAcceptCallback, byte[] initialImage,
+                             byte[] initialDarkImage, byte[] initialLightHeader, byte[] initialDarkHeader, String defaultDarkPrompt,
+                             String defaultNegativePrompt, String defaultDarkNegativePrompt, String defaultLightHeaderPrompt,
+                             String defaultDarkHeaderPrompt) {
         this.avatarService          = avatarService;
         this.stableDiffusionService = stableDiffusionService;
         this.acceptCallback         = acceptCallback;
         this.initialImage           = initialImage;
         this.darkIconName           = darkIconName;
+        this.headerAcceptCallback   = headerAcceptCallback;
 
         // Resolve default values for the new prompt fields
         String resolvedNegativePrompt     = defaultNegativePrompt != null ? defaultNegativePrompt : StableDiffusionService.NEGATIVE_PROMPT;
@@ -116,6 +151,10 @@ public class ImagePromptDialog extends Dialog {
         String resolvedDarkNegativePrompt = defaultDarkNegativePrompt != null ? defaultDarkNegativePrompt : resolvedNegativePrompt;
 
         setId("image-prompt-dialog");
+        if (headerAcceptCallback != null) {
+            setWidth("800px");
+            setMaxHeight("95vh");
+        }
         getHeader().add(VaadinUtil.createDialogHeader("Generate AI Image", VaadinIcon.MAGIC));
 
         VerticalLayout dialogLayout = new VerticalLayout();
@@ -173,6 +212,14 @@ public class ImagePromptDialog extends Dialog {
         darkNegativePromptField.setMinHeight("80px");
         darkNegativePromptField.setValue(resolvedDarkNegativePrompt);
         dialogLayout.add(darkNegativePromptField);
+
+        lightHeaderPromptField = createPromptField("Light Header Prompt", ID_LIGHT_HEADER_PROMPT_FIELD,
+                "Describe the light-theme header image", defaultLightHeaderPrompt);
+        darkHeaderPromptField  = createPromptField("Dark Header Prompt", ID_DARK_HEADER_PROMPT_FIELD,
+                "Describe the dark-theme header image", defaultDarkHeaderPrompt);
+        if (headerAcceptCallback != null) {
+            dialogLayout.add(lightHeaderPromptField, darkHeaderPromptField);
+        }
 
         // Preview container
         previewContainer = new Div();
@@ -268,6 +315,9 @@ public class ImagePromptDialog extends Dialog {
                 lightUpdateButton.setEnabled(true);
                 Notification.show("Image uploaded and resized.", 2000, Notification.Position.BOTTOM_END);
                 generateDarkVariant();
+                if (headerAcceptCallback != null) {
+                    generateLightHeader();
+                }
             } catch (Exception ex) {
                 Notification.show("Failed to process image: " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
             }
@@ -365,6 +415,29 @@ public class ImagePromptDialog extends Dialog {
         previewRow.setWidthFull();
         dialogLayout.add(previewRow);
 
+        lightHeaderPreviewContainer = createHeaderPreviewContainer();
+        darkHeaderPreviewContainer  = createHeaderPreviewContainer();
+        if (initialLightHeader != null && initialLightHeader.length > 0) {
+            generatedLightHeaderImage = initialLightHeader;
+            displayHeader(lightHeaderPreviewContainer, initialLightHeader);
+        } else {
+            lightHeaderPreviewContainer.setText("Generated light header will appear here");
+        }
+        if (initialDarkHeader != null && initialDarkHeader.length > 0) {
+            generatedDarkHeaderImage = initialDarkHeader;
+            displayHeader(darkHeaderPreviewContainer, initialDarkHeader);
+        } else {
+            darkHeaderPreviewContainer.setText("Generated dark header will appear here");
+        }
+        lightHeaderUpdateButton = createHeaderUpdateButton(ID_LIGHT_HEADER_UPDATE_BUTTON, "Regenerate light header",
+                this::generateLightHeader);
+        darkHeaderUpdateButton  = createHeaderUpdateButton(ID_DARK_HEADER_UPDATE_BUTTON, "Regenerate dark header",
+                this::generateDarkHeader);
+        if (headerAcceptCallback != null) {
+            dialogLayout.add(createHeaderLayout("Light Header", lightHeaderPreviewContainer, lightHeaderUpdateButton),
+                    createHeaderLayout("Dark Header", darkHeaderPreviewContainer, darkHeaderUpdateButton));
+        }
+
         // Buttons
         HorizontalLayout buttonLayout = new HorizontalLayout(generateButton, acceptButton, cancelButton);
         buttonLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
@@ -399,9 +472,62 @@ public class ImagePromptDialog extends Dialog {
                 darkResult.setNegativePrompt(darkNegativePrompt);
             }
 
-            acceptCallback.accept(lightResult, darkResult);
+            if (headerAcceptCallback != null) {
+                headerAcceptCallback.accept(lightResult, darkResult,
+                        createHeaderResult(generatedLightHeaderImage, lightHeaderPromptField.getValue().trim()),
+                        createHeaderResult(generatedDarkHeaderImage, darkHeaderPromptField.getValue().trim()));
+            } else {
+                acceptCallback.accept(lightResult, darkResult);
+            }
             close();
         }
+    }
+
+    private VerticalLayout createHeaderLayout(String label, Div preview, Button updateButton) {
+        HorizontalLayout title = new HorizontalLayout(new com.vaadin.flow.component.html.Span(label), updateButton);
+        title.setWidthFull();
+        title.setAlignItems(FlexComponent.Alignment.CENTER);
+        title.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        VerticalLayout layout = new VerticalLayout(title, preview);
+        layout.setPadding(false);
+        layout.setSpacing(true);
+        layout.setWidthFull();
+        return layout;
+    }
+
+    private Div createHeaderPreviewContainer() {
+        Div container = new Div();
+        container.getStyle().set("border", "1px dashed var(--lumo-contrast-30pct)")
+                .set("border-radius", "var(--lumo-border-radius)").set("width", "100%").set("aspect-ratio", "1024 / 48")
+                .set("min-height", "48px")
+                .set("display", "flex").set("align-items", "center").set("justify-content", "center")
+                .set("background-color", "var(--lumo-contrast-5pct)").set("overflow", "hidden");
+        return container;
+    }
+
+    private GeneratedImageResult createHeaderResult(byte[] image, String prompt) {
+        return image == null ? null : new GeneratedImageResult(image, prompt, image);
+    }
+
+    private Button createHeaderUpdateButton(String id, String title, Runnable action) {
+        Button button = new Button(new Icon(VaadinIcon.REFRESH));
+        button.setId(id);
+        button.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        button.getElement().setAttribute("title", title);
+        button.addClickListener(event -> action.run());
+        return button;
+    }
+
+    private TextArea createPromptField(String label, String id, String helperText, String value) {
+        TextArea field = new TextArea(label);
+        field.setId(id);
+        field.setWidthFull();
+        field.setMinHeight("80px");
+        field.setHelperText(helperText);
+        if (value != null) {
+            field.setValue(value);
+        }
+        return field;
     }
 
     private void displayGeneratedImage(byte[] imageBytes) {
@@ -431,6 +557,16 @@ public class ImagePromptDialog extends Dialog {
         previewContainer.add(image);
     }
 
+    private void displayHeader(Div container, byte[] imageBytes) {
+        container.removeAll();
+        Image image = new Image(new StreamResource("header-" + System.currentTimeMillis() + ".png",
+                () -> new ByteArrayInputStream(imageBytes)), "Header preview");
+        image.setWidthFull();
+        image.setHeightFull();
+        image.getStyle().set("object-fit", "contain");
+        container.add(image);
+    }
+
     /**
      * Renders {@code imageBytes} inside the given container, replacing any existing content.
      *
@@ -448,6 +584,16 @@ public class ImagePromptDialog extends Dialog {
         img.setHeight("256px");
         img.getStyle().set("object-fit", "contain").set("display", "block");
         container.add(img);
+    }
+
+    private void generateDarkHeader() {
+        String prompt = darkHeaderPromptField.getValue().trim();
+        if (prompt.isEmpty()) {
+            Notification.show("Please enter a dark header description", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+        generateHeader(darkHeaderPreviewContainer, darkHeaderUpdateButton, "Generating dark header...", prompt,
+                generatedLightHeaderSeed, true);
     }
 
     /**
@@ -471,7 +617,7 @@ public class ImagePromptDialog extends Dialog {
             // Read prompts from their respective fields while holding the session lock
             String               darkPrompt         = darkPromptField.getValue().trim();
             String               darkNegativePrompt = darkNegativePromptField.getValue().trim();
-            GeneratedImageResult lightResult = new GeneratedImageResult(lightOriginal, promptField.getValue().trim(), null, lightSeed);
+            GeneratedImageResult lightResult        = new GeneratedImageResult(lightOriginal, promptField.getValue().trim(), null, lightSeed);
 
             darkPreviewContainer.removeAll();
             if (darkUpdateButton != null) {
@@ -554,6 +700,81 @@ public class ImagePromptDialog extends Dialog {
         }));
     }
 
+    private void generateHeader(Div container, Button updateButton, String label, String prompt, long seed, boolean dark) {
+        updateButton.setEnabled(false);
+        acceptButton.setEnabled(false);
+        container.removeAll();
+//        Icon hourglassIcon = new Icon(VaadinIcon.HOURGLASS);
+//        hourglassIcon.setSize("16px");
+//        hourglassIcon.getStyle().set("color", "var(--lumo-primary-color)");
+        Div loadingText = new Div(label);
+        loadingText.getStyle().set("color", "var(--lumo-contrast-60pct)").set("font-weight", "500").set("line-height", "1");
+        Div progressText = new Div("Initializing...");
+        progressText.getStyle().set("color", "var(--lumo-contrast-50pct)").set("font-size", "var(--lumo-font-size-s)").set("line-height", "1");
+        com.vaadin.flow.component.progressbar.ProgressBar progressBar = new com.vaadin.flow.component.progressbar.ProgressBar();
+        progressBar.setMin(0);
+        progressBar.setMax(1);
+        progressBar.setValue(0);
+        progressBar.setWidth("80%");
+        VerticalLayout loadingLayout = new VerticalLayout(loadingText, progressText, progressBar);
+        loadingLayout.setPadding(false);
+        loadingLayout.setSpacing(false);
+        loadingLayout.getStyle().set("gap", "0");
+        loadingLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        loadingLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        loadingLayout.setWidthFull();
+        container.add(loadingLayout);
+        getUI().ifPresent(ui -> new Thread(() -> {
+            try {
+                GeneratedImageResult result = dark && generatedLightHeaderImage != null
+                        ? avatarService.generateDarkHeaderWithFallback(prompt, negativePromptField.getValue().trim(),
+                        new GeneratedImageResult(generatedLightHeaderImage, "", null, seed), darkIconName,
+                        (value, step, total) -> ui.access(() -> {
+                            progressBar.setValue(value);
+                            progressText.setText(String.format("Step %d / %d (%.0f%%)", step, total, value * 100));
+                            ui.push();
+                        }))
+                        : avatarService.generateLightHeaderWithFallback(prompt, negativePromptField.getValue().trim(), darkIconName,
+                        (value, step, total) -> ui.access(() -> {
+                            progressBar.setValue(value);
+                            progressText.setText(String.format("Step %d / %d (%.0f%%)", step, total, value * 100));
+                            ui.push();
+                        }));
+                if (dark) {
+                    generatedDarkHeaderImage = result.getResizedImage();
+                } else {
+                    generatedLightHeaderImage = result.getResizedImage();
+                    generatedLightHeaderSeed  = result.getSeed();
+                }
+                ui.access(() -> {
+                    displayHeader(container, result.getResizedImage());
+                    updateButton.setEnabled(true);
+                    acceptButton.setEnabled(generatedImage != null);
+                    Notification notification = Notification.show(dark ? "Dark header generated!" : "Light header generated!",
+                            3000, Notification.Position.BOTTOM_END);
+                    notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    ui.push();
+                });
+            } catch (RuntimeException exception) {
+                ui.access(() -> {
+                    progressText.setText("Failed to generate header: " + exception.getMessage());
+                    updateButton.setEnabled(true);
+                    acceptButton.setEnabled(generatedImage != null);
+                    ui.push();
+                });
+            }
+        }).start());
+    }
+
+    private void generateLightHeader() {
+        String prompt = lightHeaderPromptField.getValue().trim();
+        if (prompt.isEmpty()) {
+            Notification.show("Please enter a light header description", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+        generateHeader(lightHeaderPreviewContainer, lightHeaderUpdateButton, "Generating light header...", prompt, -1L, false);
+    }
+
     private void generateLightVariant() {
         String prompt = promptField.getValue().trim();
         if (prompt.isEmpty()) {
@@ -633,6 +854,9 @@ public class ImagePromptDialog extends Dialog {
                         ui.push();
                     });
                     generateDarkVariant();
+                    if (headerAcceptCallback != null) {
+                        generateLightHeader();
+                    }
                 } catch (StableDiffusionException ex) {
                     ui.access(() -> {
                         generateButton.setEnabled(true);
@@ -690,8 +914,8 @@ public class ImagePromptDialog extends Dialog {
         getUI().ifPresent(ui -> {
             new Thread(() -> {
                 try {
-                    String               negativePrompt = negativePromptField.getValue().trim();
-                    GeneratedImageResult result         =
+                    String negativePrompt = negativePromptField.getValue().trim();
+                    GeneratedImageResult result =
                             avatarService.generateLightAvatar(prompt, negativePrompt, (progress, step, totalSteps) -> {
                                 ui.access(() -> {
                                     progressBar.setValue(progress);
@@ -745,5 +969,21 @@ public class ImagePromptDialog extends Dialog {
          */
         void accept(GeneratedImageResult lightResult, GeneratedImageResult darkResult);
     }
-}
 
+    /**
+     * Callback invoked when the dialog accepts avatar and header variants.
+     */
+    @FunctionalInterface
+    public interface HeaderAcceptCallback {
+        /**
+         * Accept all generated image variants.
+         *
+         * @param lightAvatar light avatar result
+         * @param darkAvatar  dark avatar result
+         * @param lightHeader light header result
+         * @param darkHeader  dark header result
+         */
+        void accept(GeneratedImageResult lightAvatar, GeneratedImageResult darkAvatar,
+                    GeneratedImageResult lightHeader, GeneratedImageResult darkHeader);
+    }
+}

@@ -37,8 +37,14 @@ public class FeatureAvatarDAO extends AbstractTimeAwareDAO {
     @Column(name = "light_avatar_image")
     private byte[] lightAvatarImage;
     @Lob
+    @Column(name = "light_header_image")
+    private byte[] lightHeaderImage;
+    @Lob
     @Column(name = "dark_avatar_image")
     private byte[] darkAvatarImage;
+    @Lob
+    @Column(name = "dark_header_image")
+    private byte[] darkHeaderImage;
     @Column(name = "feature_id", unique = true, nullable = false)
     private UUID   featureId;
     @Id
@@ -46,4 +52,3 @@ public class FeatureAvatarDAO extends AbstractTimeAwareDAO {
     @Column(name = "id")
     private UUID   id;
 }
-

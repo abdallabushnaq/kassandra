@@ -70,6 +70,10 @@ public class FeatureDialog extends Dialog {
     private volatile    byte[]                 generatedDarkImageBytes;
     private volatile    byte[]                 generatedDarkImageBytesOriginal;
     private             String                 generatedDarkImagePrompt;
+    private             byte[]                 generatedLightHeaderImage;
+    private             byte[]                 generatedDarkHeaderImage;
+    private             String                 generatedLightHeaderPrompt;
+    private             String                 generatedDarkHeaderPrompt;
     private             String                 generatedNegativePrompt;
     private             String                 generatedDarkNegativePrompt;
     private final       Image                  headerIcon;
@@ -249,8 +253,8 @@ public class FeatureDialog extends Dialog {
         Shortcuts.addShortcutListener(this, e -> save(), Key.ENTER);
     }
 
-    private void handleGeneratedImage(de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult result,
-            de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult darkResult) {
+    private void handleGeneratedImage(GeneratedImageResult result, GeneratedImageResult darkResult,
+            GeneratedImageResult lightHeaderResult, GeneratedImageResult darkHeaderResult) {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();
@@ -260,6 +264,14 @@ public class FeatureDialog extends Dialog {
             this.generatedDarkImageBytes         = darkResult.getResizedImage();
             this.generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
             this.generatedDarkImagePrompt        = darkResult.getPrompt();
+        }
+        if (lightHeaderResult != null) {
+            generatedLightHeaderImage  = lightHeaderResult.getResizedImage();
+            generatedLightHeaderPrompt = lightHeaderResult.getPrompt();
+        }
+        if (darkHeaderResult != null) {
+            generatedDarkHeaderImage  = darkHeaderResult.getResizedImage();
+            generatedDarkHeaderPrompt = darkHeaderResult.getPrompt();
         }
 
         // Update UI from callback (might be from async thread)
@@ -310,12 +322,19 @@ public class FeatureDialog extends Dialog {
                 stableDiffusionService,
                 defaultPrompt,
                 "lightbulb",
+                null,
                 this::handleGeneratedImage,
                 initialImage,
                 initialDarkImage,
+                avatarUpdateRequest != null ? avatarUpdateRequest.getLightHeaderImage() : null,
+                avatarUpdateRequest != null ? avatarUpdateRequest.getDarkHeaderImage() : null,
                 defaultDarkPrompt,
                 defaultNegativePrompt,
-                defaultDarkNegativePrompt
+                defaultDarkNegativePrompt,
+                avatarUpdateRequest != null && avatarUpdateRequest.getLightHeaderPrompt() != null
+                        ? avatarUpdateRequest.getLightHeaderPrompt() : Feature.getDefaultLightHeaderPrompt(nameField.getValue()),
+                avatarUpdateRequest != null && avatarUpdateRequest.getDarkHeaderPrompt() != null
+                        ? avatarUpdateRequest.getDarkHeaderPrompt() : Feature.getDefaultDarkHeaderPrompt(nameField.getValue())
         );
         imageDialog.open();
     }
@@ -360,6 +379,14 @@ public class FeatureDialog extends Dialog {
             darkAvatarImage         = darkImage.getResizedImage();
             darkAvatarImageOriginal = darkImage.getOriginalImage();
         }
+        byte[] lightHeaderImage = generatedLightHeaderImage;
+        byte[] darkHeaderImage  = generatedDarkHeaderImage;
+        if (lightHeaderImage != null) {
+            featureToSave.setLightHeaderHash(AvatarUtil.computeHash(lightHeaderImage));
+        }
+        if (darkHeaderImage != null) {
+            featureToSave.setDarkHeaderHash(AvatarUtil.computeHash(darkHeaderImage));
+        }
         try {
             if (isEditMode) {
                 // Edit mode
@@ -367,7 +394,8 @@ public class FeatureDialog extends Dialog {
 
                 if (avatarImage != null && avatarImageOriginal != null) {
                     featureApi.updateAvatarFull(featureToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
-                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt);
+                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt,
+                            lightHeaderImage, darkHeaderImage, generatedLightHeaderPrompt, generatedDarkHeaderPrompt);
                 }
 
                 Notification.show("Feature updated", 3000, Notification.Position.BOTTOM_START);
@@ -377,7 +405,8 @@ public class FeatureDialog extends Dialog {
 
                 if (avatarImage != null && avatarImageOriginal != null && createdFeature != null) {
                     featureApi.updateAvatarFull(createdFeature.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
-                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt);
+                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt,
+                            lightHeaderImage, darkHeaderImage, generatedLightHeaderPrompt, generatedDarkHeaderPrompt);
                 }
 
                 Notification.show("Feature created", 3000, Notification.Position.BOTTOM_START);

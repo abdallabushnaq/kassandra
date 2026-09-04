@@ -17,6 +17,9 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -36,6 +39,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
@@ -43,6 +47,8 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.MergedScrumBoard;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
+import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +82,9 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
      * Avatar image shown in the header when exactly one sprint is selected.
      */
     private             Image                       headerAvatar;
+    private             HorizontalLayout            headerControlsLayout;
+    private final       HorizontalLayout            headerLayout;
+    private             HorizontalLayout            headerTitleLayout;
     private             boolean                     isRestoringFromUrl        = false;
     /**
      * Page title component updated to reflect the current sprint selection.
@@ -95,6 +104,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private             MultiSelectComboBox<User>   userSelector;
     private             List<User>                  users                     = new ArrayList<>();
     private final       WorklogApi                  worklogApi;
+    private             Registration                themeChangedRegistration;
 
     public ActiveSprints(FeatureApi featureApi, SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi) {
         this.featureApi = featureApi;
@@ -112,7 +122,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
 
             // Create header
-            HorizontalLayout headerLayout = createHeader();
+            headerLayout = createHeader();
 
             // Create content layout for scrum boards
             contentLayout = new VerticalLayout();
@@ -377,7 +387,11 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             applyFilters();
         });
 
-        header.add(headerAvatar, pageTitle, searchField, userSelector, sprintSelector, groupingModeSelector, clearButton);
+        headerTitleLayout = new HorizontalLayout(headerAvatar, pageTitle);
+        headerTitleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        headerControlsLayout = new HorizontalLayout(searchField, userSelector, sprintSelector, groupingModeSelector, clearButton);
+        headerControlsLayout.setAlignItems(FlexComponent.Alignment.END);
+        header.add(headerTitleLayout, headerControlsLayout);
 
         return header;
     }
@@ -574,7 +588,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     }
 
     /**
-     * Updates the header title text and avatar to reflect the current sprint-selector state.
+     * Updates the header title, avatar, and background to reflect the current sprint-selector state.
      * <ul>
      *   <li>Exactly one sprint selected → show that sprint's avatar and name.</li>
      *   <li>Zero or multiple sprints selected → hide avatar and show "Active Sprints".</li>
@@ -587,8 +601,9 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         if (selectedSprints.size() == 1) {
             Sprint single = selectedSprints.iterator().next();
             pageTitle.setText(single.getName());
+            boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, single.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
             if (single.getLightAvatarHash() != null && !single.getLightAvatarHash().isEmpty()) {
-                boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
                 headerAvatar.setSrc(single.getAvatarUrl(isDark));
                 headerAvatar.setVisible(true);
             } else {
@@ -597,7 +612,33 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         } else {
             pageTitle.setText("Active Sprints");
             headerAvatar.setVisible(false);
+            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, null, headerTitleLayout, headerControlsLayout);
         }
+    }
+
+    /**
+     * Refreshes the header image when the active UI theme changes.
+     *
+     * @param attachEvent the attach event
+     */
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderForSelection());
+    }
+
+    /**
+     * Removes the theme-change listener.
+     *
+     * @param detachEvent the detach event
+     */
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
     }
 
     /**
@@ -643,4 +684,3 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         getUI().ifPresent(ui -> ui.navigate(ActiveSprints.class, queryParameters));
     }
 }
-

@@ -1,16 +1,17 @@
 # TODO
 
-1. rename all mcp tpo IDs
-2. GENERATOR. ensure some projects show delay, are not started or are finished closed.
-3. add better error handling in api.
-4. remove default test password from AbstractApi.
-5. make sure getAll will filter via alc in db, not in memory.
-6. make all entities client side id generated
+1. test should not create default user with avatar to speed up test execution.
+2. rename all mcp tpo IDs
+3. GENERATOR. ensure some projects show delay, are not started or are finished closed.
+4. add better error handling in api.
+5. remove default test password from AbstractApi.
+6. make sure getAll will filter via alc in db, not in memory.
+7. make all entities client side id generated
     1. dto and dao need default constructors that set the id
     2. remove the generator annotation
     3. use entitymanager to persist
-7. sort db printout
-8. remove fallback parameter in ColorUtils.intToHex
+8. sort db printout
+9. remove fallback parameter in ColorUtils.intToHex
 
 ## Feature
 

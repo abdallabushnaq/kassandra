@@ -70,6 +70,37 @@ public class StableDiffusionService {
     }
 
     /**
+     * Crop a horizontally centered image to a vertically centered strip.
+     *
+     * @param imageBytes    PNG image bytes
+     * @param expectedWidth Expected image width
+     * @param targetHeight  Height of the cropped strip
+     * @return PNG bytes containing the vertical center strip
+     * @throws StableDiffusionException if the image cannot be decoded or has unexpected dimensions
+     */
+    public byte[] cropVerticalCenter(byte[] imageBytes, int expectedWidth, int targetHeight)
+            throws StableDiffusionException {
+        try {
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
+            if (image == null) {
+                throw new StableDiffusionException("Failed to read generated image for header crop");
+            }
+            if (image.getWidth() != expectedWidth || image.getHeight() < targetHeight) {
+                throw new StableDiffusionException(String.format(
+                        "Generated image dimensions %dx%d cannot produce a %dx%d header",
+                        image.getWidth(), image.getHeight(), expectedWidth, targetHeight));
+            }
+            BufferedImage croppedImage = image.getSubimage(0, (image.getHeight() - targetHeight) / 2,
+                    expectedWidth, targetHeight);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ImageIO.write(croppedImage, "PNG", outputStream);
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            throw new StableDiffusionException("Failed to crop generated header image", e);
+        }
+    }
+
+    /**
      * Generate a default avatar image with white background and dotted light gray border.
      * This is used when Stable Diffusion is not available or when the user doesn't want to use AI image generation.
      * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
@@ -330,6 +361,39 @@ public class StableDiffusionService {
             }
         }
         return generateDefaultAvatarInternal(pngImageBytes, true, backgroundColor);
+    }
+
+    /**
+     * Generate a 1024x48 fallback header image with the entity icon.
+     *
+     * @param iconName Optional icon name (without the {@code .png} extension)
+     * @param dark     {@code true} to use the configured dark background
+     * @return A header image result whose original and resized images are both 1024x48
+     */
+    public GeneratedImageResult generateDefaultHeader(String iconName, boolean dark) {
+        try {
+            BufferedImage header   = new BufferedImage(AvatarService.HEADER_WIDTH, AvatarService.HEADER_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D    graphics = header.createGraphics();
+            graphics.setColor(Color.decode(dark ? config.getAvatarDarkBackgroundColor() : config.getAvatarLightBackgroundColor()));
+            graphics.fillRect(0, 0, AvatarService.HEADER_WIDTH, AvatarService.HEADER_HEIGHT);
+            if (iconName != null && !iconName.trim().isEmpty()) {
+                byte[] iconBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
+                if (iconBytes != null) {
+                    BufferedImage icon = ImageIO.read(new ByteArrayInputStream(iconBytes));
+                    if (icon != null) {
+                        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                        graphics.drawImage(icon, 8, 8, 32, 32, null);
+                    }
+                }
+            }
+            graphics.dispose();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ImageIO.write(header, "PNG", outputStream);
+            byte[] headerBytes = outputStream.toByteArray();
+            return new GeneratedImageResult(headerBytes, dark ? "Default Dark Header" : "Default Header", headerBytes);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to generate default header", e);
+        }
     }
 
     /**
@@ -677,6 +741,19 @@ public class StableDiffusionService {
      * @throws IOException if image processing fails
      */
     private byte[] resizeImage(byte[] imageBytes, int targetSize) throws IOException {
+        return resizeImage(imageBytes, targetSize, targetSize);
+    }
+
+    /**
+     * Resize an image to the specified dimensions.
+     *
+     * @param imageBytes   The original image bytes
+     * @param targetWidth  The target width
+     * @param targetHeight The target height
+     * @return Resized image as byte array (PNG format)
+     * @throws IOException if image processing fails
+     */
+    private byte[] resizeImage(byte[] imageBytes, int targetWidth, int targetHeight) throws IOException {
         // Read original image
         ByteArrayInputStream inputStream   = new ByteArrayInputStream(imageBytes);
         BufferedImage        originalImage = ImageIO.read(inputStream);
@@ -686,7 +763,7 @@ public class StableDiffusionService {
         }
 
         // Create resized image
-        BufferedImage resizedImage = new BufferedImage(targetSize, targetSize, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage resizedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D    graphics     = resizedImage.createGraphics();
 
         // Use high-quality rendering
@@ -695,7 +772,7 @@ public class StableDiffusionService {
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // Draw and scale image
-        graphics.drawImage(originalImage, 0, 0, targetSize, targetSize, null);
+        graphics.drawImage(originalImage, 0, 0, targetWidth, targetHeight, null);
         graphics.dispose();
 
         // Convert to byte array
@@ -739,6 +816,70 @@ public class StableDiffusionService {
     }
 
     /**
+     * Generate a non-square image from a text prompt.
+     *
+     * @param prompt           The text description of the image to generate
+     * @param negativePrompt   Negative prompt guiding what to avoid
+     * @param outputWidth      The desired output width
+     * @param outputHeight     The desired output height
+     * @param progressCallback Callback for progress updates, or null
+     * @param seed             Seed to use; pass {@code -1} for a random seed
+     * @param cfgScale         Classifier Free Guidance scale
+     * @return GeneratedImageResult containing the generated image at the requested dimensions
+     * @throws StableDiffusionException if generation fails
+     */
+    public GeneratedImageResult text2ImgWithOriginal(String prompt, String negativePrompt, int outputWidth, int outputHeight,
+                                                     ProgressCallback progressCallback, long seed, double cfgScale) throws StableDiffusionException {
+        log.info("Generating image with prompt '{}' at {}x{}", prompt, outputWidth, outputHeight);
+        try {
+            selectModel(config.getModelName());
+            String resolvedNegativePrompt = (negativePrompt != null && !negativePrompt.isBlank()) ? negativePrompt : NEGATIVE_PROMPT;
+            ImageGenerationRequest request = ImageGenerationRequest.builder()
+                    .prompt(prompt)
+                    .negativePrompt(resolvedNegativePrompt)
+                    .steps(config.getDefaultSteps())
+                    .samplerName(config.getDefaultSampler())
+                    .cfgScale(cfgScale)
+                    .width(outputWidth)
+                    .height(outputHeight)
+                    .batchSize(1)
+                    .seed(seed)
+                    .build();
+
+            Thread progressThread = null;
+            if (progressCallback != null) {
+                progressThread = new Thread(() -> pollProgress(progressCallback));
+                progressThread.setDaemon(true);
+                progressThread.start();
+            }
+            try {
+                ImageGenerationResponse response = webClient.post()
+                        .uri("/sdapi/v1/txt2img")
+                        .bodyValue(request)
+                        .retrieve()
+                        .bodyToMono(ImageGenerationResponse.class)
+                        .timeout(Duration.ofSeconds(config.getTimeoutSeconds()))
+                        .block();
+                if (response == null || response.getImages() == null || response.getImages().isEmpty()) {
+                    throw new StableDiffusionException("No image returned from Stable Diffusion API");
+                }
+                byte[]               originalImage = Base64.getDecoder().decode(response.getImages().getFirst());
+                byte[]               resizedImage  = resizeImage(originalImage, outputWidth, outputHeight);
+                GeneratedImageResult result        = new GeneratedImageResult(originalImage, prompt, resizedImage, parseSeedFromInfo(response.getInfo()));
+                result.setNegativePrompt(resolvedNegativePrompt);
+                return result;
+            } finally {
+                if (progressThread != null) {
+                    progressThread.interrupt();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error generating image with Stable Diffusion", e);
+            throw new StableDiffusionException("Failed to generate image: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Generate an image from a text prompt with both original and resized versions.
      *
      * @param prompt The text description of the image to generate
@@ -775,7 +916,8 @@ public class StableDiffusionService {
      * @throws StableDiffusionException if generation fails
      */
     public GeneratedImageResult text2ImgWithOriginal(String prompt, String negativePrompt, int outputSize, ProgressCallback progressCallback, long seed, double cfgScale) throws StableDiffusionException {
-        log.info("Generating image with original at size {}x{} and resized to {}x{}", Math.max(config.getGenerationSize(), outputSize), Math.max(config.getGenerationSize(), outputSize), outputSize, outputSize);
+        log.info("Generating image with prompt '{}' at original size {}x{} and resized to {}x{}", prompt,
+                Math.max(config.getGenerationSize(), outputSize), Math.max(config.getGenerationSize(), outputSize), outputSize, outputSize);
 
         try {
             selectModel(config.getModelName());

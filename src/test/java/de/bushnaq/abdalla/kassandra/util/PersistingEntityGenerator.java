@@ -104,11 +104,18 @@ public class PersistingEntityGenerator {
             feature.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
             GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "lightbulb");
             feature.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
+            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(
+                    Feature.getDefaultLightHeaderPrompt(name), negativePrompt, "lightbulb");
+            feature.setLightHeaderHash(AvatarUtil.computeHash(lightHeader.getResizedImage()));
+            GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(
+                    Feature.getDefaultDarkHeaderPrompt(name), darkNegativePrompt, lightHeader, "lightbulb");
+            feature.setDarkHeaderHash(AvatarUtil.computeHash(darkHeader.getResizedImage()));
 
             Feature saved = featureApi.persist(feature);
             featureApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), basePrompt,
                     darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
-                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt());
+                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt(),
+                    lightHeader.getResizedImage(), darkHeader.getResizedImage());
             System.out.println("Generated lightImage for feature: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
             return saved;
         });
@@ -151,12 +158,19 @@ public class PersistingEntityGenerator {
             product.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
             GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "cube");
             product.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
+            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(
+                    Product.getDefaultLightHeaderPrompt(name), negativePrompt, "cube");
+            product.setLightHeaderHash(AvatarUtil.computeHash(lightHeader.getResizedImage()));
+            GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(
+                    Product.getDefaultDarkHeaderPrompt(name), darkNegativePrompt, lightHeader, "cube");
+            product.setDarkHeaderHash(AvatarUtil.computeHash(darkHeader.getResizedImage()));
 
             Product saved = productApi.persist(product);
 
             productApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), basePrompt,
                     darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
-                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt());
+                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt(),
+                    lightHeader.getResizedImage(), darkHeader.getResizedImage());
             System.out.println("Generated lightImage for product: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
             return saved;
         });
@@ -303,12 +317,19 @@ public class PersistingEntityGenerator {
             sprint.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
             GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "exit");
             sprint.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
+            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(
+                    Sprint.getDefaultLightHeaderPrompt(name), negativePrompt, "exit");
+            sprint.setLightHeaderHash(AvatarUtil.computeHash(lightHeader.getResizedImage()));
+            GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(
+                    Sprint.getDefaultDarkHeaderPrompt(name), darkNegativePrompt, lightHeader, "exit");
+            sprint.setDarkHeaderHash(AvatarUtil.computeHash(darkHeader.getResizedImage()));
 
             Sprint saved = sprintApi.persist(sprint);
 
             sprintApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), basePrompt,
                     darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
-                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt());
+                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt(),
+                    lightHeader.getResizedImage(), darkHeader.getResizedImage());
             System.out.println("Generated lightImage for sprint: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
             return saved;
         });

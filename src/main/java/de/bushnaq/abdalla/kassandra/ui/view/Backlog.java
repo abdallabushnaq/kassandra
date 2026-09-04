@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -50,6 +51,7 @@ import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.CrossGridDragDropCoordinator;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
+import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -114,6 +116,8 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
      * Avatar image shown in the header — updated to reflect the selected sprint.
      */
     private             Image                        headerAvatar;
+    private             HorizontalLayout             headerControlsLayout;
+    private             HorizontalLayout             headerTitleLayout;
     private final       HorizontalLayout             headerLayout;
     private             boolean                      isRestoringFromUrl         = false;
     private final       JsonMapper                   jsonMapper;
@@ -596,10 +600,13 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         cancelButton.setVisible(false);
         cancelButton.addClickListener(e -> cancelEditMode());
 
-        // Add all components to header
-        header.add(headerAvatar, pageTitle, searchField, userSelector, sprintSelector, clearButton, expandToggleLayout, spacer,
+        headerTitleLayout = new HorizontalLayout(headerAvatar, pageTitle);
+        headerTitleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        headerControlsLayout = new HorizontalLayout(searchField, userSelector, sprintSelector, clearButton, expandToggleLayout, spacer,
                 createMilestoneButton, createStoryButton, createTaskButton, editButton, saveButton, cancelButton);
-        header.setFlexGrow(1, spacer);
+        headerControlsLayout.setAlignItems(FlexComponent.Alignment.END);
+        headerControlsLayout.setFlexGrow(1, spacer);
+        header.add(headerTitleLayout, headerControlsLayout);
 
         return header;
     }
@@ -1218,6 +1225,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         super.onAttach(attachEvent);
         themeChangedRegistration = ComponentUtil.addListener(
                 attachEvent.getUI(), ThemeChangedEvent.class, e -> {
+                    updateHeaderForSelection();
                     if (sprint != null && !"Backlog".equals(sprint.getName())) {
                         refreshGanttChart();
                     }
@@ -1507,7 +1515,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     }
 
     /**
-     * Updates the header title text and avatar to reflect the currently selected sprint.
+     * Updates the header title, avatar, and background to reflect the currently selected sprint.
      * <ul>
      *   <li>Sprint loaded → show that sprint's avatar and name.</li>
      *   <li>No sprint loaded → hide avatar and show "Backlog".</li>
@@ -1519,8 +1527,9 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         }
         if (sprint != null) {
             pageTitle.setText(sprint.getName());
+            boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, sprint.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
             if (sprint.getLightAvatarHash() != null && !sprint.getLightAvatarHash().isEmpty()) {
-                boolean isDark = com.vaadin.flow.component.UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
                 headerAvatar.setSrc(sprint.getAvatarUrl(isDark));
                 headerAvatar.setVisible(true);
             } else {
@@ -1529,6 +1538,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         } else {
             pageTitle.setText("Backlog");
             headerAvatar.setVisible(false);
+            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, null, headerTitleLayout, headerControlsLayout);
         }
     }
 

@@ -51,6 +51,16 @@ public class AvatarUpdateRequest {
     private String lightAvatarPrompt;
 
     /**
+     * The prompt used to generate the light header.
+     */
+    private String lightHeaderPrompt;
+
+    /**
+     * Header image (1024x48) for the light theme.
+     */
+    private byte[] lightHeaderImage;
+
+    /**
      * Resized dark-mode avatar image (e.g., 64x64).
      */
     private byte[] darkAvatarImage;
@@ -69,4 +79,14 @@ public class AvatarUpdateRequest {
      * The prompt used to generate the dark avatar (includes dark-background suffix).
      */
     private String darkAvatarPrompt;
+
+    /**
+     * The prompt used to generate the dark header.
+     */
+    private String darkHeaderPrompt;
+
+    /**
+     * Header image (1024x48) for the dark theme.
+     */
+    private byte[] darkHeaderImage;
 }

@@ -40,12 +40,16 @@ public class ProductDAO extends AbstractTimeAwareDAO {
 
     @Column(name = "dark_avatar_hash", length = 16)
     private String darkAvatarHash;
+    @Column(name = "dark_header_hash", length = 16)
+    private String darkHeaderHash;
     @Id
 //    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
     private UUID   id;
     @Column(name = "light_avatar_hash", length = 16)
     private String lightAvatarHash;
+    @Column(name = "light_header_hash", length = 16)
+    private String lightHeaderHash;
     @Column(nullable = false, unique = true)
     private String name;
 

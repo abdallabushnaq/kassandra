@@ -42,8 +42,10 @@ import java.util.UUID;
 public class Product extends AbstractTimeAware implements Comparable<Product> {
 
     private String        darkAvatarHash;
+    private String        darkHeaderHash;
     private UUID          id;
     private String        lightAvatarHash;
+    private String        lightHeaderHash;
     private String        name;
     @JsonIgnore
     @ToString.Exclude//help intellij debugger not to go into a loop
@@ -90,8 +92,30 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
         return getAvatarUrl(false);
     }
 
+    /**
+     * Get the header URL for the given theme variant.
+     *
+     * @param dark {@code true} to request the dark-background header variant
+     * @return The header URL with hash parameter for cache-busting
+     */
+    @JsonIgnore
+    public String getHeaderUrl(boolean dark) {
+        if (dark && darkHeaderHash != null && !darkHeaderHash.isEmpty()) {
+            return "/frontend/dark-avatar-proxy/product-header/" + id + "?h=" + darkHeaderHash;
+        }
+        String url = "/frontend/avatar-proxy/product-header/" + id;
+        if (lightHeaderHash != null && !lightHeaderHash.isEmpty()) {
+            url += "?h=" + lightHeaderHash;
+        }
+        return url;
+    }
+
     private static String getDefaultAvatarPrompt(String productName) {
         return "In the style of TOK, App Icon '" + productName + "'" + StableDiffusionService.LORA;
+    }
+
+    private static String getDefaultHeaderPrompt(String productName) {
+        return "panoramic view of " + productName + ", web page header, detailed, high resolution";
     }
 
     /**
@@ -124,6 +148,16 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
     }
 
     /**
+     * Generate a default dark-background header prompt for a given product name.
+     *
+     * @param productName The name of the product
+     * @return A default dark header prompt string
+     */
+    public static String getDefaultDarkHeaderPrompt(String productName) {
+        return getDefaultHeaderPrompt(productName) + AvatarService.DARK_PROMPT_SUFFIX;
+    }
+
+    /**
      * Return the default negative prompt used when generating light-background avatars.
      *
      * @return The default negative prompt string
@@ -153,6 +187,16 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
      */
     public static String getDefaultLightAvatarPrompt(String productName) {
         return getDefaultAvatarPrompt(productName) + AvatarService.LIGHT_PROMPT_SUFFIX;
+    }
+
+    /**
+     * Generate a default light-background header prompt for a given product name.
+     *
+     * @param productName The name of the product
+     * @return A default light header prompt string
+     */
+    public static String getDefaultLightHeaderPrompt(String productName) {
+        return getDefaultHeaderPrompt(productName) + AvatarService.LIGHT_PROMPT_SUFFIX;
     }
 
     @JsonIgnore

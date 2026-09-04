@@ -75,7 +75,7 @@ tbd
 26. ❌ show product, versions, features, in quality-board
 27. ✅ show Versions, Features, Sprints pages in menu
 28. ✅ add about box.
-29. ✅ optimaze AbstractEntityGenrator avatar generation code.
+29. ✅ optimize AbstractEntityGenrator avatar generation code.
 30. ✅ data scenario simulation generator
     1. ✅ Simulator Write the use case as a Story in the project or product
     2. ✅ include closed and delayed sprints.

@@ -85,6 +85,24 @@ public class DarkAvatarProxyController {
     }
 
     /**
+     * Serve the dark header image for a feature.
+     *
+     * @param featureId The feature ID
+     * @return PNG header bytes, or 404 if no header exists
+     */
+    @GetMapping("/feature-header/{featureId}")
+    public ResponseEntity<byte[]> proxyFeatureDarkHeader(@PathVariable("featureId") UUID featureId) {
+        AvatarWrapper headerImage = featureApi.getDarkHeaderImage(featureId);
+        if (headerImage == null || headerImage.getAvatar() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+        headers.setCacheControl("public, max-age=31536000, immutable");
+        return ResponseEntity.ok().headers(headers).body(headerImage.getAvatar());
+    }
+
+    /**
      * Serve the dark-background avatar variant for a product.
      * Falls back to the light avatar transparently when no dark variant has been stored yet
      * (the server-side {@code GET /api/product/{id}/dark-avatar} handles the fallback).
@@ -102,6 +120,24 @@ public class DarkAvatarProxyController {
         headers.setContentType(MediaType.IMAGE_PNG);
         headers.setCacheControl("public, max-age=31536000, immutable");
         return ResponseEntity.ok().headers(headers).body(avatarImage.getAvatar());
+    }
+
+    /**
+     * Serve the dark header image for a product.
+     *
+     * @param productId The product ID
+     * @return PNG header bytes, or 404 if no header exists
+     */
+    @GetMapping("/product-header/{productId}")
+    public ResponseEntity<byte[]> proxyProductDarkHeader(@PathVariable("productId") UUID productId) {
+        AvatarWrapper headerImage = productApi.getDarkHeaderImage(productId);
+        if (headerImage == null || headerImage.getAvatar() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+        headers.setCacheControl("public, max-age=31536000, immutable");
+        return ResponseEntity.ok().headers(headers).body(headerImage.getAvatar());
     }
 
     /**
@@ -142,5 +178,23 @@ public class DarkAvatarProxyController {
         headers.setContentType(MediaType.IMAGE_PNG);
         headers.setCacheControl("public, max-age=31536000, immutable");
         return ResponseEntity.ok().headers(headers).body(avatarImage.getAvatar());
+    }
+
+    /**
+     * Serve the dark header image for a sprint.
+     *
+     * @param sprintId The sprint ID
+     * @return PNG header bytes, or 404 if no header exists
+     */
+    @GetMapping("/sprint-header/{sprintId}")
+    public ResponseEntity<byte[]> proxySprintDarkHeader(@PathVariable("sprintId") UUID sprintId) {
+        AvatarWrapper headerImage = sprintApi.getDarkHeaderImage(sprintId);
+        if (headerImage == null || headerImage.getAvatar() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+        headers.setCacheControl("public, max-age=31536000, immutable");
+        return ResponseEntity.ok().headers(headers).body(headerImage.getAvatar());
     }
 }

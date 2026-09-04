@@ -51,6 +51,7 @@ import de.bushnaq.abdalla.kassandra.service.SprintExportService;
 import de.bushnaq.abdalla.kassandra.ui.HtmlColor;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
+import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import de.bushnaq.abdalla.util.date.ReportUtil;
@@ -122,6 +123,8 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
      * Avatar image shown next to the page title — updated to reflect the selected sprint.
      */
     private final       Image                     headerAvatar;
+    private final       HorizontalLayout          headerControlsLayout;
+    private final       HorizontalLayout          headerTitleLayout;
     private final       HtmlUtil                  htmlUtil                    = new HtmlUtil();
     /**
      * Guard flag: prevents {@link #updateUrlParameters()} from firing during programmatic selector restores.
@@ -201,7 +204,11 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         });
 
         // Persistent header: avatar + page title on the left, sprint selector next to it
-        header = new HorizontalLayout(headerAvatar, pageTitle, sprintSelector);
+        headerTitleLayout = new HorizontalLayout(headerAvatar, pageTitle);
+        headerTitleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        headerControlsLayout = new HorizontalLayout(sprintSelector);
+        headerControlsLayout.setAlignItems(FlexComponent.Alignment.END);
+        header = new HorizontalLayout(headerTitleLayout, headerControlsLayout);
         header.setAlignItems(FlexComponent.Alignment.END);
         header.setWidthFull();
         header.getStyle().set("padding", "var(--lumo-space-xs)");
@@ -633,7 +640,10 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        themeChangedRegistration = ComponentUtil.addListener(attachEvent.getUI(), ThemeChangedEvent.class, e -> refreshCharts());
+        themeChangedRegistration = ComponentUtil.addListener(attachEvent.getUI(), ThemeChangedEvent.class, e -> {
+            updateHeaderForSelection();
+            refreshCharts();
+        });
     }
 
     /**
@@ -784,7 +794,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     }
 
     /**
-     * Updates the page title text and avatar to reflect the currently selected sprint.
+     * Updates the page title, avatar, and background to reflect the currently selected sprint.
      * <ul>
      *   <li>Sprint loaded → show that sprint's avatar and name.</li>
      *   <li>No sprint loaded → hide avatar and show "Sprint Quality Board".</li>
@@ -793,8 +803,9 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     private void updateHeaderForSelection() {
         if (sprint != null) {
             pageTitle.setText(sprint.getName());
+            boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+            VaadinUtil.applyHeaderBackground(header, pageTitle, sprint.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
             if (sprint.getLightAvatarHash() != null && !sprint.getLightAvatarHash().isEmpty()) {
-                boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
                 headerAvatar.setSrc(sprint.getAvatarUrl(isDark));
                 headerAvatar.setVisible(true);
             } else {
@@ -803,6 +814,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         } else {
             pageTitle.setText("Sprint Quality Board");
             headerAvatar.setVisible(false);
+            VaadinUtil.applyHeaderBackground(header, pageTitle, null, headerTitleLayout, headerControlsLayout);
         }
     }
 
