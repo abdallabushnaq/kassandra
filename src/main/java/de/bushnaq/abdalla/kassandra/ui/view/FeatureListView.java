@@ -217,6 +217,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
+                        mainLayout.setActiveProductId(productId);
                         if (productId == null || versionId == null) {
                             log.warn("No products/versions available; skipping FeatureListView breadcrumb setup");
                             return;

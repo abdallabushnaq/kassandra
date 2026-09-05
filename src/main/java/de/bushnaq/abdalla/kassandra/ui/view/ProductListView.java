@@ -167,6 +167,10 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
+                        mainLayout.setActiveProductIds(productApi.getAll().stream()
+                                .filter(product -> !DefaultEntitiesInitializer.DEFAULT_NAME.equals(product.getName()))
+                                .map(Product::getId)
+                                .toList());
                         mainLayout.getBreadcrumbs().clear();
                         mainLayout.getBreadcrumbs().addItem("Products", ProductListView.class);
                     }

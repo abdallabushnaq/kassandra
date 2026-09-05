@@ -17,17 +17,19 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import de.bushnaq.abdalla.kassandra.dto.UndoRedoHistory;
 import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
+import de.bushnaq.abdalla.kassandra.ui.dialog.UndoHistoryConfirmationDialog;
 
 import java.util.Collection;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -39,23 +41,34 @@ public class UndoHistoryPanel extends VerticalLayout {
     private final Supplier<Collection<UUID>> productIdsSupplier;
     private final Runnable                   refreshCallback;
     private final UndoRedoApi                undoRedoApi;
+    private final Function<UUID, String>     productAvatarUrlResolver;
+    private final Consumer<String>           userAvatarCache;
+    private final Function<String, String>   userAvatarUrlResolver;
 
     /**
      * Creates the planning history panel.
      *
-     * @param undoRedoApi        planning history API client
-     * @param productIdsSupplier active product IDs
-     * @param historyLimit       maximum number of operations to display
-     * @param closeCallback      closes the panel after replay
-     * @param refreshCallback    refreshes the active view after replay
+     * @param undoRedoApi              planning history API client
+     * @param productIdsSupplier       active product IDs
+     * @param historyLimit             maximum number of operations to display
+     * @param closeCallback            closes the panel after replay
+     * @param refreshCallback          refreshes the active view after replay
+     * @param productAvatarUrlResolver resolves product avatar URLs
+     * @param userAvatarUrlResolver    resolves actor avatar URLs
+     * @param userAvatarCache          preloads actor avatar data for the current session
      */
     public UndoHistoryPanel(UndoRedoApi undoRedoApi, Supplier<Collection<UUID>> productIdsSupplier,
-                            int historyLimit, Runnable closeCallback, Runnable refreshCallback) {
-        this.undoRedoApi        = undoRedoApi;
-        this.productIdsSupplier = productIdsSupplier;
-        this.historyLimit       = Math.max(1, historyLimit);
-        this.closeCallback      = closeCallback;
-        this.refreshCallback    = refreshCallback;
+                            int historyLimit, Runnable closeCallback, Runnable refreshCallback,
+                            Function<UUID, String> productAvatarUrlResolver, Function<String, String> userAvatarUrlResolver,
+                            Consumer<String> userAvatarCache) {
+        this.undoRedoApi              = undoRedoApi;
+        this.productIdsSupplier       = productIdsSupplier;
+        this.historyLimit             = Math.max(1, historyLimit);
+        this.closeCallback            = closeCallback;
+        this.refreshCallback          = refreshCallback;
+        this.productAvatarUrlResolver = productAvatarUrlResolver;
+        this.userAvatarUrlResolver    = userAvatarUrlResolver;
+        this.userAvatarCache          = userAvatarCache;
         setPadding(true);
         setSpacing(true);
         setWidthFull();
@@ -66,10 +79,15 @@ public class UndoHistoryPanel extends VerticalLayout {
         content.setPadding(false);
         content.setSpacing(false);
         content.setWidthFull();
+        HorizontalLayout titleLayout = new HorizontalLayout();
+        titleLayout.setAlignItems(Alignment.CENTER);
+        addAvatar(titleLayout, productAvatarUrlResolver.apply(operation.getProductId()), operation.getProductName());
+        addAvatar(titleLayout, userAvatarUrlResolver.apply(operation.getActor()), operation.getActor());
         Span title = new Span(operation.getProductName() + ": " + operation.getSummary() + " - "
                 + operation.getActor() + " (" + operation.getCreated() + ")");
         title.getStyle().set("font-weight", "600").set("white-space", "normal");
-        content.add(title);
+        titleLayout.add(title);
+        content.add(titleLayout);
         operation.getEntityChanges().forEach(change -> {
             Span entity = new Span(change.getAction() + " " + change.getEntityType() + ": " + change.getDisplayName());
             entity.getStyle().set("white-space", "normal");
@@ -87,25 +105,15 @@ public class UndoHistoryPanel extends VerticalLayout {
         add(row);
     }
 
-    private boolean isVisible(UndoRedoHistory.EntityChange change) {
-        return !"Updated".equals(change.getAction()) || !change.getFieldChanges().isEmpty();
-    }
-
-    private VerticalLayout operationDetails(UndoRedoHistory.Operation operation) {
-        VerticalLayout details = new VerticalLayout();
-        details.setPadding(false);
-        details.setSpacing(false);
-        Span title = new Span(operation.getProductName() + ": " + operation.getSummary());
-        title.getStyle().set("font-weight", "600");
-        details.add(title);
-        details.add(new Span(operation.getCreated() + " - " + operation.getActor()));
-        operation.getEntityChanges().stream().filter(this::isVisible).forEach(change -> {
-            Span entity = new Span(change.getAction() + " " + change.getEntityType() + ": " + change.getDisplayName());
-            entity.getStyle().set("font-weight", "600");
-            details.add(entity);
-            change.getFieldChanges().forEach(fieldChange -> details.add(new Span(fieldChange)));
-        });
-        return details;
+    private void addAvatar(HorizontalLayout layout, String source, String alt) {
+        if (source == null) {
+            return;
+        }
+        Image avatar = new Image(source, alt);
+        avatar.setWidth("20px");
+        avatar.setHeight("20px");
+        avatar.getStyle().set("border-radius", "4px").set("object-fit", "cover");
+        layout.add(avatar);
     }
 
     /**
@@ -117,39 +125,26 @@ public class UndoHistoryPanel extends VerticalLayout {
         if (productIds.isEmpty()) {
             return;
         }
-        undoRedoApi.history(productIds, historyLimit).getOperations().forEach(this::addOperation);
+        undoRedoApi.history(productIds, historyLimit).getOperations().forEach(operation -> {
+            userAvatarCache.accept(operation.getActor());
+            addOperation(operation);
+        });
     }
 
     private void replay(UndoRedoHistory.Operation operation) {
         boolean         undo    = !operation.isUndone();
         UndoRedoHistory preview = undoRedoApi.replayPreview(operation.getProductId(), operation.getId(), undo);
-        showReplayConfirmation(undo, operation, preview);
-    }
-
-    private void showReplayConfirmation(boolean undo, UndoRedoHistory.Operation selectedOperation, UndoRedoHistory preview) {
-        Dialog dialog = new Dialog();
-        dialog.setHeaderTitle(undo ? "Confirm undo" : "Confirm redo");
-        VerticalLayout operations = new VerticalLayout();
-        operations.setPadding(false);
-        operations.setSpacing(true);
-        preview.getOperations().forEach(operation -> operations.add(operationDetails(operation)));
-        operations.setWidthFull();
-        operations.setHeight("400px");
-        dialog.add(operations);
-        Button cancel = new Button("Cancel", event -> dialog.close());
-        Button confirm = new Button(undo ? "Undo operations" : "Redo operations", event -> {
+        preview.getOperations().forEach(previewOperation -> userAvatarCache.accept(previewOperation.getActor()));
+        UndoHistoryConfirmationDialog dialog = new UndoHistoryConfirmationDialog(undo, preview,
+                productAvatarUrlResolver, userAvatarUrlResolver, () -> {
             if (undo) {
-                undoRedoApi.undoThrough(selectedOperation.getProductId(), selectedOperation.getId());
+                undoRedoApi.undoThrough(operation.getProductId(), operation.getId());
             } else {
-                undoRedoApi.redoThrough(selectedOperation.getProductId(), selectedOperation.getId());
+                undoRedoApi.redoThrough(operation.getProductId(), operation.getId());
             }
-            dialog.close();
             closeCallback.run();
             refreshCallback.run();
         });
-        confirm.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        dialog.getFooter().add(cancel, confirm);
-        dialog.setWidth("900px");
         dialog.open();
     }
 

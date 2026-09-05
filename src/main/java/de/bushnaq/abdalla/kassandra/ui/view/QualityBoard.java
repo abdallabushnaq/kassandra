@@ -83,77 +83,77 @@ import java.util.stream.Collectors;
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
 public class QualityBoard extends Main implements AfterNavigationObserver {
-    public static final String                    GANTT_BURNDOWN_CONTAINER_ID = "quality-board-gantt-burndown-container";
-    public static final String                    MENU_ITEM_ID                = "/quality-board";
-    public static final String                    SPRINT_GRID_NAME_PREFIX     = "sprint-grid-name-";
-    public static final String                    SPRINT_SELECTOR_ID          = "sprint-selector";
+    public static final String                          GANTT_BURNDOWN_CONTAINER_ID = "quality-board-gantt-burndown-container";
+    public static final String                          MENU_ITEM_ID                = "/quality-board";
+    public static final String                          SPRINT_GRID_NAME_PREFIX     = "sprint-grid-name-";
+    public static final String                          SPRINT_SELECTOR_ID          = "sprint-selector";
     /**
      * All non-Backlog sprints belonging to the current feature, used to populate the sprint selector.
      */
-    private             List<Sprint>              allFeatureSprints           = new ArrayList<>();
+    private             List<Sprint>                    allFeatureSprints           = new ArrayList<>();
     /**
      * Container for the burndown SVG (the spanning column in the stats grid).
      */
-    private             Div                       burnDownContainer;
+    private             Div                             burnDownContainer;
     //    /**
 //     * In-flight async burndown generation; cancelled before a new run starts.
 //     */
 //    private             CompletableFuture<Void> burndownGenerationFuture;
-    private final       Clock                     clock;
+    private final       Clock                           clock;
     @Autowired
-    protected           Context                   context;
-    private final       LocalDateTime             created;
-    private final       GanttErrorHandler         eh                          = new GanttErrorHandler();
-    private final       FeatureApi                featureApi;
-    private             UUID                      featureId;
+    protected           Context                         context;
+    private final       LocalDateTime                   created;
+    private final       GanttErrorHandler               eh                          = new GanttErrorHandler();
+    private final       FeatureApi                      featureApi;
+    private             UUID                            featureId;
     /**
      * Container for the Gantt chart SVG.
      */
-    private             Div                       ganttBurndownChartContainer;
+    private             Div                             ganttBurndownChartContainer;
     @Autowired
-    private             GanttBurndownChartService ganttBurndownChartService;
+    private             GanttBurndownChartService       ganttBurndownChartService;
     @Autowired
     private             GanttBurndownExcelExportService ganttBurndownExcelExportService;
-    private             GanttUtil                 ganttUtil;
+    private             GanttUtil                       ganttUtil;
     /**
      * Persistent header layout (sprint selector + page title) — survives content reloads.
      */
-    private final       HorizontalLayout          header;
+    private final       HorizontalLayout                header;
     /**
      * Avatar image shown next to the page title — updated to reflect the selected sprint.
      */
-    private final       Image                     headerAvatar;
-    private final       HorizontalLayout          headerControlsLayout;
-    private final       HorizontalLayout          headerTitleLayout;
-    private final       HtmlUtil                  htmlUtil                    = new HtmlUtil();
+    private final       Image                           headerAvatar;
+    private final       HorizontalLayout                headerControlsLayout;
+    private final       HorizontalLayout                headerTitleLayout;
+    private final       HtmlUtil                        htmlUtil                    = new HtmlUtil();
     /**
      * Guard flag: prevents {@link #updateUrlParameters()} from firing during programmatic selector restores.
      */
-    private             boolean                   isRestoringFromUrl          = false;
-    private final       JsonMapper                jsonMapper;
-    private final       LocalDateTime             now;
-    private final       H2                        pageTitle;
-    private final       ProductApi                productApi;
-    private             UUID                      productId;
-    private             Sprint                    sprint;
-    private final       SprintApi                 sprintApi;
+    private             boolean                         isRestoringFromUrl          = false;
+    private final       JsonMapper                      jsonMapper;
+    private final       LocalDateTime                   now;
+    private final       H2                              pageTitle;
+    private final       ProductApi                      productApi;
+    private             UUID                            productId;
+    private             Sprint                          sprint;
+    private final       SprintApi                       sprintApi;
     @Autowired
-    private             SprintExportService       sprintExportService;
-    private             UUID                      sprintId;
+    private             SprintExportService             sprintExportService;
+    private             UUID                            sprintId;
     /**
      * Sprint selector ComboBox — lets the user switch sprints without leaving the page.
      */
-    private final       ComboBox<Sprint>          sprintSelector;
-    private             SprintStatistics          sprintStatistics;
-    private final       TaskApi                   taskApi;
+    private final       ComboBox<Sprint>                sprintSelector;
+    private             SprintStatistics                sprintStatistics;
+    private final       TaskApi                         taskApi;
     /**
      * Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}.
      */
-    private             Registration              themeChangedRegistration;
-    private final       UserApi                   userApi;
-    private final       VersionApi                versionApi;
-    private             UUID                      versionId;
-    private final       WorklogApi                worklogApi;
+    private             Registration                    themeChangedRegistration;
+    private final       UserApi                         userApi;
+    private final       VersionApi                      versionApi;
+    private             UUID                            versionId;
+    private final       WorklogApi                      worklogApi;
 
     public QualityBoard(WorklogApi worklogApi, TaskApi taskApi, SprintApi sprintApi, ProductApi productApi,
                         VersionApi versionApi, FeatureApi featureApi, UserApi userApi, Clock clock,
@@ -330,7 +330,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
                 sprintSnapshot.getName() + "-burndown.xlsx",
                 () -> {
                     try {
-                        boolean                isDark = getUI().map(ui -> ui.getElement().getThemeList().contains(Lumo.DARK)).orElse(false);
+                        boolean               isDark = getUI().map(ui -> ui.getElement().getThemeList().contains(Lumo.DARK)).orElse(false);
                         GanttBurndownChartDto dto    = ganttBurndownChartService.build(sprintSnapshot, ParameterOptions.getLocalNow(), isDark);
                         return new ByteArrayInputStream(ganttBurndownExcelExportService.export(dto));
                     } catch (Exception e) {
@@ -735,6 +735,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
+                        mainLayout.setActiveProductId(productId);
                         mainLayout.getBreadcrumbs().clear();
 //                        Product product = productApi.getById(productId);
                         mainLayout.getBreadcrumbs().addItem("Products (" + sprint.getFeature().getVersion().getProduct().getName() + ")", ProductListView.class);

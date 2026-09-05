@@ -86,8 +86,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
     private final        ChatAgentPanel                      chatAgentPanel;
     private final        Div                                 chatPane;
     private              com.vaadin.flow.component.Component headerComponent;
-    private              Image                              headerAvatar;
-    private              Product                            headerAvatarProduct;
+    private              Image                               headerAvatar;
+    private              Product                             headerAvatarProduct;
     private              boolean                             isRestoringFromUrl                = false;
     private final        JsonMapper                          mapper;
     private final        ProductApi                          productApi;
@@ -172,6 +172,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
+                        mainLayout.setActiveProductId(productId);
                         if (productId == null) {
                             log.warn("No products available; skipping VersionListView header setup");
                             return;

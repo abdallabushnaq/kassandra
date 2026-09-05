@@ -45,7 +45,9 @@ import com.vaadin.flow.server.menu.MenuEntry;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
+import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
@@ -71,50 +73,57 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     /**
      * Stable ID for the action-history toggle.
      */
-    public static final String           ID_ACTION_HISTORY_BUTTON        = "main-layout-action-history-button";
-    public static final String           ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
-    public static final String           ID_LOGO                         = "main-layout-logo";
-    public static final String           ID_TAB_BASE                     = "main-layout-tab-";
+    public static final String             ID_ACTION_HISTORY_BUTTON        = "main-layout-action-history-button";
+    public static final String             ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
+    public static final String             ID_LOGO                         = "main-layout-logo";
+    public static final String             ID_TAB_BASE                     = "main-layout-tab-";
     //    public static final String           ID_TAB_USERS                 = "main-layout-tab-users";
-    public static final String           ID_THEME_TOGGLE                 = "main-layout-theme-toggle";
-    public static final String           ID_USER_MENU                    = "main-layout-user-menu";
-    public static final String           ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
-    public static final String           ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
-    public static final String           ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
-    public static final String           ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
-    public static final String           ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
-    public static final String           ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
-    public static final String           ID_USER_MENU_MANAGE_USER_GROUPS = "main-layout-user-menu-manage-user-groups";
-    public static final String           ID_USER_MENU_MANAGE_WORK_WEEKS  = "main-layout-user-menu-manage-work-weeks";
-    public static final String           ID_USER_MENU_OFF_DAYS           = "main-layout-user-menu-off-days";
-    public static final String           ID_USER_MENU_VIEW_PROFILE       = "main-layout-user-menu-view-profile";
-    public static final String           ID_USER_MENU_WORK_WEEK          = "main-layout-user-menu-work-week";
-    private final       Collection<UUID> activeProductIds                = new LinkedHashSet<>();
+    public static final String             ID_THEME_TOGGLE                 = "main-layout-theme-toggle";
+    public static final String             ID_USER_MENU                    = "main-layout-user-menu";
+    public static final String             ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
+    public static final String             ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
+    public static final String             ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
+    public static final String             ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
+    public static final String             ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
+    public static final String             ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
+    public static final String             ID_USER_MENU_MANAGE_USER_GROUPS = "main-layout-user-menu-manage-user-groups";
+    public static final String             ID_USER_MENU_MANAGE_WORK_WEEKS  = "main-layout-user-menu-manage-work-weeks";
+    public static final String             ID_USER_MENU_OFF_DAYS           = "main-layout-user-menu-off-days";
+    public static final String             ID_USER_MENU_VIEW_PROFILE       = "main-layout-user-menu-view-profile";
+    public static final String             ID_USER_MENU_WORK_WEEK          = "main-layout-user-menu-work-week";
+    private final       Collection<UUID>   activeProductIds                = new LinkedHashSet<>();
+    private final       Map<UUID, Product> activeProducts                  = new HashMap<>();
     AuthenticationContext authenticationContext;
-    private final Div               breadcrumbContainer;
+    private final Div                         breadcrumbContainer;
     @Getter
-    private final Breadcrumbs       breadcrumbs               = new Breadcrumbs();
-    private       SplitLayout       contentSplit;
-    private final Div               historyPane;
-    private       boolean           historyPaneOpen;
-    private       Image             logoImage;
-    private final Map<Tab, String>  tabToPathMap              = new HashMap<>();
-    private       Tabs              tabs;
-    private final ThemeSessionState themeSessionState;
-    private final UndoHistoryPanel  undoHistoryPanel;
-    private       boolean           updatingTabFromNavigation = false;
-    private final UserApi           userApi;
-    private       Image             userAvatarImage;
+    private final Breadcrumbs                 breadcrumbs               = new Breadcrumbs();
+    private       SplitLayout                 contentSplit;
+    private final Div                         historyPane;
+    private       boolean                     historyPaneOpen;
+    private       Image                       logoImage;
+    private final Map<Tab, String>            tabToPathMap              = new HashMap<>();
+    private       Tabs                        tabs;
+    private final ThemeSessionState           themeSessionState;
+    private final UndoHistoryPanel            undoHistoryPanel;
+    private       boolean                     updatingTabFromNavigation = false;
+    private final ProductApi                  productApi;
+    private final UserApi                     userApi;
+    private final Map<String, Optional<User>> usersByEmail              = new HashMap<>();
+    private       Image                       userAvatarImage;
 
-    MainLayout(UserApi userApi, ThemeSessionState themeSessionState, UndoRedoApi undoRedoApi,
+    MainLayout(ProductApi productApi, UserApi userApi, ThemeSessionState themeSessionState, UndoRedoApi undoRedoApi,
                KassandraProperties kassandraProperties) {
         this.authenticationContext = authenticationContext;
+        this.productApi            = productApi;
         this.userApi               = userApi;
         this.themeSessionState     = themeSessionState;
         this.undoHistoryPanel      = new UndoHistoryPanel(undoRedoApi, () -> activeProductIds,
                 kassandraProperties.getUndoRedo().getHistoryLimit(),
                 this::closeHistoryDrawer,
-                () -> UI.getCurrent().getPage().reload());
+                () -> UI.getCurrent().getPage().reload(),
+                this::resolveProductAvatarUrl,
+                this::resolveUserAvatarUrl,
+                this::cacheUserAvatar);
         this.historyPane           = createHistoryPane();
         UI.getCurrent().getPage().addJavaScript("/js/tooltips.js");
         setPrimarySection(Section.NAVBAR);
@@ -311,6 +320,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             boolean isDarkTheme = ui.getElement().getThemeList().contains(Lumo.DARK);
             updateLogoBasedOnTheme(isDarkTheme);
             updateUserAvatarBasedOnTheme(isDarkTheme);
+            undoHistoryPanel.refresh();
         });
 
         return themeToggle;
@@ -511,6 +521,16 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public void setActiveProductIds(Collection<UUID> productIds) {
         activeProductIds.clear();
         activeProductIds.addAll(productIds);
+        productIds.forEach(productId -> {
+            if (activeProducts.containsKey(productId)) {
+                return;
+            }
+            try {
+                activeProducts.put(productId, productApi.getById(productId));
+            } catch (Exception e) {
+                log.warn("Could not load product avatar for planning history: {}", productId, e);
+            }
+        });
     }
 
     /**
@@ -584,5 +604,34 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         } catch (Exception e) {
             log.debug("Could not refresh user avatar after theme toggle: {}", e.getMessage());
         }
+    }
+
+    private String resolveProductAvatarUrl(UUID productId) {
+        Product product = activeProducts.get(productId);
+        if (product == null) {
+            return null;
+        }
+        return product.getAvatarUrl(UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK));
+    }
+
+    private String resolveUserAvatarUrl(String email) {
+        Optional<User> user = usersByEmail.get(email);
+        return user == null ? null
+                : user.map(value -> value.getAvatarUrl(UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK)))
+                .orElse(null);
+    }
+
+    private void cacheUserAvatar(String email) {
+        if (email == null) {
+            return;
+        }
+        usersByEmail.computeIfAbsent(email, key -> {
+            try {
+                return userApi.getByEmail(key);
+            } catch (Exception e) {
+                log.warn("Could not load user avatar for planning history: {}", key, e);
+                return Optional.empty();
+            }
+        });
     }
 }
