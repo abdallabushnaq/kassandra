@@ -26,13 +26,20 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.envers.Audited;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "worklogs")
+@Audited
+@SQLDelete(sql = "UPDATE worklogs SET deleted = true, deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+@SQLRestriction("deleted = false")
 @Getter
 @Setter
 @ToString(callSuper = true)
@@ -45,6 +52,10 @@ public class WorklogDAO extends AbstractTimeAwareDAO {
 
     @Column(nullable = true)
     private String comment;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted;
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
 
     @Id
 //    @UuidGenerator(style = UuidGenerator.Style.RANDOM)

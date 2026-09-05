@@ -27,11 +27,15 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.envers.Audited;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +45,9 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "tasks")
+@Audited
+@SQLDelete(sql = "UPDATE tasks SET deleted = true, deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+@SQLRestriction("deleted = false")
 @Getter
 @Setter
 @ToString(callSuper = false)
@@ -50,6 +57,10 @@ import java.util.UUID;
 public class TaskDAO {
     @Column(nullable = false)
     private boolean critical;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted;
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
 
     @Column(nullable = true)
     @JsonSerialize(using = DurationSerializer.class)

@@ -28,18 +28,25 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.envers.Audited;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(
         name = "sprints",
         uniqueConstraints = @UniqueConstraint(columnNames = {"featureId", "name"})
 )
+@Audited
+@SQLDelete(sql = "UPDATE sprints SET deleted = true, deleted_at = CURRENT_TIMESTAMP, name = CONCAT(name, ' [deleted] ', id) WHERE id = ?")
+@SQLRestriction("deleted = false")
 @Getter
 @Setter
 @ToString(callSuper = true)
@@ -48,6 +55,10 @@ import java.util.UUID;
 @Hidden
 @Schema(hidden = true)
 public class SprintDAO extends AbstractTimeAwareDAO {
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted;
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
     @Column(name = "dark_avatar_hash", length = 16)
     private String        darkAvatarHash;
     @Column(name = "dark_header_hash", length = 16)

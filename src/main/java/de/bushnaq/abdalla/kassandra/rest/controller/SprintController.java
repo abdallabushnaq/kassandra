@@ -28,6 +28,7 @@ import de.bushnaq.abdalla.kassandra.repository.*;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ProductAclService;
+import de.bushnaq.abdalla.kassandra.service.PlanningChangeService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +64,8 @@ public class SprintController {
     @Autowired
     private ProductAclService                    productAclService;
     @Autowired
+    private PlanningChangeService                planningChangeService;
+    @Autowired
     private SprintAvatarGenerationDataRepository sprintAvatarGenerationDataRepository;
     @Autowired
     private SprintAvatarRepository               sprintAvatarRepository;
@@ -85,7 +88,7 @@ public class SprintController {
         sprintAvatarRepository.deleteBySprintId(id);
         sprintAvatarGenerationDataRepository.deleteBySprintId(id);
         // Then delete sprint
-        sprintRepository.deleteById(id);
+        planningChangeService.deleteTree(SprintDAO.class, id, "Deleted sprint hierarchy");
     }
 
     @GetMapping("/{id}")
@@ -273,7 +276,7 @@ public class SprintController {
         if (sprintRepository.existsByNameAndFeatureId(sprintDAO.getName(), sprintDAO.getFeatureId())) {
             throw new UniqueConstraintViolationException("Sprint", "name", sprintDAO.getName());
         }
-        entityManager.persist(sprintDAO);
+        planningChangeService.persist(sprintDAO, "Created sprint");
         return ResponseEntity.ok(sprintDAO);
     }
 
@@ -285,7 +288,7 @@ public class SprintController {
         if (sprintRepository.existsByNameAndFeatureIdAndIdNot(sprintEntity.getName(), sprintEntity.getFeatureId(), sprintEntity.getId())) {
             throw new UniqueConstraintViolationException("Sprint", "name", sprintEntity.getName());
         }
-        return sprintRepository.save(sprintEntity);
+        return planningChangeService.update(sprintEntity, "Updated sprint");
     }
 
     @PutMapping("/{id}/avatar/full")

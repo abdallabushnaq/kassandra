@@ -288,6 +288,10 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         if (queryParameters.getParameters().containsKey("sprint")) {
             this.sprintId = UUID.fromString(queryParameters.getParameters().get("sprint").getFirst());
         }
+        if (sprintId != null && sprintApi.getAll().stream().noneMatch(candidate -> candidate.getId().equals(sprintId))) {
+            log.info("Selected sprint {} no longer exists; selecting an available sprint", sprintId);
+            sprintId = null;
+        }
         // Capture requested users from URL for initial user-selector preselection.
         // Cleared here so each navigation cycle starts fresh.
         requestedUserIds = null;
@@ -331,6 +335,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
         ganttUtil = new GanttUtil();
         loadData();
+        updateUndoRedoProductContext();
 
         // Update sprint selector to show the current sprint (in case it was determined automatically)
         updateSprintSelectorValue();
@@ -1477,27 +1482,56 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         java.util.Set<Task> allModifiedTasks = new java.util.HashSet<>();
         allModifiedTasks.addAll(grid.getModifiedTasks());
         allModifiedTasks.addAll(backlogGrid.getModifiedTasks());
+        java.util.Set<Task> newTasks = new java.util.HashSet<>();
+        newTasks.addAll(grid.getNewTasks());
+        newTasks.addAll(backlogGrid.getNewTasks());
 
-        if (allModifiedTasks.isEmpty()) {
+        if (allModifiedTasks.isEmpty() && newTasks.isEmpty()) {
             exitEditMode();
             return;
         }
 
-        log.info("Saving {} modified tasks ({} from sprint grid, {} from backlog grid)", allModifiedTasks.size(), grid.getModifiedTasks().size(), backlogGrid.getModifiedTasks().size());
+        log.info("Saving {} new tasks and {} modified tasks", newTasks.size(), allModifiedTasks.size());
 
-        // Persist all modified tasks
-        for (Task task : allModifiedTasks) {
-            if (task.getTaskMode() == de.bushnaq.abdalla.kassandra.dto.TaskMode.AUTO_SCHEDULED)
-                task.setStart(null); // Reset start date to force recalculation
-            taskApi.persist(task);
+        PlanningOperationContext.begin();
+        try {
+            for (Task task : newTasks) {
+                taskApi.persist(task);
+            }
+            allModifiedTasks.removeAll(newTasks);
+            for (Task task : allModifiedTasks) {
+                if (task.getTaskMode() == de.bushnaq.abdalla.kassandra.dto.TaskMode.AUTO_SCHEDULED)
+                    task.setStart(null); // Reset start date to force recalculation
+                taskApi.update(task);
+            }
+        } finally {
+            PlanningOperationContext.clear();
         }
 
         // Clear modified tasks from both grids and reload data
         grid.getModifiedTasks().clear();
         backlogGrid.getModifiedTasks().clear();
+        grid.getNewTasks().clear();
+        backlogGrid.getNewTasks().clear();
         loadData();
+        updateUndoRedoProductContext();
         refreshGrid();
         exitEditMode();
+    }
+
+    private void updateUndoRedoProductContext() {
+        if (sprint == null) {
+            return;
+        }
+        if (productId == null) {
+            Feature feature = featureApi.getById(sprint.getFeatureId());
+            Version version = versionApi.getById(feature.getVersionId());
+            productId = version.getProductId();
+        }
+        getElement().getParent().getComponent()
+                .filter(MainLayout.class::isInstance)
+                .map(MainLayout.class::cast)
+                .ifPresent(mainLayout -> mainLayout.setActiveProductId(productId));
     }
 
     /**

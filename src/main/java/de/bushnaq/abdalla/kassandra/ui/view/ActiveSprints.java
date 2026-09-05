@@ -100,18 +100,21 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private             MultiSelectComboBox<Sprint> sprintSelector;
     private final       TaskApi                     taskApi;
     private final       UserApi                     userApi;
+    private final       VersionApi                  versionApi;
     private final       Map<UUID, User>             userMap                   = new HashMap<>();
     private             MultiSelectComboBox<User>   userSelector;
     private             List<User>                  users                     = new ArrayList<>();
     private final       WorklogApi                  worklogApi;
     private             Registration                themeChangedRegistration;
 
-    public ActiveSprints(FeatureApi featureApi, SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi) {
+    public ActiveSprints(FeatureApi featureApi, SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi,
+            VersionApi versionApi) {
         this.featureApi = featureApi;
         this.sprintApi  = sprintApi;
         this.taskApi    = taskApi;
         this.userApi    = userApi;
         this.worklogApi = worklogApi;
+        this.versionApi = versionApi;
 
         try {
             // Set width full but not height - let content determine height for scrolling
@@ -350,6 +353,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 updateUrlParameters();
                 applyFilters();
                 updateHeaderForSelection();
+                updateUndoRedoProductScope();
             }
         });
 
@@ -442,6 +446,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 featureMap,
                 selectedUsers,
                 worklogApi
+                , this::refreshUndoRedoToolbar
         );
 
         contentLayout.add(mergedBoard);
@@ -574,6 +579,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             }
 
             updateHeaderForSelection();
+            updateUndoRedoProductScope();
 
         } catch (Exception e) {
             log.error("Error loading active sprint data", e);
@@ -585,6 +591,29 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                     .set("color", "var(--lumo-error-text-color)");
             contentLayout.add(errorMessage);
         }
+    }
+
+    private void updateUndoRedoProductScope() {
+        List<Sprint> displayedSprints = selectedSprints.isEmpty() ? allSprints : new ArrayList<>(selectedSprints);
+        Set<UUID> productIds = displayedSprints.stream()
+                .map(Sprint::getFeatureId)
+                .map(featureMap::get)
+                .filter(Objects::nonNull)
+                .map(Feature::getVersionId)
+                .map(versionApi::getById)
+                .map(Version::getProductId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        getElement().getParent().getComponent()
+                .filter(MainLayout.class::isInstance)
+                .map(MainLayout.class::cast)
+                .ifPresent(mainLayout -> mainLayout.setActiveProductIds(productIds));
+    }
+
+    private void refreshUndoRedoToolbar() {
+        getElement().getParent().getComponent()
+                .filter(MainLayout.class::isInstance)
+                .map(MainLayout.class::cast)
+                .ifPresent(MainLayout::refreshUndoRedoToolbar);
     }
 
     /**

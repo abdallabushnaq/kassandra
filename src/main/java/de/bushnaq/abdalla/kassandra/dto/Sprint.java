@@ -178,30 +178,8 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
         return url;
     }
 
-    /**
-     * Get the header URL for the given theme variant.
-     *
-     * @param dark {@code true} to request the dark-background header variant
-     * @return The header URL with hash parameter for cache-busting
-     */
-    @JsonIgnore
-    public String getHeaderUrl(boolean dark) {
-        if (dark && darkHeaderHash != null && !darkHeaderHash.isEmpty()) {
-            return "/frontend/dark-avatar-proxy/sprint-header/" + id + "?h=" + darkHeaderHash;
-        }
-        String url = "/frontend/avatar-proxy/sprint-header/" + id;
-        if (lightHeaderHash != null && !lightHeaderHash.isEmpty()) {
-            url += "?h=" + lightHeaderHash;
-        }
-        return url;
-    }
-
     private static String getDefaultAvatarPrompt(String sprintName) {
         return "app icon '" + sprintName + "'" + StableDiffusionService.LORA;
-    }
-
-    private static String getDefaultHeaderPrompt(String sprintName) {
-        return "panoramic view of " + sprintName + ", web page header, detailed, high resolution";
     }
 
     /**
@@ -241,6 +219,10 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
      */
     public static String getDefaultDarkHeaderPrompt(String sprintName) {
         return getDefaultHeaderPrompt(sprintName) + AvatarService.DARK_PROMPT_SUFFIX;
+    }
+
+    private static String getDefaultHeaderPrompt(String sprintName) {
+        return "panoramic view of " + sprintName + ", web page header, detailed, high resolution";
     }
 
     /**
@@ -308,6 +290,24 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
             earliestDate = ParameterOptions.getLocalNow();
         }
         return earliestDate;
+    }
+
+    /**
+     * Get the header URL for the given theme variant.
+     *
+     * @param dark {@code true} to request the dark-background header variant
+     * @return The header URL with hash parameter for cache-busting
+     */
+    @JsonIgnore
+    public String getHeaderUrl(boolean dark) {
+        if (dark && darkHeaderHash != null && !darkHeaderHash.isEmpty()) {
+            return "/frontend/dark-avatar-proxy/sprint-header/" + id + "?h=" + darkHeaderHash;
+        }
+        String url = "/frontend/avatar-proxy/sprint-header/" + id;
+        if (lightHeaderHash != null && !lightHeaderHash.isEmpty()) {
+            url += "?h=" + lightHeaderHash;
+        }
+        return url;
     }
 
     @JsonIgnore
@@ -398,6 +398,7 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
             addWorklogRemaining(task);
         });
         setStart(getEarliestStartDate());
+        setEnd(getLatestFinishDate());
     }
 
     public void initUserMap(List<User> users) {

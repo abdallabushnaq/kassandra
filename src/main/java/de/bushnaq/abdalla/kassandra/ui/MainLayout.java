@@ -42,10 +42,12 @@ import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
+import de.bushnaq.abdalla.kassandra.ui.component.UndoRedoToolbar;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
 import de.bushnaq.abdalla.kassandra.ui.view.OidcProviderManagementView;
 import jakarta.annotation.security.RolesAllowed;
@@ -54,7 +56,10 @@ import lombok.extern.slf4j.Slf4j;
 
 
 import java.util.HashMap;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 
@@ -88,14 +93,17 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final Map<Tab, String>                     tabToPathMap              = new HashMap<>();
     private       Tabs                                 tabs;
     private final ThemeSessionState                    themeSessionState;
+    private final UndoRedoToolbar                      undoRedoToolbar;
+    private final Collection<UUID>                     activeProductIds          = new LinkedHashSet<>();
     private       boolean                              updatingTabFromNavigation = false;
     private final UserApi                              userApi;
     private       com.vaadin.flow.component.html.Image userAvatarImage;
 
-    MainLayout(UserApi userApi, ThemeSessionState themeSessionState) {
+    MainLayout(UserApi userApi, ThemeSessionState themeSessionState, UndoRedoApi undoRedoApi) {
         this.authenticationContext = authenticationContext;
         this.userApi               = userApi;
         this.themeSessionState     = themeSessionState;
+        this.undoRedoToolbar       = new UndoRedoToolbar(undoRedoApi, () -> activeProductIds, history -> UI.getCurrent().getPage().reload());
         UI.getCurrent().getPage().addJavaScript("/js/tooltips.js");
         setPrimarySection(Section.NAVBAR);
         addClassName("main-layout"); // scope CSS to this layout
@@ -146,6 +154,33 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         tabs.setSelectedTab(null);
     }
 
+    /**
+     * Sets the product whose history is controlled by the global undo/redo buttons.
+     *
+     * @param productId active product ID, or {@code null} when the current view has no product context
+     */
+    public void setActiveProductId(UUID productId) {
+        setActiveProductIds(productId == null ? java.util.List.of() : java.util.List.of(productId));
+    }
+
+    /**
+     * Sets the products whose histories are controlled by the global undo/redo buttons.
+     *
+     * @param productIds active product IDs, or an empty collection when the current view has no product context
+     */
+    public void setActiveProductIds(Collection<UUID> productIds) {
+        activeProductIds.clear();
+        activeProductIds.addAll(productIds);
+        undoRedoToolbar.refresh();
+    }
+
+    /**
+     * Reloads the global undo/redo button state.
+     */
+    public void refreshUndoRedoToolbar() {
+        undoRedoToolbar.refresh();
+    }
+
     private Div createBreadcrumbs() {
         breadcrumbs.setId(ID_BREADCRUMBS);
         Div breadcrumbContainer = new Div(breadcrumbs);
@@ -194,7 +229,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         // Add user menu to the right
         Component userMenu = createUserMenu();
 
-        navbarLayout.add(logoLayout, tabs, themeToggle, userMenu);
+        navbarLayout.add(logoLayout, tabs, undoRedoToolbar, themeToggle, userMenu);
         navbarLayout.expand(tabs);
         return navbarLayout;
     }

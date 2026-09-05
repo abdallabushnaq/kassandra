@@ -57,6 +57,7 @@ public class MergedScrumBoard extends VerticalLayout {
     private       String             filterText       = "";
     private final GroupingMode       groupingMode;
     private final Set<User>          selectedUsers;
+    private final Runnable            onPlanningChange;
     private final List<Sprint>       sprints;
     private final List<StoryCard>    storyCards       = new ArrayList<>();
     private final TaskApi            taskApi;
@@ -65,7 +66,8 @@ public class MergedScrumBoard extends VerticalLayout {
 
     public MergedScrumBoard(List<Sprint> sprints, List<Task> allTasks, TaskApi taskApi,
                             Map<UUID, User> userMap, String filterText, GroupingMode groupingMode,
-                            Map<UUID, Feature> featureMap, Set<User> selectedUsers, WorklogApi worklogApi) {
+                            Map<UUID, Feature> featureMap, Set<User> selectedUsers, WorklogApi worklogApi,
+                            Runnable onPlanningChange) {
         this.sprints       = sprints;
         this.allTasks      = allTasks;
         this.taskApi       = taskApi;
@@ -75,6 +77,7 @@ public class MergedScrumBoard extends VerticalLayout {
         this.featureMap    = featureMap;
         this.selectedUsers = selectedUsers;
         this.worklogApi    = worklogApi;
+        this.onPlanningChange = onPlanningChange;
 
         setPadding(false);
         setSpacing(true);
@@ -131,6 +134,7 @@ public class MergedScrumBoard extends VerticalLayout {
             // After saving the worklog, refresh the board
             log.info("Worklog saved for task {}", task.getId());
             refresh();
+            onPlanningChange.run();
         }, currentUser.getId());
 
         dialog.open();
@@ -153,7 +157,10 @@ public class MergedScrumBoard extends VerticalLayout {
 
         UUID currentUserId = currentUser != null ? currentUser.getId() : null;
 
-        TaskDialog dialog = new TaskDialog(task, taskApi, worklogApi, userMap, currentUserId, this::refresh);
+        TaskDialog dialog = new TaskDialog(task, taskApi, worklogApi, userMap, currentUserId, () -> {
+            refresh();
+            onPlanningChange.run();
+        });
         dialog.open();
     }
 
@@ -172,6 +179,7 @@ public class MergedScrumBoard extends VerticalLayout {
             // Story status will be recalculated correctly - story only moves to IN_PROGRESS
             // when ALL tasks are at least IN_PROGRESS (no TODO tasks remain)
             refresh();
+            onPlanningChange.run();
 
             // Show success notification
             showSuccess("Task " + task.getId() + " moved to " + newStatus.name());
@@ -471,4 +479,3 @@ public class MergedScrumBoard extends VerticalLayout {
         return null; // Validation passed
     }
 }
-

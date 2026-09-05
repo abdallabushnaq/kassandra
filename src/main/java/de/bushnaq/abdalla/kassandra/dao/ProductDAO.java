@@ -26,17 +26,28 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.envers.Audited;
 
 import java.util.UUID;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "products")
+@Audited
+@SQLDelete(sql = "UPDATE products SET deleted = true, deleted_at = CURRENT_TIMESTAMP, name = CONCAT(name, ' [deleted] ', id) WHERE id = ?")
+@SQLRestriction("deleted = false")
 @Getter
 @Setter
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
 public class ProductDAO extends AbstractTimeAwareDAO {
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted;
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
 
     @Column(name = "dark_avatar_hash", length = 16)
     private String darkAvatarHash;

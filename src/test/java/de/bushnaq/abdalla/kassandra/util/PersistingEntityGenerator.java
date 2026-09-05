@@ -104,11 +104,9 @@ public class PersistingEntityGenerator {
             feature.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
             GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "lightbulb");
             feature.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
-            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(
-                    Feature.getDefaultLightHeaderPrompt(name), negativePrompt, "lightbulb");
+            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(Feature.getDefaultLightHeaderPrompt(name), negativePrompt, "lightbulb");
             feature.setLightHeaderHash(AvatarUtil.computeHash(lightHeader.getResizedImage()));
-            GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(
-                    Feature.getDefaultDarkHeaderPrompt(name), darkNegativePrompt, lightHeader, "lightbulb");
+            GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(Feature.getDefaultDarkHeaderPrompt(name), darkNegativePrompt, lightHeader, "lightbulb");
             feature.setDarkHeaderHash(AvatarUtil.computeHash(darkHeader.getResizedImage()));
 
             Feature saved = featureApi.persist(feature);
@@ -365,7 +363,7 @@ public class PersistingEntityGenerator {
     }
 
     private Task addTask(Sprint sprint, Task parent, String name, LocalDateTime start, Duration minWork, Duration maxWork, String notes, User user, Task dependency, TaskMode taskMode,
-            boolean milestone) {
+                         boolean milestone) {
         return eg.addTask(sprint, parent, name, start, minWork, maxWork, user, dependency, taskMode, milestone, task -> {
             task.setNotes(notes);
             Task saved = taskApi.persist(task);

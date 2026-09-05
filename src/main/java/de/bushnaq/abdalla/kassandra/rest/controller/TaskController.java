@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.repository.TaskRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ProductAclService;
+import de.bushnaq.abdalla.kassandra.service.PlanningChangeService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,8 @@ public class TaskController {
     private FeatureRepository featureRepository;
     @Autowired
     private ProductAclService productAclService;
+    @Autowired
+    private PlanningChangeService planningChangeService;
     @Autowired
     private SprintRepository  sprintRepository;
     @Autowired
@@ -69,24 +72,7 @@ public class TaskController {
     @PreAuthorize("@aclSecurityService.hasTaskAccess(#id) or hasRole('ADMIN')")
     @Transactional
     public void delete(@PathVariable UUID id) {
-        // 1. Collect the task and all of its descendants
-        Set<UUID> idsToDelete = new LinkedHashSet<>();
-        collectDescendantIds(id, idsToDelete);
-
-        // 2. Remove inbound predecessor relations from tasks that are NOT being deleted.
-        //    Relations owned by tasks being deleted are handled by CascadeType.ALL.
-        if (!idsToDelete.isEmpty()) {
-            List<TaskDAO> tasksWithInbound = taskRepository.findByPredecessorIdIn(idsToDelete);
-            for (TaskDAO task : tasksWithInbound) {
-                if (!idsToDelete.contains(task.getId())) {
-                    task.getPredecessors().removeIf(r -> idsToDelete.contains(r.getPredecessorId()));
-                    taskRepository.save(task);
-                }
-            }
-        }
-
-        // 3. Delete all collected tasks (CascadeType.ALL removes their owned relations)
-        taskRepository.deleteAllById(idsToDelete);
+        planningChangeService.deleteTaskTree(id, "Deleted task hierarchy");
     }
 
     @GetMapping("/{id}")
@@ -145,7 +131,7 @@ public class TaskController {
             Integer maxOrderId = taskRepository.findMaxOrderId(task.getSprintId());
             task.setOrderId(maxOrderId + 1);
         }
-        entityManager.persist(task); // INSERT, no SELECT, no cascade conflict
+        planningChangeService.persist(task, "Created task");
         return ResponseEntity.ok(task);
     }
 
@@ -153,7 +139,7 @@ public class TaskController {
     @PreAuthorize("@aclSecurityService.hasTaskAccess(#task.id) or hasRole('ADMIN')")
     @Transactional
     public void update(@RequestBody TaskDAO task) {
-        taskRepository.save(task);
+        planningChangeService.update(task, "Updated task");
     }
 
     /**
@@ -170,18 +156,13 @@ public class TaskController {
     @PreAuthorize("@aclSecurityService.hasSprintAccess(#sprintId) or hasRole('ADMIN')")
     @Transactional
     public void updateBatch(@RequestBody List<TaskDAO> tasks, @PathVariable UUID sprintId) {
-        taskRepository.saveAll(tasks);
+        planningChangeService.updateBatch(tasks, "Updated task batch");
     }
 
     @PutMapping("/{id}/status/{status}")
     @PreAuthorize("@aclSecurityService.hasTaskAccess(#id) or hasRole('ADMIN')")
     @Transactional
     public void updateStatus(@PathVariable UUID id, @PathVariable de.bushnaq.abdalla.kassandra.dto.TaskStatus status) {
-        Optional<TaskDAO> taskOptional = taskRepository.findById(id);
-        if (taskOptional.isPresent()) {
-            TaskDAO task = taskOptional.get();
-            task.setTaskStatus(status);
-            taskRepository.save(task);
-        }
+        planningChangeService.update(TaskDAO.class, id, "Updated task status", task -> task.setTaskStatus(status));
     }
 }

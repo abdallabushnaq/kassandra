@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ProductAclService;
+import de.bushnaq.abdalla.kassandra.service.PlanningChangeService;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -45,13 +46,15 @@ public class VersionController {
     @Autowired
     private ProductRepository productRepository;
     @Autowired
+    private PlanningChangeService planningChangeService;
+    @Autowired
     private VersionRepository versionRepository;
 
     @DeleteMapping("/{id}")
     @PreAuthorize("@aclSecurityService.hasVersionAccess(#id) or hasRole('ADMIN')")
     @Transactional
     public void delete(@PathVariable UUID id) {
-        versionRepository.deleteById(id);
+        planningChangeService.deleteTree(VersionDAO.class, id, "Deleted version hierarchy");
     }
 
     @GetMapping("/{id}")
@@ -101,7 +104,7 @@ public class VersionController {
                 throw new UniqueConstraintViolationException("Version", "name", version.getName());
             }
 //            VersionDAO save = versionRepository.save(version);
-            entityManager.persist(version); // INSERT, no SELECT, no cascade conflict
+            planningChangeService.persist(version, "Created version");
             return ResponseEntity.ok(version);
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -114,6 +117,6 @@ public class VersionController {
         if (versionRepository.existsByNameAndProductIdAndIdNot(version.getName(), version.getProductId(), version.getId())) {
             throw new UniqueConstraintViolationException("Version", "name", version.getName());
         }
-        versionRepository.save(version);
+        planningChangeService.update(version, "Updated version");
     }
 }

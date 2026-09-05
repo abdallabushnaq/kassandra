@@ -30,6 +30,7 @@ import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ProductAclService;
+import de.bushnaq.abdalla.kassandra.service.PlanningChangeService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +61,8 @@ public class FeatureController {
     @Autowired
     private ProductAclService                     productAclService;
     @Autowired
+    private PlanningChangeService                 planningChangeService;
+    @Autowired
     private VersionRepository                     versionRepository;
 
     @DeleteMapping("/{id}")
@@ -70,7 +73,7 @@ public class FeatureController {
         featureAvatarRepository.deleteByFeatureId(id);
         featureAvatarGenerationDataRepository.deleteByFeatureId(id);
         // Then delete feature
-        featureRepository.deleteById(id);
+        planningChangeService.deleteTree(FeatureDAO.class, id, "Deleted feature hierarchy");
     }
 
     @GetMapping("/{id}")
@@ -234,7 +237,7 @@ public class FeatureController {
             if (featureRepository.existsByNameAndVersionId(feature.getName(), feature.getVersionId())) {
                 throw new UniqueConstraintViolationException("Feature", "name", feature.getName());
             }
-            entityManager.persist(feature); // INSERT, no SELECT, no cascade conflict
+            planningChangeService.persist(feature, "Created feature");
             return ResponseEntity.ok(feature);
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -247,7 +250,7 @@ public class FeatureController {
         if (featureRepository.existsByNameAndVersionIdAndIdNot(feature.getName(), feature.getVersionId(), feature.getId())) {
             throw new UniqueConstraintViolationException("Feature", "name", feature.getName());
         }
-        return featureRepository.save(feature);
+        return planningChangeService.update(feature, "Updated feature");
     }
 
     @PutMapping("/{id}/avatar/full")

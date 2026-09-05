@@ -18,6 +18,8 @@
 package de.bushnaq.abdalla.kassandra.repository;
 
 import de.bushnaq.abdalla.kassandra.dao.ProductDAO;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -47,4 +49,14 @@ public interface ProductRepository extends ListCrudRepository<ProductDAO, UUID> 
      */
     @Query("SELECT p FROM ProductDAO p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :partialName, '%'))")
     List<ProductDAO> findByNameContainingIgnoreCase(@Param("partialName") String partialName);
+
+    /**
+     * Locks the product row while appending or replaying its linear history.
+     *
+     * @param id the product ID
+     * @return the locked product, if it exists
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM ProductDAO p WHERE p.id = :id")
+    java.util.Optional<ProductDAO> findByIdForUpdate(@Param("id") UUID id);
 }

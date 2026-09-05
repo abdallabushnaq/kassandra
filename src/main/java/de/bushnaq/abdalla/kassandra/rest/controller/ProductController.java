@@ -30,6 +30,7 @@ import de.bushnaq.abdalla.kassandra.repository.UserRepository;
 import de.bushnaq.abdalla.kassandra.rest.exception.UniqueConstraintViolationException;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ProductAclService;
+import de.bushnaq.abdalla.kassandra.service.PlanningChangeService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +60,8 @@ public class ProductController {
     @Autowired
     private ProductRepository                     productRepository;
     @Autowired
+    private PlanningChangeService                 planningChangeService;
+    @Autowired
     private UserRepository                        userRepository;
 
     @DeleteMapping("/{id}")
@@ -71,7 +74,7 @@ public class ProductController {
         productAvatarRepository.deleteByProductId(id);
         productAvatarGenerationDataRepository.deleteByProductId(id);
         // Then delete product
-        productRepository.deleteById(id);
+        planningChangeService.deleteTree(ProductDAO.class, id, "Deleted product hierarchy");
     }
 
     @DeleteMapping("/by-name/{name}")
@@ -92,7 +95,7 @@ public class ProductController {
         productAvatarRepository.deleteByProductId(id);
         productAvatarGenerationDataRepository.deleteByProductId(id);
         // Then delete product
-        productRepository.deleteById(id);
+        planningChangeService.deleteTree(ProductDAO.class, id, "Deleted product hierarchy");
         return ResponseEntity.ok().build();
     }
 
@@ -277,7 +280,7 @@ public class ProductController {
         }
 
         // Save the product
-        entityManager.persist(product); // INSERT, no SELECT, no cascade conflict
+        planningChangeService.persist(product, "Created product");
 //        ProductDAO savedProduct = productRepository.save(product);
 
         // Grant creator access to the product
@@ -311,7 +314,7 @@ public class ProductController {
         if (productRepository.existsByNameAndIdNot(product.getName(), product.getId())) {
             throw new UniqueConstraintViolationException("Product", "name", product.getName());
         }
-        productRepository.save(product);
+        planningChangeService.update(product, "Updated product");
     }
 
     @PutMapping("/{id}/avatar/full")

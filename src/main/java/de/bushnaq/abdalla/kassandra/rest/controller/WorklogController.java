@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.dao.WorklogDAO;
 import de.bushnaq.abdalla.kassandra.repository.WorklogRepository;
+import de.bushnaq.abdalla.kassandra.service.PlanningChangeService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,11 +40,13 @@ public class WorklogController {
     EntityManager entityManager;
     @Autowired
     private WorklogRepository worklogRepository;
+    @Autowired
+    private PlanningChangeService planningChangeService;
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public void delete(@PathVariable UUID id) {
-        worklogRepository.deleteById(id);
+        planningChangeService.delete(WorklogDAO.class, id, "Deleted worklog");
     }
 
     @GetMapping("/{id}")
@@ -69,7 +72,7 @@ public class WorklogController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
     public ResponseEntity<WorklogDAO> save(@RequestBody WorklogDAO worklog) {
-        entityManager.persist(worklog);
+        planningChangeService.persist(worklog, "Created worklog");
         return ResponseEntity.ok(worklog);
     }
 
@@ -87,17 +90,13 @@ public class WorklogController {
     @PostMapping("/batch")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<WorklogDAO>> saveBatch(@RequestBody List<WorklogDAO> worklogs) {
-        List<WorklogDAO> saved = new ArrayList<>(worklogs.size());
-        for (WorklogDAO worklog : worklogs) {
-            saved.add(worklogRepository.save(worklog));
-        }
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.ok(planningChangeService.persistBatch(worklogs, "Created worklog batch"));
     }
 
     @PutMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public WorklogDAO update(@RequestBody WorklogDAO worklog) {
-        return worklogRepository.save(worklog);
+        return planningChangeService.update(worklog, "Updated worklog");
     }
 
 }

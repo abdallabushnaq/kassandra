@@ -99,6 +99,8 @@ public class TaskGrid extends TreeGrid<Task> {
     private final       Locale                            locale;
     @Getter
     private final       Set<Task>                         modifiedTasks                       = new HashSet<>();
+    @Getter
+    private final       Set<Task>                         newTasks                            = new HashSet<>();
     @Setter
     private             java.util.function.Consumer<Task> onDeleteTask;
     @Setter
@@ -146,7 +148,10 @@ public class TaskGrid extends TreeGrid<Task> {
         task.setSprint(sprint);
         task.setSprintId(sprint.getId());
         sprint.addTask(task);
-        taskOrder.add(task);
+        if (!taskOrder.contains(task)) {
+            taskOrder.add(task);
+        }
+        newTasks.add(task);
         if (!task.isStory()) {
             indentTask(task);
         } else {
@@ -1753,5 +1758,3 @@ public class TaskGrid extends TreeGrid<Task> {
 
 
 }
-
-

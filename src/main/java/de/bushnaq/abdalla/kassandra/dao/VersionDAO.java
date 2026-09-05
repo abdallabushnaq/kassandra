@@ -23,20 +23,31 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.envers.Audited;
 
 import java.util.UUID;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(
         name = "versions",
         uniqueConstraints = @UniqueConstraint(columnNames = {"productId", "name"})
 )
+@Audited
+@SQLDelete(sql = "UPDATE versions SET deleted = true, deleted_at = CURRENT_TIMESTAMP, name = CONCAT(name, ' [deleted] ', id) WHERE id = ?")
+@SQLRestriction("deleted = false")
 @Getter
 @Setter
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
 public class VersionDAO extends AbstractTimeAwareDAO {
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted;
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
 
     @Id
 //    @UuidGenerator(style = UuidGenerator.Style.RANDOM)

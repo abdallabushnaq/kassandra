@@ -802,7 +802,7 @@ public class StableDiffusionService {
             log.info("Model '{}' loaded successfully.", modelName);
             return true;
         } catch (Exception e) {
-            log.error("Failed to select model '{}': {}", modelName, e.getMessage(), e);
+            log.error("Failed to select model '{}': {}", modelName, e.getMessage());
             return false;
         }
     }
@@ -874,7 +874,7 @@ public class StableDiffusionService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error generating image with Stable Diffusion", e);
+            log.error("Error generating image with Stable Diffusion: {}", e.getMessage());
             throw new StableDiffusionException("Failed to generate image: " + e.getMessage(), e);
         }
     }

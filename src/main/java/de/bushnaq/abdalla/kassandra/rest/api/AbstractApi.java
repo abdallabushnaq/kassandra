@@ -104,6 +104,10 @@ public class AbstractApi {
      */
     protected HttpHeaders createAuthHeaders() {
         HttpHeaders headers = new HttpHeaders();
+        UUID operationId = PlanningOperationContext.getOperationId();
+        if (operationId != null) {
+            headers.set(PlanningOperationContext.HEADER_NAME, operationId.toString());
+        }
 
         // Get current authentication from security context
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

@@ -301,6 +301,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         getElement().getParent().getComponent()
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
+                        mainLayout.setActiveProductId(productId);
                         if (productId == null || versionId == null || featureId == null) {
                             log.warn("No products/versions/features available; skipping SprintListView breadcrumb setup");
                             return;
@@ -387,6 +388,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 () -> {
                     sprintApi.deleteById(sprint.getId());
                     refreshGrid();
+                    refreshUndoRedoToolbar();
                     Notification.show("Sprint deleted", 3000, Notification.Position.BOTTOM_START);
                 }
         );
@@ -602,9 +604,17 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
             if (!event.isOpened()) {
                 // Dialog was closed, refresh the grid
                 refreshGrid();
+                refreshUndoRedoToolbar();
             }
         });
         dialog.open();
+    }
+
+    private void refreshUndoRedoToolbar() {
+        getElement().getParent().getComponent()
+                .filter(MainLayout.class::isInstance)
+                .map(MainLayout.class::cast)
+                .ifPresent(MainLayout::refreshUndoRedoToolbar);
     }
 
     /**

@@ -34,6 +34,7 @@ import com.vaadin.flow.component.textfield.TextFieldVariant;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
+import de.bushnaq.abdalla.kassandra.rest.api.PlanningOperationContext;
 import de.bushnaq.abdalla.kassandra.rest.api.WorklogApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -339,6 +340,8 @@ public class WorklogDialog extends Dialog {
      * @param startDateTime the log date/time
      */
     private void saveCreateMode(Duration timeSpent, Duration timeRemaining, LocalDateTime startDateTime) {
+        PlanningOperationContext.begin();
+        try {
         // Create worklog
         Worklog worklog = new Worklog();
         worklog.setTaskId(task.getId());
@@ -369,6 +372,9 @@ public class WorklogDialog extends Dialog {
             onSave.accept(savedWorklog);
         }
         close();
+        } finally {
+            PlanningOperationContext.clear();
+        }
     }
 
     /**
@@ -379,6 +385,8 @@ public class WorklogDialog extends Dialog {
      * @param startDateTime new log date/time
      */
     private void saveEditMode(Duration newTimeSpent, Duration timeRemaining, LocalDateTime startDateTime) {
+        PlanningOperationContext.begin();
+        try {
         Duration oldTimeSpent = existingWorklog.getTimeSpent();
 
         // Mutate the existing worklog in place (same object reference held by task.getWorklogs())
@@ -410,6 +418,9 @@ public class WorklogDialog extends Dialog {
             onSave.accept(existingWorklog);
         }
         close();
+        } finally {
+            PlanningOperationContext.clear();
+        }
     }
 
     private void showError(String message) {

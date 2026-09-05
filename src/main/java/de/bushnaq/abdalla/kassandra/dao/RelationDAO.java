@@ -25,16 +25,27 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.envers.Audited;
 
 import java.util.UUID;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "relations")
+@Audited
+@SQLDelete(sql = "UPDATE relations SET deleted = true, deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+@SQLRestriction("deleted = false")
 @Getter
 @Setter
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @BatchSize(size = 10)
 public class RelationDAO {
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted;
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
 
     @Id
 //    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
