@@ -332,7 +332,7 @@ public class LegacyBacklog extends Main implements AfterNavigationObserver, Befo
         updateSprintSelectorValue();
 
         //- Update breadcrumbs
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();
@@ -1659,7 +1659,7 @@ public class LegacyBacklog extends Main implements AfterNavigationObserver, Befo
             Version version = versionApi.getById(feature.getVersionId());
             productId = version.getProductId();
         }
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .filter(MainLayout.class::isInstance)
                 .map(MainLayout.class::cast)
                 .ifPresent(mainLayout -> mainLayout.setActiveProductId(productId));

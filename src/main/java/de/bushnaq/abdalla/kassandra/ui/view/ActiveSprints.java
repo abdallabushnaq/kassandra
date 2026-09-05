@@ -148,7 +148,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
         // Update breadcrumbs
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();
@@ -603,14 +603,14 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 .map(versionApi::getById)
                 .map(Version::getProductId)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .filter(MainLayout.class::isInstance)
                 .map(MainLayout.class::cast)
                 .ifPresent(mainLayout -> mainLayout.setActiveProductIds(productIds));
     }
 
     private void refreshUndoRedoToolbar() {
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .filter(MainLayout.class::isInstance)
                 .map(MainLayout.class::cast)
                 .ifPresent(MainLayout::refreshUndoRedoToolbar);

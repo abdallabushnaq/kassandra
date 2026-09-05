@@ -210,10 +210,12 @@ public class PlanningChangeService {
      * Returns globally ordered history for multiple products.
      *
      * @param productIds products whose history is requested
+     * @param limit maximum number of operations to retrieve
      * @return operations ordered newest first
      */
-    public List<UndoableOperationDAO> history(java.util.Collection<UUID> productIds) {
-        return undoableOperationRepository.findByProductIdInOrderByCreatedDesc(productIds);
+    public List<UndoableOperationDAO> history(java.util.Collection<UUID> productIds, int limit) {
+        return undoableOperationRepository.findByProductIdInOrderByCreatedDesc(productIds,
+                org.springframework.data.domain.PageRequest.of(0, limit));
     }
 
     /**
@@ -442,6 +444,22 @@ public class PlanningChangeService {
         }
     }
 
+    /**
+     * Lists all operations that would be replayed by undoing or redoing through the selected operation.
+     *
+     * @param productId product history to inspect
+     * @param operationId selected operation
+     * @param undo {@code true} for undo preview, {@code false} for redo preview
+     * @return operations in the replay range
+     */
+    public List<UndoableOperationDAO> replayPreview(UUID productId, UUID operationId, boolean undo) {
+        List<UndoableOperationDAO> operations = undoableOperationRepository.findByProductIdOrderBySequenceNumberDesc(productId).stream()
+                .filter(operation -> undo != operation.isUndone())
+                .toList();
+        int targetIndex = indexOfOperation(operations, operationId);
+        return undo ? operations.subList(0, targetIndex + 1) : operations.subList(targetIndex, operations.size());
+    }
+
     private int indexOfOperation(List<UndoableOperationDAO> operations, UUID operationId) {
         for (int index = 0; index < operations.size(); index++) {
             if (operations.get(index).getId().equals(operationId)) {
@@ -481,6 +499,7 @@ public class PlanningChangeService {
         String entityType = entry.getEntityType().substring(entry.getEntityType().lastIndexOf('.') + 1)
                 .replace("DAO", "");
         UndoRedoHistory.EntityChange change = new UndoRedoHistory.EntityChange();
+        change.setFieldChanges(List.of());
         change.setAction(entry.getBeforeSnapshot() == null ? "Created"
                 : entry.getAfterSnapshot() == null ? "Deleted" : "Updated");
         change.setEntityType(entityType);
@@ -492,15 +511,52 @@ public class PlanningChangeService {
             java.util.Map<?, ?> values = objectMapper.readValue(snapshot, java.util.Map.class);
             if (WorklogDAO.class.getName().equals(entry.getEntityType())) {
                 change.setDisplayName(worklogDisplayName(values, entry.getEntityId()));
+                change.setFieldChanges(fieldChanges(entry));
                 return change;
             }
             Object name = values.get("name");
             change.setDisplayName(name == null ? entry.getEntityId().toString() : name.toString());
+            change.setFieldChanges(fieldChanges(entry));
         } catch (JacksonException exception) {
             log.warn("Could not read the snapshot name for {} {}", entityType, entry.getEntityId(), exception);
             change.setDisplayName(entry.getEntityId().toString());
         }
         return change;
+    }
+
+    private List<String> fieldChanges(UndoableOperationEntryDAO entry) throws JacksonException {
+        if (entry.getBeforeSnapshot() == null || entry.getAfterSnapshot() == null) {
+            return List.of();
+        }
+        java.util.Map<String, Object> before = objectMapper.readValue(entry.getBeforeSnapshot(), java.util.Map.class);
+        java.util.Map<String, Object> after = objectMapper.readValue(entry.getAfterSnapshot(), java.util.Map.class);
+        java.util.Set<String> fieldNames = new java.util.TreeSet<>();
+        fieldNames.addAll(before.keySet());
+        fieldNames.addAll(after.keySet());
+        return fieldNames.stream()
+                .filter(fieldName -> !java.util.Objects.equals(normalizeHistoryValue(before.get(fieldName)),
+                        normalizeHistoryValue(after.get(fieldName))))
+                .map(fieldName -> fieldName + ": " + normalizeHistoryValue(before.get(fieldName)) + " -> "
+                        + normalizeHistoryValue(after.get(fieldName)))
+                .toList();
+    }
+
+    private Object normalizeHistoryValue(Object value) {
+        if (value instanceof java.util.Map<?, ?> map) {
+            java.util.Map<String, Object> normalized = new java.util.TreeMap<>();
+            map.forEach((key, nestedValue) -> {
+                if (!"id".equals(key)) {
+                    normalized.put(String.valueOf(key), normalizeHistoryValue(nestedValue));
+                }
+            });
+            return normalized;
+        }
+        if (value instanceof java.util.Collection<?> collection) {
+            return collection.stream().map(this::normalizeHistoryValue)
+                    .sorted(java.util.Comparator.comparing(String::valueOf))
+                    .toList();
+        }
+        return value;
     }
 
     private String worklogDisplayName(java.util.Map<?, ?> values, UUID entityId) {

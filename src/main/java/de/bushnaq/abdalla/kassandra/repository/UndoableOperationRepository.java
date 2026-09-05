@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.repository;
 
 import de.bushnaq.abdalla.kassandra.dao.UndoableOperationDAO;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.ListCrudRepository;
 
@@ -29,7 +30,7 @@ import java.util.UUID;
 public interface UndoableOperationRepository extends ListCrudRepository<UndoableOperationDAO, UUID> {
     List<UndoableOperationDAO> findByProductIdOrderBySequenceNumberDesc(UUID productId);
 
-    List<UndoableOperationDAO> findByProductIdInOrderByCreatedDesc(Collection<UUID> productIds);
+    List<UndoableOperationDAO> findByProductIdInOrderByCreatedDesc(Collection<UUID> productIds, Pageable pageable);
 
     Optional<UndoableOperationDAO> findFirstByProductIdAndUndoneFalseOrderBySequenceNumberDesc(UUID productId);
 

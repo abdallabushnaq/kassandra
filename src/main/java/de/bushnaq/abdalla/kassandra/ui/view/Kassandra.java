@@ -114,7 +114,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
     public void afterNavigation(AfterNavigationEvent event) {
         chatAgentPanel.restoreOrStart(ROUTE_KEY);
 
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();
@@ -134,4 +134,3 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
         chatAgentPanel.setCurrentUser(userFromDb);
     }
 }
-

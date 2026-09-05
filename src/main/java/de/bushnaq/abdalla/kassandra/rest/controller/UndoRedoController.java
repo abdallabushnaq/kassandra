@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.dao.UndoableOperationDAO;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.UndoRedoHistory;
 import de.bushnaq.abdalla.kassandra.repository.ProductRepository;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
@@ -44,6 +45,8 @@ public class UndoRedoController {
     @Autowired
     private AclSecurityService aclSecurityService;
     @Autowired
+    private KassandraProperties kassandraProperties;
+    @Autowired
     private PlanningChangeService planningChangeService;
     @Autowired
     private ProductRepository productRepository;
@@ -57,18 +60,20 @@ public class UndoRedoController {
     @GetMapping("/product/{productId}/history")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
     public UndoRedoHistory history(@PathVariable UUID productId) {
-        return history(List.of(productId));
+        return history(List.of(productId), null);
     }
 
     /**
      * Gets globally ordered history for the specified accessible products.
      *
      * @param productIds product IDs in the active page scope
+     * @param limit maximum number of operations to return
      * @return undo/redo availability and product operations, newest first
      */
     @GetMapping("/history")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public UndoRedoHistory history(@org.springframework.web.bind.annotation.RequestParam Collection<UUID> productIds) {
+    public UndoRedoHistory history(@org.springframework.web.bind.annotation.RequestParam Collection<UUID> productIds,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Integer limit) {
         if (productIds.isEmpty()) {
             UndoRedoHistory emptyHistory = new UndoRedoHistory();
             emptyHistory.setOperations(List.of());
@@ -78,7 +83,11 @@ public class UndoRedoController {
             throw new org.springframework.security.access.AccessDeniedException("Access to product history is denied");
         }
         UndoRedoHistory history = new UndoRedoHistory();
-        history.setOperations(planningChangeService.history(productIds).stream().map(this::operation).toList());
+        int operationLimit = limit == null ? kassandraProperties.getUndoRedo().getHistoryLimit() : limit;
+        if (operationLimit < 1) {
+            throw new IllegalArgumentException("History limit must be at least one");
+        }
+        history.setOperations(planningChangeService.history(productIds, operationLimit).stream().map(this::operation).toList());
         history.setCanUndo(history.getOperations().stream().anyMatch(operation -> !operation.isUndone()));
         history.setCanRedo(history.getOperations().stream().anyMatch(UndoRedoHistory.Operation::isUndone));
         return history;
@@ -136,6 +145,23 @@ public class UndoRedoController {
     public UndoRedoHistory undoThrough(@PathVariable UUID productId, @PathVariable UUID operationId) {
         planningChangeService.undoThrough(productId, operationId);
         return history(productId);
+    }
+
+    /**
+     * Gets the exact operation range that a selected undo or redo action will replay.
+     *
+     * @param productId product whose history is inspected
+     * @param operationId selected operation
+     * @param undo whether the selected action is undo
+     * @return operations that will be replayed
+     */
+    @GetMapping("/product/{productId}/history/{operationId}/preview")
+    @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
+    public UndoRedoHistory replayPreview(@PathVariable UUID productId, @PathVariable UUID operationId,
+            @org.springframework.web.bind.annotation.RequestParam boolean undo) {
+        UndoRedoHistory history = new UndoRedoHistory();
+        history.setOperations(planningChangeService.replayPreview(productId, operationId, undo).stream().map(this::operation).toList());
+        return history;
     }
 
     private UndoRedoHistory.Operation operation(UndoableOperationDAO source) {

@@ -289,7 +289,7 @@ public class LegacySprintListView extends AbstractMainGrid<Sprint> implements Af
         chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId + ":" + versionId + ":" + featureId);
 
         //- update breadcrumbs
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         if (productId == null || versionId == null || featureId == null) {

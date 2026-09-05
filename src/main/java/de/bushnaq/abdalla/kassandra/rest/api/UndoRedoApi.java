@@ -70,12 +70,13 @@ public class UndoRedoApi extends AbstractApi {
     }
 
     /**
-     * Gets globally ordered history for multiple active products.
+     * Gets a limited globally ordered history for multiple active products.
      *
      * @param productIds product IDs in the active page scope
+     * @param limit maximum number of operations to retrieve
      * @return combined history state
      */
-    public UndoRedoHistory history(Collection<UUID> productIds) {
+    public UndoRedoHistory history(Collection<UUID> productIds, int limit) {
         if (productIds.isEmpty()) {
             UndoRedoHistory history = new UndoRedoHistory();
             history.setOperations(java.util.List.of());
@@ -83,8 +84,23 @@ public class UndoRedoApi extends AbstractApi {
         }
         String ids = productIds.stream().map(UUID::toString).collect(Collectors.joining(","));
         ResponseEntity<UndoRedoHistory> response = executeWithErrorHandling(() -> restTemplate.exchange(
-                getBaseUrl() + "/history?productIds={productIds}", HttpMethod.GET, createHttpEntity(),
-                UndoRedoHistory.class, ids));
+                getBaseUrl() + "/history?productIds={productIds}&limit={limit}", HttpMethod.GET, createHttpEntity(),
+                UndoRedoHistory.class, ids, limit));
+        return response.getBody();
+    }
+
+    /**
+     * Gets the operations that will be replayed by a selected undo or redo action.
+     *
+     * @param productId product ID
+     * @param operationId selected operation ID
+     * @param undo whether the selected action is undo
+     * @return replay preview
+     */
+    public UndoRedoHistory replayPreview(UUID productId, UUID operationId, boolean undo) {
+        ResponseEntity<UndoRedoHistory> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/product/{productId}/history/{operationId}/preview?undo={undo}", HttpMethod.GET,
+                createHttpEntity(), UndoRedoHistory.class, productId, operationId, undo));
         return response.getBody();
     }
 

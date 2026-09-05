@@ -142,7 +142,7 @@ public class AboutView extends Main implements AfterNavigationObserver {
      */
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout layout) {
                         layout.getBreadcrumbs().clear();
@@ -152,4 +152,3 @@ public class AboutView extends Main implements AfterNavigationObserver {
                 });
     }
 }
-

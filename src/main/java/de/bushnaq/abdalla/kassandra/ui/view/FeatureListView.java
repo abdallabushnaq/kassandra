@@ -214,7 +214,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId + ":" + versionId);
 
         //- update breadcrumbs
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         if (productId == null || versionId == null) {

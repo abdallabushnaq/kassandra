@@ -169,7 +169,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
 
         chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId);
 
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         if (productId == null) {

@@ -164,7 +164,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     public void afterNavigation(AfterNavigationEvent event) {
         chatAgentPanel.restoreOrStart(ROUTE_KEY);
 
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();

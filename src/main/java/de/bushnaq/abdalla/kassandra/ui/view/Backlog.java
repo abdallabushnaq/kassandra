@@ -341,7 +341,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         updateSprintSelectorValue();
 
         //- Update breadcrumbs
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();
@@ -1528,7 +1528,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             Version version = versionApi.getById(feature.getVersionId());
             productId = version.getProductId();
         }
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .filter(MainLayout.class::isInstance)
                 .map(MainLayout.class::cast)
                 .ifPresent(mainLayout -> mainLayout.setActiveProductId(productId));

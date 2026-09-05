@@ -717,7 +717,7 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
 
 
         //- update breadcrumbs
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();

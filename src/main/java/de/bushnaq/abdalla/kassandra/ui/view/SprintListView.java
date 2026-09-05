@@ -298,7 +298,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         chatAgentPanel.restoreOrStart(ROUTE_KEY_PREFIX + productId + ":" + versionId + ":" + featureId);
 
         //- update breadcrumbs
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.setActiveProductId(productId);
@@ -611,7 +611,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
     }
 
     private void refreshUndoRedoToolbar() {
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .filter(MainLayout.class::isInstance)
                 .map(MainLayout.class::cast)
                 .ifPresent(MainLayout::refreshUndoRedoToolbar);

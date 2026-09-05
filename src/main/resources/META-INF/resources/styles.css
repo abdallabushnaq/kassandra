@@ -149,3 +149,19 @@ body {
     text-align: center;
     text-decoration: none;
 }
+.planning-history-pane {
+    transition: width 0.3s ease;
+}
+
+.planning-history-drawer {
+    overflow-y: auto;
+}
+
+.planning-history-operation {
+    cursor: pointer;
+}
+
+.planning-history-operation-undone {
+    color: var(--lumo-secondary-text-color);
+    opacity: 0.6;
+}

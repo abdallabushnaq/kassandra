@@ -18,20 +18,24 @@
 package de.bushnaq.abdalla.kassandra.ui;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -40,26 +44,22 @@ import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.lumo.Lumo;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
-import de.bushnaq.abdalla.kassandra.ui.component.UndoRedoToolbar;
+import de.bushnaq.abdalla.kassandra.ui.component.UndoHistoryPanel;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
 import de.bushnaq.abdalla.kassandra.ui.view.OidcProviderManagementView;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-
-import java.util.HashMap;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 
@@ -68,42 +68,54 @@ import static com.vaadin.flow.theme.lumo.LumoUtility.*;
 @Slf4j
 public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
-    public static final String ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
-    public static final String ID_LOGO                         = "main-layout-logo";
-    public static final String ID_TAB_BASE                     = "main-layout-tab-";
+    /**
+     * Stable ID for the action-history toggle.
+     */
+    public static final String           ID_ACTION_HISTORY_BUTTON        = "main-layout-action-history-button";
+    public static final String           ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
+    public static final String           ID_LOGO                         = "main-layout-logo";
+    public static final String           ID_TAB_BASE                     = "main-layout-tab-";
     //    public static final String           ID_TAB_USERS                 = "main-layout-tab-users";
-    public static final String ID_THEME_TOGGLE                 = "main-layout-theme-toggle";
-    public static final String ID_USER_MENU                    = "main-layout-user-menu";
-    public static final String ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
-    public static final String ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
-    public static final String ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
-    public static final String ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
-    public static final String ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
-    public static final String ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
-    public static final String ID_USER_MENU_MANAGE_USER_GROUPS = "main-layout-user-menu-manage-user-groups";
-    public static final String ID_USER_MENU_MANAGE_WORK_WEEKS  = "main-layout-user-menu-manage-work-weeks";
-    public static final String ID_USER_MENU_OFF_DAYS           = "main-layout-user-menu-off-days";
-    public static final String ID_USER_MENU_VIEW_PROFILE       = "main-layout-user-menu-view-profile";
-    public static final String ID_USER_MENU_WORK_WEEK          = "main-layout-user-menu-work-week";
+    public static final String           ID_THEME_TOGGLE                 = "main-layout-theme-toggle";
+    public static final String           ID_USER_MENU                    = "main-layout-user-menu";
+    public static final String           ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
+    public static final String           ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
+    public static final String           ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
+    public static final String           ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
+    public static final String           ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
+    public static final String           ID_USER_MENU_MANAGE_USERS       = "main-layout-user-menu-manage-users";
+    public static final String           ID_USER_MENU_MANAGE_USER_GROUPS = "main-layout-user-menu-manage-user-groups";
+    public static final String           ID_USER_MENU_MANAGE_WORK_WEEKS  = "main-layout-user-menu-manage-work-weeks";
+    public static final String           ID_USER_MENU_OFF_DAYS           = "main-layout-user-menu-off-days";
+    public static final String           ID_USER_MENU_VIEW_PROFILE       = "main-layout-user-menu-view-profile";
+    public static final String           ID_USER_MENU_WORK_WEEK          = "main-layout-user-menu-work-week";
+    private final       Collection<UUID> activeProductIds                = new LinkedHashSet<>();
     AuthenticationContext authenticationContext;
-    private final Div                                  breadcrumbContainer;
+    private final Div               breadcrumbContainer;
     @Getter
-    private final Breadcrumbs                          breadcrumbs               = new Breadcrumbs();
-    private       Image                                logoImage;
-    private final Map<Tab, String>                     tabToPathMap              = new HashMap<>();
-    private       Tabs                                 tabs;
-    private final ThemeSessionState                    themeSessionState;
-    private final UndoRedoToolbar                      undoRedoToolbar;
-    private final Collection<UUID>                     activeProductIds          = new LinkedHashSet<>();
-    private       boolean                              updatingTabFromNavigation = false;
-    private final UserApi                              userApi;
-    private       com.vaadin.flow.component.html.Image userAvatarImage;
+    private final Breadcrumbs       breadcrumbs               = new Breadcrumbs();
+    private       SplitLayout       contentSplit;
+    private final Div               historyPane;
+    private       boolean           historyPaneOpen;
+    private       Image             logoImage;
+    private final Map<Tab, String>  tabToPathMap              = new HashMap<>();
+    private       Tabs              tabs;
+    private final ThemeSessionState themeSessionState;
+    private final UndoHistoryPanel  undoHistoryPanel;
+    private       boolean           updatingTabFromNavigation = false;
+    private final UserApi           userApi;
+    private       Image             userAvatarImage;
 
-    MainLayout(UserApi userApi, ThemeSessionState themeSessionState, UndoRedoApi undoRedoApi) {
+    MainLayout(UserApi userApi, ThemeSessionState themeSessionState, UndoRedoApi undoRedoApi,
+               KassandraProperties kassandraProperties) {
         this.authenticationContext = authenticationContext;
         this.userApi               = userApi;
         this.themeSessionState     = themeSessionState;
-        this.undoRedoToolbar       = new UndoRedoToolbar(undoRedoApi, () -> activeProductIds, history -> UI.getCurrent().getPage().reload());
+        this.undoHistoryPanel      = new UndoHistoryPanel(undoRedoApi, () -> activeProductIds,
+                kassandraProperties.getUndoRedo().getHistoryLimit(),
+                this::closeHistoryDrawer,
+                () -> UI.getCurrent().getPage().reload());
+        this.historyPane           = createHistoryPane();
         UI.getCurrent().getPage().addJavaScript("/js/tooltips.js");
         setPrimarySection(Section.NAVBAR);
         addClassName("main-layout"); // scope CSS to this layout
@@ -154,31 +166,10 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         tabs.setSelectedTab(null);
     }
 
-    /**
-     * Sets the product whose history is controlled by the global undo/redo buttons.
-     *
-     * @param productId active product ID, or {@code null} when the current view has no product context
-     */
-    public void setActiveProductId(UUID productId) {
-        setActiveProductIds(productId == null ? java.util.List.of() : java.util.List.of(productId));
-    }
-
-    /**
-     * Sets the products whose histories are controlled by the global undo/redo buttons.
-     *
-     * @param productIds active product IDs, or an empty collection when the current view has no product context
-     */
-    public void setActiveProductIds(Collection<UUID> productIds) {
-        activeProductIds.clear();
-        activeProductIds.addAll(productIds);
-        undoRedoToolbar.refresh();
-    }
-
-    /**
-     * Reloads the global undo/redo button state.
-     */
-    public void refreshUndoRedoToolbar() {
-        undoRedoToolbar.refresh();
+    private void closeHistoryDrawer() {
+        historyPane.getStyle().set("width", "0").set("min-width", "0").set("max-width", "0");
+        contentSplit.setSplitterPosition(100);
+        historyPaneOpen = false;
     }
 
     private Div createBreadcrumbs() {
@@ -192,6 +183,19 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         );
 
         return breadcrumbContainer;
+    }
+
+    private Div createHistoryPane() {
+        VerticalLayout drawer = new VerticalLayout(undoHistoryPanel);
+        drawer.setPadding(false);
+        drawer.setSpacing(false);
+        drawer.setSizeFull();
+        drawer.addClassName("planning-history-drawer");
+        Div pane = new Div(drawer);
+        pane.setSizeFull();
+        pane.addClassName("planning-history-pane");
+        pane.getStyle().set("width", "0").set("min-width", "0").set("overflow", "hidden");
+        return pane;
     }
 
     private Image createLogo() {
@@ -229,7 +233,11 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         // Add user menu to the right
         Component userMenu = createUserMenu();
 
-        navbarLayout.add(logoLayout, tabs, undoRedoToolbar, themeToggle, userMenu);
+        Button historyButton = new Button(VaadinIcon.TIME_BACKWARD.create(), event -> toggleHistoryDrawer());
+        historyButton.setId(ID_ACTION_HISTORY_BUTTON);
+        historyButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        historyButton.setTooltipText("Undo history");
+        navbarLayout.add(logoLayout, tabs, historyButton, themeToggle, userMenu);
         navbarLayout.expand(tabs);
         return navbarLayout;
     }
@@ -404,6 +412,23 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     }
 
     /**
+     * Finds this layout from a routed view, including when an intermediate layout component is present.
+     *
+     * @param component routed view or one of its child components
+     * @return the enclosing main layout, when attached
+     */
+    public static Optional<Component> findParent(Component component) {
+        Component parent = component.getParent().orElse(null);
+        while (parent != null) {
+            if (parent instanceof MainLayout) {
+                return Optional.of(parent);
+            }
+            parent = parent.getParent().orElse(null);
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Gets the tab ID constant for a given menu title.
      * This allows proper identification of tabs in UI tests.
      *
@@ -455,6 +480,39 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         getUI().ifPresent(ui -> ui.navigate("work-week-list"));
     }
 
+    private void openHistoryDrawer() {
+        undoHistoryPanel.refresh();
+        historyPane.getStyle().set("width", "35%").set("min-width", "420px").set("max-width", "560px");
+        contentSplit.setSplitterPosition(65);
+        historyPaneOpen = true;
+    }
+
+    /**
+     * Invalidates the global planning history after a planning change.
+     */
+    public void refreshUndoRedoToolbar() {
+        undoHistoryPanel.refresh();
+    }
+
+    /**
+     * Sets the product whose history is controlled by the global undo/redo buttons.
+     *
+     * @param productId active product ID, or {@code null} when the current view has no product context
+     */
+    public void setActiveProductId(UUID productId) {
+        setActiveProductIds(productId == null ? java.util.List.of() : java.util.List.of(productId));
+    }
+
+    /**
+     * Sets the products whose histories are controlled by the global undo/redo buttons.
+     *
+     * @param productIds active product IDs, or an empty collection when the current view has no product context
+     */
+    public void setActiveProductIds(Collection<UUID> productIds) {
+        activeProductIds.clear();
+        activeProductIds.addAll(productIds);
+    }
+
     /**
      * Shows or hides the breadcrumb bar below the main navigation.
      * Called by views that do not need breadcrumb context (e.g. {@link de.bushnaq.abdalla.kassandra.ui.view.AboutView}).
@@ -464,6 +522,31 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public void setBreadcrumbsVisible(boolean visible) {
         if (breadcrumbContainer != null) {
             breadcrumbContainer.setVisible(visible);
+        }
+    }
+
+    /**
+     * Places routed view content beside the collapsible global planning-history pane.
+     *
+     * @param content routed view content
+     */
+    @Override
+    public void showRouterLayoutContent(HasElement content) {
+        Component target = content == null ? null
+                : content.getElement().getComponent()
+                .orElseThrow(() -> new IllegalArgumentException("AppLayout content must be a Component"));
+        contentSplit = new SplitLayout(target, historyPane);
+        contentSplit.setOrientation(SplitLayout.Orientation.HORIZONTAL);
+        contentSplit.setSizeFull();
+        closeHistoryDrawer();
+        setContent(contentSplit);
+    }
+
+    private void toggleHistoryDrawer() {
+        if (historyPaneOpen) {
+            closeHistoryDrawer();
+        } else {
+            openHistoryDrawer();
         }
     }
 

@@ -61,5 +61,6 @@ public class UndoRedoHistory {
         private String action;
         private String displayName;
         private String entityType;
+        private List<String> fieldChanges;
     }
 }

@@ -57,6 +57,10 @@ public class KassandraProperties {
      * Bound from {@code kassandra.lm-studio.*}.
      */
     private        LmStudio lmStudio               = new LmStudio();
+    /**
+     * Bound from {@code kassandra.undo-redo.*}.
+     */
+    private        UndoRedo undoRedo               = new UndoRedo();
 
     /**
      * Copies the bound instance values into static fields after Spring has set them.
@@ -133,6 +137,14 @@ public class KassandraProperties {
          * Timeout in seconds for API requests to LM Studio.
          */
         private int     timeoutSeconds      = 300;
+    }
+
+    @Data
+    public static class UndoRedo {
+        /**
+         * Maximum number of operations displayed in the planning history panel.
+         */
+        private int historyLimit = 5;
     }
 
     /**

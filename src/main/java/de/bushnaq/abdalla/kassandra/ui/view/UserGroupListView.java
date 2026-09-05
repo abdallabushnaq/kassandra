@@ -80,7 +80,7 @@ public class UserGroupListView extends AbstractMainGrid<UserGroup> implements Af
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        getElement().getParent().getComponent()
+        MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.getBreadcrumbs().clear();
@@ -210,4 +210,3 @@ public class UserGroupListView extends AbstractMainGrid<UserGroup> implements Af
         getUI().ifPresent(ui -> ui.push());
     }
 }
-
