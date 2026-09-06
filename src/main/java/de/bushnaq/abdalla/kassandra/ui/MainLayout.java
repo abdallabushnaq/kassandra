@@ -98,18 +98,22 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     @Getter
     private final Breadcrumbs                 breadcrumbs               = new Breadcrumbs();
     private       SplitLayout                 contentSplit;
+    private       String                      darkHeaderBackgroundUrl;
     private final Div                         historyPane;
     private       boolean                     historyPaneOpen;
+    private       String                      lightHeaderBackgroundUrl;
     private       Image                       logoImage;
+    private final HorizontalLayout            navbarLayout;
+    private final Div                         pageHeaderBackground;
+    private final ProductApi                  productApi;
     private final Map<Tab, String>            tabToPathMap              = new HashMap<>();
     private       Tabs                        tabs;
     private final ThemeSessionState           themeSessionState;
     private final UndoHistoryPanel            undoHistoryPanel;
     private       boolean                     updatingTabFromNavigation = false;
-    private final ProductApi                  productApi;
     private final UserApi                     userApi;
-    private final Map<String, Optional<User>> usersByEmail              = new HashMap<>();
     private       Image                       userAvatarImage;
+    private final Map<String, Optional<User>> usersByEmail              = new HashMap<>();
 
     MainLayout(ProductApi productApi, UserApi userApi, ThemeSessionState themeSessionState, UndoRedoApi undoRedoApi,
                KassandraProperties kassandraProperties) {
@@ -130,15 +134,33 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         addClassName("main-layout"); // scope CSS to this layout
 
         // Create main navigation bar components
-        HorizontalLayout navbarLayout = createNavBar();
-        breadcrumbContainer = createBreadcrumbs();
+        navbarLayout         = createNavBar();
+        breadcrumbContainer  = createBreadcrumbs();
+        pageHeaderBackground = createHeaderBackground();
 
         var navAndBreadcrumbs = new VerticalLayout();
         navAndBreadcrumbs.setPadding(false);
         navAndBreadcrumbs.setSpacing(false);
         navAndBreadcrumbs.setMargin(false);
+        navAndBreadcrumbs.getStyle()
+                .set("position", "relative")
+                .set("overflow", "visible")
+                .set("background-color", "transparent");
 
-        navAndBreadcrumbs.add(navbarLayout, breadcrumbContainer);
+        pageHeaderBackground.getStyle()
+                .set("position", "absolute")
+                .set("z-index", "0")
+                .set("left", "0")
+                .set("top", "0")
+                .set("right", "0")
+                .set("width", "100%")
+                .set("filter", "brightness(0.72) saturate(0.75)")
+                .set("pointer-events", "none")
+                .set("border-radius", "0");
+
+        navAndBreadcrumbs.add(pageHeaderBackground, navbarLayout, breadcrumbContainer);
+        navAndBreadcrumbs.getStyle().set("position", "relative").set("z-index", "0");
+        applyTopChromeAppearance();
 
         // Add the combined layout to the navbar area
         addToNavbar(true, navAndBreadcrumbs);
@@ -149,6 +171,48 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         // Remove these lines that are causing the overflow
         this.getStyle().set("padding-left", "var(--lumo-space-xs)");
         this.getStyle().set("padding-right", "var(--lumo-space-xs)");
+    }
+
+    private void applyHeaderBackground() {
+        if (pageHeaderBackground == null) {
+            return;
+        }
+        boolean dark          = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        String  backgroundUrl = dark ? darkHeaderBackgroundUrl : lightHeaderBackgroundUrl;
+        if (backgroundUrl == null || backgroundUrl.isBlank()) {
+            pageHeaderBackground.setVisible(false);
+            pageHeaderBackground.getStyle().remove("background-image");
+            return;
+        }
+        pageHeaderBackground.setVisible(true);
+        pageHeaderBackground.getStyle().set("background-image",
+                "linear-gradient(rgba(0, 0, 0, 0.30), rgba(0, 0, 0, 0.18)), url('" + backgroundUrl + "')");
+    }
+
+    private void applyTopChromeAppearance() {
+        if (navbarLayout == null || breadcrumbContainer == null) {
+            return;
+        }
+        boolean dark            = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        String glassBackground = dark ? "rgba(15, 15, 15, 0.28)" : "rgba(255, 255, 255, 0.32)";
+        String  textColor       = dark ? "rgba(255, 255, 255, 0.96)" : "rgba(17, 17, 17, 0.92)";
+
+        navbarLayout.getStyle()
+                .set("position", "relative")
+                .set("z-index", "2")
+                .set("background-color", glassBackground)
+                .set("backdrop-filter", "blur(8px)")
+                .set("border-radius", "0")
+                .set("box-shadow", "none")
+                .set("color", textColor);
+        breadcrumbContainer.getStyle()
+                .set("position", "relative")
+                .set("z-index", "2")
+                .set("background-color", glassBackground)
+                .set("backdrop-filter", "blur(8px)")
+                .set("border-radius", "0")
+                .set("box-shadow", "none")
+                .set("color", textColor);
     }
 
     @Override
@@ -165,6 +229,20 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         } finally {
             updatingTabFromNavigation = false;
         }
+    }
+
+    private void cacheUserAvatar(String email) {
+        if (email == null) {
+            return;
+        }
+        usersByEmail.computeIfAbsent(email, key -> {
+            try {
+                return userApi.getByEmail(key);
+            } catch (Exception e) {
+                log.warn("Could not load user avatar for planning history: {}", key, e);
+                return Optional.empty();
+            }
+        });
     }
 
     /**
@@ -187,11 +265,30 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         breadcrumbContainer.addClassNames(
                 Padding.Horizontal.MEDIUM,
                 Padding.Vertical.XSMALL,
-                Width.FULL,
-                Background.CONTRAST_5
+                Width.FULL
         );
+        breadcrumbContainer.getStyle().set("background-color", "transparent");
 
         return breadcrumbContainer;
+    }
+
+    private Div createHeaderBackground() {
+        Div banner = new Div();
+        banner.addClassNames(Width.FULL);
+        banner.getStyle()
+                .set("min-height", "80px")
+                .set("max-height", "80px")
+                .set("height", "80px")
+                .set("background-repeat", "no-repeat")
+                .set("background-position", "center top")
+                .set("background-size", "cover")
+                .set("border-radius", "0")
+                .set("overflow", "hidden")
+                .set("box-sizing", "border-box")
+                .set("display", "block")
+                .set("margin-bottom", "var(--lumo-space-xs)");
+        banner.setVisible(false);
+        return banner;
     }
 
     private Div createHistoryPane() {
@@ -314,12 +411,14 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         ThemeToggle themeToggle = new ThemeToggle(themeSessionState);
         themeToggle.setId(ID_THEME_TOGGLE);
 
-        // Add click listener to update logo and user avatar when theme is toggled
+        // Add click listener to update logo, header background and user avatar when theme is toggled
         themeToggle.addClickListener(event -> {
             UI      ui          = UI.getCurrent();
             boolean isDarkTheme = ui.getElement().getThemeList().contains(Lumo.DARK);
             updateLogoBasedOnTheme(isDarkTheme);
             updateUserAvatarBasedOnTheme(isDarkTheme);
+            applyHeaderBackground();
+            applyTopChromeAppearance();
             undoHistoryPanel.refresh();
         });
 
@@ -504,6 +603,21 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         undoHistoryPanel.refresh();
     }
 
+    private String resolveProductAvatarUrl(UUID productId) {
+        Product product = activeProducts.get(productId);
+        if (product == null) {
+            return null;
+        }
+        return product.getAvatarUrl(UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK));
+    }
+
+    private String resolveUserAvatarUrl(String email) {
+        Optional<User> user = usersByEmail.get(email);
+        return user == null ? null
+                : user.map(value -> value.getAvatarUrl(UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK)))
+                .orElse(null);
+    }
+
     /**
      * Sets the product whose history is controlled by the global undo/redo buttons.
      *
@@ -546,6 +660,18 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     }
 
     /**
+     * Sets the themed hero background shown directly below the breadcrumbs.
+     *
+     * @param lightUrl URL for the light theme image, or {@code null} to clear it
+     * @param darkUrl  URL for the dark theme image, or {@code null} to clear it
+     */
+    public void setHeaderBackgroundUrls(String lightUrl, String darkUrl) {
+        lightHeaderBackgroundUrl = lightUrl;
+        darkHeaderBackgroundUrl  = darkUrl;
+        applyHeaderBackground();
+    }
+
+    /**
      * Places routed view content beside the collapsible global planning-history pane.
      *
      * @param content routed view content
@@ -558,6 +684,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         contentSplit = new SplitLayout(target, historyPane);
         contentSplit.setOrientation(SplitLayout.Orientation.HORIZONTAL);
         contentSplit.setSizeFull();
+        contentSplit.getStyle().set("position", "relative").set("z-index", "1");
         closeHistoryDrawer();
         setContent(contentSplit);
     }
@@ -604,34 +731,5 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         } catch (Exception e) {
             log.debug("Could not refresh user avatar after theme toggle: {}", e.getMessage());
         }
-    }
-
-    private String resolveProductAvatarUrl(UUID productId) {
-        Product product = activeProducts.get(productId);
-        if (product == null) {
-            return null;
-        }
-        return product.getAvatarUrl(UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK));
-    }
-
-    private String resolveUserAvatarUrl(String email) {
-        Optional<User> user = usersByEmail.get(email);
-        return user == null ? null
-                : user.map(value -> value.getAvatarUrl(UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK)))
-                .orElse(null);
-    }
-
-    private void cacheUserAvatar(String email) {
-        if (email == null) {
-            return;
-        }
-        usersByEmail.computeIfAbsent(email, key -> {
-            try {
-                return userApi.getByEmail(key);
-            } catch (Exception e) {
-                log.warn("Could not load user avatar for planning history: {}", key, e);
-                return Optional.empty();
-            }
-        });
     }
 }

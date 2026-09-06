@@ -39,6 +39,7 @@ import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
+import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import lombok.Getter;
 import tools.jackson.databind.json.JsonMapper;
@@ -126,6 +127,10 @@ public abstract class AbstractMainGrid<T> extends Main {
     public void setSmartHeaderBackgroundUrls(String lightUrl, String darkUrl) {
         lightHeaderBackgroundUrl = lightUrl;
         darkHeaderBackgroundUrl  = darkUrl;
+        MainLayout.findParent(this)
+               .filter(MainLayout.class::isInstance)
+               .map(MainLayout.class::cast)
+               .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(lightUrl, darkUrl));
         applySmartHeaderBackground(getUI()
                .map(ui -> ui.getElement().getThemeList().contains("dark"))
                .orElse(false));
@@ -629,8 +634,9 @@ public abstract class AbstractMainGrid<T> extends Main {
         if (smartHeader == null) {
             return;
         }
-        String backgroundUrl = dark ? darkHeaderBackgroundUrl : lightHeaderBackgroundUrl;
-        VaadinUtil.applyHeaderBackground(smartHeader, headerPageTitle, backgroundUrl, smartHeaderTitleLayout, lastHeaderRightLayout);
+        // The themed page background now lives in MainLayout directly, just below the breadcrumbs.
+        // Keep the smart header itself visually clean so the image can extend higher in the stack.
+        VaadinUtil.applyHeaderBackground(smartHeader, headerPageTitle, null, smartHeaderTitleLayout, lastHeaderRightLayout);
     }
 
 }
