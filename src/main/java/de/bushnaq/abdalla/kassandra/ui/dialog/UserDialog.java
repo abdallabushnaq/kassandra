@@ -708,12 +708,22 @@ public class UserDialog extends Dialog {
             avatarImage         = image.getResizedImage();
             avatarImageOriginal = image.getOriginalImage();
             avatarPrompt        = image.getPrompt();
+            negativePrompt      = image.getNegativePrompt();
             String newHash = AvatarUtil.computeHash(image.getResizedImage());
             userToSave.setLightAvatarHash(newHash);
+        }
+        if (darkAvatarImage != null) {
+            String darkHash = AvatarUtil.computeHash(darkAvatarImage);
+            userToSave.setDarkAvatarHash(darkHash);
+        } else if (avatarUpdateRequest == null) {
             // Also generate a dark default programmatically
             GeneratedImageResult darkImage = stableDiffusionService.generateDefaultDarkAvatar("user");
             darkAvatarImage         = darkImage.getResizedImage();
             darkAvatarImageOriginal = darkImage.getOriginalImage();
+            darkAvatarPrompt        = darkImage.getPrompt();
+            darkNegativePrompt      = darkImage.getNegativePrompt();
+            String darkHash = AvatarUtil.computeHash(darkAvatarImage);
+            userToSave.setDarkAvatarHash(darkHash);
         }
 
         try {

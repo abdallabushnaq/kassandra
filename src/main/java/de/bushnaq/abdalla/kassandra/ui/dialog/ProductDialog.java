@@ -522,12 +522,22 @@ public class ProductDialog extends Dialog {
             avatarImage         = image.getResizedImage();
             avatarImageOriginal = image.getOriginalImage();
             avatarPrompt        = image.getPrompt();
+            negativePrompt      = image.getNegativePrompt();
             String newHash = AvatarUtil.computeHash(image.getResizedImage());
             productToSave.setLightAvatarHash(newHash);
+        }
+        if (darkAvatarImage != null) {
+            String darkHash = AvatarUtil.computeHash(darkAvatarImage);
+            productToSave.setDarkAvatarHash(darkHash);
+        } else if (avatarUpdateRequest == null) {
             // Also generate a dark default programmatically
             GeneratedImageResult darkImage = stableDiffusionService.generateDefaultDarkAvatar("cube");
             darkAvatarImage         = darkImage.getResizedImage();
             darkAvatarImageOriginal = darkImage.getOriginalImage();
+            darkAvatarPrompt        = darkImage.getPrompt();
+            darkNegativePrompt      = darkImage.getNegativePrompt();
+            String darkHash = AvatarUtil.computeHash(darkAvatarImage);
+            productToSave.setDarkAvatarHash(darkHash);
         }
         byte[] lightHeaderImage = generatedLightHeaderImage;
         byte[] darkHeaderImage  = generatedDarkHeaderImage;

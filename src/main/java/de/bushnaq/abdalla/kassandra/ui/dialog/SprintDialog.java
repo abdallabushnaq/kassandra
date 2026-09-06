@@ -377,12 +377,22 @@ public class SprintDialog extends Dialog {
             avatarImage         = image.getResizedImage();
             avatarImageOriginal = image.getOriginalImage();
             avatarPrompt        = image.getPrompt();
+            negativePrompt      = image.getNegativePrompt();
             String newHash = AvatarUtil.computeHash(image.getResizedImage());
             sprintToSave.setLightAvatarHash(newHash);
+        }
+        if (darkAvatarImage != null) {
+            String darkHash = AvatarUtil.computeHash(darkAvatarImage);
+            sprintToSave.setDarkAvatarHash(darkHash);
+        } else if (avatarUpdateRequest == null) {
             // Also generate a dark default programmatically
             GeneratedImageResult darkImage = stableDiffusionService.generateDefaultDarkAvatar("exit");
             darkAvatarImage         = darkImage.getResizedImage();
             darkAvatarImageOriginal = darkImage.getOriginalImage();
+            darkAvatarPrompt        = darkImage.getPrompt();
+            darkNegativePrompt      = darkImage.getNegativePrompt();
+            String darkHash = AvatarUtil.computeHash(darkAvatarImage);
+            sprintToSave.setDarkAvatarHash(darkHash);
         }
         byte[] lightHeaderImage = generatedLightHeaderImage;
         byte[] darkHeaderImage  = generatedDarkHeaderImage;

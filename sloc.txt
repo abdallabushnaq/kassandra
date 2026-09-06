@@ -483,15 +483,15 @@
 | kassandra.ui.dialog                  | AvailabilityDialog.java                                      | src      |       28 |        0 |       35 |      124 |      187 |
 | kassandra.ui.dialog                  | ConfirmDialog.java                                           | src      |       17 |       21 |       20 |       63 |      121 |
 | kassandra.ui.dialog                  | DependencyDialog.java                                        | src      |       46 |       26 |       45 |      233 |      350 |
-| kassandra.ui.dialog                  | FeatureDialog.java                                           | src      |       47 |       16 |       46 |      321 |      430 |
+| kassandra.ui.dialog                  | FeatureDialog.java                                           | src      |       47 |       16 |       46 |      331 |      440 |
 | kassandra.ui.dialog                  | ImagePromptDialog.java                                       | src      |       88 |       63 |       51 |      787 |      989 |
 | kassandra.ui.dialog                  | LocationDialog.java                                          | src      |       46 |        0 |       51 |      235 |      332 |
 | kassandra.ui.dialog                  | OffDayDialog.java                                            | src      |       45 |       28 |       62 |      239 |      374 |
-| kassandra.ui.dialog                  | ProductDialog.java                                           | src      |       82 |       31 |       74 |      460 |      647 |
-| kassandra.ui.dialog                  | SprintDialog.java                                            | src      |       47 |       17 |       46 |      325 |      435 |
+| kassandra.ui.dialog                  | ProductDialog.java                                           | src      |       82 |       31 |       74 |      470 |      657 |
+| kassandra.ui.dialog                  | SprintDialog.java                                            | src      |       47 |       17 |       46 |      335 |      445 |
 | kassandra.ui.dialog                  | TaskDialog.java                                              | src      |       83 |      109 |       61 |      433 |      686 |
 | kassandra.ui.dialog                  | UndoHistoryConfirmationDialog.java                           | src      |       13 |       12 |       16 |       87 |      128 |
-| kassandra.ui.dialog                  | UserDialog.java                                              | src      |       85 |       52 |       71 |      593 |      801 |
+| kassandra.ui.dialog                  | UserDialog.java                                              | src      |       85 |       52 |       71 |      603 |      811 |
 | kassandra.ui.dialog                  | UserGroupDialog.java                                         | src      |       37 |       15 |       39 |      185 |      276 |
 | kassandra.ui.dialog                  | UserWorkWeekDialog.java                                      | src      |       23 |       13 |       19 |      125 |      180 |
 | kassandra.ui.dialog                  | VersionDialog.java                                           | src      |       26 |       22 |       25 |       99 |      172 |
@@ -690,5 +690,5 @@
 | util                                 | TaskUtil.java                                                | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 71 package(s)                        | 618 file(s)                                                  | java     |    13206 |    14050 |    17953 |    73403 |   118612 |
+| 71 package(s)                        | 618 file(s)                                                  | java     |    13206 |    14050 |    17953 |    73443 |   118652 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
