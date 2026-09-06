@@ -179,14 +179,87 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         }
         boolean dark          = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
         String  backgroundUrl = dark ? darkHeaderBackgroundUrl : lightHeaderBackgroundUrl;
+        log.info("Applying header background: theme={}, backgroundUrl={}, darkHeaderBackgroundUrl={}, lightHeaderBackgroundUrl={}",
+                dark ? "dark" : "light", backgroundUrl, darkHeaderBackgroundUrl, lightHeaderBackgroundUrl);
         if (backgroundUrl == null || backgroundUrl.isBlank()) {
             pageHeaderBackground.setVisible(false);
             pageHeaderBackground.getStyle().remove("background-image");
+            setHeaderTextColor(dark ? "rgba(255, 255, 255, 0.96)" : "rgba(17, 17, 17, 0.92)");
             return;
         }
         pageHeaderBackground.setVisible(true);
-        pageHeaderBackground.getStyle().set("background-image",
-                "linear-gradient(rgba(0, 0, 0, 0.30), rgba(0, 0, 0, 0.18)), url('" + backgroundUrl + "')");
+        pageHeaderBackground.getStyle().set("background-image", "url('" + backgroundUrl + "')");
+        updateHeaderTextColorFromImage(backgroundUrl);
+    }
+
+    private void updateHeaderTextColorFromImage(String backgroundUrl) {
+        if (navbarLayout == null || breadcrumbContainer == null || backgroundUrl == null || backgroundUrl.isBlank()) {
+            return;
+        }
+        String script = """
+                const host = this;
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function() {
+                  const canvas = document.createElement('canvas');
+                  const size = 24;
+                  canvas.width = size;
+                  canvas.height = size;
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(img, 0, 0, size, size);
+                  const data = ctx.getImageData(0, 0, size, size).data;
+                  let total = 0;
+                  let count = 0;
+                  for (let i = 0; i < data.length; i += 4) {
+                    total += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                    count++;
+                  }
+                  const brightness = total / count;
+                  const isLight = brightness > 160;
+                  const color = isLight ? 'rgba(17, 17, 17, 0.92)' : 'rgba(255, 255, 255, 0.96)';
+                  const panelColor = isLight ? 'rgba(255, 255, 255, 0.28)' : 'rgba(15, 15, 15, 0.24)';
+
+                  host.style.setProperty('--header-text-color', color);
+                  host.style.setProperty('--header-glass-background', panelColor);
+                  host.style.setProperty('--lumo-body-text-color', color);
+                  host.style.setProperty('--lumo-primary-text-color', color);
+                  host.style.setProperty('--lumo-secondary-text-color', color);
+                  host.style.setProperty('--lumo-contrast-color', color);
+                  host.style.setProperty('--lumo-primary-contrast-color', color);
+
+                  host.querySelectorAll('span, a, button, vaadin-tab, vaadin-menu-bar-button').forEach((element) => {
+                    element.style.setProperty('color', color, 'important');
+                  });
+
+                  console.log('header image brightness', {
+                    url: $0,
+                    brightness,
+                    threshold: 160,
+                    isLight,
+                    color,
+                    panelColor,
+                    theme: document.body.getAttribute('theme') || document.documentElement.getAttribute('theme'),
+                    host: host.tagName
+                  });
+                };
+                img.onerror = function(event) {
+                  console.warn('header image failed to load', { url: $0, event });
+                };
+                img.src = $0;
+                """;
+        navbarLayout.getElement().executeJs(script, backgroundUrl);
+        breadcrumbContainer.getElement().executeJs(script, backgroundUrl);
+    }
+
+    private void setHeaderTextColor(String color) {
+        if (navbarLayout != null) {
+            navbarLayout.getStyle().set("color", color);
+            navbarLayout.getElement().executeJs("this.style.setProperty('--header-text-color', $0);", color);
+        }
+        if (breadcrumbContainer != null) {
+            breadcrumbContainer.getStyle().set("color", color);
+            breadcrumbContainer.getElement().executeJs("this.style.setProperty('--header-text-color', $0);", color);
+        }
     }
 
     private void applyTopChromeAppearance() {
@@ -194,25 +267,35 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             return;
         }
         boolean dark            = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
-        String glassBackground = dark ? "rgba(15, 15, 15, 0.28)" : "rgba(255, 255, 255, 0.32)";
+        String  glassBackground = dark ? "rgba(15, 15, 15, 0.24)" : "rgba(255, 255, 255, 0.28)";
         String  textColor       = dark ? "rgba(255, 255, 255, 0.96)" : "rgba(17, 17, 17, 0.92)";
 
         navbarLayout.getStyle()
                 .set("position", "relative")
                 .set("z-index", "2")
-                .set("background-color", glassBackground)
+                .set("background-color", "var(--header-glass-background, " + glassBackground + ")")
                 .set("backdrop-filter", "blur(8px)")
                 .set("border-radius", "0")
                 .set("box-shadow", "none")
-                .set("color", textColor);
+                .set("color", "var(--header-text-color, " + textColor + ")")
+                .set("--lumo-body-text-color", "var(--header-text-color, " + textColor + ")")
+                .set("--lumo-primary-text-color", "var(--header-text-color, " + textColor + ")")
+                .set("--lumo-secondary-text-color", "var(--header-text-color, " + textColor + ")")
+                .set("--lumo-contrast-color", "var(--header-text-color, " + textColor + ")")
+                .set("--lumo-primary-contrast-color", "var(--header-text-color, " + textColor + ")");
         breadcrumbContainer.getStyle()
                 .set("position", "relative")
                 .set("z-index", "2")
-                .set("background-color", glassBackground)
+                .set("background-color", "var(--header-glass-background, " + glassBackground + ")")
                 .set("backdrop-filter", "blur(8px)")
                 .set("border-radius", "0")
                 .set("box-shadow", "none")
-                .set("color", textColor);
+                .set("color", "var(--header-text-color, " + textColor + ")")
+                .set("--lumo-body-text-color", "var(--header-text-color, " + textColor + ")")
+                .set("--lumo-primary-text-color", "var(--header-text-color, " + textColor + ")")
+                .set("--lumo-secondary-text-color", "var(--header-text-color, " + textColor + ")")
+                .set("--lumo-contrast-color", "var(--header-text-color, " + textColor + ")")
+                .set("--lumo-primary-contrast-color", "var(--header-text-color, " + textColor + ")");
     }
 
     @Override
