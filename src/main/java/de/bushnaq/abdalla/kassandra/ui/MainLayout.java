@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui;
 
+import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.UI;
@@ -99,6 +100,8 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final Breadcrumbs                 breadcrumbs               = new Breadcrumbs();
     private       SplitLayout                 contentSplit;
     private       String                      darkHeaderBackgroundUrl;
+    private       String                      headerImageContrastTheme;
+    private       Button                      historyButton;
     private final Div                         historyPane;
     private       boolean                     historyPaneOpen;
     private       String                      lightHeaderBackgroundUrl;
@@ -109,10 +112,12 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final Map<Tab, String>            tabToPathMap              = new HashMap<>();
     private       Tabs                        tabs;
     private final ThemeSessionState           themeSessionState;
+    private       ThemeToggle                 themeToggle;
     private final UndoHistoryPanel            undoHistoryPanel;
     private       boolean                     updatingTabFromNavigation = false;
     private final UserApi                     userApi;
     private       Image                       userAvatarImage;
+    private       MenuBar                     userMenu;
     private final Map<String, Optional<User>> usersByEmail              = new HashMap<>();
 
     MainLayout(ProductApi productApi, UserApi userApi, ThemeSessionState themeSessionState, UndoRedoApi undoRedoApi,
@@ -179,87 +184,18 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         }
         boolean dark          = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
         String  backgroundUrl = dark ? darkHeaderBackgroundUrl : lightHeaderBackgroundUrl;
+        headerImageContrastTheme = null;
         log.info("Applying header background: theme={}, backgroundUrl={}, darkHeaderBackgroundUrl={}, lightHeaderBackgroundUrl={}",
                 dark ? "dark" : "light", backgroundUrl, darkHeaderBackgroundUrl, lightHeaderBackgroundUrl);
         if (backgroundUrl == null || backgroundUrl.isBlank()) {
             pageHeaderBackground.setVisible(false);
             pageHeaderBackground.getStyle().remove("background-image");
-            setHeaderTextColor(dark ? "rgba(255, 255, 255, 0.96)" : "rgba(17, 17, 17, 0.92)");
+            setHeaderTextColor(dark ? "dark" : "light");
             return;
         }
         pageHeaderBackground.setVisible(true);
         pageHeaderBackground.getStyle().set("background-image", "url('" + backgroundUrl + "')");
         updateHeaderTextColorFromImage(backgroundUrl);
-    }
-
-    private void updateHeaderTextColorFromImage(String backgroundUrl) {
-        if (navbarLayout == null || breadcrumbContainer == null || backgroundUrl == null || backgroundUrl.isBlank()) {
-            return;
-        }
-        String script = """
-                const host = this;
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = function() {
-                  const canvas = document.createElement('canvas');
-                  const size = 24;
-                  canvas.width = size;
-                  canvas.height = size;
-                  const ctx = canvas.getContext('2d');
-                  ctx.drawImage(img, 0, 0, size, size);
-                  const data = ctx.getImageData(0, 0, size, size).data;
-                  let total = 0;
-                  let count = 0;
-                  for (let i = 0; i < data.length; i += 4) {
-                    total += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-                    count++;
-                  }
-                  const brightness = total / count;
-                  const isLight = brightness > 160;
-                  const color = isLight ? 'rgba(17, 17, 17, 0.92)' : 'rgba(255, 255, 255, 0.96)';
-                  const panelColor = isLight ? 'rgba(255, 255, 255, 0.28)' : 'rgba(15, 15, 15, 0.24)';
-
-                  host.style.setProperty('--header-text-color', color);
-                  host.style.setProperty('--header-glass-background', panelColor);
-                  host.style.setProperty('--lumo-body-text-color', color);
-                  host.style.setProperty('--lumo-primary-text-color', color);
-                  host.style.setProperty('--lumo-secondary-text-color', color);
-                  host.style.setProperty('--lumo-contrast-color', color);
-                  host.style.setProperty('--lumo-primary-contrast-color', color);
-
-                  host.querySelectorAll('span, a, button, vaadin-tab, vaadin-menu-bar-button').forEach((element) => {
-                    element.style.setProperty('color', color, 'important');
-                  });
-
-                  console.log('header image brightness', {
-                    url: $0,
-                    brightness,
-                    threshold: 160,
-                    isLight,
-                    color,
-                    panelColor,
-                    theme: document.body.getAttribute('theme') || document.documentElement.getAttribute('theme'),
-                    host: host.tagName
-                  });
-                };
-                img.onerror = function(event) {
-                  console.warn('header image failed to load', { url: $0, event });
-                };
-                img.src = $0;
-                """;
-        navbarLayout.getElement().executeJs(script, backgroundUrl);
-        breadcrumbContainer.getElement().executeJs(script, backgroundUrl);
-    }
-
-    private void setHeaderTextColor(String color) {
-        if (navbarLayout != null) {
-            navbarLayout.getStyle().set("color", color);
-            navbarLayout.getElement().executeJs("this.style.setProperty('--header-text-color', $0);", color);
-        }
-        if (breadcrumbContainer != null) {
-            breadcrumbContainer.getStyle().set("color", color);
-            breadcrumbContainer.getElement().executeJs("this.style.setProperty('--header-text-color', $0);", color);
-        }
     }
 
     private void applyTopChromeAppearance() {
@@ -422,10 +358,15 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         // Add user menu to the right
         Component userMenu = createUserMenu();
 
-        Button historyButton = new Button(VaadinIcon.TIME_BACKWARD.create(), event -> toggleHistoryDrawer());
+        historyButton = new Button(VaadinIcon.TIME_BACKWARD.create(), event -> toggleHistoryDrawer());
         historyButton.setId(ID_ACTION_HISTORY_BUTTON);
         historyButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
         historyButton.setTooltipText("Undo history");
+        historyButton.getStyle()
+                .set("background-color", "transparent")
+                .set("border-radius", "0")
+                .set("box-shadow", "none")
+                .set("backdrop-filter", "none");
         navbarLayout.add(logoLayout, tabs, historyButton, themeToggle, userMenu);
         navbarLayout.expand(tabs);
         return navbarLayout;
@@ -491,8 +432,13 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
      * @return the theme toggle button
      */
     private ThemeToggle createThemeToggle() {
-        ThemeToggle themeToggle = new ThemeToggle(themeSessionState);
+        themeToggle = new ThemeToggle(themeSessionState);
         themeToggle.setId(ID_THEME_TOGGLE);
+        themeToggle.getStyle()
+                .set("background-color", "transparent")
+                .set("border-radius", "0")
+                .set("box-shadow", "none")
+                .set("backdrop-filter", "none");
 
         // Add click listener to update logo, header background and user avatar when theme is toggled
         themeToggle.addClickListener(event -> {
@@ -527,7 +473,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         Component avatarComponent;
         if (user != null) {
             // User has a custom avatar image - use URL-based loading
-            userAvatarImage = new com.vaadin.flow.component.html.Image();
+            userAvatarImage = new Image();
             userAvatarImage.setWidth("24px");
             userAvatarImage.setHeight("24px");
             userAvatarImage.getStyle()
@@ -548,10 +494,15 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             avatarComponent = avatar;
         }
 
-        var userMenu = new MenuBar();
+        userMenu = new MenuBar();
         userMenu.addThemeVariants(MenuBarVariant.LUMO_TERTIARY_INLINE);
         userMenu.addClassNames(Margin.Right.MEDIUM);
         userMenu.setId(ID_USER_MENU);
+        userMenu.getStyle()
+                .set("background-color", "transparent")
+                .set("border-radius", "0")
+                .set("box-shadow", "none")
+                .set("backdrop-filter", "none");
 
         var userMenuItem = userMenu.addItem(avatarComponent);
         userMenuItem.add(userEmail);
@@ -686,6 +637,13 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         undoHistoryPanel.refresh();
     }
 
+    private boolean resolveHeaderContrastTheme(boolean defaultIsDarkTheme) {
+        if (headerImageContrastTheme == null) {
+            return defaultIsDarkTheme;
+        }
+        return "dark".equalsIgnoreCase(headerImageContrastTheme);
+    }
+
     private String resolveProductAvatarUrl(UUID productId) {
         Product product = activeProducts.get(productId);
         if (product == null) {
@@ -755,6 +713,39 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     }
 
     /**
+     * Stores the computed contrast theme for the current header image so the logo and user avatar can
+     * follow the same light/dark decision used for the header chrome.
+     *
+     * @param contrastTheme the resolved header contrast theme, or {@code null} to clear the cached value
+     */
+    @ClientCallable
+    public void setHeaderImageContrastTheme(String contrastTheme) {
+        headerImageContrastTheme = contrastTheme == null || contrastTheme.isBlank() ? null
+                : contrastTheme.trim().toLowerCase(Locale.ROOT);
+        boolean isDarkTheme = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        updateLogoBasedOnTheme(isDarkTheme);
+        updateUserAvatarBasedOnTheme(isDarkTheme);
+    }
+
+    private void setHeaderTextColor(String themeName) {
+        if (navbarLayout != null) {
+            navbarLayout.getElement().setAttribute("theme", themeName);
+        }
+        if (breadcrumbContainer != null) {
+            breadcrumbContainer.getElement().setAttribute("theme", themeName);
+        }
+        if (themeToggle != null) {
+            themeToggle.getElement().setAttribute("theme", themeName);
+        }
+        if (historyButton != null) {
+            historyButton.getElement().setAttribute("theme", themeName);
+        }
+        if (userMenu != null) {
+            userMenu.getElement().setAttribute("theme", themeName);
+        }
+    }
+
+    /**
      * Places routed view content beside the collapsible global planning-history pane.
      *
      * @param content routed view content
@@ -780,14 +771,94 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         }
     }
 
+    private void updateHeaderTextColorFromImage(String backgroundUrl) {
+        if (getElement() == null || backgroundUrl == null || backgroundUrl.isBlank()) {
+            return;
+        }
+        String script = """
+                const host = this;
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function() {
+                  const canvas = document.createElement('canvas');
+                  const size = 24;
+                  canvas.width = size;
+                  canvas.height = size;
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(img, 0, 0, size, size);
+                  const data = ctx.getImageData(0, 0, size, size).data;
+                  let total = 0;
+                  let count = 0;
+                  for (let i = 0; i < data.length; i += 4) {
+                    total += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                    count++;
+                  }
+                  const brightness = total / count;
+                  const isDarkHeader = brightness <= 160;
+                  const contrastTheme = isDarkHeader ? 'dark' : 'light';
+                  const panelColor = isDarkHeader ? 'rgba(15, 15, 15, 0.24)' : 'rgba(255, 255, 255, 0.28)';
+                
+                  host.style.setProperty('--header-glass-background', panelColor);
+                
+                  const themeTargets = [
+                    document.getElementById('main-layout-logo'),
+                    document.getElementById('main-layout-theme-toggle'),
+                    document.getElementById('main-layout-action-history-button'),
+                    document.getElementById('main-layout-user-menu'),
+                    document.getElementById('main-layout-breadcrumbs')
+                
+                  ];
+                
+                  themeTargets.forEach((element) => {
+                    if (!element) {
+                      return;
+                    }
+                    element.setAttribute('theme', contrastTheme);
+                    element.style.setProperty('background-color', 'transparent', 'important');
+                  });
+                
+                  const tabs = host.querySelectorAll('vaadin-tab');
+                  tabs.forEach((element) => {
+                    element.setAttribute('theme', contrastTheme);
+                  });
+                
+                  const logo = document.getElementById('main-layout-logo');
+                  if (logo) {
+                    logo.src = isDarkHeader ? '/ui/images/logo-dark.svg' : '/ui/images/logo.svg';
+                  }
+                
+                  if (host.$server && host.$server.setHeaderImageContrastTheme) {
+                    host.$server.setHeaderImageContrastTheme(contrastTheme);
+                  }
+                
+                  console.log('header image brightness', {
+                    url: $0,
+                    brightness,
+                    threshold: 160,
+                    isDarkHeader,
+                    contrastTheme,
+                    panelColor,
+                    bodyTheme: document.body.getAttribute('theme') || document.documentElement.getAttribute('theme'),
+                    host: host.tagName
+                  });
+                };
+                img.onerror = function(event) {
+                  console.warn('header image failed to load', { url: $0, event });
+                };
+                img.src = $0;
+                """;
+        getElement().executeJs(script, backgroundUrl);
+    }
+
     /**
      * Updates the logo source based on the theme
      *
      * @param isDarkTheme true if dark theme is active, false otherwise
      */
     private void updateLogoBasedOnTheme(boolean isDarkTheme) {
+        boolean effectiveDarkTheme = resolveHeaderContrastTheme(isDarkTheme);
         if (logoImage != null) {
-            if (isDarkTheme) {
+            if (effectiveDarkTheme) {
                 logoImage.setSrc("images/logo-dark.svg");
             } else {
                 logoImage.setSrc("images/logo.svg");
@@ -810,7 +881,8 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             return;
         }
         try {
-            userApi.getByEmail(userEmail).ifPresent(u -> userAvatarImage.setSrc(u.getAvatarUrl(isDarkTheme)));
+            final boolean effectiveDarkTheme = resolveHeaderContrastTheme(isDarkTheme);
+            userApi.getByEmail(userEmail).ifPresent(u -> userAvatarImage.setSrc(u.getAvatarUrl(effectiveDarkTheme)));
         } catch (Exception e) {
             log.debug("Could not refresh user avatar after theme toggle: {}", e.getMessage());
         }

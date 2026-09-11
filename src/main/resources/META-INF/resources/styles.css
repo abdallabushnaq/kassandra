@@ -38,8 +38,37 @@ body {
 
 
 /* Dark theme specific styles */
+.navbar-custom {
+    background-color: transparent;
+}
+
 [theme~="dark"] .navbar-custom {
-    background-color: var(--lumo-base-color);
+    background-color: transparent;
+}
+
+[theme~="dark"] .navbar-custom vaadin-tab[selected] {
+    color: var(--lumo-primary-text-color);
+}
+
+[theme~="dark"] .navbar-custom vaadin-tab:not([selected]) {
+    color: var(--lumo-secondary-text-color);
+}
+
+[theme~="light"] .navbar-custom vaadin-tab[selected] {
+    color: var(--lumo-primary-text-color);
+}
+
+[theme~="light"] .navbar-custom vaadin-tab:not([selected]) {
+    color: var(--lumo-secondary-text-color);
+}
+
+[theme~="dark"] .navbar-custom vaadin-menu-bar,
+[theme~="dark"] .navbar-custom vaadin-button,
+[theme~="dark"] .navbar-custom button,
+[theme~="light"] .navbar-custom vaadin-menu-bar,
+[theme~="light"] .navbar-custom vaadin-button,
+[theme~="light"] .navbar-custom button {
+    color: var(--lumo-primary-text-color);
 }
 
 /*******************/

@@ -452,7 +452,7 @@
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.test.util                  | OllamaTestHelper.java                                        | src      |       29 |       21 |       20 |      109 |      179 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.ui.component               | AbstractMainGrid.java                                        | src      |       44 |       73 |      274 |      245 |      636 |
+| kassandra.ui.component               | AbstractMainGrid.java                                        | src      |       44 |       73 |      276 |      249 |      642 |
 | kassandra.ui.component               | AvailabilityCalendarComponent.java                           | src      |       67 |       70 |       55 |      302 |      494 |
 | kassandra.ui.component               | BacklogDragDropHandler.java                                  | src      |       34 |       30 |       40 |      158 |      262 |
 | kassandra.ui.component               | BacklogStoryCard.java                                        | src      |       42 |       17 |       30 |      213 |      302 |
@@ -595,7 +595,7 @@
 | kassandra.ui                         | GenerateScreenshotsIT.java                                   | src      |       81 |       65 |      141 |      511 |      798 |
 | kassandra.ui                         | HtmlColor.java                                               | src      |        6 |        0 |       36 |       22 |       64 |
 | kassandra.ui                         | MainErrorHandler.java                                        | src      |        5 |        0 |       16 |       28 |       49 |
-| kassandra.ui                         | MainLayout.java                                              | src      |       82 |       60 |       45 |      450 |      637 |
+| kassandra.ui                         | MainLayout.java                                              | src      |       96 |       66 |       45 |      653 |      860 |
 | kassandra.ui                         | SprintStatus.java                                            | src      |        2 |        0 |       16 |        4 |       22 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.util                       | AbstractGanttTestUtil.java                                   | src      |       56 |       27 |       65 |      518 |      666 |
@@ -690,5 +690,5 @@
 | util                                 | TaskUtil.java                                                | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 71 package(s)                        | 618 file(s)                                                  | java     |    13206 |    14050 |    17953 |    73443 |   118652 |
+| 71 package(s)                        | 618 file(s)                                                  | java     |    13220 |    14056 |    17955 |    73650 |   118881 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
