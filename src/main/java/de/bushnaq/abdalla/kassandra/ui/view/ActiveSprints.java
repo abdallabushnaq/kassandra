@@ -48,7 +48,6 @@ import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.MergedScrumBoard;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
-import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
@@ -99,16 +98,16 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private final       SprintApi                   sprintApi;
     private             MultiSelectComboBox<Sprint> sprintSelector;
     private final       TaskApi                     taskApi;
+    private             Registration                themeChangedRegistration;
     private final       UserApi                     userApi;
-    private final       VersionApi                  versionApi;
     private final       Map<UUID, User>             userMap                   = new HashMap<>();
     private             MultiSelectComboBox<User>   userSelector;
     private             List<User>                  users                     = new ArrayList<>();
+    private final       VersionApi                  versionApi;
     private final       WorklogApi                  worklogApi;
-    private             Registration                themeChangedRegistration;
 
     public ActiveSprints(FeatureApi featureApi, SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi,
-            VersionApi versionApi) {
+                         VersionApi versionApi) {
         this.featureApi = featureApi;
         this.sprintApi  = sprintApi;
         this.taskApi    = taskApi;
@@ -593,20 +592,29 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         }
     }
 
-    private void updateUndoRedoProductScope() {
-        List<Sprint> displayedSprints = selectedSprints.isEmpty() ? allSprints : new ArrayList<>(selectedSprints);
-        Set<UUID> productIds = displayedSprints.stream()
-                .map(Sprint::getFeatureId)
-                .map(featureMap::get)
-                .filter(Objects::nonNull)
-                .map(Feature::getVersionId)
-                .map(versionApi::getById)
-                .map(Version::getProductId)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        MainLayout.findParent(this)
-                .filter(MainLayout.class::isInstance)
-                .map(MainLayout.class::cast)
-                .ifPresent(mainLayout -> mainLayout.setActiveProductIds(productIds));
+    /**
+     * Refreshes the header image when the active UI theme changes.
+     *
+     * @param attachEvent the attach event
+     */
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderForSelection());
+    }
+
+    /**
+     * Removes the theme-change listener.
+     *
+     * @param detachEvent the detach event
+     */
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
     }
 
     private void refreshUndoRedoToolbar() {
@@ -631,7 +639,11 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             Sprint single = selectedSprints.iterator().next();
             pageTitle.setText(single.getName());
             boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
-            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, single.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
+            MainLayout.findParent(this)
+                    .filter(MainLayout.class::isInstance)
+                    .map(MainLayout.class::cast)
+                    .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(single.getHeaderUrl(false), single.getHeaderUrl(true)));
+//            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, single.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
             if (single.getLightAvatarHash() != null && !single.getLightAvatarHash().isEmpty()) {
                 headerAvatar.setSrc(single.getAvatarUrl(isDark));
                 headerAvatar.setVisible(true);
@@ -641,33 +653,28 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         } else {
             pageTitle.setText("Active Sprints");
             headerAvatar.setVisible(false);
-            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, null, headerTitleLayout, headerControlsLayout);
+            MainLayout.findParent(this)
+                    .filter(MainLayout.class::isInstance)
+                    .map(MainLayout.class::cast)
+                    .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(null, null));
+//            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, null, headerTitleLayout, headerControlsLayout);
         }
     }
 
-    /**
-     * Refreshes the header image when the active UI theme changes.
-     *
-     * @param attachEvent the attach event
-     */
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        themeChangedRegistration = ComponentUtil.addListener(attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderForSelection());
-    }
-
-    /**
-     * Removes the theme-change listener.
-     *
-     * @param detachEvent the detach event
-     */
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        if (themeChangedRegistration != null) {
-            themeChangedRegistration.remove();
-            themeChangedRegistration = null;
-        }
-        super.onDetach(detachEvent);
+    private void updateUndoRedoProductScope() {
+        List<Sprint> displayedSprints = selectedSprints.isEmpty() ? allSprints : new ArrayList<>(selectedSprints);
+        Set<UUID> productIds = displayedSprints.stream()
+                .map(Sprint::getFeatureId)
+                .map(featureMap::get)
+                .filter(Objects::nonNull)
+                .map(Feature::getVersionId)
+                .map(versionApi::getById)
+                .map(Version::getProductId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        MainLayout.findParent(this)
+                .filter(MainLayout.class::isInstance)
+                .map(MainLayout.class::cast)
+                .ifPresent(mainLayout -> mainLayout.setActiveProductIds(productIds));
     }
 
     /**

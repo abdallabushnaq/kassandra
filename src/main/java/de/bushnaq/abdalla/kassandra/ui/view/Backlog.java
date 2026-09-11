@@ -51,7 +51,6 @@ import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.CrossGridDragDropCoordinator;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
-import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -117,8 +116,8 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
      */
     private             Image                        headerAvatar;
     private             HorizontalLayout             headerControlsLayout;
-    private             HorizontalLayout             headerTitleLayout;
     private final       HorizontalLayout             headerLayout;
+    private             HorizontalLayout             headerTitleLayout;
     private             boolean                      isRestoringFromUrl         = false;
     private final       JsonMapper                   jsonMapper;
     private static      UUID                         lastShownSprintId          = null;  // Static to persist across navigation
@@ -1519,21 +1518,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         exitEditMode();
     }
 
-    private void updateUndoRedoProductContext() {
-        if (sprint == null) {
-            return;
-        }
-        if (productId == null) {
-            Feature feature = featureApi.getById(sprint.getFeatureId());
-            Version version = versionApi.getById(feature.getVersionId());
-            productId = version.getProductId();
-        }
-        MainLayout.findParent(this)
-                .filter(MainLayout.class::isInstance)
-                .map(MainLayout.class::cast)
-                .ifPresent(mainLayout -> mainLayout.setActiveProductId(productId));
-    }
-
     /**
      * Toggle expansion/collapse of all stories in both grids.
      * Updates the expandInitially setting and forces immediate expansion/collapse.
@@ -1562,7 +1546,11 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         if (sprint != null) {
             pageTitle.setText(sprint.getName());
             boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
-            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, sprint.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
+            MainLayout.findParent(this)
+                    .filter(MainLayout.class::isInstance)
+                    .map(MainLayout.class::cast)
+                    .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(sprint.getHeaderUrl(false), sprint.getHeaderUrl(true)));
+//            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, sprint.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
             if (sprint.getLightAvatarHash() != null && !sprint.getLightAvatarHash().isEmpty()) {
                 headerAvatar.setSrc(sprint.getAvatarUrl(isDark));
                 headerAvatar.setVisible(true);
@@ -1572,7 +1560,11 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         } else {
             pageTitle.setText("Backlog");
             headerAvatar.setVisible(false);
-            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, null, headerTitleLayout, headerControlsLayout);
+            MainLayout.findParent(this)
+                    .filter(MainLayout.class::isInstance)
+                    .map(MainLayout.class::cast)
+                    .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(null, null));
+//            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, null, headerTitleLayout, headerControlsLayout);
         }
     }
 
@@ -1608,6 +1600,21 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                     selectedSprint = s;
                     sprintSelector.setValue(s);
                 });
+    }
+
+    private void updateUndoRedoProductContext() {
+        if (sprint == null) {
+            return;
+        }
+        if (productId == null) {
+            Feature feature = featureApi.getById(sprint.getFeatureId());
+            Version version = versionApi.getById(feature.getVersionId());
+            productId = version.getProductId();
+        }
+        MainLayout.findParent(this)
+                .filter(MainLayout.class::isInstance)
+                .map(MainLayout.class::cast)
+                .ifPresent(mainLayout -> mainLayout.setActiveProductId(productId));
     }
 
     /**

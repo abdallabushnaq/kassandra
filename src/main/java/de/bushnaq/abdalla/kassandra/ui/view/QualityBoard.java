@@ -51,7 +51,6 @@ import de.bushnaq.abdalla.kassandra.service.SprintExportService;
 import de.bushnaq.abdalla.kassandra.ui.HtmlColor;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
-import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import de.bushnaq.abdalla.util.date.ReportUtil;
@@ -805,7 +804,11 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         if (sprint != null) {
             pageTitle.setText(sprint.getName());
             boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
-            VaadinUtil.applyHeaderBackground(header, pageTitle, sprint.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
+            MainLayout.findParent(this)
+                    .filter(MainLayout.class::isInstance)
+                    .map(MainLayout.class::cast)
+                    .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(sprint.getHeaderUrl(false), sprint.getHeaderUrl(true)));
+//            VaadinUtil.applyHeaderBackground(header, pageTitle, sprint.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
             if (sprint.getLightAvatarHash() != null && !sprint.getLightAvatarHash().isEmpty()) {
                 headerAvatar.setSrc(sprint.getAvatarUrl(isDark));
                 headerAvatar.setVisible(true);
@@ -815,7 +818,11 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         } else {
             pageTitle.setText("Sprint Quality Board");
             headerAvatar.setVisible(false);
-            VaadinUtil.applyHeaderBackground(header, pageTitle, null, headerTitleLayout, headerControlsLayout);
+            MainLayout.findParent(this)
+                    .filter(MainLayout.class::isInstance)
+                    .map(MainLayout.class::cast)
+                    .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(null, null));
+//            VaadinUtil.applyHeaderBackground(header, pageTitle, null, headerTitleLayout, headerControlsLayout);
         }
     }
 

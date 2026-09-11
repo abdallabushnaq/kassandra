@@ -210,7 +210,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
                 .set("position", "relative")
                 .set("z-index", "2")
                 .set("background-color", "var(--header-glass-background, " + glassBackground + ")")
-                .set("backdrop-filter", "blur(8px)")
+//                .set("backdrop-filter", "blur(8px)")
                 .set("border-radius", "0")
                 .set("box-shadow", "none")
                 .set("color", "var(--header-text-color, " + textColor + ")")
@@ -223,7 +223,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
                 .set("position", "relative")
                 .set("z-index", "2")
                 .set("background-color", "var(--header-glass-background, " + glassBackground + ")")
-                .set("backdrop-filter", "blur(8px)")
+//                .set("backdrop-filter", "blur(8px)")
                 .set("border-radius", "0")
                 .set("box-shadow", "none")
                 .set("color", "var(--header-text-color, " + textColor + ")")
@@ -776,76 +776,76 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             return;
         }
         String script = """
-                const host = this;
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = function() {
-                  const canvas = document.createElement('canvas');
-                  const size = 24;
-                  canvas.width = size;
-                  canvas.height = size;
-                  const ctx = canvas.getContext('2d');
-                  ctx.drawImage(img, 0, 0, size, size);
-                  const data = ctx.getImageData(0, 0, size, size).data;
-                  let total = 0;
-                  let count = 0;
-                  for (let i = 0; i < data.length; i += 4) {
-                    total += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-                    count++;
-                  }
-                  const brightness = total / count;
-                  const isDarkHeader = brightness <= 160;
-                  const contrastTheme = isDarkHeader ? 'dark' : 'light';
-                  const panelColor = isDarkHeader ? 'rgba(15, 15, 15, 0.24)' : 'rgba(255, 255, 255, 0.28)';
+                                const host = this;
+                                const img = new Image();
+                                img.crossOrigin = 'anonymous';
+                                img.onload = function() {
+                                  const canvas = document.createElement('canvas');
+                                  const size = 24;
+                                  canvas.width = size;
+                                  canvas.height = size;
+                                  const ctx = canvas.getContext('2d');
+                                  ctx.drawImage(img, 0, 0, size, size);
+                                  const data = ctx.getImageData(0, 0, size, size).data;
+                                  let total = 0;
+                                  let count = 0;
+                                  for (let i = 0; i < data.length; i += 4) {
+                                    total += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                                    count++;
+                                  }
+                                  const brightness = total / count;
+                                  const isDarkHeader = brightness <= 160;
+                                  const contrastTheme = isDarkHeader ? 'dark' : 'light';
+                                  const panelColor = isDarkHeader ? 'rgba(15, 15, 15, 0.24)' : 'rgba(255, 255, 255, 0.28)';
                 
-                  host.style.setProperty('--header-glass-background', panelColor);
+                                  host.style.setProperty('--header-glass-background', panelColor);
                 
-                  const themeTargets = [
-                    document.getElementById('main-layout-logo'),
-                    document.getElementById('main-layout-theme-toggle'),
-                    document.getElementById('main-layout-action-history-button'),
-                    document.getElementById('main-layout-user-menu'),
-                    document.getElementById('main-layout-breadcrumbs')
+                                  const themeTargets = [
+                                    document.getElementById('main-layout-logo'),
+                                    document.getElementById('main-layout-theme-toggle'),
+                                    document.getElementById('main-layout-action-history-button'),
+                                    document.getElementById('main-layout-user-menu'),
+                                    document.getElementById('main-layout-breadcrumbs')
                 
-                  ];
+                                  ];
                 
-                  themeTargets.forEach((element) => {
-                    if (!element) {
-                      return;
-                    }
-                    element.setAttribute('theme', contrastTheme);
-                    element.style.setProperty('background-color', 'transparent', 'important');
-                  });
+                                  themeTargets.forEach((element) => {
+                                    if (!element) {
+                                      return;
+                                    }
+                                    element.setAttribute('theme', contrastTheme);
+                                    element.style.setProperty('background-color', 'transparent', 'important');
+                                  });
                 
-                  const tabs = host.querySelectorAll('vaadin-tab');
-                  tabs.forEach((element) => {
-                    element.setAttribute('theme', contrastTheme);
-                  });
+                                  const tabs = host.querySelectorAll('vaadin-tab');
+                                  tabs.forEach((element) => {
+                                    element.setAttribute('theme', contrastTheme);
+                                  });
                 
-                  const logo = document.getElementById('main-layout-logo');
-                  if (logo) {
-                    logo.src = isDarkHeader ? '/ui/images/logo-dark.svg' : '/ui/images/logo.svg';
-                  }
+                                  const logo = document.getElementById('main-layout-logo');
+                                  if (logo) {
+                                    logo.src = isDarkHeader ? '/ui/images/logo-dark.svg' : '/ui/images/logo.svg';
+                                  }
                 
-                  if (host.$server && host.$server.setHeaderImageContrastTheme) {
-                    host.$server.setHeaderImageContrastTheme(contrastTheme);
-                  }
+                                  if (host.$server && host.$server.setHeaderImageContrastTheme) {
+                                    host.$server.setHeaderImageContrastTheme(contrastTheme);
+                                  }
                 
-                  console.log('header image brightness', {
-                    url: $0,
-                    brightness,
-                    threshold: 160,
-                    isDarkHeader,
-                    contrastTheme,
-                    panelColor,
-                    bodyTheme: document.body.getAttribute('theme') || document.documentElement.getAttribute('theme'),
-                    host: host.tagName
-                  });
-                };
-                img.onerror = function(event) {
-                  console.warn('header image failed to load', { url: $0, event });
-                };
-                img.src = $0;
+                                  console.log('header image brightness', {
+                                    url: $0,
+                                    brightness,
+                                    threshold: 160,
+                                    isDarkHeader,
+                                    contrastTheme,
+                                    panelColor,
+                                    bodyTheme: document.body.getAttribute('theme') || document.documentElement.getAttribute('theme'),
+                                    host: host.tagName
+                                  });
+                                };
+                                img.onerror = function(event) {
+                                  console.warn('header image failed to load', { url: $0, event });
+                                };
+                                img.src = $0;
                 """;
         getElement().executeJs(script, backgroundUrl);
     }
