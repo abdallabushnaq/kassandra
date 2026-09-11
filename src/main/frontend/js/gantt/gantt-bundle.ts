@@ -32,7 +32,10 @@ function createChart(
         minDayWidth: MIN_DW,
         maxDayWidth: MAX_DW,
         dayWidthZoomStep: ZOOM_STEP,
-        getContainerHeight: () => Math.max(200, Math.min(chart.chartHeight, container.clientHeight || 600)),
+        getContainerHeight: () => {
+            const naturalHeight = Number.isFinite(chart.chartHeight) ? chart.chartHeight : 0;
+            return Math.max(200, naturalHeight || container.clientHeight || 600);
+        },
         initialScrollOffset: (dayWidth, containerWidth) => {
             const todayIdx = DateUtils.calculateDayIndex(renderer.currentDate!, renderer.chartStart!);
             const visibleDays = containerWidth / dayWidth;
