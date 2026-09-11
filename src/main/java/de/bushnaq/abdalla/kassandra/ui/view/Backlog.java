@@ -212,10 +212,11 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             ganttChartContainer.getStyle()
                     .set("display", "block")
                     .set("width", "100%")
-                    .set("overflow", "hidden")
+                    .set("overflow-x", "auto")
+                    .set("overflow-y", "visible")
                     .set("height", "auto")
-                    .set("min-height", "0")
-                    .set("max-height", "600px")
+                    .set("max-height", "none")
+                    .set("min-height", "200px")
                     .set("margin-top", "var(--lumo-space-xs)");
 
             // Create backlog grid (always shown at bottom)
@@ -264,7 +265,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             contentLayout.setSpacing(false);
             contentLayout.setMargin(false);
             contentLayout.setWidthFull();
-            contentLayout.setHeightFull();
+            // Let the page grow with the chart instead of clipping it to the viewport height.
             contentLayout.getStyle().set("min-height", "0");
             contentLayout.add(headerLayout, ganttChartContainer, gridPanelWrapper, backlogGridPanel);
 
