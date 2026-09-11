@@ -84,7 +84,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
 
     @BeforeAll
     static void beforeAll() {
-        StableDiffusionService.setEnabled(true);
+        StableDiffusionService.setEnabled(false);
     }
 
     private static synchronized KeycloakContainer getKeycloakContainer() {
@@ -150,6 +150,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     @BeforeEach
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void setupTestUser() {
+        StableDiffusionService.setEnabled(false);
         LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
         peg.addUser("Christopher Paul", TEST_USER_EMAIL, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f, null);
         var provider = oidcProviderService.createProvider(
@@ -168,6 +169,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
 
     @Override
     protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase) throws Exception {
+        StableDiffusionService.setEnabled(true);
         super.generateProductsIfNeeded(testInfo, randomCase);
         refreshRestoredKeycloakProvider();
     }
