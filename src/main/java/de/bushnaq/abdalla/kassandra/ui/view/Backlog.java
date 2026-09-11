@@ -32,6 +32,7 @@ import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
@@ -163,10 +164,13 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         this.jsonMapper = jsonMapper;
 
         try {
-            // Set width full but not height - let content determine height for scrolling
+            // Give the page a dedicated scrolling area for the tall sprint/backlog content.
             setWidthFull();
-            // Make view background transparent, so AppLayout's gray background is visible
-            getStyle().set("background-color", "transparent");
+            setHeightFull();
+            getStyle()
+                    .set("background-color", "transparent")
+                    .set("overflow", "hidden")
+                    .set("min-height", "0");
 
             // Apply tree-grid-wrapper styling to the main view
             setClassName("tree-grid-wrapper");
@@ -206,10 +210,12 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             ganttChartContainer = new Div();
             ganttChartContainer.setId(GANTT_CHART_CONTAINER_ID);
             ganttChartContainer.getStyle()
+                    .set("display", "block")
                     .set("width", "100%")
-                    .set("overflow-x", "hidden")
-                    .set("min-height", "120px")
-//                    .set("max-height", "600px")
+                    .set("overflow", "hidden")
+                    .set("height", "auto")
+                    .set("min-height", "0")
+                    .set("max-height", "600px")
                     .set("margin-top", "var(--lumo-space-xs)");
 
             // Create backlog grid (always shown at bottom)
@@ -253,8 +259,21 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             grid.setDragDropCoordinator(dragDropCoordinator);
             backlogGrid.setDragDropCoordinator(dragDropCoordinator);
 
-            // Add components in order: header, sprint grid, gantt chart, backlog grid
-            add(headerLayout, ganttChartContainer, gridPanelWrapper, backlogGridPanel);
+            VerticalLayout contentLayout = new VerticalLayout();
+            contentLayout.setPadding(false);
+            contentLayout.setSpacing(false);
+            contentLayout.setMargin(false);
+            contentLayout.setWidthFull();
+            contentLayout.setHeightFull();
+            contentLayout.getStyle().set("min-height", "0");
+            contentLayout.add(headerLayout, ganttChartContainer, gridPanelWrapper, backlogGridPanel);
+
+            Scroller scroller = new Scroller(contentLayout);
+            scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
+            scroller.setWidthFull();
+            scroller.setHeightFull();
+            scroller.getStyle().set("min-height", "0");
+            add(scroller);
 
             String userEmail = getUserEmail();
             try {
