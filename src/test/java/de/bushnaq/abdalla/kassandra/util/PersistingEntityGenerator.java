@@ -372,33 +372,10 @@ public class PersistingEntityGenerator {
         });
     }
 
-    private boolean hasMissingAvatar(User user) {
-        return user.getLightAvatarHash() == null || user.getLightAvatarHash().isBlank()
-                || user.getDarkAvatarHash() == null || user.getDarkAvatarHash().isBlank();
-    }
-
-    private User ensureUserAvatar(User user, String name) {
-        if (!hasMissingAvatar(user)) {
-            return user;
-        }
-
-        long                 startTime          = System.currentTimeMillis();
-        String               basePrompt         = User.getDefaultLightAvatarPrompt(name);
-        String               darkBasePrompt     = User.getDefaultDarkAvatarPrompt(name);
-        String               negativePrompt     = User.getDefaultLightAvatarNegativePrompt();
-        String               darkNegativePrompt = User.getDefaultDarkAvatarNegativePrompt();
-        GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "user");
-        GeneratedImageResult darkImage          = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "user");
-
-        user.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
-        user.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
-        userApi.updateAvatarFull(user.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), basePrompt,
-                darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
-                lightImage.getNegativePrompt(), darkImage.getNegativePrompt());
-        userApi.update(user);
-        System.out.println("Generated missing avatar for existing user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
-        return user;
-    }
+//    private boolean hasMissingAvatar(User user) {
+//        return user.getLightAvatarHash() == null || user.getLightAvatarHash().isBlank()
+//                || user.getDarkAvatarHash() == null || user.getDarkAvatarHash().isBlank();
+//    }
 
     public User addUser(String name, String email, String roles, String country, String state, LocalDate start, Color color, float availability, WorkWeek workWeek) {
         // Check if user already exists by email
@@ -529,6 +506,29 @@ public class PersistingEntityGenerator {
             sprint.addTask(saved);
         }
         return saved;
+    }
+
+    private User ensureUserAvatar(User user, String name) {
+//        if (!hasMissingAvatar(user)) {
+//            return user;
+//        }
+
+        long                 startTime          = System.currentTimeMillis();
+        String               basePrompt         = User.getDefaultLightAvatarPrompt(name);
+        String               darkBasePrompt     = User.getDefaultDarkAvatarPrompt(name);
+        String               negativePrompt     = User.getDefaultLightAvatarNegativePrompt();
+        String               darkNegativePrompt = User.getDefaultDarkAvatarNegativePrompt();
+        GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "user");
+        GeneratedImageResult darkImage          = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "user");
+
+        user.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
+        user.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
+        userApi.updateAvatarFull(user.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), basePrompt,
+                darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
+                lightImage.getNegativePrompt(), darkImage.getNegativePrompt());
+        userApi.update(user);
+        System.out.println("Generated missing avatar for existing user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+        return user;
     }
 
     /**
