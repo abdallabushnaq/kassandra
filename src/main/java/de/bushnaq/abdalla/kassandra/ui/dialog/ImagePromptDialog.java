@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -52,28 +53,34 @@ import java.io.ByteArrayOutputStream;
  */
 public class ImagePromptDialog extends Dialog {
 
-    public static final String                 DARK_THEMED_BACKGROUND_COLOR  = "#111111";
+    public static final String                 DARK_THEMED_BACKGROUND_COLOR    = "#111111";
     // Button ID constants for Selenium tests
-    public static final String                 ID_ACCEPT_BUTTON              = "accept-image-button";
-    public static final String                 ID_CANCEL_BUTTON              = "cancel-image-button";
-    public static final String                 ID_DARK_HEADER_PROMPT_FIELD   = "dark-header-prompt-field";
-    public static final String                 ID_DARK_HEADER_UPDATE_BUTTON  = "dark-update-header-button";
-    public static final String                 ID_DARK_NEGATIVE_PROMPT_FIELD = "dark-negative-prompt-field";
-    public static final String                 ID_DARK_PROMPT_FIELD          = "dark-prompt-field";
-    public static final String                 ID_DARK_UPDATE_BUTTON         = "dark-update-image-button";
-    public static final String                 ID_DOWNLOAD_BUTTON            = "download-image-button";
-    public static final String                 ID_GENERATE_BUTTON            = "generate-image-button";
-    public static final String                 ID_IMAGE_PROMPT_FIELD         = "image-prompt-field";
-    public static final String                 ID_LIGHT_HEADER_PROMPT_FIELD  = "light-header-prompt-field";
-    public static final String                 ID_LIGHT_HEADER_UPDATE_BUTTON = "light-update-header-button";
-    public static final String                 ID_NEGATIVE_PROMPT_FIELD      = "negative-prompt-field";
-    public static final String                 ID_UPDATE_BUTTON              = "update-image-button";
-    public static final String                 ID_UPLOAD_BUTTON              = "upload-image-button";
+    public static final String                 ID_ACCEPT_BUTTON                = "accept-image-button";
+    public static final String                 ID_CANCEL_BUTTON                = "cancel-image-button";
+    public static final String                 ID_DARK_DOWNLOAD_BUTTON         = "dark-download-image-button";
+    public static final String                 ID_DARK_HEADER_DOWNLOAD_BUTTON  = "dark-header-download-image-button";
+    public static final String                 ID_DARK_HEADER_PROMPT_FIELD     = "dark-header-prompt-field";
+    public static final String                 ID_DARK_HEADER_UPDATE_BUTTON    = "dark-update-header-button";
+    public static final String                 ID_DARK_HEADER_UPLOAD_BUTTON    = "dark-header-upload-image-button";
+    public static final String                 ID_DARK_NEGATIVE_PROMPT_FIELD   = "dark-negative-prompt-field";
+    public static final String                 ID_DARK_PROMPT_FIELD            = "dark-prompt-field";
+    public static final String                 ID_DARK_UPDATE_BUTTON           = "dark-update-image-button";
+    public static final String                 ID_DARK_UPLOAD_BUTTON           = "dark-upload-image-button";
+    public static final String                 ID_GENERATE_BUTTON              = "generate-image-button";
+    public static final String                 ID_LIGHT_DOWNLOAD_BUTTON        = "light-download-image-button";
+    public static final String                 ID_LIGHT_HEADER_DOWNLOAD_BUTTON = "light-header-download-image-button";
+    public static final String                 ID_LIGHT_HEADER_PROMPT_FIELD    = "light-header-prompt-field";
+    public static final String                 ID_LIGHT_HEADER_UPDATE_BUTTON   = "light-update-header-button";
+    public static final String                 ID_LIGHT_HEADER_UPLOAD_BUTTON   = "light-header-upload-image-button";
+    public static final String                 ID_LIGHT_NEGATIVE_PROMPT_FIELD  = "light-negative-prompt-field";
+    public static final String                 ID_LIGHT_PROMPT_FIELD           = "light-prompt-field";
+    public static final String                 ID_LIGHT_UPDATE_BUTTON          = "light-update-image-button";
+    public static final String                 ID_LIGHT_UPLOAD_BUTTON          = "light-upload-image-button";
     /**
      * Element ID of the dialog itself, used by Selenium to locate the overlay.
      */
-    public static final String                 IMAGE_PROMPT_DIALOG           = "image-prompt-dialog";
-    public static final String                 LIGHT_THEMED_BACKGROUND_COLOR = "#f5f5f5";
+    public static final String                 IMAGE_PROMPT_DIALOG             = "image-prompt-dialog";
+    public static final String                 LIGHT_THEMED_BACKGROUND_COLOR   = "#f5f5f5";
     private final       Button                 acceptButton;
     private final       AcceptCallback         acceptCallback;
     private final       AvatarService          avatarService;
@@ -81,29 +88,33 @@ public class ImagePromptDialog extends Dialog {
     private             Div                    darkHeaderPreviewContainer;
     private             TextArea               darkHeaderPromptField;
     private             Button                 darkHeaderUpdateButton;
+    private             Upload                 darkHeaderUploadButton;
     private final       String                 darkIconName;
     private             TextArea               darkNegativePromptField;
     private             Div                    darkPreviewContainer;
     private             TextArea               darkPromptField;
     private             Button                 darkUpdateButton;
+    private             Upload                 darkUploadButton;
     private final       Button                 generateButton;
     private             byte[]                 generatedDarkHeaderImage;
     private volatile    byte[]                 generatedDarkImage;
     private volatile    byte[]                 generatedDarkImageOriginal;
     private             byte[]                 generatedLightHeaderImage;
-    private volatile    long                   generatedLightHeaderSeed      = -1L;
+    private volatile    long                   generatedLightHeaderSeed        = -1L;
     private             byte[]                 generatedLightImage;
     private             byte[]                 generatedLightImageOriginal;
-    private volatile    long                   generatedLightImageSeed       = -1L;
+    private volatile    long                   generatedLightImageSeed         = -1L;
     private final       HeaderAcceptCallback   headerAcceptCallback;
     private             byte[]                 initialImage;
     private             Div                    lightHeaderPreviewContainer;
     private             TextArea               lightHeaderPromptField;
     private             Button                 lightHeaderUpdateButton;
+    private             Upload                 lightHeaderUploadButton;
     private             TextArea               lightNegativePromptField;
     private             Div                    lightPreviewContainer;
     private             TextArea               lightPromptField;
     private             Button                 lightUpdateButton;
+    private             Upload                 lightUploadButton;
     private             HorizontalLayout       previewRow;
     private final       StableDiffusionService stableDiffusionService;
 
@@ -177,15 +188,6 @@ public class ImagePromptDialog extends Dialog {
             dialogLayout.add(warningDiv);
         }
 
-        MemoryBuffer uploadBuffer = new MemoryBuffer();
-        Upload       upload       = new Upload(uploadBuffer);
-        upload.setId(ID_UPLOAD_BUTTON);
-        upload.setAcceptedFileTypes(".png");
-        upload.setMaxFiles(1);
-        upload.setDropAllowed(true);
-        upload.setAutoUpload(true);
-        upload.getElement().setAttribute("title", "Upload PNG");
-
         generateButton = new Button("Generate", new Icon(VaadinIcon.MAGIC));
         generateButton.setId(ID_GENERATE_BUTTON);
         generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
@@ -209,55 +211,6 @@ public class ImagePromptDialog extends Dialog {
         cancelButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         cancelButton.addClickListener(e -> close());
 
-        upload.addSucceededListener(event -> {
-            try {
-                BufferedImage inputImage = ImageIO.read(uploadBuffer.getInputStream());
-                if (inputImage == null) {
-                    Notification.show("Invalid PNG file.", 3000, Notification.Position.MIDDLE);
-                    return;
-                }
-                BufferedImage resized = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D    g2d     = resized.createGraphics();
-                g2d.drawImage(inputImage, 0, 0, 256, 256, null);
-                g2d.dispose();
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(resized, "png", baos);
-                baos.flush();
-                byte[] imageBytes = baos.toByteArray();
-                baos.close();
-                generatedLightImage = imageBytes;
-                displayGeneratedImage(lightPreviewContainer, imageBytes);
-                acceptButton.setEnabled(true);
-                lightUpdateButton.setEnabled(true);
-                Notification.show("Image uploaded and resized.", 2000, Notification.Position.BOTTOM_END);
-                generateDarkVariant();
-                if (headerAcceptCallback != null) {
-                    generateLightHeader();
-                }
-            } catch (Exception ex) {
-                Notification.show("Failed to process image: " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
-            }
-        });
-
-        Anchor downloadAnchor = new Anchor();
-        Button downloadButton = new Button(new Icon(VaadinIcon.DOWNLOAD));
-        downloadButton.setId(ID_DOWNLOAD_BUTTON);
-        downloadButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        downloadButton.getElement().setAttribute("title", "Download PNG");
-        downloadAnchor.add(downloadButton);
-        downloadAnchor.getElement().setAttribute("download", true);
-        downloadButton.addClickListener(e -> {
-            byte[] imageToDownload = generatedLightImage != null ? generatedLightImage : initialImage;
-            if (imageToDownload != null && imageToDownload.length > 0) {
-                StreamResource resource = new StreamResource("ai-image.png", () -> new ByteArrayInputStream(imageToDownload));
-                resource.setContentType("image/png");
-                resource.setCacheTime(0);
-                downloadAnchor.setHref(resource);
-            } else {
-                Notification.show("No image to download.", 2000, Notification.Position.MIDDLE);
-            }
-        });
-
         if (previewRow == null) {
             previewRow = new HorizontalLayout();
             previewRow.setId("preview-row");
@@ -266,11 +219,11 @@ public class ImagePromptDialog extends Dialog {
 //            previewRow.setMargin(true);
             previewRow.setWidthFull();
         }
-        createLightElements(defaultPrompt, resolvedNegativePrompt, defaultLightHeaderPrompt, initialImage, initialLightHeader, upload, downloadAnchor);
-        previewRow.add(createLightColumn(upload, downloadAnchor));
+        createLightElements(defaultPrompt, resolvedNegativePrompt, defaultLightHeaderPrompt, initialImage, initialLightHeader);
+        previewRow.add(createLightColumn());
 
-        createDarkElements(resolvedDarkPrompt, resolvedDarkNegativePrompt, defaultDarkHeaderPrompt, initialDarkImage, initialDarkHeader, upload, downloadAnchor);
-        previewRow.add(createDarkColumn(upload, downloadAnchor));
+        createDarkElements(resolvedDarkPrompt, resolvedDarkNegativePrompt, defaultDarkHeaderPrompt, initialDarkImage, initialDarkHeader);
+        previewRow.add(createDarkColumn());
 
         dialogLayout.add(previewRow);
 
@@ -319,8 +272,8 @@ public class ImagePromptDialog extends Dialog {
         }
     }
 
-    private HorizontalLayout createActionRow(Upload upload, Anchor downloadAnchor, Button generateButton) {
-        HorizontalLayout actionRow = new HorizontalLayout(upload, downloadAnchor, generateButton);
+    private HorizontalLayout createActionRow(Button generateButton) {
+        HorizontalLayout actionRow = new HorizontalLayout(generateButton);
         actionRow.setId("action-row");
         actionRow.setPadding(false);
         actionRow.setSpacing(true);
@@ -330,16 +283,21 @@ public class ImagePromptDialog extends Dialog {
         return actionRow;
     }
 
-    private VerticalLayout createDarkColumn(Upload upload, Anchor downloadAnchor) {
-        HorizontalLayout titleRow = createTitleRow("Dark Avatar", darkUpdateButton);
+    private VerticalLayout createDarkColumn() {
+        HorizontalLayout titleRow = createTitleRow("Dark Avatar",
+                createImageDownloadButton(ID_DARK_DOWNLOAD_BUTTON, "Download dark avatar", "dark-avatar.png",
+                        () -> generatedDarkImage != null ? generatedDarkImage : generatedDarkImageOriginal),
+                darkUploadButton, darkUpdateButton);
 
         VerticalLayout column = new VerticalLayout(titleRow, darkPreviewContainer, darkPromptField, darkNegativePromptField);
         column.setId("dark-column");
         if (headerAcceptCallback != null) {
-            HorizontalLayout headerTitleRow = createTitleRow("Dark Header", darkHeaderUpdateButton);
+            HorizontalLayout headerTitleRow = createTitleRow("Dark Header",
+                    createImageDownloadButton(ID_DARK_HEADER_DOWNLOAD_BUTTON, "Download dark header", "dark-header.png",
+                            () -> generatedDarkHeaderImage), darkHeaderUploadButton, darkHeaderUpdateButton);
             column.add(headerTitleRow, darkHeaderPreviewContainer, darkHeaderPromptField);
         }
-        column.add(createActionRow(upload, downloadAnchor, generateButton));
+        column.add(createActionRow(generateButton));
         column.setPadding(false);
         column.setSpacing(false);
         column.setMargin(true);
@@ -352,8 +310,14 @@ public class ImagePromptDialog extends Dialog {
     }
 
     private void createDarkElements(String defaultDarkPrompt, String defaultDarkNegativePrompt, String defaultDarkHeaderPrompt,
-                                    byte[] initialDarkImage, byte[] initialDarkHeader, Upload upload, Anchor downloadAnchor) {
-        //avatar
+                                    byte[] initialDarkImage, byte[] initialDarkHeader) {
+        darkUploadButton     = createImageUpload(ID_DARK_UPLOAD_BUTTON, "Upload dark avatar", imageBytes -> {
+            generatedDarkImage         = imageBytes;
+            generatedDarkImageOriginal = imageBytes;
+            displayInContainer(darkPreviewContainer, imageBytes);
+            darkUpdateButton.setEnabled(true);
+            Notification.show("Dark avatar uploaded.", 2000, Notification.Position.BOTTOM_END);
+        });
         darkUpdateButton     = createHeaderUpdateButton(ID_DARK_UPDATE_BUTTON, "Regenerate dark avatar", this::generateDarkVariant);
         darkPreviewContainer = createPreviewContainer(DARK_THEMED_BACKGROUND_COLOR, "272px");
         if (initialDarkImage != null && initialDarkImage.length > 0) {
@@ -366,9 +330,15 @@ public class ImagePromptDialog extends Dialog {
             darkPlaceholder.getStyle().set("color", "#888").set("text-align", "center");
             darkPreviewContainer.add(darkPlaceholder);
         }
-        darkPromptField         = createPromptField("Dark Avatar Prompt", ID_DARK_PROMPT_FIELD, "Describe the image you want to generate. Be specific about style, colors, and composition", defaultDarkPrompt);
-        darkNegativePromptField = createPromptField("Dark Avatar Negative Prompt", ID_DARK_NEGATIVE_PROMPT_FIELD, "Things to avoid in the dark avatar", defaultDarkNegativePrompt);
-        //header
+        darkPromptField            = createPromptField("Dark Avatar Prompt", ID_DARK_PROMPT_FIELD,
+                "Describe the image you want to generate. Be specific about style, colors, and composition", defaultDarkPrompt);
+        darkNegativePromptField    = createPromptField("Dark Avatar Negative Prompt", ID_DARK_NEGATIVE_PROMPT_FIELD,
+                "Things to avoid in the dark avatar", defaultDarkNegativePrompt);
+        darkHeaderUploadButton     = createImageUpload(ID_DARK_HEADER_UPLOAD_BUTTON, "Upload dark header", imageBytes -> {
+            generatedDarkHeaderImage = imageBytes;
+            displayHeader(darkHeaderPreviewContainer, imageBytes);
+            Notification.show("Dark header uploaded.", 2000, Notification.Position.BOTTOM_END);
+        });
         darkHeaderUpdateButton     = createHeaderUpdateButton(ID_DARK_HEADER_UPDATE_BUTTON, "Regenerate dark header", this::generateDarkHeader);
         darkHeaderPreviewContainer = createPreviewContainer(DARK_THEMED_BACKGROUND_COLOR, "48px");
         if (initialDarkHeader != null && initialDarkHeader.length > 0) {
@@ -377,7 +347,8 @@ public class ImagePromptDialog extends Dialog {
         } else {
             darkHeaderPreviewContainer.setText("Generated dark header will appear here");
         }
-        darkHeaderPromptField = createPromptField("Dark Header Prompt", ID_DARK_HEADER_PROMPT_FIELD, "Describe the dark-theme header image", defaultDarkHeaderPrompt);
+        darkHeaderPromptField = createPromptField("Dark Header Prompt", ID_DARK_HEADER_PROMPT_FIELD,
+                "Describe the dark-theme header image", defaultDarkHeaderPrompt);
     }
 
     private GeneratedImageResult createHeaderResult(byte[] image, String prompt) {
@@ -393,16 +364,76 @@ public class ImagePromptDialog extends Dialog {
         return button;
     }
 
-    private VerticalLayout createLightColumn(Upload upload, Anchor downloadAnchor) {
-        HorizontalLayout titleRow = createTitleRow("Light Avatar", lightUpdateButton);
+    private Anchor createImageDownloadButton(String id, String title, String fileName, java.util.function.Supplier<byte[]> imageSupplier) {
+        Anchor downloadAnchor = new Anchor();
+        Button downloadButton = new Button(new Icon(VaadinIcon.DOWNLOAD));
+        downloadButton.setId(id);
+        downloadButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        downloadButton.getElement().setAttribute("title", title);
+        downloadAnchor.add(downloadButton);
+        downloadAnchor.getElement().setAttribute("download", true);
+        downloadButton.addClickListener(e -> {
+            byte[] imageToDownload = imageSupplier.get();
+            if (imageToDownload != null && imageToDownload.length > 0) {
+                StreamResource resource = new StreamResource(fileName, () -> new ByteArrayInputStream(imageToDownload));
+                resource.setContentType("image/png");
+                resource.setCacheTime(0);
+                downloadAnchor.setHref(resource);
+            } else {
+                Notification.show("No image to download.", 2000, Notification.Position.MIDDLE);
+            }
+        });
+        return downloadAnchor;
+    }
+
+    private Upload createImageUpload(String id, String title, java.util.function.Consumer<byte[]> imageConsumer) {
+        MemoryBuffer uploadBuffer = new MemoryBuffer();
+        Upload       upload       = new Upload(uploadBuffer);
+        upload.setId(id);
+        upload.setAcceptedFileTypes(".png");
+        upload.setMaxFiles(1);
+        upload.setDropAllowed(true);
+        upload.setAutoUpload(true);
+        upload.getElement().setAttribute("title", title);
+        upload.addSucceededListener(event -> {
+            try {
+                BufferedImage inputImage = ImageIO.read(uploadBuffer.getInputStream());
+                if (inputImage == null) {
+                    Notification.show("Invalid PNG file.", 3000, Notification.Position.MIDDLE);
+                    return;
+                }
+                BufferedImage resized = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D    g2d     = resized.createGraphics();
+                g2d.drawImage(inputImage, 0, 0, 256, 256, null);
+                g2d.dispose();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(resized, "png", baos);
+                baos.flush();
+                byte[] imageBytes = baos.toByteArray();
+                baos.close();
+                imageConsumer.accept(imageBytes);
+            } catch (Exception ex) {
+                Notification.show("Failed to process image: " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
+            }
+        });
+        return upload;
+    }
+
+    private VerticalLayout createLightColumn() {
+        HorizontalLayout titleRow = createTitleRow("Light Avatar",
+                createImageDownloadButton(ID_LIGHT_DOWNLOAD_BUTTON, "Download light avatar", "light-avatar.png",
+                        () -> generatedLightImage != null ? generatedLightImage : initialImage),
+                lightUploadButton, lightUpdateButton);
 
         VerticalLayout column = new VerticalLayout(titleRow, lightPreviewContainer, lightPromptField, lightNegativePromptField);
         column.setId("light-column");
         if (headerAcceptCallback != null) {
-            HorizontalLayout headerTitleRow = createTitleRow("Light Header", lightHeaderUpdateButton);
+            HorizontalLayout headerTitleRow = createTitleRow("Light Header",
+                    createImageDownloadButton(ID_LIGHT_HEADER_DOWNLOAD_BUTTON, "Download light header", "light-header.png",
+                            () -> generatedLightHeaderImage), lightHeaderUploadButton, lightHeaderUpdateButton);
             column.add(headerTitleRow, lightHeaderPreviewContainer, lightHeaderPromptField);
         }
-        column.add(createActionRow(upload, downloadAnchor, generateButton));
+        column.add(createActionRow(generateButton));
         column.setPadding(false);
         column.setSpacing(false);
         column.setMargin(true);
@@ -414,9 +445,20 @@ public class ImagePromptDialog extends Dialog {
         return column;
     }
 
-    private void createLightElements(String defaultPrompt, String defaultNegativePrompt, String defaultLightHeaderPrompt, byte[] initialLightImage, byte[] initialLightHeader, Upload upload, Anchor downloadAnchor) {
-        //avatar
-        lightUpdateButton     = createHeaderUpdateButton(ID_UPDATE_BUTTON, "Regenerate light avatar", this::updateImage);
+    private void createLightElements(String defaultPrompt, String defaultNegativePrompt, String defaultLightHeaderPrompt, byte[] initialLightImage, byte[] initialLightHeader) {
+        lightUploadButton     = createImageUpload(ID_LIGHT_UPLOAD_BUTTON, "Upload light avatar", imageBytes -> {
+            generatedLightImage         = imageBytes;
+            generatedLightImageOriginal = imageBytes;
+            displayGeneratedImage(lightPreviewContainer, imageBytes);
+            acceptButton.setEnabled(true);
+            lightUpdateButton.setEnabled(true);
+            generateDarkVariant();
+            if (headerAcceptCallback != null) {
+                generateLightHeader();
+            }
+            Notification.show("Light avatar uploaded.", 2000, Notification.Position.BOTTOM_END);
+        });
+        lightUpdateButton     = createHeaderUpdateButton(ID_LIGHT_UPDATE_BUTTON, "Regenerate light avatar", this::updateImage);
         lightPreviewContainer = createPreviewContainer(LIGHT_THEMED_BACKGROUND_COLOR, "272px");
         if (initialLightImage != null && initialLightImage.length > 0) {
             displayGeneratedImage(lightPreviewContainer, initialLightImage);
@@ -426,11 +468,17 @@ public class ImagePromptDialog extends Dialog {
             placeholderText.getStyle().set("color", "var(--lumo-contrast-50pct)");
             lightPreviewContainer.add(placeholderText);
         }
-        lightPromptField         = createPromptField("Image Description", ID_IMAGE_PROMPT_FIELD, "Describe the image you want to generate. Be specific about style, colors, and composition", defaultPrompt != null && !defaultPrompt.isEmpty() ? defaultPrompt : null);
-        lightNegativePromptField = createPromptField("Negative Prompt", ID_NEGATIVE_PROMPT_FIELD, "Things to avoid in the generated image", defaultNegativePrompt);
+        lightPromptField         = createPromptField("Image Description", ID_LIGHT_PROMPT_FIELD,
+                "Describe the image you want to generate. Be specific about style, colors, and composition",
+                defaultPrompt != null && !defaultPrompt.isEmpty() ? defaultPrompt : null);
+        lightNegativePromptField = createPromptField("Negative Prompt", ID_LIGHT_NEGATIVE_PROMPT_FIELD,
+                "Things to avoid in the generated image", defaultNegativePrompt);
 
-
-        //header
+        lightHeaderUploadButton     = createImageUpload(ID_LIGHT_HEADER_UPLOAD_BUTTON, "Upload light header", imageBytes -> {
+            generatedLightHeaderImage = imageBytes;
+            displayHeader(lightHeaderPreviewContainer, imageBytes);
+            Notification.show("Light header uploaded.", 2000, Notification.Position.BOTTOM_END);
+        });
         lightHeaderUpdateButton     = createHeaderUpdateButton(ID_LIGHT_HEADER_UPDATE_BUTTON, "Regenerate light header", this::generateLightHeader);
         lightHeaderPreviewContainer = createPreviewContainer(LIGHT_THEMED_BACKGROUND_COLOR, "48px");
         if (initialLightHeader != null && initialLightHeader.length > 0) {
@@ -439,7 +487,8 @@ public class ImagePromptDialog extends Dialog {
         } else {
             lightHeaderPreviewContainer.setText("Generated light header will appear here");
         }
-        lightHeaderPromptField = createPromptField("Light Header Prompt", ID_LIGHT_HEADER_PROMPT_FIELD, "Describe the light-theme header image", defaultLightHeaderPrompt);
+        lightHeaderPromptField = createPromptField("Light Header Prompt", ID_LIGHT_HEADER_PROMPT_FIELD,
+                "Describe the light-theme header image", defaultLightHeaderPrompt);
     }
 
     private Div createPreviewContainer(String backgroundColor, String height) {
@@ -471,12 +520,18 @@ public class ImagePromptDialog extends Dialog {
         return field;
     }
 
-    private HorizontalLayout createTitleRow(String titleText, Button updateButton) {
+    private HorizontalLayout createTitleRow(String titleText, Component... actions) {
         Span             label    = new Span(titleText);
-        HorizontalLayout titleRow = new HorizontalLayout(label, updateButton);
+        HorizontalLayout titleRow = new HorizontalLayout(label);
+        for (Component action : actions) {
+            if (action != null) {
+                titleRow.add(action);
+            }
+        }
         titleRow.setAlignItems(FlexComponent.Alignment.CENTER);
         titleRow.setWidthFull();
         titleRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        titleRow.setSpacing(true);
         return titleRow;
     }
 

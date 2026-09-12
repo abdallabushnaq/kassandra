@@ -137,16 +137,16 @@ public class UserProfileIntroductionVideo04IT extends AbstractIntroductionVideo 
         // Enter Light Prompt
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD);
+        seleniumHandler.highlight(ImagePromptDialog.ID_LIGHT_PROMPT_FIELD);
         paul.narrate(NORMAL, "Let me enter a description for my avatar. I'll describe a professional portrait in a minimalist style.");
-        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Professional avatar portrait of Christopher Wilson, software developer, simple white background");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_LIGHT_PROMPT_FIELD, "Professional avatar portrait of Christopher Wilson, software developer, simple white background");
         seleniumHandler.wait(500);
 
         //---------------------------------------------------------------------------------------
         // Explain Negative Prompt
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(ImagePromptDialog.ID_NEGATIVE_PROMPT_FIELD);
+        seleniumHandler.highlight(ImagePromptDialog.ID_LIGHT_NEGATIVE_PROMPT_FIELD);
         paul.narrate(NORMAL, "Below the main prompt is the negative prompt. Here you list things you want the AI to avoid — such as blurry backgrounds, extra limbs, or text. You can leave it empty most of the time.");
 
         //---------------------------------------------------------------------------------------
@@ -184,13 +184,13 @@ public class UserProfileIntroductionVideo04IT extends AbstractIntroductionVideo 
         // Demonstrate Light Update Button
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(ImagePromptDialog.ID_UPDATE_BUTTON);
+        seleniumHandler.highlight(ImagePromptDialog.ID_LIGHT_UPDATE_BUTTON);
         paul.narrate(NORMAL, "If I want to refine the light avatar, I can update the prompt and click the refresh button on the light panel. This uses the current image as a starting point and applies the new prompt to modify it.");
-        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Professional avatar portrait of Christopher Wilson wearing glasses, software developer, simple white background");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_LIGHT_PROMPT_FIELD, "Professional avatar portrait of Christopher Wilson wearing glasses, software developer, simple white background");
         seleniumHandler.wait(500);
 
         paul.narrateAsync(NORMAL, "I'll click the light update button to refine it with green tones.");
-        seleniumHandler.click(ImagePromptDialog.ID_UPDATE_BUTTON);
+        seleniumHandler.click(ImagePromptDialog.ID_LIGHT_UPDATE_BUTTON);
         waitForStableDiffusion();
         paul.narrate(NORMAL, "The light avatar has been updated. Now let me keep the dark variant in sync by updating its prompt as well.");
 
@@ -212,14 +212,14 @@ public class UserProfileIntroductionVideo04IT extends AbstractIntroductionVideo 
         // Demonstrate Upload Button
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(ImagePromptDialog.ID_UPLOAD_BUTTON);
+        seleniumHandler.highlight(ImagePromptDialog.ID_LIGHT_UPLOAD_BUTTON);
         paul.narrate(NORMAL, "You can also upload an existing PNG image using this upload area. The system automatically resizes it to the correct dimensions.");
 
         //---------------------------------------------------------------------------------------
         // Demonstrate Download Button
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(ImagePromptDialog.ID_DOWNLOAD_BUTTON);
+        seleniumHandler.highlight(ImagePromptDialog.ID_LIGHT_DOWNLOAD_BUTTON);
         paul.narrate(NORMAL, "And you can download the generated image to save it locally for use elsewhere.");
 
         //---------------------------------------------------------------------------------------
@@ -227,7 +227,7 @@ public class UserProfileIntroductionVideo04IT extends AbstractIntroductionVideo 
         //---------------------------------------------------------------------------------------
 
         paul.narrate(NORMAL, "I am still not happy with my image. Let me try a completely different style.");
-        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "portrait of a friendly robot character, simple white background");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_LIGHT_PROMPT_FIELD, "portrait of a friendly robot character, simple white background");
         seleniumHandler.setTextArea(ImagePromptDialog.ID_DARK_PROMPT_FIELD, "portrait of a friendly robot character, simple dark background");
         seleniumHandler.wait(500);
 

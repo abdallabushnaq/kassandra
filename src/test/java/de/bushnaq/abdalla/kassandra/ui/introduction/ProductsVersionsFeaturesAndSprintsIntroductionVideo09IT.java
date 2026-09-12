@@ -259,7 +259,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo09IT extends Abs
         // Enter Prompt
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD);
+        seleniumHandler.highlight(ImagePromptDialog.ID_LIGHT_PROMPT_FIELD);
         paul.narrate(NORMAL, "Lets again use the default prompt.");
 
         //---------------------------------------------------------------------------------------
@@ -275,11 +275,11 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo09IT extends Abs
 
         paul.narrate(NORMAL, "OK! The AI has generated an avatar based on my description. I can see the preview here in the dialog.");
         paul.narrate(NORMAL, "If I want to refine the image, I can use the Update button. This uses the current image as a starting point and applies my prompt to modify it. Let me adjust my description slightly.");
-        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Golden Icon representing the feature '" + featureName + "' including several cogs of a complex machine, 3D design, white background");
+        seleniumHandler.setTextArea(ImagePromptDialog.ID_LIGHT_PROMPT_FIELD, "Golden Icon representing the feature '" + featureName + "' including several cogs of a complex machine, 3D design, white background");
         seleniumHandler.wait(500);
 
         paul.narrateAsync(NORMAL, "I'll click Update to refine the avatar with green tones instead.");
-        seleniumHandler.click(ImagePromptDialog.ID_UPDATE_BUTTON);
+        seleniumHandler.click(ImagePromptDialog.ID_LIGHT_UPDATE_BUTTON);
         waitForStableDiffusion();
 
         paul.narrate(NORMAL, "Perfect! The avatar has been updated with the new color scheme while maintaining the overall style.");
@@ -329,7 +329,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo09IT extends Abs
         // Enter Prompt
         //---------------------------------------------------------------------------------------
 
-        seleniumHandler.highlight(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD);
+        seleniumHandler.highlight(ImagePromptDialog.ID_LIGHT_PROMPT_FIELD);
         paul.narrate(NORMAL, "lets use the default prompt.");
 //        seleniumHandler.setTextArea(ImagePromptDialog.ID_IMAGE_PROMPT_FIELD, "Icon representing the sprint '" + sprintName + "', minimalist, 3D design, white background");
 //        seleniumHandler.wait(500);
