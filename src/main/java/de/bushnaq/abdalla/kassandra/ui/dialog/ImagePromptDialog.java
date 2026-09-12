@@ -285,16 +285,19 @@ public class ImagePromptDialog extends Dialog {
 
     private VerticalLayout createDarkColumn() {
         HorizontalLayout titleRow = createTitleRow("Dark Avatar",
+                darkUploadButton,
                 createImageDownloadButton(ID_DARK_DOWNLOAD_BUTTON, "Download dark avatar", "dark-avatar.png",
                         () -> generatedDarkImage != null ? generatedDarkImage : generatedDarkImageOriginal),
-                darkUploadButton, darkUpdateButton);
+                darkUpdateButton);
 
         VerticalLayout column = new VerticalLayout(titleRow, darkPreviewContainer, darkPromptField, darkNegativePromptField);
         column.setId("dark-column");
         if (headerAcceptCallback != null) {
             HorizontalLayout headerTitleRow = createTitleRow("Dark Header",
+                    darkHeaderUploadButton,
                     createImageDownloadButton(ID_DARK_HEADER_DOWNLOAD_BUTTON, "Download dark header", "dark-header.png",
-                            () -> generatedDarkHeaderImage), darkHeaderUploadButton, darkHeaderUpdateButton);
+                            () -> generatedDarkHeaderImage),
+                    darkHeaderUpdateButton);
             column.add(headerTitleRow, darkHeaderPreviewContainer, darkHeaderPromptField);
         }
         column.add(createActionRow(generateButton));
@@ -421,16 +424,19 @@ public class ImagePromptDialog extends Dialog {
 
     private VerticalLayout createLightColumn() {
         HorizontalLayout titleRow = createTitleRow("Light Avatar",
+                lightUploadButton,
                 createImageDownloadButton(ID_LIGHT_DOWNLOAD_BUTTON, "Download light avatar", "light-avatar.png",
                         () -> generatedLightImage != null ? generatedLightImage : initialImage),
-                lightUploadButton, lightUpdateButton);
+                lightUpdateButton);
 
         VerticalLayout column = new VerticalLayout(titleRow, lightPreviewContainer, lightPromptField, lightNegativePromptField);
         column.setId("light-column");
         if (headerAcceptCallback != null) {
             HorizontalLayout headerTitleRow = createTitleRow("Light Header",
+                    lightHeaderUploadButton,
                     createImageDownloadButton(ID_LIGHT_HEADER_DOWNLOAD_BUTTON, "Download light header", "light-header.png",
-                            () -> generatedLightHeaderImage), lightHeaderUploadButton, lightHeaderUpdateButton);
+                            () -> generatedLightHeaderImage),
+                    lightHeaderUpdateButton);
             column.add(headerTitleRow, lightHeaderPreviewContainer, lightHeaderPromptField);
         }
         column.add(createActionRow(generateButton));
@@ -523,15 +529,30 @@ public class ImagePromptDialog extends Dialog {
     private HorizontalLayout createTitleRow(String titleText, Component... actions) {
         Span             label    = new Span(titleText);
         HorizontalLayout titleRow = new HorizontalLayout(label);
-        for (Component action : actions) {
-            if (action != null) {
-                titleRow.add(action);
-            }
-        }
-        titleRow.setAlignItems(FlexComponent.Alignment.CENTER);
         titleRow.setWidthFull();
-        titleRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        titleRow.setAlignItems(FlexComponent.Alignment.CENTER);
         titleRow.setSpacing(true);
+
+        HorizontalLayout actionGroup = new HorizontalLayout();
+        actionGroup.setPadding(false);
+        actionGroup.setSpacing(false);
+        actionGroup.setAlignItems(FlexComponent.Alignment.CENTER);
+        actionGroup.getStyle().set("margin-left", "auto");
+
+        for (int i = 0; i < actions.length; i++) {
+            Component action = actions[i];
+            if (action == null) {
+                continue;
+            }
+            if (i == 0) {
+                action.getElement().getStyle().set("margin-right", "var(--lumo-space-s)");
+            } else if (i == 1) {
+                action.getElement().getStyle().set("margin-right", "var(--lumo-space-xs)");
+            }
+            actionGroup.add(action);
+        }
+
+        titleRow.add(actionGroup);
         return titleRow;
     }
 
