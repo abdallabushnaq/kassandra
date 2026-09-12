@@ -40,7 +40,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.server.StreamResource;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
@@ -56,7 +55,6 @@ import de.focus_shift.jollyday.core.ManagerParameters;
 import lombok.extern.slf4j.Slf4j;
 
 import java.awt.*;
-import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.List;
@@ -495,17 +493,16 @@ public class UserDialog extends Dialog {
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
-            // Create StreamResource for the generated image
-            StreamResource resource = new StreamResource("user-avatar.png",
-                    () -> new ByteArrayInputStream(lightResult.getResizedImage()));
+            String imageUrl = VaadinUtil.dataUriFromBytes(lightResult.getResizedImage());
+            if (imageUrl != null) {
+                // Show preview
+                avatarPreview.setSrc(imageUrl);
+                avatarPreview.setVisible(true);
 
-            // Show preview
-            avatarPreview.setSrc(resource);
-            avatarPreview.setVisible(true);
-
-            // Update header icon and name field icon with StreamResource (works for both create and edit mode)
-            headerAvatar.setSrc(resource);
-            nameFieldAvatar.setSrc(resource);
+                // Update header icon and name field icon with a data URL (works for both create and edit mode)
+                headerAvatar.setSrc(imageUrl);
+                nameFieldAvatar.setSrc(imageUrl);
+            }
 
             Notification.show("Avatar set successfully", 3000, Notification.Position.BOTTOM_END);
 

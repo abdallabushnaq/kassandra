@@ -250,13 +250,6 @@ public class TaskCard extends Div {
                         .set("object-fit", "cover")
                         .set("display", "inline-block")
                         .set("vertical-align", "middle");
-//                com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
-//                        "task-user-avatar-" + user.getId() + ".png",
-//                        () -> new java.io.ByteArrayInputStream(user.getAvatarImage())
-//                );
-//                resource.setContentType("image/png");
-//                resource.setCacheTime(0);
-//                avatar.setSrc(resource);
                 avatar.setSrc(user.getAvatarUrl());
                 avatar.setAlt(user.getName());
                 avatar.getElement().setProperty("title", user.getName());

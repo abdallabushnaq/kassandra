@@ -34,7 +34,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.server.StreamResource;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
@@ -43,8 +42,6 @@ import de.bushnaq.abdalla.kassandra.dto.Feature;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
-
-import java.io.ByteArrayInputStream;
 
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
 
@@ -276,16 +273,16 @@ public class FeatureDialog extends Dialog {
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
-            // Create StreamResource for the generated image
-            StreamResource resource = new StreamResource("feature-avatar.png", () -> new ByteArrayInputStream(result.getResizedImage()));
+            String imageUrl = VaadinUtil.dataUriFromBytes(result.getResizedImage());
+            if (imageUrl != null) {
+                // Show preview
+                avatarPreview.setSrc(imageUrl);
+                avatarPreview.setVisible(true);
 
-            // Show preview
-            avatarPreview.setSrc(resource);
-            avatarPreview.setVisible(true);
-
-            // Update header icon and name field icon with StreamResource (works for both create and edit mode)
-            headerIcon.setSrc(resource);
-            nameFieldImage.setSrc(resource);
+                // Update header icon and name field icon with a data URL (works for both create and edit mode)
+                headerIcon.setSrc(imageUrl);
+                nameFieldImage.setSrc(imageUrl);
+            }
 
             Notification.show("Image set successfully", 3000, Notification.Position.BOTTOM_END);
 

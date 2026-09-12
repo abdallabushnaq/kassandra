@@ -34,7 +34,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.server.streams.DownloadHandler;
+import com.vaadin.flow.server.streams.DownloadResponse;
 import com.vaadin.flow.server.streams.UploadHandler;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
@@ -374,10 +375,12 @@ public class ImagePromptDialog extends Dialog {
                 Notification.show("No image to download.", 2000, Notification.Position.MIDDLE);
                 return;
             }
-            StreamResource resource = new StreamResource(fileName, () -> new ByteArrayInputStream(imageToDownload));
-            resource.setContentType("image/png");
-            resource.setCacheTime(0);
-            downloadAnchor.setHref(resource);
+            DownloadHandler downloadHandler = DownloadHandler.fromInputStream(event -> new DownloadResponse(
+                    new ByteArrayInputStream(imageToDownload),
+                    fileName,
+                    "image/png",
+                    imageToDownload.length));
+            downloadAnchor.setHref(downloadHandler);
             downloadAnchor.getElement().setAttribute("download", fileName);
             downloadAnchor.getElement().executeJs("this.click();");
         });
@@ -569,16 +572,13 @@ public class ImagePromptDialog extends Dialog {
     private void displayGeneratedImage(Div container, byte[] imageBytes) {
         container.removeAll();
 
-        final byte[] imageBytesForResource = imageBytes;
-        String       resourceName          = "generated-image-" + System.currentTimeMillis() + ".png";
+        String dataUri = VaadinUtil.dataUriFromBytes(imageBytes);
+        if (dataUri == null) {
+            container.add(new Div("Image unavailable"));
+            return;
+        }
 
-        StreamResource resource = new StreamResource(resourceName,
-                () -> new ByteArrayInputStream(imageBytesForResource));
-
-        resource.setContentType("image/png");
-        resource.setCacheTime(0);
-
-        Image image = new Image(resource, "Generated image");
+        Image image = new Image(dataUri, "Generated image");
         image.setWidth("256px");
         image.setHeight("256px");
         image.getStyle()
@@ -591,8 +591,12 @@ public class ImagePromptDialog extends Dialog {
 
     private void displayHeader(Div container, byte[] imageBytes) {
         container.removeAll();
-        Image image = new Image(new StreamResource("header-" + System.currentTimeMillis() + ".png",
-                () -> new ByteArrayInputStream(imageBytes)), "Header preview");
+        String dataUri = VaadinUtil.dataUriFromBytes(imageBytes);
+        if (dataUri == null) {
+            container.add(new Div("Header unavailable"));
+            return;
+        }
+        Image image = new Image(dataUri, "Header preview");
         image.setWidthFull();
         image.setHeightFull();
         image.getStyle().set("object-fit", "contain");
@@ -607,11 +611,12 @@ public class ImagePromptDialog extends Dialog {
      */
     private void displayInContainer(Div container, byte[] imageBytes) {
         container.removeAll();
-        String         resourceName = "image-" + System.currentTimeMillis() + ".png";
-        StreamResource resource     = new StreamResource(resourceName, () -> new ByteArrayInputStream(imageBytes));
-        resource.setContentType("image/png");
-        resource.setCacheTime(0);
-        Image img = new Image(resource, "Preview");
+        String dataUri = VaadinUtil.dataUriFromBytes(imageBytes);
+        if (dataUri == null) {
+            container.add(new Div("Preview unavailable"));
+            return;
+        }
+        Image img = new Image(dataUri, "Preview");
         img.setWidth("256px");
         img.setHeight("256px");
         img.getStyle().set("object-fit", "contain").set("display", "block");

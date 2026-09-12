@@ -33,7 +33,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
-import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.server.streams.DownloadHandler;
+import com.vaadin.flow.server.streams.DownloadResponse;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -280,65 +281,58 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     /**
      * Builds the download toolbar placed below the Gantt/burndown chart.
      * Contains JSON, XML, and XLSX download anchor buttons, each backed by a
-     * {@link StreamResource} that generates the export bytes on demand.
+     * {@link DownloadHandler} that generates the export bytes on demand.
      *
      * @return a {@link HorizontalLayout} containing the download anchors
      */
     private HorizontalLayout createDownloadToolbar() {
         Sprint sprintSnapshot = sprint; // capture before async use
 
-        // JSON anchor
-        StreamResource jsonResource = new StreamResource(
-                sprintSnapshot.getName() + ".json",
-                () -> {
-                    try {
-                        return new ByteArrayInputStream(sprintExportService.exportToJson(sprintSnapshot));
-                    } catch (Exception e) {
-                        log.error("Error generating JSON export for sprint {}", sprintSnapshot.getName(), e);
-                        return new ByteArrayInputStream(new byte[0]);
-                    }
-                });
-        jsonResource.setContentType("application/json");
-        Anchor jsonAnchor = new Anchor(jsonResource, "");
+        DownloadHandler jsonHandler = DownloadHandler.fromInputStream(event -> {
+            try {
+                byte[] data = sprintExportService.exportToJson(sprintSnapshot);
+                return new DownloadResponse(new ByteArrayInputStream(data), sprintSnapshot.getName() + ".json", "application/json", data.length);
+            } catch (Exception e) {
+                log.error("Error generating JSON export for sprint {}", sprintSnapshot.getName(), e);
+                return DownloadResponse.error(500, "Failed to generate JSON export", e);
+            }
+        });
+        Anchor jsonAnchor = new Anchor(jsonHandler, "");
         jsonAnchor.getElement().setAttribute("download", true);
         Button jsonButton = new Button("JSON", new Icon(VaadinIcon.DOWNLOAD));
         jsonButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
         jsonButton.getElement().setAttribute("title", "Download sprint data as JSON");
         jsonAnchor.add(jsonButton);
 
-        // MSPDI XML anchor
-        StreamResource xmlResource = new StreamResource(
-                sprintSnapshot.getName() + ".xml",
-                () -> {
-                    try {
-                        return new ByteArrayInputStream(sprintExportService.exportToMspdiXml(sprintSnapshot));
-                    } catch (Exception e) {
-                        log.error("Error generating XML export for sprint {}", sprintSnapshot.getName(), e);
-                        return new ByteArrayInputStream(new byte[0]);
-                    }
-                });
-        xmlResource.setContentType("application/xml");
-        Anchor xmlAnchor = new Anchor(xmlResource, "");
+        DownloadHandler xmlHandler = DownloadHandler.fromInputStream(event -> {
+            try {
+                byte[] data = sprintExportService.exportToMspdiXml(sprintSnapshot);
+                return new DownloadResponse(new ByteArrayInputStream(data), sprintSnapshot.getName() + ".xml", "application/xml", data.length);
+            } catch (Exception e) {
+                log.error("Error generating XML export for sprint {}", sprintSnapshot.getName(), e);
+                return DownloadResponse.error(500, "Failed to generate XML export", e);
+            }
+        });
+        Anchor xmlAnchor = new Anchor(xmlHandler, "");
         xmlAnchor.getElement().setAttribute("download", true);
         Button xmlButton = new Button("XML", new Icon(VaadinIcon.DOWNLOAD));
         xmlButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
         xmlButton.getElement().setAttribute("title", "Download sprint data as Microsoft Project XML (MSPDI)");
         xmlAnchor.add(xmlButton);
 
-        StreamResource xlsxResource = new StreamResource(
-                sprintSnapshot.getName() + "-burndown.xlsx",
-                () -> {
-                    try {
-                        boolean               isDark = getUI().map(ui -> ui.getElement().getThemeList().contains(Lumo.DARK)).orElse(false);
-                        GanttBurndownChartDto dto    = ganttBurndownChartService.build(sprintSnapshot, ParameterOptions.getLocalNow(), isDark);
-                        return new ByteArrayInputStream(ganttBurndownExcelExportService.export(dto));
-                    } catch (Exception e) {
-                        log.error("Error generating XLSX burndown export for sprint {}", sprintSnapshot.getName(), e);
-                        return new ByteArrayInputStream(new byte[0]);
-                    }
-                });
-        xlsxResource.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        Anchor xlsxAnchor = new Anchor(xlsxResource, "");
+        DownloadHandler xlsxHandler = DownloadHandler.fromInputStream(event -> {
+            try {
+                boolean               isDark = getUI().map(ui -> ui.getElement().getThemeList().contains(Lumo.DARK)).orElse(false);
+                GanttBurndownChartDto dto    = ganttBurndownChartService.build(sprintSnapshot, ParameterOptions.getLocalNow(), isDark);
+                byte[]                data   = ganttBurndownExcelExportService.export(dto);
+                return new DownloadResponse(new ByteArrayInputStream(data), sprintSnapshot.getName() + "-burndown.xlsx",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", data.length);
+            } catch (Exception e) {
+                log.error("Error generating XLSX burndown export for sprint {}", sprintSnapshot.getName(), e);
+                return DownloadResponse.error(500, "Failed to generate XLSX export", e);
+            }
+        });
+        Anchor xlsxAnchor = new Anchor(xlsxHandler, "");
         xlsxAnchor.getElement().setAttribute("download", true);
         Button xlsxButton = new Button("XLSX", new Icon(VaadinIcon.DOWNLOAD));
         xlsxButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
@@ -399,7 +393,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     /**
      * Creates the Gantt/burndown chart container and the download toolbar that appears below it.
      * The toolbar contains JSON, MSPDI XML, and XLSX export anchors; each uses
-     * {@link StreamResource} so the file is generated lazily on the first browser download
+     * a {@link DownloadHandler} so the file is generated lazily on the first browser download
      * request rather than up front.
      */
     private void createGanttBurndownChart() {

@@ -51,6 +51,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
+import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -189,21 +190,18 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                     colorPicker.setValue(pendingColor);
                 }
             } else {
-                // Update existing preview using resized image
-                com.vaadin.flow.server.StreamResource resource = new com.vaadin.flow.server.StreamResource(
-                        "user-avatar-preview-" + System.currentTimeMillis() + ".png",
-                        () -> new java.io.ByteArrayInputStream(result.getResizedImage())
-                );
-                avatarPreview.setSrc(resource);
+                String imageUrl = VaadinUtil.dataUriFromBytes(result.getResizedImage());
+                if (imageUrl != null) {
+                    avatarPreview.setSrc(imageUrl);
+                }
             }
 
             // Update header icon if it exists
             if (headerAvatarImage != null) {
-                com.vaadin.flow.server.StreamResource headerResource = new com.vaadin.flow.server.StreamResource(
-                        "user-profile-header-" + System.currentTimeMillis() + ".png",
-                        () -> new java.io.ByteArrayInputStream(result.getResizedImage())
-                );
-                headerAvatarImage.setSrc(headerResource);
+                String imageUrl = VaadinUtil.dataUriFromBytes(result.getResizedImage());
+                if (imageUrl != null) {
+                    headerAvatarImage.setSrc(imageUrl);
+                }
             }
 
             // Update name field icon
@@ -217,11 +215,10 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                         .set("object-fit", "cover");
                 nameField.setPrefixComponent(nameFieldAvatarImage);
             }
-            com.vaadin.flow.server.StreamResource nameFieldResource = new com.vaadin.flow.server.StreamResource(
-                    "user-name-field-" + System.currentTimeMillis() + ".png",
-                    () -> new java.io.ByteArrayInputStream(result.getResizedImage())
-            );
-            nameFieldAvatarImage.setSrc(nameFieldResource);
+            String nameFieldImageUrl = VaadinUtil.dataUriFromBytes(result.getResizedImage());
+            if (nameFieldImageUrl != null) {
+                nameFieldAvatarImage.setSrc(nameFieldImageUrl);
+            }
 
             Notification.show("Avatar generated successfully", 3000, Notification.Position.BOTTOM_END);
 

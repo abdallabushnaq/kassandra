@@ -28,12 +28,11 @@ import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.StreamResource;
 import de.bushnaq.abdalla.kassandra.service.AboutBoxService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
 
-import java.io.ByteArrayInputStream;
 import java.time.Year;
 
 @Route(value = "", layout = MainLayout.class)
@@ -122,11 +121,9 @@ public class AboutView extends Main implements AfterNavigationObserver {
                 byte[] imageBytes = aboutBoxService.getOrGenerateImage();
                 ui.access(() -> {
                     loadingText.setVisible(false);
-                    if (imageBytes != null && imageBytes.length > 0) {
-                        StreamResource resource = new StreamResource(
-                                "kassandra-about.png",
-                                () -> new ByteArrayInputStream(imageBytes));
-                        bannerImage.setSrc(resource);
+                    String imageUrl = VaadinUtil.dataUriFromBytes(imageBytes);
+                    if (imageUrl != null) {
+                        bannerImage.setSrc(imageUrl);
                         bannerImage.setVisible(true);
                     }
                     ui.push();

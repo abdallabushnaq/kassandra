@@ -43,6 +43,7 @@ import de.bushnaq.abdalla.kassandra.dto.TaskStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -53,6 +54,19 @@ import java.util.function.Function;
  */
 public final class VaadinUtil {
     public static String DIALOG_DEFAULT_WIDTH = "480px";
+
+    /**
+     * Converts a PNG payload into a browser-safe data URL for use in Vaadin image components.
+     *
+     * @param imageBytes raw PNG bytes, or null/empty for a no-op
+     * @return a data URI suitable for an {@code Image#setSrc(String)} call, or null when no image is available
+     */
+    public static String dataUriFromBytes(byte[] imageBytes) {
+        if (imageBytes == null || imageBytes.length == 0) {
+            return null;
+        }
+        return "data:image/png;base64," + Base64.getEncoder().encodeToString(imageBytes);
+    }
 
     /**
      * Applies or clears a themed entity-header background and the surfaces that keep its content readable.

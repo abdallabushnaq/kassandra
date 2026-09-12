@@ -37,7 +37,6 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.server.StreamResource;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
@@ -49,7 +48,6 @@ import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserGroupApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
-import java.io.ByteArrayInputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -423,16 +421,16 @@ public class ProductDialog extends Dialog {
 
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
-            // Create StreamResource for the generated image
-            StreamResource resource = new StreamResource("product-avatar.png", () -> new ByteArrayInputStream(result.getResizedImage()));
+            String imageUrl = VaadinUtil.dataUriFromBytes(result.getResizedImage());
+            if (imageUrl != null) {
+                // Show preview
+                avatarPreview.setSrc(imageUrl);
+                avatarPreview.setVisible(true);
 
-            // Show preview
-            avatarPreview.setSrc(resource);
-            avatarPreview.setVisible(true);
-
-            // Update header icon and name field icon with StreamResource (works for both create and edit mode)
-            headerIcon.setSrc(resource);
-            nameFieldImage.setSrc(resource);
+                // Update header icon and name field icon with a data URL (works for both create and edit mode)
+                headerIcon.setSrc(imageUrl);
+                nameFieldImage.setSrc(imageUrl);
+            }
 
             Notification.show("Image set successfully", 3000, Notification.Position.BOTTOM_END);
 
