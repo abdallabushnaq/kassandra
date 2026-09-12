@@ -194,7 +194,7 @@ public class ImagePromptDialog extends Dialog {
         generateButton.setId(ID_GENERATE_BUTTON);
         generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         generateButton.getStyle().set("color", "var(--lumo-primary-contrast-color)");
-        generateButton.addClickListener(e -> generateLightVariant());
+        generateButton.addClickListener(e -> generateLightAvatar());
 
         acceptButton = new Button("Accept", new Icon(VaadinIcon.CHECK));
         acceptButton.setId(ID_ACCEPT_BUTTON);
@@ -323,7 +323,7 @@ public class ImagePromptDialog extends Dialog {
             darkUpdateButton.setEnabled(true);
             Notification.show("Dark avatar uploaded.", 2000, Notification.Position.BOTTOM_END);
         });
-        darkUpdateButton     = createUpdateButton(ID_DARK_UPDATE_BUTTON, "Regenerate dark avatar", this::generateDarkVariant);
+        darkUpdateButton     = createUpdateButton(ID_DARK_UPDATE_BUTTON, "Regenerate dark avatar", this::generateDarkAvatar);
         darkPreviewContainer = createPreviewContainer(DARK_THEMED_BACKGROUND_COLOR, "272px");
         if (initialDarkImage != null && initialDarkImage.length > 0) {
             displayInContainer(darkPreviewContainer, initialDarkImage);
@@ -618,23 +618,13 @@ public class ImagePromptDialog extends Dialog {
         container.add(img);
     }
 
-    private void generateDarkHeader() {
-        String prompt = darkHeaderPromptField.getValue().trim();
-        if (prompt.isEmpty()) {
-            Notification.show("Please enter a dark header description", 3000, Notification.Position.MIDDLE);
-            return;
-        }
-        generateHeader(darkHeaderPreviewContainer, darkHeaderUpdateButton, "Generating dark header...", prompt,
-                generatedLightHeaderSeed, true);
-    }
-
     /**
      * Generates the dark-avatar variant from the current light image.
      * Safe to call from any thread (UI thread or background thread):
      * all Vaadin state access is protected by a single {@code ui.access()} call.
      * Does nothing when the dark panel is disabled ({@code enableDark == false}).
      */
-    private void generateDarkVariant() {
+    private void generateDarkAvatar() {
         if (darkPreviewContainer == null) {
             return;
         }
@@ -732,6 +722,16 @@ public class ImagePromptDialog extends Dialog {
         }));
     }
 
+    private void generateDarkHeader() {
+        String prompt = darkHeaderPromptField.getValue().trim();
+        if (prompt.isEmpty()) {
+            Notification.show("Please enter a dark header description", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+        generateHeader(darkHeaderPreviewContainer, darkHeaderUpdateButton, "Generating dark header...", prompt,
+                generatedLightHeaderSeed, true);
+    }
+
     private void generateHeader(Div container, Button updateButton, String label, String prompt, long seed, boolean dark) {
         updateButton.setEnabled(false);
         acceptButton.setEnabled(false);
@@ -795,16 +795,7 @@ public class ImagePromptDialog extends Dialog {
         }).start());
     }
 
-    private void generateLightHeader() {
-        String prompt = lightHeaderPromptField.getValue().trim();
-        if (prompt.isEmpty()) {
-            Notification.show("Please enter a light header description", 3000, Notification.Position.MIDDLE);
-            return;
-        }
-        generateHeader(lightHeaderPreviewContainer, lightHeaderUpdateButton, "Generating light header...", prompt, -1L, false);
-    }
-
-    private void generateLightVariant() {
+    private void generateLightAvatar() {
         String prompt = lightPromptField.getValue().trim();
         if (prompt.isEmpty()) {
             Notification.show("Please enter a description", 3000, Notification.Position.MIDDLE);
@@ -875,7 +866,7 @@ public class ImagePromptDialog extends Dialog {
                         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                         ui.push();
                     });
-                    generateDarkVariant();
+                    generateDarkAvatar();
                     if (headerAcceptCallback != null) {
                         generateLightHeader();
                     }
@@ -897,6 +888,15 @@ public class ImagePromptDialog extends Dialog {
                 }
             }).start();
         });
+    }
+
+    private void generateLightHeader() {
+        String prompt = lightHeaderPromptField.getValue().trim();
+        if (prompt.isEmpty()) {
+            Notification.show("Please enter a light header description", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+        generateHeader(lightHeaderPreviewContainer, lightHeaderUpdateButton, "Generating light header...", prompt, -1L, false);
     }
 
     private void updateImage() {

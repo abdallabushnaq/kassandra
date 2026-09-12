@@ -379,23 +379,6 @@ public class AvatarService {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Private helpers
-    // ─────────────────────────────────────────────────────────────────────────
-
-//    /**
-//     * Generates a light-background AI avatar, falling back to a programmatic placeholder if
-//     * Stable Diffusion is unavailable or generation fails.
-//     * Uses {@link StableDiffusionService#NEGATIVE_PROMPT} as the negative prompt.
-//     *
-//     * @param basePrompt       Core prompt passed to {@link #generateLightAvatar(String)}.
-//     * @param fallbackIconName Icon name forwarded to {@link #generateDefaultLightAvatar(String)}; may be {@code null}.
-//     * @return {@link GeneratedImageResult} — either AI-generated or the programmatic default.
-//     */
-//    public GeneratedImageResult generateLightAvatarWithFallback(String basePrompt, String fallbackIconName) {
-//        return generateLightAvatarWithFallback(basePrompt, StableDiffusionService.NEGATIVE_PROMPT, fallbackIconName);
-//    }
-
     /**
      * Generate a light-theme header image from a header-specific prompt.
      *
