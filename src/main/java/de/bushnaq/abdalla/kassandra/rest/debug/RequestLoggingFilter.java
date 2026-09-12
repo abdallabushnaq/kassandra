@@ -23,14 +23,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
+import java.util.Locale;
 
 @Component
 public class RequestLoggingFilter implements Filter {
@@ -46,16 +46,25 @@ public class RequestLoggingFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         if (request instanceof HttpServletRequest httpRequest) {
-            CachedBodyHttpServletRequest cachedRequest = new CachedBodyHttpServletRequest(httpRequest);
-            String                       body          = cachedRequest.getRequestBody();
-            String                       requestURL    = httpRequest.getRequestURL().toString();
-            if (DebugUtil.DEBUG) {
-                System.out.format("Received JSON request: %s %s\n", requestURL, body);
+            String contentType = httpRequest.getContentType();
+            if (contentType != null && contentType.toLowerCase(Locale.ROOT).startsWith("multipart/")) {
+                logger.info("RequestLoggingFilter: skipping multipart upload for {} {} contentType={}",
+                        httpRequest.getMethod(), httpRequest.getRequestURI(), contentType);
+                chain.doFilter(request, response);
+                return;
             }
-            chain.doFilter(cachedRequest, response);
-        } else {
-            chain.doFilter(request, response);
+
+            byte[] rawBody    = readBytes(httpRequest.getInputStream());
+            String requestURL = httpRequest.getRequestURL().toString();
+            logger.info("RequestLoggingFilter: {} {} contentType={}",
+                    httpRequest.getMethod(),
+                    requestURL,
+                    contentType);
+
+            chain.doFilter(new CachedBodyHttpServletRequest(httpRequest, rawBody), response);
+            return;
         }
+        chain.doFilter(request, response);
     }
 
     @Override
@@ -63,20 +72,39 @@ public class RequestLoggingFilter implements Filter {
         // Initialization code, if needed
     }
 
+    private static byte[] readBytes(InputStream inputStream) throws IOException {
+        byte[] buffer = new byte[8192];
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            return out.toByteArray();
+        }
+    }
+
+    @Bean
+    public FilterRegistrationBean<RequestLoggingFilter> requestLoggingFilterRegistration() {
+        FilterRegistrationBean<RequestLoggingFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(this);
+        registration.addUrlPatterns("/*");
+        registration.setName("requestLoggingFilter");
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
+        return registration;
+    }
+
     private static class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 
-        private final String requestBody;
+        private final byte[] requestBody;
 
-        public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
+        public CachedBodyHttpServletRequest(HttpServletRequest request, byte[] requestBody) {
             super(request);
-            this.requestBody = new BufferedReader(new InputStreamReader(request.getInputStream(), StandardCharsets.UTF_8))
-                    .lines()
-                    .collect(Collectors.joining("\n"));
+            this.requestBody = requestBody;
         }
 
         @Override
-        public ServletInputStream getInputStream() throws IOException {
-            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(requestBody.getBytes(StandardCharsets.UTF_8));
+        public ServletInputStream getInputStream() {
+            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(requestBody);
             return new ServletInputStream() {
                 @Override
                 public boolean isFinished() {
@@ -89,7 +117,7 @@ public class RequestLoggingFilter implements Filter {
                 }
 
                 @Override
-                public int read() throws IOException {
+                public int read() {
                     return byteArrayInputStream.read();
                 }
 
@@ -101,11 +129,11 @@ public class RequestLoggingFilter implements Filter {
         }
 
         @Override
-        public BufferedReader getReader() throws IOException {
+        public BufferedReader getReader() {
             return new BufferedReader(new InputStreamReader(this.getInputStream(), StandardCharsets.UTF_8));
         }
 
-        public String getRequestBody() {
+        public byte[] getRequestBody() {
             return this.requestBody;
         }
     }

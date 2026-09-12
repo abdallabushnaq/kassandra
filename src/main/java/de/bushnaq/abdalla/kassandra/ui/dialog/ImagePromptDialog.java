@@ -34,13 +34,14 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.server.streams.UploadHandler;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -51,6 +52,7 @@ import java.io.ByteArrayOutputStream;
 /**
  * A reusable dialog for generating AI images using prompts.
  */
+@Slf4j
 public class ImagePromptDialog extends Dialog {
 
     public static final String                 DARK_THEMED_BACKGROUND_COLOR    = "#111111";
@@ -321,7 +323,7 @@ public class ImagePromptDialog extends Dialog {
             darkUpdateButton.setEnabled(true);
             Notification.show("Dark avatar uploaded.", 2000, Notification.Position.BOTTOM_END);
         });
-        darkUpdateButton     = createHeaderUpdateButton(ID_DARK_UPDATE_BUTTON, "Regenerate dark avatar", this::generateDarkVariant);
+        darkUpdateButton     = createUpdateButton(ID_DARK_UPDATE_BUTTON, "Regenerate dark avatar", this::generateDarkVariant);
         darkPreviewContainer = createPreviewContainer(DARK_THEMED_BACKGROUND_COLOR, "272px");
         if (initialDarkImage != null && initialDarkImage.length > 0) {
             displayInContainer(darkPreviewContainer, initialDarkImage);
@@ -342,7 +344,7 @@ public class ImagePromptDialog extends Dialog {
             displayHeader(darkHeaderPreviewContainer, imageBytes);
             Notification.show("Dark header uploaded.", 2000, Notification.Position.BOTTOM_END);
         });
-        darkHeaderUpdateButton     = createHeaderUpdateButton(ID_DARK_HEADER_UPDATE_BUTTON, "Regenerate dark header", this::generateDarkHeader);
+        darkHeaderUpdateButton     = createUpdateButton(ID_DARK_HEADER_UPDATE_BUTTON, "Regenerate dark header", this::generateDarkHeader);
         darkHeaderPreviewContainer = createPreviewContainer(DARK_THEMED_BACKGROUND_COLOR, "48px");
         if (initialDarkHeader != null && initialDarkHeader.length > 0) {
             generatedDarkHeaderImage = initialDarkHeader;
@@ -358,57 +360,54 @@ public class ImagePromptDialog extends Dialog {
         return image == null ? null : new GeneratedImageResult(image, prompt, image);
     }
 
-    private Button createHeaderUpdateButton(String id, String title, Runnable action) {
-        Button button = new Button(new Icon(VaadinIcon.REFRESH));
-        button.setId(id);
-        button.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
-        button.getElement().setAttribute("title", title);
-        button.addClickListener(event -> action.run());
-        return button;
-    }
-
     private Anchor createImageDownloadButton(String id, String title, String fileName, java.util.function.Supplier<byte[]> imageSupplier) {
         Anchor downloadAnchor = new Anchor();
         Button downloadButton = new Button(new Icon(VaadinIcon.DOWNLOAD));
         downloadButton.setId(id);
         downloadButton.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
-        downloadButton.getElement().setAttribute("title", title);
+        downloadButton.setTooltipText(title);
         downloadAnchor.add(downloadButton);
-        downloadAnchor.getElement().setAttribute("download", true);
+        downloadAnchor.getElement().setAttribute("download", fileName);
         downloadButton.addClickListener(e -> {
             byte[] imageToDownload = imageSupplier.get();
-            if (imageToDownload != null && imageToDownload.length > 0) {
-                StreamResource resource = new StreamResource(fileName, () -> new ByteArrayInputStream(imageToDownload));
-                resource.setContentType("image/png");
-                resource.setCacheTime(0);
-                downloadAnchor.setHref(resource);
-            } else {
+            if (imageToDownload == null || imageToDownload.length == 0) {
                 Notification.show("No image to download.", 2000, Notification.Position.MIDDLE);
+                return;
             }
+            StreamResource resource = new StreamResource(fileName, () -> new ByteArrayInputStream(imageToDownload));
+            resource.setContentType("image/png");
+            resource.setCacheTime(0);
+            downloadAnchor.setHref(resource);
+            downloadAnchor.getElement().setAttribute("download", fileName);
+            downloadAnchor.getElement().executeJs("this.click();");
         });
         return downloadAnchor;
     }
 
     private Upload createImageUpload(String id, String title, java.util.function.Consumer<byte[]> imageConsumer) {
-        MemoryBuffer uploadBuffer = new MemoryBuffer();
-        Upload       upload       = new Upload(uploadBuffer);
-        upload.setId(id);
-        upload.setAcceptedFileTypes(".png");
-        upload.setMaxFiles(1);
-        upload.setDropAllowed(true);
-        upload.setAutoUpload(true);
-        upload.getElement().setAttribute("title", title);
-        upload.addSucceededListener(event -> {
+        Upload upload = new Upload(UploadHandler.inMemory((metadata, uploadedBytes) -> {
+            String fileName      = metadata.fileName();
+            String mimeType      = metadata.contentType();
+            long   contentLength = metadata.contentLength();
+            log.info("Uploading image: fileName={}, mimeType={}, contentLength={}", fileName, mimeType, contentLength);
             try {
-                BufferedImage inputImage = ImageIO.read(uploadBuffer.getInputStream());
+                if (uploadedBytes == null || uploadedBytes.length == 0) {
+                    Notification.show("Invalid PNG file.", 3000, Notification.Position.MIDDLE);
+                    return;
+                }
+                BufferedImage inputImage = ImageIO.read(new ByteArrayInputStream(uploadedBytes));
                 if (inputImage == null) {
                     Notification.show("Invalid PNG file.", 3000, Notification.Position.MIDDLE);
                     return;
                 }
                 BufferedImage resized = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D    g2d     = resized.createGraphics();
-                g2d.drawImage(inputImage, 0, 0, 256, 256, null);
-                g2d.dispose();
+                try {
+                    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                    g2d.drawImage(inputImage, 0, 0, 256, 256, null);
+                } finally {
+                    g2d.dispose();
+                }
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(resized, "png", baos);
                 baos.flush();
@@ -418,7 +417,13 @@ public class ImagePromptDialog extends Dialog {
             } catch (Exception ex) {
                 Notification.show("Failed to process image: " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
             }
-        });
+        }));
+        upload.setId(id);
+        upload.setAcceptedFileTypes(".png");
+        upload.setMaxFiles(1);
+        upload.setDropAllowed(true);
+        upload.setAutoUpload(true);
+        upload.getElement().setAttribute("title", title);
         return upload;
     }
 
@@ -458,13 +463,9 @@ public class ImagePromptDialog extends Dialog {
             displayGeneratedImage(lightPreviewContainer, imageBytes);
             acceptButton.setEnabled(true);
             lightUpdateButton.setEnabled(true);
-            generateDarkVariant();
-            if (headerAcceptCallback != null) {
-                generateLightHeader();
-            }
             Notification.show("Light avatar uploaded.", 2000, Notification.Position.BOTTOM_END);
         });
-        lightUpdateButton     = createHeaderUpdateButton(ID_LIGHT_UPDATE_BUTTON, "Regenerate light avatar", this::updateImage);
+        lightUpdateButton     = createUpdateButton(ID_LIGHT_UPDATE_BUTTON, "Regenerate light avatar", this::updateImage);
         lightPreviewContainer = createPreviewContainer(LIGHT_THEMED_BACKGROUND_COLOR, "272px");
         if (initialLightImage != null && initialLightImage.length > 0) {
             displayGeneratedImage(lightPreviewContainer, initialLightImage);
@@ -485,7 +486,7 @@ public class ImagePromptDialog extends Dialog {
             displayHeader(lightHeaderPreviewContainer, imageBytes);
             Notification.show("Light header uploaded.", 2000, Notification.Position.BOTTOM_END);
         });
-        lightHeaderUpdateButton     = createHeaderUpdateButton(ID_LIGHT_HEADER_UPDATE_BUTTON, "Regenerate light header", this::generateLightHeader);
+        lightHeaderUpdateButton     = createUpdateButton(ID_LIGHT_HEADER_UPDATE_BUTTON, "Regenerate light header", this::generateLightHeader);
         lightHeaderPreviewContainer = createPreviewContainer(LIGHT_THEMED_BACKGROUND_COLOR, "48px");
         if (initialLightHeader != null && initialLightHeader.length > 0) {
             generatedLightHeaderImage = initialLightHeader;
@@ -554,6 +555,15 @@ public class ImagePromptDialog extends Dialog {
 
         titleRow.add(actionGroup);
         return titleRow;
+    }
+
+    private Button createUpdateButton(String id, String title, Runnable action) {
+        Button button = new Button(new Icon(VaadinIcon.REFRESH));
+        button.setId(id);
+        button.addThemeVariants(ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        button.setTooltipText(title);
+        button.addClickListener(event -> action.run());
+        return button;
     }
 
     private void displayGeneratedImage(Div container, byte[] imageBytes) {
