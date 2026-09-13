@@ -207,8 +207,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 applyFeatureFilter();
             }
         });
-        // Insert before the smart-filter so the feature selector appears on the far left
-        getLastHeaderRightLayout().addComponentAtIndex(0, featureSelector);
+        addHeaderLeftComponent(featureSelector);
 
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(SPRINT_AI_PANEL_BUTTON);

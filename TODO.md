@@ -37,6 +37,7 @@
 18. all js charts are drawn 2 times.
 19. gantt chart task tooltip is missing many items from legacy code.
 20. Gantt chart is drawn until now although they are closed.
+21. there is currently no way to move the backlog back to independence if it was moved by mistake into a story.
 
 # Latest Bugs
 

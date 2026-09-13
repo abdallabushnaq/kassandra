@@ -144,8 +144,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                 applyFeatureFilter();
             }
         });
-        // Insert before the smart-filter so the version selector appears on the far left
-        getLastHeaderRightLayout().addComponentAtIndex(0, versionSelector);
+        addHeaderLeftComponent(versionSelector);
 
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(FEATURE_AI_PANEL_BUTTON);

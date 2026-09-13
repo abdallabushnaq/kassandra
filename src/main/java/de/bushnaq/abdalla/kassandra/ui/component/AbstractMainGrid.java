@@ -63,6 +63,7 @@ public abstract class AbstractMainGrid<T> extends Main {
     private       H2                 headerPageTitle;
     private       String             darkHeaderBackgroundUrl;
     private       String             lightHeaderBackgroundUrl;
+    private       HorizontalLayout    lastHeaderLeftLayout;
     private       HorizontalLayout    lastHeaderRightLayout;
     private       HorizontalLayout    smartHeader;
     private       HorizontalLayout   smartHeaderTitleLayout;
@@ -115,6 +116,19 @@ public abstract class AbstractMainGrid<T> extends Main {
     public void addHeaderButton(Button button) {
         if (lastHeaderRightLayout != null) {
             lastHeaderRightLayout.add(button);
+        }
+    }
+
+    /**
+     * Appends a component to the left side of the most recently created smart header.
+     * Call this immediately after {@code createSmartHeader(...)} when the component is a
+     * filter or selector that should stay aligned with the page title and search controls.
+     *
+     * @param component the component to add
+     */
+    public void addHeaderLeftComponent(Component component) {
+        if (lastHeaderLeftLayout != null) {
+            lastHeaderLeftLayout.add(component);
         }
     }
 
@@ -465,56 +479,62 @@ public abstract class AbstractMainGrid<T> extends Main {
             titleLayout.add(titleIcon, pageTitle);
         else
             titleLayout.add(pageTitle);
-        // Right side with smart global filter, row counter (if grid provided) and create button
-        HorizontalLayout rightLayout = new HorizontalLayout();
-        rightLayout.setSpacing(false);
-        rightLayout.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        // Add smart global filter if provided
-        if (globalFilterId != null && grid != null) {
-            GlobalAiFilter<T> smartFilter =
-                    new GlobalAiFilter<>(
-                            globalFilterId,
-                            grid,
-                            aiFilterService,
-                            mapper,
-                            entityType
-                    );
-            smartFilter.getStyle().set("margin-right", "var(--lumo-space-m)");
-            rightLayout.add(smartFilter);
-        }
+       HorizontalLayout leftLayout = new HorizontalLayout();
+       leftLayout.setSpacing(true);
+       leftLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+       leftLayout.add(titleLayout);
 
-        // Add row counter if grid is provided
-        if (grid != null && rowCounterId != null) {
-            Span rowCounter = new Span();
-            rowCounter.setId(rowCounterId);
-            rowCounter.getStyle().set("margin-right", "var(--lumo-space-m)");
-            rowCounter.getStyle().set("color", "var(--lumo-secondary-text-color)");
+       // Add smart global filter to the left side so filters stay with the title.
+       if (globalFilterId != null && grid != null) {
+           GlobalAiFilter<T> smartFilter =
+                   new GlobalAiFilter<>(
+                           globalFilterId,
+                           grid,
+                           aiFilterService,
+                           mapper,
+                           entityType
+                   );
+           smartFilter.getStyle().set("margin-right", "var(--lumo-space-m)");
+           leftLayout.add(smartFilter);
+       }
 
-            // Initial counter update
-            updateRowCounter(grid, rowCounter);
+       // Add row counter to the left side before the action controls.
+       if (grid != null && rowCounterId != null) {
+           Span rowCounter = new Span();
+           rowCounter.setId(rowCounterId);
+           rowCounter.getStyle().set("margin-right", "var(--lumo-space-m)");
+           rowCounter.getStyle().set("color", "var(--lumo-secondary-text-color)");
 
-            DataProvider<T, ?> dataProvider = grid.getDataProvider();
+           // Initial counter update
+           updateRowCounter(grid, rowCounter);
 
-            // Register a ComponentEventListener for grid's data changes, will be triggered when filtering
-            grid.getDataProvider().addDataProviderListener(event -> {
-                updateRowCounter(grid, rowCounter);
-            });
+           DataProvider<T, ?> dataProvider = grid.getDataProvider();
 
-            rightLayout.add(rowCounter);
-        }
+           // Register a ComponentEventListener for grid's data changes, will be triggered when filtering
+           grid.getDataProvider().addDataProviderListener(event -> {
+               updateRowCounter(grid, rowCounter);
+           });
 
-        Button createButton = new Button("Create", new Icon(VaadinIcon.PLUS));
-        createButton.setId(createButtonId);
-        createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
-        createButton.addClickListener(e -> createButtonClickHandler.onClick());
+           leftLayout.add(rowCounter);
+       }
 
-        rightLayout.add(createButton);
-        headerLayout.add(titleLayout, rightLayout);
-//        headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
-        // Store for addHeaderButton() callers
-        lastHeaderRightLayout = rightLayout;
-        return headerLayout;
+       HorizontalLayout rightLayout = new HorizontalLayout();
+       rightLayout.setSpacing(true);
+       rightLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+
+       Button createButton = new Button("Create", new Icon(VaadinIcon.PLUS));
+       createButton.setId(createButtonId);
+       createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+       createButton.addClickListener(e -> createButtonClickHandler.onClick());
+
+       rightLayout.add(createButton);
+       headerLayout.add(leftLayout, rightLayout);
+       //        headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
+       // Store for addHeaderButton()/addHeaderLeftComponent() callers.
+       lastHeaderLeftLayout = leftLayout;
+       lastHeaderRightLayout = rightLayout;
+       return headerLayout;
     }
 
     /**

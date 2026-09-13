@@ -588,9 +588,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
         expandToggleLayout.add(expandLabel, expandToggleCheckbox);
 
-        // Spacer to push create buttons to the right
-        Div spacer = new Div();
-
         // Create Milestone button
         Button createMilestoneButton = new Button("Milestone", VaadinIcon.PLUS.create());
         createMilestoneButton.setId(CREATE_MILESTONE_BUTTON_ID);
@@ -637,11 +634,22 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
         headerTitleLayout = new HorizontalLayout(headerAvatar, pageTitle);
         headerTitleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        headerControlsLayout = new HorizontalLayout(searchField, userSelector, sprintSelector, clearButton, expandToggleLayout, spacer,
-                createMilestoneButton, createStoryButton, createTaskButton, editButton, saveButton, cancelButton);
-        headerControlsLayout.setAlignItems(FlexComponent.Alignment.END);
-        headerControlsLayout.setFlexGrow(1, spacer);
-        header.add(headerTitleLayout, headerControlsLayout);
+
+        HorizontalLayout filterLayout = new HorizontalLayout(searchField, userSelector, sprintSelector, clearButton, expandToggleLayout);
+        filterLayout.setAlignItems(FlexComponent.Alignment.END);
+        filterLayout.setSpacing(true);
+
+        HorizontalLayout leftHeaderLayout = new HorizontalLayout(headerTitleLayout, filterLayout);
+        leftHeaderLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        leftHeaderLayout.setSpacing(true);
+
+        HorizontalLayout actionLayout = new HorizontalLayout(createMilestoneButton, createStoryButton, createTaskButton,
+                editButton, saveButton, cancelButton);
+        actionLayout.setAlignItems(FlexComponent.Alignment.END);
+        actionLayout.setSpacing(true);
+
+        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        header.add(leftHeaderLayout, actionLayout);
 
         return header;
     }
@@ -679,6 +687,14 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                 .set("padding", "var(--lumo-space-s) var(--lumo-space-m)")
                 .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border-radius", "var(--lumo-border-radius-m) var(--lumo-border-radius-m) 0 0");
+
+        Div instructions = new Div();
+        instructions.setText("Drag & drop: move a story/task within its hierarchy or onto another story. Ctrl + drag & drop: add or remove a dependency.");
+        instructions.getStyle()
+                .set("font-size", "var(--lumo-font-size-s)")
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("line-height", "1.4")
+                .set("max-width", "60ch");
 
         // Spacer pushes everything that follows to the far right
         Div spacer = new Div();
@@ -729,7 +745,8 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             }
         });
 
-        panel.add(spacer, startLabel, sprintStartValue, endLabel, sprintEndValue, statusLabel, sprintStatusComboBox);
+        panel.add(instructions, spacer, startLabel, sprintStartValue, endLabel, sprintEndValue, statusLabel, sprintStatusComboBox);
+        panel.setFlexGrow(1, instructions);
         panel.setFlexGrow(1, spacer);
         return panel;
     }

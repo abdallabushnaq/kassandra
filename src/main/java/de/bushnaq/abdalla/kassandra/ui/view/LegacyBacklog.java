@@ -638,6 +638,14 @@ public class LegacyBacklog extends Main implements AfterNavigationObserver, Befo
                 .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border-radius", "var(--lumo-border-radius-m) var(--lumo-border-radius-m) 0 0");
 
+        Div instructions = new Div();
+        instructions.setText("Drag & drop: move a story/task within its hierarchy or onto another story. Ctrl + drag & drop: add or remove a dependency.");
+        instructions.getStyle()
+                .set("font-size", "var(--lumo-font-size-s)")
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("line-height", "1.4")
+                .set("max-width", "60ch");
+
         // Spacer pushes everything that follows to the far right
         Div spacer = new Div();
 
@@ -687,7 +695,8 @@ public class LegacyBacklog extends Main implements AfterNavigationObserver, Befo
             }
         });
 
-        panel.add(spacer, startLabel, sprintStartValue, endLabel, sprintEndValue, statusLabel, sprintStatusComboBox);
+        panel.add(instructions, spacer, startLabel, sprintStartValue, endLabel, sprintEndValue, statusLabel, sprintStatusComboBox);
+        panel.setFlexGrow(1, instructions);
         panel.setFlexGrow(1, spacer);
         return panel;
     }

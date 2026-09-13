@@ -226,7 +226,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                                 applyVersionFilter();
                             }
                         });
-                        getLastHeaderRightLayout().addComponentAtIndex(0, productSelector);
+                        addHeaderLeftComponent(productSelector);
 
                         addHeaderButton(aiToggleButton);
                         add(bodySplit);
