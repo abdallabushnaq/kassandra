@@ -85,6 +85,10 @@ import java.util.stream.Collectors;
 public class QualityBoard extends Main implements AfterNavigationObserver {
     public static final String                          GANTT_BURNDOWN_CONTAINER_ID = "quality-board-gantt-burndown-container";
     public static final String                          MENU_ITEM_ID                = "/quality-board";
+    /**
+     * Identifier of the control that opens the Gantt and burndown chart in a separate browser tab.
+     */
+    public static final String                          OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID = "open-gantt-burndown-chart-button";
     public static final String                          SPRINT_GRID_NAME_PREFIX     = "sprint-grid-name-";
     public static final String                          SPRINT_SELECTOR_ID          = "sprint-selector";
     /**
@@ -397,6 +401,15 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
      * request rather than up front.
      */
     private void createGanttBurndownChart() {
+        Button openGanttBurndownChartButton = new Button("Open chart in new tab", VaadinIcon.EXTERNAL_LINK.create());
+        openGanttBurndownChartButton.setId(OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID);
+        openGanttBurndownChartButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+        openGanttBurndownChartButton.setTooltipText("Open the Gantt and burndown chart in a separate browser tab");
+        openGanttBurndownChartButton.getElement().executeJs(
+                "this.addEventListener('click', () => window.detachKassandraChart($0));",
+                GANTT_BURNDOWN_CONTAINER_ID);
+        add(openGanttBurndownChartButton);
+
         ganttBurndownChartContainer = new Div();
         ganttBurndownChartContainer.setId(GANTT_BURNDOWN_CONTAINER_ID);
         ganttBurndownChartContainer.getStyle()
@@ -511,8 +524,8 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
                 ganttBurndownChartContainer.removeAll();
                 ui.getPage().executeJs(
                         "import('/js/generated/burndown/gantt-burndown-bundle.js')" +
-                                ".then(() => window.mountGanttBurndownChart($0, JSON.parse($1)));",
-                        GANTT_BURNDOWN_CONTAINER_ID, json
+                                ".then(() => window.mountGanttBurndownChart($0, JSON.parse($1), $2));",
+                        GANTT_BURNDOWN_CONTAINER_ID, json, sprint.getName() + " - Gantt and burndown chart"
                 );
                 log.debug("Gantt burndown chart DTO pushed to client for sprint '{}'", sprint.getName());
             } catch (Exception e) {
@@ -646,6 +659,9 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
      */
     @Override
     protected void onDetach(DetachEvent detachEvent) {
+        detachEvent.getUI().getPage().executeJs(
+                "window.disposeKassandraChart && window.disposeKassandraChart($0);",
+                GANTT_BURNDOWN_CONTAINER_ID);
         if (themeChangedRegistration != null) {
             themeChangedRegistration.remove();
             themeChangedRegistration = null;

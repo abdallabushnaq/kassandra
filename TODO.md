@@ -36,6 +36,7 @@
 17. a lot of Gantt charts are not actually resource leveled. Example Demo, testCaseIndex=1, sprint=Paris,
 18. all js charts are drawn 2 times.
 19. gantt chart task tooltip is missing many items from legacy code.
+20. Gantt chart is drawn until now although they are closed.
 
 # Latest Bugs
 

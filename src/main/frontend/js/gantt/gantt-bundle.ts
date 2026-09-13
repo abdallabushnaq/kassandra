@@ -5,6 +5,7 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {DateUtils} from '../DateUtils.js';
+import {mountDetachableChart} from '../DetachableChartHost.js';
 import {ChartHandle, InteractiveTimelineChart} from '../InteractiveTimelineChart.js';
 import {Theme} from '../theme/Theme.js';
 import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from './AbstractGanttRenderer.js';
@@ -12,9 +13,7 @@ import {GanttChart} from './GanttChart.js';
 import {GanttChartDto} from './dto/GanttChartDto.js';
 import {GanttRenderer} from './GanttRenderer.js';
 
-let currentGanttChartInstance: ChartHandle | null = null;
-
-function createChart(
+export function createGanttChart(
     container: HTMLElement,
     data: GanttChartDto,
     options: { containerId?: string } = {},
@@ -48,17 +47,25 @@ function createChart(
 
 // ── Public mount API (called by Backlog.java via Vaadin executeJs) ───────────
 
-function mountGanttChart(containerId: string, injectedData: GanttChartDto): void {
+function mountGanttChart(containerId: string, injectedData: GanttChartDto, title: string = 'Gantt chart'): void {
     const elementId = containerId || 'gantt-chart-container';
     const containerElement = document.getElementById(elementId);
     if (!containerElement)
         return;
 
-    currentGanttChartInstance?.destroy();
-    currentGanttChartInstance = null;
-
     if (injectedData) {
-        currentGanttChartInstance = createChart(containerElement, injectedData, {containerId: elementId});
+        mountDetachableChart(
+            {
+                bundleUrl: '/js/generated/gantt/gantt-bundle.js',
+                containerId: elementId,
+                factoryExportName: 'createGanttChart',
+                factory: createGanttChart,
+                title: 'Gantt chart',
+            },
+            containerElement,
+            injectedData,
+            title,
+        );
     } else {
         containerElement.innerHTML = '<div style="padding:16px;color:red;font-family:sans-serif;">No Gantt chart data provided.</div>';
     }
@@ -69,8 +76,8 @@ function mountGanttChart(containerId: string, injectedData: GanttChartDto): void
 declare global {
     interface Window {
         mountGanttChart: typeof mountGanttChart;
-        createGanttChart: typeof createChart;
+        createGanttChart: typeof createGanttChart;
     }
 }
 window.mountGanttChart = mountGanttChart;
-window.createGanttChart = createChart;
+window.createGanttChart = createGanttChart;

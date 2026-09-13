@@ -155,10 +155,10 @@ public class Demo extends AbstractKeycloakUiTestUtil {
                         OffsetDateTime.parse("2026-08-22T08:00:00+01:00"),
                         LocalDate.parse("2026-02-01"),
                         Duration.ofDays(10),
-                        2, 2,
-                        2, 2,
-                        2, 2,
-                        1, 5,
+                        6, 6,
+                        1, 3,
+                        1, 3,
+                        1, 3,
                         5, 8, 8, 4, 6, 7)//official demo data
                 //
         };

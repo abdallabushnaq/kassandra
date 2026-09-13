@@ -16,6 +16,7 @@
  */
 
 import {DateUtils} from '../DateUtils.js';
+import {mountDetachableChart} from '../DetachableChartHost.js';
 import {ChartHandle, InteractiveTimelineChart} from '../InteractiveTimelineChart.js';
 import {Theme} from '../theme/Theme.js';
 import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from '../gantt/AbstractGanttRenderer.js';
@@ -23,8 +24,6 @@ import {GanttRenderer} from '../gantt/GanttRenderer.js';
 import {BurndownRenderer} from './BurndownRenderer.js';
 import {GanttBurndownChart} from './GanttBurndownChart.js';
 import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
-
-let currentGanttBurndownChartInstance: ChartHandle | null = null;
 
 function createTooltipElement(container: HTMLElement): HTMLDivElement {
     const tooltip = document.createElement('div');
@@ -46,7 +45,7 @@ function createTooltipElement(container: HTMLElement): HTMLDivElement {
     return tooltip;
 }
 
-function createChart(
+export function createGanttBurndownChart(
     container: HTMLElement,
     data: GanttBurndownChartDto,
     options: { containerId?: string } = {},
@@ -124,17 +123,29 @@ function createChart(
     return interactiveChart;
 }
 
-function mountGanttBurndownChart(containerId: string, injectedData: GanttBurndownChartDto): void {
+function mountGanttBurndownChart(
+    containerId: string,
+    injectedData: GanttBurndownChartDto,
+    title: string = 'Gantt and burndown chart',
+): void {
     const elementId = containerId || 'gantt-burndown-chart-container';
     const containerElement = document.getElementById(elementId);
     if (!containerElement)
         return;
 
-    currentGanttBurndownChartInstance?.destroy();
-    currentGanttBurndownChartInstance = null;
-
     if (injectedData) {
-        currentGanttBurndownChartInstance = createChart(containerElement, injectedData, {containerId: elementId});
+        mountDetachableChart(
+            {
+                bundleUrl: '/js/generated/burndown/gantt-burndown-bundle.js',
+                containerId: elementId,
+                factoryExportName: 'createGanttBurndownChart',
+                factory: createGanttBurndownChart,
+                title: 'Gantt and burndown chart',
+            },
+            containerElement,
+            injectedData,
+            title,
+        );
     } else {
         containerElement.innerHTML = '<div style="padding:16px;color:red;font-family:sans-serif;">No Gantt burndown chart data provided.</div>';
     }
@@ -143,9 +154,8 @@ function mountGanttBurndownChart(containerId: string, injectedData: GanttBurndow
 declare global {
     interface Window {
         mountGanttBurndownChart: typeof mountGanttBurndownChart;
-        createGanttBurndownChart: typeof createChart;
+        createGanttBurndownChart: typeof createGanttBurndownChart;
     }
 }
-
 window.mountGanttBurndownChart = mountGanttBurndownChart;
-window.createGanttBurndownChart = createChart;
+window.createGanttBurndownChart = createGanttBurndownChart;

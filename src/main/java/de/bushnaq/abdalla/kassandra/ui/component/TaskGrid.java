@@ -58,6 +58,8 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class TaskGrid extends TreeGrid<Task> {
+    public static final String                            DRAG_MODE_DEPENDENCY                = "dependency";
+    public static final String                            DRAG_MODE_REORDER                   = "reorder";
     public static final String                            TASK_GRID_ASSIGNED_PREFIX           = "task-grid-assigned-";
     public static final String                            TASK_GRID_DELETE_BUTTON_PREFIX      = "task-grid-delete-button-prefix-";
     public static final String                            TASK_GRID_DEPENDENCY_PREFIX         = "task-grid-dependency-";
@@ -1234,7 +1236,7 @@ public class TaskGrid extends TreeGrid<Task> {
         this.externalDragMode    = mode;
 
         // Enable drop mode for reorder operations (not dependency)
-        if (!"dependency".equals(mode)) {
+        if (!DRAG_MODE_DEPENDENCY.equals(mode)) {
             // Use BETWEEN for precise positioning, but ON_GRID if the grid is empty
             if (taskOrder.isEmpty()) {
                 setDropMode(GridDropMode.ON_GRID);
@@ -1451,11 +1453,11 @@ public class TaskGrid extends TreeGrid<Task> {
             draggedTask = event.getDraggedItems().getFirst();
             if (isCtrlKeyPressed) {
                 log.info("starting dependency drag mode");
-                dragMode = "dependency";
+                dragMode = DRAG_MODE_DEPENDENCY;
                 setDropMode(GridDropMode.ON_TOP); // dependency mode
             } else {
                 log.info("starting reorder drag mode");
-                dragMode = "reorder";
+                dragMode = DRAG_MODE_REORDER;
                 setDropMode(GridDropMode.BETWEEN); // reorder mode
             }
 
@@ -1469,7 +1471,7 @@ public class TaskGrid extends TreeGrid<Task> {
             // Check for external (cross-grid) drag first
             if (externalDraggedTask != null && externalDragSource != null) {
                 // Cross-grid drops: only allow reorder mode, not dependency
-                if ("dependency".equals(externalDragMode)) {
+                if (DRAG_MODE_DEPENDENCY.equals(externalDragMode)) {
                     log.trace("Cross-grid dependency drop not allowed");
                     return false;
                 }
@@ -1484,10 +1486,10 @@ public class TaskGrid extends TreeGrid<Task> {
             if (isEditMode || draggedTask == null || dragMode == null) return false;
 //            log.trace("DropFilter {} {} {}", draggedTask.getKey(), dropTargetTask.getKey(), dragMode);
             switch (dragMode) {
-                case "dependency":
+                case DRAG_MODE_DEPENDENCY:
                     log.trace("dependency DropFilter {}", isEligiblePredecessor(dropTargetTask, draggedTask));
                     return isEligiblePredecessor(dropTargetTask, draggedTask);
-                case "reorder": {
+                case DRAG_MODE_REORDER: {
                     log.trace("reorder DropFilter {}", isEligibleMoveTarget(dropTargetTask, draggedTask));
                     return isEligibleMoveTarget(dropTargetTask, draggedTask);
 //                    return false;
@@ -1529,14 +1531,14 @@ public class TaskGrid extends TreeGrid<Task> {
             if (dropTargetTask != null && !draggedTask.equals(dropTargetTask)) {
 
                 switch (dragMode) {
-                    case "dependency": {
+                    case DRAG_MODE_DEPENDENCY: {
                         log.info("dropped {} on {}", draggedTask.getKey(), dropTargetTask.getKey());
                         // Check if Ctrl/SprintOverviewMetaDto key is pressed to modify behavior
                         handleDependencyDrop(draggedTask, dropTargetTask);
                         onSaveAllChangesAndRefresh.run();
                     }
                     break;
-                    case "reorder": {
+                    case DRAG_MODE_REORDER: {
                         if (draggedTask.isTask() || draggedTask.isMilestone()) {
                             log.info("dropped {} before {}", draggedTask.getKey(), dropTargetTask.getKey());
 

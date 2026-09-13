@@ -34,6 +34,7 @@ import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
@@ -72,6 +73,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     public static final String                      ROUTE                     = "active-sprints";
     private             List<Sprint>                allSprints                = new ArrayList<>();
     private final       VerticalLayout              contentLayout;
+    private final       Scroller                   contentScroller;
     //    private final       DateTimeFormatter           dateFormatter      = DateTimeFormatter.ofPattern("MMM dd, yyyy");
     private final       FeatureApi                  featureApi;
     private final       Map<UUID, Feature>          featureMap                = new HashMap<>();
@@ -116,10 +118,12 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         this.versionApi = versionApi;
 
         try {
-            // Set width full but not height - let content determine height for scrolling
             setWidthFull();
-            // Make view background transparent, so AppLayout's gray background is visible
-            getStyle().set("background-color", "transparent");
+            setHeightFull();
+            getStyle()
+                    .set("background-color", "transparent")
+                    .set("overflow", "hidden")
+                    .set("min-height", "0");
 
             addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
 
@@ -132,8 +136,15 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             contentLayout.setPadding(false);
             contentLayout.setSpacing(false);
             contentLayout.addClassName(LumoUtility.Gap.LARGE);
+            contentLayout.getStyle().set("min-height", "0");
 
-            add(headerLayout, contentLayout);
+            contentScroller = new Scroller(contentLayout);
+            contentScroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
+            contentScroller.setWidthFull();
+            contentScroller.setHeightFull();
+            contentScroller.getStyle().set("min-height", "0");
+
+            add(headerLayout, contentScroller);
 
             this.getStyle().set("padding-left", "var(--lumo-space-xs)");
             this.getStyle().set("padding-right", "var(--lumo-space-xs)");

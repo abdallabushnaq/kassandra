@@ -85,6 +85,10 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     public static final String                       EDIT_BUTTON_ID             = "edit-tasks-button";
     public static final String                       EXPAND_TOGGLE_BUTTON_ID    = "expand-toggle-button";
     public static final String                       GANTT_CHART_CONTAINER_ID   = "backlog-gantt-chart-container";
+    /**
+     * Identifier of the control that opens the Gantt chart in a separate browser tab.
+     */
+    public static final String                       OPEN_GANTT_CHART_BUTTON_ID = "open-gantt-chart-button";
     public static final String                       MENU_ITEM_ID               = "/backlog";
     public static final String                       ROUTE                      = "backlog";
     public static final String                       SAVE_BUTTON_ID             = "save-tasks-button";
@@ -218,6 +222,13 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                     .set("max-height", "none")
                     .set("min-height", "200px")
                     .set("margin-top", "var(--lumo-space-xs)");
+            Button openGanttChartButton = new Button("Open chart in new tab", VaadinIcon.EXTERNAL_LINK.create());
+            openGanttChartButton.setId(OPEN_GANTT_CHART_BUTTON_ID);
+            openGanttChartButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+            openGanttChartButton.setTooltipText("Open the Gantt chart in a separate browser tab");
+            openGanttChartButton.getElement().executeJs(
+                    "this.addEventListener('click', () => window.detachKassandraChart($0));",
+                    GANTT_CHART_CONTAINER_ID);
 
             // Create backlog grid (always shown at bottom)
             backlogGrid = createGrid(clock);
@@ -267,7 +278,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             contentLayout.setWidthFull();
             // Let the page grow with the chart instead of clipping it to the viewport height.
             contentLayout.getStyle().set("min-height", "0");
-            contentLayout.add(headerLayout, ganttChartContainer, gridPanelWrapper, backlogGridPanel);
+            contentLayout.add(headerLayout, openGanttChartButton, ganttChartContainer, gridPanelWrapper, backlogGridPanel);
 
             Scroller scroller = new Scroller(contentLayout);
             scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
@@ -1263,6 +1274,9 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
      */
     @Override
     protected void onDetach(DetachEvent detachEvent) {
+        detachEvent.getUI().getPage().executeJs(
+                "window.disposeKassandraChart && window.disposeKassandraChart($0);",
+                GANTT_CHART_CONTAINER_ID);
         if (themeChangedRegistration != null) {
             themeChangedRegistration.remove();
             themeChangedRegistration = null;
@@ -1358,8 +1372,8 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                 // Prod: single minified bundle (npm run build:static:prod, built by Maven)
                 ui.getPage().executeJs(
                         "import('/js/generated/gantt/gantt-bundle.js')" +
-                                ".then(() => window.mountGanttChart($0, JSON.parse($1)));",
-                        GANTT_CHART_CONTAINER_ID, json
+                                ".then(() => window.mountGanttChart($0, JSON.parse($1), $2));",
+                        GANTT_CHART_CONTAINER_ID, json, sprint.getName() + " - Gantt chart"
                 );
                 log.info("Gantt Chart data size = {}", json.length());
                 log.debug("Gantt chart DTO pushed to client for sprint '{}'", sprint.getName());
@@ -1406,6 +1420,9 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         } else if (ganttChartContainer != null) {
             // Clear the Gantt chart container if we're showing Backlog or no sprint
             ganttChartContainer.removeAll();
+            getUI().ifPresent(ui -> ui.getPage().executeJs(
+                    "window.disposeKassandraChart && window.disposeKassandraChart($0);",
+                    GANTT_CHART_CONTAINER_ID));
         }
 
         updateHeaderForSelection();
