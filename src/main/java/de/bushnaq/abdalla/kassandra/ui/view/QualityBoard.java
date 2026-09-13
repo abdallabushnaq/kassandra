@@ -401,14 +401,19 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
      * request rather than up front.
      */
     private void createGanttBurndownChart() {
-        Button openGanttBurndownChartButton = new Button("Open chart in new tab", VaadinIcon.EXTERNAL_LINK.create());
+        Button openGanttBurndownChartButton = new Button("Open chart in new window", VaadinIcon.EXTERNAL_LINK.create());
         openGanttBurndownChartButton.setId(OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID);
         openGanttBurndownChartButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
-        openGanttBurndownChartButton.setTooltipText("Open the Gantt and burndown chart in a separate browser tab");
+        openGanttBurndownChartButton.setTooltipText("Open the Gantt and burndown chart in a separate browser window");
         openGanttBurndownChartButton.getElement().executeJs(
                 "this.addEventListener('click', () => window.detachKassandraChart($0));",
                 GANTT_BURNDOWN_CONTAINER_ID);
-        add(openGanttBurndownChartButton);
+        HorizontalLayout chartActionLayout = new HorizontalLayout(openGanttBurndownChartButton);
+        chartActionLayout.setPadding(false);
+        chartActionLayout.setSpacing(false);
+        chartActionLayout.setWidthFull();
+        chartActionLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
+        add(chartActionLayout);
 
         ganttBurndownChartContainer = new Div();
         ganttBurndownChartContainer.setId(GANTT_BURNDOWN_CONTAINER_ID);
@@ -532,6 +537,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
                 log.error("Failed to build Gantt burndown chart data for sprint '{}'", sprint.getName(), e);
                 ganttBurndownChartContainer.removeAll();
                 ganttBurndownChartContainer.add(new Paragraph("Error generating gantt burndown chart: " + e.getMessage()));
+                ui.getPage().executeJs("window.clearKassandraChart && window.clearKassandraChart();");
             }
         });
     }
@@ -660,7 +666,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         detachEvent.getUI().getPage().executeJs(
-                "window.disposeKassandraChart && window.disposeKassandraChart($0);",
+                "window.releaseKassandraChart && window.releaseKassandraChart($0);",
                 GANTT_BURNDOWN_CONTAINER_ID);
         if (themeChangedRegistration != null) {
             themeChangedRegistration.remove();

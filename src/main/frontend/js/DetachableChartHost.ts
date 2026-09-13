@@ -27,6 +27,10 @@ interface PopupRenderMessage<T> {
     title: string;
 }
 
+interface PopupClearMessage {
+    type: 'kassandra-chart-clear';
+}
+
 class DetachableChartHost<T> {
     private container: HTMLElement | null = null;
     private data: T | null = null;
@@ -42,6 +46,9 @@ class DetachableChartHost<T> {
     }
 
     public mount(container: HTMLElement, data: T, title: string): void {
+        if (activeDetachedHost && activeDetachedHost !== this)
+            activeDetachedHost.transferTo(this);
+
         const containerChanged = this.container !== container;
         this.container = container;
         this.data = data;
@@ -65,13 +72,18 @@ class DetachableChartHost<T> {
             return;
         }
 
-        const popup = window.open('', '_blank');
+        const popup = window.open(
+            '',
+            '_blank',
+            'popup=yes,width=1280,height=900,resizable=yes,scrollbars=yes,toolbar=yes,location=yes,menubar=yes',
+        );
         if (!popup) {
             this.showPageError('The browser blocked opening the chart tab. Allow popups for this site and try again.');
             return;
         }
 
         this.popup = popup;
+        activeDetachedHost = this as DetachableChartHost<unknown>;
         this.popupReady = false;
         this.writePopupDocument(popup);
         this.normalHandle?.destroy();
@@ -101,9 +113,27 @@ class DetachableChartHost<T> {
         }
         this.normalHandle?.destroy();
         this.normalHandle = null;
+        if (activeDetachedHost === this)
+            activeDetachedHost = null;
         if (popup && !popup.closed)
             popup.close();
         window.removeEventListener('message', this.handlePopupMessage);
+    }
+
+    public release(): boolean {
+        this.container = null;
+        this.normalHandle?.destroy();
+        this.normalHandle = null;
+        if (activeDetachedHost === this && this.isDetached()) {
+            this.sendPopupClear();
+            return true;
+        }
+        window.removeEventListener('message', this.handlePopupMessage);
+        return false;
+    }
+
+    public clear(): void {
+        this.sendPopupClear();
     }
 
     private readonly handlePopupMessage = (event: MessageEvent<PopupMessage>): void => {
@@ -135,6 +165,26 @@ class DetachableChartHost<T> {
         return this.popup != null && !this.popup.closed;
     }
 
+    private transferTo(nextHost: DetachableChartHost<unknown>): void {
+        const popup = this.popup;
+        if (!popup || popup.closed)
+            return;
+
+        this.popup = null;
+        this.popupReady = false;
+        if (this.popupReadyTimer) {
+            clearTimeout(this.popupReadyTimer);
+            this.popupReadyTimer = null;
+        }
+        if (this.popupCheckTimer) {
+            clearInterval(this.popupCheckTimer);
+            this.popupCheckTimer = null;
+        }
+        nextHost.popup = popup;
+        nextHost.popupReady = true;
+        activeDetachedHost = nextHost;
+    }
+
     private renderOnPage(): void {
         if (!this.container || !this.data)
             return;
@@ -156,10 +206,19 @@ class DetachableChartHost<T> {
         this.popup.postMessage(message, window.location.origin);
     }
 
+    private sendPopupClear(): void {
+        if (!this.popupReady || !this.popup || this.popup.closed)
+            return;
+        const message: PopupClearMessage = {type: 'kassandra-chart-clear'};
+        this.popup.postMessage(message, window.location.origin);
+    }
+
     private restoreToPage(closePopup: boolean): void {
         const popup = this.popup;
         this.popup = null;
         this.popupReady = false;
+        if (activeDetachedHost === this)
+            activeDetachedHost = null;
         if (this.popupReadyTimer) {
             clearTimeout(this.popupReadyTimer);
             this.popupReadyTimer = null;
@@ -233,7 +292,20 @@ document.getElementById('return-chart').addEventListener('click', () => {
 });
 window.addEventListener('pagehide', notifyReturn);
 window.addEventListener('message', async (event) => {
-    if (event.origin !== expectedOrigin || event.source !== window.opener || event.data?.type !== 'kassandra-chart-render')
+    if (event.origin !== expectedOrigin || event.source !== window.opener)
+        return;
+    if (event.data?.type === 'kassandra-chart-clear') {
+        chartHandle?.destroy();
+        chartHandle = null;
+        document.title = 'No Chart Data Available';
+        document.getElementById('title').textContent = 'No Chart Data Available';
+        const chart = document.getElementById('chart');
+        chart.textContent = 'No Chart Data Available';
+        chart.style.padding = '24px';
+        chart.style.textAlign = 'center';
+        return;
+    }
+    if (event.data?.type !== 'kassandra-chart-render')
         return;
     try {
         const message = event.data;
@@ -247,7 +319,11 @@ window.addEventListener('message', async (event) => {
         chartHandle?.destroy();
         document.title = message.title;
         document.getElementById('title').textContent = message.title;
-        chartHandle = factory(document.getElementById('chart'), message.data, {containerId: message.containerId});
+        const chart = document.getElementById('chart');
+        chart.textContent = '';
+        chart.style.padding = '';
+        chart.style.textAlign = '';
+        chartHandle = factory(chart, message.data, {containerId: message.containerId});
     } catch (error) {
         const detail = error instanceof Error ? error.message : 'Unknown chart rendering error.';
         if (window.opener && !window.opener.closed)
@@ -264,6 +340,7 @@ if (window.opener && !window.opener.closed)
 }
 
 const hosts = new Map<string, DetachableChartHost<unknown>>();
+let activeDetachedHost: DetachableChartHost<unknown> | null = null;
 
 export function mountDetachableChart<T>(
     options: DetachableChartOptions<T>,
@@ -291,12 +368,28 @@ export function disposeDetachableChart(containerId: string): void {
     hosts.delete(containerId);
 }
 
+export function releaseDetachableChart(containerId: string): void {
+    const host = hosts.get(containerId);
+    if (!host)
+        return;
+    if (!host.release())
+        hosts.delete(containerId);
+}
+
+export function clearDetachedChart(): void {
+    activeDetachedHost?.clear();
+}
+
 declare global {
     interface Window {
+        clearKassandraChart: typeof clearDetachedChart;
         detachKassandraChart: typeof detachChart;
         disposeKassandraChart: typeof disposeDetachableChart;
+        releaseKassandraChart: typeof releaseDetachableChart;
     }
 }
 
+window.clearKassandraChart = clearDetachedChart;
 window.detachKassandraChart = detachChart;
 window.disposeKassandraChart = disposeDetachableChart;
+window.releaseKassandraChart = releaseDetachableChart;

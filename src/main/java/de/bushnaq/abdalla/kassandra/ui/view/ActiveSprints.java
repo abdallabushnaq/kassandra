@@ -46,12 +46,18 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttBurndownChartDto;
+import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.MergedScrumBoard;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
+import de.bushnaq.abdalla.util.GanttErrorHandler;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -63,6 +69,14 @@ import java.util.stream.Collectors;
 @RolesAllowed({"USER", "ADMIN"})
 @Slf4j
 public class ActiveSprints extends Main implements AfterNavigationObserver {
+    /**
+     * Identifier of the Active Sprints Gantt/burndown chart container.
+     */
+    public static final String                      GANTT_BURNDOWN_CONTAINER_ID = "active-sprints-gantt-burndown-container";
+    /**
+     * Identifier of the control that opens the Active Sprints chart in a separate browser window.
+     */
+    public static final String                      OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID = "open-active-sprints-gantt-burndown-chart-button";
     public static final String                      ID_CLEAR_FILTERS_BUTTON   = "clear-filters-button";
     public static final String                      ID_GROUPING_MODE_SELECTOR = "grouping-mode-selector";
     public static final String                      ID_SEARCH_FIELD           = "search-field";
@@ -77,6 +91,10 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     //    private final       DateTimeFormatter           dateFormatter      = DateTimeFormatter.ofPattern("MMM dd, yyyy");
     private final       FeatureApi                  featureApi;
     private final       Map<UUID, Feature>          featureMap                = new HashMap<>();
+    private final       GanttErrorHandler           ganttErrorHandler         = new GanttErrorHandler();
+    @Autowired
+    private             GanttBurndownChartService   ganttBurndownChartService;
+    private             Div                         ganttBurndownChartContainer;
     private             ComboBox<GroupingMode>      groupingModeSelector;
     private             boolean                     hasUrlParameters          = false;
     /**
@@ -87,6 +105,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private final       HorizontalLayout            headerLayout;
     private             HorizontalLayout            headerTitleLayout;
     private             boolean                     isRestoringFromUrl        = false;
+    private final       JsonMapper                  jsonMapper;
     /**
      * Page title component updated to reflect the current sprint selection.
      */
@@ -108,14 +127,26 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private final       VersionApi                  versionApi;
     private final       WorklogApi                  worklogApi;
 
+    /**
+     * Creates the Active Sprints board.
+     *
+     * @param featureApi  API for loading sprint features
+     * @param sprintApi   API for loading active sprints
+     * @param taskApi     API for loading and updating tasks
+     * @param userApi     API for loading users
+     * @param worklogApi  API for loading and recording worklogs
+     * @param versionApi  API for loading versions
+     * @param jsonMapper  mapper used to serialize the chart DTO for the browser
+     */
     public ActiveSprints(FeatureApi featureApi, SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi,
-                         VersionApi versionApi) {
+                         VersionApi versionApi, JsonMapper jsonMapper) {
         this.featureApi = featureApi;
         this.sprintApi  = sprintApi;
         this.taskApi    = taskApi;
         this.userApi    = userApi;
         this.worklogApi = worklogApi;
         this.versionApi = versionApi;
+        this.jsonMapper = jsonMapper;
 
         try {
             setWidthFull();
@@ -235,6 +266,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             contentLayout.removeAll();
 
             if (allSprints.isEmpty()) {
+                clearDetachedChart();
                 Div emptyMessage = new Div();
                 emptyMessage.setText("No active sprints found. Sprints must have status 'STARTED' to appear here.");
                 emptyMessage.getStyle()
@@ -249,6 +281,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             List<Sprint> sprintsToShow = selectedSprints.isEmpty() ? allSprints : new ArrayList<>(selectedSprints);
 
             if (sprintsToShow.isEmpty()) {
+                clearDetachedChart();
                 Div emptyMessage = new Div();
                 emptyMessage.setText("No sprints match the current filters.");
                 emptyMessage.getStyle()
@@ -258,6 +291,8 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 contentLayout.add(emptyMessage);
                 return;
             }
+
+            createGanttBurndownChart();
 
             // Get grouping mode
             GroupingMode mode = groupingModeSelector != null ? groupingModeSelector.getValue() : GroupingMode.FEATURES;
@@ -274,6 +309,82 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                     .set("color", "var(--lumo-error-text-color)");
             contentLayout.add(errorMessage);
         }
+    }
+
+    private void clearDetachedChart() {
+        getUI().ifPresent(ui -> ui.getPage().executeJs("window.clearKassandraChart && window.clearKassandraChart();"));
+    }
+
+    private void createGanttBurndownChart() {
+        if (selectedSprints.size() != 1) {
+            Div message = new Div();
+            message.setText("Select exactly one sprint to display its Gantt and burndown chart.");
+            message.getStyle()
+                    .set("padding", "var(--lumo-space-m)")
+                    .set("color", "var(--lumo-secondary-text-color)");
+            contentLayout.add(message);
+            clearDetachedChart();
+            return;
+        }
+
+        Sprint selectedSprint = selectedSprints.iterator().next();
+        if (selectedSprint.getStart() == null || selectedSprint.getEnd() == null) {
+            Div message = new Div();
+            message.setText("The selected sprint needs start and end dates before its chart can be displayed.");
+            message.getStyle()
+                    .set("padding", "var(--lumo-space-m)")
+                    .set("color", "var(--lumo-secondary-text-color)");
+            contentLayout.add(message);
+            clearDetachedChart();
+            return;
+        }
+
+        Button openGanttBurndownChartButton = new Button("Open chart in new window", VaadinIcon.EXTERNAL_LINK.create());
+        openGanttBurndownChartButton.setId(OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID);
+        openGanttBurndownChartButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+        openGanttBurndownChartButton.setTooltipText("Open the Gantt and burndown chart in a separate browser window");
+        openGanttBurndownChartButton.getElement().executeJs(
+                "this.addEventListener('click', () => window.detachKassandraChart($0));",
+                GANTT_BURNDOWN_CONTAINER_ID);
+
+        HorizontalLayout chartActionLayout = new HorizontalLayout(openGanttBurndownChartButton);
+        chartActionLayout.setPadding(false);
+        chartActionLayout.setSpacing(false);
+        chartActionLayout.setWidthFull();
+        chartActionLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
+
+        ganttBurndownChartContainer = new Div();
+        ganttBurndownChartContainer.setId(GANTT_BURNDOWN_CONTAINER_ID);
+        ganttBurndownChartContainer.getStyle()
+                .set("width", "100%")
+                .set("overflow-x", "hidden")
+                .set("height", "100%")
+                .set("margin-top", "var(--lumo-space-xs)");
+        contentLayout.add(chartActionLayout, ganttBurndownChartContainer);
+        refreshGanttBurndownChart(selectedSprint);
+    }
+
+    private void refreshGanttBurndownChart(Sprint selectedSprint) {
+        if (ganttBurndownChartContainer == null) {
+            return;
+        }
+        getUI().ifPresent(ui -> {
+            boolean isDark = ui.getElement().getThemeList().contains(Lumo.DARK);
+            try {
+                new GanttUtil().levelResources(ganttErrorHandler, selectedSprint, "", ParameterOptions.getLocalNow());
+                GanttBurndownChartDto dto  = ganttBurndownChartService.build(selectedSprint, ParameterOptions.getLocalNow(), isDark);
+                String                json = jsonMapper.writeValueAsString(dto);
+                ui.getPage().executeJs(
+                        "import('/js/generated/burndown/gantt-burndown-bundle.js')" +
+                                ".then(() => window.mountGanttBurndownChart($0, JSON.parse($1), $2));",
+                        GANTT_BURNDOWN_CONTAINER_ID, json, selectedSprint.getName() + " - Gantt and burndown chart");
+            } catch (Exception e) {
+                log.error("Failed to build Gantt burndown chart for sprint '{}'", selectedSprint.getName(), e);
+                ganttBurndownChartContainer.removeAll();
+                ganttBurndownChartContainer.add(new Div("Error generating Gantt and burndown chart: " + e.getMessage()));
+                clearDetachedChart();
+            }
+        });
     }
 
     /**
@@ -456,7 +567,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 featureMap,
                 selectedUsers,
                 worklogApi
-                , this::refreshUndoRedoToolbar
+                , this::refreshAfterPlanningChange
         );
 
         contentLayout.add(mergedBoard);
@@ -611,7 +722,12 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        themeChangedRegistration = ComponentUtil.addListener(attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderForSelection());
+        themeChangedRegistration = ComponentUtil.addListener(attachEvent.getUI(), ThemeChangedEvent.class, e -> {
+            updateHeaderForSelection();
+            if (selectedSprints.size() == 1 && ganttBurndownChartContainer != null) {
+                refreshGanttBurndownChart(selectedSprints.iterator().next());
+            }
+        });
     }
 
     /**
@@ -621,6 +737,9 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
      */
     @Override
     protected void onDetach(DetachEvent detachEvent) {
+        detachEvent.getUI().getPage().executeJs(
+                "window.releaseKassandraChart && window.releaseKassandraChart($0);",
+                GANTT_BURNDOWN_CONTAINER_ID);
         if (themeChangedRegistration != null) {
             themeChangedRegistration.remove();
             themeChangedRegistration = null;
@@ -633,6 +752,11 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 .filter(MainLayout.class::isInstance)
                 .map(MainLayout.class::cast)
                 .ifPresent(MainLayout::refreshUndoRedoToolbar);
+    }
+
+    private void refreshAfterPlanningChange() {
+        loadData();
+        refreshUndoRedoToolbar();
     }
 
     /**

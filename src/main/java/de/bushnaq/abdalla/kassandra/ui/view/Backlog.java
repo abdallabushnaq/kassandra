@@ -222,10 +222,10 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                     .set("max-height", "none")
                     .set("min-height", "200px")
                     .set("margin-top", "var(--lumo-space-xs)");
-            Button openGanttChartButton = new Button("Open chart in new tab", VaadinIcon.EXTERNAL_LINK.create());
+            Button openGanttChartButton = new Button("Open chart in new window", VaadinIcon.EXTERNAL_LINK.create());
             openGanttChartButton.setId(OPEN_GANTT_CHART_BUTTON_ID);
             openGanttChartButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
-            openGanttChartButton.setTooltipText("Open the Gantt chart in a separate browser tab");
+            openGanttChartButton.setTooltipText("Open the Gantt chart in a separate browser window");
             openGanttChartButton.getElement().executeJs(
                     "this.addEventListener('click', () => window.detachKassandraChart($0));",
                     GANTT_CHART_CONTAINER_ID);
@@ -1292,7 +1292,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         detachEvent.getUI().getPage().executeJs(
-                "window.disposeKassandraChart && window.disposeKassandraChart($0);",
+                "window.releaseKassandraChart && window.releaseKassandraChart($0);",
                 GANTT_CHART_CONTAINER_ID);
         if (themeChangedRegistration != null) {
             themeChangedRegistration.remove();
@@ -1397,6 +1397,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             } catch (Exception e) {
                 log.error("Failed to build Gantt chart data for sprint '{}'", sprint.getName(), e);
                 displayGanttError(e.getMessage());
+                ui.getPage().executeJs("window.clearKassandraChart && window.clearKassandraChart();");
             }
         });
     }
@@ -1438,7 +1439,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             // Clear the Gantt chart container if we're showing Backlog or no sprint
             ganttChartContainer.removeAll();
             getUI().ifPresent(ui -> ui.getPage().executeJs(
-                    "window.disposeKassandraChart && window.disposeKassandraChart($0);",
+                    "window.releaseKassandraChart && window.releaseKassandraChart($0);",
                     GANTT_CHART_CONTAINER_ID));
         }
 

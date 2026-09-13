@@ -549,11 +549,11 @@
 | kassandra.ui.view.util               | WorkWeekListViewTester.java                                  | src      |       28 |      109 |       32 |      117 |      286 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.view                    | AboutView.java                                               | src      |       19 |       16 |       21 |       95 |      151 |
-| kassandra.ui.view                    | ActiveSprints.java                                           | src      |       73 |       38 |       76 |      546 |      733 |
+| kassandra.ui.view                    | ActiveSprints.java                                           | src      |       82 |       55 |       76 |      644 |      857 |
 | kassandra.ui.view                    | ActiveSprintsIT.java                                         | src      |       24 |       10 |       29 |      116 |      179 |
 | kassandra.ui.view                    | AvailabilityListView.java                                    | src      |       32 |       11 |       48 |      244 |      335 |
 | kassandra.ui.view                    | AvailabilityListViewIT.java                                  | src      |       18 |       80 |       30 |      109 |      237 |
-| kassandra.ui.view                    | Backlog.java                                                 | src      |      179 |      161 |      154 |     1215 |     1709 |
+| kassandra.ui.view                    | Backlog.java                                                 | src      |      179 |      161 |      154 |     1216 |     1710 |
 | kassandra.ui.view                    | FeatureListView.java                                         | src      |       41 |       18 |       46 |      433 |      538 |
 | kassandra.ui.view                    | FeatureListViewIT.java                                       | src      |       14 |       81 |       23 |      111 |      229 |
 | kassandra.ui.view                    | GridRowReordering.java                                       | src      |       18 |        0 |        3 |       62 |       83 |
@@ -572,7 +572,7 @@
 | kassandra.ui.view                    | OidcProviderManagementView.java                              | src      |       14 |       11 |       16 |      110 |      151 |
 | kassandra.ui.view                    | ProductListView.java                                         | src      |       41 |        6 |       23 |      343 |      413 |
 | kassandra.ui.view                    | ProductListViewIT.java                                       | src      |       35 |      119 |       24 |      224 |      402 |
-| kassandra.ui.view                    | QualityBoard.java                                            | src      |       68 |       87 |       62 |      650 |      867 |
+| kassandra.ui.view                    | QualityBoard.java                                            | src      |       68 |       87 |       62 |      656 |      873 |
 | kassandra.ui.view                    | QualityBoardIT.java                                          | src      |       11 |        0 |       18 |      116 |      145 |
 | kassandra.ui.view                    | RecoveryView.java                                            | src      |        6 |        9 |       16 |       26 |       57 |
 | kassandra.ui.view                    | SetupView.java                                               | src      |       18 |       42 |       16 |      149 |      225 |
@@ -692,5 +692,5 @@
 | util                                 | TaskUtil.java                                                | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 71 package(s)                        | 620 file(s)                                                  | java     |    13281 |    14199 |    17943 |    74239 |   119662 |
+| 71 package(s)                        | 620 file(s)                                                  | java     |    13290 |    14216 |    17943 |    74344 |   119793 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
