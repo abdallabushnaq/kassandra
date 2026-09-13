@@ -35,5 +35,6 @@ public class AuditRevisionListener implements RevisionListener {
         AuditRevisionEntity auditRevision = (AuditRevisionEntity) revisionEntity;
         auditRevision.setActor(SecurityUtils.getUserEmail());
         auditRevision.setOperationId(AuditOperationContextHolder.getOperationId());
+        auditRevision.setReplay(AuditOperationContextHolder.isReplay());
     }
 }

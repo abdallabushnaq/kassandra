@@ -43,6 +43,7 @@ import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductAclApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserGroupApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
@@ -92,10 +93,12 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     private final        ProductApi             productApi;
     private final        ChatPanelSessionState  sessionState;
     private final        StableDiffusionService stableDiffusionService;
+    private final        UndoRedoApi            undoRedoApi;
     private final        UserApi                userApi;
     private final        UserGroupApi           userGroupApi;
 
-    public ProductListView(ProductApi productApi, ProductAclApi productAclApi, UserApi userApi, UserGroupApi userGroupApi,
+    public ProductListView(ProductApi productApi, ProductAclApi productAclApi, UndoRedoApi undoRedoApi, UserApi userApi,
+                           UserGroupApi userGroupApi,
                            Clock clock, AiFilterService aiFilterService, JsonMapper mapper,
                            AvatarService avatarService,
                            StableDiffusionService stableDiffusionService,
@@ -106,6 +109,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         super(clock);
         this.productApi             = productApi;
         this.productAclApi          = productAclApi;
+        this.undoRedoApi            = undoRedoApi;
         this.userApi                = userApi;
         this.userGroupApi           = userGroupApi;
         this.avatarService          = avatarService;
@@ -171,6 +175,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                                 .filter(product -> !DefaultEntitiesInitializer.DEFAULT_NAME.equals(product.getName()))
                                 .map(Product::getId)
                                 .toList());
+                        mainLayout.setHistoryProductIds(undoRedoApi.historyProductIds());
                         mainLayout.getBreadcrumbs().clear();
                         mainLayout.getBreadcrumbs().addItem("Products", ProductListView.class);
                     }

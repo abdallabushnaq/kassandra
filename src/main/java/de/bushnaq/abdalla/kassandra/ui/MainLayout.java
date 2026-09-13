@@ -94,6 +94,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public static final String             ID_USER_MENU_WORK_WEEK          = "main-layout-user-menu-work-week";
     private final       Collection<UUID>   activeProductIds                = new LinkedHashSet<>();
     private final       Map<UUID, Product> activeProducts                  = new HashMap<>();
+    private final       Collection<UUID>   historyProductIds               = new LinkedHashSet<>();
     AuthenticationContext authenticationContext;
     private final Div                         breadcrumbContainer;
     @Getter
@@ -126,7 +127,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         this.productApi            = productApi;
         this.userApi               = userApi;
         this.themeSessionState     = themeSessionState;
-        this.undoHistoryPanel      = new UndoHistoryPanel(undoRedoApi, () -> activeProductIds,
+        this.undoHistoryPanel      = new UndoHistoryPanel(undoRedoApi, () -> historyProductIds,
                 kassandraProperties.getUndoRedo().getHistoryLimit(),
                 this::closeHistoryDrawer,
                 () -> UI.getCurrent().getPage().reload(),
@@ -676,6 +677,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public void setActiveProductIds(Collection<UUID> productIds) {
         activeProductIds.clear();
         activeProductIds.addAll(productIds);
+        setHistoryProductIds(productIds);
         productIds.forEach(productId -> {
             if (activeProducts.containsKey(productId)) {
                 return;
@@ -686,6 +688,16 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
                 log.warn("Could not load product avatar for planning history: {}", productId, e);
             }
         });
+    }
+
+    /**
+     * Sets the products included in global action history without changing the active view context.
+     *
+     * @param productIds product IDs whose history should be displayed
+     */
+    public void setHistoryProductIds(Collection<UUID> productIds) {
+        historyProductIds.clear();
+        historyProductIds.addAll(productIds);
     }
 
     /**

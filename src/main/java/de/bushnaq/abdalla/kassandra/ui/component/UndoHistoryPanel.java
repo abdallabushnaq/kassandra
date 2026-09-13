@@ -17,10 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
-import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import de.bushnaq.abdalla.kassandra.dto.UndoRedoHistory;
 import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
@@ -75,45 +71,14 @@ public class UndoHistoryPanel extends VerticalLayout {
     }
 
     private void addOperation(UndoRedoHistory.Operation operation) {
-        VerticalLayout content = new VerticalLayout();
-        content.setPadding(false);
-        content.setSpacing(false);
-        content.setWidthFull();
-        HorizontalLayout titleLayout = new HorizontalLayout();
-        titleLayout.setAlignItems(Alignment.CENTER);
-        addAvatar(titleLayout, productAvatarUrlResolver.apply(operation.getProductId()), operation.getProductName());
-        addAvatar(titleLayout, userAvatarUrlResolver.apply(operation.getActor()), operation.getActor());
-        Span title = new Span(operation.getProductName() + ": " + operation.getSummary() + " - "
-                + operation.getActor() + " (" + operation.getCreated() + ")");
-        title.getStyle().set("font-weight", "600").set("white-space", "normal");
-        titleLayout.add(title);
-        content.add(titleLayout);
-        operation.getEntityChanges().forEach(change -> {
-            Span entity = new Span(change.getAction() + " " + change.getEntityType() + ": " + change.getDisplayName());
-            entity.getStyle().set("white-space", "normal");
-            content.add(entity);
-        });
-        HorizontalLayout row = new HorizontalLayout(content);
-        row.setWidthFull();
-        row.setFlexGrow(1, content);
-        row.getStyle().set("flex-shrink", "0");
-        row.addClassName("planning-history-operation");
+        boolean undo = !operation.isUndone();
+        UndoHistoryOperationDetails details = new UndoHistoryOperationDetails(operation, productAvatarUrlResolver,
+                userAvatarUrlResolver, undo ? "Undo" : "Redo", () -> replay(operation));
+        details.setWidthFull();
         if (operation.isUndone()) {
-            row.addClassName("planning-history-operation-undone");
+            details.addClassName("planning-history-operation-undone");
         }
-        row.addClickListener(event -> replay(operation));
-        add(row);
-    }
-
-    private void addAvatar(HorizontalLayout layout, String source, String alt) {
-        if (source == null) {
-            return;
-        }
-        Image avatar = new Image(source, alt);
-        avatar.setWidth("20px");
-        avatar.setHeight("20px");
-        avatar.getStyle().set("border-radius", "4px").set("object-fit", "cover");
-        layout.add(avatar);
+        add(details);
     }
 
     /**

@@ -68,8 +68,6 @@ public class ProductController {
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     @Transactional
     public void delete(@PathVariable UUID id) {
-        // Delete ACL entries first
-        productAclService.deleteProductAcl(id);
         // Delete avatars
         productAvatarRepository.deleteByProductId(id);
         productAvatarGenerationDataRepository.deleteByProductId(id);

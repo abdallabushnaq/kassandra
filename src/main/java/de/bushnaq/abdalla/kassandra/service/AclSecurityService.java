@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -63,6 +64,21 @@ public class AclSecurityService {
             return true;
         }
         return hasProductAccess(productId);
+    }
+
+    /**
+     * Gets all product IDs accessible by the current non-administrator user, including soft-deleted products.
+     *
+     * @return accessible product IDs, or an empty list for guests and unknown users
+     */
+    public List<UUID> getAccessibleProductIds() {
+        String userEmail = SecurityUtils.getUserEmail();
+        if (SecurityUtils.GUEST.equals(userEmail)) {
+            return List.of();
+        }
+        return userRepository.findByEmail(userEmail)
+                .map(user -> productAclService.getAccessibleProductIds(user.getId()))
+                .orElseGet(List::of);
     }
 
     /**
@@ -213,4 +229,3 @@ public class AclSecurityService {
                 .orElse(false);
     }
 }
-

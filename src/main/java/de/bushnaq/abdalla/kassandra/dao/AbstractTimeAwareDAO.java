@@ -24,10 +24,12 @@ import jakarta.persistence.PreUpdate;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.envers.Audited;
 
 import java.time.OffsetDateTime;
 
 @MappedSuperclass
+@Audited
 @Getter
 @Setter
 @ToString

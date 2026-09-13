@@ -27,6 +27,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.UUID;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -39,8 +40,8 @@ public class UndoRedoApi extends AbstractApi {
      * Creates the API client for tests with an explicit base URL.
      *
      * @param restTemplate HTTP client
-     * @param jsonMapper JSON mapper
-     * @param baseUrl API base URL
+     * @param jsonMapper   JSON mapper
+     * @param baseUrl      API base URL
      */
     public UndoRedoApi(RestTemplate restTemplate, JsonMapper jsonMapper, String baseUrl) {
         super(restTemplate, jsonMapper, baseUrl);
@@ -50,7 +51,7 @@ public class UndoRedoApi extends AbstractApi {
      * Creates the Spring-managed API client.
      *
      * @param restTemplate HTTP client
-     * @param jsonMapper JSON mapper
+     * @param jsonMapper   JSON mapper
      */
     @Autowired
     public UndoRedoApi(RestTemplate restTemplate, JsonMapper jsonMapper) {
@@ -73,7 +74,7 @@ public class UndoRedoApi extends AbstractApi {
      * Gets a limited globally ordered history for multiple active products.
      *
      * @param productIds product IDs in the active page scope
-     * @param limit maximum number of operations to retrieve
+     * @param limit      maximum number of operations to retrieve
      * @return combined history state
      */
     public UndoRedoHistory history(Collection<UUID> productIds, int limit) {
@@ -90,11 +91,22 @@ public class UndoRedoApi extends AbstractApi {
     }
 
     /**
+     * Gets product IDs whose histories are available to the current user, including soft-deleted products.
+     *
+     * @return authorized product history IDs
+     */
+    public List<UUID> historyProductIds() {
+        ResponseEntity<UUID[]> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/history/product-ids", HttpMethod.GET, createHttpEntity(), UUID[].class));
+        return List.of(response.getBody());
+    }
+
+    /**
      * Gets the operations that will be replayed by a selected undo or redo action.
      *
-     * @param productId product ID
+     * @param productId   product ID
      * @param operationId selected operation ID
-     * @param undo whether the selected action is undo
+     * @param undo        whether the selected action is undo
      * @return replay preview
      */
     public UndoRedoHistory replayPreview(UUID productId, UUID operationId, boolean undo) {
@@ -119,7 +131,7 @@ public class UndoRedoApi extends AbstractApi {
     /**
      * Reapplies the consecutive undone operations through the selected operation.
      *
-     * @param productId product ID
+     * @param productId   product ID
      * @param operationId last operation to reapply
      * @return updated history state
      */
@@ -145,7 +157,7 @@ public class UndoRedoApi extends AbstractApi {
     /**
      * Reverts the consecutive applied operations through the selected operation.
      *
-     * @param productId product ID
+     * @param productId   product ID
      * @param operationId oldest operation to revert
      * @return updated history state
      */

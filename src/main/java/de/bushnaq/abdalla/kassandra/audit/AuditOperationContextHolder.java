@@ -23,7 +23,8 @@ import java.util.UUID;
  * Holds the command-journal operation associated with the current transaction thread.
  */
 public final class AuditOperationContextHolder {
-    private static final ThreadLocal<UUID> OPERATION_ID = new ThreadLocal<>();
+    private static final ThreadLocal<UUID>    OPERATION_ID = new ThreadLocal<>();
+    private static final ThreadLocal<Boolean> REPLAY       = new ThreadLocal<>();
 
     private AuditOperationContextHolder() {
     }
@@ -33,6 +34,7 @@ public final class AuditOperationContextHolder {
      */
     public static void clear() {
         OPERATION_ID.remove();
+        REPLAY.remove();
     }
 
     /**
@@ -45,11 +47,31 @@ public final class AuditOperationContextHolder {
     }
 
     /**
+     * Returns whether the current revision is produced by undo or redo replay.
+     *
+     * @return {@code true} when the current mutation replays a journaled operation
+     */
+    public static boolean isReplay() {
+        return Boolean.TRUE.equals(REPLAY.get());
+    }
+
+    /**
      * Associates an undoable operation with the current thread.
      *
      * @param operationId the persisted command-journal operation ID
      */
     public static void setOperationId(UUID operationId) {
         OPERATION_ID.set(operationId);
+        REPLAY.set(false);
+    }
+
+    /**
+     * Associates an undoable replay operation with the current thread.
+     *
+     * @param operationId the original command-journal operation ID
+     */
+    public static void setReplayOperationId(UUID operationId) {
+        OPERATION_ID.set(operationId);
+        REPLAY.set(true);
     }
 }

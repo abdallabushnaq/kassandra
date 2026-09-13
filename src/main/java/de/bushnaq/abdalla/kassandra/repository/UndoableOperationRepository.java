@@ -28,6 +28,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UndoableOperationRepository extends ListCrudRepository<UndoableOperationDAO, UUID> {
+
+    /**
+     * Finds all products that have journaled planning operations.
+     *
+     * @return product IDs with undo/redo history
+     */
+    @Query("SELECT DISTINCT o.productId FROM UndoableOperationDAO o")
+    List<UUID> findDistinctProductIds();
+
     List<UndoableOperationDAO> findByProductIdOrderBySequenceNumberDesc(UUID productId);
 
     List<UndoableOperationDAO> findByProductIdInOrderByCreatedDesc(Collection<UUID> productIds, Pageable pageable);

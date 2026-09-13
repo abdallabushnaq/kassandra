@@ -22,7 +22,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.EqualsAndHashCode;
@@ -33,7 +32,7 @@ import lombok.ToString;
 import java.util.UUID;
 
 /**
- * Stores the before and after state of one entity within an undoable operation.
+ * References the Envers revision of one entity within an undoable operation.
  */
 @Entity
 @Table(name = "undoable_operation_entries")
@@ -42,14 +41,6 @@ import java.util.UUID;
 @ToString(exclude = "operation")
 @EqualsAndHashCode(of = {"id"})
 public class UndoableOperationEntryDAO {
-    @Lob
-    @Column
-    private String afterSnapshot;
-
-    @Lob
-    @Column
-    private String beforeSnapshot;
-
     @Column(nullable = false)
     private UUID entityId;
 
@@ -62,6 +53,9 @@ public class UndoableOperationEntryDAO {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "operation_id", nullable = false)
     private UndoableOperationDAO operation;
+
+    @Column(nullable = false)
+    private int revisionNumber;
 
     @Column(nullable = false)
     private int restoreOrder;

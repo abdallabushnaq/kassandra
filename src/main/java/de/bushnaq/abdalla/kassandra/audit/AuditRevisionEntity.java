@@ -51,6 +51,9 @@ public class AuditRevisionEntity {
     @Column
     private UUID operationId;
 
+    @Column(nullable = false)
+    private boolean replay;
+
     @RevisionTimestamp
     private long timestamp;
 }

@@ -20,12 +20,9 @@ package de.bushnaq.abdalla.kassandra.ui.dialog;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import de.bushnaq.abdalla.kassandra.dto.UndoRedoHistory;
+import de.bushnaq.abdalla.kassandra.ui.component.UndoHistoryOperationDetails;
 
 import java.util.UUID;
 import java.util.function.Function;
@@ -56,7 +53,8 @@ public class UndoHistoryConfirmationDialog extends Dialog {
         VerticalLayout operations = new VerticalLayout();
         operations.setPadding(false);
         operations.setSpacing(true);
-        preview.getOperations().forEach(operation -> operations.add(operationDetails(operation)));
+        preview.getOperations().forEach(operation -> operations.add(new UndoHistoryOperationDetails(operation,
+                productAvatarUrlResolver, userAvatarUrlResolver)));
         operations.setWidthFull();
         operations.setHeight("400px");
         operations.getStyle().set("overflow-y", "auto");
@@ -72,57 +70,4 @@ public class UndoHistoryConfirmationDialog extends Dialog {
         setWidth("900px");
     }
 
-    private Image createAvatar(String source, String alt) {
-        if (source == null) {
-            return null;
-        }
-        Image avatar = new Image(source, alt);
-        avatar.setWidth("24px");
-        avatar.setHeight("24px");
-        avatar.getStyle().set("border-radius", "4px").set("object-fit", "cover");
-        return avatar;
-    }
-
-    private boolean isVisible(UndoRedoHistory.EntityChange change) {
-        return !"Updated".equals(change.getAction()) || !change.getFieldChanges().isEmpty();
-    }
-
-    private VerticalLayout operationDetails(UndoRedoHistory.Operation operation) {
-        VerticalLayout details = new VerticalLayout();
-        details.setPadding(false);
-        details.setSpacing(false);
-
-        HorizontalLayout title = new HorizontalLayout();
-        title.setAlignItems(Alignment.CENTER);
-        Image productAvatar = createAvatar(productAvatarUrlResolver.apply(operation.getProductId()), operation.getProductName());
-        if (productAvatar != null) {
-            title.add(productAvatar);
-        }
-        Span summary = new Span(operation.getProductName() + ": " + operation.getSummary());
-        summary.getStyle().set("font-weight", "600");
-        title.add(summary);
-        details.add(title);
-
-        HorizontalLayout actor = new HorizontalLayout();
-        actor.setAlignItems(Alignment.CENTER);
-        Image userAvatar = createAvatar(userAvatarUrlResolver.apply(operation.getActor()), operation.getActor());
-        if (userAvatar != null) {
-            actor.add(userAvatar);
-        }
-        actor.add(new Span(operation.getCreated() + " - " + operation.getActor()));
-        details.add(actor);
-
-        var visibleChanges = operation.getEntityChanges().stream().filter(this::isVisible).toList();
-        if (visibleChanges.isEmpty()) {
-            details.add(new Span("No updates in any fields."));
-        } else {
-            visibleChanges.forEach(change -> {
-                Span entity = new Span(change.getAction() + " " + change.getEntityType() + ": " + change.getDisplayName());
-                entity.getStyle().set("font-weight", "600");
-                details.add(entity);
-                change.getFieldChanges().forEach(fieldChange -> details.add(new Span(fieldChange)));
-            });
-        }
-        return details;
-    }
 }

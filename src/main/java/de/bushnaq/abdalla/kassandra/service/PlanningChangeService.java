@@ -40,16 +40,21 @@ import de.bushnaq.abdalla.util.date.DateUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.envers.RevisionType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.time.OffsetDateTime;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -60,23 +65,25 @@ import java.util.function.Consumer;
 @Slf4j
 public class PlanningChangeService {
     @Autowired
-    private EntityManager entityManager;
+    private EntityManager               entityManager;
     @Autowired
-    private FeatureRepository featureRepository;
+    private EnversPlanningStateService  enversPlanningStateService;
     @Autowired
-    private JsonMapper objectMapper;
+    private FeatureRepository           featureRepository;
     @Autowired
-    private ProductRepository productRepository;
+    private JsonMapper                  objectMapper;
     @Autowired
-    private SprintRepository sprintRepository;
+    private ProductRepository           productRepository;
     @Autowired
-    private TaskRepository taskRepository;
+    private SprintRepository            sprintRepository;
+    @Autowired
+    private TaskRepository              taskRepository;
     @Autowired
     private UndoableOperationRepository undoableOperationRepository;
     @Autowired
-    private VersionRepository versionRepository;
+    private VersionRepository           versionRepository;
     @Autowired
-    private WorklogRepository worklogRepository;
+    private WorklogRepository           worklogRepository;
 
     /**
      * Returns whether the product has a currently applied operation to undo.
@@ -101,7 +108,7 @@ public class PlanningChangeService {
     /**
      * Deletes a task, its descendants, and inbound predecessor references as one operation.
      *
-     * @param taskId root task ID
+     * @param taskId  root task ID
      * @param summary user-visible operation description
      * @throws IllegalArgumentException when the task does not exist
      */
@@ -111,7 +118,7 @@ public class PlanningChangeService {
         if (rootTask == null) {
             throw new IllegalArgumentException("Planning entity does not exist: " + taskId);
         }
-        UUID productId = resolveProductId(rootTask);
+        UUID          productId     = resolveProductId(rootTask);
         List<TaskDAO> tasksToDelete = new java.util.ArrayList<>();
         collectTaskTree(rootTask, tasksToDelete);
         java.util.Set<UUID> taskIds = tasksToDelete.stream().map(TaskDAO::getId).collect(java.util.stream.Collectors.toSet());
@@ -119,26 +126,33 @@ public class PlanningChangeService {
                 .filter(task -> !taskIds.contains(task.getId()))
                 .toList();
 
-        UndoableOperationDAO operation = createOperation(productId, "DELETE", summary);
-        int restoreOrder = tasksToDelete.size();
-        for (TaskDAO task : tasksToDelete) {
-            addEntry(operation, TaskDAO.class, task.getId(), snapshot(task), null, restoreOrder--);
+        UndoableOperationDAO operation      = createOperation(productId, "DELETE", summary);
+        int                  revisionNumber = enversPlanningStateService.currentRevisionNumber();
+        List<PendingEntry>   entries        = new java.util.ArrayList<>();
+        try {
+            int restoreOrder = tasksToDelete.size();
+            for (TaskDAO task : tasksToDelete) {
+                entries.addAll(pendingEntries(task, restoreOrder--));
+            }
+            for (TaskDAO inboundTask : inboundTasks) {
+                List<PendingEntry> inboundEntries = pendingEntries(inboundTask, ++restoreOrder);
+                inboundTask.getPredecessors().removeIf(relation -> taskIds.contains(relation.getPredecessorId()));
+                addTaskRelationEntries(inboundEntries, inboundTask, restoreOrder);
+                entries.addAll(inboundEntries);
+            }
+            tasksToDelete.reversed().forEach(entityManager::remove);
+            finishOperation(operation, revisionNumber, entries);
+        } finally {
+            AuditOperationContextHolder.clear();
         }
-        for (TaskDAO inboundTask : inboundTasks) {
-            String beforeSnapshot = snapshot(inboundTask);
-            inboundTask.getPredecessors().removeIf(relation -> taskIds.contains(relation.getPredecessorId()));
-            addEntry(operation, TaskDAO.class, inboundTask.getId(), beforeSnapshot, snapshot(inboundTask), ++restoreOrder);
-        }
-        tasksToDelete.reversed().forEach(entityManager::remove);
-        flushAndClearContext();
     }
 
     /**
      * Deletes a planning entity and all planning descendants as one operation.
      *
      * @param entityType product, version, feature, or sprint entity class
-     * @param id root entity ID
-     * @param summary user-visible operation description
+     * @param id         root entity ID
+     * @param summary    user-visible operation description
      * @throws IllegalArgumentException when the root does not exist or is unsupported
      */
     @Transactional
@@ -161,26 +175,33 @@ public class PlanningChangeService {
         List<TaskDAO> inboundTasks = taskIds.isEmpty() ? List.of() : taskRepository.findByPredecessorIdIn(taskIds).stream()
                 .filter(task -> !taskIds.contains(task.getId()))
                 .toList();
-        UndoableOperationDAO operation = createOperation(resolveProductId(root), "DELETE", summary);
-        int restoreOrder = entities.size();
-        for (Object entity : entities) {
-            addEntry(operation, entity.getClass(), entityId(entity), snapshot(entity), null, restoreOrder--);
+        UndoableOperationDAO operation      = createOperation(resolveProductId(root), "DELETE", summary);
+        int                  revisionNumber = enversPlanningStateService.currentRevisionNumber();
+        List<PendingEntry>   entries        = new java.util.ArrayList<>();
+        try {
+            int restoreOrder = entities.size();
+            for (Object entity : entities) {
+                entries.addAll(pendingEntries(entity, restoreOrder--));
+            }
+            for (TaskDAO inboundTask : inboundTasks) {
+                List<PendingEntry> inboundEntries = pendingEntries(inboundTask, ++restoreOrder);
+                inboundTask.getPredecessors().removeIf(relation -> taskIds.contains(relation.getPredecessorId()));
+                addTaskRelationEntries(inboundEntries, inboundTask, restoreOrder);
+                entries.addAll(inboundEntries);
+            }
+            entities.reversed().forEach(entityManager::remove);
+            finishOperation(operation, revisionNumber, entries);
+        } finally {
+            AuditOperationContextHolder.clear();
         }
-        for (TaskDAO inboundTask : inboundTasks) {
-            String beforeSnapshot = snapshot(inboundTask);
-            inboundTask.getPredecessors().removeIf(relation -> taskIds.contains(relation.getPredecessorId()));
-            addEntry(operation, TaskDAO.class, inboundTask.getId(), beforeSnapshot, snapshot(inboundTask), ++restoreOrder);
-        }
-        entities.reversed().forEach(entityManager::remove);
-        flushAndClearContext();
     }
 
     /**
      * Deletes an existing planning entity and records its previous state.
      *
      * @param entityType entity class
-     * @param id entity ID
-     * @param summary user-visible operation description
+     * @param id         entity ID
+     * @param summary    user-visible operation description
      * @throws IllegalArgumentException when the entity does not exist
      */
     @Transactional
@@ -189,37 +210,49 @@ public class PlanningChangeService {
         if (existing == null) {
             throw new IllegalArgumentException("Planning entity does not exist: " + id);
         }
-        UUID productId = resolveProductId(existing);
-        UndoableOperationDAO operation = createOperation(productId, "DELETE", summary);
-        addEntry(operation, entityType, id, snapshot(existing), null, 0);
-        entityManager.remove(existing);
-        flushAndClearContext();
+        UndoableOperationDAO operation      = createOperation(resolveProductId(existing), "DELETE", summary);
+        int                  revisionNumber = enversPlanningStateService.currentRevisionNumber();
+        try {
+            entityManager.remove(existing);
+            finishOperation(operation, revisionNumber, pendingEntries(existing, 0));
+        } finally {
+            AuditOperationContextHolder.clear();
+        }
     }
 
     /**
      * Returns the product-scoped operation history, newest first.
      *
      * @param productId the product history to retrieve
-     * @return immutable operation metadata and snapshots
+     * @return immutable operation metadata and revision references
      */
     public List<UndoableOperationDAO> history(UUID productId) {
         return undoableOperationRepository.findByProductIdOrderBySequenceNumberDesc(productId);
     }
 
     /**
+     * Returns product IDs that have recorded planning history.
+     *
+     * @return product IDs with at least one operation
+     */
+    public List<UUID> historyProductIds() {
+        return undoableOperationRepository.findDistinctProductIds();
+    }
+
+    /**
      * Returns globally ordered history for multiple products.
      *
      * @param productIds products whose history is requested
-     * @param limit maximum number of operations to retrieve
+     * @param limit      maximum number of operations to retrieve
      * @return operations ordered newest first
      */
-    public List<UndoableOperationDAO> history(java.util.Collection<UUID> productIds, int limit) {
+    public List<UndoableOperationDAO> history(Collection<UUID> productIds, int limit) {
         return undoableOperationRepository.findByProductIdInOrderByCreatedDesc(productIds,
                 org.springframework.data.domain.PageRequest.of(0, limit));
     }
 
     /**
-     * Returns the names of the entities changed by an operation.
+     * Returns the named entities changed by an operation.
      *
      * @param operation recorded planning operation
      * @return entity type and name descriptions
@@ -233,28 +266,32 @@ public class PlanningChangeService {
     /**
      * Records and persists a newly created planning entity.
      *
-     * @param <T> entity type
-     * @param entity entity to persist
+     * @param <T>     entity type
+     * @param entity  entity to persist
      * @param summary user-visible operation description
      * @return the managed persisted entity
      */
     @Transactional
     public <T> T persist(T entity, String summary) {
-        UUID productId = resolveProductId(entity);
-        UUID entityId = entityId(entity);
-        UndoableOperationDAO operation = createOperation(productId, "CREATE", summary);
-        entityManager.persist(entity);
-        addEntry(operation, entity.getClass(), entityId, null, snapshot(entity), 0);
-        flushAndClearContext();
-        return entity;
+        UUID                 productId      = resolveProductId(entity);
+        UUID                 entityId       = entityId(entity);
+        UndoableOperationDAO operation      = createOperation(productId, "CREATE", summary);
+        int                  revisionNumber = enversPlanningStateService.currentRevisionNumber();
+        try {
+            entityManager.persist(entity);
+            finishOperation(operation, revisionNumber, pendingEntries(entity, 0));
+            return entity;
+        } finally {
+            AuditOperationContextHolder.clear();
+        }
     }
 
     /**
      * Records and persists a batch of new planning entities as one product operation.
      *
-     * @param <T> entity type
+     * @param <T>      entity type
      * @param entities entities to persist
-     * @param summary user-visible operation description
+     * @param summary  user-visible operation description
      * @return the persisted entities
      * @throws IllegalArgumentException when entities are empty or belong to different products
      */
@@ -267,14 +304,20 @@ public class PlanningChangeService {
         if (entities.stream().anyMatch(entity -> !productId.equals(resolveProductId(entity)))) {
             throw new IllegalArgumentException("A planning batch must belong to one product");
         }
-        UndoableOperationDAO operation = createOperation(productId, "CREATE", summary);
-        int restoreOrder = 0;
-        for (T entity : entities) {
-            entityManager.persist(entity);
-            addEntry(operation, entity.getClass(), entityId(entity), null, snapshot(entity), restoreOrder++);
+        UndoableOperationDAO operation      = createOperation(productId, "CREATE", summary);
+        int                  revisionNumber = enversPlanningStateService.currentRevisionNumber();
+        List<PendingEntry>   entries        = new java.util.ArrayList<>();
+        try {
+            int restoreOrder = 0;
+            for (T entity : entities) {
+                entityManager.persist(entity);
+                entries.addAll(pendingEntries(entity, restoreOrder++));
+            }
+            finishOperation(operation, revisionNumber, entries);
+            return entities;
+        } finally {
+            AuditOperationContextHolder.clear();
         }
-        flushAndClearContext();
-        return entities;
     }
 
     /**
@@ -294,7 +337,7 @@ public class PlanningChangeService {
     /**
      * Reapplies all consecutive undone operations through the selected operation.
      *
-     * @param productId product history to redo
+     * @param productId   product history to redo
      * @param operationId last operation to reapply
      * @throws IllegalArgumentException when the selected operation is not available to redo
      */
@@ -311,32 +354,18 @@ public class PlanningChangeService {
         }
     }
 
-    private void replayRedo(UndoableOperationDAO operation) {
-        logOperation("Redoing", operation);
-        AuditOperationContextHolder.setOperationId(operation.getId());
-        try {
-            operation.getEntries().stream()
-                    .sorted(Comparator.comparingInt(UndoableOperationEntryDAO::getRestoreOrder))
-                    .forEach(entry -> restore(entry, entry.getAfterSnapshot()));
-            operation.setUndone(false);
-            entityManager.flush();
-        } finally {
-            AuditOperationContextHolder.clear();
-        }
-    }
-
     /**
      * Records and persists an update to an existing planning entity.
      *
-     * @param <T> entity type
-     * @param entity detached entity containing the replacement state
+     * @param <T>     entity type
+     * @param entity  detached entity containing the replacement state
      * @param summary user-visible operation description
      * @return the managed replacement entity
      * @throws IllegalArgumentException when the entity does not exist or moves to another product
      */
     @Transactional
     public <T> T update(T entity, String summary) {
-        UUID entityId = entityId(entity);
+        UUID   entityId = entityId(entity);
         Object existing = entityManager.find(entity.getClass(), entityId);
         if (existing == null) {
             throw new IllegalArgumentException("Planning entity does not exist: " + entityId);
@@ -346,19 +375,25 @@ public class PlanningChangeService {
         if (!productId.equals(resolveProductId(entity))) {
             throw new IllegalArgumentException("Moving planning data between products is not supported");
         }
-        UndoableOperationDAO operation = createOperation(productId, "UPDATE", summary);
-        addEntry(operation, entity.getClass(), entityId, snapshot(existing), snapshot(entity), 0);
-        T merged = entityManager.merge(entity);
-        flushAndClearContext();
-        return merged;
+        UndoableOperationDAO operation      = createOperation(productId, "UPDATE", summary);
+        int                  revisionNumber = enversPlanningStateService.currentRevisionNumber();
+        try {
+            T                  merged  = entityManager.merge(entity);
+            List<PendingEntry> entries = pendingEntries(existing, 0);
+            addTaskRelationEntries(entries, entity, 0);
+            finishOperation(operation, revisionNumber, entries);
+            return merged;
+        } finally {
+            AuditOperationContextHolder.clear();
+        }
     }
 
     /**
      * Records and persists a batch of updates as one product operation.
      *
-     * @param <T> entity type
+     * @param <T>      entity type
      * @param entities detached replacement entities
-     * @param summary user-visible operation description
+     * @param summary  user-visible operation description
      * @return the managed replacement entities
      * @throws IllegalArgumentException when an entity does not exist or belongs to another product
      */
@@ -371,31 +406,38 @@ public class PlanningChangeService {
         if (firstExisting == null) {
             throw new IllegalArgumentException("Planning entity does not exist: " + entityId(entities.getFirst()));
         }
-        UUID productId = resolveProductId(firstExisting);
-        UndoableOperationDAO operation = createOperation(productId, "BATCH_UPDATE", summary);
-        List<T> merged = new java.util.ArrayList<>(entities.size());
-        int restoreOrder = 0;
-        for (T entity : entities) {
-            Object existing = entityManager.find(entity.getClass(), entityId(entity));
-            if (existing == null || !productId.equals(resolveProductId(existing))
-                    || !productId.equals(resolveProductId(entity))) {
-                throw new IllegalArgumentException("A planning batch must update existing entities of one product");
+        UUID                 productId      = resolveProductId(firstExisting);
+        UndoableOperationDAO operation      = createOperation(productId, "BATCH_UPDATE", summary);
+        int                  revisionNumber = enversPlanningStateService.currentRevisionNumber();
+        List<T>              merged         = new java.util.ArrayList<>(entities.size());
+        List<PendingEntry>   entries        = new java.util.ArrayList<>(entities.size());
+        try {
+            int restoreOrder = 0;
+            for (T entity : entities) {
+                Object existing = entityManager.find(entity.getClass(), entityId(entity));
+                if (existing == null || !productId.equals(resolveProductId(existing))
+                        || !productId.equals(resolveProductId(entity))) {
+                    throw new IllegalArgumentException("A planning batch must update existing entities of one product");
+                }
+                entries.addAll(pendingEntries(existing, restoreOrder));
+                addTaskRelationEntries(entries, entity, restoreOrder++);
+                merged.add(entityManager.merge(entity));
             }
-            addEntry(operation, entity.getClass(), entityId(entity), snapshot(existing), snapshot(entity), restoreOrder++);
-            merged.add(entityManager.merge(entity));
+            finishOperation(operation, revisionNumber, entries);
+            return merged;
+        } finally {
+            AuditOperationContextHolder.clear();
         }
-        flushAndClearContext();
-        return merged;
     }
 
     /**
      * Records an in-place mutation of an existing entity.
      *
-     * @param <T> entity type
+     * @param <T>        entity type
      * @param entityType entity class
-     * @param id entity ID
-     * @param summary user-visible operation description
-     * @param mutation mutation to apply to the managed entity
+     * @param id         entity ID
+     * @param summary    user-visible operation description
+     * @param mutation   mutation to apply to the managed entity
      * @throws IllegalArgumentException when the entity does not exist
      */
     @Transactional
@@ -404,11 +446,16 @@ public class PlanningChangeService {
         if (entity == null) {
             throw new IllegalArgumentException("Planning entity does not exist: " + id);
         }
-        UndoableOperationDAO operation = createOperation(resolveProductId(entity), "UPDATE", summary);
-        String beforeSnapshot = snapshot(entity);
-        mutation.accept(entity);
-        addEntry(operation, entityType, id, beforeSnapshot, snapshot(entity), 0);
-        flushAndClearContext();
+        UndoableOperationDAO operation      = createOperation(resolveProductId(entity), "UPDATE", summary);
+        int                  revisionNumber = enversPlanningStateService.currentRevisionNumber();
+        try {
+            List<PendingEntry> entries = pendingEntries(entity, 0);
+            mutation.accept(entity);
+            addTaskRelationEntries(entries, entity, 0);
+            finishOperation(operation, revisionNumber, entries);
+        } finally {
+            AuditOperationContextHolder.clear();
+        }
     }
 
     /**
@@ -428,7 +475,7 @@ public class PlanningChangeService {
     /**
      * Reverts all consecutive applied operations through the selected operation.
      *
-     * @param productId product history to undo
+     * @param productId   product history to undo
      * @param operationId oldest operation to revert
      * @throws IllegalArgumentException when the selected operation is not available to undo
      */
@@ -447,9 +494,9 @@ public class PlanningChangeService {
     /**
      * Lists all operations that would be replayed by undoing or redoing through the selected operation.
      *
-     * @param productId product history to inspect
+     * @param productId   product history to inspect
      * @param operationId selected operation
-     * @param undo {@code true} for undo preview, {@code false} for redo preview
+     * @param undo        {@code true} for undo preview, {@code false} for redo preview
      * @return operations in the replay range
      */
     public List<UndoableOperationDAO> replayPreview(UUID productId, UUID operationId, boolean undo) {
@@ -458,6 +505,37 @@ public class PlanningChangeService {
                 .toList();
         int targetIndex = indexOfOperation(operations, operationId);
         return undo ? operations.subList(0, targetIndex + 1) : operations.subList(targetIndex, operations.size());
+    }
+
+    private void replayRedo(UndoableOperationDAO operation) {
+        logOperation("Redoing", operation);
+        AuditOperationContextHolder.setReplayOperationId(operation.getId());
+        try {
+            operation.getEntries().stream()
+                    .sorted(Comparator.comparingInt(UndoableOperationEntryDAO::getRevisionNumber)
+                            .thenComparingInt(UndoableOperationEntryDAO::getRestoreOrder))
+                    .forEach(this::restoreAtRevision);
+            operation.setUndone(false);
+            entityManager.flush();
+        } finally {
+            AuditOperationContextHolder.clear();
+        }
+    }
+
+    private void replayUndo(UndoableOperationDAO operation) {
+        logOperation("Undoing", operation);
+        AuditOperationContextHolder.setReplayOperationId(operation.getId());
+        try {
+            operation.getEntries().stream()
+                    .sorted(Comparator.<UndoableOperationEntryDAO>comparingInt(UndoableOperationEntryDAO::getRevisionNumber)
+                            .reversed()
+                            .thenComparing(Comparator.comparingInt(UndoableOperationEntryDAO::getRestoreOrder).reversed()))
+                    .forEach(this::restoreBeforeRevision);
+            operation.setUndone(true);
+            entityManager.flush();
+        } finally {
+            AuditOperationContextHolder.clear();
+        }
     }
 
     private int indexOfOperation(List<UndoableOperationDAO> operations, UUID operationId) {
@@ -469,81 +547,119 @@ public class PlanningChangeService {
         throw new IllegalArgumentException("Planning operation is not available for replay: " + operationId);
     }
 
-    private void replayUndo(UndoableOperationDAO operation) {
-        logOperation("Undoing", operation);
-        AuditOperationContextHolder.setOperationId(operation.getId());
-        try {
-            operation.getEntries().stream()
-                    .sorted(Comparator.comparingInt(UndoableOperationEntryDAO::getRestoreOrder).reversed())
-                    .forEach(entry -> restore(entry, entry.getBeforeSnapshot()));
-            operation.setUndone(true);
-            entityManager.flush();
-        } finally {
-            AuditOperationContextHolder.clear();
-        }
+    private void finishOperation(UndoableOperationDAO operation, int revisionNumber, List<PendingEntry> pendingEntries) {
+        entityManager.flush();
+        pendingEntries.stream()
+                .forEach(entry -> addEntry(operation, entry, revisionNumber));
+        entityManager.flush();
     }
 
-    private void addEntry(UndoableOperationDAO operation, Class<?> entityType, UUID entityId, String beforeSnapshot,
-            String afterSnapshot, int restoreOrder) {
+    private void addEntry(UndoableOperationDAO operation, PendingEntry pendingEntry, int revisionNumber) {
         UndoableOperationEntryDAO entry = new UndoableOperationEntryDAO();
-        entry.setEntityType(entityType.getName());
-        entry.setEntityId(entityId);
-        entry.setBeforeSnapshot(beforeSnapshot);
-        entry.setAfterSnapshot(afterSnapshot);
-        entry.setRestoreOrder(restoreOrder);
+        entry.setEntityType(pendingEntry.entityType().getName());
+        entry.setEntityId(pendingEntry.entityId());
+        entry.setRevisionNumber(revisionNumber);
+        entry.setRestoreOrder(pendingEntry.restoreOrder());
         operation.addEntry(entry);
     }
 
+    private List<PendingEntry> pendingEntries(Object entity, int restoreOrder) {
+        List<PendingEntry> entries = new java.util.ArrayList<>();
+        entries.add(new PendingEntry(entity.getClass(), entityId(entity), restoreOrder));
+        addTaskRelationEntries(entries, entity, restoreOrder);
+        return entries;
+    }
+
+    private void addTaskRelationEntries(List<PendingEntry> entries, Object entity, int restoreOrder) {
+        if (!(entity instanceof TaskDAO task)) {
+            return;
+        }
+        task.getPredecessors().forEach(relation -> {
+            boolean present = entries.stream()
+                    .anyMatch(entry -> entry.entityType() == RelationDAO.class && entry.entityId().equals(relation.getId()));
+            if (!present) {
+                entries.add(new PendingEntry(RelationDAO.class, relation.getId(), restoreOrder));
+            }
+        });
+    }
+
     private UndoRedoHistory.EntityChange entityChange(UndoableOperationEntryDAO entry) {
-        String snapshot = entry.getAfterSnapshot() != null ? entry.getAfterSnapshot() : entry.getBeforeSnapshot();
-        String entityType = entry.getEntityType().substring(entry.getEntityType().lastIndexOf('.') + 1)
-                .replace("DAO", "");
+        Class<?> entityType = entityType(entry.getEntityType());
+        Optional<EnversPlanningStateService.HistoricalState> exactState = enversPlanningStateService
+                .findAtRevision(entityType, entry.getEntityId(), entry.getRevisionNumber());
+        Optional<EnversPlanningStateService.HistoricalState> previousState = enversPlanningStateService
+                .findBeforeRevision(entityType, entry.getEntityId(), entry.getRevisionNumber());
+        EnversPlanningStateService.HistoricalState state = exactState.orElse(null);
+        Object displayState = state != null && state.revisionType() == RevisionType.DEL
+                ? previousState.map(EnversPlanningStateService.HistoricalState::entity).orElse(null)
+                : state == null ? previousState.map(EnversPlanningStateService.HistoricalState::entity).orElse(null) : state.entity();
         UndoRedoHistory.EntityChange change = new UndoRedoHistory.EntityChange();
-        change.setFieldChanges(List.of());
-        change.setAction(entry.getBeforeSnapshot() == null ? "Created"
-                : entry.getAfterSnapshot() == null ? "Deleted" : "Updated");
-        change.setEntityType(entityType);
-        if (snapshot == null) {
+        change.setAction(state == null ? "Updated" : action(state.revisionType()));
+        change.setEntityType(entityType.getSimpleName().replace("DAO", ""));
+        change.setFieldChanges(fieldChanges(previousState.map(EnversPlanningStateService.HistoricalState::entity).orElse(null),
+                state == null ? null : state.entity(), state == null ? null : state.revisionType()));
+        if (displayState == null) {
             change.setDisplayName(entry.getEntityId().toString());
             return change;
         }
         try {
-            java.util.Map<?, ?> values = objectMapper.readValue(snapshot, java.util.Map.class);
-            if (WorklogDAO.class.getName().equals(entry.getEntityType())) {
+            Map<?, ?> values = values(displayState);
+            if (displayState instanceof WorklogDAO) {
                 change.setDisplayName(worklogDisplayName(values, entry.getEntityId()));
-                change.setFieldChanges(fieldChanges(entry));
-                return change;
+            } else {
+                Object name = values.get("name");
+                change.setDisplayName(name == null ? entry.getEntityId().toString() : name.toString());
             }
-            Object name = values.get("name");
-            change.setDisplayName(name == null ? entry.getEntityId().toString() : name.toString());
-            change.setFieldChanges(fieldChanges(entry));
         } catch (JacksonException exception) {
-            log.warn("Could not read the snapshot name for {} {}", entityType, entry.getEntityId(), exception);
+            log.warn("Could not read the historical name for {} {}", entityType.getSimpleName(), entry.getEntityId(), exception);
             change.setDisplayName(entry.getEntityId().toString());
         }
         return change;
     }
 
-    private List<String> fieldChanges(UndoableOperationEntryDAO entry) throws JacksonException {
-        if (entry.getBeforeSnapshot() == null || entry.getAfterSnapshot() == null) {
+    private String action(RevisionType revisionType) {
+        return switch (revisionType) {
+            case ADD -> "Created";
+            case DEL -> "Deleted";
+            case MOD -> "Updated";
+        };
+    }
+
+    private List<String> fieldChanges(Object before, Object after, RevisionType revisionType) {
+        if (revisionType != RevisionType.MOD || before == null || after == null) {
             return List.of();
         }
-        java.util.Map<String, Object> before = objectMapper.readValue(entry.getBeforeSnapshot(), java.util.Map.class);
-        java.util.Map<String, Object> after = objectMapper.readValue(entry.getAfterSnapshot(), java.util.Map.class);
-        java.util.Set<String> fieldNames = new java.util.TreeSet<>();
-        fieldNames.addAll(before.keySet());
-        fieldNames.addAll(after.keySet());
-        return fieldNames.stream()
-                .filter(fieldName -> !java.util.Objects.equals(normalizeHistoryValue(before.get(fieldName)),
-                        normalizeHistoryValue(after.get(fieldName))))
-                .map(fieldName -> fieldName + ": " + normalizeHistoryValue(before.get(fieldName)) + " -> "
-                        + normalizeHistoryValue(after.get(fieldName)))
-                .toList();
+        try {
+            Map<String, Object>   beforeValues = values(before);
+            Map<String, Object>   afterValues  = values(after);
+            java.util.Set<String> fieldNames   = new java.util.TreeSet<>();
+            fieldNames.addAll(beforeValues.keySet());
+            fieldNames.addAll(afterValues.keySet());
+            return fieldNames.stream()
+                    .filter(fieldName -> !java.util.Objects.equals(normalizeHistoryValue(beforeValues.get(fieldName)),
+                            normalizeHistoryValue(afterValues.get(fieldName))))
+                    .map(fieldName -> fieldName + ": " + normalizeHistoryValue(beforeValues.get(fieldName)) + " -> "
+                            + normalizeHistoryValue(afterValues.get(fieldName)))
+                    .toList();
+        } catch (JacksonException exception) {
+            log.warn("Could not calculate field changes from Envers state", exception);
+            return List.of();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> values(Object entity) throws JacksonException {
+        if (entity instanceof TaskDAO task) {
+            TaskDAO taskWithoutPredecessors = new TaskDAO();
+            BeanUtils.copyProperties(task, taskWithoutPredecessors, "predecessors");
+            entity = taskWithoutPredecessors;
+        }
+        return objectMapper.readValue(objectMapper.writeValueAsString(entity), Map.class);
     }
 
     private Object normalizeHistoryValue(Object value) {
-        if (value instanceof java.util.Map<?, ?> map) {
-            java.util.Map<String, Object> normalized = new java.util.TreeMap<>();
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> normalized = new java.util.TreeMap<>();
             map.forEach((key, nestedValue) -> {
                 if (!"id".equals(key)) {
                     normalized.put(String.valueOf(key), normalizeHistoryValue(nestedValue));
@@ -551,16 +667,16 @@ public class PlanningChangeService {
             });
             return normalized;
         }
-        if (value instanceof java.util.Collection<?> collection) {
+        if (value instanceof Collection<?> collection) {
             return collection.stream().map(this::normalizeHistoryValue)
-                    .sorted(java.util.Comparator.comparing(String::valueOf))
+                    .sorted(Comparator.comparing(String::valueOf))
                     .toList();
         }
         return value;
     }
 
-    private String worklogDisplayName(java.util.Map<?, ?> values, UUID entityId) {
-        Object start = values.get("start");
+    private String worklogDisplayName(Map<?, ?> values, UUID entityId) {
+        Object start     = values.get("start");
         Object timeSpent = values.get("timeSpent");
         if (!(start instanceof String startValue) || !(timeSpent instanceof String timeSpentValue)) {
             return entityId.toString();
@@ -570,7 +686,7 @@ public class PlanningChangeService {
             return DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(startTime) + " - "
                     + DateUtil.createDurationString(java.time.Duration.parse(timeSpentValue), false, true, false);
         } catch (RuntimeException exception) {
-            log.warn("Could not format worklog {} for history display", entityId, exception);
+            log.warn("Could not format historical worklog {}", entityId, exception);
             return entityId.toString();
         }
     }
@@ -583,6 +699,97 @@ public class PlanningChangeService {
         });
     }
 
+    private void restoreAtRevision(UndoableOperationEntryDAO entry) {
+        enversPlanningStateService.findAtRevision(entityType(entry.getEntityType()), entry.getEntityId(), entry.getRevisionNumber())
+                .ifPresent(state -> restore(entry, state, entry.getRevisionNumber()));
+    }
+
+    private void restoreBeforeRevision(UndoableOperationEntryDAO entry) {
+        if (enversPlanningStateService.findAtRevision(entityType(entry.getEntityType()), entry.getEntityId(),
+                entry.getRevisionNumber()).isEmpty()) {
+            return;
+        }
+        Optional<EnversPlanningStateService.HistoricalState> state = enversPlanningStateService
+                .findBeforeRevision(entityType(entry.getEntityType()), entry.getEntityId(), entry.getRevisionNumber());
+        if (state.isEmpty()) {
+            remove(entry);
+            return;
+        }
+        restore(entry, state.get(), entry.getRevisionNumber() - 1);
+    }
+
+    private void restore(UndoableOperationEntryDAO entry, EnversPlanningStateService.HistoricalState state,
+                         int relationRevisionNumber) {
+        if (state.revisionType() == RevisionType.DEL) {
+            remove(entry);
+            return;
+        }
+        Object restored = state.entity();
+        if (restored == null) {
+            throw new IllegalStateException("Planning-history revision has no restorable state: " + entry.getRevisionNumber());
+        }
+        Class<?> entityType = entityType(entry.getEntityType());
+        revive(entityType, entry.getEntityId());
+        if (restored instanceof TaskDAO task) {
+            restoreTask(entry, task, relationRevisionNumber);
+            return;
+        }
+        entityManager.merge(restored);
+    }
+
+    private void restoreTask(UndoableOperationEntryDAO entry, TaskDAO historicalTask, int revisionNumber) {
+        TaskDAO currentTask = entityManager.find(TaskDAO.class, entry.getEntityId());
+        if (currentTask == null) {
+            throw new IllegalStateException("Planning-history task is unavailable: " + entry.getEntityId());
+        }
+        BeanUtils.copyProperties(historicalTask, currentTask, "predecessors");
+        boolean predecessorMembershipChanged = enversPlanningStateService
+                .hasTaskPredecessorChangeAtRevision(entry.getEntityId(), entry.getRevisionNumber());
+        if (predecessorMembershipChanged) {
+            restoreTaskPredecessors(entry, currentTask, revisionNumber);
+        } else {
+            restorePredecessorFields(entry, currentTask, revisionNumber);
+        }
+    }
+
+    private void restoreTaskPredecessors(UndoableOperationEntryDAO entry, TaskDAO currentTask, int revisionNumber) {
+        List<EnversPlanningStateService.HistoricalState> predecessorStates = enversPlanningStateService
+                .taskPredecessorIdsAtRevision(entry.getEntityId(), revisionNumber).stream()
+                .map(relationId -> enversPlanningStateService.findAtOrBeforeRevision(RelationDAO.class, relationId, revisionNumber))
+                .flatMap(Optional::stream)
+                .filter(state -> state.revisionType() != RevisionType.DEL)
+                .toList();
+        List<RelationDAO> currentPredecessors = new java.util.ArrayList<>(currentTask.getPredecessors());
+        currentTask.getPredecessors().clear();
+        entityManager.flush();
+        currentPredecessors.forEach(entityManager::detach);
+        for (EnversPlanningStateService.HistoricalState predecessorState : predecessorStates) {
+            RelationDAO predecessor = (RelationDAO) predecessorState.entity();
+            revive(RelationDAO.class, predecessor.getId());
+            currentTask.getPredecessors().add(entityManager.merge(predecessor));
+        }
+    }
+
+    private void restorePredecessorFields(UndoableOperationEntryDAO entry, TaskDAO currentTask, int revisionNumber) {
+        for (RelationDAO currentPredecessor : currentTask.getPredecessors()) {
+            Optional<EnversPlanningStateService.HistoricalState> state = revisionNumber == entry.getRevisionNumber()
+                    ? enversPlanningStateService.findAtOrBeforeRevision(RelationDAO.class, currentPredecessor.getId(), revisionNumber)
+                    : enversPlanningStateService.findBeforeRevision(RelationDAO.class, currentPredecessor.getId(),
+                    entry.getRevisionNumber());
+            state.filter(historicalState -> historicalState.revisionType() != RevisionType.DEL)
+                    .map(EnversPlanningStateService.HistoricalState::entity)
+                    .map(RelationDAO.class::cast)
+                    .ifPresent(historicalPredecessor -> BeanUtils.copyProperties(historicalPredecessor, currentPredecessor));
+        }
+    }
+
+    private void remove(UndoableOperationEntryDAO entry) {
+        Object existing = entityManager.find(entityType(entry.getEntityType()), entry.getEntityId());
+        if (existing != null) {
+            entityManager.remove(existing);
+        }
+    }
+
     private UndoableOperationDAO createOperation(UUID productId, String kind, String summary) {
         lockProduct(productId);
         UUID clientOperationId = AuditOperationContextHolder.getOperationId();
@@ -592,6 +799,7 @@ public class PlanningChangeService {
                 if (!productId.equals(existingOperation.getProductId())) {
                     throw new IllegalArgumentException("A planning operation cannot span products");
                 }
+                AuditOperationContextHolder.setOperationId(existingOperation.getId());
                 return existingOperation;
             }
         }
@@ -611,39 +819,6 @@ public class PlanningChangeService {
         entityManager.persist(operation);
         AuditOperationContextHolder.setOperationId(operation.getId());
         return operation;
-    }
-
-    private UUID entityId(Object entity) {
-        if (entity instanceof ProductDAO product) {
-            return product.getId();
-        }
-        if (entity instanceof VersionDAO version) {
-            return version.getId();
-        }
-        if (entity instanceof FeatureDAO feature) {
-            return feature.getId();
-        }
-        if (entity instanceof SprintDAO sprint) {
-            return sprint.getId();
-        }
-        if (entity instanceof TaskDAO task) {
-            return task.getId();
-        }
-        if (entity instanceof WorklogDAO worklog) {
-            return worklog.getId();
-        }
-        if (entity instanceof RelationDAO relation) {
-            return relation.getId();
-        }
-        throw new IllegalArgumentException("Unsupported planning entity: " + entity.getClass().getName());
-    }
-
-    private void flushAndClearContext() {
-        try {
-            entityManager.flush();
-        } finally {
-            AuditOperationContextHolder.clear();
-        }
     }
 
     private void lockProduct(UUID productId) {
@@ -680,39 +855,35 @@ public class PlanningChangeService {
         throw new IllegalArgumentException("Unsupported planning entity: " + entity.getClass().getName());
     }
 
-    private void restore(UndoableOperationEntryDAO entry, String snapshot) {
-        Class<?> entityType = entityType(entry.getEntityType());
-        Object existing = entityManager.find(entityType, entry.getEntityId());
-        if (snapshot == null) {
-            if (existing != null) {
-                entityManager.remove(existing);
-            }
-            return;
+    private UUID entityId(Object entity) {
+        if (entity instanceof ProductDAO product) {
+            return product.getId();
         }
-        try {
-            Object restored = objectMapper.readValue(snapshot, entityType);
-            revive(entityType, entry.getEntityId());
-            if (restored instanceof TaskDAO task) {
-                task.getPredecessors().forEach(relation -> revive(RelationDAO.class, relation.getId()));
-            }
-            entityManager.merge(restored);
-        } catch (JacksonException e) {
-            throw new IllegalStateException("Cannot restore planning-history snapshot", e);
+        if (entity instanceof VersionDAO version) {
+            return version.getId();
         }
+        if (entity instanceof FeatureDAO feature) {
+            return feature.getId();
+        }
+        if (entity instanceof SprintDAO sprint) {
+            return sprint.getId();
+        }
+        if (entity instanceof TaskDAO task) {
+            return task.getId();
+        }
+        if (entity instanceof WorklogDAO worklog) {
+            return worklog.getId();
+        }
+        if (entity instanceof RelationDAO relation) {
+            return relation.getId();
+        }
+        throw new IllegalArgumentException("Unsupported planning entity: " + entity.getClass().getName());
     }
 
     private void revive(Class<?> entityType, UUID entityId) {
         entityManager.createNativeQuery("UPDATE " + tableName(entityType) + " SET deleted = false, deleted_at = NULL WHERE id = :id")
                 .setParameter("id", entityId)
                 .executeUpdate();
-    }
-
-    private String snapshot(Object entity) {
-        try {
-            return objectMapper.writeValueAsString(entity);
-        } catch (JacksonException e) {
-            throw new IllegalStateException("Cannot capture planning-history snapshot", e);
-        }
     }
 
     private void collectTaskTree(TaskDAO task, List<TaskDAO> tasks) {
@@ -752,14 +923,14 @@ public class PlanningChangeService {
 
     private Class<?> entityType(String entityType) {
         return switch (entityType) {
-        case "de.bushnaq.abdalla.kassandra.dao.ProductDAO" -> ProductDAO.class;
-        case "de.bushnaq.abdalla.kassandra.dao.VersionDAO" -> VersionDAO.class;
-        case "de.bushnaq.abdalla.kassandra.dao.FeatureDAO" -> FeatureDAO.class;
-        case "de.bushnaq.abdalla.kassandra.dao.SprintDAO" -> SprintDAO.class;
-        case "de.bushnaq.abdalla.kassandra.dao.TaskDAO" -> TaskDAO.class;
-        case "de.bushnaq.abdalla.kassandra.dao.WorklogDAO" -> WorklogDAO.class;
-        case "de.bushnaq.abdalla.kassandra.dao.RelationDAO" -> RelationDAO.class;
-        default -> throw new IllegalArgumentException("Unsupported planning entity type: " + entityType);
+            case "de.bushnaq.abdalla.kassandra.dao.ProductDAO" -> ProductDAO.class;
+            case "de.bushnaq.abdalla.kassandra.dao.VersionDAO" -> VersionDAO.class;
+            case "de.bushnaq.abdalla.kassandra.dao.FeatureDAO" -> FeatureDAO.class;
+            case "de.bushnaq.abdalla.kassandra.dao.SprintDAO" -> SprintDAO.class;
+            case "de.bushnaq.abdalla.kassandra.dao.TaskDAO" -> TaskDAO.class;
+            case "de.bushnaq.abdalla.kassandra.dao.WorklogDAO" -> WorklogDAO.class;
+            case "de.bushnaq.abdalla.kassandra.dao.RelationDAO" -> RelationDAO.class;
+            default -> throw new IllegalArgumentException("Unsupported planning entity type: " + entityType);
         };
     }
 
@@ -786,5 +957,8 @@ public class PlanningChangeService {
             return "relations";
         }
         throw new IllegalArgumentException("Unsupported planning entity: " + entityType.getName());
+    }
+
+    private record PendingEntry(Class<?> entityType, UUID entityId, int restoreOrder) {
     }
 }

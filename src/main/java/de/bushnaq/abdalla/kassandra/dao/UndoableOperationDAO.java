@@ -29,8 +29,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -45,7 +43,6 @@ import java.util.UUID;
         name = "undoable_operations",
         uniqueConstraints = @UniqueConstraint(columnNames = {"productId", "sequenceNumber"})
 )
-@Audited
 @Getter
 @Setter
 @ToString(exclude = "entries")
@@ -57,7 +54,6 @@ public class UndoableOperationDAO {
     @Column(nullable = false)
     private OffsetDateTime created;
 
-    @NotAudited
     @OneToMany(mappedBy = "operation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<UndoableOperationEntryDAO> entries = new ArrayList<>();
 
@@ -82,7 +78,7 @@ public class UndoableOperationDAO {
     /**
      * Adds an entry to this operation while keeping both sides of the association in sync.
      *
-     * @param entry the entity snapshot entry to add
+     * @param entry the entity revision entry to add
      */
     public void addEntry(UndoableOperationEntryDAO entry) {
         entry.setOperation(this);

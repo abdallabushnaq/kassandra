@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.service;
 
+import de.bushnaq.abdalla.kassandra.audit.AuditOperationContextHolder;
 import de.bushnaq.abdalla.kassandra.dao.*;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.dto.TaskMode;
@@ -24,6 +25,7 @@ import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.ProductRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
 import de.bushnaq.abdalla.kassandra.repository.TaskRepository;
+import de.bushnaq.abdalla.kassandra.repository.UndoableOperationRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.repository.WorklogRepository;
 import de.bushnaq.abdalla.kassandra.util.AbstractTestUtil;
@@ -44,6 +46,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -55,21 +58,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @AutoConfigureTestRestTemplate
 public class PlanningChangeServiceTest extends AbstractTestUtil {
     @Autowired
-    private PlanningChangeService planningChangeService;
+    private PlanningChangeService       planningChangeService;
     @Autowired
-    private ProductRepository productRepository;
+    private ProductRepository           productRepository;
     @Autowired
-    private VersionRepository versionRepository;
+    private VersionRepository           versionRepository;
     @Autowired
-    private FeatureRepository featureRepository;
+    private FeatureRepository           featureRepository;
     @Autowired
-    private SprintRepository sprintRepository;
+    private SprintRepository            sprintRepository;
     @Autowired
-    private TaskRepository taskRepository;
+    private TaskRepository              taskRepository;
     @Autowired
-    private WorklogRepository worklogRepository;
+    private UndoableOperationRepository undoableOperationRepository;
     @Autowired
-    private JsonMapper jsonMapper;
+    private WorklogRepository           worklogRepository;
+    @Autowired
+    private JsonMapper                  jsonMapper;
 
     /**
      * Retains a deleted product as a tombstone and restores it through undo.
@@ -106,6 +111,56 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
         assertFalse(planningChangeService.canRedo(productId));
         assertEquals(3, planningChangeService.history(productId).size());
         assertTrue(((Number) entityManager.createNativeQuery("SELECT COUNT(*) FROM audit_revisions").getSingleResult()).intValue() >= 5);
+    }
+
+    /**
+     * Keeps an undone product creation in the history scope after the product is soft-deleted.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "USER")
+    public void historyProductIdsIncludeUndoneProductCreation() {
+        ProductDAO product = new ProductDAO();
+        product.setName("Product");
+        planningChangeService.persist(product, "Created product");
+        planningChangeService.undo(product.getId());
+
+        assertTrue(productRepository.findById(product.getId()).isEmpty());
+        assertTrue(planningChangeService.historyProductIds().contains(product.getId()));
+    }
+
+    /**
+     * Groups multiple transactions by their Envers revision references without persisting JSON snapshots.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "ADMIN")
+    public void groupedOperationsReferenceDistinctEnversRevisions() {
+        PlanningData data        = createPlanningData();
+        UUID         operationId = UUID.randomUUID();
+
+        AuditOperationContextHolder.setOperationId(operationId);
+        data.task().setName("First grouped update");
+        planningChangeService.update(data.task(), "Grouped task updates");
+
+        TaskDAO updatedTask = taskRepository.findById(data.task().getId()).orElseThrow();
+        AuditOperationContextHolder.setOperationId(operationId);
+        updatedTask.setName("Second grouped update");
+        planningChangeService.update(updatedTask, "Grouped task updates");
+
+        UndoableOperationDAO operation = undoableOperationRepository.findById(operationId).orElseThrow();
+        assertEquals(2, operation.getEntries().size());
+        assertTrue(operation.getEntries().stream().allMatch(entry -> entry.getRevisionNumber() > 0));
+        assertNotEquals(operation.getEntries().getFirst().getRevisionNumber(), operation.getEntries().getLast().getRevisionNumber());
+        assertEquals(0, ((Number) entityManager.createNativeQuery("""
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = 'UNDOABLE_OPERATION_ENTRIES'
+                  AND COLUMN_NAME IN ('BEFORE_SNAPSHOT', 'AFTER_SNAPSHOT')
+                """).getSingleResult()).intValue());
+
+        planningChangeService.undo(data.product().getId());
+        assertEquals("Task", taskRepository.findById(data.task().getId()).orElseThrow().getName());
+        planningChangeService.redo(data.product().getId());
+        assertEquals("Second grouped update", taskRepository.findById(data.task().getId()).orElseThrow().getName());
     }
 
     /**
@@ -182,7 +237,7 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
         PlanningData data = createPlanningData();
         // Update Task and Subtasks
         LocalDateTime originalParentStart = data.task().getStart();
-        LocalDateTime originalChildStart = data.childTask().getStart();
+        LocalDateTime originalChildStart  = data.childTask().getStart();
         data.task().setStart(originalParentStart.plusDays(3));
         data.childTask().setStart(originalChildStart.plusDays(3));
         planningChangeService.updateBatch(List.of(data.task(), data.childTask()), "Moved task tree");
@@ -207,8 +262,8 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
     @Test
     @WithMockUser(username = "history-user", roles = "ADMIN")
     public void twoConsecutiveUndosRestoreCompleteTaskStates() throws Exception {
-        BackendPlanningDataGenerator.PlanningData data = new BackendPlanningDataGenerator(planningChangeService).createPlanningData();
-        TaskDAO original = copy(data.task(), TaskDAO.class);
+        BackendPlanningDataGenerator.PlanningData data     = new BackendPlanningDataGenerator(planningChangeService).createPlanningData();
+        TaskDAO                                   original = copy(data.task(), TaskDAO.class);
         data.task().setName("First update");
         data.task().setMinEstimate(Duration.ofHours(36));
         data.task().setMaxEstimate(Duration.ofHours(56));
@@ -319,7 +374,8 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
         assertEquals(jsonMapper.writeValueAsString(expected), jsonMapper.writeValueAsString(actual));
     }
 
-    private record PlanningData(ProductDAO product, VersionDAO version, FeatureDAO feature, SprintDAO sprint, TaskDAO task,
-            TaskDAO childTask) {
+    private record PlanningData(ProductDAO product, VersionDAO version, FeatureDAO feature, SprintDAO sprint,
+                                TaskDAO task,
+                                TaskDAO childTask) {
     }
 }

@@ -43,13 +43,13 @@ import java.util.UUID;
 @RequestMapping("/api")
 public class UndoRedoController {
     @Autowired
-    private AclSecurityService aclSecurityService;
+    private AclSecurityService    aclSecurityService;
     @Autowired
-    private KassandraProperties kassandraProperties;
+    private KassandraProperties   kassandraProperties;
     @Autowired
     private PlanningChangeService planningChangeService;
     @Autowired
-    private ProductRepository productRepository;
+    private ProductRepository     productRepository;
 
     /**
      * Gets the product's planning history without exposing stored entity snapshots.
@@ -67,13 +67,13 @@ public class UndoRedoController {
      * Gets globally ordered history for the specified accessible products.
      *
      * @param productIds product IDs in the active page scope
-     * @param limit maximum number of operations to return
+     * @param limit      maximum number of operations to return
      * @return undo/redo availability and product operations, newest first
      */
     @GetMapping("/history")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public UndoRedoHistory history(@org.springframework.web.bind.annotation.RequestParam Collection<UUID> productIds,
-            @org.springframework.web.bind.annotation.RequestParam(required = false) Integer limit) {
+                                   @org.springframework.web.bind.annotation.RequestParam(required = false) Integer limit) {
         if (productIds.isEmpty()) {
             UndoRedoHistory emptyHistory = new UndoRedoHistory();
             emptyHistory.setOperations(List.of());
@@ -82,8 +82,8 @@ public class UndoRedoController {
         if (!SecurityUtils.isAdmin() && productIds.stream().anyMatch(productId -> !aclSecurityService.hasProductAccess(productId))) {
             throw new org.springframework.security.access.AccessDeniedException("Access to product history is denied");
         }
-        UndoRedoHistory history = new UndoRedoHistory();
-        int operationLimit = limit == null ? kassandraProperties.getUndoRedo().getHistoryLimit() : limit;
+        UndoRedoHistory history        = new UndoRedoHistory();
+        int             operationLimit = limit == null ? kassandraProperties.getUndoRedo().getHistoryLimit() : limit;
         if (operationLimit < 1) {
             throw new IllegalArgumentException("History limit must be at least one");
         }
@@ -91,6 +91,20 @@ public class UndoRedoController {
         history.setCanUndo(history.getOperations().stream().anyMatch(operation -> !operation.isUndone()));
         history.setCanRedo(history.getOperations().stream().anyMatch(UndoRedoHistory.Operation::isUndone));
         return history;
+    }
+
+    /**
+     * Gets product IDs whose histories are available to the current user, including soft-deleted products.
+     *
+     * @return authorized product history IDs
+     */
+    @GetMapping("/history/product-ids")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public List<UUID> historyProductIds() {
+        if (SecurityUtils.isAdmin()) {
+            return planningChangeService.historyProductIds();
+        }
+        return aclSecurityService.getAccessibleProductIds();
     }
 
     /**
@@ -109,7 +123,7 @@ public class UndoRedoController {
     /**
      * Reapplies the consecutive undone operations through the selected operation.
      *
-     * @param productId product ID
+     * @param productId   product ID
      * @param operationId last operation to reapply
      * @return updated product undo/redo availability and history
      */
@@ -136,7 +150,7 @@ public class UndoRedoController {
     /**
      * Reverts the consecutive applied operations through the selected operation.
      *
-     * @param productId product ID
+     * @param productId   product ID
      * @param operationId oldest operation to revert
      * @return updated product undo/redo availability and history
      */
@@ -150,15 +164,15 @@ public class UndoRedoController {
     /**
      * Gets the exact operation range that a selected undo or redo action will replay.
      *
-     * @param productId product whose history is inspected
+     * @param productId   product whose history is inspected
      * @param operationId selected operation
-     * @param undo whether the selected action is undo
+     * @param undo        whether the selected action is undo
      * @return operations that will be replayed
      */
     @GetMapping("/product/{productId}/history/{operationId}/preview")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
     public UndoRedoHistory replayPreview(@PathVariable UUID productId, @PathVariable UUID operationId,
-            @org.springframework.web.bind.annotation.RequestParam boolean undo) {
+                                         @org.springframework.web.bind.annotation.RequestParam boolean undo) {
         UndoRedoHistory history = new UndoRedoHistory();
         history.setOperations(planningChangeService.replayPreview(productId, operationId, undo).stream().map(this::operation).toList());
         return history;
