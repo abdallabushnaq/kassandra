@@ -25,6 +25,8 @@ import de.bushnaq.abdalla.kassandra.repository.ServerSettingRepository;
 import de.bushnaq.abdalla.kassandra.security.SecuritySecretService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.logging.LogLevel;
+import org.springframework.boot.logging.LoggingSystem;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
@@ -35,6 +37,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Validates, persists, and safely exposes administrator-managed server settings.
@@ -47,6 +50,8 @@ public class ServerSettingsService {
 
     @Autowired
     private Environment             environment;
+    @Autowired
+    private LoggingSystem           loggingSystem;
     @Autowired
     private SecuritySecretService   securitySecretService;
     @Autowired
@@ -72,6 +77,7 @@ public class ServerSettingsService {
             setting.setValue(setting.isEncrypted() ? securitySecretService.encrypt(value) : value);
             serverSettingRepository.save(setting);
         }
+        applyLoggingLevels();
     }
 
     /**
@@ -186,6 +192,9 @@ public class ServerSettingsService {
         if ("kassandra.holidays.look-ahead-months".equals(key)) {
             KassandraProperties.setHolidayLookAheadMonths(Long.parseLong(setting.getValue()));
         }
+        if (definition.type() == ServerSettingsCatalogue.Type.LOG_LEVEL) {
+            applyLoggingLevel(definition.key(), setting.getValue());
+        }
         return toDto(definition, setting);
     }
 
@@ -210,6 +219,17 @@ public class ServerSettingsService {
 
     private String categoryEnabledKey(ServerSettingsCatalogue.Category category) {
         return CATEGORY_ENABLED_KEY_PREFIX + category.key() + ".enabled";
+    }
+
+    private void applyLoggingLevel(String key, String value) {
+        String loggerName = key.substring("logging.level.".length());
+        loggingSystem.setLogLevel(loggerName, LogLevel.valueOf(value.toUpperCase(Locale.ROOT)));
+    }
+
+    private void applyLoggingLevels() {
+        serverSettingsCatalogue.list().stream()
+                .filter(definition -> definition.type() == ServerSettingsCatalogue.Type.LOG_LEVEL)
+                .forEach(definition -> applyLoggingLevel(definition.key(), value(definition.key(), definition.defaultValue())));
     }
 
     private boolean categoryEnabled(ServerSettingsCatalogue.Category category) {
@@ -291,6 +311,11 @@ public class ServerSettingsService {
                 }
                 case DECIMAL -> range(definition, Double.parseDouble(value));
                 case INTEGER -> range(definition, Long.parseLong(value));
+                case LOG_LEVEL -> {
+                    if (!definition.options().contains(value.toUpperCase(Locale.ROOT))) {
+                        throw new IllegalArgumentException(definition.label() + " must be one of " + String.join(", ", definition.options()));
+                    }
+                }
                 case PASSWORD, TEXT -> maximumLength(definition, value);
                 case URL -> {
                     maximumLength(definition, value);

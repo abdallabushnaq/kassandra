@@ -22,6 +22,11 @@ import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.lumo.Lumo;
+import org.springframework.ai.model.openai.autoconfigure.OpenAiAudioSpeechAutoConfiguration;
+import org.springframework.ai.model.openai.autoconfigure.OpenAiAudioTranscriptionAutoConfiguration;
+import org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration;
+import org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration;
+import org.springframework.ai.model.openai.autoconfigure.OpenAiModerationAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -29,7 +34,13 @@ import org.springframework.context.annotation.ComponentScan;
 
 import java.time.Clock;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        OpenAiAudioSpeechAutoConfiguration.class,
+        OpenAiAudioTranscriptionAutoConfiguration.class,
+        OpenAiEmbeddingAutoConfiguration.class,
+        OpenAiImageAutoConfiguration.class,
+        OpenAiModerationAutoConfiguration.class
+})
 @ComponentScan
 @StyleSheet("context://" + Lumo.STYLESHEET)
 @StyleSheet("context://" + Lumo.UTILITY_STYLESHEET)

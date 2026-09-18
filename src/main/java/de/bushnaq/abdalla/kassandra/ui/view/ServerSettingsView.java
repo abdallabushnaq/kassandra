@@ -32,6 +32,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
@@ -102,6 +103,12 @@ public class ServerSettingsView extends VerticalLayout {
             Checkbox field = new Checkbox();
             field.setValue(Boolean.parseBoolean(setting.getValue()));
             return saveRow(setting, field, () -> Boolean.toString(field.getValue()), categoryEnabled);
+        }
+        if ("LOG_LEVEL".equals(setting.getType())) {
+            Select<String> field = new Select<>();
+            field.setItems(setting.getOptions());
+            field.setValue(setting.getValue());
+            return saveRow(setting, field, field::getValue, categoryEnabled);
         }
         HasValue<?, String> field;
         if (setting.isSecret()) {

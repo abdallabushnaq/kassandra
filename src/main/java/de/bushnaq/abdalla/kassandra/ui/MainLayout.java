@@ -95,7 +95,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public static final String             ID_USER_MENU_WORK_WEEK          = "main-layout-user-menu-work-week";
     private final       Collection<UUID>   activeProductIds                = new LinkedHashSet<>();
     private final       Map<UUID, Product> activeProducts                  = new HashMap<>();
-    private final       Collection<UUID>   historyProductIds               = new LinkedHashSet<>();
     AuthenticationContext authenticationContext;
     private final Div                         breadcrumbContainer;
     @Getter
@@ -106,6 +105,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private       Button                      historyButton;
     private final Div                         historyPane;
     private       boolean                     historyPaneOpen;
+    private final Collection<UUID>            historyProductIds         = new LinkedHashSet<>();
     private       String                      lightHeaderBackgroundUrl;
     private       Image                       logoImage;
     private final HorizontalLayout            navbarLayout;
@@ -540,13 +540,13 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
             var manageWorkWeeksItem = userMenuItem.getSubMenu().addItem("Manage Work Weeks", e -> navigateToWorkWeeks());
             manageWorkWeeksItem.setId(ID_USER_MENU_MANAGE_WORK_WEEKS);
+
+            var manageSettingsItem = userMenuItem.getSubMenu().addItem("Manage Settings", e -> UI.getCurrent().navigate(ServerSettingsView.class));
+            manageSettingsItem.setId(ID_USER_MENU_MANAGE_SETTINGS);
         }
 
         if (SecurityUtils.isAdmin()) {
             userMenuItem.getSubMenu().addSeparator();
-            var manageSettingsItem = userMenuItem.getSubMenu().addItem("Manage Settings",
-                    e -> UI.getCurrent().navigate(ServerSettingsView.class));
-            manageSettingsItem.setId(ID_USER_MENU_MANAGE_SETTINGS);
         }
 
         var aboutItem = userMenuItem.getSubMenu().addItem("About", e -> UI.getCurrent().navigate(AboutView.class));
@@ -694,16 +694,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     }
 
     /**
-     * Sets the products included in global action history without changing the active view context.
-     *
-     * @param productIds product IDs whose history should be displayed
-     */
-    public void setHistoryProductIds(Collection<UUID> productIds) {
-        historyProductIds.clear();
-        historyProductIds.addAll(productIds);
-    }
-
-    /**
      * Shows or hides the breadcrumb bar below the main navigation.
      * Called by views that do not need breadcrumb context (e.g. {@link de.bushnaq.abdalla.kassandra.ui.view.AboutView}).
      *
@@ -758,6 +748,16 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         if (userMenu != null) {
             userMenu.getElement().setAttribute("theme", themeName);
         }
+    }
+
+    /**
+     * Sets the products included in global action history without changing the active view context.
+     *
+     * @param productIds product IDs whose history should be displayed
+     */
+    public void setHistoryProductIds(Collection<UUID> productIds) {
+        historyProductIds.clear();
+        historyProductIds.addAll(productIds);
     }
 
     /**

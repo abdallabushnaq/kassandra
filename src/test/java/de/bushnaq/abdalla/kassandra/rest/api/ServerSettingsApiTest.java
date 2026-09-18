@@ -58,12 +58,55 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void administratorGetsSafeSettingMetadata() {
         ServerSetting secret = serverSettingsApi.getAll().stream()
-                .filter(setting -> "kassandra.lm-studio.api-key".equals(setting.getKey()))
+                .filter(setting -> "kassandra.openai.api-key".equals(setting.getKey()))
                 .findFirst()
                 .orElseThrow();
 
         assertTrue(secret.isSecret());
         assertEquals(null, secret.getValue());
+        assertTrue(secret.isRestartRequired());
+    }
+
+    /**
+     * Exposes the default OpenAI-compatible API base URL without exposing its API key.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void administratorGetsOpenAiConnectionDefaults() {
+        ServerSetting baseUrl = serverSettingsApi.getAll().stream()
+                .filter(setting -> "kassandra.openai.base-url".equals(setting.getKey()))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals("http://localhost:1234", baseUrl.getValue());
+        assertTrue(baseUrl.isRestartRequired());
+    }
+
+    /**
+     * Applies model selections to subsequent AI requests without requiring a restart.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void administratorCanUpdateAssistantModelWithoutRestart() {
+        ServerSetting assistantModel = serverSettingsApi.getAll().stream()
+                .filter(setting -> "kassandra.ai.mcp-model".equals(setting.getKey()))
+                .findFirst()
+                .orElseThrow();
+
+        assertFalse(assistantModel.isRestartRequired());
+    }
+
+    /**
+     * Rejects log levels that cannot be applied by Spring Boot's logging system.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void administratorCannotSaveInvalidLogLevel() {
+        ServerSettingUpdateRequest request = new ServerSettingUpdateRequest();
+        request.setValue("VERBOSE");
+
+        assertThrows(Exception.class, () -> serverSettingsApi.update(
+                "logging.level.de.bushnaq.abdalla.kassandra.ai.mcp.ContextPropagatingToolCallbackProvider", request));
     }
 
     /**

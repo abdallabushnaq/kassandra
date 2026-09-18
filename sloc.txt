@@ -140,6 +140,8 @@
 | kassandra.ai.tts                     | SyncResult.java                                              | src      |        6 |        3 |       16 |       16 |       41 |
 | kassandra.ai.tts                     | TtsEngine.java                                               | src      |        8 |       12 |       16 |        8 |       44 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
+| kassandra.ai                         | OpenAiConfiguration.java                                     | src      |       10 |       22 |       16 |       72 |      120 |
++--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.audit                      | AuditOperationContextHolder.java                             | src      |        9 |       26 |       16 |       26 |       77 |
 | kassandra.audit                      | AuditRevisionEntity.java                                     | src      |        8 |        3 |       16 |       32 |       59 |
 | kassandra.audit                      | AuditRevisionListener.java                                   | src      |        4 |        8 |       16 |       12 |       40 |
@@ -344,7 +346,7 @@
 | kassandra.rest.api                   | ProductApi.java                                              | src      |       28 |      101 |       16 |      246 |      391 |
 | kassandra.rest.api                   | ProductApiTest.java                                          | src      |       55 |        0 |       52 |      294 |      401 |
 | kassandra.rest.api                   | ServerSettingsApi.java                                       | src      |       10 |       41 |       16 |       45 |      112 |
-| kassandra.rest.api                   | ServerSettingsApiTest.java                                   | src      |       20 |       21 |       16 |       83 |      140 |
+| kassandra.rest.api                   | ServerSettingsApiTest.java                                   | src      |       26 |       30 |       16 |      111 |      183 |
 | kassandra.rest.api                   | SprintAclApiTest.java                                        | src      |       63 |       74 |       55 |      254 |      446 |
 | kassandra.rest.api                   | SprintApi.java                                               | src      |       29 |      102 |       16 |      264 |      411 |
 | kassandra.rest.api                   | SprintApiTest.java                                           | src      |       31 |        0 |       35 |      190 |      256 |
@@ -453,8 +455,8 @@
 | kassandra.service                    | PlanningChangeServiceTest.java                               | src      |       33 |       29 |       28 |      291 |      381 |
 | kassandra.service                    | ProductAclService.java                                       | src      |       25 |       72 |       16 |      117 |      230 |
 | kassandra.service                    | SecurityConfigurationService.java                            | src      |       13 |       37 |       16 |       74 |      140 |
-| kassandra.service                    | ServerSettingsCatalogue.java                                 | src      |       37 |       46 |       20 |      203 |      306 |
-| kassandra.service                    | ServerSettingsService.java                                   | src      |       24 |       51 |       16 |      228 |      319 |
+| kassandra.service                    | ServerSettingsCatalogue.java                                 | src      |       41 |       52 |       22 |      223 |      338 |
+| kassandra.service                    | ServerSettingsService.java                                   | src      |       26 |       51 |       16 |      251 |      344 |
 | kassandra.service                    | SprintExportService.java                                     | src      |       20 |       53 |       24 |      121 |      218 |
 | kassandra.service                    | SprintsOverviewService.java                                  | src      |       29 |        0 |       33 |      156 |      218 |
 | kassandra.service                    | SprintsOverviewServiceTest.java                              | src      |       13 |        0 |        3 |       60 |       76 |
@@ -585,7 +587,7 @@
 | kassandra.ui.view                    | QualityBoard.java                                            | src      |       68 |       87 |       62 |      656 |      873 |
 | kassandra.ui.view                    | QualityBoardIT.java                                          | src      |       11 |        0 |       18 |      116 |      145 |
 | kassandra.ui.view                    | RecoveryView.java                                            | src      |        6 |        9 |       16 |       26 |       57 |
-| kassandra.ui.view                    | ServerSettingsView.java                                      | src      |       18 |       11 |       16 |      224 |      269 |
+| kassandra.ui.view                    | ServerSettingsView.java                                      | src      |       18 |       11 |       16 |      231 |      276 |
 | kassandra.ui.view                    | SetupView.java                                               | src      |       18 |       42 |       16 |      149 |      225 |
 | kassandra.ui.view                    | SprintListView.java                                          | src      |       64 |       74 |       49 |      631 |      818 |
 | kassandra.ui.view                    | SprintListViewIT.java                                        | src      |       15 |       82 |       24 |      113 |      234 |
@@ -627,7 +629,7 @@
 | kassandra.util                       | RandomCase.java                                              | src      |        7 |        0 |       19 |       73 |       99 |
 | kassandra.util                       | TestInfoUtil.java                                            | src      |       15 |       86 |       16 |       51 |      168 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra                            | Application.java                                             | src      |        5 |        0 |       16 |       26 |       47 |
+| kassandra                            | Application.java                                             | src      |        5 |        0 |       16 |       37 |       58 |
 | kassandra                            | Context.java                                                 | src      |        8 |       11 |       72 |       30 |      121 |
 | kassandra                            | KassandraParameterOptions.java                               | src      |        8 |        0 |       39 |      102 |      149 |
 | kassandra                            | ParameterOptions.java                                        | src      |       10 |        0 |       21 |       73 |      104 |
@@ -703,5 +705,5 @@
 | util                                 | TaskUtil.java                                                | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 71 package(s)                        | 631 file(s)                                                  | java     |    13453 |    14500 |    18123 |    75319 |   121395 |
+| 72 package(s)                        | 632 file(s)                                                  | java     |    13475 |    14537 |    18141 |    75480 |   121633 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
