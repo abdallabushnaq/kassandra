@@ -18,6 +18,8 @@
 package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
 import lombok.Data;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,61 +31,191 @@ import org.springframework.context.annotation.Configuration;
 @Data
 public class StableDiffusionConfig {
 
+    @Autowired(required = false)
+    private ServerSettingsService serverSettingsService;
     /**
      * Base URL of the Stable Diffusion WebUI API
      */
-    private String apiUrl                     = "http://localhost:7861";
+    private String                apiUrl                     = "http://localhost:7861";
     /**
      * Background color for dark-theme avatars, as a CSS hex string (e.g., "#000000").
      * Used by AvatarService to generate dark avatars with a matching background.
      * Configurable via 'stable-diffusion.avatar-dark-background-color'.
      */
-    private String avatarDarkBackgroundColor  = "#242323";
+    private String                avatarDarkBackgroundColor  = "#242323";
     /**
      * Background color for light-theme avatars, as a CSS hex string (e.g., "#FFFFFF").
      * Used by AvatarService to generate light avatars with a matching background.
      * Configurable via 'stable-diffusion.avatar-light-background-color'.
      */
-    private String avatarLightBackgroundColor = "#FFFFFF";
+    private String                avatarLightBackgroundColor = "#FFFFFF";
     /**
      * Final output size for AI-generated avatars (light and dark variants).
      * Defaults to 256 to preserve detail; differs from the generic {@code outputSize}.
      */
-    private int    avatarOutputSize           = 256;
+    private int                   avatarOutputSize           = 256;
     /**
      * CFG Scale (Classifier Free Guidance)
      */
-    private double cfgScale                   = 7.0;
+    private double                cfgScale                   = 7.0;
     /**
      * Default denoising strength for image-to-image requests (0.0 = no change, 1.0 = fully new image)
      */
-    private double defaultDenoisingStrength   = 0.75;
+    private double                defaultDenoisingStrength   = 0.75;
     /**
      * Default sampler algorithm (optimized for SD3 Medium)
      */
-    private String defaultSampler             = "DPM++ 2M Karras";
+    private String                defaultSampler             = "DPM++ 2M Karras";
     /**
      * Default number of sampling steps
      */
-    private int    defaultSteps               = 20;
+    private int                   defaultSteps               = 20;
     /**
      * Size to generate images at (before resizing)
      */
-    private int    generationSize             = 512;
+    private int                   generationSize             = 512;
     /**
      * Timeout in seconds for model-loading requests ({@code POST /sdapi/v1/options}).
      * Loading a new checkpoint can take several minutes; this timeout must be large enough
      * to cover the full load time. Configurable via {@code stable-diffusion.model-load-timeout-seconds}.
      */
-    private int    modelLoadTimeoutSeconds    = 400;
-    private String modelName                  = "realisticVisionV60B1_v51HyperVAE.safetensors";
+    private int                   modelLoadTimeoutSeconds    = 400;
+    private String                modelName                  = "realisticVisionV60B1_v51HyperVAE.safetensors";
     /**
      * Final output size for avatars/icons
      */
-    private int    outputSize                 = 64;
+    private int                   outputSize                 = 64;
     /**
      * Timeout in seconds for API requests
      */
-    private int    timeoutSeconds             = 120;
-}
+    private int                   timeoutSeconds             = 120;
 
+    /**
+     * Gets the current Stable Diffusion API URL.
+     *
+     * @return current API URL
+     */
+    public String getApiUrl() {
+        return value("stable-diffusion.api-url", apiUrl);
+    }
+
+    /**
+     * Gets the current dark-avatar background colour.
+     *
+     * @return CSS hex colour
+     */
+    public String getAvatarDarkBackgroundColor() {
+        return value("stable-diffusion.avatar-dark-background-color", avatarDarkBackgroundColor);
+    }
+
+    /**
+     * Gets the current light-avatar background colour.
+     *
+     * @return CSS hex colour
+     */
+    public String getAvatarLightBackgroundColor() {
+        return value("stable-diffusion.avatar-light-background-color", avatarLightBackgroundColor);
+    }
+
+    /**
+     * Gets the current avatar output size.
+     *
+     * @return output size in pixels
+     */
+    public int getAvatarOutputSize() {
+        return integer("stable-diffusion.avatar-output-size", avatarOutputSize);
+    }
+
+    /**
+     * Gets the current CFG scale.
+     *
+     * @return configured CFG scale
+     */
+    public double getCfgScale() {
+        return decimal("stable-diffusion.cfg-scale", cfgScale);
+    }
+
+    /**
+     * Gets the current default denoising strength.
+     *
+     * @return configured denoising strength
+     */
+    public double getDefaultDenoisingStrength() {
+        return decimal("stable-diffusion.default-denoising-strength", defaultDenoisingStrength);
+    }
+
+    /**
+     * Gets the current default sampler.
+     *
+     * @return configured sampler
+     */
+    public String getDefaultSampler() {
+        return value("stable-diffusion.default-sampler", defaultSampler);
+    }
+
+    /**
+     * Gets the current default number of sampling steps.
+     *
+     * @return configured sampling steps
+     */
+    public int getDefaultSteps() {
+        return integer("stable-diffusion.default-steps", defaultSteps);
+    }
+
+    /**
+     * Gets the current image generation size.
+     *
+     * @return generation size in pixels
+     */
+    public int getGenerationSize() {
+        return integer("stable-diffusion.generation-size", generationSize);
+    }
+
+    /**
+     * Gets the current model-load timeout.
+     *
+     * @return timeout in seconds
+     */
+    public int getModelLoadTimeoutSeconds() {
+        return integer("stable-diffusion.model-load-timeout-seconds", modelLoadTimeoutSeconds);
+    }
+
+    /**
+     * Gets the current Stable Diffusion model name.
+     *
+     * @return configured model name
+     */
+    public String getModelName() {
+        return value("stable-diffusion.model-name", modelName);
+    }
+
+    /**
+     * Gets the current generic output size.
+     *
+     * @return output size in pixels
+     */
+    public int getOutputSize() {
+        return integer("stable-diffusion.output-size", outputSize);
+    }
+
+    /**
+     * Gets the current request timeout.
+     *
+     * @return timeout in seconds
+     */
+    public int getTimeoutSeconds() {
+        return integer("stable-diffusion.timeout-seconds", timeoutSeconds);
+    }
+
+    private double decimal(String key, double fallback) {
+        return Double.parseDouble(value(key, Double.toString(fallback)));
+    }
+
+    private int integer(String key, int fallback) {
+        return Integer.parseInt(value(key, Integer.toString(fallback)));
+    }
+
+    private String value(String key, String fallback) {
+        return serverSettingsService == null ? fallback : serverSettingsService.value(key, fallback);
+    }
+}

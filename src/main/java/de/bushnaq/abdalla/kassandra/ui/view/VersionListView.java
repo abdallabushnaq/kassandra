@@ -35,7 +35,6 @@ import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Version;
@@ -43,6 +42,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.VersionApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
@@ -104,7 +104,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                            AiFilterService aiFilterService, JsonMapper mapper,
                            AiAssistantService aiAssistantService,
                            ChatPanelSessionState chatPanelSessionState,
-                           KassandraProperties kassandraProperties,
+                           ServerSettingsService serverSettingsService,
                            LmStudioService lmStudioService) {
         super(clock);
         this.versionApi         = versionApi;
@@ -121,7 +121,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
 
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, kassandraProperties, lmStudioService);
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);
         chatAgentPanel.setSizeFull();
 
         chatPane = new Div(chatAgentPanel);

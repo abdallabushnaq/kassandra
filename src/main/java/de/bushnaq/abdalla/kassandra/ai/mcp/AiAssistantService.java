@@ -25,7 +25,7 @@ import de.bushnaq.abdalla.kassandra.ai.mcp.api.sprint.SprintTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.user.UserTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.usergroup.UserGroupTools;
 import de.bushnaq.abdalla.kassandra.ai.mcp.api.version.VersionTools;
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.profiler.TimeKeeping;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -94,7 +94,7 @@ public class AiAssistantService {
     @Autowired
     private              FeatureTools                            featureTools;
     @Autowired
-    private              KassandraProperties                     kassandraProperties;
+    private              ServerSettingsService                   serverSettingsService;
     @Autowired
     private              ProductAclTools                         productAclTools;
     @Autowired
@@ -114,23 +114,26 @@ public class AiAssistantService {
 
     private OpenAiChatOptions buildChatOptions() {
         OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
-        String                    mcpModel       = kassandraProperties.getAi().getMcpModel();
+        String                    mcpModel       = value("kassandra.ai.mcp-model", "");
         if (mcpModel != null && !mcpModel.isBlank()) {
             optionsBuilder.model(mcpModel);
         }
-        Double temperature = kassandraProperties.getAi().getTemperature();
-        if (temperature != null) {
-            optionsBuilder.temperature(temperature);
-        }
-        Integer maxTokens = kassandraProperties.getAi().getMaxTokens();
-        if (maxTokens != null) {
-            optionsBuilder.maxTokens(maxTokens);
-        }
-        Integer seed = kassandraProperties.getAi().getSeed();
-        if (seed != null) {
-            optionsBuilder.seed(seed);
-        }
+        optionsBuilder.temperature(decimal("kassandra.ai.temperature", 0));
+        optionsBuilder.maxTokens(integer("kassandra.ai.max-tokens", 20480));
+        optionsBuilder.seed(integer("kassandra.ai.seed", 42));
         return optionsBuilder.build();
+    }
+
+    private double decimal(String key, double fallback) {
+        return Double.parseDouble(value(key, Double.toString(fallback)));
+    }
+
+    private int integer(String key, int fallback) {
+        return Integer.parseInt(value(key, Integer.toString(fallback)));
+    }
+
+    private String value(String key, String fallback) {
+        return serverSettingsService.value(key, fallback);
     }
 
     /**
@@ -250,7 +253,7 @@ public class AiAssistantService {
     }
 
     public String getModelName() {
-        String mcpModel = kassandraProperties.getAi().getMcpModel();
+        String mcpModel = value("kassandra.ai.mcp-model", "");
         if (mcpModel != null && !mcpModel.isBlank()) {
             return mcpModel;
         }

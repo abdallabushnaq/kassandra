@@ -70,6 +70,15 @@ public class KassandraProperties {
         holidayLookAheadMonths = holidays.getLookAheadMonths();
     }
 
+    /**
+     * Updates the static holiday look-ahead value used by DTOs outside Spring injection.
+     *
+     * @param lookAheadMonths number of months to look ahead
+     */
+    public static void setHolidayLookAheadMonths(long lookAheadMonths) {
+        holidayLookAheadMonths = lookAheadMonths;
+    }
+
     @Data
     public static class Ai {
         /**

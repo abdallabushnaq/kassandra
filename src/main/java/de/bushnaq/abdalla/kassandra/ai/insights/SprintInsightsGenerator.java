@@ -17,7 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.insights;
 
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
@@ -105,35 +105,38 @@ public class SprintInsightsGenerator {
             %s
             """;
 
-    private static final Logger              logger = LoggerFactory.getLogger(SprintInsightsGenerator.class);
-    private final        ChatModel           chatModel;
-    private final        KassandraProperties kassandraProperties;
+    private static final Logger                logger = LoggerFactory.getLogger(SprintInsightsGenerator.class);
+    private final        ChatModel             chatModel;
+    private final        ServerSettingsService serverSettingsService;
 
     @Autowired
-    public SprintInsightsGenerator(ChatModel chatModel, KassandraProperties kassandraProperties) {
-        this.chatModel           = chatModel;
-        this.kassandraProperties = kassandraProperties;
+    public SprintInsightsGenerator(ChatModel chatModel, ServerSettingsService serverSettingsService) {
+        this.chatModel             = chatModel;
+        this.serverSettingsService = serverSettingsService;
     }
 
     private OpenAiChatOptions buildChatOptions() {
         OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
-        String                    insightsModel  = kassandraProperties.getAi().getInsightsModel();
+        String                    insightsModel  = value("kassandra.ai.insights-model", "");
         if (insightsModel != null && !insightsModel.isBlank()) {
             optionsBuilder.model(insightsModel);
         }
-        Double temperature = kassandraProperties.getAi().getTemperature();
-        if (temperature != null) {
-            optionsBuilder.temperature(temperature);
-        }
-        Integer maxTokens = kassandraProperties.getAi().getMaxTokens();
-        if (maxTokens != null) {
-            optionsBuilder.maxTokens(maxTokens);
-        }
-        Integer seed = kassandraProperties.getAi().getSeed();
-        if (seed != null) {
-            optionsBuilder.seed(seed);
-        }
+        optionsBuilder.temperature(decimal("kassandra.ai.temperature", 0));
+        optionsBuilder.maxTokens(integer("kassandra.ai.max-tokens", 20480));
+        optionsBuilder.seed(integer("kassandra.ai.seed", 42));
         return optionsBuilder.build();
+    }
+
+    private double decimal(String key, double fallback) {
+        return Double.parseDouble(value(key, Double.toString(fallback)));
+    }
+
+    private int integer(String key, int fallback) {
+        return Integer.parseInt(value(key, Integer.toString(fallback)));
+    }
+
+    private String value(String key, String fallback) {
+        return serverSettingsService.value(key, fallback);
     }
 
     /**
@@ -248,4 +251,3 @@ public class SprintInsightsGenerator {
                         "and top 2 most important insights. Keep it under 200 words.");
     }
 }
-

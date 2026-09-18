@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.ai.filter.js;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterGenerator;
 import de.bushnaq.abdalla.kassandra.ai.filter.FilterPromptRegistry;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolContextHelper;
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -112,7 +112,7 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
     private static final Logger                       logger                     = LoggerFactory.getLogger(JavaScriptAiFilterGenerator.class);
     private final        ChatClient                   chatModel;
     private final        JavaScriptExecutionValidator executionValidator;
-    private final        KassandraProperties          kassandraProperties;
+    private final        ServerSettingsService        serverSettingsService;
     private final        JavaScriptSyntaxValidator    syntaxValidator;
     private final        ToolCallbackProvider         validatorToolProvider;
 
@@ -120,33 +120,36 @@ public class JavaScriptAiFilterGenerator implements AiFilterGenerator {
                                        JavaScriptValidatorTools validatorTools,
                                        JavaScriptSyntaxValidator syntaxValidator,
                                        JavaScriptExecutionValidator executionValidator,
-                                       KassandraProperties kassandraProperties) {
+                                       ServerSettingsService serverSettingsService) {
         this.chatModel             = builder.build();
         this.validatorToolProvider = MethodToolCallbackProvider.builder().toolObjects(validatorTools).build();
         this.syntaxValidator       = syntaxValidator;
         this.executionValidator    = executionValidator;
-        this.kassandraProperties   = kassandraProperties;
+        this.serverSettingsService = serverSettingsService;
     }
 
     private OpenAiChatOptions buildChatOptions() {
         OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
-        String                    filterModel    = kassandraProperties.getAi().getFilterModel();
+        String                    filterModel    = value("kassandra.ai.filter-model", "");
         if (filterModel != null && !filterModel.isBlank()) {
             optionsBuilder.model(filterModel);
         }
-        Double temperature = kassandraProperties.getAi().getTemperature();
-        if (temperature != null) {
-            optionsBuilder.temperature(temperature);
-        }
-        Integer maxTokens = kassandraProperties.getAi().getMaxTokens();
-        if (maxTokens != null) {
-            optionsBuilder.maxTokens(maxTokens);
-        }
-        Integer seed = kassandraProperties.getAi().getSeed();
-        if (seed != null) {
-            optionsBuilder.seed(seed);
-        }
+        optionsBuilder.temperature(decimal("kassandra.ai.temperature", 0));
+        optionsBuilder.maxTokens(integer("kassandra.ai.max-tokens", 20480));
+        optionsBuilder.seed(integer("kassandra.ai.seed", 42));
         return optionsBuilder.build();
+    }
+
+    private double decimal(String key, double fallback) {
+        return Double.parseDouble(value(key, Double.toString(fallback)));
+    }
+
+    private int integer(String key, int fallback) {
+        return Integer.parseInt(value(key, Integer.toString(fallback)));
+    }
+
+    private String value(String key, String fallback) {
+        return serverSettingsService.value(key, fallback);
     }
 
     private String extractJsCodeFromResponse(String content) {

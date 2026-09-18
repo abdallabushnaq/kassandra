@@ -36,7 +36,6 @@ import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -46,6 +45,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserWorkWeekApi;
 import de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
@@ -103,7 +103,7 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
                         WorkWeekApi workWeekApi,
                         UserWorkWeekApi userWorkWeekApi,
                         LocationApi locationApi,
-                        KassandraProperties kassandraProperties,
+                        ServerSettingsService serverSettingsService,
                         LmStudioService lmStudioService) {
         super(clock);
         this.userApi                = userApi;
@@ -125,7 +125,7 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
 
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, kassandraProperties, lmStudioService);
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);
         chatAgentPanel.setSizeFull();
 
         chatPane = new Div(chatAgentPanel);

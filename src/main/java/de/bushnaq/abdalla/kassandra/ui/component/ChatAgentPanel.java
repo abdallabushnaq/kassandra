@@ -34,10 +34,10 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.SessionToolActivityContext;
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContext;
@@ -76,7 +76,7 @@ public class ChatAgentPanel extends VerticalLayout {
      */
     @Setter
     private             User                                          currentUser;
-    private final       KassandraProperties                           kassandraProperties;
+    private final       ServerSettingsService                         serverSettingsService;
     private final       LmStudioService                               lmStudioService;
     /**
      * Called on the UI thread after every successful AI reply — use to refresh the host view's grid.
@@ -109,32 +109,32 @@ public class ChatAgentPanel extends VerticalLayout {
     /**
      * Constructs a {@code ChatAgentPanel} without a session state (standalone use).
      *
-     * @param aiAssistantService  the AI assistant service for streaming queries
-     * @param userApi             the user REST API for avatar/name lookup
-     * @param kassandraProperties application configuration (provides the MCP model name)
-     * @param lmStudioService     service used to ensure the required model is loaded before querying
+     * @param aiAssistantService    the AI assistant service for streaming queries
+     * @param userApi               the user REST API for avatar/name lookup
+     * @param serverSettingsService persisted configuration (provides the MCP model name)
+     * @param lmStudioService       service used to ensure the required model is loaded before querying
      */
     public ChatAgentPanel(AiAssistantService aiAssistantService, UserApi userApi,
-                          KassandraProperties kassandraProperties, LmStudioService lmStudioService) {
-        this(aiAssistantService, userApi, null, kassandraProperties, lmStudioService);
+                          ServerSettingsService serverSettingsService, LmStudioService lmStudioService) {
+        this(aiAssistantService, userApi, null, serverSettingsService, lmStudioService);
     }
 
     /**
      * Constructs a {@code ChatAgentPanel} with an optional session state for conversation persistence.
      *
-     * @param aiAssistantService  the AI assistant service for streaming queries
-     * @param userApi             the user REST API for avatar/name lookup
-     * @param sessionState        session-scoped bean that persists conversation history across reloads; may be null
-     * @param kassandraProperties application configuration (provides the MCP model name)
-     * @param lmStudioService     service used to ensure the required model is loaded before querying
+     * @param aiAssistantService    the AI assistant service for streaming queries
+     * @param userApi               the user REST API for avatar/name lookup
+     * @param sessionState          session-scoped bean that persists conversation history across reloads; may be null
+     * @param serverSettingsService persisted configuration (provides the MCP model name)
+     * @param lmStudioService       service used to ensure the required model is loaded before querying
      */
     public ChatAgentPanel(AiAssistantService aiAssistantService, UserApi userApi, ChatPanelSessionState sessionState,
-                          KassandraProperties kassandraProperties, LmStudioService lmStudioService) {
-        this.aiAssistantService  = aiAssistantService;
-        this.userApi             = userApi;
-        this.sessionState        = sessionState;
-        this.kassandraProperties = kassandraProperties;
-        this.lmStudioService     = lmStudioService;
+                          ServerSettingsService serverSettingsService, LmStudioService lmStudioService) {
+        this.aiAssistantService    = aiAssistantService;
+        this.userApi               = userApi;
+        this.sessionState          = sessionState;
+        this.serverSettingsService = serverSettingsService;
+        this.lmStudioService       = lmStudioService;
         // sessionMessages and conversationId are set by restoreOrStart() on first afterNavigation call.
         // Start with null / a temporary UUID so the component is valid before restoreOrStart() fires.
         this.sessionMessages = null;
@@ -403,7 +403,7 @@ public class ChatAgentPanel extends VerticalLayout {
         final String    username                = SecurityUtils.getUserEmail();
 
         getUI().ifPresent(ui -> {
-            String mcpModel = kassandraProperties.getAi().getMcpModel();
+            String mcpModel = serverSettingsService.value("kassandra.ai.mcp-model", "");
             if (mcpModel != null && !mcpModel.isBlank()) {
                 lmStudioService.ensureModelLoaded(mcpModel);
             }
@@ -586,4 +586,3 @@ public class ChatAgentPanel extends VerticalLayout {
         handleQuery();
     }
 }
-

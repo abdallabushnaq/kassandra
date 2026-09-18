@@ -26,10 +26,10 @@ import com.vaadin.flow.router.*;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
@@ -60,7 +60,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
 
     public Kassandra(AiAssistantService aiAssistantService, UserApi userApi,
                      ChatPanelSessionState chatPanelSessionState,
-                     KassandraProperties kassandraProperties,
+                     ServerSettingsService serverSettingsService,
                      LmStudioService lmStudioService) {
         this.userApi      = userApi;
         this.sessionState = chatPanelSessionState;
@@ -103,7 +103,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
                 .set("flex-direction", "column")
                 .set("overflow", "hidden");
 
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, kassandraProperties, lmStudioService);
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);
         rightPanel.add(chatAgentPanel);
 
         mainContent.add(leftPanel, rightPanel);

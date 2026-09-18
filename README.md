@@ -31,6 +31,16 @@ pulled automatically; no GitHub Packages credentials are required.
 
 - for the agent tests to run, you need to load ministral-3-8B with 20480 token context and a sed of 42.
 
+## Server settings
+
+Administrators manage runtime server settings from **Manage Settings** in the user menu. Kassandra stores those values in
+its database, validates each value against its documented type and limits, and applies supported AI and Stable Diffusion
+settings immediately. Settings that require a Spring-managed client restart are labelled accordingly.
+
+Database connection, server, and security bootstrap settings remain deployment-managed. Set
+`KASSANDRA_SECURITY_ENCRYPTION_KEY` when storing a credential through the UI; it is the external AES-256 master key used
+to encrypt persisted secrets, which are never returned to the browser after saving.
+
 ## features
 
 tbd

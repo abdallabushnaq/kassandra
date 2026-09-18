@@ -17,7 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.lmstudio;
 
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -55,21 +55,22 @@ public class LmStudioService {
     private static final String MODELS   = API_BASE + "/models";
     private static final String UNLOAD   = API_BASE + "/models/unload";
 
-    private final KassandraProperties.LmStudio config;
-    private final WebClient                    webClient;
+    private final ServerSettingsService serverSettingsService;
 
-    public LmStudioService(KassandraProperties kassandraProperties) {
-        this.config = kassandraProperties.getLmStudio();
+    public LmStudioService(ServerSettingsService serverSettingsService) {
+        this.serverSettingsService = serverSettingsService;
+    }
 
+    private WebClient webClient() {
         WebClient.Builder builder = WebClient.builder()
-                .baseUrl(config.getApiUrl())
+                .baseUrl(value("kassandra.lm-studio.api-url", "http://localhost:1234"))
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-        if (config.getApiKey() != null && !config.getApiKey().isBlank()) {
-            builder.defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + config.getApiKey());
+        String apiKey = serverSettingsService.secretValue("kassandra.lm-studio.api-key");
+        if (!apiKey.isBlank()) {
+            builder.defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
         }
-
-        this.webClient = builder.build();
+        return builder.build();
     }
 
     // -----------------------------------------------------------------------
@@ -95,7 +96,8 @@ public class LmStudioService {
 
         List<LmStudioModel> models = listModels();
         if (models == null) {
-            log.warn("LM Studio is not reachable at {} – skipping model management", config.getApiUrl());
+            log.warn("LM Studio is not reachable at {} – skipping model management",
+                    value("kassandra.lm-studio.api-url", "http://localhost:1234"));
             return false;
         }
 
@@ -159,11 +161,11 @@ public class LmStudioService {
      */
     public List<LmStudioModel> listModels() {
         try {
-            LmStudioModelsResponse response = webClient.get()
+            LmStudioModelsResponse response = webClient().get()
                     .uri(MODELS)
                     .retrieve()
                     .bodyToMono(LmStudioModelsResponse.class)
-                    .block(Duration.ofSeconds(config.getTimeoutSeconds()));
+                    .block(Duration.ofSeconds(integer("kassandra.lm-studio.timeout-seconds", 300)));
 
             if (response == null || response.models() == null) {
                 log.warn("LM Studio returned an empty model list");
@@ -180,7 +182,8 @@ public class LmStudioService {
             log.error("LM Studio returned HTTP {} when listing models: {}", e.getStatusCode(), e.getMessage());
             return null;
         } catch (Exception e) {
-            log.warn("Could not reach LM Studio at {}: {}", config.getApiUrl(), e.getMessage());
+            log.warn("Could not reach LM Studio at {}: {}",
+                    value("kassandra.lm-studio.api-url", "http://localhost:1234"), e.getMessage());
             return null;
         }
     }
@@ -195,20 +198,21 @@ public class LmStudioService {
 
         Map<String, Object> body = new HashMap<>();
         body.put("model", modelId);
-        if (config.getContextLength() > 0) {
-            body.put("context_length", config.getContextLength());
+        int contextLength = integer("kassandra.lm-studio.context-length", 0);
+        if (contextLength > 0) {
+            body.put("context_length", contextLength);
         }
         body.put("echo_load_config", true);
-        body.put("flash_attention", config.isFlashAttention());
-        body.put("offload_kv_cache_to_gpu", config.isOffloadKvCacheToGpu());
+        body.put("flash_attention", bool("kassandra.lm-studio.flash-attention", true));
+        body.put("offload_kv_cache_to_gpu", bool("kassandra.lm-studio.offload-kv-cache-to-gpu", true));
 
         try {
-            LmStudioLoadResponse response = webClient.post()
+            LmStudioLoadResponse response = webClient().post()
                     .uri(LOAD)
                     .bodyValue(body)
                     .retrieve()
                     .bodyToMono(LmStudioLoadResponse.class)
-                    .block(Duration.ofSeconds(config.getTimeoutSeconds()));
+                    .block(Duration.ofSeconds(integer("kassandra.lm-studio.timeout-seconds", 300)));
 
             if (response != null && "loaded".equals(response.status())) {
                 log.info("Model '{}' loaded successfully in {}s {}", modelId, response.loadTimeSeconds(), response);
@@ -239,12 +243,12 @@ public class LmStudioService {
         body.put("instance_id", instanceId);
 
         try {
-            LmStudioUnloadResponse response = webClient.post()
+            LmStudioUnloadResponse response = webClient().post()
                     .uri(UNLOAD)
                     .bodyValue(body)
                     .retrieve()
                     .bodyToMono(LmStudioUnloadResponse.class)
-                    .block(Duration.ofSeconds(config.getTimeoutSeconds()));
+                    .block(Duration.ofSeconds(integer("kassandra.lm-studio.timeout-seconds", 300)));
 
             if (response != null && response.instanceId() != null) {
                 log.info("Model instance '{}' unloaded successfully: {}", instanceId, response);
@@ -262,9 +266,18 @@ public class LmStudioService {
             return false;
         }
     }
+
+    private boolean bool(String key, boolean fallback) {
+        return Boolean.parseBoolean(value(key, Boolean.toString(fallback)));
+    }
+
+    private int integer(String key, int fallback) {
+        return Integer.parseInt(value(key, Integer.toString(fallback)));
+    }
+
+    private String value(String key, String fallback) {
+        return serverSettingsService.value(key, fallback);
+    }
 }
-
-
-
 
 

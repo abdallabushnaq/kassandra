@@ -29,3 +29,14 @@
 3- explain the basic idea.
 4- use mermaid to visualize the flow of MCP and/or class relations.
 
+## Improve kassandra readme.md
+
+1- use mermaid to visualize the systems kassandra interacts with.
+2- mention the database, ID server, stable diffusion, LM Studio, Chatterbox.
+3- visualize the backend and the UI portal and how the portal talks with the backend using the apis.
+4- API first is our motto.
+
+## Server Settings Design
+
+1- create a markdown file docs/design/server-settings-design.md explaining how server settings work
+2- use mermaid to visualize flows or relations.

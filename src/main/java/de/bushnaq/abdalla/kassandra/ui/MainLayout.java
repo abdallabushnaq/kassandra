@@ -45,19 +45,20 @@ import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.lumo.Lumo;
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
 import de.bushnaq.abdalla.kassandra.ui.component.UndoHistoryPanel;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
 import de.bushnaq.abdalla.kassandra.ui.view.OidcProviderManagementView;
+import de.bushnaq.abdalla.kassandra.ui.view.ServerSettingsView;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -122,13 +123,13 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final Map<String, Optional<User>> usersByEmail              = new HashMap<>();
 
     MainLayout(ProductApi productApi, UserApi userApi, ThemeSessionState themeSessionState, UndoRedoApi undoRedoApi,
-               KassandraProperties kassandraProperties) {
+               ServerSettingsService serverSettingsService) {
         this.authenticationContext = authenticationContext;
         this.productApi            = productApi;
         this.userApi               = userApi;
         this.themeSessionState     = themeSessionState;
         this.undoHistoryPanel      = new UndoHistoryPanel(undoRedoApi, () -> historyProductIds,
-                kassandraProperties.getUndoRedo().getHistoryLimit(),
+                Integer.parseInt(serverSettingsService.value("kassandra.undo-redo.history-limit", "5")),
                 this::closeHistoryDrawer,
                 () -> UI.getCurrent().getPage().reload(),
                 this::resolveProductAvatarUrl,
@@ -541,10 +542,12 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             manageWorkWeeksItem.setId(ID_USER_MENU_MANAGE_WORK_WEEKS);
         }
 
-        userMenuItem.getSubMenu().addSeparator();
-        var manageSettingsItem = userMenuItem.getSubMenu().addItem("Manage Settings");
-        manageSettingsItem.setEnabled(false);
-        manageSettingsItem.setId(ID_USER_MENU_MANAGE_SETTINGS);
+        if (SecurityUtils.isAdmin()) {
+            userMenuItem.getSubMenu().addSeparator();
+            var manageSettingsItem = userMenuItem.getSubMenu().addItem("Manage Settings",
+                    e -> UI.getCurrent().navigate(ServerSettingsView.class));
+            manageSettingsItem.setId(ID_USER_MENU_MANAGE_SETTINGS);
+        }
 
         var aboutItem = userMenuItem.getSubMenu().addItem("About", e -> UI.getCurrent().navigate(AboutView.class));
         aboutItem.setId(ID_USER_MENU_ABOUT);
@@ -767,6 +770,10 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         Component target = content == null ? null
                 : content.getElement().getComponent()
                 .orElseThrow(() -> new IllegalArgumentException("AppLayout content must be a Component"));
+        if (target instanceof ServerSettingsView) {
+            setContent(target);
+            return;
+        }
         contentSplit = new SplitLayout(target, historyPane);
         contentSplit.setOrientation(SplitLayout.Orientation.HORIZONTAL);
         contentSplit.setSizeFull();

@@ -18,12 +18,12 @@
 package de.bushnaq.abdalla.kassandra.rest.controller;
 
 import de.bushnaq.abdalla.kassandra.dao.UndoableOperationDAO;
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.UndoRedoHistory;
 import de.bushnaq.abdalla.kassandra.repository.ProductRepository;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.AclSecurityService;
 import de.bushnaq.abdalla.kassandra.service.PlanningChangeService;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,7 +45,7 @@ public class UndoRedoController {
     @Autowired
     private AclSecurityService    aclSecurityService;
     @Autowired
-    private KassandraProperties   kassandraProperties;
+    private ServerSettingsService serverSettingsService;
     @Autowired
     private PlanningChangeService planningChangeService;
     @Autowired
@@ -82,8 +82,10 @@ public class UndoRedoController {
         if (!SecurityUtils.isAdmin() && productIds.stream().anyMatch(productId -> !aclSecurityService.hasProductAccess(productId))) {
             throw new org.springframework.security.access.AccessDeniedException("Access to product history is denied");
         }
-        UndoRedoHistory history        = new UndoRedoHistory();
-        int             operationLimit = limit == null ? kassandraProperties.getUndoRedo().getHistoryLimit() : limit;
+        UndoRedoHistory history = new UndoRedoHistory();
+        int operationLimit = limit == null
+                ? Integer.parseInt(serverSettingsService.value("kassandra.undo-redo.history-limit", "5"))
+                : limit;
         if (operationLimit < 1) {
             throw new IllegalArgumentException("History limit must be at least one");
         }

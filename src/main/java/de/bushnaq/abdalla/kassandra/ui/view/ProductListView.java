@@ -37,7 +37,6 @@ import de.bushnaq.abdalla.kassandra.ai.mcp.AiAssistantService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -47,6 +46,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserGroupApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
@@ -104,7 +104,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
                            StableDiffusionService stableDiffusionService,
                            AiAssistantService aiAssistantService,
                            ChatPanelSessionState chatPanelSessionState,
-                           KassandraProperties kassandraProperties,
+                           ServerSettingsService serverSettingsService,
                            LmStudioService lmStudioService) {
         super(clock);
         this.productApi             = productApi;
@@ -138,7 +138,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         addHeaderButton(aiToggleButton);
 
         // Chat panel (session-aware: reuses conversationId + replays history on F5)
-        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, kassandraProperties, lmStudioService);
+        chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);
         chatAgentPanel.setSizeFull();
 
         chatPane = new Div(chatAgentPanel);
